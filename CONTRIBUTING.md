@@ -27,6 +27,7 @@ It is important to carefully define and follow development goals throughout the 
 
 - Any bugs or concerns with current implementation should first be addressed by opening an Issue on Github.
 - Code contributions should strike a balance between readability and similarity to the base game. We aren't striving for perfect matches, but we also want to make it easier to debug by comparing codeflow to the base game.
+- To help with debugging via comparison against the base game, it is important to not skip any member variable assignments that may seem pointless. (e.g. if a variable is assigned a value in the constructor, but it is immediately overwritten in the class's `init()` function, then it should still be initialized in the constructor.)
 - Code additions should be ad-hoc. In other words, only add what you need.
   - e.g. If we are presently focused on syncing the race countdown and some function `func1` calls another function `func2` if and only if the countdown has ended, then `func2` should not be implemented yet.
 - In order to limit merge conflicts and duplication of work amonst collaborators, pull requests should have a limited scope, such as implementing wheelies or handling offroad.
