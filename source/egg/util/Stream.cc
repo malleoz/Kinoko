@@ -107,6 +107,9 @@ u8 *RamStream::data() {
     return m_buffer;
 }
 
+/// @details Segments the current stream at the current index. The returned stream is the data from
+/// the current index to size bytes after. The current stream is then moved to `size` bytes after
+/// the current index.
 RamStream RamStream::split(u32 size) {
     RamStream stream = RamStream(m_buffer + m_index, size);
     m_index += size;

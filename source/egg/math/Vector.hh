@@ -6,6 +6,7 @@
 
 namespace EGG {
 
+/// @brief A 2D float vector.
 struct Vector2f {
     Vector2f(f32 x_, f32 y_);
     Vector2f();
@@ -44,6 +45,7 @@ struct Vector2f {
     static const Vector2f ex, ey;
 };
 
+/// @brief A 3D float vector.
 struct Vector3f {
     Vector3f(f32 x_, f32 y_, f32 z_);
     Vector3f();
@@ -118,29 +120,30 @@ struct Vector3f {
         return !(*this == rhs);
     }
 
+    /// @brief Allows for copy construction from a vector to a string.
     explicit operator std::string() const {
         return std::format("[0x{:08X}, 0x{:08X}, 0x{:08X}] | [{}, {}, {}]", f2u(x), f2u(y), f2u(z),
                 x, y, z);
     }
 
     Vector3f cross(const EGG::Vector3f &rhs) const;
-    f32 dot() const;
-    f32 dot(const EGG::Vector3f &rhs) const;
-    f32 ps_dot() const;
-    f32 ps_dot(const EGG::Vector3f &rhs) const;
-    f32 length() const;
-    f32 normalise();
-    [[nodiscard]] Vector3f maximize(const Vector3f &rhs) const;
-    [[nodiscard]] Vector3f minimize(const Vector3f &rhs) const;
-    Vector3f proj(const Vector3f &rhs) const;
-    Vector3f rej(const Vector3f &rhs) const;
+    f32 dot() const;                            ///< The dot product between the vector and itself.
+    f32 dot(const EGG::Vector3f &rhs) const;    ///< The dot product between two vectors.
+    f32 ps_dot() const;                         ///< Paired-singles dot product implementation.
+    f32 ps_dot(const EGG::Vector3f &rhs) const; ///< Paired-singles dot product implementation.
+    f32 length() const;                         ///< The square root of the vector's dot product.
+    f32 normalise(); ///< Normalizes the vector and returns the original length.
+    [[nodiscard]] Vector3f maximize(const Vector3f &rhs) const; ///< Max elems of two vectors.
+    [[nodiscard]] Vector3f minimize(const Vector3f &rhs) const; ///< Min elems of two vectors.
+    Vector3f proj(const Vector3f &rhs) const; ///< The projection of this vector onto rhs.
+    Vector3f rej(const Vector3f &rhs) const;  ///< The rejection of this vector onto rhs.
     std::pair<Vector3f, Vector3f> projAndRej(const Vector3f &rhs);
-    f32 sqDistance(const Vector3f &rhs) const;
-    f32 ps_sqDistance(const Vector3f &rhs) const;
-    Vector3f abs() const;
+    f32 sqDistance(const Vector3f &rhs) const; ///< The square of the distance between two vectors.
+    f32 ps_sqDistance(const Vector3f &rhs) const; ///< Paired-singles impl. of @ref sqDistance.
+    Vector3f abs() const; ///< Returns the absolute value of each element of the vector.
     Vector3f perpInPlane(const EGG::Vector3f &rhs, bool normalise) const;
 
-    void read(Stream &stream);
+    void read(Stream &stream); ///< Constructs a Vector3f by reading 12 bytes from the stream.
 
     f32 x;
     f32 y;

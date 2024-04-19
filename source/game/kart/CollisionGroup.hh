@@ -9,8 +9,12 @@
 #include <array>
 #include <span>
 
+/// @brief Pertains to kart-related functionality.
 namespace Kart {
 
+/// @brief Information about the current collision and its properties.
+/// @details For additional information regarding the KCL information, please see @ref
+/// kcl_flag_components "KCL Flag Components".
 struct CollisionData {
     void reset();
 
@@ -22,15 +26,18 @@ struct CollisionData {
     EGG::Vector3f movement;
     f32 speedFactor;
     f32 rotFactor;
-    Field::KCLTypeMask closestFloorFlags;
-    u32 closestFloorSettings;
-    s32 intensity;
+    Field::KCLTypeMask closestFloorFlags; ///< The KCL flag's @ref KColType.
+    u32 closestFloorSettings;             ///< The KCL flag's "variant"
+    s32 intensity;                        ///< The KCL flag's "wheel depth"
 
-    bool bFloor;
+    bool bFloor; ///< Set if colliding with KCL which satisfies #KCL_TYPE_FLOOR
     bool bSoftWall;
     bool bTrickable;
 };
 
+/// @brief Represents a hitbox for the kart body or a wheel.
+/// @details A hitbox's position information is directly used in the KCL collision check functions.
+/// @nosubgrouping
 class Hitbox {
 public:
     Hitbox();
@@ -39,19 +46,25 @@ public:
     void calc(f32 param_1, f32 totalScale, const EGG::Vector3f &scale, const EGG::Quatf &rot,
             const EGG::Vector3f &pos);
 
+    /// @name Setters
+    /// @{
     void reset();
-    void setScale(f32 scale);
     void setRadius(f32 radius);
     void setBspHitbox(const BSP::Hitbox *hitbox, bool owns = false);
     void setWorldPos(const EGG::Vector3f &pos);
     void setLastPos(const EGG::Vector3f &pos);
     void setLastPos(const EGG::Vector3f &scale, const EGG::Matrix34f &pose);
+    /// @}
+    /// @nosubgrouping
 
+    /// @name Getters
+    /// @{
     const BSP::Hitbox *bspHitbox() const;
     const EGG::Vector3f &worldPos() const;
     const EGG::Vector3f &lastPos() const;
     const EGG::Vector3f &relPos() const;
     f32 radius() const;
+    /// @}
 
 private:
     const BSP::Hitbox *m_bspHitbox;
@@ -63,6 +76,8 @@ private:
     bool m_ownsBSP;
 };
 
+/// @brief Houses hitbox and collision info for an object (body or wheel).
+/// @nosubgrouping
 class CollisionGroup {
 public:
     CollisionGroup();
@@ -72,15 +87,18 @@ public:
     f32 computeCollisionLimits();
     void createSingleHitbox(f32 radius, const EGG::Vector3f &relPos);
 
+    /// @beginSetters
     void reset();
     void resetCollision();
+    void setHitboxScale(f32 scale);
+    /// @endSetters
 
+    /// @beginGetters
     Hitbox &hitbox(u16 hitboxIdx);
     u16 hitboxCount() const;
     CollisionData &collisionData();
     const CollisionData &collisionData() const;
-
-    void setHitboxScale(f32 scale);
+    /// @endGetters
 
 private:
     f32 m_boundingRadius;

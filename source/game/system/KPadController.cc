@@ -4,12 +4,15 @@
 
 namespace System {
 
+/// @addr{0x8051EBA8}
 KPadController::KPadController() : m_connected(false) {}
 
+/// @addr{0x8051CE7C}
 ControlSource KPadController::controlSource() {
     return ControlSource::Unknown;
 }
 
+/// @addr{0x8051ED14}
 void KPadController::calc() {
     calcImpl();
 }
@@ -26,18 +29,22 @@ bool KPadController::driftIsAuto() const {
     return m_driftIsAuto;
 }
 
+/// @addr{0x80520730}
 KPadGhostController::KPadGhostController() : m_acceptingInputs(false) {
     m_buttonsStreams[0] = new KPadGhostFaceButtonsStream;
     m_buttonsStreams[1] = new KPadGhostDirectionButtonsStream;
     m_buttonsStreams[2] = new KPadGhostTrickButtonsStream;
 }
 
+/// @addr{0x80520924}
 KPadGhostController::~KPadGhostController() = default;
 
+/// @addr{0x8052282C}
 ControlSource KPadGhostController::controlSource() {
     return ControlSource::Ghost;
 }
 
+/// @addr{0x80520998}
 void KPadGhostController::reset(bool driftIsAuto) {
     m_driftIsAuto = driftIsAuto;
     m_raceInputState.reset();
@@ -52,6 +59,20 @@ void KPadGhostController::reset(bool driftIsAuto) {
     m_connected = true;
 }
 
+/// @brief Reads in the raw input data section from the ghost RKG file.
+/// @addr{Inlined in 0x80521844}
+/// @details The buffer is split into three sections: face buttons, analog stick, and the D-Pad.
+/// Each section is an array of tuples, where each tuple contains the input state and the duration
+/// of that input state. This is used to minimize data consumption given that the user is not
+/// changing inputs every frame. We first read in the header of the RKG input data section as
+/// follows:
+/// Offset  | Size | Description
+///------------- | ------------- | -------------
+/// 0x00  | 2 bytes | Count of face button input tuples
+/// 0x02  | 2 bytes | Count of analog stick input tuples
+/// 0x04  | 2 bytes | Count of D-Pad input tuples
+/// 0x06  | 2 bytes | Unknown. Probably padding.
+/// 0x08  | | End of header, beginning of face button input data.
 void KPadGhostController::readGhostBuffer(const u8 *buffer, bool driftIsAuto) {
     constexpr u32 SEQUENCE_SIZE = 0x2;
 
@@ -72,6 +93,7 @@ void KPadGhostController::readGhostBuffer(const u8 *buffer, bool driftIsAuto) {
     m_buttonsStreams[2]->buffer = stream.split(trickCount * SEQUENCE_SIZE);
 }
 
+/// @addr{0x80520B9C}
 void KPadGhostController::calcImpl() {
     if (!m_ghostBuffer || !m_acceptingInputs) {
         return;
@@ -113,6 +135,7 @@ RaceInputState::RaceInputState() {
     reset();
 }
 
+/// @addr{0x8051E85C}
 void RaceInputState::reset() {
     buttons = 0;
     buttonsRaw = 0;
@@ -148,14 +171,18 @@ KPadGhostButtonsStream::KPadGhostButtonsStream()
 
 KPadGhostButtonsStream::~KPadGhostButtonsStream() = default;
 
+/// @addr{0x8052502C} @addr{0x80524FC4}
 bool KPadGhostButtonsStream::readIsNewSequence() const {
     return readSequenceFrames >= (currentSequence & 0xFF);
 }
 
+/// @addr{0x80525024} @addr{0x80524FBC}
 u8 KPadGhostButtonsStream::readVal() const {
     return currentSequence >> 8;
 }
 
+/// @brief Reads the data from the corresponding tuple in the buffer.
+/// @addr{0x80520D4C} @addr{0x80522F40}
 u8 KPadGhostButtonsStream::readFrame() {
     if (state != 1) {
         return 0;
@@ -192,12 +219,14 @@ KPadGhostTrickButtonsStream::KPadGhostTrickButtonsStream() = default;
 
 KPadGhostTrickButtonsStream::~KPadGhostTrickButtonsStream() = default;
 
+/// @addr{0x805250A8}
 bool KPadGhostTrickButtonsStream::readIsNewSequence() const {
     u16 duration = currentSequence & 0xFF;
     duration += 256 * (currentSequence >> 8 & 0xF);
     return duration <= readSequenceFrames;
 }
 
+/// @addr{0x8052509C}
 u8 KPadGhostTrickButtonsStream::readVal() const {
     return currentSequence >> 0x8 & ~0x80;
 }

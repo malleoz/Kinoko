@@ -9,6 +9,8 @@
 
 namespace Field {
 
+/// @brief Performs lookups for KCL triangles
+/// @nosubgrouping
 class KColData {
 public:
     enum class CollisionCheckType {
@@ -32,7 +34,6 @@ public:
     };
     static_assert(sizeof(KCollisionPrism) == 0x10);
 
-    KColData();
     KColData(const void *file);
 
     void narrowScopeLocal(const EGG::Vector3f &pos, f32 radius, KCLTypeMask mask);
@@ -54,10 +55,12 @@ public:
     EGG::Vector3f getNrm(u16 nrmIdx) const;
     KCollisionPrism getPrism(u16 prismIdx) const;
 
+    /// @beginGetters
+    u16 prismCache(u32 idx) const;
+    /// @endGetters
+
     static EGG::Vector3f GetVertex(f32 height, const EGG::Vector3f &vertex1,
             const EGG::Vector3f &fnrm, const EGG::Vector3f &enrm3, const EGG::Vector3f &enrm);
-
-    u16 prismCache(u32 idx) const;
 
 private:
     bool checkCollision(const KCollisionPrism &prism, f32 *distOut, EGG::Vector3f *fnrmOut,

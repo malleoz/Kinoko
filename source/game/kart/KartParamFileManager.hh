@@ -4,6 +4,7 @@
 
 namespace Kart {
 
+/// @brief Abstraction for the process of retrieving kart parameters from files.
 class KartParamFileManager {
 public:
     void clear();

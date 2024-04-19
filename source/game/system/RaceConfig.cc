@@ -8,10 +8,12 @@
 
 namespace System {
 
+/// @addr{0x8052DD40}
 void RaceConfig::init() {
     m_raceScenario.init();
 }
 
+/// @addr{0x805302C4}
 void RaceConfig::initRace() {
     // Normally we copy the menu scenario into the race scenario
     // There's no menu scenario in Kinoko, so instead we initialize values here
@@ -38,26 +40,32 @@ void RaceConfig::initControllers(const GhostFile &ghost) {
     KPadDirector::Instance()->setGhostPad(ghost.inputs(), ghost.driftIsAuto());
 }
 
+/// @addr{0x8052FE58}
 RaceConfig *RaceConfig::CreateInstance() {
     assert(!s_instance);
     s_instance = new RaceConfig;
     return s_instance;
 }
 
+/// @addr{0x8052FFE8}
 void RaceConfig::DestroyInstance() {
     assert(s_instance);
     delete s_instance;
     s_instance = nullptr;
 }
 
+/// @addr{0x809BD728}
 RaceConfig *RaceConfig::Instance() {
     return s_instance;
 }
 
+/// @addr{0x8053015C}
 RaceConfig::RaceConfig() = default;
 
+/// @addr{0x80530038}
 RaceConfig::~RaceConfig() = default;
 
+/// @addr{Inlined in 0x8052DD40}
 void RaceConfig::Scenario::init() {
     playerCount = 0;
     course = Course::GCN_Mario_Circuit;
@@ -70,6 +78,6 @@ void RaceConfig::Scenario::init() {
     }
 }
 
-RaceConfig *RaceConfig::s_instance = nullptr;
+RaceConfig *RaceConfig::s_instance = nullptr; ///< @addr{0x809BD728}
 
 } // namespace System
