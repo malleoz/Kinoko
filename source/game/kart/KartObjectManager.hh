@@ -4,12 +4,16 @@
 
 namespace Kart {
 
+/// @brief Responsible for the lifecycle and calculation of KartObjects.
+/// @nosubgrouping
 class KartObjectManager {
 public:
     void init();
     void calc();
 
+    /// @beginGetters
     KartObject *object(size_t i) const;
+    /// @endGetters
 
     static KartObjectManager *CreateInstance();
     static void DestroyInstance();

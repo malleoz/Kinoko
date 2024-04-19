@@ -314,7 +314,8 @@ f32 sqrt(f32 x) {
     return x > 0.0 ? frsqrt(x) * x : 0.0;
 }
 
-// CREDIT: Hanachan
+/// CREDIT: Hanachan
+/// @addr{0x80085040}
 f32 frsqrt(f32 x) {
     // frsqrte instruction
     f64 est = frsqrte(x);
@@ -326,6 +327,7 @@ f32 frsqrt(f32 x) {
     return tmp1 * tmp2;
 }
 
+/// @addr{0x80085110}
 f32 SinFIdx(f32 fidx) {
     f32 abs_fidx = fabs(fidx);
 
@@ -340,6 +342,7 @@ f32 SinFIdx(f32 fidx) {
     return fidx < 0.0f ? -val : val;
 }
 
+/// @addr{0x80085180}
 f32 CosFIdx(f32 fidx) {
     f32 abs_fidx = fabs(fidx);
 
@@ -361,6 +364,7 @@ f32 AtanFIdx_(f32 x) {
     return sArcTanTbl[idx].atanVal + r * sArcTanTbl[idx].atanDt;
 }
 
+/// @addr{0x800853C0}
 f32 Atan2FIdx(f32 y, f32 x) {
     if (x == 0.0f && y == 0.0f) {
         return 0.0f;
@@ -397,20 +401,24 @@ f32 Atan2FIdx(f32 y, f32 x) {
     }
 }
 
-// Takes in radians
+/// Takes in radians
+/// @addr{0x8022F860}
 f32 sin(f32 x) {
     return SinFIdx(x * RAD2FIDX);
 }
 
-// Takes in radians
+/// Takes in radians
+/// @addr{0x8022F86C}
 f32 cos(f32 x) {
     return CosFIdx(x * RAD2FIDX);
 }
 
+/// @addr{0x8022F8C0}
 f32 acos(f32 x) {
     return ::acosl(x);
 }
 
+/// @addr{0x8022F8E4}
 f32 atan2(f32 y, f32 x) {
     return Atan2FIdx(y, x) * FIDX2RAD;
 }
@@ -419,11 +427,18 @@ f32 abs(f32 x) {
     return std::abs(x);
 }
 
+/// Fused multiply-add operation.
+/// Mimics paired-single arithmetic by using 25-bit precision of the middle term.
 f32 fma(f32 x, f32 y, f32 z) {
     return static_cast<f32>(
             static_cast<f64>(x) * force25Bit(static_cast<f64>(y)) + static_cast<f64>(z));
 }
 
+/// This is used to mimic the Wii's floating-point unit.
+/// When performing single-precision floating-point multiplies, it rounds the input's mantissa to
+/// keep the upper 25 bits. This is likely the source of Mario Kart Wii ghost replay desyncs from
+/// Dolphin 4.0.
+/// @todo Validate the accuracy of the claim that this is the source of 4.0 desyncs.
 f64 force25Bit(f64 x) {
     u64 bits = std::bit_cast<u64>(x);
     bits = (bits & 0xfffffffff8000000ULL) + (bits & 0x8000000);

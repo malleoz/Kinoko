@@ -4,7 +4,7 @@
 
 namespace System {
 
-// TODO: full implementation
+/// @brief The highest level abstraction for controller processing.
 class KPadDirector {
 public:
     void calc();

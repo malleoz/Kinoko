@@ -6,6 +6,7 @@
 
 namespace EGG {
 
+/// @brief A stream of data, abstracted to allow for continuous seeking.
 class Stream {
 public:
     Stream();
@@ -49,6 +50,11 @@ private:
     }
 };
 
+/// @brief A stream of data stored in memory.
+/// @details RamStream solves two problems:
+/// 1. Inconsistent endianness across Kinoko clients.
+/// 2. Having to maintain pointer arithmetic while reading in various data types.
+/// We specify the endianness of the data in the stream, and the stream will handle the rest.
 class RamStream : public Stream {
 public:
     RamStream();
@@ -60,7 +66,7 @@ public:
     bool eof() override;
 
     std::string read_string();
-    RamStream split(u32 size);
+    RamStream split(u32 size); ///< Splits the current stream into two.
     void setBufferAndSize(void *buffer, u32 size);
     u8 *data();
 

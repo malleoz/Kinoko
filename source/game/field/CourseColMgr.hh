@@ -12,6 +12,8 @@ namespace Field {
 typedef bool (
         KColData::*CollisionCheckFunc)(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *attributeOut);
 
+/// @brief Manager for course KCL interactions.
+/// @nosubgrouping
 class CourseColMgr {
 public:
     struct CollisionInfo {
@@ -58,10 +60,14 @@ public:
             const EGG::Vector3f &prevPos, KCLTypeMask typeMask, CollisionInfo *colInfo,
             KCLTypeMask *typeMaskOut, f32 scale, f32 radius);
 
+    /// @beginSetters
     void setNoBounceWallInfo(NoBounceWallColInfo *info);
     void clearNoBounceWallInfo();
+    /// @endSetters
 
+    /// @beginGetters
     NoBounceWallColInfo *noBounceWallInfo() const;
+    /// @endGetters
 
     static void *LoadFile(const char *filename);
 

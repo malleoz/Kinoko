@@ -2,6 +2,7 @@
 
 #include <Common.hh>
 
+/// @brief High-level handling for race lifecycle.
 namespace System {
 
 class MapdataFileAccessor;
@@ -10,6 +11,7 @@ class MapdataStageInfoAccessor;
 class MapdataStartPoint;
 class MapdataStartPointAccessor;
 
+/// @brief Contains some information about a course, notably the starting position.
 class CourseMap {
 public:
     void init();

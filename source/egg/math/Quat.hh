@@ -4,6 +4,10 @@
 
 namespace EGG {
 
+/// @brief A quaternion, used to represent 3D rotation.
+/// @details A quaternion is comprised of a scalar (w) and a vector (v).
+/// The vector is used to represent the axis of rotation, while
+/// the scalar is used to represent the amount of rotation.
 struct Quatf {
     Quatf();
     Quatf(f32 w_, const Vector3f &v_);
@@ -62,21 +66,24 @@ struct Quatf {
         return !(*this == rhs);
     }
 
+    /// @brief A conversion function that allows for string representation of a quaternion.
     explicit operator std::string() const {
         return std::format("[0x{:08X}, 0x{:08X}, 0x{:08X}, 0x{:08X}] | [{}, {}, {}, {}]", f2u(v.x),
                 f2u(v.y), f2u(v.z), f2u(w), v.x, v.y, v.z, w);
     }
 
-    void setRPY(const Vector3f &rpy);
-    void normalise();
-    void makeVectorRotation(const Vector3f &from, const Vector3f &to);
-    Quatf conjugate() const;
-    Vector3f rotateVector(const Vector3f &vec) const;
-    Vector3f rotateVectorInv(const Vector3f &vec) const;
-    Quatf slerpTo(const Quatf &q2, f32 t) const;
-    f32 dot() const;
-    f32 dot(const Quatf &q) const;
-    void setAxisRotation(f32 angle, const Vector3f &axis);
+    void setRPY(const Vector3f &rpy); ///< Sets roll, pitch, and yaw.
+    void normalise();                 ///< Scales the quaternion to a unit length.
+    void makeVectorRotation(const Vector3f &from,
+            const Vector3f &to); ///< Captures rotation between two vectors.
+    Quatf conjugate() const;     ///< Computes \f$conj(a+bi+cj+dk) = a-bi-cj-dk\f$
+    Vector3f rotateVector(const Vector3f &vec) const;    ///< Rotates a vector based on the quat.
+    Vector3f rotateVectorInv(const Vector3f &vec) const; ///< Rotates a vector on the inverse quat.
+    Quatf slerpTo(const Quatf &q2, f32 t) const; ///< Performs spherical linear interpolation.
+    f32 dot() const;               ///< Computes \f$this \cdot this = w^2 + x^2 + y^2 + z^2\f$
+    f32 dot(const Quatf &q) const; /// @brief Computes \f$this \cdot rhs = w \times rhs.w + x
+                                   /// \times rhs.x + y \times rhs.y + z \times rhs.z\f$
+    void setAxisRotation(f32 angle, const Vector3f &axis); ///< Set the quat given angle and axis.
     Quatf multSwap(const Vector3f &v) const;
     Quatf multSwap(const Quatf &q) const;
 
