@@ -4,6 +4,7 @@
 
 #include <span>
 
+/// @brief Pertains to item handling.
 namespace Item {
 
 class ItemDirector {

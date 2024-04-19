@@ -6,8 +6,11 @@
 
 #define COLLISION_ARR_LENGTH 0x40
 
+/// @brief Pertains to collision.
 namespace Field {
 
+/// @brief Manages the caching of colliding KCL triangles and exposes queries for collision checks.
+/// @nosubgrouping
 class CollisionDirector {
 public:
     struct CollisionEntry {
@@ -36,8 +39,11 @@ public:
     void resetCollisionEntries(KCLTypeMask *ptr);
     void pushCollisionEntry(f32 dist, KCLTypeMask *typeMask, KCLTypeMask kclTypeBit, u16 attribute);
 
-    const CollisionEntry *closestCollisionEntry() const;
     bool findClosestCollisionEntry(KCLTypeMask *typeMask, KCLTypeMask type);
+
+    /// @beginGetters
+    const CollisionEntry *closestCollisionEntry() const;
+    /// @endGetters
 
     static CollisionDirector *CreateInstance();
     static CollisionDirector *Instance();

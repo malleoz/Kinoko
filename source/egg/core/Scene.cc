@@ -2,6 +2,7 @@
 
 namespace EGG {
 
+/// @addr{0x8023AD10}
 Scene::Scene() {
     m_parent = nullptr;
     m_child = nullptr;

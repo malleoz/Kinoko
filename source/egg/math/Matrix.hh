@@ -4,6 +4,7 @@
 
 namespace EGG {
 
+/// @brief A 3 x 4 matrix.
 class Matrix34f {
 public:
     Matrix34f();
@@ -15,28 +16,29 @@ public:
         return mtx == rhs.mtx;
     }
 
+    /// @brief Accesses the matrix element at the specified row and column.
     f32 &operator[](size_t row, size_t col) {
         return mtx[row][col];
     }
 
+    /// @brief Accesses the matrix element at the specified row and column.
     f32 operator[](size_t row, size_t col) const {
         return mtx[row][col];
     }
 
-    // Q for Quaternion, T for translation
-    void makeQT(const Quatf &q, const Vector3f &t);
-    void makeQ(const Quatf &q);
-    void makeRT(const Vector3f &r, const Vector3f &t);
-    void makeR(const Vector3f &r);
-    void makeZero();
-    void setAxisRotation(f32 angle, const EGG::Vector3f &axis);
+    void makeQT(const Quatf &q, const Vector3f &t);    ///< Sets matrix from rotation and position.
+    void makeQ(const Quatf &q);                        ///< Sets rotation matrix from quaternion.
+    void makeRT(const Vector3f &r, const Vector3f &t); ///< Sets rotation-translation matrix.
+    void makeR(const Vector3f &r); ///< Sets 3x3 rotation matrix from a vector of Euler angles.
+    void makeZero();               ///< Zeroes every element of the matrix.
+    void setAxisRotation(f32 angle, const Vector3f &axis); ///< Rotates the matrix about an axis.
 
-    Matrix34f multiplyTo(const Matrix34f &rhs) const;
-    Vector3f multVector(const Vector3f &vec) const;
-    Vector3f ps_multVector(const Vector3f &vec) const;
-    Vector3f multVector33(const Vector3f &vec) const;
-    Matrix34f inverseTo() const;
-    Matrix34f transpose() const;
+    Matrix34f multiplyTo(const Matrix34f &rhs) const;  ///< Multiplies two matrices.
+    Vector3f multVector(const Vector3f &vec) const;    ///< Multiplies a vector by a matrix.
+    Vector3f ps_multVector(const Vector3f &vec) const; ///< Paired-singles impl. of @ref multVector.
+    Vector3f multVector33(const Vector3f &vec) const;  ///< Multiplies a 3x3 matrix by a vector.
+    Matrix34f inverseTo() const;                       ///< Computes the inverse of the matrix.
+    Matrix34f transpose() const; ///< Transposes the 3x3 portion of the matrix.
 
     static const Matrix34f ident;
     static const Matrix34f zero;

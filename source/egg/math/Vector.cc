@@ -26,6 +26,7 @@ f32 Vector2f::length() const {
     return dot() > FLT_EPSILON ? Mathf::sqrt(dot()) : 0.0f;
 }
 
+/// @addr{0x80243A00}
 f32 Vector2f::normalise() {
     f32 len = length();
     if (len != 0.0f) {
@@ -61,6 +62,7 @@ f32 Vector3f::ps_dot(const Vector3f &rhs) const {
     return xy + z * rhs.z;
 }
 
+/// @addr{0x80214968}
 Vector3f Vector3f::cross(const Vector3f &rhs) const {
     return Vector3f(y * rhs.z - z * rhs.y, z * rhs.x - x * rhs.z, x * rhs.y - y * rhs.x);
 }
@@ -78,6 +80,7 @@ f32 Vector3f::normalise() {
     return len;
 }
 
+/// @addr{0x80085580}
 Vector3f Vector3f::maximize(const Vector3f &rhs) const {
     Vector3f out;
 
@@ -88,6 +91,7 @@ Vector3f Vector3f::maximize(const Vector3f &rhs) const {
     return out;
 }
 
+/// @addr{0x800855C0}
 Vector3f Vector3f::minimize(const Vector3f &rhs) const {
     Vector3f out;
 
@@ -98,14 +102,17 @@ Vector3f Vector3f::minimize(const Vector3f &rhs) const {
     return out;
 }
 
+/// @addr{0x805AEB88}
 Vector3f Vector3f::proj(const Vector3f &rhs) const {
     return rhs * rhs.dot(*this);
 }
 
+/// @addr{0x805AEBD0}
 Vector3f Vector3f::rej(const Vector3f &rhs) const {
     return *this - proj(rhs);
 }
 
+/// @addr{0x805AEC24}
 std::pair<Vector3f, Vector3f> Vector3f::projAndRej(const Vector3f &rhs) {
     return std::pair(proj(rhs), rej(rhs));
 }
@@ -124,6 +131,8 @@ Vector3f Vector3f::abs() const {
     return Vector3f(Mathf::abs(x), Mathf::abs(y), Mathf::abs(z));
 }
 
+/// @brief Calculates the orthogonal vector, based on the plane defined by this vector and rhs.
+/// @addr{0x805AE9EC}
 Vector3f Vector3f::perpInPlane(const EGG::Vector3f &rhs, bool normalise) const {
     if (Mathf::abs(dot(rhs)) == 1.0f) {
         return EGG::Vector3f::zero;
@@ -152,10 +161,10 @@ const Vector2f Vector2f::zero = Vector2f(0.0f, 0.0f);
 const Vector2f Vector2f::ex = Vector2f(1.0f, 0.0f);
 const Vector2f Vector2f::ey = Vector2f(0.0f, 1.0f);
 
-const Vector3f Vector3f::zero = Vector3f(0.0f, 0.0f, 0.0f);
-const Vector3f Vector3f::ex = Vector3f(1.0f, 0.0f, 0.0f);
-const Vector3f Vector3f::ey = Vector3f(0.0f, 1.0f, 0.0f);
-const Vector3f Vector3f::ez = Vector3f(0.0f, 0.0f, 1.0f);
+const Vector3f Vector3f::zero = Vector3f(0.0f, 0.0f, 0.0f); ///< @addr{0x802A4100}
+const Vector3f Vector3f::ex = Vector3f(1.0f, 0.0f, 0.0f);   ///< @addr{0x802A4118}
+const Vector3f Vector3f::ey = Vector3f(0.0f, 1.0f, 0.0f);   ///< @addr{0x802A4130}
+const Vector3f Vector3f::ez = Vector3f(0.0f, 0.0f, 1.0f);   ///< @addr{0x802A4148}
 
 const Vector3f Vector3f::inf = Vector3f(std::numeric_limits<f32>::infinity(),
         std::numeric_limits<f32>::infinity(), std::numeric_limits<f32>::infinity());

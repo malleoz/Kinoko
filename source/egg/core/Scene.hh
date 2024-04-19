@@ -6,6 +6,13 @@ namespace EGG {
 
 class SceneManager;
 
+/// @brief Base class for all scenes.
+
+/// @details A scene compartmentalizes certain elements of the game,
+/// such as the menu, the race, the credits, etc.
+/// This allows for easy cleanup when transitioning to a different scene,
+/// as scenes destroy instances of classes used only during the scene lifetime.
+/// While this is not an abstract class, you'll never see an instance of this base class.
 class Scene {
 public:
     /*------------*
