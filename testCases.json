@@ -1,4 +1,9 @@
 {
+    "Kasey rSGB RTA WR": {
+        "rkgPath": "samples/rsgb-rta-1-21-363.rkg",
+        "krkgPath": "samples/rsgb-rta-1-21-363.krkg",
+        "targetFrame": 5288
+    },
     "Luke rBC RTA WR": {
         "rkgPath": "samples/rbc-rta-2-30-459.rkg",
         "krkgPath": "samples/rbc-rta-2-30-459.krkg",

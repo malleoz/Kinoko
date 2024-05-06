@@ -52,7 +52,15 @@ void KartJump::tryStart(const EGG::Vector3f &left) {
     }
 
     if (m_move->speedRatioCapped() > 0.5f) {
-        m_variant = static_cast<BoostRampVariant>(state()->boostRampType());
+        s32 boostRampType = state()->boostRampType();
+
+        if (boostRampType == 0) {
+            m_variant = BoostRampVariant::StuntTrick;
+        } else if (boostRampType == 1) {
+            m_variant = BoostRampVariant::SingleFlipTrick;
+        } else {
+            m_variant = BoostRampVariant::DoubleFlipTrick;
+        }
 
         start(left);
     }
@@ -126,7 +134,7 @@ void KartJump::setAngle(const EGG::Vector3f &left) {
     u32 weightClass = static_cast<u32>(param()->stats().weightClass);
     f32 targetAngle = ANGLE_PROPERTIES[weightClass][static_cast<u32>(m_variant)][0];
 
-    if (angle > targetAngle) {
+    if (state()->isJumpPad() || angle > targetAngle) {
         return;
     }
 
@@ -208,6 +216,7 @@ void KartJumpBike::start(const EGG::Vector3f &left) {
     setAngle(left);
     state()->setInATrick(true);
     m_cooldown = 5;
+    state()->setTrickableTimer(0);
     KartMoveBike *moveBike = reinterpret_cast<KartMoveBike *>(m_move);
     moveBike->cancelWheelie();
 }

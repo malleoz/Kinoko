@@ -89,7 +89,7 @@ void WheelPhysics::updateCollision(const EGG::Vector3f &bottom, const EGG::Vecto
     m_topmostPos = topmostPos;
     m_wheelEdgePos = m_pos + m_effectiveRadius * move()->totalScale() * bottom;
     m_effectiveRadius += (m_targetEffectiveRadius - m_effectiveRadius) * 0.1f;
-    m_suspTravel = bottom.dot(m_pos - topmostPos); // m_pos wrong wheel 2
+    m_suspTravel = bottom.dot(m_pos - topmostPos);
 
     if (m_suspTravel < 0.0f) {
         m_74 = 1.0f;
@@ -193,7 +193,7 @@ void KartSuspensionPhysics::setInitialState() {
 }
 
 void KartSuspensionPhysics::calcCollision(f32 dt, const EGG::Vector3f &gravity,
-        const EGG::Matrix34f &mat) {
+        const EGG::Matrix34f &mat) { // mat wrong
     m_maxTravelScaled = m_bspWheel->maxTravel * sub()->someScale();
     EGG::Vector3f topmostPos = mat.ps_multVector(m_bspWheel->relPosition * scale());
     EGG::Matrix34f mStack_60;
@@ -242,6 +242,10 @@ void KartSuspensionPhysics::calcSuspension(const EGG::Vector3f &forward,
     fLinear.y = std::min(fLinear.y, param()->stats().maxNormalAcceleration);
 
     if (dynamics()->extVel().y > 5.0f) {
+        fLinear.y = 0.0f;
+    }
+
+    if (state()->isJumpPadDisableYsusForce()) {
         fLinear.y = 0.0f;
     }
 

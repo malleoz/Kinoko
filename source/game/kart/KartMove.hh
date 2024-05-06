@@ -53,6 +53,9 @@ public:
 
     void tryStartBoostPanel();
     void tryStartBoostRamp();
+    void tryStartJumpPad();
+    void tryEndJumpPad();
+    void cancelJumpPad();
 
     void activateBoost(KartBoost::Type type, s16 frames);
     void applyStartBoost(s16 frames);
@@ -67,8 +70,9 @@ public:
     void setFloorCollisionCount(u16 count);
     void setKCLWheelSpeedFactor(f32 val);
     void setKCLWheelRotFactor(f32 val);
-    void setRampBoost(bool isSet);
     void setPadBoost(bool isSet);
+    void setRampBoost(bool isSet);
+    void setPadJump(bool isSet);
 
     s32 getAppliedHopStickX() const;
     f32 softSpeedLimit() const;
@@ -93,6 +97,12 @@ protected:
         ChargedMt = 2,
         ChargingSmt = 2,
         ChargedSmt = 3,
+    };
+
+    struct JumpPadProperties {
+        f32 minSpeed;
+        f32 maxSpeed;
+        f32 velY;
     };
 
     f32 m_baseSpeed;
@@ -131,12 +141,17 @@ protected:
     f32 m_totalScale;
     u16 m_mushroomBoostTimer;
     u32 m_nonZipperAirtime;
+    f32 m_jumpPadMinSpeed;
+    f32 m_jumpPadMaxSpeed;
+    JumpPadProperties m_jumpPadProperties; // TODO: This is originally a pointer, from which we copy
+                                           // the min/max speed. Maybe we just chuck this?
     u16 m_rampBoost;
     f32 m_hopVelY;
     f32 m_hopPosY;
     f32 m_hopGravity;
-    bool m_bRampBoost;
     bool m_bPadBoost;
+    bool m_bRampBoost;
+    bool m_bPadJump;
     KartJump *m_jump;
     f32 m_rawTurn;
 };
