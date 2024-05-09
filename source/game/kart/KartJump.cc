@@ -25,15 +25,15 @@ void KartJump::setupProperties() {
 
     static constexpr std::array<f32, 3> FINAL_ANGLES = {{360.0f, 720.0f, 180.0f}};
 
-    if (m_variant == BoostRampVariant::SingleFlipTrick) {
+    if (m_variant == SurfaceVariant::SingleFlipTrick) {
         m_properties = TRICK_PROPERTIES[0];
         m_finalAngle = FINAL_ANGLES[0];
-    } else if (m_variant == BoostRampVariant::DoubleFlipTrick) {
+    } else if (m_variant == SurfaceVariant::StuntTrick) {
         m_properties = TRICK_PROPERTIES[1];
         m_finalAngle = FINAL_ANGLES[1];
     } else if (m_type == TrickType::BikeSideStuntTrick) {
         m_properties = TRICK_PROPERTIES[2];
-        m_finalAngle = FINAL_ANGLES[0];
+        m_finalAngle = FINAL_ANGLES[2];
     }
 
     m_angleDelta = m_properties.initialAngleDiff;
@@ -55,11 +55,11 @@ void KartJump::tryStart(const EGG::Vector3f &left) {
         s32 boostRampType = state()->boostRampType();
 
         if (boostRampType == 0) {
-            m_variant = BoostRampVariant::StuntTrick;
+            m_variant = SurfaceVariant::StuntTrick;
         } else if (boostRampType == 1) {
-            m_variant = BoostRampVariant::SingleFlipTrick;
+            m_variant = SurfaceVariant::SingleFlipTrick;
         } else {
-            m_variant = BoostRampVariant::DoubleFlipTrick;
+            m_variant = SurfaceVariant::DoubleFlipTrick;
         }
 
         start(left);
@@ -158,7 +158,7 @@ TrickType KartJump::type() const {
     return m_type;
 }
 
-BoostRampVariant KartJump::variant() const {
+SurfaceVariant KartJump::variant() const {
     return m_variant;
 }
 
@@ -224,7 +224,7 @@ void KartJumpBike::start(const EGG::Vector3f &left) {
 void KartJumpBike::init() {
     constexpr f32 DOUBLE_FLIP_TRICK_FINAL_ANGLE = 180.0f;
 
-    if (m_variant == BoostRampVariant::DoubleFlipTrick) {
+    if (m_variant == SurfaceVariant::DoubleFlipTrick) {
         if (m_nextTrick < System::Trick::Left) {
             return;
         }
