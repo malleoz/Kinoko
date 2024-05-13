@@ -6,7 +6,7 @@ namespace System {
 
 /// A simple struct to represent a lap or race finish time.
 struct Timer {
-    Timer();         ///< @unused Creates a zero'd timer.
+    Timer(); ///< @unused Creates a zero'd timer.
     Timer(u32 data);
     ~Timer();
 
