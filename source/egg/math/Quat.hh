@@ -80,9 +80,8 @@ struct Quatf {
     Vector3f rotateVector(const Vector3f &vec) const;    ///< Rotates a vector based on the quat.
     Vector3f rotateVectorInv(const Vector3f &vec) const; ///< Rotates a vector on the inverse quat.
     Quatf slerpTo(const Quatf &q2, f32 t) const; ///< Performs spherical linear interpolation.
-    f32 dot() const;               ///< Computes \f$this \cdot this = w^2 + x^2 + y^2 + z^2\f$
-    f32 dot(const Quatf &q) const; /// @brief Computes \f$this \cdot rhs = w \times rhs.w + x
-                                   /// \times rhs.x + y \times rhs.y + z \times rhs.z\f$
+    f32 dot() const; ///< Computes \f$this \cdot this = w^2 + x^2 + y^2 + z^2\f$
+    f32 dot(const Quatf &q) const;
     void setAxisRotation(f32 angle, const Vector3f &axis); ///< Set the quat given angle and axis.
     Quatf multSwap(const Vector3f &v) const;
     Quatf multSwap(const Quatf &q) const;

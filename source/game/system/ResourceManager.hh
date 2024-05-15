@@ -9,6 +9,7 @@ enum class ArchiveId {
     Course = 1,
 };
 
+/// @addr{0x809BD738}
 class ResourceManager {
 public:
     void *getFile(const char *filename, size_t *size, ArchiveId id);
@@ -32,7 +33,7 @@ private:
     MultiDvdArchive **m_archives;
 
     static MultiDvdArchive *Create(u8 i);
-    static ResourceManager *s_instance;
+    static ResourceManager *s_instance; ///< @addr{0x809BD738}
 };
 
 } // namespace System

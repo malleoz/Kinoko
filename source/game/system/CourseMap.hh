@@ -12,6 +12,7 @@ class MapdataStartPoint;
 class MapdataStartPointAccessor;
 
 /// @brief Contains some information about a course, notably the starting position.
+/// @addr{0x809BD6E8}
 class CourseMap {
 public:
     void init();
@@ -46,7 +47,7 @@ private:
     f32 m_startTmp2;
     f32 m_startTmp3;
 
-    static void *LoadFile(const char *filename);
+    static void *LoadFile(const char *filename); ///< @addr{0x809BD6E8}
 
     static CourseMap *s_instance;
 };

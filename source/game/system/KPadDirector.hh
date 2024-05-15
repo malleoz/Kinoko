@@ -5,6 +5,7 @@
 namespace System {
 
 /// @brief The highest level abstraction for controller processing.
+/// @addr{0x809BD70C}
 class KPadDirector {
 public:
     void calc();
@@ -29,7 +30,7 @@ private:
     KPadPlayer m_playerInput;
     KPadGhostController *m_ghostController;
 
-    static KPadDirector *s_instance;
+    static KPadDirector *s_instance; ///< @addr{0x809BD70C}
 };
 
 } // namespace System

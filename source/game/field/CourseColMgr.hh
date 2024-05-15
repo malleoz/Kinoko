@@ -13,6 +13,7 @@ typedef bool (
         KColData::*CollisionCheckFunc)(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *attributeOut);
 
 /// @brief Manager for course KCL interactions.
+/// @addr{0x809C3C10}
 /// @nosubgrouping
 class CourseColMgr {
 public:
@@ -93,7 +94,7 @@ private:
     NoBounceWallColInfo *m_noBounceWallInfo;
     EGG::Matrix34f *m_localMtx;
 
-    static CourseColMgr *s_instance;
+    static CourseColMgr *s_instance; ///< @addr{0x809C3C10}
 };
 
 } // namespace Field

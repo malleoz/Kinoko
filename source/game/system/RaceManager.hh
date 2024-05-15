@@ -17,6 +17,7 @@ private:
     const KPad *m_inputs;
 };
 
+/// @addr{0x809BD730}
 class RaceManager {
 public:
     enum class Stage {
@@ -52,7 +53,7 @@ private:
 
     static constexpr u16 STAGE_COUNTDOWN_DURATION = 240;
 
-    static RaceManager *s_instance;
+    static RaceManager *s_instance; ///< @addr{0x809BD730}
 };
 
 } // namespace System

@@ -87,7 +87,6 @@ struct Vector3f {
         return *this = *this + val;
     }
 
-    // TODO: This is surely not an actual operation, but I imagine this will be used often
     Vector3f operator*(const Vector3f &rhs) const {
         return Vector3f(x * rhs.x, y * rhs.y, z * rhs.z);
     }

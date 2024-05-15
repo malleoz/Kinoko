@@ -37,7 +37,7 @@ public:
     Vector3f multVector(const Vector3f &vec) const;    ///< Multiplies a vector by a matrix.
     Vector3f ps_multVector(const Vector3f &vec) const; ///< Paired-singles impl. of @ref multVector.
     Vector3f multVector33(const Vector3f &vec) const;  ///< Multiplies a 3x3 matrix by a vector.
-    Matrix34f inverseTo() const;                       ///< Computes the inverse of the matrix.
+    Matrix34f inverseTo33() const;                     ///< Computes the inverse of the matrix.
     Matrix34f transpose() const; ///< Transposes the 3x3 portion of the matrix.
 
     static const Matrix34f ident;

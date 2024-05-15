@@ -71,6 +71,8 @@ f32 Vector3f::length() const {
     return Mathf::sqrt(dot());
 }
 
+/// @addr{0x80243ADC}
+/// @return (optional) The length of the vector before normalisation.
 f32 Vector3f::normalise() {
     f32 len = length();
     if (FLT_EPSILON < dot()) {
@@ -157,9 +159,9 @@ void Vector3f::read(Stream &stream) {
     z = stream.read_f32();
 }
 
-const Vector2f Vector2f::zero = Vector2f(0.0f, 0.0f);
-const Vector2f Vector2f::ex = Vector2f(1.0f, 0.0f);
-const Vector2f Vector2f::ey = Vector2f(0.0f, 1.0f);
+const Vector2f Vector2f::zero = Vector2f(0.0f, 0.0f); ///< @addr{0x80385FD0}
+const Vector2f Vector2f::ex = Vector2f(1.0f, 0.0f);   ///< @addr{0x80385FD8}
+const Vector2f Vector2f::ey = Vector2f(0.0f, 1.0f);   ///< @addr{0x80385FE0}
 
 const Vector3f Vector3f::zero = Vector3f(0.0f, 0.0f, 0.0f); ///< @addr{0x802A4100}
 const Vector3f Vector3f::ex = Vector3f(1.0f, 0.0f, 0.0f);   ///< @addr{0x802A4118}

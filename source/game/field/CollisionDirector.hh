@@ -10,6 +10,7 @@
 namespace Field {
 
 /// @brief Manages the caching of colliding KCL triangles and exposes queries for collision checks.
+/// @addr{0x809C2F44}
 /// @nosubgrouping
 class CollisionDirector {
 public:
@@ -57,7 +58,7 @@ private:
     std::array<CollisionEntry, COLLISION_ARR_LENGTH> m_entries;
     size_t m_collisionEntryCount;
 
-    static CollisionDirector *s_instance;
+    static CollisionDirector *s_instance; ///< @addr{0x809C2F44}
 };
 
 } // namespace Field

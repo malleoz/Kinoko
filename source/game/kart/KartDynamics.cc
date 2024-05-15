@@ -49,7 +49,7 @@ void KartDynamics::setBspParams(f32 rotSpeed, const EGG::Vector3f &m, const EGG:
     m_inertiaTensor[1, 1] = (m.z * m.z + m.x * m.x) * TWELFTH + n.z * n.z + n.x * n.x;
     m_inertiaTensor[2, 2] = (m.x * m.x + m.y * m.y) * TWELFTH + n.x * n.x + n.y * n.y;
 
-    m_invInertiaTensor = m_inertiaTensor.inverseTo();
+    m_invInertiaTensor = m_inertiaTensor.inverseTo33();
 }
 
 /// @stage All

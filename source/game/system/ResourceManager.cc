@@ -99,6 +99,6 @@ MultiDvdArchive *ResourceManager::Create(u8 i) {
     }
 }
 
-ResourceManager *ResourceManager::s_instance = nullptr; ///< @addr{0x809BD738}
+ResourceManager *ResourceManager::s_instance = nullptr;
 
 } // namespace System

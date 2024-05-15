@@ -6,7 +6,7 @@
 
 namespace System {
 
-/// @arr{0x8051C398}
+/// @addr{0x8051C398}
 GhostFile::GhostFile(const RawGhostFile &raw) {
     u8 *streamPtr = const_cast<u8 *>(raw.buffer());
     EGG::RamStream stream(streamPtr, RKG_HEADER_SIZE);
@@ -14,10 +14,10 @@ GhostFile::GhostFile(const RawGhostFile &raw) {
     m_inputs = raw.buffer() + RKG_HEADER_SIZE;
 }
 
-/// @arr{0x8051CF90}
+/// @addr{0x8051CF90}
 GhostFile::~GhostFile() = default;
 
-/// @arr{0x8051C530}
+/// @addr{0x8051C530}
 void GhostFile::read(EGG::RamStream &stream) {
     stream.skip(0x4); // RKGD
 
@@ -108,7 +108,7 @@ void RawGhostFile::init(const u8 *rkg) {
     }
 }
 
-/// @arr{0x8051D1B4}
+/// @addr{0x8051D1B4}
 bool RawGhostFile::decompress(const u8 *rkg) {
     memcpy(m_buffer, rkg, RKG_HEADER_SIZE);
 
@@ -131,7 +131,7 @@ bool RawGhostFile::decompress(const u8 *rkg) {
     return true;
 }
 
-/// @arr{0x8051C120}
+/// @addr{0x8051C120}
 /// @todo Check for valid controller type?
 /// @todo Check lap times sum to race time?
 bool RawGhostFile::isValid(const u8 *rkg) const {
