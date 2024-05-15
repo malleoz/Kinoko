@@ -46,25 +46,22 @@ public:
     void calc(f32 param_1, f32 totalScale, const EGG::Vector3f &scale, const EGG::Quatf &rot,
             const EGG::Vector3f &pos);
 
-    /// @name Setters
-    /// @{
+    /// @beginSetters
     void reset();
     void setRadius(f32 radius);
     void setBspHitbox(const BSP::Hitbox *hitbox, bool owns = false);
     void setWorldPos(const EGG::Vector3f &pos);
     void setLastPos(const EGG::Vector3f &pos);
     void setLastPos(const EGG::Vector3f &scale, const EGG::Matrix34f &pose);
-    /// @}
-    /// @nosubgrouping
+    /// @endSetters
 
-    /// @name Getters
-    /// @{
+    /// @beginGetters
     const BSP::Hitbox *bspHitbox() const;
     const EGG::Vector3f &worldPos() const;
     const EGG::Vector3f &lastPos() const;
     const EGG::Vector3f &relPos() const;
     f32 radius() const;
-    /// @}
+    /// @endGetters
 
 private:
     const BSP::Hitbox *m_bspHitbox;

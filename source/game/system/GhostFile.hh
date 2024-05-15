@@ -76,6 +76,7 @@ private:
 static_assert(sizeof(RawGhostFile) == RKG_UNCOMPRESSED_FILE_SIZE);
 
 /// @brief Parsed representation of a binary ghost file.
+/// @nosubgrouping
 class GhostFile {
 public:
     GhostFile(const RawGhostFile &raw);
@@ -83,11 +84,13 @@ public:
 
     void read(EGG::RamStream &stream); ///< Organizes binary data into members. See RawGhostFile.
 
+    /// @beginGetters
     Character character() const;
     Vehicle vehicle() const;
     Course course() const;
     const u8 *inputs() const;
     bool driftIsAuto() const;
+    /// @endGetters
 
 private:
     std::array<wchar_t, 11> m_userData;

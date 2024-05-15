@@ -198,7 +198,7 @@ Vector3f Matrix34f::multVector33(const Vector3f &vec) const {
 
 /// @details Inverts the 3x3 portion of the 3x4 matrix. Unlike a typical matrix inversion, if the
 /// determinant is 0, then this function returns the identity matrix.
-Matrix34f Matrix34f::inverseTo() const {
+Matrix34f Matrix34f::inverseTo33() const {
     f32 determinant = (((mtx[2][1] * mtx[0][2] * mtx[1][0] + mtx[2][2] * mtx[0][0] * mtx[1][1] +
                                 mtx[2][0] * mtx[0][1] * mtx[1][2]) -
                                mtx[0][2] * mtx[2][0] * mtx[1][1]) -

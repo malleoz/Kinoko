@@ -113,6 +113,8 @@ f32 Quatf::dot() const {
     return w * w + v.dot();
 }
 
+/// Computes \f$this \cdot rhs = w \times rhs.w + x
+/// \times rhs.x + y \times rhs.y + z \times rhs.z\f$
 f32 Quatf::dot(const Quatf &q) const {
     return w * q.w + v.dot(q.v);
 }

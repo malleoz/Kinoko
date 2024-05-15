@@ -7,6 +7,7 @@
 
 namespace Host {
 
+/// @addr{0x80385FC8}
 class KSystem {
 private:
     enum class Option {

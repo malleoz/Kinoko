@@ -6,7 +6,8 @@
 
 namespace System {
 
-// TODO: elaborate on implementation
+/// @todo Elaborate on implementation
+/// @addr{0x809BD728}
 class RaceConfig {
 public:
     struct Player {
@@ -55,7 +56,7 @@ private:
     Scenario m_raceScenario;
     RawGhostFile m_ghost;
 
-    static RaceConfig *s_instance;
+    static RaceConfig *s_instance; ///< @addr{0x809BD728}
 };
 
 } // namespace System
