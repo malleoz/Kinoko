@@ -5,7 +5,7 @@
   A reimplementation of Mario Kart Wii's physics engine in C++.
 
 [![Discord](https://img.shields.io/badge/Discord-grey?logo=discord)](https://discord.gg/qjt66ptQde)
-[![Doxygen](https://img.shields.io/badge/📚%20Documentation-grey)](https://malleoz.github.io/Kinoko/docs/html/index.html)
+[![Doxygen](https://img.shields.io/badge/📚%20Docs-grey)](https://malleoz.github.io/Kinoko/docs/html/index.html)
 </div>
 <hr/><br/>
 
@@ -34,7 +34,7 @@ Kinoko is a reimplementation of Mario Kart Wii's physics engine in C++. This pro
 ### Dependencies
 
 - g++ 13.1 (C++23)
-- ninja
+- ninja 1.3
 - Python 3.6
 
 ### Process
@@ -66,7 +66,7 @@ Currently, Kinoko runs by iterating over a set of test cases defined in `testCas
 
 Test cases rely on a custom `.krkg` file format, which stores some header information followed by data points that we want to check against on each frame. This file is generated using a custom version of MKW-SP.
 
-1. Navigate to the [workflows](https://github.com/vabold/mkw-sp/actions?query=branch%3Akrkg) page for the KRKG branch.
+1. Navigate to the [workflows](https://github.com/vabold/mkw-sp/actions?query=branch%3Akrkg) page for the KRKG branch of [vabold/mkw-sp](https://github.com/vabold/mkw-sp).
 2. Download the `mkw-sp-test` artifact at the bottom of the page.
 3. Extract `boot.dol` to a folder of your choosing.
 4. In Dolphin, navigate to Config > Paths and set `Default ISO` to the path of your Mario Kart Wii PAL ISO.
