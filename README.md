@@ -1,11 +1,11 @@
 <div align="center">
+  <h1>Kinoko</h1>
   <img src="https://github.com/vabold/Kinoko/assets/16770560/0e4ef63a-409a-40e4-8801-d30a27d7f7b5" width=100>
-  <div style="font-size: 2em; margin: .67em 0">
-    <b>Kinoko</b>
-  </div>
 
-  [![Discord](https://img.shields.io/badge/Discord-grey?logo=discord)](https://discord.gg/qjt66ptQde)
-  [![Doxygen](https://img.shields.io/badge/📚%20Documentation-grey)](https://malleoz.github.io/Kinoko/docs/html/index.html)
+  A reimplementation of Mario Kart Wii's physics engine in C++.
+
+[![Discord](https://img.shields.io/badge/Discord-grey?logo=discord)](https://discord.gg/qjt66ptQde)
+[![Doxygen](https://img.shields.io/badge/📚%20Documentation-grey)](https://malleoz.github.io/Kinoko/docs/html/index.html)
 </div>
 <hr/><br/>
 
