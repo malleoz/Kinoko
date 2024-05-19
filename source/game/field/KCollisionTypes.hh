@@ -6,7 +6,7 @@
 
 #define KCL_ATTRIBUTE_TYPE(x) ((x)&0x1f)
 #define KCL_TYPE_BIT(x) (1 << (x))
-#define KCL_ATTRIBUTE_TYPE_BIT(x) KCL_TYPE_BIT(KCL_ATTRIBUTE_TYPE(x))
+#define KCL_ATTRIBUTE_TYPE_BIT(x)                                                               KCL_TYPE_BIT(KCL_ATTRIBUTE_TYPE(x))
 #define KCL_VARIANT_TYPE(x) ((x >> 5) & 7)
 
 // KCL attribute types
