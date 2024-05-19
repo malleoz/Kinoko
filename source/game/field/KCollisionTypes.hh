@@ -11,7 +11,7 @@
 /// colspan="3"><center>Variant</center><td colspan="5"><center>@ref KColType</center>
 /// </table></center>
 /// - **@ref KColType** - 0x00 to 0x1F. The main effect the triangle will have.
-/// - **Variant** - 0 and 7. Determines the variant of the base type.
+/// - **Variant** - 0 to 7. Determines the variant of the base type.
 /// - **BLIGHT Index** - Ranges from 0 to 7. Has to do with lighting.
 /// - **Wheel Depth** - 0 to 3. A higher value means player's wheel sinks further into the ground.
 /// - **Collision effect** - Bitfield that makes surfaces trickable, reject road, and/or soft wall.
