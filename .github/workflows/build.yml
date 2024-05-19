@@ -53,9 +53,18 @@ jobs:
           sudo ./llvm.sh 16
           sudo apt install clang-format-16
       - name: Format Kinoko
+        id: formatKinoko
+        continue-on-error: true
         run: |
           dirs="include source"
           find $dirs -regex '.*\.\(c\|h\|cc\|hh\)' | xargs clang-format-16 --dry-run -Werror
+      - name: Alert on Format Failure
+        if: steps.formatKinoko.outcome == 'failure' && github.event_name == 'push' && github.ref == 'refs/heads/alert_on_failure'
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        uses: Ilshidur/action-discord@master
+        with:
+          args: "clang-format failed!"
 
   verify:
     name: Verify
