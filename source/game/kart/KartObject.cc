@@ -33,6 +33,39 @@ KartObject::~KartObject() {
     }
 }
 
+/// @addr{0x8058EA0C}
+void KartObject::createTires() {
+    constexpr u16 BSP_WHEEL_INDICES[4] = {0, 0, 1, 1};
+    constexpr MirroredTire X_MIRRORED_TIRE[4] = {
+            MirroredTire::NotMirrored,
+            MirroredTire::Mirrored,
+            MirroredTire::NotMirrored,
+            MirroredTire::Mirrored,
+    };
+
+    const auto bodyType = m_pointers.param->stats().body;
+    const u32 tireCount = m_pointers.param->tireCount();
+
+    if (bodyType == KartParam::Stats::Body::Three_Wheel_Kart) {
+        K_PANIC("Blue falcon not supported!");
+        return;
+    }
+
+    for (u16 wheelIdx = 0; wheelIdx < tireCount; ++wheelIdx) {
+        const u16 bspWheelIdx = BSP_WHEEL_INDICES[wheelIdx];
+        const MirroredTire mirroredTire = X_MIRRORED_TIRE[wheelIdx];
+
+        KartSuspension *sus = new KartSuspension;
+        KartTire *tire = (bspWheelIdx == 0) ? new KartTireFront(mirroredTire, bspWheelIdx) :
+                                              new KartTire(mirroredTire, bspWheelIdx);
+
+        m_pointers.suspensions.push_back(sus);
+        m_pointers.tires.push_back(tire);
+
+        sus->init(wheelIdx, mirroredTire, bspWheelIdx);
+    }
+}
+
 /// @addr{0x8058E5F8}
 KartBody *KartObject::createBody(KartPhysics *physics) {
     return new KartBodyKart(physics);
@@ -180,16 +213,16 @@ void KartObjectBike::createTires() {
 
         if (wheelIdx == 0 || wheelIdx == 2) {
             sus = new KartSuspensionFrontBike;
-            tire = new KartTireFrontBike(0);
+            tire = new KartTireFrontBike(MirroredTire::Bike, 0);
         } else {
             sus = new KartSuspensionRearBike;
-            tire = new KartTireRearBike(1);
+            tire = new KartTireRearBike(MirroredTire::Bike, 1);
         }
 
         m_pointers.suspensions.push_back(sus);
         m_pointers.tires.push_back(tire);
 
-        sus->init(wheelIdx, wheelIdx);
+        sus->init(wheelIdx, MirroredTire::Bike, wheelIdx);
     }
 }
 } // namespace Kart

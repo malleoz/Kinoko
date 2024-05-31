@@ -8,6 +8,13 @@
 
 namespace Kart {
 
+/// @brief Every other kart tire is a mirror of the first. Bikes do not leverage this.
+enum class MirroredTire {
+    NotMirrored,
+    Mirrored,
+    Bike,
+};
+
 /// @brief Manages wheel physics and collision checks.
 /// @nosubgrouping
 class WheelPhysics : KartObjectProxy {
@@ -65,7 +72,7 @@ private:
 /// @brief Physics for a single wheel's suspension.
 class KartSuspensionPhysics : KartObjectProxy {
 public:
-    KartSuspensionPhysics(u16 wheelIdx, u16 bspWheelIdx);
+    KartSuspensionPhysics(u16 wheelIdx, MirroredTire mirroredTire, u16 bspWheelIdx);
     ~KartSuspensionPhysics();
 
     void init();
@@ -79,6 +86,7 @@ public:
 private:
     const BSP::Wheel *m_bspWheel;
     WheelPhysics *m_tirePhysics;
+    MirroredTire m_mirroredTire;
     u16 m_bspWheelIdx;
     u16 m_wheelIdx;
     EGG::Vector3f m_topmostPos;
