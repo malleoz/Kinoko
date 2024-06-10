@@ -59,6 +59,7 @@ public:
     u16 someNonSoftWallTimer() const;
 
     bool isRampBoost() const;
+    bool isTrickable() const;
     bool isNotTrickable() const;
     /// @endGetters
 
