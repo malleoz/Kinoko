@@ -13,63 +13,14 @@ public:
     virtual ~KartMove();
 
     virtual void createSubsystems();
-    virtual void calcTurn();
-    virtual void calcWheelie() {}
     virtual void setTurnParams();
-    virtual void init(bool b1, bool b2);
-    virtual f32 leanRot() const;
 
     void setInitialPhysicsValues(const EGG::Vector3f &position, const EGG::Vector3f &angles);
     void setKartSpeedLimit();
-    void resetDriftManual();
-
     void calc();
-    void calcTop();
-    void calcAirtimeTop();
-    void calcSpecialFloor();
-    void calcDirs();
-    void calcStickyRoad();
-    void calcOffroad();
-    void calcBoost();
-    void calcRampBoost();
-    void calcDisableBackwardsAccel();
-    void calcSsmt();
-    bool calcPreDrift();
-    void calcManualDrift();
-    void startManualDrift();
-    void releaseMt();
-    void controlOutsideDriftAngle();
-    void calcRotation();
-    void calcVehicleSpeed();
-    f32 calcVehicleAcceleration() const;
-    void calcAcceleration();
-    f32 calcWallCollisionSpeedFactor(f32 &f1);
-    void calcWallCollisionStart(f32 param_2);
-    void calcStandstillBoostRot();
-    void calcDive();
-    void calcSsmtStart();
     void calcHopPhysics();
-    virtual void calcVehicleRotation(f32 turn);
-    virtual void hop();
-    virtual void onHop() {}
-    virtual void onWallCollision() {}
-    virtual void calcMtCharge();
-    virtual f32 getWheelieSoftSpeedLimitBonus() const;
-    virtual bool canWheelie() const;
-    virtual bool canHop() const;
-
-    void tryStartBoostPanel();
-    void tryStartBoostRamp();
-    void tryStartJumpPad();
-    void tryEndJumpPad();
-    void cancelJumpPad();
-
-    void activateBoost(KartBoost::Type type, s16 frames);
     void applyStartBoost(s16 frames);
     void activateMushroom();
-    void setOffroadInvincibility(s16 timer);
-    void calcOffroadInvincibility();
-    void calcMushroomBoost();
     void landTrick();
 
     /// @beginSetters
@@ -84,7 +35,9 @@ public:
     /// @endSetters
 
     /// @beginGetters
-    s32 getAppliedHopStickX() const;
+    virtual f32 leanRot() const;
+
+    s32 appliedHopStickX() const;
     f32 softSpeedLimit() const;
     f32 speed() const;
     f32 acceleration() const;
@@ -131,6 +84,12 @@ protected:
         f32 _8;
         f32 boostRotFactor;
     };
+
+    virtual void init(bool b1, bool b2);
+    virtual void calcTurn();
+
+    void calcDive();
+    void calcStandstillBoostRot();
 
     f32 m_baseSpeed;      ///< The speed associated with the current character/vehicle stats.
     f32 m_softSpeedLimit; ///< Base speed + boosts + wheelies, restricted to the hard speed limit.
@@ -197,6 +156,51 @@ protected:
     KartJump *m_jump;
     const DriftingParameters *m_driftingParams; ///< Drift-type-specific parameters.
     f32 m_rawTurn; ///< Float in range [-1, 1]. Represents stick magnitude + direction.
+
+private:
+    virtual void calcWheelie() {}
+    virtual void calcVehicleRotation(f32 turn);
+    virtual void hop();
+    virtual void onHop() {}
+    virtual void onWallCollision() {}
+    virtual void calcMtCharge();
+    virtual f32 wheelieSoftSpeedLimitBonus() const;
+    virtual bool canWheelie() const;
+    virtual bool canHop() const;
+
+    void resetDriftManual();
+
+    void calcTop();
+    void calcAirtimeTop();
+    void calcSpecialFloor();
+    void calcDirs();
+    void calcStickyRoad();
+    void calcOffroad();
+    void calcBoost();
+    void calcRampBoost();
+    void calcDisableBackwardsAccel();
+    void calcSsmt();
+    bool calcPreDrift();
+    void calcManualDrift();
+    void startManualDrift();
+    void releaseMt();
+    void controlOutsideDriftAngle();
+    void calcRotation();
+    void calcVehicleSpeed();
+    f32 calcVehicleAcceleration() const;
+    void calcAcceleration();
+    f32 calcWallCollisionSpeedFactor(f32 &f1);
+    void calcWallCollisionStart(f32 param_2);
+    void calcSsmtStart();
+    void tryStartBoostPanel();
+    void tryStartBoostRamp();
+    void tryStartJumpPad();
+    void tryEndJumpPad();
+    void cancelJumpPad();
+    void activateBoost(KartBoost::Type type, s16 frames);
+    void setOffroadInvincibility(s16 timer);
+    void calcOffroadInvincibility();
+    void calcMushroomBoost();
 };
 
 /// @brief Responsible for reacting to player inputs and moving the bike.
@@ -228,24 +232,25 @@ public:
     virtual void cancelWheelie();
 
     void createSubsystems() override;
-    void calcVehicleRotation(f32 /*turn*/) override;
+
+    /// @beginGetters
+    f32 leanRot() const override;
+    /// @endGetters
+
+private:
+    void init(bool b1, bool b2) override;
     void calcWheelie() override;
+    void calcVehicleRotation(f32 /*turn*/) override;
     void onHop() override;
     void onWallCollision() override;
     void calcMtCharge() override;
     void setTurnParams() override;
-    void init(bool b1, bool b2) override;
-    f32 getWheelieSoftSpeedLimitBonus() const override;
-    f32 wheelieRotFactor() const;
+    f32 wheelieSoftSpeedLimitBonus() const override;
+    bool canWheelie() const override;
 
     void tryStartWheelie();
+    f32 wheelieRotFactor() const;
 
-    /// @beginGetters
-    f32 leanRot() const override;
-    bool canWheelie() const override;
-    /// @endGetters
-
-private:
     f32 m_leanRot;         ///< Z-axis rotation of the bike from leaning.
     f32 m_leanRotCap;      ///< The maximum leaning rotation.
     f32 m_leanRotInc;      ///< The incrementor for leaning rotation.
