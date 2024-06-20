@@ -22,6 +22,7 @@ public:
     void calcPass1();
     void addFloor(const CollisionData &, bool);
     void updateSuspOvertravel(const EGG::Vector3f &suspOvertravel);
+    void FUN_80598744();
 
     /// @beginGetters
     f32 someScale();
@@ -34,6 +35,8 @@ private:
     EGG::Vector3f m_maxSuspOvertravel;
     EGG::Vector3f m_minSuspOvertravel;
     u16 m_floorCollisionCount;
+    s16 m_sideCollisionTimer;
+    f32 m_colPerpendicularity;
     f32 m_someScale; /// @rename
 
     static constexpr f32 DT = 1.0f; ///< Delta time.

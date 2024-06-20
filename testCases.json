@@ -1,4 +1,9 @@
 {
+    "Braixen CM RTA WR": {
+        "rkgPath": "samples/cm-rta-0-25-145.rkg",
+        "krkgPath": "samples/cm-rta-0-25-145.krkg",
+        "targetFrame": 592
+    },
     "Flare RR NG RTA WR": {
         "rkgPath": "samples/rr-ng-rta-2-24-281.rkg",
         "krkgPath": "samples/rr-ng-rta-2-24-281.krkg",

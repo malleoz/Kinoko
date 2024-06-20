@@ -57,6 +57,7 @@ public:
     void setJumpPadDisableYsusForce(bool isSet);
     void setSomethingWallCollision(bool isSet);
     void setSoftWallDrift(bool isSet);
+    void setHWG(bool isSet);
     void setBoostRampType(s32 val);
     void setJumpPadVariant(s32 val);
     void setTrickableTimer(s16 val);
@@ -68,6 +69,7 @@ public:
     bool isBrake() const;
     bool isDriftInput() const;
     bool isDriftManual() const;
+    bool isWall3Collision() const;
     bool isWallCollision() const;
     bool isHopStart() const;
     bool isGroundStart() const;
@@ -81,6 +83,7 @@ public:
     bool isTouchingGround() const;
     bool isHop() const;
     bool isSoftWallDrift() const;
+    bool isHWG() const;
     bool isChargeStartBoost() const;
     bool isBoost() const;
     bool isStickRight() const;
@@ -128,6 +131,7 @@ private:
     /// ghosts which could not have been created legitimately in the first place.
     bool m_bDriftInput;
     bool m_bDriftManual;               ///< Currently in a drift w/ manual.
+    bool m_bWall3Collision;            ///< @todo
     bool m_bWallCollision;             ///< Set if we are colliding with a wall.
     bool m_bHopStart;                  ///< Set if @ref m_bDriftInput was toggled on this frame.
     bool m_bAccelerateStart;           ///< Set if @ref m_bAccelerate was toggled on this frame.
@@ -176,6 +180,7 @@ private:
     bool m_bUNK2;
     bool m_bSomethingWallCollision;
     bool m_bSoftWallDrift;
+    bool m_bHWG;
     bool m_bChargeStartBoost; ///< Like @ref m_bAccelerate but during countdown.
     /// @}
 

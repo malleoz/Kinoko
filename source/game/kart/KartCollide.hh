@@ -27,6 +27,8 @@ public:
     void calcTriggers(Field::KCLTypeMask *mask, const EGG::Vector3f &pos, bool twoPoint);
     void calcWheelCollision(u16 wheelIdx, CollisionGroup *hitboxGroup, const EGG::Vector3f &colVel,
             const EGG::Vector3f &center, f32 radius);
+    void calcSideCollision(CollisionData &collisionData, Hitbox &hitbox,
+            Field::CourseColMgr::CollisionInfo *colInfo);
 
     void processWheel(CollisionData &collisionData, Hitbox &hitbox,
             Field::CourseColMgr::CollisionInfo *colInfo, Field::KCLTypeMask *maskOut);
@@ -57,6 +59,7 @@ public:
     u16 someSoftWallTimer() const;
     f32 suspBottomHeightNonSoftWall() const;
     u16 someNonSoftWallTimer() const;
+    f32 colPerpendicularity() const;
 
     bool isRampBoost() const;
     bool isTrickable() const;
@@ -70,6 +73,7 @@ private:
     u16 m_someSoftWallTimer;
     f32 m_suspBottomHeightNonSoftWall;
     u16 m_someNonSoftWallTimer;
+    f32 m_colPerpendicularity;
 
     bool m_rampBoost;
     bool m_offRoad; ///< @unused

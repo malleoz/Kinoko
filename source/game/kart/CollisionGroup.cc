@@ -15,11 +15,15 @@ void CollisionData::reset() {
     closestFloorFlags = 0;
     closestFloorSettings = 0xffffffff;
     intensity = 0.0f;
+    colPerpendicularity = 0.0f;
 
     bFloor = false;
     bWall = false;
+    bWall3 = false;
     bSoftWall = false;
     bTrickable = false;
+    bWallAtLeftCloser = false;
+    bWallAtRightCloser = false;
 }
 
 /// @addr{0x805B7F48}
