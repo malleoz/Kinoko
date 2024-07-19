@@ -77,7 +77,8 @@ void KartState::reset() {
 void KartState::calcInput() {
     const auto *raceMgr = System::RaceManager::Instance();
     if (raceMgr->isStageReached(System::RaceManager::Stage::Race)) {
-        if (!state()->isBeforeRespawn() && !state()->isCannonStart() && !state()->isInCannon()) {
+        if (!state()->isBeforeRespawn() && !state()->isCannonStart() && !state()->isInCannon() &&
+                !state()->isOverZipper()) {
             const auto &currentState = inputs()->currentState();
             const auto &lastState = inputs()->lastState();
             m_stickX = currentState.stick.x;
@@ -118,6 +119,13 @@ void KartState::calcInput() {
 /// @brief Every frame, resets the input state and saves collision-related bit flags.
 /// @addr{0x8059474C}
 void KartState::calc() {
+    resetFlags();
+
+    calcCollisions();
+}
+
+/// @addr{0x80594704}
+void KartState::resetFlags() {
     m_bAccelerate = false;
     m_bBrake = false;
     m_bDriftInput = false;
@@ -126,14 +134,13 @@ void KartState::calc() {
     m_bGroundStart = false;
     m_bStickLeft = false;
     m_bWallCollisionStart = false;
+    m_bAirStart = false;
     m_bStickRight = false;
 
     m_bJumpPadDisableYsusForce = false;
 
     m_stickY = 0.0f;
     m_stickX = 0.0f;
-
-    calcCollisions();
 }
 
 /// @stage All
@@ -288,6 +295,10 @@ void KartState::calcCollisions() {
     m_trickableTimer = std::max(0, m_trickableTimer - 1);
 
     if (wheelCollisions < 1 && !colData.bFloor) {
+        if (wasTouchingGround) {
+            state()->setAirStart(true);
+        }
+
         if (++m_airtime > 20) {
             m_bAirtimeOver20 = true;
         }
@@ -379,6 +390,7 @@ void KartState::handleStartBoost(size_t idx) {
 /// @brief Resets certain bitfields pertaining to ejections (reject road, half pipe zippers, etc.)
 /// @addr{0x805958F0}
 void KartState::resetEjection() {
+    m_bHalfpipeRamp = false;
     m_bRejectRoad = false;
 }
 
@@ -474,6 +486,10 @@ bool KartState::isBoost() const {
     return m_bBoost;
 }
 
+bool KartState::isAirStart() const {
+    return m_bAirStart;
+}
+
 bool KartState::isStickRight() const {
     return m_bStickRight;
 }
@@ -522,8 +538,20 @@ bool KartState::isBoostOffroadInvincibility() const {
     return m_bBoostOffroadInvincibility;
 }
 
+bool KartState::isHalfpipeRamp() const {
+    return m_bHalfpipeRamp;
+}
+
+bool KartState::isOverZipper() const {
+    return m_bOverZipper;
+}
+
 bool KartState::isDisableBackwardsAccel() const {
     return m_bDisableBackwardsAccel;
+}
+
+bool KartState::isZipperStick() const {
+    return m_bZipperStick;
 }
 
 bool KartState::isTrickRot() const {
@@ -636,6 +664,7 @@ void KartState::clearBitfield0() {
     m_bTouchingGround = false;
     m_bHop = false;
     m_bBoost = false;
+    m_bAirStart = false;
     m_bStickRight = false;
     m_bMushroomBoost = false;
     m_bDriftAuto = false;
@@ -652,7 +681,10 @@ void KartState::clearBitfield1() {
     m_bTrickStart = false;
     m_bInATrick = false;
     m_bBoostOffroadInvincibility = false;
+    m_bHalfpipeRamp = false;
+    m_bOverZipper = false;
     m_bDisableBackwardsAccel = false;
+    m_bZipperStick = false;
     m_bTrickRot = false;
     m_bChargingSsmt = false;
     m_bRejectRoad = false;
@@ -725,6 +757,10 @@ void KartState::setBoost(bool isSet) {
     m_bBoost = isSet;
 }
 
+void KartState::setAirStart(bool isSet) {
+    m_bAirStart = isSet;
+}
+
 void KartState::setMushroomBoost(bool isSet) {
     m_bMushroomBoost = isSet;
 }
@@ -765,8 +801,20 @@ void KartState::setBoostOffroadInvincibility(bool isSet) {
     m_bBoostOffroadInvincibility = isSet;
 }
 
+void KartState::setHalfpipeRamp(bool isSet) {
+    m_bHalfpipeRamp = isSet;
+}
+
+void KartState::setOverZipper(bool isSet) {
+    m_bOverZipper = isSet;
+}
+
 void KartState::setDisableBackwardsAccel(bool isSet) {
     m_bDisableBackwardsAccel = isSet;
+}
+
+void KartState::setZipperStick(bool isSet) {
+    m_bZipperStick = isSet;
 }
 
 void KartState::setTrickRot(bool isSet) {

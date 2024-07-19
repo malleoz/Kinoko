@@ -150,6 +150,11 @@ typedef enum {
              KCL_TYPE_BIT(COL_TYPE_INVISIBLE_WALL) | KCL_TYPE_BIT(COL_TYPE_INVISIBLE_WALL2)) & \
             ~KCL_TYPE_BIT(COL_TYPE_ITEM_ROAD))
 
+/// 0x90002000
+#define KCL_TYPE_ANY_INVISIBLE_WALL \
+    (KCL_TYPE_BIT(COL_TYPE_INVISIBLE_WALL2) | KCL_TYPE_BIT(COL_TYPE_HALFPIPE_INVISIBLE_WALL) | \
+            KCL_TYPE_BIT(COL_TYPE_INVISIBLE_WALL))
+
 namespace Field {
 /// @brief The header of the KCL file format. It is 0x3C bytes long (for Mario %Kart Wii).
 struct KColHeader {

@@ -1,8 +1,11 @@
 #pragma once
 
 #include "game/kart/KartBoost.hh"
+#include "game/kart/KartHalfPipe.hh"
 #include "game/kart/KartObjectProxy.hh"
 #include "game/kart/KartReject.hh"
+
+#include "game/field/CourseColMgr.hh"
 
 namespace Kart {
 
@@ -58,6 +61,10 @@ public:
     void calcSsmtStart();
     void calcHopPhysics();
     void calcRejectRoad();
+    bool calcZipperCollision(f32 radius, f32 scale, EGG::Vector3f &pos, EGG::Vector3f &upLocal,
+            const EGG::Vector3f &prevPos, Field::CourseColMgr::CollisionInfo *colInfo,
+            Field::KCLTypeMask *maskOut, Field::KCLTypeMask flags);
+    f32 calcSlerpRate(f32 scale, const EGG::Quatf &from, const EGG::Quatf &to);
     virtual void calcVehicleRotation(f32 turn);
     virtual void hop();
     virtual void onHop() {}
@@ -118,7 +125,9 @@ public:
     [[nodiscard]] f32 speedRatio() const;
     [[nodiscard]] u16 floorCollisionCount() const;
     [[nodiscard]] s32 hopStickX() const;
+    [[nodiscard]] f32 hopPosY() const;
     [[nodiscard]] KartJump *jump() const;
+    [[nodiscard]] KartHalfPipe *halfpipe() const;
     /// @endGetters
 
 protected:
@@ -224,6 +233,7 @@ protected:
     bool m_bTrickableSurface; ///< Set when driving on a trickable surface.
     bool m_bWallBounce;       ///< Set when our speed loss from wall collision is > 30.0f.
     KartJump *m_jump;
+    KartHalfPipe *m_halfpipe;                   ///< Pertains to zipper physics.
     const DriftingParameters *m_driftingParams; ///< Drift-type-specific parameters.
     f32 m_rawTurn; ///< Float in range [-1, 1]. Represents stick magnitude + direction.
 };
