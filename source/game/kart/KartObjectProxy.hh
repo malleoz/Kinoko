@@ -20,6 +20,7 @@ struct CollisionData;
 class KartBody;
 class KartCollide;
 class KartDynamics;
+class KartHalfPipe;
 class KartJump;
 class KartMove;
 class KartParam;
@@ -69,6 +70,8 @@ public:
     [[nodiscard]] const CollisionGroup *collisionGroup() const;
     [[nodiscard]] KartMove *move();
     [[nodiscard]] const KartMove *move() const;
+    [[nodiscard]] KartHalfPipe *halfpipe();
+    [[nodiscard]] const KartHalfPipe *halfpipe() const;
     [[nodiscard]] KartJump *jump();
     [[nodiscard]] const KartJump *jump() const;
     [[nodiscard]] KartParam *param();

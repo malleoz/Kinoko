@@ -171,6 +171,8 @@ void KartMove::init(bool b1, bool b2) {
     m_mtCharge = 0;
     m_outsideDriftBonus = 0.0f;
     m_boost.reset();
+    m_zipperBoostTimer = 0;
+    m_zipperBoostMax = 0;
     m_reject.reset();
     m_offroadInvincibility = 0;
     m_ssmtCharge = 0;
@@ -286,6 +288,7 @@ void KartMove::calc() {
     calcSsmt();
     calcBoost();
     calcMushroomBoost();
+    calcZipperBoost();
 
     if (state()->isInCannon()) {
         calcCannon();
@@ -324,7 +327,8 @@ void KartMove::calcTop() {
 
             if (state()->isHalfpipeRamp() ||
                     (!state()->isBoost() && !state()->isRampBoost() && !state()->isWheelie() &&
-                            !state()->isOverZipper())) {
+                            !state()->isOverZipper() &&
+                            (!state()->isZipperBoost() || m_zipperBoostTimer > 15))) {
                 f32 topDotZ = 0.8f - 6.0f * (EGG::Mathf::abs(inputTop.dot(componentZAxis())));
                 scalar = std::min(0.8f, std::max(0.3f, topDotZ));
             }
@@ -347,7 +351,7 @@ void KartMove::calcTop() {
 
     dynamics()->setStabilizationFactor(stabilizationFactor);
 
-    m_nonZipperAirtime = state()->airtime();
+    m_nonZipperAirtime = state()->isOverZipper() ? 0 : state()->airtime();
     m_bTrickableSurface = collide()->isTrickable();
 }
 
@@ -722,6 +726,12 @@ void KartMove::clearRampBoost() {
     state()->setRampBoost(false);
 }
 
+/// @addr{0x80582F38}
+void KartMove::clearZipperBoost() {
+    m_zipperBoostTimer = 0;
+    state()->setZipperBoost(false);
+}
+
 /// @addr{0x80582D94}
 void KartMove::clearBoost() {
     m_boost.resetActive();
@@ -965,6 +975,10 @@ void KartMove::calcRotation() {
 
         if (!forwards) {
             turn = -turn;
+        }
+
+        if (state()->isZipperBoost() && !state()->isDriftManual()) {
+            turn *= 2.0f;
         }
     }
 
@@ -1740,6 +1754,22 @@ void KartMove::activateMushroom() {
     setOffroadInvincibility(MUSHROOM_DURATION);
 }
 
+/// @addr{0x8057F96C}
+void KartMove::activateZipperBoost() {
+    constexpr s16 BASE_DURATION = 50;
+
+    if (state()->isBeforeRespawn()) {
+        return;
+    }
+
+    activateBoost(KartBoost::Type::TrickAndZipper, BASE_DURATION);
+
+    setOffroadInvincibility(BASE_DURATION);
+    m_zipperBoostTimer = 0;
+    m_zipperBoostMax = BASE_DURATION;
+    state()->setZipperBoost(true);
+}
+
 /// @stage 2
 /// @brief Ignores offroad KCL collision for a set amount of time.
 /// @addr{0x805824C8}
@@ -1781,6 +1811,26 @@ void KartMove::calcMushroomBoost() {
     state()->setMushroomBoost(false);
 }
 
+/// @addr{0x80582E34}
+void KartMove::calcZipperBoost() {
+    if (!state()->isZipperBoost()) {
+        return;
+    }
+
+    state()->setAccelerate(true);
+
+    if (!state()->isOverZipper() && ++m_zipperBoostTimer >= m_zipperBoostMax) {
+        m_zipperBoostTimer = 0;
+        state()->setZipperBoost(false);
+    }
+
+    if (m_zipperBoostTimer < 10) {
+        EGG::Vector3f angVel = dynamics()->angVel0();
+        angVel.y = 0.0f;
+        dynamics()->setAngVel0(angVel);
+    }
+}
+
 /// @addr{0x8057F7A8}
 void KartMove::landTrick() {
     static constexpr std::array<s16, 3> KART_TRICK_BOOST_DURATION = {{
@@ -1817,6 +1867,7 @@ void KartMove::enterCannon() {
 
     cancelJumpPad();
     clearRampBoost();
+    clearZipperBoost();
     clearSsmt();
     clearOffroadInvincibility();
 
@@ -2337,6 +2388,7 @@ void KartMoveBike::initOob() {
     clearBoost();
     clearJumpPad();
     clearRampBoost();
+    clearZipperBoost();
     clearSsmt();
     clearOffroadInvincibility();
     cancelWheelie();

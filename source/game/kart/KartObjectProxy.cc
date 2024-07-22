@@ -76,6 +76,14 @@ const KartMove *KartObjectProxy::move() const {
     return m_accessor->move;
 }
 
+KartHalfPipe *KartObjectProxy::halfpipe() {
+    return m_accessor->move->halfpipe();
+}
+
+const KartHalfPipe *KartObjectProxy::halfpipe() const {
+    return m_accessor->move->halfpipe();
+}
+
 /// @addr{0x80591914}
 KartJump *KartObjectProxy::jump() {
     return m_accessor->move->jump();
