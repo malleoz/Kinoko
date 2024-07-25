@@ -60,6 +60,7 @@ public:
     void setDisableBackwardsAccel(bool isSet);
     void setZipperBoost(bool isSet);
     void setZipperStick(bool isSet);
+    void setZipperTrick(bool isSet);
     void setTrickRot(bool isSet);
     void setChargingSsmt(bool isSet);
     void setRejectRoad(bool isSet);
@@ -74,6 +75,7 @@ public:
     void setCannonPointId(u16 val);
     void setBoostRampType(s32 val);
     void setJumpPadVariant(s32 val);
+    void setHalfpipeInvisibilityTimer(s16 val);
     void setTrickableTimer(s16 val);
     /// @endSetters
 
@@ -118,6 +120,7 @@ public:
     [[nodiscard]] bool isOverZipper() const;
     [[nodiscard]] bool isDisableBackwardsAccel() const;
     [[nodiscard]] bool isZipperBoost() const;
+    [[nodiscard]] bool isZipperTrick() const;
     [[nodiscard]] bool isZipperStick() const;
     [[nodiscard]] bool isTrickRot() const;
     [[nodiscard]] bool isChargingSsmt() const;
@@ -196,6 +199,7 @@ private:
     bool m_bDisableBackwardsAccel;     ///< Enforces a 20f delay when reversing after charging SSMT.
     bool m_bZipperBoost;
     bool m_bZipperStick; ///< Set while mid-air and still influenced by the zipper.
+    bool m_bZipperTrick;
     bool m_bTrickRot;
     bool m_bChargingSsmt; ///< Tracks whether we are charging a stand-still mini-turbo.
     bool m_bRejectRoad;   ///< Collision which causes a change in the player's pos and rot.
@@ -234,6 +238,7 @@ private:
     u16 m_cannonPointId;
     s32 m_boostRampType;
     s32 m_jumpPadVariant;
+    s16 m_halfpipeInvisibilityTimer;
     f32 m_stickX;           ///< One of 15 discrete stick values from [-1.0, 1.0].
     f32 m_stickY;           ///< One of 15 discrete stick values from [-1.0, 1.0].
     f32 m_startBoostCharge; ///< 0-1 representation of start boost charge. Burnout if >0.95f.

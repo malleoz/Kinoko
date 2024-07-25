@@ -557,6 +557,7 @@ void KartCollide::processFloor(CollisionData &collisionData, Hitbox &hitbox,
     if ((*maskOut & halfpipeRampMask) &&
             colDirector->findClosestCollisionEntry(maskOut, halfpipeRampMask)) {
         state()->setHalfpipeRamp(true);
+        state()->setHalfpipeInvisibilityTimer(2);
     }
 
     Field::KCLTypeMask jumpPadMask = KCL_TYPE_BIT(COL_TYPE_JUMP_PAD);
@@ -687,6 +688,10 @@ bool KartCollide::FUN_805B6A9C(CollisionData &collisionData, const Hitbox &hitbo
         }
 
         collisionData.wallNrm += colInfo.wallNrm;
+
+        if ((maskOut & KCL_TYPE_ANY_INVISIBLE_WALL) && !(maskOut & KCL_TYPE_4010D000)) {
+            collisionData.bInvisibleWallOnly = true;
+        }
 
         if (maskOut & KCL_TYPE_BIT(COL_TYPE_WALL_2)) {
             collisionData.bWall3 = true;
