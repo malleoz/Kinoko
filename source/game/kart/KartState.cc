@@ -123,7 +123,7 @@ void KartState::calc() {
     resetFlags();
 
     collide()->calcBeforeRespawn();
-    
+
     calcCollisions();
 }
 
