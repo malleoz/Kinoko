@@ -76,7 +76,8 @@ void KartCollide::findCollision() {
 void KartCollide::FUN_80572F4C() {
     f32 fVar1;
 
-    if (state()->isBoost() || state()->isOverZipper() || state()->isHalfpipeRamp()) {
+    if (isInRespawn() || state()->isBoost() || state()->isOverZipper() ||
+            state()->isHalfpipeRamp()) {
         fVar1 = 0.0f;
     } else {
         fVar1 = 0.05f;
@@ -306,6 +307,17 @@ void KartCollide::calcFallBoundary(Field::KCLTypeMask *mask, bool /*shortBoundar
 void KartCollide::calcBeforeRespawn() {
     if (pos().y < 0.0f) {
         activateOob(true, nullptr, false, false);
+    }
+
+    if (!state()->isBeforeRespawn()) {
+        return;
+    }
+
+    if (--m_respawnTimer < 1) {
+        state()->setBeforeRespawn(false);
+        m_respawnTimer = 0;
+
+        move()->triggerRespawn();
     }
 }
 

@@ -202,6 +202,8 @@ void KartMove::init(bool b1, bool b2) {
     m_hopVelY = 0.0f;
     m_hopPosY = 0.0f;
     m_hopGravity = 0.0f;
+    m_timeInRespawn = 0;
+    m_respawnBoostInputTimer = 0;
     m_drivingDirection = DrivingDirection::Forwards;
     m_bPadBoost = false;
     m_bRampBoost = false;
@@ -268,11 +270,18 @@ void KartMove::setKartSpeedLimit() {
 /// @details Calls various functions to handle drifts, hops, boosts.
 /// Afterwards, calculates the kart's speed and rotation.
 void KartMove::calc() {
+    if (state()->isInRespawn()) {
+        calcInRespawn();
+
+        return;
+    }
+
     dynamics()->resetInternalVelocity();
     calcSsmtStart();
     m_halfpipe->calc();
     calcTop();
     tryEndJumpPad();
+    calcRespawnBoost();
     calcSpecialFloor();
     m_jump->calc();
     calcDirs();
@@ -298,6 +307,70 @@ void KartMove::calc() {
     calcVehicleSpeed();
     calcAcceleration();
     calcRotation();
+}
+
+/// @addr{0x80584334}
+void KartMove::calcRespawnStart() {
+    constexpr float RESPAWN_HEIGHT = 700.0f;
+
+    const auto *jugemPoint = System::RaceManager::Instance()->jugemPoint();
+
+    const EGG::Vector3f &jugemPos = jugemPoint->pos();
+    const EGG::Vector3f &jugemRot = jugemPoint->rot();
+
+    EGG::Vector3f respawnPos = jugemPos;
+    EGG::Vector3f respawnRot = jugemRot;
+    respawnRot.z = 0.0f;
+    respawnRot.x = 0.0f;
+    respawnPos.y += RESPAWN_HEIGHT;
+
+    setInitialPhysicsValues(respawnPos, respawnRot);
+
+    state()->setTriggerRespawn(false);
+    state()->setInRespawn(true);
+}
+
+/// @addr{0x80579A50}
+void KartMove::calcInRespawn() {
+    constexpr f32 LAKITU_VELOCITY = 1.5f;
+    constexpr u16 RESPAWN_DURATION = 110;
+
+    if (!state()->isInRespawn()) {
+        return;
+    }
+
+    EGG::Vector3f newPos = pos();
+    newPos.y -= LAKITU_VELOCITY;
+    dynamics()->setPos(newPos);
+    dynamics()->setNoGravity(true);
+
+    if (++m_timeInRespawn > RESPAWN_DURATION) {
+        state()->setInRespawn(false);
+        state()->setAfterRespawn(true);
+        state()->setUNK20000(true);
+        m_timeInRespawn = 0;
+        dynamics()->setNoGravity(false);
+    }
+}
+
+/// @addr{0x80581C90}
+void KartMove::calcRespawnBoost() {
+    constexpr s16 RESPAWN_BOOST_INPUT_FRAMES = 4;
+
+    if (state()->isAfterRespawn()) {
+        if (state()->isTouchingGround()) {
+            m_respawnBoostInputTimer = RESPAWN_BOOST_INPUT_FRAMES;
+
+            state()->setAfterRespawn(false);
+        }
+    } else {
+        if (m_respawnBoostInputTimer < 1) {
+            state()->setUNK20000(false);
+            return;
+        }
+
+        m_respawnBoostInputTimer = std::max(0, m_respawnBoostInputTimer - 1);
+    }
 }
 
 /// @addr{0x8057D398}
@@ -1144,6 +1217,8 @@ void KartMove::calcAcceleration() {
 
     m_lastSpeed = m_speed;
 
+    dynamics()->setHit(state()->isUNK20000());
+
     if (m_acceleration < 0.0f) {
         if (m_speed < -20.0f) {
             m_acceleration = 0.0f;
@@ -1987,6 +2062,12 @@ void KartMove::exitCannon() {
     dynamics()->setIntVel(m_cannonEntryOfs * m_speed);
 }
 
+/// @addr{0x805799AC}
+void KartMove::triggerRespawn() {
+    m_timeInRespawn = 0;
+    state()->setTriggerRespawn(true);
+}
+
 void KartMove::setSmoothedUp(const EGG::Vector3f &v) {
     m_smoothedUp = v;
 }
@@ -2096,6 +2177,10 @@ s32 KartMove::hopStickX() const {
 
 f32 KartMove::hopPosY() const {
     return m_hopPosY;
+}
+
+s16 KartMove::respawnBoostInputTimer() const {
+    return m_respawnBoostInputTimer;
 }
 
 KartJump *KartMove::jump() const {

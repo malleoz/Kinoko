@@ -30,11 +30,7 @@ static constexpr std::array<StartBoostEntry, 6> START_BOOST_ENTRIES = {{
 KartState::KartState() {
     clearBitfield0();
     clearBitfield1();
-
-    m_bWheelieRot = false;
-    m_bSkipWheelCalc = false;
-    m_bJumpPadDisableYsusForce = false;
-
+    clearBitfield2();
     clearBitfield3();
 
     m_bAutoDrift = inputs()->driftIsAuto();
@@ -52,11 +48,7 @@ void KartState::init() {
 /// @addr{0x80594594}
 void KartState::reset() {
     clearBitfield3();
-
-    m_bWheelieRot = false;
-    m_bSkipWheelCalc = false;
-    m_bJumpPadDisableYsusForce = false;
-
+    clearBitfield2();
     clearBitfield1();
     clearBitfield0();
 
@@ -536,6 +528,10 @@ bool KartState::isRampBoost() const {
     return m_bRampBoost;
 }
 
+bool KartState::isTriggerRespawn() const {
+    return m_bTriggerRespawn;
+}
+
 bool KartState::isCannonStart() const {
     return m_bCannonStart;
 }
@@ -576,6 +572,10 @@ bool KartState::isZipperTrick() const {
     return m_bZipperTrick;
 }
 
+bool KartState::isUNK20000() const {
+    return m_bUNK20000;
+}
+
 bool KartState::isZipperStick() const {
     return m_bZipperStick;
 }
@@ -610,6 +610,14 @@ bool KartState::isJumpPadDisableYsusForce() const {
 
 bool KartState::isSkipWheelCalc() const {
     return m_bSkipWheelCalc;
+}
+
+bool KartState::isInRespawn() const {
+    return m_bInRespawn;
+}
+
+bool KartState::isAfterRespawn() const {
+    return m_bAfterRespawn;
 }
 
 bool KartState::isUNK2() const {
@@ -702,6 +710,7 @@ void KartState::clearBitfield0() {
 
 /// @brief Helper function to clear all bit flags at 0x8-0xB in KartState.
 void KartState::clearBitfield1() {
+    m_bTriggerRespawn = false;
     m_bCannonStart = false;
     m_bInCannon = false;
     m_bTrickStart = false;
@@ -713,11 +722,20 @@ void KartState::clearBitfield1() {
     m_bZipperBoost = false;
     m_bZipperStick = false;
     m_bZipperTrick = false;
+    m_bUNK20000 = false;
     m_bTrickRot = false;
     m_bChargingSsmt = false;
     m_bRejectRoad = false;
     m_bHalfpipeWall = false;
     m_bTrickable = false;
+}
+
+void KartState::clearBitfield2() {
+    m_bWheelieRot = false;
+    m_bSkipWheelCalc = false;
+    m_bInRespawn = false;
+    m_bAfterRespawn = false;
+    m_bJumpPadDisableYsusForce = false;
 }
 
 /// @brief Helper function to clear all bit flags at 0x10-0x13 in KartState.
@@ -809,6 +827,10 @@ void KartState::setRampBoost(bool isSet) {
     m_bRampBoost = isSet;
 }
 
+void KartState::setTriggerRespawn(bool isSet) {
+    m_bTriggerRespawn = isSet;
+}
+
 void KartState::setCannonStart(bool isSet) {
     m_bCannonStart = isSet;
 }
@@ -853,6 +875,10 @@ void KartState::setZipperTrick(bool isSet) {
     m_bZipperTrick = isSet;
 }
 
+void KartState::setUNK20000(bool isSet) {
+    m_bUNK20000 = isSet;
+}
+
 void KartState::setTrickRot(bool isSet) {
     m_bTrickRot = isSet;
 }
@@ -879,6 +905,14 @@ void KartState::setWheelieRot(bool isSet) {
 
 void KartState::setSkipWheelCalc(bool isSet) {
     m_bSkipWheelCalc = isSet;
+}
+
+void KartState::setInRespawn(bool isSet) {
+    m_bInRespawn = isSet;
+}
+
+void KartState::setAfterRespawn(bool isSet) {
+    m_bAfterRespawn = isSet;
 }
 
 void KartState::setJumpPadDisableYsusForce(bool isSet) {

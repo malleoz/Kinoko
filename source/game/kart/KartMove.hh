@@ -28,6 +28,9 @@ public:
     void resetDriftManual();
 
     void calc();
+    void calcRespawnStart();
+    void calcInRespawn();
+    void calcRespawnBoost();
     void calcTop();
     void calcAirtimeTop();
     void calcSpecialFloor();
@@ -98,6 +101,8 @@ public:
     void calcRotCannon(const EGG::Vector3f &forward);
     void exitCannon();
 
+    void triggerRespawn();
+
     /// @beginSetters
     void setSmoothedUp(const EGG::Vector3f &v);
     void setUp(const EGG::Vector3f &v);
@@ -129,6 +134,7 @@ public:
     [[nodiscard]] u16 floorCollisionCount() const;
     [[nodiscard]] s32 hopStickX() const;
     [[nodiscard]] f32 hopPosY() const;
+    [[nodiscard]] s16 respawnBoostInputTimer() const;
     [[nodiscard]] KartJump *jump() const;
     [[nodiscard]] KartHalfPipe *halfpipe() const;
     /// @endGetters
@@ -226,6 +232,8 @@ protected:
     f32 m_hopVelY;    ///< Relative velocity due to a hop. Starts at 10 and decreases with gravity.
     f32 m_hopPosY;    ///< Relative position as the result of a hop. Starts at 0.
     f32 m_hopGravity; ///< Always main gravity (-1.3f).
+    s16 m_respawnBoostInputTimer; ///< Frames remaining to activate a respawn boost.
+    s16 m_timeInRespawn; ///< The number of frames elapsed after position snap from respawn.
     DrivingDirection m_drivingDirection; ///< Current state of driver's direction.
     s16 m_backwardsAllowCounter;         ///< Tracks the 15f delay before reversing.
     bool m_bLaunchBoost;

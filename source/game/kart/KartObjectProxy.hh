@@ -59,6 +59,7 @@ public:
     /// @beginSetters
     void setPos(const EGG::Vector3f &pos);
     void setRot(const EGG::Quatf &q);
+    void setInertiaScale(const EGG::Vector3f &scale);
     /// @endSetters
 
     /// @beginGetters
@@ -128,6 +129,7 @@ public:
     [[nodiscard]] bool hasFloorCollision(const WheelPhysics *wheelPhysics) const;
     [[nodiscard]] std::pair<EGG::Vector3f, EGG::Vector3f> getCannonPosRot();
     [[nodiscard]] f32 speedRatio() const;
+    [[nodiscard]] bool isInRespawn() const;
     /// @endGetters
 
 protected:

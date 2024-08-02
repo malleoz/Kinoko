@@ -1,6 +1,7 @@
 #pragma once
 
 #include "game/system/KPadController.hh"
+#include "game/system/RaceMode.hh"
 
 #include <egg/math/Vector.hh>
 
@@ -34,7 +35,10 @@ public:
         FinishGlobal = 4,
     };
 
+    void init();
+
     void findKartStartPoint(EGG::Vector3f &pos, EGG::Vector3f &angles);
+    const MapdataJugemPoint *jugemPoint();
 
     void calc();
 
@@ -55,6 +59,7 @@ private:
     ~RaceManager();
 
     RaceManagerPlayer m_player;
+    RaceMode m_raceMode;
     Stage m_stage;
     u16 m_introTimer;
     u32 m_timer;

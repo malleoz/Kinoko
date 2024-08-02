@@ -23,6 +23,11 @@ void RaceManager::findKartStartPoint(EGG::Vector3f &pos, EGG::Vector3f &angles) 
     }
 }
 
+/// @addr{0x80584334}
+const MapdataJugemPoint *RaceManager::jugemPoint() {
+    return m_raceMode.jugemPoint();
+}
+
 /// @addr{0x805331B4}
 void RaceManager::calc() {
     constexpr u16 STAGE_INTRO_DURATION = 172;

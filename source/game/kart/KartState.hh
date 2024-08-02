@@ -28,6 +28,7 @@ public:
     /// @beginSetters
     void clearBitfield0();
     void clearBitfield1();
+    void clearBitfield2();
     void clearBitfield3();
 
     void setAccelerate(bool isSet);
@@ -49,6 +50,7 @@ public:
     void setSlipdriftCharge(bool isSet);
     void setWheelie(bool isSet);
     void setRampBoost(bool isSet);
+    void setTriggerRespawn(bool isSet);
     void setCannonStart(bool isSet);
     void setInCannon(bool isSet);
     void setTrickStart(bool isSet);
@@ -61,6 +63,7 @@ public:
     void setZipperBoost(bool isSet);
     void setZipperStick(bool isSet);
     void setZipperTrick(bool isSet);
+    void setUNK20000(bool isSet);
     void setTrickRot(bool isSet);
     void setChargingSsmt(bool isSet);
     void setRejectRoad(bool isSet);
@@ -68,6 +71,8 @@ public:
     void setTrickable(bool isSet);
     void setWheelieRot(bool isSet);
     void setSkipWheelCalc(bool isSet);
+    void setInRespawn(bool isSet);
+    void setAfterRespawn(bool isSet);
     void setJumpPadDisableYsusForce(bool isSet);
     void setSomethingWallCollision(bool isSet);
     void setSoftWallDrift(bool isSet);
@@ -111,6 +116,7 @@ public:
     [[nodiscard]] bool isWheelie() const;
     [[nodiscard]] bool isRampBoost() const;
     [[nodiscard]] bool isJumpPad() const;
+    [[nodiscard]] bool isTriggerRespawn() const;
     [[nodiscard]] bool isCannonStart() const;
     [[nodiscard]] bool isInCannon() const;
     [[nodiscard]] bool isTrickStart() const;
@@ -121,6 +127,7 @@ public:
     [[nodiscard]] bool isDisableBackwardsAccel() const;
     [[nodiscard]] bool isZipperBoost() const;
     [[nodiscard]] bool isZipperTrick() const;
+    [[nodiscard]] bool isUNK20000() const;
     [[nodiscard]] bool isZipperStick() const;
     [[nodiscard]] bool isTrickRot() const;
     [[nodiscard]] bool isChargingSsmt() const;
@@ -129,6 +136,8 @@ public:
     [[nodiscard]] bool isTrickable() const;
     [[nodiscard]] bool isWheelieRot() const;
     [[nodiscard]] bool isSkipWheelCalc() const;
+    [[nodiscard]] bool isInRespawn() const;
+    [[nodiscard]] bool isAfterRespawn() const;
     [[nodiscard]] bool isJumpPadDisableYsusForce() const;
     [[nodiscard]] bool isUNK2() const;
     [[nodiscard]] bool isSomethingWallCollision() const;
@@ -189,6 +198,7 @@ private:
     /// @name bitfield1
     /// The bitfield at offset 0x8.
     /// @{
+    bool m_bTriggerRespawn;
     bool m_bCannonStart;
     bool m_bInCannon;
     bool m_bTrickStart;
@@ -200,6 +210,7 @@ private:
     bool m_bZipperBoost;
     bool m_bZipperStick; ///< Set while mid-air and still influenced by the zipper.
     bool m_bZipperTrick;
+    bool m_bUNK20000;
     bool m_bTrickRot;
     bool m_bChargingSsmt; ///< Tracks whether we are charging a stand-still mini-turbo.
     bool m_bRejectRoad;   ///< Collision which causes a change in the player's pos and rot.
@@ -212,6 +223,8 @@ private:
     /// @{
     bool m_bWheelieRot;
     bool m_bSkipWheelCalc;
+    bool m_bInRespawn;
+    bool m_bAfterRespawn;
     bool m_bJumpPadDisableYsusForce;
     /// @}
 
