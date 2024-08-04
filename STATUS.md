@@ -40,7 +40,7 @@ Test Case                                                 | Frames      |     | 
 [`rsgb-rta-1-14-513`](https://youtu.be/lgfw-zswqIM)       | 4878 / 4878 | ✔️ |
 [`rsgb-ng-rta-1-21-363`](https://youtu.be/SjXUPXT8n8g)    | 5288 / 5288 | ✔️ |
 [`rds-rta-2-03-525`](https://youtu.be/a9Mnd2W7JXI)        | 2306 / 7816 | ❌ | Drawbridge
-[`rws-rta-1-31-987`](https://youtu.be/2rDSx5pgQ9A)        | 5009 / 5925 | ❌ | Respawn position
+[`rws-rta-1-31-987`](https://youtu.be/2rDSx5pgQ9A)        | 5925 / 5925 | ✔️ |
 [`rws-ng-rta-1-48-193`](https://youtu.be/4PU4zpCU_q4)     | 6897 / 6897 | ✔️ |
 [`rdh-rta-1-30-425`](https://youtu.be/v5Qj0DnqVo0)        | 5832 / 5832 | ✔️ |
 [`rdh-ng-rta-1-34-237`](https://youtu.be/4Lp-ehOOiGo)     | 6060 / 6060 | ✔️ |
