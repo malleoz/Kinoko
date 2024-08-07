@@ -440,6 +440,10 @@ bool KartState::isHopStart() const {
     return m_bHopStart;
 }
 
+bool KartState::isAccelerateStart() const {
+    return m_bAccelerateStart;
+}
+
 bool KartState::isGroundStart() const {
     return m_bGroundStart;
 }

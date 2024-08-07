@@ -94,6 +94,7 @@ public:
     [[nodiscard]] bool isWall3Collision() const;
     [[nodiscard]] bool isWallCollision() const;
     [[nodiscard]] bool isHopStart() const;
+    [[nodiscard]] bool isAccelerateStart() const;
     [[nodiscard]] bool isGroundStart() const;
     [[nodiscard]] bool isVehicleBodyFloorCollision() const;
     [[nodiscard]] bool isAnyWheelCollision() const;

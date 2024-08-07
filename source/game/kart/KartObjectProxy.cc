@@ -364,7 +364,7 @@ f32 KartObjectProxy::speedRatio() const {
 
 /// @addr{0x805914F4}
 bool KartObjectProxy::isInRespawn() const {
-    return move()->respawnBoostInputTimer() > 0;
+    return move()->respawnTimer() > 0 || move()->respawnBoostInputTimer() > 0;
 }
 
 /// @addr{0x805901D0}

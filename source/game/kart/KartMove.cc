@@ -195,6 +195,7 @@ void KartMove::init(bool b1, bool b2) {
     m_hopGravity = 0.0f;
     m_timeInRespawn = 0;
     m_respawnBoostInputTimer = 0;
+    m_respawnTimer = 0;
     m_drivingDirection = DrivingDirection::Forwards;
     m_bPadBoost = false;
     m_bRampBoost = false;
@@ -347,10 +348,18 @@ void KartMove::calcInRespawn() {
 /// @addr{0x80581C90}
 void KartMove::calcRespawnBoost() {
     constexpr s16 RESPAWN_BOOST_INPUT_FRAMES = 4;
+    constexpr s16 RESPAWN_BOOST_DURATION = 30;
 
     if (state()->isAfterRespawn()) {
         if (state()->isTouchingGround()) {
             m_respawnBoostInputTimer = RESPAWN_BOOST_INPUT_FRAMES;
+
+            if (!state()->isBeforeRespawn()) {
+                activateBoost(KartBoost::Type::AllMt, RESPAWN_BOOST_DURATION);
+                m_respawnTimer = RESPAWN_BOOST_DURATION;
+            }
+
+            m_respawnBoostInputTimer = 0;
 
             state()->setAfterRespawn(false);
         }
@@ -362,6 +371,8 @@ void KartMove::calcRespawnBoost() {
 
         m_respawnBoostInputTimer = std::max(0, m_respawnBoostInputTimer - 1);
     }
+
+    m_respawnTimer = std::max(0, m_respawnTimer - 1);
 }
 
 /// @addr{0x8057D398}
@@ -2172,6 +2183,10 @@ f32 KartMove::hopPosY() const {
 
 s16 KartMove::respawnBoostInputTimer() const {
     return m_respawnBoostInputTimer;
+}
+
+s16 KartMove::respawnTimer() const {
+    return m_respawnTimer;
 }
 
 KartJump *KartMove::jump() const {
