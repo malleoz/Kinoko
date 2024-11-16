@@ -44,6 +44,7 @@ public:
     [[nodiscard]] int getCountdownTimer() const;
     [[nodiscard]] const RaceManagerPlayer &player() const;
     [[nodiscard]] Stage stage() const;
+    [[nodiscard]] u32 timer() const;
     /// @endGetters
 
     static RaceManager *CreateInstance();

@@ -87,7 +87,7 @@ void KartReject::calcRejectRoad() {
 
 /// @addr{0x805860BC}
 bool KartReject::calcRejection() {
-    Field::CourseColMgr::CollisionInfo colInfo;
+    Field::CollisionInfo colInfo;
     Field::KCLTypeMask mask = KCL_NONE;
     EGG::Vector3f worldUpPos = dynamics()->pos() + bodyUp() * 100.0f;
     f32 posScalar = 100.0f;

@@ -54,6 +54,6 @@ Test Case                                                 | Frames      |     | 
 [`rmc3-rta-1-17-843`](https://youtu.be/6H6UnSDPPdI)       | 5077 / 5077 | ✔️ |
 [`rpg-rta-1-58-890`](https://youtu.be/vu0vpmTmcbg)        | 7538 / 7538 | ✔️ |
 [`rdkm-rta-1-58-133`](https://youtu.be/s3uqTaxr_4A)       | 2094 / 7492 | ❌ | Zipper
-[`rdkm-ng-rta-2-04-775`](https://youtu.be/jk5NIcHWQ-Y)    | 2717 / 7890 | ❌ | KMP bridge object
+[`rdkm-ng-rta-2-04-775`](https://youtu.be/jk5NIcHWQ-Y)    | 7890 / 7890 | ✔️ |
 [`rbc-rta-2-17-997`](https://youtu.be/6Wri7nBtZMk)        | 1168 / 8683 | ❌ | Respawn position
 [`rbc-ng-rta-2-30-459`](https://youtu.be/twZes-RI6Sc)     | 9430 / 9430 | ✔️ |

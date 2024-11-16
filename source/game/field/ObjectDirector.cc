@@ -190,6 +190,8 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
         return new ObjectDokan(params);
     case ObjectId::OilSFC:
         return new ObjectOilSFC(params);
+    case ObjectId::Turibashi:
+        return new ObjectTuribashi(params);
     default:
         return new ObjectNoImpl(params);
     }

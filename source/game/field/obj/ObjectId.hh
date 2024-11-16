@@ -7,6 +7,7 @@ namespace Field {
 enum class ObjectId {
     DokanSFC = 0x12e,
     OilSFC = 0x15d,
+    Turibashi = 0x202,
 };
 
 enum class BlacklistedObjectId {
