@@ -474,6 +474,7 @@ void KartCollide::calcObjectCollision() {
             size_t handlerIdx = static_cast<std::underlying_type_t<Reaction>>(reaction);
             Action action = (this->*s_objectCollisionHandlers[handlerIdx])(i);
             static_cast<void>(action); // Ignore for now
+            // TODO: KartAction::calc will slow down speed based off the reaction
 
             if (reaction != Reaction::SmallBump && reaction != Reaction::BigBump) {
                 const EGG::Vector3f &hitDepth = objectDirector->hitDepth(i);
