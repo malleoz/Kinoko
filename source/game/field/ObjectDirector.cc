@@ -80,7 +80,7 @@ size_t ObjectDirector::checkKartObjectCollision(Kart::KartObject *kartObj,
             obj->onObjectCollision(kartObj);
         }
 
-        m_collisionObjects[count] = obj;
+        m_collidingObjects[count] = obj;
         if (m_hitDepths[count].y < 0.0f) {
             m_hitDepths[count].y = 0.0f;
         }
@@ -93,6 +93,12 @@ size_t ObjectDirector::checkKartObjectCollision(Kart::KartObject *kartObj,
 
 const ObjectFlowTable &ObjectDirector::flowTable() const {
     return m_flowTable;
+}
+
+const ObjectBase *ObjectDirector::collidingObject(size_t idx) const {
+    ASSERT(idx < m_collidingObjects.size());
+
+    return m_collidingObjects[idx];
 }
 
 Kart::Reaction ObjectDirector::reaction(size_t idx) const {
@@ -132,7 +138,11 @@ ObjectDirector *ObjectDirector::Instance() {
 /// @addr{0x8082A38C}
 ObjectDirector::ObjectDirector()
     : m_flowTable("ObjFlow.bin"), m_hitTableKart("GeoHitTableKart.bin"),
-      m_hitTableKartObject("GeoHitTableKartObj.bin") {}
+      m_hitTableKartObject("GeoHitTableKartObj.bin") {
+    m_objects.reserve(MAX_UNIT_COUNT);
+    m_calcObjects.reserve(MAX_UNIT_COUNT);
+    m_collisionObjects.reserve(MAX_UNIT_COUNT);
+}
 
 /// @addr{0x8082A694}
 ObjectDirector::~ObjectDirector() {
@@ -181,6 +191,8 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
         return new ObjectDokan(params);
     case ObjectId::OilSFC:
         return new ObjectOilSFC(params);
+    case ObjectId::DummyPole:
+        return new ObjectCollidable(params);
     default:
         return new ObjectNoImpl(params);
     }
