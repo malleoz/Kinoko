@@ -192,6 +192,7 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
     case ObjectId::OilSFC:
         return new ObjectOilSFC(params);
     case ObjectId::DummyPole:
+    case ObjectId::CastleTree1c:
         return new ObjectCollidable(params);
     default:
         return new ObjectNoImpl(params);
