@@ -254,6 +254,7 @@ void BoxColManager::search(BoxColUnit *unit, const BoxColFlag &flag) {
 /// @addr{0x80786B14}
 void BoxColManager::search(f32 radius, const EGG::Vector3f &pos, const BoxColFlag &flag) {
     searchImpl(radius, pos, flag);
+    resetIterators();
 }
 
 /// @addr{0x807855DC}
