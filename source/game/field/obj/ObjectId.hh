@@ -24,6 +24,7 @@ enum class ObjectId {
     KinokoNm = 0x1fa,
     Turibashi = 0x202,
     Aurora = 0x204,
+    Ami = 0x20e,
     Mdush = 0x217,
 };
 

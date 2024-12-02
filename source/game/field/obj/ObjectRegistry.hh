@@ -1,5 +1,6 @@
 #pragma once
 
+#include "game/field/obj/ObjectAmi.hh"
 #include "game/field/obj/ObjectAurora.hh"
 #include "game/field/obj/ObjectDokan.hh"
 #include "game/field/obj/ObjectFireRing.hh"
