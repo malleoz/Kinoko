@@ -9,6 +9,7 @@ enum class ObjectId {
     DokanSFC = 0x12e,
     OilSFC = 0x15d,
     Turibashi = 0x202,
+    Ami = 0x20e,
 };
 
 enum class BlacklistedObjectId {
