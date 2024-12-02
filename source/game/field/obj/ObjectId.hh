@@ -16,6 +16,7 @@ enum class ObjectId {
     PuchiPakkun = 0x1aa,
     Turibashi = 0x202,
     Aurora = 0x204,
+    Ami = 0x20e,
     Mdush = 0x217,
 };
 
