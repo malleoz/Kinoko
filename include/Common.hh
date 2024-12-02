@@ -5,6 +5,7 @@
 
 #include <Logger.hh>
 
+#include <bit>
 #include <egg/core/Heap.hh>
 
 #include <array>

@@ -51,6 +51,7 @@ public:
 
     /// @beginGetters
     [[nodiscard]] bool searched() const;
+    [[nodiscard]] u8 jugemIndex() const;
     [[nodiscard]] s8 checkArea() const;
     [[nodiscard]] u16 nextCount() const;
     [[nodiscard]] u16 prevCount() const;

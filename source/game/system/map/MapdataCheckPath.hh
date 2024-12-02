@@ -24,6 +24,7 @@ public:
     void read(EGG::Stream &stream);
 
     void findDepth(s8 depth, const MapdataCheckPathAccessor &accessor);
+    f32 oneOverCount() const;
     bool isPointInPath(u16 checkpointId) const;
 
     static constexpr size_t MAX_NEIGHBORS = 6;
@@ -52,6 +53,8 @@ class MapdataCheckPathAccessor
 public:
     MapdataCheckPathAccessor(const MapSectionHeader *header);
     ~MapdataCheckPathAccessor() override;
+
+    f32 lapProportion();
 
     MapdataCheckPath *findCheckpathForCheckpoint(u16 checkpointId) const;
 

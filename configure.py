@@ -89,15 +89,15 @@ for in_file in code_in_files:
     debug_out_file = os.path.join('$builddir', in_file + 'D.o')
     debug_code_out_files.append(debug_out_file)
 
-    n.build(
-        target_out_file,
-        ext[1:],
-        in_file,
-        variables={
-            'ccflags': ' '.join([*common_ccflags, *target_cflags])
-        }
-    )
-    n.newline()
+    # n.build(
+    #     target_out_file,
+    #     ext[1:],
+    #     in_file,
+    #     variables={
+    #         'ccflags': ' '.join([*common_ccflags, *target_cflags])
+    #     }
+    # )
+    # n.newline()
 
     n.build(
         debug_out_file,
@@ -110,16 +110,16 @@ for in_file in code_in_files:
     n.newline()
 
 
-n.build(
-    os.path.join('$outdir', f'kinoko{file_extension}'),
-    'ld',
-    target_code_out_files,
-    variables={
-        'ldflags': ' '.join([
-            *common_ldflags,
-        ])
-    },
-)
+# n.build(
+#     os.path.join('$outdir', f'kinoko{file_extension}'),
+#     'ld',
+#     target_code_out_files,
+#     variables={
+#         'ldflags': ' '.join([
+#             *common_ldflags,
+#         ])
+#     },
+# )
 
 n.build(
     os.path.join('$outdir', f'kinokoD{file_extension}'),

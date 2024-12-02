@@ -46,9 +46,13 @@ public:
     [[nodiscard]] MapdataCheckPath *getCheckPath(u16 i) const;
     [[nodiscard]] MapdataCheckPoint *getCheckPoint(u16 i) const;
     [[nodiscard]] MapdataGeoObj *getGeoObj(u16 i) const;
+    [[nodiscard]] MapdataJugemPoint *getJugemPoint(u16 i) const;
     [[nodiscard]] MapdataStageInfo *getStageInfo() const;
     [[nodiscard]] MapdataStartPoint *getStartPoint(u16 i) const;
     [[nodiscard]] u16 getGeoObjCount() const;
+    [[nodiscard]] u16 getCheckPointCount() const;
+    [[nodiscard]] u16 getCheckPathCount() const;
+    [[nodiscard]] s8 lastKcpType() const;
     [[nodiscard]] u32 version() const;
     [[nodiscard]] MapdataCheckPathAccessor *checkPath() const;
     [[nodiscard]] f32 startTmpAngle() const;

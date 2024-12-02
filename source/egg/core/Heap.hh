@@ -91,10 +91,10 @@ protected:
 
 } // namespace EGG
 
-[[nodiscard]] void *operator new(size_t size) noexcept;
+[[nodiscard]] void *operator new(size_t size);
 [[nodiscard]] void *operator new(size_t size, int align) noexcept;
 [[nodiscard]] void *operator new(size_t size, EGG::Heap *heap, int align) noexcept;
-[[nodiscard]] void *operator new[](size_t size) noexcept;
+[[nodiscard]] void *operator new[](size_t size);
 [[nodiscard]] void *operator new[](size_t size, int align) noexcept;
 [[nodiscard]] void *operator new[](size_t size, EGG::Heap *heap, int align) noexcept;
 void operator delete(void *block) noexcept;

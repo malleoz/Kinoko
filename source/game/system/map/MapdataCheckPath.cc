@@ -61,6 +61,14 @@ s8 MapdataCheckPath::depth() const {
     return m_depth;
 }
 
+f32 MapdataCheckPath::oneOverCount() const {
+    return m_oneOverCount;
+}
+
+f32 MapdataCheckPathAccessor::lapProportion() {
+    return m_lapProportion;
+}
+
 bool MapdataCheckPath::isPointInPath(u16 checkpointId) const {
     return m_start <= checkpointId && checkpointId <= end();
 }

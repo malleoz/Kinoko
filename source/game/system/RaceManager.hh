@@ -1,19 +1,65 @@
 #pragma once
 
 #include "game/system/KPadController.hh"
+#include "game/system/RaceMode.hh"
+#include <game/system/map/MapdataCheckPoint.hh>
 
 #include <egg/math/Vector.hh>
+#include <vector>
 
 namespace System {
 
 class RaceManagerPlayer {
 public:
-    RaceManagerPlayer();
+    RaceManagerPlayer(u8 idx, u8 lapCount);
     virtual ~RaceManagerPlayer() {}
 
+    void init();
+    void calc();
     [[nodiscard]] const KPad *inputs() const;
 
+    f32 raceCompletion() const {
+        return m_raceCompletion;
+    }
+    u16 checkpointId() const {
+        return m_checkpointId;
+    }
+    u16 currentLap() const {
+        return m_currentLap;
+    }
+    s8 respawn() const {
+        return m_respawn;
+    }
+
 private:
+    void decrementLap();
+    void endLap();
+    MapdataCheckPoint *calcCheckpoint(u16 checkpointId, f32 checkpointCompletion, bool isRemote);
+
+    s8 m_playerIdx;
+    u16 m_checkpointId;
+    f32 m_raceCompletion;
+    f32 m_raceCompletionMax;
+    f32 m_checkpointFactor;
+    f32 m_checkpointStartLapCompletion;
+    f32 m_lapCompletion;
+    s8 m_respawn;
+    u16 m_battleScore;
+    s16 m_currentLap;
+    s8 m_maxLap;
+    s8 m_currentKcp;
+    s8 m_maxKcp;
+    u32 m_frameCounter;
+    /// @name raceManagerPlayerFlags
+    /// The bitfield at offset 0x38.
+    /// @{
+    bool m_bInRace;          ///< field 0x01
+    bool m_bFinished;        ///< field 0x02
+    bool m_bDrivingWrongWay; ///< field 0x04
+    bool m_bStopped;         ///< field 0x20
+    /// @}
+    std::vector<Timer> m_lapFinishTimes;
+    Timer *m_raceFinishTime;
     const KPad *m_inputs;
 };
 
@@ -34,7 +80,10 @@ public:
         FinishGlobal = 4,
     };
 
+    void init();
+
     void findKartStartPoint(EGG::Vector3f &pos, EGG::Vector3f &angles);
+    const MapdataJugemPoint *jugemPoint();
 
     void calc();
 
@@ -55,6 +104,7 @@ private:
     ~RaceManager() override;
 
     RaceManagerPlayer m_player;
+    RaceMode m_raceMode;
     Stage m_stage;
     u16 m_introTimer;
     u32 m_timer;

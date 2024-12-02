@@ -33,6 +33,7 @@ void CourseMap::init() {
     m_geoObj = parseGeoObj(GEO_OBJ_SIGNATURE);
     m_jugemPoint = parseJugemPoint(JUGEM_POINT_SIGNATURE);
     m_cannonPoint = parseCannonPoint(CANNON_POINT_SIGNATURE);
+    m_jugemPoint = parseJugemPoint(JUGEM_POINT_SIGNATURE);
     m_stageInfo = parseStageInfo(STAGE_INFO_SIGNATURE);
 
     MapdataStageInfo *stageInfo = getStageInfo();
@@ -270,6 +271,11 @@ MapdataGeoObj *CourseMap::getGeoObj(u16 i) const {
     return i < getGeoObjCount() ? m_geoObj->get(i) : nullptr;
 }
 
+/// @addr{0x80518920}
+MapdataJugemPoint *CourseMap::getJugemPoint(u16 i) const {
+    return i < m_jugemPoint->size() ? m_jugemPoint->get(i) : nullptr;
+}
+
 /// @addr{0x80518B78}
 MapdataStageInfo *CourseMap::getStageInfo() const {
     return m_stageInfo && m_stageInfo->size() != 0 ? m_stageInfo->get(0) : nullptr;
@@ -282,6 +288,18 @@ MapdataStartPoint *CourseMap::getStartPoint(u16 i) const {
 
 u16 CourseMap::getGeoObjCount() const {
     return m_geoObj ? m_geoObj->size() : 0;
+}
+
+u16 CourseMap::getCheckPointCount() const {
+    return m_checkPoint->size();
+}
+
+u16 CourseMap::getCheckPathCount() const {
+    return m_checkPath->size();
+}
+
+s8 CourseMap::lastKcpType() const {
+    return m_checkPoint->lastKcpType();
 }
 
 u32 CourseMap::version() const {

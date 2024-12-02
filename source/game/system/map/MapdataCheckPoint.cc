@@ -137,6 +137,10 @@ void MapdataCheckPoint::clearSearched() {
     m_searched = false;
 }
 
+u8 MapdataCheckPoint::jugemIndex() const {
+    return m_jugemIndex;
+}
+
 bool MapdataCheckPoint::searched() const {
     return m_searched;
 }
@@ -204,6 +208,10 @@ bool MapdataCheckPoint::checkDistanceRatio(const LinkedCheckpoint &next, const E
     f32 d2 = -(next.checkpoint->m_dir.dot(p0));
     distanceRatio = d1 / (d1 + d2);
     return distanceRatio >= 0.0f && distanceRatio <= 1.0f;
+}
+
+s8 MapdataCheckPointAccessor::lastKcpType() const {
+    return m_lastKcpType;
 }
 
 /// @addr{0x80515244}
