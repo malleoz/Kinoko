@@ -143,9 +143,7 @@ void RaceManagerPlayer::calc() {
 
     f32 checkpointCompletion;
     s16 checkpointId =
-            courseMap->findSector(kart->pos(), m_checkpointId, &checkpointCompletion, false);
-    REPORT("1 %d",checkpointId);
-    REPORT("1 %d",m_checkpointId);
+            courseMap->findSector(kart->pos(), m_checkpointId, checkpointCompletion);
 
     if (checkpointId == -1) {
         return;
@@ -153,8 +151,6 @@ void RaceManagerPlayer::calc() {
 
     if (m_checkpointFactor < 0 || m_checkpointId != checkpointId) {
         calcCheckpoint(checkpointId, checkpointCompletion, false);
-    REPORT("2 %d",checkpointId);
-    REPORT("2 %d",m_checkpointId);
     }
 
     m_raceCompletion = static_cast<f32>(m_currentLap) +
@@ -229,11 +225,8 @@ void RaceManagerPlayer::init() {
     if (courseMap->getCheckPointCount() != 0 && courseMap->getCheckPathCount() != 0) {
         auto pos = Kart::KartObjectManager::Instance()->object(m_playerIdx)->pos();
         f32 checkpointCompletion;
-        s16 sector = courseMap->findSector(pos, 0, &checkpointCompletion, true);
-        REPORT("3 %d",m_checkpointId);
-        REPORT("3.sector %d",sector);
+        s16 sector = courseMap->findSector(pos, 0, checkpointCompletion);
         m_checkpointId = std::max<s16>(0, sector);
-        REPORT("4 %d",m_checkpointId);
         auto *ckpt = courseMap->getCheckPoint(m_checkpointId);
         m_respawn = ckpt->jugemIndex();
     } else {

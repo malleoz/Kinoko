@@ -4,6 +4,11 @@
         "krkgPath": "samples/checkpoint-cm-rta.krkg",
         "targetFrame": 1919
     },
+    "mmm-rta-1-15-273": {
+        "rkgPath": "samples/mmm-rta-1-15-273.rkg",
+        "krkgPath": "samples/mmm-rta-1-15-273.krkg",
+        "targetFrame": 4923
+    },
     "checkpoint-mmm-rta": {
         "rkgPath": "samples/mmm-rta-1-15-273.rkg",
         "krkgPath": "samples/checkpoint-mmm-rta.krkg",
