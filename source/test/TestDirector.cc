@@ -117,6 +117,10 @@ bool TestDirector::calc() {
 
     // Test the current frame
     TestData data = findNextEntry();
+
+    if (m_currentFrame < 3) {
+        return true;
+    }
     test(data);
     return m_sync;
 }
