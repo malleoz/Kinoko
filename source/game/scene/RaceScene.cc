@@ -44,8 +44,7 @@ void RaceScene::initEngines() {
 /// @details In Kinoko, it is not possible to pause the race scene, so Kinoko's implementation for
 /// this function is really the base game's `calcEnginesUnpaused` located at `0x80554AD4`.
 void RaceScene::calcEngines() {
-    auto *raceMgr = System::RaceManager::Instance();
-    raceMgr->calc();
+    System::RaceManager::Instance()->calc();
     Field::BoxColManager::Instance()->calc();
     Field::ObjectDirector::Instance()->calc();
     Kart::KartObjectManager::Instance()->calc();

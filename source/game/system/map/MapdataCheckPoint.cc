@@ -137,12 +137,11 @@ void MapdataCheckPoint::clearSearched() {
     m_searched = false;
 }
 
-u8 MapdataCheckPoint::jugemIndex() const {
-    return m_jugemIndex;
-}
-
 bool MapdataCheckPoint::searched() const {
     return m_searched;
+}
+u8 MapdataCheckPoint::jugemIndex() const {
+    return m_jugemIndex;
 }
 
 s8 MapdataCheckPoint::checkArea() const {
@@ -167,7 +166,7 @@ MapdataCheckPoint *MapdataCheckPoint::prevPoint(size_t i) const {
 }
 
 MapdataCheckPoint *MapdataCheckPoint::nextPoint(size_t i) const {
-    ASSERT(i < m_nextPoints.size());
+    // assert(i < m_nextPoints.size());
     return m_nextPoints[i].checkpoint;
 }
 

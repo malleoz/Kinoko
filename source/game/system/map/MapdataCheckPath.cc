@@ -22,8 +22,10 @@ void MapdataCheckPath::read(EGG::Stream &stream) {
     }
 }
 
-/// @brief Performs DFS to calculate @ref m_depth for all subsequent checkpaths.
-/// @param depth Number of checkpaths from first checkpath.
+/// @brief performs DFS to calculate `m_depth` (distance (in checkpaths) from the first checkpath)
+/// for all subsequent checkpaths. if that doesnt make sense just paste this text into chatgpt and
+/// ask it to explain it to you.
+/// @param depth number of checkpaths from first checkpath
 /// @addr{0x805150E0}
 void MapdataCheckPath::findDepth(s8 depth, const MapdataCheckPathAccessor &accessor) {
     if (m_depth != -1) {
@@ -41,9 +43,21 @@ void MapdataCheckPath::findDepth(s8 depth, const MapdataCheckPathAccessor &acces
     }
 }
 
+// u16 MapdataCheckPath::getPrev(u16 i) const {
+//     return m_prev[i];
+// }
+
+// u16 MapdataCheckPath::getNext(u16 i) const {
+//     return m_next[i];
+// }
+
 u8 MapdataCheckPath::start() const {
     return m_start;
 }
+
+// u8 MapdataCheckPath::size() const {
+//     return m_size;
+// }
 
 u8 MapdataCheckPath::end() const {
     return m_start + m_size - 1;
@@ -65,12 +79,12 @@ f32 MapdataCheckPath::oneOverCount() const {
     return m_oneOverCount;
 }
 
-f32 MapdataCheckPathAccessor::lapProportion() {
-    return m_lapProportion;
+bool MapdataCheckPath::isPointInPath(u16 checkpointId) const {
+    return start() <= checkpointId && checkpointId <= end();
 }
 
-bool MapdataCheckPath::isPointInPath(u16 checkpointId) const {
-    return m_start <= checkpointId && checkpointId <= end();
+f32 MapdataCheckPathAccessor::lapProportion() {
+    return m_lapProportion;
 }
 
 /// @addr{0x80515014}
@@ -85,16 +99,12 @@ MapdataCheckPath *MapdataCheckPathAccessor::findCheckpathForCheckpoint(u16 check
     return nullptr;
 }
 
+/// @addr{Inlined in 0x8051377C}
 MapdataCheckPathAccessor::MapdataCheckPathAccessor(const MapSectionHeader *header)
     : MapdataAccessorBase<MapdataCheckPath, MapdataCheckPath::SData>(header) {
     init(reinterpret_cast<const MapdataCheckPath::SData *>(m_sectionHeader + 1),
             parse<u16>(m_sectionHeader->count));
-
-    if (m_entryCount == 0) {
-        return;
-    }
-
-    // Maximum number of paths one could traverse through in a lap
+    // maximum number of checkpaths one could traverse through in a lap
     s8 maxDepth = -1;
     get(0)->findDepth(0, *this);
 
@@ -103,6 +113,7 @@ MapdataCheckPathAccessor::MapdataCheckPathAccessor(const MapSectionHeader *heade
     }
 
     m_lapProportion = 1.0f / (maxDepth + 1.0f);
+    // loadPaths();
 }
 
 MapdataCheckPathAccessor::~MapdataCheckPathAccessor() = default;

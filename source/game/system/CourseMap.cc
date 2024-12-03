@@ -33,6 +33,7 @@ void CourseMap::init() {
     m_geoObj = parseGeoObj(GEO_OBJ_SIGNATURE);
     m_jugemPoint = parseJugemPoint(JUGEM_POINT_SIGNATURE);
     m_cannonPoint = parseCannonPoint(CANNON_POINT_SIGNATURE);
+    m_geoObj = parseGeoObj(GEO_OBJ_SIGNATURE);
     m_jugemPoint = parseJugemPoint(JUGEM_POINT_SIGNATURE);
     m_stageInfo = parseStageInfo(STAGE_INFO_SIGNATURE);
 
@@ -290,14 +291,6 @@ u16 CourseMap::getGeoObjCount() const {
     return m_geoObj ? m_geoObj->size() : 0;
 }
 
-u16 CourseMap::getCheckPointCount() const {
-    return m_checkPoint->size();
-}
-
-u16 CourseMap::getCheckPathCount() const {
-    return m_checkPath->size();
-}
-
 s8 CourseMap::lastKcpType() const {
     return m_checkPoint->lastKcpType();
 }
@@ -332,14 +325,14 @@ f32 CourseMap::startTmp3() const {
 
 /// @addr{0x80512694}
 CourseMap *CourseMap::CreateInstance() {
-    ASSERT(!s_instance);
+    assert(!s_instance);
     s_instance = new CourseMap;
     return s_instance;
 }
 
 /// @addr{0x8051271C}
 void CourseMap::DestroyInstance() {
-    ASSERT(s_instance);
+    assert(s_instance);
     auto *instance = s_instance;
     s_instance = nullptr;
     delete instance;
@@ -358,7 +351,7 @@ CourseMap::CourseMap()
 CourseMap::~CourseMap() {
     if (s_instance) {
         s_instance = nullptr;
-        WARN("CourseMap instance not explicitly handled!");
+        // WARN("CourseMap instance not explicitly handled!");
     }
 
     delete m_course;

@@ -3,6 +3,7 @@
 #include "game/system/CourseMap.hh"
 #include "game/system/KPadDirector.hh"
 #include "game/system/map/MapdataStartPoint.hh"
+#include <Logger.hh>
 #include <game/kart/KartObjectManager.hh>
 #include <game/kart/KartState.hh>
 #include <game/system/RaceConfig.hh>
@@ -132,22 +133,30 @@ void RaceManagerPlayer::calc() {
     if (m_bFinished) {
         m_frameCounter++;
     }
-    auto courseMap = CourseMap::Instance();
-    auto kart = Kart::KartObjectManager::Instance()->object(m_playerIdx);
+    auto *courseMap = CourseMap::Instance();
+    auto *kart = Kart::KartObjectManager::Instance()->object(m_playerIdx);
+
     if (courseMap->getCheckPointCount() == 0 || courseMap->getCheckPathCount() == 0 ||
             kart->state()->isBeforeRespawn() || !m_bInRace) {
         return;
     }
+
     f32 checkpointCompletion;
     s16 checkpointId =
             courseMap->findSector(kart->pos(), m_checkpointId, &checkpointCompletion, false);
+    REPORT("1 %d",checkpointId);
+    REPORT("1 %d",m_checkpointId);
+
     if (checkpointId == -1) {
         return;
     }
 
     if (m_checkpointFactor < 0 || m_checkpointId != checkpointId) {
         calcCheckpoint(checkpointId, checkpointCompletion, false);
+    REPORT("2 %d",checkpointId);
+    REPORT("2 %d",m_checkpointId);
     }
+
     m_raceCompletion = static_cast<f32>(m_currentLap) +
             (m_checkpointStartLapCompletion + m_checkpointFactor * checkpointCompletion);
     m_raceCompletion = std::min(m_raceCompletion, m_currentLap + 0.99999f);
@@ -221,7 +230,10 @@ void RaceManagerPlayer::init() {
         auto pos = Kart::KartObjectManager::Instance()->object(m_playerIdx)->pos();
         f32 checkpointCompletion;
         s16 sector = courseMap->findSector(pos, 0, &checkpointCompletion, true);
+        REPORT("3 %d",m_checkpointId);
+        REPORT("3.sector %d",sector);
         m_checkpointId = std::max<s16>(0, sector);
+        REPORT("4 %d",m_checkpointId);
         auto *ckpt = courseMap->getCheckPoint(m_checkpointId);
         m_respawn = ckpt->jugemIndex();
     } else {
