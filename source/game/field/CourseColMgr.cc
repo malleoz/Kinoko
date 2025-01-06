@@ -26,6 +26,26 @@ void CourseColMgr::scaledNarrowScopeLocal(f32 scale, f32 radius, KColData *data,
     data->narrowScopeLocal(pos / scale, radius / scale, mask);
 }
 
+/// @addr{0x807C3B5C}
+bool CourseColMgr::checkSpherePartialPush(f32 scalar, f32 radius, KColData *data,
+        const EGG::Vector3f &v0, const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *info,
+        KCLTypeMask *typeMaskOut) {
+    if (!data) {
+        data = m_data;
+    }
+
+    m_kclScale = scalar;
+    EGG::Vector3f scaled_v0 = v0 / scalar;
+    EGG::Vector3f scaled_v1 = v1 / scalar;
+    data->lookupSphere(radius, scaled_v0, scaled_v1, flags);
+
+    if (info) {
+        return doCheckWithPartialInfoPush(data, &KColData::checkSphereCollision, info, typeMaskOut);
+    } else {
+        return doCheckMaskOnlyPush(data, &KColData::checkSphereCollision, typeMaskOut);
+    }
+}
+
 /// @addr{0x807C3CF0}
 bool CourseColMgr::checkSphereFull(f32 scalar, f32 radius, KColData *data, const EGG::Vector3f &v0,
         const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *info,

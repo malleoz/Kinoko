@@ -38,6 +38,10 @@ u16 MapdataPointInfo::pointCount() const {
     return m_pointCount;
 }
 
+const std::vector<MapdataPointInfo::Point> &MapdataPointInfo::points() const {
+    return m_points;
+}
+
 /// @addr{0x80515D3C}
 MapdataPointInfoAccessor::MapdataPointInfoAccessor(const MapSectionHeader *header)
     : MapdataAccessorBase<MapdataPointInfo, MapdataPointInfo::SData>(header) {

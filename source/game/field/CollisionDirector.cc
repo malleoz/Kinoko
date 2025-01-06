@@ -8,6 +8,34 @@ void CollisionDirector::checkCourseColNarrScLocal(f32 radius, const EGG::Vector3
     CourseColMgr::Instance()->scaledNarrowScopeLocal(1.0f, radius, nullptr, pos, mask);
 }
 
+/// @addr{0x8078f320}
+bool CollisionDirector::checkSpherePartialPush(f32 radius, const EGG::Vector3f &v0,
+        const EGG::Vector3f &v1, KCLTypeMask flags, CourseColMgr::CollisionInfo *pInfo,
+        KCLTypeMask *pFlagsOut, u32 /*start*/) {
+    if (pInfo) {
+        pInfo->bbox.setZero();
+    }
+
+    if (pFlagsOut) {
+        resetCollisionEntries(pFlagsOut);
+    }
+
+    auto *courseColMgr = CourseColMgr::Instance();
+    auto *noBounceInfo = courseColMgr->noBounceWallInfo();
+    if (noBounceInfo) {
+        noBounceInfo->bbox.setZero();
+        noBounceInfo->dist = std::numeric_limits<f32>::min();
+    }
+
+    bool hasCourseCol = flags != KCL_NONE &&
+            courseColMgr->checkSpherePartialPush(1.0f, radius, nullptr, v0, v1, flags, pInfo,
+                    pFlagsOut);
+
+    courseColMgr->clearNoBounceWallInfo();
+
+    return hasCourseCol;
+}
+
 /// @addr{0x8078F500}
 bool CollisionDirector::checkSphereFull(f32 radius, const EGG::Vector3f &v0,
         const EGG::Vector3f &v1, KCLTypeMask flags, CourseColMgr::CollisionInfo *pInfo,
