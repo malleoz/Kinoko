@@ -1,5 +1,7 @@
 #include "ObjectBase.hh"
 
+#include "game/field/ObjectDirector.hh"
+
 #include <game/system/CourseMap.hh>
 #include <game/system/map/MapdataPointInfo.hh>
 
@@ -41,6 +43,14 @@ void ObjectBase::loadRail() {
     } else {
         m_railInterpolator = new RailSmoothInterpolator(speed, pathId);
     }
+}
+
+/// @addr{0x806806DC}
+const char *ObjectBase::getKclName() const {
+    const auto &flowTable = ObjectDirector::Instance()->flowTable();
+    s16 slot = flowTable.slot(id());
+    ASSERT(slot >= 0);
+    return flowTable.set(slot)->resources;
 }
 
 /// @addr{0x80821640}
