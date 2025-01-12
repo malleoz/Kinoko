@@ -11,6 +11,7 @@ public:
 
     void load() override;
     void calcCollisionTransform() override {}
+    virtual void createCollision() override {}
 };
 
 } // namespace Field

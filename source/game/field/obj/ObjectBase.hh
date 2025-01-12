@@ -19,11 +19,11 @@ public:
     virtual void calcModel();
     virtual void load() = 0;
     virtual void calcCollisionTransform() = 0;
+    [[nodiscard]] ObjectId id() const;
     [[nodiscard]] virtual u32 loadFlags() const;
     [[nodiscard]] virtual const EGG::Vector3f &getPosition() const;
     [[nodiscard]] virtual f32 getCollisionRadius() const;
-
-    [[nodiscard]] ObjectId id() const;
+    virtual void createCollision() = 0;
 
 protected:
     void calcTransform();

@@ -17,6 +17,11 @@ void ObjectBase::calcModel() {
     calcTransform();
 }
 
+/// @addr{0x80572574}
+ObjectId ObjectBase::id() const {
+    return m_id;
+}
+
 /// @addr{0x806BF434}
 u32 ObjectBase::loadFlags() const {
     // TODO: This references LOD to determine load flags
@@ -33,11 +38,6 @@ f32 ObjectBase::getCollisionRadius() const {
     constexpr f32 BASE_RADIUS = 100.0f;
 
     return BASE_RADIUS;
-}
-
-/// @addr{0x80572574}
-ObjectId ObjectBase::id() const {
-    return m_id;
 }
 
 /// @addr{0x80821640}
