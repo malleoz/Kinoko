@@ -1,17 +1,20 @@
 #include "CollisionDirector.hh"
 
+#include "game/field/ObjectDrivableDirector.hh"
+
 namespace Field {
 
 /// @addr{0x8078E4F0}
 void CollisionDirector::checkCourseColNarrScLocal(f32 radius, const EGG::Vector3f &pos,
-        KCLTypeMask mask, u32 /*timeOffset*/) {
+        KCLTypeMask mask, u32 timeOffset) {
     CourseColMgr::Instance()->scaledNarrowScopeLocal(1.0f, radius, nullptr, pos, mask);
+    ObjectDrivableDirector::Instance()->colNarScLocal(radius, pos, mask, timeOffset);
 }
 
 /// @addr{0x8078F500}
 bool CollisionDirector::checkSphereFull(f32 radius, const EGG::Vector3f &v0,
         const EGG::Vector3f &v1, KCLTypeMask flags, CourseColMgr::CollisionInfo *pInfo,
-        KCLTypeMask *pFlagsOut, u32 /*timeOffset*/) {
+        KCLTypeMask *pFlagsOut, u32 timeOffset) {
     if (pInfo) {
         pInfo->bbox.min = EGG::Vector3f::zero;
         pInfo->bbox.max = EGG::Vector3f::zero;
@@ -32,14 +35,14 @@ bool CollisionDirector::checkSphereFull(f32 radius, const EGG::Vector3f &v0,
         noBounceInfo->dist = std::numeric_limits<f32>::min();
     }
 
-    bool colliding = false;
+    bool hasCourseCol = flags &&
+            courseColMgr->checkSphereFull(1.0f, radius, nullptr, v0, v1, flags, pInfo, pFlagsOut);
+    bool hasObjCol = ObjectDrivableDirector::Instance()->checkSphereFull(radius, v0, v1, flags,
+            pInfo, pFlagsOut, timeOffset);
 
-    if (flags &&
-            courseColMgr->checkSphereFull(1.0f, radius, nullptr, v0, v1, flags, pInfo, pFlagsOut)) {
-        colliding = true;
-    }
+    bool hasCol = hasCourseCol | hasObjCol;
 
-    if (colliding) {
+    if (hasCol) {
         if (pInfo) {
             pInfo->tangentOff = pInfo->bbox.min + pInfo->bbox.max;
         }
@@ -51,13 +54,13 @@ bool CollisionDirector::checkSphereFull(f32 radius, const EGG::Vector3f &v0,
 
     courseColMgr->clearNoBounceWallInfo();
 
-    return colliding;
+    return hasCol;
 }
 
 /// @addr{0x8078F784}
 bool CollisionDirector::checkSphereFullPush(f32 radius, const EGG::Vector3f &v0,
         const EGG::Vector3f &v1, KCLTypeMask flags, CourseColMgr::CollisionInfo *pInfo,
-        KCLTypeMask *pFlagsOut, u32 /*timeOffset*/) {
+        KCLTypeMask *pFlagsOut, u32 timeOffset) {
     if (pInfo) {
         pInfo->bbox.setZero();
         pInfo->_50 = -std::numeric_limits<f32>::min();
@@ -77,15 +80,16 @@ bool CollisionDirector::checkSphereFullPush(f32 radius, const EGG::Vector3f &v0,
         noBounceInfo->dist = std::numeric_limits<f32>::min();
     }
 
-    bool colliding = false;
-
-    if (flags &&
+    bool hasCourseCol = flags &&
             courseColMgr->checkSphereFullPush(1.0f, radius, nullptr, v0, v1, flags, pInfo,
-                    pFlagsOut)) {
-        colliding = true;
-    }
+                    pFlagsOut);
 
-    if (colliding) {
+    bool hasObjCol = ObjectDrivableDirector::Instance()->checkSphereFullPush(radius, v0, v1, flags,
+            pInfo, pFlagsOut, timeOffset);
+
+    bool hasCol = hasCourseCol | hasObjCol;
+
+    if (hasCol) {
         if (pInfo) {
             pInfo->tangentOff = pInfo->bbox.min + pInfo->bbox.max;
         }
@@ -97,13 +101,13 @@ bool CollisionDirector::checkSphereFullPush(f32 radius, const EGG::Vector3f &v0,
 
     courseColMgr->clearNoBounceWallInfo();
 
-    return colliding;
+    return hasCol;
 }
 
 /// @addr{0x807901F0}
 bool CollisionDirector::checkSphereCachedPartial(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask typeMask,
-        CourseColMgr::CollisionInfoPartial *info, KCLTypeMask *typeMaskOut, u32 /*timeOffset*/) {
+        CourseColMgr::CollisionInfoPartial *info, KCLTypeMask *typeMaskOut, u32 timeOffset) {
     if (info) {
         info->bbox.setZero();
     }
@@ -122,7 +126,12 @@ bool CollisionDirector::checkSphereCachedPartial(f32 radius, const EGG::Vector3f
     bool hasCourseCol = courseColMgr->checkSphereCachedPartial(1.0f, radius, nullptr, pos, prevPos,
             typeMask, info, typeMaskOut);
 
-    if (hasCourseCol) {
+    bool hasObjCol = ObjectDrivableDirector::Instance()->checkSphereCachedPartial(radius, pos,
+            prevPos, typeMask, info, typeMaskOut, timeOffset);
+
+    bool hasCol = hasCourseCol || hasObjCol;
+
+    if (hasCol) {
         if (info) {
             info->tangentOff = info->bbox.min + info->bbox.max;
         }
@@ -134,13 +143,13 @@ bool CollisionDirector::checkSphereCachedPartial(f32 radius, const EGG::Vector3f
 
     courseColMgr->clearNoBounceWallInfo();
 
-    return hasCourseCol;
+    return hasCol;
 }
 
 /// @addr{0x807903BC}
 bool CollisionDirector::checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask typeMask,
-        CourseColMgr::CollisionInfoPartial *info, KCLTypeMask *typeMaskOut, u32 /*timeOffset*/) {
+        CourseColMgr::CollisionInfoPartial *info, KCLTypeMask *typeMaskOut, u32 timeOffset) {
     if (info) {
         info->bbox.setZero();
     }
@@ -159,15 +168,18 @@ bool CollisionDirector::checkSphereCachedPartialPush(f32 radius, const EGG::Vect
     bool hasCourseCol = courseColMgr->checkSphereCachedPartialPush(1.0f, radius, nullptr, pos,
             prevPos, typeMask, info, typeMaskOut);
 
+    bool hasObjCol = ObjectDrivableDirector::Instance()->checkSphereCachedPartialPush(radius, pos,
+            prevPos, typeMask, info, typeMaskOut, timeOffset);
+
     courseColMgr->clearNoBounceWallInfo();
 
-    return hasCourseCol;
+    return hasCourseCol || hasObjCol;
 }
 
 /// @addr{0x807907F8}
 bool CollisionDirector::checkSphereCachedFullPush(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask typeMask, CourseColMgr::CollisionInfo *colInfo,
-        KCLTypeMask *typeMaskOut, u32 /*timeOffset*/) {
+        KCLTypeMask *typeMaskOut, u32 timeOffset) {
     if (colInfo) {
         colInfo->bbox.min.setZero();
         colInfo->bbox.max.setZero();
@@ -191,7 +203,12 @@ bool CollisionDirector::checkSphereCachedFullPush(f32 radius, const EGG::Vector3
     bool hasCourseCol = courseColMgr->checkSphereCachedFullPush(1.0f, radius, nullptr, pos, prevPos,
             typeMask, colInfo, typeMaskOut);
 
-    if (hasCourseCol) {
+    bool hasObjCol = ObjectDrivableDirector::Instance()->checkSphereCachedFullPush(radius, pos,
+            prevPos, typeMask, colInfo, typeMaskOut, timeOffset);
+
+    bool hasCol = hasCourseCol || hasObjCol;
+
+    if (hasCol) {
         if (colInfo) {
             colInfo->tangentOff = colInfo->bbox.min + colInfo->bbox.max;
         }
@@ -203,7 +220,7 @@ bool CollisionDirector::checkSphereCachedFullPush(f32 radius, const EGG::Vector3
 
     courseColMgr->clearNoBounceWallInfo();
 
-    return hasCourseCol;
+    return hasCol;
 }
 
 /// @addr{0x807BDA7C}

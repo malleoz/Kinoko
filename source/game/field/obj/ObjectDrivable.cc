@@ -1,5 +1,7 @@
 #include "game/field/obj/ObjectDrivable.hh"
 
+#include "game/field/ObjectDrivableDirector.hh"
+
 namespace Field {
 
 /// @addr{0x8081A6D0}
@@ -14,7 +16,7 @@ void ObjectDrivable::load() {
     initCollision();
     loadAABB(getCollisionRadius());
 
-    // ObjectDrivableDirector::Instance()->addObject(this);
+    ObjectDrivableDirector::Instance()->addObject(this);
 }
 
 /// @addr{0x80682918}
