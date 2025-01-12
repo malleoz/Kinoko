@@ -30,17 +30,53 @@ void ObjectDrivableDirector::addObject(ObjectDrivable *obj) {
     m_objects.push_back(obj);
 }
 
-/// @addr{0x8081BE48}
-bool ObjectDrivableDirector::checkSphereFull(f32 radius, f32 scale, const EGG::Vector3f &v0,
+/// @addr{0x8081BC98}
+bool ObjectDrivableDirector::checkSpherePartial(f32 radius, const EGG::Vector3f &v0,
         const EGG::Vector3f &v1, KCLTypeMask mask, CollisionInfo *colInfo, KCLTypeMask *maskOut,
         u32 start) {
     if (m_objects.empty()) {
         return false;
     }
 
-    BoxColManager::Instance()->search(scale, v0, eBoxColFlag::Drivable);
+    bool hasCollision = false;
+    BoxColManager::Instance()->search(radius, v0, eBoxColFlag::Drivable);
+
+    while (ObjectDrivable *obj = BoxColManager::Instance()->getNextDrivable()) {
+        hasCollision |= obj->checkSpherePartial(radius, v0, v1, mask, colInfo, maskOut, start);
+    }
+
+    return hasCollision;
+}
+
+/// @addr{0x8081BD70}
+bool ObjectDrivableDirector::checkSpherePartialPush(f32 radius, const EGG::Vector3f &v0,
+        const EGG::Vector3f &v1, KCLTypeMask mask, CollisionInfo *colInfo, KCLTypeMask *maskOut,
+        u32 start) {
+    if (m_objects.empty()) {
+        return false;
+    }
 
     bool hasCollision = false;
+    BoxColManager::Instance()->search(radius, v0, eBoxColFlag::Drivable);
+
+    while (ObjectDrivable *obj = BoxColManager::Instance()->getNextDrivable()) {
+        hasCollision |= obj->checkSpherePartialPush(radius, v0, v1, mask, colInfo, maskOut, start);
+    }
+
+    return hasCollision;
+}
+
+/// @addr{0x8081BE48}
+bool ObjectDrivableDirector::checkSphereFull(f32 radius, const EGG::Vector3f &v0,
+        const EGG::Vector3f &v1, KCLTypeMask mask, CollisionInfo *colInfo, KCLTypeMask *maskOut,
+        u32 start) {
+    if (m_objects.empty()) {
+        return false;
+    }
+
+    bool hasCollision = false;
+    BoxColManager::Instance()->search(radius, v0, eBoxColFlag::Drivable);
+
     while (ObjectDrivable *obj = BoxColManager::Instance()->getNextDrivable()) {
         hasCollision |= obj->checkSphereFull(radius, v0, v1, mask, colInfo, maskOut, start);
     }
@@ -49,17 +85,18 @@ bool ObjectDrivableDirector::checkSphereFull(f32 radius, f32 scale, const EGG::V
 }
 
 /// @addr{0x8081BFA0}
-bool ObjectDrivableDirector::checkSphereFullPush(f32 radius, f32 scale, const EGG::Vector3f &v0,
+bool ObjectDrivableDirector::checkSphereFullPush(f32 radius, const EGG::Vector3f &v0,
         const EGG::Vector3f &v1, KCLTypeMask mask, CollisionInfo *colInfo, KCLTypeMask *maskOut,
         u32 start) {
     if (m_objects.empty()) {
         return false;
     }
 
-    BoxColManager::Instance()->search(scale, v0, eBoxColFlag::Drivable);
-
     bool hasCollision = false;
-    while (ObjectDrivable *obj = BoxColManager::Instance()->getNextDrivable()) {
+    auto *boxColMgr = BoxColManager::Instance();
+    boxColMgr->search(radius, v0, eBoxColFlag::Drivable);
+
+    while (ObjectDrivable *obj = boxColMgr->getNextDrivable()) {
         hasCollision |= obj->checkSphereFullPush(radius, v0, v1, mask, colInfo, maskOut, start);
     }
 
@@ -67,73 +104,92 @@ bool ObjectDrivableDirector::checkSphereFullPush(f32 radius, f32 scale, const EG
 }
 
 /// @addr{0x8081C5A0}
-bool ObjectDrivableDirector::checkSphereCachedPartial(f32 radius, f32 scale,
-        const EGG::Vector3f &v0, const EGG::Vector3f &v1, KCLTypeMask mask, CollisionInfo *colInfo,
-        KCLTypeMask *maskOut, u32 start) {
+bool ObjectDrivableDirector::checkSphereCachedPartial(f32 radius, const EGG::Vector3f &v0,
+        const EGG::Vector3f &v1, KCLTypeMask mask, CollisionInfo *colInfo, KCLTypeMask *maskOut,
+        u32 start) {
     if (m_objects.empty()) {
         return false;
     }
 
-    BoxColManager::Instance()->search(scale, v0, eBoxColFlag::Drivable);
+    auto *boxColMgr = BoxColManager::Instance();
 
-    bool hasCollision = false;
-    while (ObjectDrivable *obj = BoxColManager::Instance()->getNextDrivable()) {
-        hasCollision |=
-                obj->checkSphereCachedPartial(radius, v0, v1, mask, colInfo, maskOut, start);
+    if (boxColMgr->isPosInSpatialCache(radius, v0, eBoxColFlag::Drivable)) {
+        BoxColManager::Instance()->resetIterators();
+
+        bool hasCollision = false;
+        while (ObjectDrivable *obj = BoxColManager::Instance()->getNextDrivable()) {
+            hasCollision |=
+                    obj->checkSphereCachedPartial(radius, v0, v1, mask, colInfo, maskOut, start);
+        }
+
+        return hasCollision;
     }
 
-    return hasCollision;
+    return checkSpherePartial(radius, v0, v1, mask, colInfo, maskOut, start);
 }
 
 /// @addr{0x8081C6B4}
-bool ObjectDrivableDirector::checkSphereCachedPartialPush(f32 radius, f32 scale,
-        const EGG::Vector3f &v0, const EGG::Vector3f &v1, KCLTypeMask mask, CollisionInfo *colInfo,
-        KCLTypeMask *maskOut, u32 start) {
+bool ObjectDrivableDirector::checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &v0,
+        const EGG::Vector3f &v1, KCLTypeMask mask, CollisionInfo *colInfo, KCLTypeMask *maskOut,
+        u32 start) {
     if (m_objects.empty()) {
         return false;
     }
 
-    BoxColManager::Instance()->search(scale, v0, eBoxColFlag::Drivable);
+    auto *boxColMgr = BoxColManager::Instance();
 
-    bool hasCollision = false;
-    while (ObjectDrivable *obj = BoxColManager::Instance()->getNextDrivable()) {
-        hasCollision |=
-                obj->checkSphereCachedPartialPush(radius, v0, v1, mask, colInfo, maskOut, start);
+    if (boxColMgr->isPosInSpatialCache(radius, v0, eBoxColFlag::Drivable)) {
+        boxColMgr->resetIterators();
+
+        bool hasCollision = false;
+        while (ObjectDrivable *obj = boxColMgr->getNextDrivable()) {
+            hasCollision |= obj->checkSphereCachedPartialPush(radius, v0, v1, mask, colInfo,
+                    maskOut, start);
+        }
+
+        return hasCollision;
     }
 
-    return hasCollision;
+    return checkSpherePartialPush(radius, v0, v1, mask, colInfo, maskOut, start);
 }
 
 /// @addr{0x8081C958}
-bool ObjectDrivableDirector::checkSphereCachedFullPush(f32 radius, f32 scale,
-        const EGG::Vector3f &v0, const EGG::Vector3f &v1, KCLTypeMask mask, CollisionInfo *colInfo,
-        KCLTypeMask *maskOut, u32 start) {
+bool ObjectDrivableDirector::checkSphereCachedFullPush(f32 radius, const EGG::Vector3f &v0,
+        const EGG::Vector3f &v1, KCLTypeMask mask, CollisionInfo *colInfo, KCLTypeMask *maskOut,
+        u32 start) {
     if (m_objects.empty()) {
         return false;
     }
 
-    BoxColManager::Instance()->search(scale, v0, eBoxColFlag::Drivable);
+    auto *boxColMgr = BoxColManager::Instance();
 
-    bool hasCollision = false;
-    while (ObjectDrivable *obj = BoxColManager::Instance()->getNextDrivable()) {
-        hasCollision |=
-                obj->checkSphereCachedFullPush(radius, v0, v1, mask, colInfo, maskOut, start);
+    if (boxColMgr->isPosInSpatialCache(radius, v0, eBoxColFlag::Drivable)) {
+        bool hasCollision = false;
+        boxColMgr->resetIterators();
+
+        while (ObjectDrivable *obj = boxColMgr->getNextDrivable()) {
+            hasCollision |=
+                    obj->checkSphereCachedFullPush(radius, v0, v1, mask, colInfo, maskOut, start);
+        }
+
+        return hasCollision;
     }
 
-    return hasCollision;
+    return checkSphereFullPush(radius, v0, v1, mask, colInfo, maskOut, start);
 }
 
 /// @addr{0x8081B7CC}
-void ObjectDrivableDirector::colNarScLocal(f32 scale, f32 radius, const EGG::Vector3f &pos,
-        KCLTypeMask mask, bool bScaledUp) {
+void ObjectDrivableDirector::colNarScLocal(f32 radius, const EGG::Vector3f &pos, KCLTypeMask mask,
+        bool bScaledUp) {
     if (m_objects.empty()) {
         return;
     }
 
-    BoxColManager::Instance()->search(radius, pos, eBoxColFlag::Drivable);
+    auto *boxColMgr = BoxColManager::Instance();
+    boxColMgr->search(radius, pos, eBoxColFlag::Drivable);
 
-    while (ObjectDrivable *obj = BoxColManager::Instance()->getNextDrivable()) {
-        obj->narrScLocal(scale, pos, mask, bScaledUp);
+    while (ObjectDrivable *obj = boxColMgr->getNextDrivable()) {
+        obj->narrScLocal(radius, pos, mask, bScaledUp);
     }
 }
 

@@ -29,6 +29,7 @@ namespace EGG::Mathf {
 [[nodiscard]] f32 abs(f32 x);
 
 [[nodiscard]] f32 fma(f32 x, f32 y, f32 z);
+[[nodiscard]] f32 fms(f32 x, f32 y, f32 z);
 
 [[nodiscard]] f64 force25Bit(f64 x);
 

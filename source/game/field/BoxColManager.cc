@@ -3,6 +3,8 @@
 #include "game/field/obj/ObjectCollidable.hh"
 #include "game/field/obj/ObjectDrivable.hh"
 
+#include <egg/math/Math.hh>
+
 #include <numeric>
 
 namespace Field {
@@ -186,8 +188,7 @@ ObjectCollidable *BoxColManager::getNextObject() {
 
 /// @addr{0x80785EC4}
 ObjectDrivable *BoxColManager::getNextDrivable() {
-    return reinterpret_cast<ObjectDrivable *>(
-            getNextImpl(m_nextDrivableID, eBoxColFlag::Drivable));
+    return reinterpret_cast<ObjectDrivable *>(getNextImpl(m_nextDrivableID, eBoxColFlag::Drivable));
 }
 
 /// @addr{0x80785F2C}
@@ -257,6 +258,24 @@ void BoxColManager::search(BoxColUnit *unit, const BoxColFlag &flag) {
 void BoxColManager::search(f32 radius, const EGG::Vector3f &pos, const BoxColFlag &flag) {
     searchImpl(radius, pos, flag);
     resetIterators();
+}
+
+/// @addr{0x80786E60}
+bool BoxColManager::isPosInSpatialCache(f32 radius, const EGG::Vector3f &pos,
+        const BoxColFlag &flag) {
+    if (m_cacheRadius == -1.0f) {
+        return false;
+    }
+
+    BoxColFlag temp = m_cacheFlag.set(flag.getDirect());
+    if (m_cacheFlag != temp) {
+        return false;
+    }
+
+    f32 radiusDiff = m_cacheRadius - radius;
+    EGG::Vector3f posDiff = pos - m_cachePoint;
+
+    return EGG::Mathf::abs(posDiff.x) <= radiusDiff && EGG::Mathf::abs(posDiff.z) <= radiusDiff;
 }
 
 /// @addr{0x807855DC}

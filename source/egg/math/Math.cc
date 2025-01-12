@@ -460,6 +460,11 @@ f32 fma(f32 x, f32 y, f32 z) {
             static_cast<f64>(x) * force25Bit(static_cast<f64>(y)) + static_cast<f64>(z));
 }
 
+f32 fms(f32 x, f32 y, f32 z) {
+    return static_cast<f32>(
+            static_cast<f64>(x) * force25Bit(static_cast<f64>(y)) - static_cast<f64>(z));
+}
+
 /// @brief This is used to mimic the Wii's floating-point unit.
 /// @details This handles the edgecase where double-precision floating-point numbers are passed into
 /// single-precision floating-point operands in assembly.
