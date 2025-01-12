@@ -1,5 +1,7 @@
 #include "ObjectBase.hh"
 
+#include "game/field/ObjectDirector.hh"
+
 #include <egg/math/Math.hh>
 
 namespace Field {
@@ -26,6 +28,14 @@ ObjectId ObjectBase::id() const {
 u32 ObjectBase::loadFlags() const {
     // TODO: This references LOD to determine load flags
     return 0;
+}
+
+/// @addr{0x806806DC}
+const char *ObjectBase::getKclName() const {
+    const auto &flowTable = ObjectDirector::Instance()->flowTable();
+    s16 slot = flowTable.slot(id());
+    ASSERT(slot >= 0);
+    return flowTable.set(slot)->resources;
 }
 
 /// @addr{0x80681598}

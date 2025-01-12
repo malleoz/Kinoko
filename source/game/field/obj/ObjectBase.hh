@@ -21,6 +21,7 @@ public:
     virtual void calcCollisionTransform() = 0;
     [[nodiscard]] ObjectId id() const;
     [[nodiscard]] virtual u32 loadFlags() const;
+    [[nodiscard]] virtual const char *getKclName() const;
     [[nodiscard]] virtual const EGG::Vector3f &getPosition() const;
     [[nodiscard]] virtual f32 getCollisionRadius() const;
     virtual void createCollision() = 0;
