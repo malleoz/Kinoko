@@ -55,6 +55,7 @@ public:
     [[nodiscard]] const u16 *searchBlock(const EGG::Vector3f &pos);
 
     /// @beginGetters
+    [[nodiscard]] const EGG::BoundBox3f &bbox() const;
     [[nodiscard]] u16 prismCache(u32 idx) const;
     /// @endGetters
 

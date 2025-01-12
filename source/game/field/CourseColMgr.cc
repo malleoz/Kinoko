@@ -350,6 +350,10 @@ void CourseColMgr::clearNoBounceWallInfo() {
     m_noBounceWallInfo = nullptr;
 }
 
+void CourseColMgr::setLocalMtx(EGG::Matrix34f *mtx) {
+    m_localMtx = mtx;
+}
+
 CourseColMgr::NoBounceWallColInfo *CourseColMgr::noBounceWallInfo() const {
     return m_noBounceWallInfo;
 }
@@ -621,6 +625,33 @@ void CourseColMgr::CollisionInfo::update(f32 now_dist, const EGG::Vector3f &offs
 
         updateWall(now_dist, fnrm);
     }
+}
+
+/// @addr{0x807C26AC}
+void CourseColMgr::CollisionInfo::transformInfo(CourseColMgr::CollisionInfo &rhs,
+        const EGG::Matrix34f &mtx) {
+    rhs.bbox.min = mtx.ps_multVector33(rhs.bbox.min);
+    rhs.bbox.max = mtx.ps_multVector33(rhs.bbox.max);
+
+    EGG::Vector3f min = rhs.bbox.min;
+
+    rhs.bbox.min = min.minimize(rhs.bbox.max);
+    rhs.bbox.max = min.maximize(rhs.bbox.max);
+
+    bbox.min = bbox.min.minimize(rhs.bbox.min);
+    bbox.max = bbox.max.maximize(rhs.bbox.max);
+
+    if (floorDist < rhs.floorDist) {
+        floorDist = rhs.floorDist;
+        floorNrm = mtx.ps_multVector33(rhs.floorNrm);
+    }
+
+    if (wallDist < rhs.wallDist) {
+        wallDist = rhs.wallDist;
+        wallNrm = mtx.ps_multVector33(rhs.wallNrm);
+    }
+
+    perpendicularity = std::min(perpendicularity, rhs.perpendicularity);
 }
 
 CourseColMgr *CourseColMgr::s_instance = nullptr; ///< @addr{0x809C3C10}

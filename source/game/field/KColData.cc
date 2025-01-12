@@ -280,6 +280,10 @@ const u16 *KColData::searchBlock(const EGG::Vector3f &point) {
     return reinterpret_cast<const u16 *>(curBlock + (offset & ~0x80000000));
 }
 
+const EGG::BoundBox3f &KColData::bbox() const {
+    return m_bbox;
+}
+
 u16 KColData::prismCache(u32 idx) const {
     return m_prismCache[idx];
 }
