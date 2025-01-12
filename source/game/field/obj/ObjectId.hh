@@ -10,6 +10,7 @@ enum class ObjectId {
     OilSFC = 0x15d,
     Turibashi = 0x202,
     Aurora = 0x204,
+    Mdush = 0x217,
     Ami = 0x20e,
 };
 

@@ -1,5 +1,7 @@
 #include "ObjectBase.hh"
 
+#include "game/field/ObjectDirector.hh"
+
 #include <egg/math/Math.hh>
 
 namespace Field {
@@ -17,10 +19,23 @@ void ObjectBase::calcModel() {
     calcTransform();
 }
 
+/// @addr{0x80572574}
+ObjectId ObjectBase::id() const {
+    return m_id;
+}
+
 /// @addr{0x806BF434}
 u32 ObjectBase::loadFlags() const {
     // TODO: This references LOD to determine load flags
     return 0;
+}
+
+/// @addr{0x806806DC}
+const char *ObjectBase::getModelName() const {
+    const auto &flowTable = ObjectDirector::Instance()->flowTable();
+    s16 slot = flowTable.slot(id());
+    ASSERT(slot >= 0);
+    return flowTable.set(slot)->resources;
 }
 
 /// @addr{0x80681598}
@@ -35,9 +50,8 @@ f32 ObjectBase::getCollisionRadius() const {
     return BASE_RADIUS;
 }
 
-/// @addr{0x80572574}
-ObjectId ObjectBase::id() const {
-    return m_id;
+const EGG::Matrix34f &ObjectBase::transform() const {
+    return m_transform;
 }
 
 /// @addr{0x80821640}

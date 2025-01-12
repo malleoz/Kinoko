@@ -253,6 +253,17 @@ Vector3f Matrix34f::multVector33(const Vector3f &vec) const {
     return ret;
 }
 
+/// @addr{0x8019A970}
+Vector3f Matrix34f::ps_multVector33(const Vector3f &vec) const {
+    Vector3f ret;
+
+    ret.x = fma(mtx[0][2], vec.z, fma(mtx[0][0], vec.x, mtx[0][1] * vec.y));
+    ret.y = fma(mtx[1][2], vec.z, fma(mtx[1][0], vec.x, mtx[1][1] * vec.y));
+    ret.z = fma(mtx[2][2], vec.z, fma(mtx[2][0], vec.x, mtx[2][1] * vec.y));
+
+    return ret;
+}
+
 /// @addr{0x8022F90C}
 /// @brief Inverts the 3x3 portion of the 3x4 matrix.
 /// @details Unlike a typical matrix inversion, if the determinant is 0, then this function returns
@@ -282,6 +293,45 @@ Matrix34f Matrix34f::inverseTo33() const {
     ret[0, 1] = -(mtx[0][1] * mtx[2][2] - mtx[2][1] * mtx[0][2]) * invDet;
     ret[1, 0] = -(mtx[1][0] * mtx[2][2] - mtx[2][0] * mtx[1][2]) * invDet;
     ret[1, 1] = (mtx[0][0] * mtx[2][2] - mtx[2][0] * mtx[0][2]) * invDet;
+
+    return ret;
+}
+
+/// @addr{0x80199FC8}
+Matrix34f Matrix34f::ps_inverse() const {
+    f32 fVar14 = fms(mtx[0][1], mtx[1][2], mtx[1][1] * mtx[0][2]);
+    f32 fVar15 = fms(mtx[1][1], mtx[2][2], mtx[2][1] * mtx[1][2]);
+    f32 fVar13 = fms(mtx[2][1], mtx[0][2], mtx[0][1] * mtx[2][2]);
+    f32 determinant = fma(mtx[2][0], fVar14, fma(mtx[1][0], fVar13, mtx[0][0] * fVar15));
+
+    if (determinant == 0.0f) {
+        return Matrix34f::ident;
+    }
+
+    f32 invDet = 1.0f / determinant;
+    f32 scalar = -fms(determinant, invDet * invDet, invDet + invDet);
+
+    f32 fVar16 = fms(mtx[1][2], mtx[2][0], mtx[2][2] * mtx[1][0]);
+    f32 fVar12 = fms(mtx[2][2], mtx[0][0], mtx[0][2] * mtx[2][0]);
+    f32 fVar9 = fms(mtx[1][0], mtx[2][1], mtx[1][1] * mtx[2][0]);
+    f32 fVar17 = fms(mtx[0][0], mtx[1][1], mtx[0][1] * mtx[1][0]);
+    f32 fVar7 = fms(mtx[0][1], mtx[2][0], mtx[0][0] * mtx[2][1]);
+    f32 fVar10 = fms(mtx[0][2], mtx[1][0], mtx[1][2] * mtx[0][0]);
+
+    Matrix34f ret;
+
+    ret[0, 0] = fVar15 * scalar;
+    ret[0, 1] = fVar13 * scalar;
+    ret[1, 0] = fVar16 * scalar;
+    ret[1, 1] = fVar12 * scalar;
+    ret[2, 0] = fVar9 * scalar;
+    ret[2, 1] = fVar7 * scalar;
+    ret[2, 2] = fVar17 * scalar;
+    ret[0, 2] = fVar14 * scalar;
+    ret[0, 3] = -fma(ret[0, 2], mtx[2][3], fma(ret[0, 1], mtx[1][3], ret[0, 0] * mtx[0][3]));
+    ret[1, 2] = fVar10 * scalar;
+    ret[1, 3] = -fma(ret[1, 2], mtx[2][3], fma(ret[1, 1], mtx[1][3], ret[1, 0] * mtx[0][3]));
+    ret[2, 3] = -fma(ret[2, 2], mtx[2][3], fma(ret[2, 1], mtx[1][3], ret[2, 0] * mtx[0][3]));
 
     return ret;
 }

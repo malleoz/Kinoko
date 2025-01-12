@@ -16,7 +16,7 @@ public:
     ~ObjectDrivable() override;
 
     void load() override;
-    f32 getCollisionRadius() const override;
+    [[nodiscard]] f32 getCollisionRadius() const override;
 
     virtual void initCollision() {}
     virtual void loadAABB(f32 radius);
@@ -41,7 +41,7 @@ public:
     [[nodiscard]] virtual bool checkSphereFullPush(f32 radius, const EGG::Vector3f &v0,
             const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo,
             KCLTypeMask *pFlagsOut, u32 timeOffset) = 0;
-    virtual void narrScLocal(f32 scale, const EGG::Vector3f &pos, KCLTypeMask mask,
+    virtual void narrScLocal(f32 radius, const EGG::Vector3f &pos, KCLTypeMask mask,
             bool bScaledUp) {}
     [[nodiscard]] virtual bool checkPointCachedPartial(const EGG::Vector3f &v0,
             const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo,
