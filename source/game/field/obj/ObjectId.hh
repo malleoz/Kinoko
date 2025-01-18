@@ -8,6 +8,7 @@ enum class ObjectId {
     DummyPole = 0x066,
     DokanSFC = 0x12e,
     OilSFC = 0x15d,
+    Sandcone = 0x209,
     Mdush = 0x217,
 };
 

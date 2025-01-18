@@ -39,6 +39,11 @@ const EGG::Vector3f &MapdataGeoObj::scale() const {
     return m_scale;
 }
 
+u16 MapdataGeoObj::setting(size_t idx) const {
+    ASSERT(idx < 8);
+    return m_settings[idx];
+}
+
 u16 MapdataGeoObj::presenceFlag() const {
     return m_presenceFlag;
 }

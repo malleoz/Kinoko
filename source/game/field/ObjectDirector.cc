@@ -200,6 +200,8 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
         return new ObjectDokan(params);
     case ObjectId::OilSFC:
         return new ObjectOilSFC(params);
+    case ObjectId::Sandcone:
+        return new ObjectSandcone(params);
     // Non-specified objects are stock collidable objects by default
     // However, we need to specify an impl, so we don't use default
     case ObjectId::DummyPole:

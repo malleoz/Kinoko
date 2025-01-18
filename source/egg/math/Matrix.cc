@@ -350,6 +350,12 @@ Matrix34f Matrix34f::transpose() const {
     return ret;
 }
 
+/// @addr{0x80537B80}
+/// @brief Get a particular column from a matrix.
+Vector3f Matrix34f::base(size_t col) const {
+    return EGG::Vector3f(mtx[0][col], mtx[1][col], mtx[2][col]);
+}
+
 /// @addr{0x80384370}
 const Matrix34f Matrix34f::ident(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
         0.0f);

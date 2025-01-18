@@ -45,6 +45,7 @@ public:
     [[nodiscard]] Matrix34f inverseTo33() const;
     [[nodiscard]] Matrix34f ps_inverse() const;
     [[nodiscard]] Matrix34f transpose() const;
+    [[nodiscard]] Vector3f base(size_t col) const;
 
     static const Matrix34f ident;
     static const Matrix34f zero;
