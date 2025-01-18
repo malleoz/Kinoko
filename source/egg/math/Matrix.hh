@@ -50,6 +50,7 @@ public:
     void inverseTo33(Matrix34f &out) const;
     bool ps_inverse(Matrix34f &out) const;
     [[nodiscard]] Matrix34f transpose() const;
+    [[nodiscard]] Vector3f base(size_t col) const;
 
     [[nodiscard]] Vector3f translation() const {
         return Vector3f(mtx[0][3], mtx[1][3], mtx[2][3]);
