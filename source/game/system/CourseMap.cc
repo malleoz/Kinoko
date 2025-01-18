@@ -1,5 +1,6 @@
 #include "CourseMap.hh"
 
+#include "game/system/map/MapdataArea.hh"
 #include "game/system/map/MapdataCannonPoint.hh"
 #include "game/system/map/MapdataCheckPath.hh"
 #include "game/system/map/MapdataCheckPoint.hh"
@@ -20,6 +21,7 @@ void CourseMap::init() {
     m_course =
             new MapdataFileAccessor(reinterpret_cast<const MapdataFileAccessor::SData *>(buffer));
 
+    constexpr u32 AREA_SIGNATURE = 0x41524541;
     constexpr u32 CANNON_POINT_SIGNATURE = 0x434e5054;
     constexpr u32 CHECK_PATH_SIGNATURE = 0x434b5048;
     constexpr u32 CHECK_POINT_SIGNATURE = 0x434b5054;
@@ -34,6 +36,7 @@ void CourseMap::init() {
     m_checkPoint = parseCheckPoint(CHECK_POINT_SIGNATURE);
     m_geoObj = parseGeoObj(GEO_OBJ_SIGNATURE);
     m_pointInfo = parsePointInfo(POINT_INFO_SIGNATURE);
+    m_area = parseArea(AREA_SIGNATURE);
     m_jugemPoint = parseJugemPoint(JUGEM_POINT_SIGNATURE);
     m_cannonPoint = parseCannonPoint(CANNON_POINT_SIGNATURE);
     m_stageInfo = parseStageInfo(STAGE_INFO_SIGNATURE);
@@ -97,6 +100,18 @@ MapdataGeoObjAccessor *CourseMap::parseGeoObj(u32 sectionName) const {
     MapdataGeoObjAccessor *accessor = nullptr;
     if (sectionPtr) {
         accessor = new MapdataGeoObjAccessor(sectionPtr);
+    }
+
+    return accessor;
+}
+
+/// @addr{0x80513304}
+MapdataAreaAccessor *CourseMap::parseArea(u32 sectionName) const {
+    const MapSectionHeader *sectionPtr = m_course->findSection(sectionName);
+
+    MapdataAreaAccessor *accessor = nullptr;
+    if (sectionPtr) {
+        accessor = new MapdataAreaAccessor(sectionPtr);
     }
 
     return accessor;
@@ -306,6 +321,11 @@ MapdataGeoObj *CourseMap::getGeoObj(u16 i) const {
     return i < getGeoObjCount() ? m_geoObj->get(i) : nullptr;
 }
 
+/// @addr{0x80516768}
+MapdataArea *CourseMap::getArea(u16 i) const {
+    return i < getAreaCount() ? m_area->get(i) : nullptr;
+}
+
 /// @addr{0x80515E04}
 MapdataPointInfo *CourseMap::getPointInfo(u16 i) const {
     return i < getPointInfoCount() ? m_pointInfo->get(i) : nullptr;
@@ -336,6 +356,10 @@ u16 CourseMap::getCheckPointCount() const {
 
 u16 CourseMap::getGeoObjCount() const {
     return m_geoObj ? m_geoObj->size() : 0;
+}
+
+u16 CourseMap::getAreaCount() const {
+    return m_area ? m_area->size() : 0;
 }
 
 u16 CourseMap::getPointInfoCount() const {
