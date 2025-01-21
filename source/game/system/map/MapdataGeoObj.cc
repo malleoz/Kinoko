@@ -39,6 +39,10 @@ const EGG::Vector3f &MapdataGeoObj::scale() const {
     return m_scale;
 }
 
+s16 MapdataGeoObj::pathId() const {
+    return m_pathId;
+}
+
 u16 MapdataGeoObj::presenceFlag() const {
     return m_presenceFlag;
 }
