@@ -6,12 +6,14 @@ namespace Field {
 
 enum class ObjectId {
     DummyPole = 0x066,
+    PenguinM = 0xd8,
     DokanSFC = 0x12e,
     CastleTree1c = 0x130,
     PalmTree = 0x145,
     DKtreeA64c = 0x158,
     OilSFC = 0x15d,
     ParasolR = 0x16e,
+    Kuribo = 0x191,
 };
 
 enum class BlacklistedObjectId {

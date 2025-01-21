@@ -27,13 +27,13 @@ void ObjectCollisionCylinder::transform(const EGG::Matrix34f &mat, const EGG::Ve
     m_worldRadius = m_radius * scale.x;
 
     m_center = mat.ps_multVector(m_worldPos);
-    m_top = mat.ps_multVector(m_worldPos + EGG::Vector3f::ey * m_worldHeight);
+    m_top = mat.ps_multVector(m_worldPos + EGG::Vector3f::ey * m_worldHeight); // mat wrong
     m_bottom = mat.ps_multVector(m_worldPos - EGG::Vector3f::ey * m_worldHeight);
 }
 
 /// @addr{0x8083618C}
 const EGG::Vector3f &ObjectCollisionCylinder::getSupport(const EGG::Vector3f &v) const {
-    return m_top.dot(v) > m_bottom.dot(v) ? m_top : m_bottom;
+    return m_top.dot(v) > m_bottom.dot(v) ? m_top : m_bottom; // m_top/m_bottom wrong
 }
 
 /// @addr{0x80836498}

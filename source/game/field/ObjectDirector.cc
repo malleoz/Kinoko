@@ -187,12 +187,16 @@ void ObjectDirector::createObjects() {
 ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
     ObjectId id = static_cast<ObjectId>(params.id());
     switch (id) {
+    case ObjectId::PenguinM:
+        return new ObjectPenguinM(params);
     case ObjectId::DokanSFC:
         return new ObjectDokan(params);
     case ObjectId::OilSFC:
         return new ObjectOilSFC(params);
     case ObjectId::ParasolR:
         return new ObjectParasolR(params);
+    case ObjectId::Kuribo:
+        return new ObjectKuribo(params);
     // Non-specified objects are stock collidable objects by default
     // However, we need to specify an impl, so we don't use default
     case ObjectId::DummyPole:

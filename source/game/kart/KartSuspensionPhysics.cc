@@ -61,8 +61,8 @@ void WheelPhysics::realign(const EGG::Vector3f &bottom, const EGG::Vector3f &veh
     m_speed = m_pos - m_lastPos;
     m_speed -= dynamics()->intVel();
     m_speed -= collisionData().movement;
-    m_speed -= collide()->movement();
-    m_hitboxGroup->collisionData().vel += m_speed;
+    m_speed -= collide()->movement(); // movement.x wrong
+    m_hitboxGroup->collisionData().vel += m_speed; // m_speed wrong on first call
     m_lastPos = m_pos;
     m_lastPosDiff = m_pos - topmostPos;
 }
