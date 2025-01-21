@@ -28,6 +28,8 @@ public:
     void read(EGG::RamStream &stream);
 
     [[nodiscard]] u16 pointCount() const;
+    [[nodiscard]] u8 setting(size_t idx) const;
+    [[nodiscard]] const std::vector<Point> &points() const;
 
 private:
     const SData *m_rawData;
