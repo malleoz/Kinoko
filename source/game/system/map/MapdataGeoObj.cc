@@ -43,6 +43,11 @@ s16 MapdataGeoObj::pathId() const {
     return m_pathId;
 }
 
+u16 MapdataGeoObj::setting(size_t idx) const {
+    ASSERT(idx < m_settings.size());
+    return m_settings[idx];
+}
+
 u16 MapdataGeoObj::presenceFlag() const {
     return m_presenceFlag;
 }

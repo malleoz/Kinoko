@@ -53,10 +53,27 @@ void Rail::checkSphereFull() {
     m_hasCheckedCol = true;
 }
 
+u16 Rail::pointCount() const {
+    return m_pointCount;
+}
+
+bool Rail::isOscillating() const {
+    return m_isOscillating;
+}
+
+const std::vector<System::MapdataPointInfo::Point> Rail::points() const {
+    return m_points;
+}
+
 /// @addr{0x806ED150}
 const EGG::Vector3f &Rail::pointPos(u16 idx) const {
     ASSERT(idx < m_pointCount);
     return m_points[idx].pos;
+}
+
+const EGG::Vector3f &Rail::floorNrm(u16 idx) const {
+    ASSERT(idx < m_floorNrms.size());
+    return m_floorNrms[idx];
 }
 
 /// @addr{0x806EF9B4}
@@ -85,23 +102,6 @@ RailLine::RailLine(u16 idx, System::MapdataPointInfo *info) : Rail(idx, info) {
 /// @addr{0x806EFD6C}
 RailLine::~RailLine() = default;
 
-/// @addr{0x806F09C0}
-f32 RailLine::getPathLength() const {
-    return m_pathLength;
-}
-
-/// @addr{0x806F09B8}
-const std::vector<RailLineTransition> &RailLine::getLinearTransitions() {
-    return m_transitions;
-}
-
-/// @addr{0x806F09B0}
-/// @brief In the base game we return a nullptr. To mimic this, return an empty vector.
-const std::vector<RailSplineTransition> &RailLine::getSplineTransitions() {
-    static std::vector<RailSplineTransition> EMPTY_TRANSITIONS(0);
-    return EMPTY_TRANSITIONS;
-}
-
 /// @addr{0x806F09A8}
 s32 RailLine::getEstimatorSampleCount() const {
     return 0;
@@ -119,37 +119,46 @@ const std::vector<f32> &RailLine::getPathPercentages() const {
     return EMPTY_PERCENTAGES;
 }
 
+/// @addr{0x806F09C0}
+f32 RailLine::getPathLength() const {
+    return m_pathLength;
+}
+
+/// @addr{0x806F09B8}
+const std::vector<RailLineTransition> &RailLine::getLinearTransitions() const {
+    return m_transitions;
+}
+
+/// @addr{0x806F09B0}
+/// @brief In the base game we return a nullptr. To mimic this, return an empty vector.
+const std::vector<RailSplineTransition> &RailLine::getSplineTransitions() const {
+    static std::vector<RailSplineTransition> EMPTY_TRANSITIONS(0);
+    return EMPTY_TRANSITIONS;
+}
+
 /// @addr{0x806ED57C}
-/// TODO:
 RailSpline::RailSpline(u16 idx, System::MapdataPointInfo *info) : Rail(idx, info) {
     m_transitionCount = m_isOscillating ? m_pointCount - 1 : m_pointCount;
     m_transitions.resize(m_transitionCount);
     m_estimatorSampleCount = 10;
     m_estimatorStep = std::numeric_limits<f32>::infinity();
 
-    onPointsChanged();
-
+    // This is normally not set until AFTER the call to invalidatTransitions,
+    // but the expected behavior requires that this is set to false.
+    // This mis-ordering was probably never noticed since EGG::Heap zero's memory.
     m_doNotAllocatePathPercentages = false;
+
+    invalidateTransitions(false);
+
+    m_pathLength = 0.0f;
+
+    for (size_t i = 0; i < m_transitionCount; ++i) {
+        m_pathLength += m_transitions[i].m_length;
+    }
 }
 
 /// @addr{0x806ED828}
 RailSpline::~RailSpline() = default;
-
-/// @addr{0x806EF9AC}
-f32 RailSpline::getPathLength() const {
-    return m_pathLength;
-}
-
-/// @addr{0x806EF9A4}
-const std::vector<RailLineTransition> &RailSpline::getLinearTransitions() {
-    static std::vector<RailLineTransition> EMPTY_TRANSITIONS(0);
-    return EMPTY_TRANSITIONS;
-}
-
-/// @addr{0x806EF99C}
-const std::vector<RailSplineTransition> &RailSpline::getSplineTransitions() {
-    return m_transitions;
-}
 
 /// @addr{0x806EF994}
 s32 RailSpline::getEstimatorSampleCount() const {
@@ -164,6 +173,22 @@ f32 RailSpline::getEstimatorStep() const {
 /// @addr{0x806EF984}
 const std::vector<f32> &RailSpline::getPathPercentages() const {
     return m_pathPercentages;
+}
+
+/// @addr{0x806EF9AC}
+f32 RailSpline::getPathLength() const {
+    return m_pathLength;
+}
+
+/// @addr{0x806EF9A4}
+const std::vector<RailLineTransition> &RailSpline::getLinearTransitions() const {
+    static std::vector<RailLineTransition> EMPTY_TRANSITIONS(0);
+    return EMPTY_TRANSITIONS;
+}
+
+/// @addr{0x806EF99C}
+const std::vector<RailSplineTransition> &RailSpline::getSplineTransitions() const {
+    return m_transitions;
 }
 
 /// @addr{0x806ED8BC}
@@ -285,14 +310,9 @@ void RailSpline::calcCubicBezierControlPoints(const EGG::Vector3f &p0, const EGG
 f32 RailSpline::estimateLength(const RailSplineTransition &transition, u32 count) {
     std::array<EGG::Vector3f, 11> waypoints;
 
-    ASSERT(count + 1 < waypoints.size());
-
     for (size_t i = 0; i < count + 1; ++i) {
         waypoints[i] = cubicBezier(m_estimatorStep * static_cast<f32>(i), transition);
     }
-
-    ASSERT(count < m_pathPercentages.size());
-
     f32 fVar1 = 0.0f;
 
     for (size_t i = 0; i < count; ++i) {

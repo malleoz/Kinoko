@@ -22,20 +22,25 @@ struct RailSplineTransition {
 class Rail {
 public:
     Rail(u16 idx, System::MapdataPointInfo *info);
-    ~Rail();
+    virtual ~Rail();
+
+    virtual f32 getPathLength() const = 0;
+    virtual const std::vector<RailLineTransition> &getLinearTransitions() const = 0;
+    virtual const std::vector<RailSplineTransition> &getSplineTransitions() const = 0;
+    virtual s32 getEstimatorSampleCount() const = 0;
+    virtual f32 getEstimatorStep() const = 0;
+    virtual const std::vector<f32> &getPathPercentages() const = 0;
 
     void addPoint(f32 scale, const EGG::Vector3f &point);
     void checkSphereFull();
 
+    [[nodiscard]] u16 pointCount() const;
+    [[nodiscard]] bool isOscillating() const;
+    [[nodiscard]] const std::vector<System::MapdataPointInfo::Point> points() const;
     [[nodiscard]] const EGG::Vector3f &pointPos(u16 idx) const;
+    [[nodiscard]] const EGG::Vector3f &floorNrm(u16 idx) const;
 
 protected:
-    virtual f32 getPathLength() const = 0;
-    virtual const std::vector<RailLineTransition> &getLinearTransitions() = 0;
-    virtual const std::vector<RailSplineTransition> &getSplineTransitions() = 0;
-    virtual s32 getEstimatorSampleCount() const = 0;
-    virtual f32 getEstimatorStep() const = 0;
-    virtual const std::vector<f32> &getPathPercentages() const = 0;
     virtual void onPointsChanged() = 0;
     virtual void onPointAdded() = 0;
 
@@ -54,15 +59,16 @@ private:
 class RailLine : public Rail {
 public:
     RailLine(u16 idx, System::MapdataPointInfo *info);
-    ~RailLine();
+    ~RailLine() override;
 
-private:
-    f32 getPathLength() const override;
-    const std::vector<RailLineTransition> &getLinearTransitions() override;
-    const std::vector<RailSplineTransition> &getSplineTransitions() override;
     s32 getEstimatorSampleCount() const override;
     f32 getEstimatorStep() const override;
     const std::vector<f32> &getPathPercentages() const override;
+
+private:
+    f32 getPathLength() const override;
+    const std::vector<RailLineTransition> &getLinearTransitions() const override;
+    const std::vector<RailSplineTransition> &getSplineTransitions() const override;
     void onPointsChanged() override {}
     void onPointAdded() override {}
 
@@ -74,15 +80,16 @@ private:
 class RailSpline : public Rail {
 public:
     RailSpline(u16 idx, System::MapdataPointInfo *info);
-    ~RailSpline();
+    ~RailSpline() override;
 
-private:
-    f32 getPathLength() const override;
-    const std::vector<RailLineTransition> &getLinearTransitions() override;
-    const std::vector<RailSplineTransition> &getSplineTransitions() override;
     s32 getEstimatorSampleCount() const override;
     f32 getEstimatorStep() const override;
     const std::vector<f32> &getPathPercentages() const override;
+
+private:
+    f32 getPathLength() const override;
+    const std::vector<RailLineTransition> &getLinearTransitions() const override;
+    const std::vector<RailSplineTransition> &getSplineTransitions() const override;
     void onPointsChanged() override;
     void onPointAdded() override;
 
