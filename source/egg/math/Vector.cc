@@ -86,9 +86,12 @@ f32 Vector3f::length() const {
 /// @brief Normalizes the vector and returns the original length.
 /// @return (optional) The length of the vector before normalisation.
 f32 Vector3f::normalise() {
-    f32 len = length();
-    if (std::numeric_limits<f32>::epsilon() < dot()) {
-        *this = *this * (1.0f / len);
+    f32 len = 0.0f;
+    f32 fDot = dot();
+
+    if (std::numeric_limits<f32>::epsilon() < fDot) {
+        len = Mathf::sqrt(fDot);
+        *this *= (1.0f / len);
     }
 
     return len;

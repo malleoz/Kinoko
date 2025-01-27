@@ -11,8 +11,9 @@ namespace Field {
 ObjectKuribo::ObjectKuribo(const System::MapdataGeoObj &params) : ObjectCollidable(params) {
     m_b8 = -1;
     m_b4 = 0;
+    m_cycleFrame = 0;
     m_animStep = static_cast<f32>(m_globalObj.setting(2)) / 100.0f;
-    m_speedStep = static_cast<f32>(m_globalObj.setting(1));
+    m_speedStep = static_cast<f32>(m_globalObj.setting(1)) / 100.0f;
 }
 
 /// @addr{0x806DB3A0}
@@ -28,7 +29,6 @@ void ObjectKuribo::init() {
     m_currSpeed = 0.0f;
     m_animTimer = 0.0f;
     m_frameCount = 0;
-    m_pos = m_origin;
 
     // This is set by querying into the DrawMdl... Let's hope this is constant!
     m_maxAnimTimer = 59;
@@ -37,14 +37,26 @@ void ObjectKuribo::init() {
 
 /// @addr{0x806DB5B0}
 void ObjectKuribo::calc() {
-    m_animTimer = std::fmod(static_cast<f32>(m_frameCount) * m_animStep, m_maxAnimTimer);
+    m_animTimer = std::fmodf(static_cast<f32>(m_frameCount) * m_animStep, m_maxAnimTimer);
 
     if (m_b8 >= 0) {
         m_b4 = m_b8;
         m_b8 = -1;
+        m_cycleFrame = 0;
+    } else {
+        ++m_cycleFrame;
     }
 
-    FUN_806DC3F8();
+    switch (m_b4) {
+    case 0:
+        FUN_806DC220();
+        break;
+    case 1:
+        FUN_806DC3F8();
+        break;
+    default:
+        PANIC("KURIBO m_b4 STATE NOT HANDLED!");
+    }
 
     ++m_frameCount;
 }
@@ -52,6 +64,18 @@ void ObjectKuribo::calc() {
 /// @addr{0x806DD2C8}
 u32 ObjectKuribo::loadFlags() const {
     return 3;
+}
+
+/// @addr{0x806DC220}
+/// @brief Called when the Goomba reaches a node on the rail
+void ObjectKuribo::FUN_806DC220() {
+    if (m_railInterpolator->curPoint().setting[0] < m_cycleFrame) {
+        m_b8 = 1;
+    }
+
+    checkSphereFull();
+    calcRot();
+    setMatrixTangentTo(m_rot, m_origin);
 }
 
 /// @addr{0x806DC3F8}
@@ -64,9 +88,9 @@ void ObjectKuribo::calcAnim() {
     bool shouldMove;
 
     if (m_railInterpolator->isMovementDirectionForward()) {
-        shouldMove = 45.0f < m_animTimer && m_animTimer < 55.0f;
-    } else {
         shouldMove = 15.0f < m_animTimer && m_animTimer < 25.0f;
+    } else {
+        shouldMove = 45.0f < m_animTimer && m_animTimer < 55.0f;
     }
 
     if (shouldMove) {
@@ -76,6 +100,7 @@ void ObjectKuribo::calcAnim() {
     }
 
     m_railInterpolator->setCurrVel(m_currSpeed);
+    m_flags |= 1;
     m_pos = m_railInterpolator->curPos();
 
     if (m_railInterpolator->calc() == 2) {
@@ -84,15 +109,19 @@ void ObjectKuribo::calcAnim() {
     }
 
     checkSphereFull();
+    calcRot();
+    setMatrixTangentTo(m_rot, m_origin);
+}
+
+/// @addr{0x806DCC9C}
+void ObjectKuribo::calcRot() {
     m_rot = FUN_806dcd48(0.1f, m_rot, m_floorNrm);
 
-    if (std::numeric_limits<f32>::epsilon() < m_rot.dot()) {
+    if (m_rot.dot() > std::numeric_limits<f32>::epsilon()) {
         m_rot.normalise2();
     } else {
         m_rot = EGG::Vector3f::ey;
     }
-
-    setMatrixTangentTo(m_rot, m_origin);
 }
 
 /// @addr{0x806DCB58}

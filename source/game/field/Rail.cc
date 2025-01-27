@@ -9,7 +9,7 @@ Rail::Rail(u16 idx, System::MapdataPointInfo *info) {
     m_idx = idx;
     m_pointCapacity = info->pointCount();
     m_pointCount = info->pointCount();
-    m_isOscillating = !info->setting(1);
+    m_isOscillating = info->setting(1);
     m_points = info->points();
     m_hasCheckedCol = false;
     m_someScale = 0.1f;

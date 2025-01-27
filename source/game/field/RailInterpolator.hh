@@ -26,6 +26,7 @@ public:
     [[nodiscard]] const EGG::Vector3f floorNrm(size_t idx) const;
     [[nodiscard]] f32 railLength() const;
 
+    [[nodiscard]] const System::MapdataPointInfo::Point &curPoint() const;
     [[nodiscard]] const EGG::Vector3f &curPos() const;
     [[nodiscard]] bool isMovementDirectionForward() const;
 
@@ -34,6 +35,7 @@ protected:
     void calcVelocities();
     bool shouldChangeDirection() const;
     void calcDirectionChange();
+    void calcNextIndices();
 
     s16 m_railIdx;
     u16 m_pointCount;

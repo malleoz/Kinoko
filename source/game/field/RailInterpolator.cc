@@ -32,6 +32,11 @@ f32 RailInterpolator::railLength() const {
     return RailManager::Instance()->rail(m_railIdx)->getPathLength();
 }
 
+const System::MapdataPointInfo::Point &RailInterpolator::curPoint() const {
+    ASSERT(m_currPointIdx < m_points.size());
+    return m_points[m_currPointIdx];
+}
+
 const EGG::Vector3f &RailInterpolator::curPos() const {
     return m_curPos;
 }
@@ -85,6 +90,26 @@ void RailInterpolator::calcDirectionChange() {
     m_movementDirectionForward = !m_movementDirectionForward;
 }
 
+void RailInterpolator::calcNextIndices() {
+    if (m_movementDirectionForward) {
+        ++m_currPointIdx;
+        ++m_nextPointIdx;
+    } else {
+        --m_currPointIdx;
+        --m_nextPointIdx;
+    }
+
+    if (!m_isOscillating) {
+        if (m_nextPointIdx == m_pointCount) {
+            m_nextPointIdx = 0;
+        }
+
+        if (m_currPointIdx == m_pointCount) {
+            m_currPointIdx = 0;
+        }
+    }
+}
+
 /// @addr{0x806EFDC4}
 RailLinearInterpolator::RailLinearInterpolator(f32 speed, u32 idx) : RailInterpolator(speed, idx) {
     m_transitions = RailManager::Instance()->rail(m_railIdx)->getLinearTransitions();
@@ -134,9 +159,13 @@ u32 RailLinearInterpolator::calc() {
         return 0;
     }
 
+    u32 status = 1;
+
     calcNextSegment();
 
     if (shouldChangeDirection()) {
+        status = 2;
+
         calcDirectionChange();
     }
 
@@ -145,7 +174,7 @@ u32 RailLinearInterpolator::calc() {
     m_currSegmentVel = m_currVel / m_currentDirection.length();
     m_curTangentDir.normalise2();
 
-    return 1;
+    return status;
 }
 
 /// @addr{0x806EFFF4}
@@ -229,23 +258,7 @@ void RailLinearInterpolator::getPathLocation(f32 t, s16 &idx, f32 &len) {
 
 /// @addr{0x806F0610}
 void RailLinearInterpolator::calcNextSegment() {
-    if (m_movementDirectionForward) {
-        ++m_currPointIdx;
-        ++m_nextPointIdx;
-    } else {
-        --m_currPointIdx;
-        --m_nextPointIdx;
-    }
-
-    if (!m_isOscillating) {
-        if (m_nextPointIdx == m_pointCount) {
-            m_nextPointIdx = 0;
-        }
-
-        if (m_currPointIdx == m_pointCount) {
-            m_currPointIdx = 0;
-        }
-    }
+    calcNextIndices();
 
     f32 prevDirLength = m_currentDirection.length();
     m_currentDirection = m_points[m_nextPointIdx].pos - m_points[m_currPointIdx].pos;
@@ -337,9 +350,13 @@ u32 RailSmoothInterpolator::calc() {
         return 0;
     }
 
+    u32 status = 1;
+
     calcNextSegment();
 
     if (shouldChangeDirection()) {
+        status = 2;
+
         calcDirectionChange();
     }
 
@@ -349,7 +366,7 @@ u32 RailSmoothInterpolator::calc() {
         m_currSegmentVel = m_currVel * m_transitions[m_nextPointIdx].m_lengthInv;
     }
 
-    return 1;
+    return status;
 }
 
 /// @addr{0x806EEB94}
@@ -527,23 +544,7 @@ void RailSmoothInterpolator::calcNextSegment() {
         m_segmentT = 0.99f;
     }
 
-    if (m_movementDirectionForward) {
-        ++m_currPointIdx;
-        ++m_nextPointIdx;
-    } else {
-        --m_currPointIdx;
-        --m_nextPointIdx;
-    }
-
-    if (!m_isOscillating) {
-        if (m_nextPointIdx == m_pointCount) {
-            m_nextPointIdx = 0;
-        }
-
-        if (m_currPointIdx == m_pointCount) {
-            m_currPointIdx = 0;
-        }
-    }
+    calcNextIndices();
 
     if (m_usePerPointVelocities) {
         calcVelocities();
