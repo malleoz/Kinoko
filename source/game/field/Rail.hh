@@ -95,9 +95,9 @@ private:
 
     void invalidateTransitions(bool lastOnly);
     void calcCubicBezierControlPoints(const EGG::Vector3f &p0, const EGG::Vector3f &p1,
-            const EGG::Vector3f &p2, const EGG::Vector3f &p3, u32 count,
+            const EGG::Vector3f &p2, const EGG::Vector3f &p3, s32 count,
             RailSplineTransition &transition);
-    f32 estimateLength(const RailSplineTransition &transition, u32 count);
+    f32 estimateLength(const RailSplineTransition &transition, s32 count);
     EGG::Vector3f calcCubicBezierP1(const EGG::Vector3f &p0, const EGG::Vector3f &p1,
             const EGG::Vector3f &p2) const;
     EGG::Vector3f calcCubicBezierP2(const EGG::Vector3f &p0, const EGG::Vector3f &p1,
@@ -109,7 +109,7 @@ private:
     u32 m_estimatorSampleCount;
     f32 m_estimatorStep;
     std::vector<f32> m_pathPercentages;
-    u32 m_segmentCount;
+    s32 m_segmentCount;
     f32 m_pathLength;
     bool m_doNotAllocatePathPercentages;
 };

@@ -30,6 +30,8 @@ public:
 protected:
     void calcTransform();
     void setMatrixTangentTo(const EGG::Vector3f &up, const EGG::Vector3f &tangent);
+    void FUN_808218B0(const EGG::Vector3f &v);
+    [[nodiscard]] EGG::Matrix34f FUN_806B3CA4(const EGG::Vector3f &v);
 
     ObjectId m_id;
     RailInterpolator *m_railInterpolator;

@@ -33,7 +33,7 @@ bool ObjectCollisionBase::check(ObjectCollisionBase &rhs, EGG::Vector3f &distanc
         }
 
         state.m_support1[state.m_idx] = getSupport(-D);
-        state.m_support2[state.m_idx] = rhs.getSupport(D);
+        state.m_support2[state.m_idx] = rhs.getSupport(D); // wrong
 
         EGG::Vector3f A = state.m_support1[state.m_idx] - state.m_support2[state.m_idx];
         f32 max2 = max * max;
@@ -48,10 +48,10 @@ bool ObjectCollisionBase::check(ObjectCollisionBase &rhs, EGG::Vector3f &distanc
         if (inSimplex(state, A) || (max2 - dot) < max2 * 0.000001f) {
             getNearestPoint(state, state.m_flags, v0, v1);
 
-            v0 -= D * (getBoundingRadius() / max);
+            v0 -= D * (getBoundingRadius() / max); // D is wrong
             v1 += D * (rhs.getBoundingRadius() / max);
 
-            distance = v1 - v0;
+            distance = v1 - v0; // v1 and v0 wrong
 
             m_00 = v0;
             rhs.m_00 = v1;
@@ -148,7 +148,7 @@ bool ObjectCollisionBase::getNearestSimplex(GJKState &state, EGG::Vector3f &v) c
 
     if (FUN_808357e4(state, state.m_mask)) {
         state.m_flags = state.m_mask;
-        v = state.m_s[state.m_idx];
+        v = state.m_s[state.m_idx]; // wrong first call, off by -0.22
 
         return true;
     }

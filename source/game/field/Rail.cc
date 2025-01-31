@@ -141,7 +141,7 @@ RailSpline::RailSpline(u16 idx, System::MapdataPointInfo *info) : Rail(idx, info
     m_transitionCount = m_isOscillating ? m_pointCount - 1 : m_pointCount;
     m_transitions.resize(m_transitionCount);
     m_estimatorSampleCount = 10;
-    m_estimatorStep = std::numeric_limits<f32>::infinity();
+    m_estimatorStep = 1.0f / static_cast<f32>(m_estimatorSampleCount);
 
     // This is normally not set until AFTER the call to invalidatTransitions,
     // but the expected behavior requires that this is set to false.
@@ -222,7 +222,7 @@ void RailSpline::onPointAdded() {
 /// @addr{0x806EDA04}
 void RailSpline::invalidateTransitions(bool lastOnly) {
     if (!m_doNotAllocatePathPercentages) {
-        m_pathPercentages.resize(m_estimatorSampleCount * m_transitionCount);
+        m_pathPercentages.resize(m_estimatorSampleCount * m_transitionCount + 1);
     }
 
     m_segmentCount = 0;
@@ -296,9 +296,9 @@ void RailSpline::invalidateTransitions(bool lastOnly) {
 
 /// @addr{0x806EE27C}
 void RailSpline::calcCubicBezierControlPoints(const EGG::Vector3f &p0, const EGG::Vector3f &p1,
-        const EGG::Vector3f &p2, const EGG::Vector3f &p3, u32 count,
+        const EGG::Vector3f &p2, const EGG::Vector3f &p3, s32 count,
         RailSplineTransition &transition) {
-    transition.m_p0 = p0;
+    transition.m_p0 = p1;
     transition.m_p1 = calcCubicBezierP1(p0, p1, p2);
     transition.m_p2 = calcCubicBezierP2(p1, p2, p3);
     transition.m_p3 = p2;
@@ -307,21 +307,21 @@ void RailSpline::calcCubicBezierControlPoints(const EGG::Vector3f &p0, const EGG
 }
 
 /// @addr{0x806EE56C}
-f32 RailSpline::estimateLength(const RailSplineTransition &transition, u32 count) {
+f32 RailSpline::estimateLength(const RailSplineTransition &transition, s32 count) {
     std::array<EGG::Vector3f, 11> waypoints;
 
-    for (size_t i = 0; i < count + 1; ++i) {
+    for (s32 i = 0; i < count + 1; ++i) {
         waypoints[i] = cubicBezier(m_estimatorStep * static_cast<f32>(i), transition);
     }
     f32 fVar1 = 0.0f;
 
-    for (size_t i = 0; i < count; ++i) {
+    for (s32 i = 0; i < count; ++i) {
         m_pathPercentages[m_segmentCount++] = fVar1;
         EGG::Vector3f vec = waypoints[i] - waypoints[i + 1];
-        fVar1 = m_estimatorStep + vec.length();
+        fVar1 += vec.length();
     }
 
-    for (size_t i = m_segmentCount - 1; i > m_segmentCount - count - 1; --i) {
+    for (s32 i = m_segmentCount - 1; i > m_segmentCount - count - 1; --i) {
         m_pathPercentages[i] /= fVar1;
     }
 
@@ -332,7 +332,9 @@ f32 RailSpline::estimateLength(const RailSplineTransition &transition, u32 count
 EGG::Vector3f RailSpline::calcCubicBezierP1(const EGG::Vector3f &p0, const EGG::Vector3f &p1,
         const EGG::Vector3f &p2) const {
     EGG::Vector3f res = p2 - p0;
-    res *= res.length() * m_someScale;
+    f32 len = res.length();
+    res.normalise2();
+    res *= len * m_someScale;
     res = p1 + res;
     return res;
 }
@@ -341,7 +343,9 @@ EGG::Vector3f RailSpline::calcCubicBezierP1(const EGG::Vector3f &p0, const EGG::
 EGG::Vector3f RailSpline::calcCubicBezierP2(const EGG::Vector3f &p0, const EGG::Vector3f &p1,
         const EGG::Vector3f &p2) const {
     EGG::Vector3f res = p0 - p2;
-    res *= res.length() * m_someScale;
+    f32 len = res.length();
+    res.normalise2();
+    res *= len * m_someScale;
     res = p1 + res;
     return res;
 }
@@ -351,8 +355,8 @@ EGG::Vector3f RailSpline::cubicBezier(f32 t, const RailSplineTransition &transit
     f32 dt = 1.0f - t;
 
     EGG::Vector3f res = transition.m_p0 * (dt * dt * dt);
-    res += transition.m_p1 * (3.0f * t * dt * dt);
-    res += transition.m_p2 * (3.0f * t * t * dt);
+    res += transition.m_p1 * (3.0f * t * (dt * dt));
+    res += transition.m_p2 * (3.0f * (t * t) * dt);
     res += transition.m_p3 * (t * t * t);
 
     return res;

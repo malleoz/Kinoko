@@ -28,6 +28,7 @@ public:
 
     [[nodiscard]] const System::MapdataPointInfo::Point &curPoint() const;
     [[nodiscard]] const EGG::Vector3f &curPos() const;
+    [[nodiscard]] const EGG::Vector3f &curTangentDir() const;
     [[nodiscard]] bool isMovementDirectionForward() const;
 
 protected:

@@ -512,11 +512,11 @@ void KartCollide::calcObjectCollision() {
         if (reaction != Reaction::None && reaction != Reaction::UNK_7) {
             size_t handlerIdx = static_cast<std::underlying_type_t<Reaction>>(reaction);
             Action action = (this->*s_objectCollisionHandlers[handlerIdx])(i);
-            static_cast<void>(action); // Ignore for now
+            static_cast<void>(action);
 
             if (reaction != Reaction::SmallBump && reaction != Reaction::BigBump) {
                 const EGG::Vector3f &hitDepth = objectDirector->hitDepth(i);
-                m_tangentOff += hitDepth;
+                m_tangentOff += hitDepth; // hitDepth really wrong
                 m_movement += hitDepth;
             }
         }
@@ -706,7 +706,7 @@ void KartCollide::applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitbo
         return;
     }
 
-    f32 velDotFloorNrm = colData.vel.dot(colData.floorNrm);
+    f32 velDotFloorNrm = colData.vel.dot(colData.floorNrm); // colData.vel wrong
 
     if (velDotFloorNrm >= 0.0f) {
         return;
@@ -777,7 +777,7 @@ void KartCollide::applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitbo
 
     projRejSum = projRejSum.rej(nextDir);
 
-    dynamics()->setExtVel(dynamics()->extVel() + projRejSum);
+    dynamics()->setExtVel(dynamics()->extVel() + projRejSum); // projRejSum.x wrong
 
     if (b3) {
         EGG::Vector3f rotation = colData.relPos.cross(projRejSumOrig);

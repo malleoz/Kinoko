@@ -41,6 +41,10 @@ const EGG::Vector3f &RailInterpolator::curPos() const {
     return m_curPos;
 }
 
+const EGG::Vector3f &RailInterpolator::curTangentDir() const {
+    return m_curTangentDir;
+}
+
 bool RailInterpolator::isMovementDirectionForward() const {
     return m_movementDirectionForward;
 }
@@ -338,9 +342,9 @@ u32 RailSmoothInterpolator::calc() {
 
     m_prevPos = m_curPos;
 
-    f32 t = m_movementDirectionForward ? calcT(m_segmentT) : calcT(1.0f - m_segmentT);
+    f32 t = m_movementDirectionForward ? calcT(m_segmentT) : calcT(1.0f - m_segmentT); // m_segmentT correct
 
-    calcCubicBezier(t, m_currPointIdx, m_nextPointIdx, m_curPos, m_curTangentDir);
+    calcCubicBezier(t, m_currPointIdx, m_nextPointIdx, m_curPos, m_curTangentDir); // t wrong
 
     EGG::Vector3f deltaPos = m_curPos - m_prevPos;
     m_velocity = deltaPos.length();
@@ -471,8 +475,8 @@ EGG::Vector3f RailSmoothInterpolator::calcCubicBezierPos(f32 t,
     f32 dt = 1.0f - t;
 
     EGG::Vector3f res = trans.m_p0 * (dt * dt * dt);
-    res += trans.m_p1 * (3.0f * t * dt * dt);
-    res += trans.m_p2 * (3.0f * t * t * dt);
+    res += trans.m_p1 * (3.0f * t * (dt * dt));
+    res += trans.m_p2 * (3.0f * (t * t) * dt);
     res += trans.m_p3 * (t * t * t);
 
     return res;
@@ -504,7 +508,7 @@ f32 RailSmoothInterpolator::calcT(f32 t) const {
 
     for (u32 i = 0; i < m_estimatorSampleCount - 1; ++i) {
         f32 currPercent = m_pathPercentages[sampleIdx + i];
-        f32 nextPercent = m_pathPercentages[sampleIdx + i + 1];
+        f32 nextPercent = m_pathPercentages[sampleIdx + i + 1]; // m_pathPercentages[1-9] are wrong
 
         if (t >= currPercent && t < nextPercent) {
             delta = (t - currPercent) / (nextPercent - currPercent);

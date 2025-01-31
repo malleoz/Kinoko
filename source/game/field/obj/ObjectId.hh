@@ -6,6 +6,7 @@ namespace Field {
 
 enum class ObjectId {
     DummyPole = 0x066,
+    PenguinM = 0xd8,
     DokanSFC = 0x12e,
     OilSFC = 0x15d,
     Kuribo = 0x191,
