@@ -22,6 +22,7 @@ enum class ObjectId {
     KinokoUd = 0x1f5,
     KinokoBend = 0x1f6,
     KinokoNm = 0x1fa,
+    TwistedWay = 0x1fe,
     Turibashi = 0x202,
     Aurora = 0x204,
     Ami = 0x20e,

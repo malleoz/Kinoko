@@ -13,4 +13,5 @@
 #include "game/field/obj/ObjectParasolR.hh"
 #include "game/field/obj/ObjectPuchiPakkun.hh"
 #include "game/field/obj/ObjectTuribashi.hh"
+#include "game/field/obj/ObjectTwistedWay.hh"
 #include "game/field/obj/ObjectWLWallGC.hh"
