@@ -196,6 +196,8 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
         return new ObjectKinokoBend(params);
     case ObjectId::KinokoNm:
         return new ObjectKinokoNm(params);
+    case ObjectId::TwistedWay:
+        return new ObjectTwistedWay(params);
     case ObjectId::Turibashi:
         return new ObjectTuribashi(params);
     case ObjectId::Aurora:
