@@ -43,6 +43,7 @@ public:
     void setTotalForce(const EGG::Vector3f &v);
     void setExtVel(const EGG::Vector3f &v);
     void setAngVel0(const EGG::Vector3f &v);
+    void setMovingObjVel(const EGG::Vector3f &v);
     void setAngVel2(const EGG::Vector3f &v);
     void setAngVel0YFactor(f32 val);
     void setTop_(const EGG::Vector3f &v);
@@ -63,6 +64,7 @@ public:
     [[nodiscard]] const EGG::Vector3f &totalForce() const;
     [[nodiscard]] const EGG::Vector3f &extVel() const;
     [[nodiscard]] const EGG::Vector3f &angVel0() const;
+    [[nodiscard]] const EGG::Vector3f &movingObjVel() const;
     [[nodiscard]] const EGG::Vector3f &angVel2() const;
     [[nodiscard]] f32 speedFix() const;
     /// @endGetters

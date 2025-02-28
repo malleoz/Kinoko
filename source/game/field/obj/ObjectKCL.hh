@@ -70,6 +70,7 @@ public:
 
     virtual void update(u32 timeOffset);
     virtual void calcScale(u32 timeOffset);
+    virtual void setSomePos(const EGG::Vector3f &v);
 
     [[nodiscard]] virtual const EGG::Matrix34f &getUpdatedMatrix(u32 timeOffset);
     [[nodiscard]] virtual f32 getScaleY() const;

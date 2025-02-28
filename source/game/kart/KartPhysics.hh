@@ -27,6 +27,8 @@ public:
     void composeStuntRot(const EGG::Quatf &rot);
     void composeExtraRot(const EGG::Quatf &rot);
     void composeDecayingRot(const EGG::Quatf &rot);
+    void composeDecayingMovingObjVel(f32 scalar1, f32 scalar2, bool floor);
+    void composeMovingObjVel(const EGG::Vector3f &v, f32 exp);
     void clearDecayingRot();
     /// @endSetters
 
@@ -55,6 +57,7 @@ private:
     EGG::Quatf m_decayingExtraRot;
     EGG::Quatf m_instantaneousExtraRot;
     EGG::Quatf m_extraRot;
+    EGG::Vector3f m_movingObjVel;
     EGG::Matrix34f m_pose;    ///< The kart's current rotation and position.
     EGG::Vector3f m_xAxis;    ///< The first column of the pose.
     EGG::Vector3f m_yAxis;    ///< The second column of the pose.

@@ -28,6 +28,7 @@ void KartPhysics::reset() {
     m_decayingExtraRot = EGG::Quatf::ident;
     m_instantaneousExtraRot = EGG::Quatf::ident;
     m_extraRot = EGG::Quatf::ident;
+    m_movingObjVel = EGG::Vector3f::zero;
     m_pose = EGG::Matrix34f::ident;
     m_xAxis = EGG::Vector3f(m_pose[0, 0], m_pose[1, 0], m_pose[2, 0]);
     m_yAxis = EGG::Vector3f(m_pose[0, 1], m_pose[1, 1], m_pose[2, 1]);
@@ -91,6 +92,18 @@ void KartPhysics::composeExtraRot(const EGG::Quatf &rot) {
 /// @addr{0x8059FDD0}
 void KartPhysics::composeDecayingRot(const EGG::Quatf &rot) {
     m_decayingStuntRot *= rot;
+}
+
+/// @addr{0x805A00D0}
+void KartPhysics::composeDecayingMovingObjVel(f32 scalar1, f32 scalar2, bool floor) {
+    m_movingObjVel *= floor ? scalar1 : scalar2;
+    m_dynamics->setMovingObjVel(m_movingObjVel);
+}
+
+/// @addr{0x805A0050}
+void KartPhysics::composeMovingObjVel(const EGG::Vector3f &v, f32 exp) {
+    m_movingObjVel += (v - m_movingObjVel) * exp;
+    dynamics()->setMovingObjVel(m_movingObjVel);
 }
 
 /// @addr{0x805A0410}

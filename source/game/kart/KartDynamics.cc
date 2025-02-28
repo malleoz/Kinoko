@@ -34,6 +34,7 @@ void KartDynamics::init() {
     m_extVel = EGG::Vector3f::zero;
     m_acceleration = EGG::Vector3f::zero;
     m_angVel0 = EGG::Vector3f::zero;
+    m_movingObjVel = EGG::Vector3f::zero;
     m_angVel1 = EGG::Vector3f::zero;
     m_velocity = EGG::Vector3f::zero;
     m_speedNorm = 0.0f;
@@ -269,6 +270,10 @@ void KartDynamics::setAngVel0(const EGG::Vector3f &v) {
     m_angVel0 = v;
 }
 
+void KartDynamics::setMovingObjVel(const EGG::Vector3f &v) {
+    m_movingObjVel = v;
+}
+
 void KartDynamics::setAngVel2(const EGG::Vector3f &v) {
     m_angVel2 = v;
 }
@@ -335,6 +340,10 @@ const EGG::Vector3f &KartDynamics::extVel() const {
 
 const EGG::Vector3f &KartDynamics::angVel0() const {
     return m_angVel0;
+}
+
+const EGG::Vector3f &KartDynamics::movingObjVel() const {
+    return m_movingObjVel;
 }
 
 const EGG::Vector3f &KartDynamics::angVel2() const {

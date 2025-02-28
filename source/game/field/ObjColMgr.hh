@@ -72,6 +72,7 @@ public:
     void setMtx(const EGG::Matrix34f &mtx);
     void setInvMtx(const EGG::Matrix34f &mtx);
     void setScale(f32 val);
+    void set68(const EGG::Vector3f &v);
     /// @endSetters
 
 private:
@@ -79,6 +80,7 @@ private:
     EGG::Matrix34f m_mtx;
     EGG::Matrix34f m_mtxInv;
     f32 m_kclScale;
+    EGG::Vector3f _68;
 };
 
 } // namespace Field

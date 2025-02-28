@@ -279,6 +279,11 @@ void ObjectKCL::calcScale(u32 timeOffset) {
     m_lastScaleUpdateFrame = time;
 }
 
+/// @addr{0x80681450}
+void ObjectKCL::setSomePos(const EGG::Vector3f &v) {
+    m_objColMgr->set68(v);
+}
+
 /// @addr{0x807FEAC0}
 const EGG::Matrix34f &ObjectKCL::getUpdatedMatrix(u32 /*timeOffset*/) {
     calcTransform();

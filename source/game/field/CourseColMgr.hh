@@ -37,7 +37,7 @@ public:
         void updateWall(f32 dist, const EGG::Vector3f &fnrm);
         void update(f32 now_dist, const EGG::Vector3f &offset, const EGG::Vector3f &fnrm,
                 u32 kclAttributeTypeBit);
-        void transformInfo(CollisionInfo &rhs, const EGG::Matrix34f &mtx);
+        void transformInfo(CollisionInfo &rhs, const EGG::Matrix34f &mtx, const EGG::Vector3f &v);
     };
 
     struct NoBounceWallColInfo {

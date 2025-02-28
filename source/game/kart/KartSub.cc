@@ -167,7 +167,9 @@ void KartSub::calcPass1() {
 
     state()->resetEjection();
 
+    _44 = 0;
     m_floorCollisionCount = 0;
+    m_roadVelocity.setZero();
     m_maxSuspOvertravel.setZero();
     m_minSuspOvertravel.setZero();
 
@@ -309,6 +311,8 @@ void KartSub::calcPass1() {
 
     move()->setFloorCollisionCount(m_floorCollisionCount);
 
+    calcMovingObj();
+
     physics()->updatePose();
 
     collide()->resetHitboxes();
@@ -323,8 +327,13 @@ void KartSub::resizeAABB(f32 radiusScale) {
 }
 
 /// @addr{0x805980D8}
-void KartSub::addFloor(const CollisionData &, bool) {
+void KartSub::addFloor(const CollisionData &colData, bool) {
     ++m_floorCollisionCount;
+
+    if (colData.bUNK10) {
+        ++_44;
+        m_roadVelocity += colData._58;
+    }
 }
 
 /// @addr{0x805979EC}
@@ -353,6 +362,17 @@ void KartSub::tryEndHWG() {
     }
 
     dynamics()->setForceUpright(!state()->isSoftWallDrift());
+}
+
+/// @addr{0x80597A88}
+void KartSub::calcMovingObj() {
+    if (_44 == 0) {
+        f32 scalar = state()->airtime() < 20 ? 1.0f : 0.9f;
+        physics()->composeDecayingMovingObjVel(0.7f, scalar, m_floorCollisionCount != 0);
+    } else {
+        m_roadVelocity *= 1.0f / static_cast<f32>(m_floorCollisionCount);
+        physics()->composeMovingObjVel(m_roadVelocity, 0.2f);
+    }
 }
 
 f32 KartSub::someScale() {

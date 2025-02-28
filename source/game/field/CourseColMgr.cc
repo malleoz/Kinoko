@@ -629,7 +629,7 @@ void CourseColMgr::CollisionInfo::update(f32 now_dist, const EGG::Vector3f &offs
 
 /// @addr{0x807C26AC}
 void CourseColMgr::CollisionInfo::transformInfo(CourseColMgr::CollisionInfo &rhs,
-        const EGG::Matrix34f &mtx) {
+        const EGG::Matrix34f &mtx, const EGG::Vector3f &v) {
     rhs.bbox.min = mtx.ps_multVector33(rhs.bbox.min);
     rhs.bbox.max = mtx.ps_multVector33(rhs.bbox.max);
 
@@ -651,7 +651,12 @@ void CourseColMgr::CollisionInfo::transformInfo(CourseColMgr::CollisionInfo &rhs
         wallNrm = mtx.ps_multVector33(rhs.wallNrm);
     }
 
-    perpendicularity = std::min(perpendicularity, rhs.perpendicularity);
+    if (_50 < rhs.floorDist) {
+        _50 = rhs.floorDist;
+        _3c = v;
+    }
+
+    perpendicularity = std::max(perpendicularity, rhs.perpendicularity);
 }
 
 CourseColMgr *CourseColMgr::s_instance = nullptr; ///< @addr{0x809C3C10}
