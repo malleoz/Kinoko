@@ -49,8 +49,10 @@ void KartAction::calcVehicleSpeed() {
 bool KartAction::start(Action action) {
     ASSERT(action != Action::None);
 
-    if (state()->isInRespawn() || state()->isAfterRespawn() || state()->isBeforeRespawn() ||
-            state()->isInCannon()) {
+    KartStatus &status = KartObjectProxy::status();
+
+    if (status.onBit(eKartStatus::InRespawn, eKartStatus::AfterRespawn, eKartStatus::BeforeRespawn,
+                eKartStatus::InCannon)) {
         return false;
     }
 
@@ -66,7 +68,7 @@ bool KartAction::start(Action action) {
     m_onStart = s_onStart[actionIdx];
     m_onCalc = s_onCalc[actionIdx];
     m_onEnd = s_onEnd[actionIdx];
-    state()->setInAction(true);
+    status.setBit(eKartStatus::InAction);
     m_frame = 0;
     m_flags.makeAllZero();
     m_up = move()->up();
@@ -126,7 +128,7 @@ void KartAction::calcSideFromHitDepthAndTranslation() {
 
 /// @addr{0x80567B98}
 void KartAction::end() {
-    state()->setInAction(false);
+    status().resetBit(eKartStatus::InAction);
     dynamics()->setForceUpright(true);
 
     m_currentAction = Action::None;
@@ -189,7 +191,7 @@ void KartAction::calcUp() {
 }
 
 void KartAction::calcLanding() {
-    if (m_currentAngle < m_targetRot || !state()->isTouchingGround()) {
+    if (m_currentAngle < m_targetRot || status().offBit(eKartStatus::TouchingGround)) {
         return;
     }
 

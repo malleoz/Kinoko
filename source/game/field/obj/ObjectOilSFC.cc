@@ -15,7 +15,8 @@ ObjectOilSFC::~ObjectOilSFC() = default;
 Kart::Reaction ObjectOilSFC::onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
         Kart::Reaction /*reactionOnObj*/, EGG::Vector3f &hitDepth) {
     hitDepth = EGG::Vector3f::zero;
-    return kartObj->state()->isTouchingGround() ? reactionOnKart : Kart::Reaction::None;
+    const Kart::KartStatus &status = kartObj->status();
+    return status.onBit(Kart::eKartStatus::TouchingGround) ? reactionOnKart : Kart::Reaction::None;
 }
 
 } // namespace Field

@@ -85,7 +85,9 @@ void KartJump::reset() {
 
 /// @addr{0x80575D7C}
 void KartJump::tryStart(const EGG::Vector3f &left) {
-    if (!state()->isTrickStart()) {
+    KartStatus &status = KartObjectProxy::status();
+
+    if (status.offBit(eKartStatus::TrickStart)) {
         return;
     }
 
@@ -103,14 +105,14 @@ void KartJump::tryStart(const EGG::Vector3f &left) {
         start(left);
     }
 
-    state()->setTrickStart(false);
+    status.resetBit(eKartStatus::TrickStart);
 }
 
 /// @addr{0x805763E4}
 void KartJump::calc() {
     m_cooldown = std::max(0, m_cooldown - 1);
 
-    if (state()->isTrickRot()) {
+    if (status().onBit(eKartStatus::TrickRot)) {
         calcRot();
     }
 
@@ -118,8 +120,8 @@ void KartJump::calc() {
 }
 
 bool KartJump::someFlagCheck() {
-    return state()->isInAction() || state()->isTrickStart() || state()->isInATrick() ||
-            state()->isOverZipper();
+    return status().onBit(eKartStatus::InAction, eKartStatus::TrickStart,
+            eKartStatus::InATrick, eKartStatus::OverZipper);
 }
 
 /// @addr{0x80575B38}
@@ -133,19 +135,22 @@ void KartJump::calcInput() {
         m_nextAllowTimer = TRICK_ALLOW_TIMER;
     }
 
+    KartStatus &status = KartObjectProxy::status();
+
     u32 airtime = state()->airtime();
     if (airtime == 0 || m_nextAllowTimer < 1 || airtime > 10 ||
-            (!state()->isTrickable() && state()->boostRampType() < 0) || someFlagCheck()) {
+            (status.offBit(eKartStatus::Trickable) && state()->boostRampType() < 0) ||
+            someFlagCheck()) {
         m_nextAllowTimer = std::max(0, m_nextAllowTimer - 1);
     } else {
         if (airtime > 2) {
-            state()->setTrickStart(true);
+            status.setBit(eKartStatus::TrickStart);
         }
-        if (state()->isRampBoost()) {
+        if (status.onBit(eKartStatus::RampBoost)) {
             m_boostRampEnabled = true;
         }
     }
-    if (state()->isTouchingGround() &&
+    if (status.onBit(eKartStatus::TouchingGround) &&
             collide()->surfaceFlags().offBit(KartCollide::eSurfaceFlags::BoostRamp)) {
         m_boostRampEnabled = false;
     }
@@ -153,12 +158,13 @@ void KartJump::calcInput() {
 
 /// @addr{0x805766B8}
 void KartJump::end() {
-    if (state()->isTrickRot()) {
+    KartStatus &status = KartObjectProxy::status();
+
+    if (status.onBit(eKartStatus::TrickRot)) {
         physics()->composeDecayingStuntRot(m_rot);
     }
 
-    state()->setInATrick(false);
-    state()->setTrickRot(false);
+    status.resetBit(eKartStatus::InATrick, eKartStatus::TrickRot);
     m_boostRampEnabled = false;
 }
 
@@ -190,7 +196,7 @@ void KartJump::setAngle(const EGG::Vector3f &left) {
     u32 weightClass = static_cast<u32>(param()->stats().weightClass);
     f32 targetAngle = ANGLE_PROPERTIES[weightClass][static_cast<u32>(m_variant)].targetAngle;
 
-    if (state()->isJumpPad() || angle > targetAngle) {
+    if (status().onBit(eKartStatus::JumpPad) || angle > targetAngle) {
         return;
     }
 
@@ -210,7 +216,7 @@ void KartJump::setAngle(const EGG::Vector3f &left) {
 void KartJump::start(const EGG::Vector3f &left) {
     init();
     setAngle(left);
-    state()->setInATrick(true);
+    status().setBit(eKartStatus::InATrick);
     m_cooldown = 5;
 }
 
@@ -230,7 +236,7 @@ void KartJump::init() {
     }
 
     setupProperties();
-    state()->setTrickRot(true);
+    status().setBit(eKartStatus::TrickRot);
 }
 
 KartJumpBike::KartJumpBike(KartMove *move) : KartJump(move) {}
@@ -306,7 +312,7 @@ void KartJumpBike::init() {
         setupProperties();
     }
 
-    state()->setTrickRot(true);
+    status().setBit(eKartStatus::TrickRot);
 }
 
 } // namespace Kart

@@ -420,6 +420,14 @@ u32 KartObjectProxy::wallKclVariant() const {
     return collisionData().closestWallSettings;
 }
 
+KartStatus &KartObjectProxy::status() {
+    return state()->status();
+}
+
+const KartStatus &KartObjectProxy::status() const {
+    return state()->status();
+}
+
 /// @addr{0x805901D0}
 void KartObjectProxy::apply(size_t idx) {
     m_accessor = KartObjectManager::Instance()->object(idx)->accessor();
