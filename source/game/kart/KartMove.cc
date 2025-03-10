@@ -357,7 +357,7 @@ void KartMove::calcRespawnBoost() {
         if (state()->flags().onBit(KartState::eFlag::TouchingGround)) {
             if (m_respawnPreLandTimer > 0) {
                 if (state()->flags().offBit(KartState::eFlag::BeforeRespawn) &&
-                        !state()->flags().onBit(KartState::eFlag::InAction)) {
+                        state()->flags().offBit(KartState::eFlag::InAction)) {
                     activateBoost(KartBoost::Type::AllMt, RESPAWN_BOOST_DURATION);
                     m_respawnTimer = RESPAWN_BOOST_DURATION;
                 }
@@ -2198,7 +2198,8 @@ void KartMove::exitCannon() {
         return;
     }
 
-    state()->flags().resetBit(KartState::eFlag::InCannon, KartState::eFlag::SkipWheelCalc, KartState::eFlag::AfterCannon);
+    state()->flags().resetBit(KartState::eFlag::InCannon, KartState::eFlag::SkipWheelCalc,
+            KartState::eFlag::AfterCannon);
     dynamics()->setIntVel(m_cannonEntryOfs * m_speed);
 }
 
