@@ -323,35 +323,35 @@ private:
         EI ei = static_cast<EI>(e);
         ASSERT(ei < N);
         auto dv = std::div(ei, 8 * sizeof(u32));
-        set(dv.quot, 1 << dv.rem);
+        set(dv.quot, makeMask_(dv.rem));
     }
 
     constexpr void resetBit_(E e) {
         EI ei = static_cast<EI>(e);
         ASSERT(ei < N);
         auto dv = std::div(ei, 8 * sizeof(u32));
-        reset(dv.quot, 1 << dv.rem);
+        reset(dv.quot, makeMask_(dv.rem));
     }
 
     [[nodiscard]] constexpr bool onBit_(E e) const {
         EI ei = static_cast<EI>(e);
         ASSERT(ei < N);
         auto dv = std::div(ei, 8 * sizeof(u32));
-        return on(dv.quot, 1 << dv.rem);
+        return on(dv.quot, makeMask_(dv.rem));
     }
 
     [[nodiscard]] constexpr bool offBit_(E e) const {
         EI ei = static_cast<EI>(e);
         ASSERT(ei < N);
         auto dv = std::div(ei, 8 * sizeof(u32));
-        return off(dv.quot, 1 << dv.rem);
+        return off(dv.quot, makeMask_(dv.rem));
     }
 
     [[nodiscard]] constexpr void changeBit_(bool on, E e) {
         EI ei = static_cast<EI>(e);
         ASSERT(ei < N);
         auto dv = std::div(ei, 8 * sizeof(u32));
-        on ? set(dv.quot, 1 << dv.rem) : reset(dv.quot, dv.rem);
+        on ? set(dv.quot, makeMask_(dv.rem)) : reset(dv.quot, makeMask_(dv.rem));
     }
 
     constexpr TBitFlagExt<N, E> &set(size_t idx, u32 mask) {
