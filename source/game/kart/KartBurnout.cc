@@ -72,7 +72,7 @@ bool KartBurnout::calcEnd(u32 duration) {
 
 /// @addr{0x80589844}
 void KartBurnout::activate() {
-    state()->flags().resetBit(KartState::eFlag::Burnout);
+    state()->flags().setBit(KartState::eFlag::Burnout);
 }
 
 /// @addr{0x80589818}

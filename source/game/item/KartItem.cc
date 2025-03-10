@@ -51,7 +51,7 @@ void KartItem::calc() {
             const auto *raceMgr = System::RaceManager::Instance();
             bool canUse = m_flags.onBit(eFlags::ItemButtonActivation);
             canUse = canUse && raceMgr->isStageReached(System::RaceManager::Stage::Race);
-            canUse = canUse && !state()->flags().onBit(Kart::KartState::eFlag::InAction);
+            canUse = canUse && state()->flags().offBit(Kart::KartState::eFlag::InAction);
             canUse = canUse && state()->flags().offBit(Kart::KartState::eFlag::Burnout);
             canUse = canUse && (m_inventory.id() != ItemId::NONE);
 
