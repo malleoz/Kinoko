@@ -973,7 +973,7 @@ void KartMove::calcManualDrift() {
 
     m_flags.resetBit(eFlags::DriftReset);
 
-    if (state()->flags().onBit(KartState::eFlag::DriftManual)) {
+    if (state()->flags().offBit(KartState::eFlag::DriftManual)) {
         if (!isHopping && state()->flags().onBit(KartState::eFlag::TouchingGround)) {
             resetDriftManual();
 
@@ -1067,7 +1067,7 @@ void KartMove::releaseMt() {
     }
 
     if (state()->flags().offBit(KartState::eFlag::BeforeRespawn) &&
-            !state()->flags().onBit(KartState::eFlag::InAction)) {
+            state()->flags().offBit(KartState::eFlag::InAction)) {
         activateBoost(KartBoost::Type::AllMt, mtLength);
     }
 
@@ -1179,7 +1179,7 @@ void KartMove::calcRotation() {
         }
     }
 
-    if (!state()->flags().onBit(KartState::eFlag::InAction) &&
+    if (state()->flags().offBit(KartState::eFlag::InAction) &&
             state()->flags().offBit(KartState::eFlag::ZipperTrick)) {
         if (state()->flags().offBit(KartState::eFlag::TouchingGround)) {
             if (state()->flags().onBit(KartState::eFlag::RampBoost) &&
@@ -1438,7 +1438,7 @@ void KartMove::calcAcceleration() {
     m_vel1Dir = local_90.multVector33(m_vel1Dir);
 
     const auto *raceMgr = System::RaceManager::Instance();
-    if (!state()->flags().onBit(KartState::eFlag::InAction) &&
+    if (state()->flags().offBit(KartState::eFlag::InAction) &&
             state()->flags().offBit(KartState::eFlag::DisableBackwardsAccel) &&
             state()->flags().onBit(KartState::eFlag::TouchingGround) &&
             state()->flags().offBit(KartState::eFlag::Accelerate) &&
@@ -1519,7 +1519,7 @@ void KartMove::calcWallCollisionStart(f32 param_2) {
     }
 
     m_outsideDriftAngle = 0.0f;
-    if (!state()->flags().onBit(KartState::eFlag::InAction)) {
+    if (state()->flags().offBit(KartState::eFlag::InAction)) {
         m_dir = bodyFront();
         m_vel1Dir = m_dir;
         m_landingDir = m_dir;
@@ -1724,7 +1724,7 @@ f32 KartMove::calcSlerpRate(f32 scale, const EGG::Quatf &from, const EGG::Quatf 
 void KartMove::calcVehicleRotation(f32 turn) {
     f32 tiltMagnitude = 0.0f;
 
-    if (!state()->flags().onBit(KartState::eFlag::InAction) &&
+    if (state()->flags().offBit(KartState::eFlag::InAction) &&
             state()->flags().offBit(KartState::eFlag::SoftWallDrift) &&
             state()->flags().onBit(KartState::eFlag::AnyWheelCollision)) {
         EGG::Vector3f front = componentZAxis();
@@ -2198,8 +2198,8 @@ void KartMove::exitCannon() {
         return;
     }
 
-    state()->flags().resetBit(KartState::eFlag::InCannon, KartState::eFlag::SkipWheelCalc,
-            KartState::eFlag::AfterCannon);
+    state()->flags().resetBit(KartState::eFlag::InCannon, KartState::eFlag::SkipWheelCalc);
+    state()->flags().setBit(KartState::eFlag::AfterCannon);
     dynamics()->setIntVel(m_cannonEntryOfs * m_speed);
 }
 
