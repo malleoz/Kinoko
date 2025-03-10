@@ -1681,8 +1681,7 @@ void KartMove::calcSsmtStart() {
     }
 
     state()->flags().setBit(KartState::eFlag::ChargingSSMT);
-    state()->flags().resetBit(KartState::eFlag::HopStart);
-    state()->flags().setBit(KartState::eFlag::DriftInput);
+    state()->flags().resetBit(KartState::eFlag::HopStart, KartState::eFlag::DriftInput);
 }
 
 /// @addr{0x80579968}

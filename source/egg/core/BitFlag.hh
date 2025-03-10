@@ -293,7 +293,7 @@ public:
     template <typename... Es>
         requires(std::is_same_v<Es, E> && ...)
     [[nodiscard]] constexpr bool onBit(Es... es) const {
-        return (onBit_(es) && ...);
+        return (onBit_(es) || ...);
     }
 
     template <typename... Es>
