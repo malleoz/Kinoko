@@ -5,6 +5,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <limits>
 #include <type_traits>
 
@@ -308,42 +309,49 @@ public:
         return *this;
     }
 
-    constexpr TBitFlagExt<N, E> &changeBit(bool on, E e) {
-        size_t idx = static_cast<size_t>(e) / sizeof(u32);
-        ASSERT(idx < N);
-        size_t shift = idx * 8;
-        return on ? set(idx, static_cast<EI>(e) >> shift) : reset(idx, static_cast<EI>(e) >> shift);
+    template <typename... Es>
+        requires(std::is_same_v<Es, E> && ...)
+    constexpr TBitFlagExt<N, E> &changeBit(bool on, Es... es) {
+        (changeBit_(on, es), ...);
+        return *this;
     }
 
 private:
     typedef std::underlying_type_t<E> EI;
 
     constexpr void setBit_(E e) {
-        size_t idx = static_cast<size_t>(e) / sizeof(u32);
-        ASSERT(idx < N);
-        size_t shift = idx * 8;
-        set(idx, makeMask_(static_cast<EI>(e) >> shift));
+        EI ei = static_cast<EI>(e);
+        ASSERT(ei < N);
+        auto dv = std::div(ei, 8 * sizeof(u32));
+        set(dv.quot, dv.rem);
     }
 
     constexpr void resetBit_(E e) {
-        size_t idx = static_cast<size_t>(e) / sizeof(u32);
-        ASSERT(idx < N);
-        size_t shift = idx * 8;
-        reset(idx, static_cast<EI>(e) >> shift);
+        EI ei = static_cast<EI>(e);
+        ASSERT(ei < N);
+        auto dv = std::div(ei, 8 * sizeof(u32));
+        reset(dv.quot, dv.rem);
     }
 
     [[nodiscard]] constexpr bool onBit_(E e) const {
-        size_t idx = static_cast<size_t>(e) / sizeof(u32);
-        ASSERT(idx < N);
-        size_t shift = idx * 8;
-        return on(idx, static_cast<EI>(e) >> shift);
+        EI ei = static_cast<EI>(e);
+        ASSERT(ei < N);
+        auto dv = std::div(ei, 8 * sizeof(u32));
+        return on(dv.quot, dv.rem);
     }
 
     [[nodiscard]] constexpr bool offBit_(E e) const {
-        size_t idx = static_cast<size_t>(e) / sizeof(u32);
-        ASSERT(idx < N);
-        size_t shift = idx * 8;
-        return off(idx, static_cast<EI>(e) >> shift);
+        EI ei = static_cast<EI>(e);
+        ASSERT(ei < N);
+        auto dv = std::div(ei, 8 * sizeof(u32));
+        return off(dv.quot, dv.rem);
+    }
+
+    [[nodiscard]] constexpr void changeBit_(bool on, E e) {
+        EI ei = static_cast<EI>(e);
+        ASSERT(ei < N);
+        auto dv = std::div(ei, 8 * sizeof(u32));
+        on ? set(dv.quot, dv.rem) : reset(dv.quot, dv.rem);
     }
 
     constexpr TBitFlagExt<N, E> &set(size_t idx, u32 mask) {
