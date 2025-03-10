@@ -144,13 +144,12 @@ void KartState::calcCollisions() {
             m_flags.onBit(eFlag::WallCollision) || m_flags.onBit(eFlag::Wall3Collision);
 
     m_flags.resetBit(eFlag::Wall3Collision, eFlag::WallCollision, eFlag::VehicleBodyFloorCollision,
-            eFlag::AnyWheelCollision, eFlag::AllWheelsCollision);
-    m_flags.resetBit(eFlag::TouchingGround);
+            eFlag::AnyWheelCollision, eFlag::AllWheelsCollision, eFlag::TouchingGround);
 
     if (m_hwgTimer > 0) {
         if (--m_hwgTimer == 0) {
             m_flags.resetBit(eFlag::UNK2);
-            m_flags.setBit(eFlag::SomethingWallCollision);
+            m_flags.resetBit(eFlag::SomethingWallCollision);
         }
     }
 
@@ -314,7 +313,7 @@ void KartState::calcCollisions() {
             halfPipe()->end(true);
         }
 
-        if (m_flags.onBit(eFlag::Trickable)) {
+        if (trickable) {
             m_trickableTimer = 3;
         }
 

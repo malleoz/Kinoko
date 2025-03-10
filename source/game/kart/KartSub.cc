@@ -363,7 +363,7 @@ void KartSub::tryEndHWG() {
         }
     }
 
-    if (!state()->flags().onBit(KartState::eFlag::InAction)) {
+    if (state()->flags().offBit(KartState::eFlag::InAction)) {
         dynamics()->setForceUpright(state()->flags().offBit(KartState::eFlag::SoftWallDrift));
     }
 }
