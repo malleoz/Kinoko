@@ -32,20 +32,27 @@ void KartItem::calc() {
     }
 
     if (m_flags.onBit(eFlags::Lockout)) {
-        if (!state()->isBeforeRespawn() && !state()->isInAction() && !state()->isTriggerRespawn() &&
-                !state()->isCannonStart() && !state()->isInCannon() && !state()->isAfterCannon()) {
+        if (state()->flags().offBit(Kart::KartState::eFlag::BeforeRespawn) &&
+                state()->flags().offBit(Kart::KartState::eFlag::InAction) &&
+                state()->flags().offBit(Kart::KartState::eFlag::TriggerRespawn) &&
+                state()->flags().offBit(Kart::KartState::eFlag::CannonStart) &&
+                state()->flags().offBit(Kart::KartState::eFlag::InCannon) &&
+                state()->flags().offBit(Kart::KartState::eFlag::AfterCannon)) {
             m_flags.resetBit(eFlags::Lockout);
         }
     } else {
-        if (state()->isInRespawn() || state()->isInAction() || state()->isTriggerRespawn() ||
-                state()->isCannonStart() || state()->isInCannon()) {
+        if (state()->flags().onBit(Kart::KartState::eFlag::InRespawn) ||
+                state()->flags().onBit(Kart::KartState::eFlag::InAction) ||
+                state()->flags().onBit(Kart::KartState::eFlag::TriggerRespawn) ||
+                state()->flags().onBit(Kart::KartState::eFlag::CannonStart) ||
+                state()->flags().onBit(Kart::KartState::eFlag::InCannon)) {
             m_flags.setBit(eFlags::Lockout);
         } else {
             const auto *raceMgr = System::RaceManager::Instance();
             bool canUse = m_flags.onBit(eFlags::ItemButtonActivation);
             canUse = canUse && raceMgr->isStageReached(System::RaceManager::Stage::Race);
-            canUse = canUse && !state()->isInAction();
-            canUse = canUse && !state()->isBurnout();
+            canUse = canUse && !state()->flags().onBit(Kart::KartState::eFlag::InAction);
+            canUse = canUse && state()->flags().offBit(Kart::KartState::eFlag::Burnout);
             canUse = canUse && (m_inventory.id() != ItemId::NONE);
 
             if (canUse) {

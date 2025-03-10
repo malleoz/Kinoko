@@ -98,7 +98,7 @@ void KartSub::resetPhysics() {
 /// @details Handles the first-half of physics calculations. This includes input processing,
 /// subsequent position/speed updates, as well as responding to last frame's collisions.
 void KartSub::calcPass0() {
-    if (state()->isCannonStart()) {
+    if (state()->flags().onBit(KartState::eFlag::CannonStart)) {
         physics()->hitboxGroup()->reset();
         for (size_t i = 0; i < tireCount(); ++i) {
             tirePhysics(i)->hitboxGroup()->reset();
@@ -108,7 +108,7 @@ void KartSub::calcPass0() {
 
     state()->calc();
 
-    if (state()->isTriggerRespawn()) {
+    if (state()->flags().onBit(KartState::eFlag::TriggerRespawn)) {
         setInertiaScale(EGG::Vector3f(1.0f, 1.0f, 1.0f));
         resetPhysics();
         state()->reset();
@@ -125,7 +125,7 @@ void KartSub::calcPass0() {
     move()->calc();
     action()->calc();
 
-    if (state()->isSkipWheelCalc()) {
+    if (state()->flags().onBit(KartState::eFlag::SkipWheelCalc)) {
         for (size_t tireIdx = 0; tireIdx < tireCount(); ++tireIdx) {
             tirePhysics(tireIdx)->setLastPos(pos());
         }
@@ -153,11 +153,12 @@ void KartSub::calcPass0() {
     }
 
     f32 maxSpeed = move()->hardSpeedLimit();
-    physics()->calc(DT, maxSpeed, scale(), !state()->isTouchingGround());
+    physics()->calc(DT, maxSpeed, scale(),
+            state()->flags().offBit(KartState::eFlag::TouchingGround));
 
     move()->calcRejectRoad();
 
-    if (!state()->isInCannon()) {
+    if (state()->flags().offBit(KartState::eFlag::InCannon)) {
         collide()->calcHitboxes();
         collisionGroup()->setHitboxScale(move()->totalScale());
     }
@@ -185,12 +186,12 @@ void KartSub::calcPass1() {
     collide()->calcObjectCollision();
     dynamics()->setPos(pos() + collide()->tangentOff());
 
-    if (state()->isSomethingWallCollision()) {
+    if (state()->flags().onBit(KartState::eFlag::SomethingWallCollision)) {
         const EGG::Vector3f &softWallSpeed = state()->softWallSpeed();
         f32 speedFactor = 5.0f;
         EGG::Vector3f effectiveSpeed;
 
-        if (state()->isHWG()) {
+        if (state()->flags().onBit(KartState::eFlag::HWG)) {
             speedFactor = 10.0f;
             effectiveSpeed = softWallSpeed;
         } else {
@@ -229,8 +230,8 @@ void KartSub::calcPass1() {
     Field::CollisionDirector::Instance()->checkCourseColNarrScLocal(250.0f, pos(),
             KCL_TYPE_VEHICLE_INTERACTABLE, 0);
 
-    if (!state()->isInCannon()) {
-        if (!state()->isZipperStick()) {
+    if (state()->flags().offBit(KartState::eFlag::InCannon)) {
+        if (state()->flags().offBit(KartState::eFlag::ZipperStick)) {
             collide()->findCollision();
             body()->calcTargetSinkDepth();
 
@@ -270,7 +271,7 @@ void KartSub::calcPass1() {
         }
     }
 
-    if (!state()->isSkipWheelCalc()) {
+    if (state()->flags().offBit(KartState::eFlag::SkipWheelCalc)) {
         EGG::Vector3f vehicleCompensation = m_maxSuspOvertravel + m_minSuspOvertravel;
         dynamics()->setPos(dynamics()->pos() + vehicleCompensation);
 
@@ -342,25 +343,28 @@ void KartSub::updateSuspOvertravel(const EGG::Vector3f &suspOvertravel) {
 
 /// @addr{0x80598744}
 void KartSub::tryEndHWG() {
-    if (state()->isSoftWallDrift()) {
-        if (EGG::Mathf::abs(move()->speed()) > 15.0f || state()->isAirtimeOver20() ||
-                state()->isAllWheelsCollision()) {
-            state()->setSoftWallDrift(false);
-        } else if (state()->isTouchingGround()) {
+    if (state()->flags().onBit(KartState::eFlag::SoftWallDrift)) {
+        if (EGG::Mathf::abs(move()->speed()) > 15.0f ||
+                state()->flags().onBit(KartState::eFlag::AirtimeOver20) ||
+                state()->flags().onBit(KartState::eFlag::AllWheelsCollision)) {
+            state()->flags().resetBit(KartState::eFlag::SoftWallDrift);
+        } else if (state()->flags().onBit(KartState::eFlag::TouchingGround)) {
             if (EGG::Mathf::abs(componentXAxis().dot(EGG::Vector3f::ey)) > 0.8f) {
-                state()->setSoftWallDrift(false);
+                state()->flags().resetBit(KartState::eFlag::SoftWallDrift);
             }
         }
     }
 
-    if (state()->isHWG() && !state()->isSomethingWallCollision()) {
-        if (!state()->isWallCollision() || state()->isAllWheelsCollision()) {
-            state()->setHWG(false);
+    if (state()->flags().onBit(KartState::eFlag::HWG) &&
+            state()->flags().offBit(KartState::eFlag::SomethingWallCollision)) {
+        if (state()->flags().offBit(KartState::eFlag::WallCollision) ||
+                state()->flags().onBit(KartState::eFlag::AllWheelsCollision)) {
+            state()->flags().resetBit(KartState::eFlag::HWG);
         }
     }
 
-    if (!state()->isInAction()) {
-        dynamics()->setForceUpright(!state()->isSoftWallDrift());
+    if (!state()->flags().onBit(KartState::eFlag::InAction)) {
+        dynamics()->setForceUpright(state()->flags().offBit(KartState::eFlag::SoftWallDrift));
     }
 }
 

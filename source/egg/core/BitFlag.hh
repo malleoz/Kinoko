@@ -2,9 +2,14 @@
 
 #include <Logger.hh>
 
+#include <array>
 #include <cstddef>
+#include <cstdint>
 #include <limits>
 #include <type_traits>
+
+// We can't include Common.hh, because we have a cyclic dependency
+typedef uint32_t u32;
 
 namespace EGG {
 
@@ -263,6 +268,111 @@ private:
     }
 
     T bits; ///< The bit mask representing the flags.
+};
+
+template <size_t N, typename E>
+    requires(std::is_enum_v<E> && N > 64)
+class TBitFlagExt {
+public:
+    constexpr TBitFlagExt() {
+        makeAllZero();
+    }
+
+    constexpr void makeAllZero() {
+        std::fill(bits.begin(), bits.end(), 0);
+    }
+
+    template <typename... Es>
+        requires(std::is_same_v<Es, E> && ...)
+    constexpr TBitFlagExt<N, E> &setBit(Es... es) {
+        (setBit_(es), ...);
+        return *this;
+    }
+
+    template <typename... Es>
+        requires(std::is_same_v<Es, E> && ...)
+    [[nodiscard]] constexpr bool onBit(Es... es) const {
+        return (onBit_(es) && ...);
+    }
+
+    template <typename... Es>
+        requires(std::is_same_v<Es, E> && ...)
+    [[nodiscard]] constexpr bool offBit(Es... es) const {
+        return (offBit_(es) && ...);
+    }
+
+    template <typename... Es>
+        requires(std::is_same_v<Es, E> && ...)
+    constexpr TBitFlagExt<N, E> &resetBit(Es... es) {
+        (resetBit_(es), ...);
+        return *this;
+    }
+
+    constexpr TBitFlagExt<N, E> &changeBit(bool on, E e) {
+        size_t idx = static_cast<size_t>(e) / sizeof(u32);
+        ASSERT(idx < N);
+        size_t shift = idx * 8;
+        return on ? set(idx, static_cast<EI>(e) >> shift) : reset(idx, static_cast<EI>(e) >> shift);
+    }
+
+private:
+    typedef std::underlying_type_t<E> EI;
+
+    constexpr void setBit_(E e) {
+        size_t idx = static_cast<size_t>(e) / sizeof(u32);
+        ASSERT(idx < N);
+        size_t shift = idx * 8;
+        set(idx, makeMask_(static_cast<EI>(e) >> shift));
+    }
+
+    constexpr void resetBit_(E e) {
+        size_t idx = static_cast<size_t>(e) / sizeof(u32);
+        ASSERT(idx < N);
+        size_t shift = idx * 8;
+        reset(idx, static_cast<EI>(e) >> shift);
+    }
+
+    [[nodiscard]] constexpr bool onBit_(E e) const {
+        size_t idx = static_cast<size_t>(e) / sizeof(u32);
+        ASSERT(idx < N);
+        size_t shift = idx * 8;
+        return on(idx, static_cast<EI>(e) >> shift);
+    }
+
+    [[nodiscard]] constexpr bool offBit_(E e) const {
+        size_t idx = static_cast<size_t>(e) / sizeof(u32);
+        ASSERT(idx < N);
+        size_t shift = idx * 8;
+        return off(idx, static_cast<EI>(e) >> shift);
+    }
+
+    constexpr TBitFlagExt<N, E> &set(size_t idx, u32 mask) {
+        ASSERT(idx < bits.size());
+        bits[idx] |= mask;
+        return *this;
+    }
+
+    constexpr TBitFlagExt<N, E> &reset(size_t idx, u32 mask) {
+        ASSERT(idx < bits.size());
+        bits[idx] &= ~mask;
+        return *this;
+    }
+
+    [[nodiscard]] constexpr bool on(size_t idx, u32 mask) const {
+        ASSERT(idx < bits.size());
+        return (bits[idx] & mask) != 0;
+    }
+
+    [[nodiscard]] constexpr bool off(size_t idx, u32 mask) const {
+        ASSERT(idx < bits.size());
+        return (bits[idx] & mask) == 0;
+    }
+
+    [[nodiscard]] constexpr u32 makeMask_(u32 e) const {
+        return static_cast<u32>(1) << e;
+    }
+
+    std::array<u32, N / 32> bits;
 };
 
 } // namespace EGG

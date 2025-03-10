@@ -30,18 +30,18 @@ void KartHalfPipe::reset() {
 void KartHalfPipe::calc() {
     constexpr s16 LANDING_BOOST_DELAY = 3;
 
-    if (state()->airtime() > 15 && state()->isOverZipper()) {
+    if (state()->airtime() > 15 && state()->flags().onBit(KartState::eFlag::OverZipper)) {
         m_timer = LANDING_BOOST_DELAY;
     }
 
-    bool isLanding = state()->isHalfPipeRamp() && m_timer <= 0;
+    bool isLanding = state()->flags().onBit(KartState::eFlag::HalfPipeRamp) && m_timer <= 0;
 
     calcTrick();
 
     if (collide()->surfaceFlags().offBit(KartCollide::eSurfaceFlags::StopHalfPipeState) &&
-            m_touchingZipper && state()->isAirStart()) {
+            m_touchingZipper && state()->flags().onBit(KartState::eFlag::AirStart)) {
         dynamics()->setExtVel(EGG::Vector3f::zero);
-        state()->setOverZipper(true);
+        state()->flags().setBit(KartState::eFlag::OverZipper);
 
         EGG::Vector3f upXZ = move()->up();
         upXZ.y = 0.0f;
@@ -63,7 +63,7 @@ void KartHalfPipe::calc() {
         f32 scaledDir = std::min(65.0f, move()->dir().y * move()->speed());
         m_attemptedTrickTimer = std::max<s32>(0, scaledDir * 2.0f / 1.3f - 1.0f);
     } else {
-        if (state()->isOverZipper()) {
+        if (state()->flags().onBit(KartState::eFlag::OverZipper)) {
             dynamics()->setGravity(-1.3f);
 
             EGG::Vector3f side = mainRot().rotateVector(EGG::Vector3f::ez);
@@ -84,7 +84,7 @@ void KartHalfPipe::calc() {
             calcRot();
             calcLanding(false);
         } else {
-            if (state()->isHalfPipeRamp()) {
+            if (state()->flags().onBit(KartState::eFlag::HalfPipeRamp)) {
                 calcLanding(true);
             }
         }
@@ -105,9 +105,9 @@ void KartHalfPipe::calcTrick() {
         m_trick = trick;
     }
 
-    if (state()->isOverZipper()) {
-        if (!state()->isZipperTrick() && m_nextTimer > 0 && state()->airtime() > 3 &&
-                state()->airtime() < 10) {
+    if (state()->flags().onBit(KartState::eFlag::OverZipper)) {
+        if (state()->flags().offBit(KartState::eFlag::ZipperTrick) && m_nextTimer > 0 &&
+                state()->airtime() > 3 && state()->airtime() < 10) {
             activateTrick(m_attemptedTrickTimer, m_trick);
         }
     }
@@ -171,7 +171,7 @@ void KartHalfPipe::calcLanding(bool) {
     EGG::Vector3f pos;
     EGG::Vector3f upLocal;
 
-    Field::KCLTypeMask mask = state()->isOverZipper() ?
+    Field::KCLTypeMask mask = state()->flags().onBit(KartState::eFlag::OverZipper) ?
             KCL_TYPE_ANY_INVISIBLE_WALL :
             KCL_TYPE_BIT(COL_TYPE_HALFPIPE_INVISIBLE_WALL);
     EGG::Vector3f prevPos = m_prevPos + EGG::Vector3f::ey * PREVIOUS_RADIUS;
@@ -181,7 +181,7 @@ void KartHalfPipe::calcLanding(bool) {
 
     prevPos = hasDriverFloorCollision ? EGG::Vector3f::inf : prevPos;
 
-    if (state()->isOverZipper()) {
+    if (state()->flags().onBit(KartState::eFlag::OverZipper)) {
         if (!move()->calcZipperCollision(MIDAIR_RADIUS, bsp().initialYPos, pos, upLocal, prevPos,
                     &colInfo2, &maskOut, mask)) {
             mask |= KCL_TYPE_DRIVER_WALL;
@@ -203,14 +203,14 @@ void KartHalfPipe::calcLanding(bool) {
         move()->setDir(move()->dir().perpInPlane(move()->up(), true));
         move()->setVel1Dir(move()->dir());
 
-        if (state()->isOverZipper()) {
-            state()->setZipperStick(true);
+        if (state()->flags().onBit(KartState::eFlag::OverZipper)) {
+            state()->flags().setBit(KartState::eFlag::ZipperStick);
         }
 
         m_prevPos = newPos;
     } else {
-        if (state()->isOverZipper()) {
-            state()->setZipperStick(false);
+        if (state()->flags().onBit(KartState::eFlag::OverZipper)) {
+            state()->flags().resetBit(KartState::eFlag::ZipperStick);
         }
     }
 
@@ -222,8 +222,8 @@ void KartHalfPipe::calcLanding(bool) {
         return;
     }
 
-    if (state()->isOverZipper()) {
-        state()->setZipperStick(false);
+    if (state()->flags().onBit(KartState::eFlag::OverZipper)) {
+        state()->flags().resetBit(KartState::eFlag::ZipperStick);
     }
 }
 
@@ -253,7 +253,7 @@ void KartHalfPipe::activateTrick(s32 duration, System::Trick trick) {
 
         m_stuntManager.setProperties(static_cast<size_t>(m_stunt));
 
-        state()->setZipperTrick(true);
+        state()->flags().setBit(KartState::eFlag::ZipperTrick);
     }
 
     m_stuntRot = EGG::Quatf::ident;
@@ -261,22 +261,21 @@ void KartHalfPipe::activateTrick(s32 duration, System::Trick trick) {
 
 /// @addr{0x805758E4}
 void KartHalfPipe::end(bool boost) {
-    if (state()->isOverZipper() && state()->airtime() > 5 && boost) {
+    if (state()->flags().onBit(KartState::eFlag::OverZipper) && state()->airtime() > 5 && boost) {
         move()->activateZipperBoost();
     }
 
-    if (state()->isZipperTrick()) {
+    if (state()->flags().onBit(KartState::eFlag::ZipperTrick)) {
         physics()->composeDecayingStuntRot(m_stuntRot);
     }
 
-    if (state()->isOverZipper()) {
+    if (state()->flags().onBit(KartState::eFlag::OverZipper)) {
         move()->setDir(mainRot().rotateVector(EGG::Vector3f::ez));
         move()->setVel1Dir(move()->dir());
     }
 
-    state()->setOverZipper(false);
-    state()->setZipperTrick(false);
-    state()->setZipperStick(false);
+    state()->flags().resetBit(KartState::eFlag::OverZipper, KartState::eFlag::ZipperTrick,
+            KartState::eFlag::ZipperStick);
 
     m_stunt = StuntType::None;
 }

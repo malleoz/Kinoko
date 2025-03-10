@@ -23,7 +23,7 @@ KartModel::~KartModel() = default;
 
 /// @addr{0x807CD32C}
 void KartModel::vf_1c() {
-    if (state()->isBurnout()) {
+    if (state()->flags().onBit(Kart::KartState::eFlag::Burnout)) {
         _54 = 1.0f;
 
         f32 pitch = move()->burnout().pitch();
@@ -39,7 +39,7 @@ void KartModel::vf_1c() {
     }
 
     f32 xStick = inputs()->currentState().stick.x;
-    bool isInCannon = state()->isInCannon();
+    bool isInCannon = state()->flags().onBit(Kart::KartState::eFlag::InCannon);
     f32 fVar2 = isInCannon ? 0.02f : 0.1f;
 
     f32 local_f31 = _58;
@@ -134,14 +134,16 @@ void KartModel::FUN_807CB198() {
     m_somethingRight = false;
     m_somethingLeft = false;
 
-    bool turnInput = state()->isStickLeft() || state()->isStickRight();
-    if (state()->isDrifting() || (state()->isChargingSsmt() && turnInput)) {
+    bool turnInput = state()->flags().onBit(Kart::KartState::eFlag::StickLeft) ||
+            state()->flags().onBit(Kart::KartState::eFlag::StickRight);
+    if (state()->isDrifting() ||
+            (state()->flags().onBit(Kart::KartState::eFlag::ChargingSSMT) && turnInput)) {
         if (move()->hopStickX() == 1) {
             m_somethingLeft = true;
         } else {
             if (move()->hopStickX() == -1) {
                 m_somethingRight = true;
-            } else if (!state()->isStickLeft()) {
+            } else if (state()->flags().offBit(Kart::KartState::eFlag::StickLeft)) {
                 m_somethingRight = true;
             } else {
                 m_somethingLeft = true;

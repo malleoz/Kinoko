@@ -26,11 +26,11 @@ void KartReject::reset() {
 
 /// @addr{0x80585AF8}
 void KartReject::calcRejectRoad() {
-    if (state()->isInAction()) {
+    if (state()->flags().onBit(KartState::eFlag::InAction)) {
         return;
     }
 
-    if (state()->isRejectRoadTrigger()) {
+    if (state()->flags().onBit(KartState::eFlag::RejectRoadTrigger)) {
         EGG::Vector3f down = -EGG::Vector3f::ey;
         down = down.perpInPlane(move()->up(), true);
         f32 cos = down.dot(move()->lastDir());
@@ -61,19 +61,21 @@ void KartReject::calcRejectRoad() {
             dynamics()->setMainRot(local_78);
         }
 
-        state()->setHop(false);
+        state()->flags().resetBit(KartState::eFlag::Hop);
 
         bool didReject = calcRejection();
 
-        if (!state()->isNoSparkInvisibleWall() && !didReject) {
-            state()->setRejectRoadTrigger(false);
+        if (state()->flags().offBit(KartState::eFlag::NoSparkInvisibleWall) && !didReject) {
+            state()->flags().resetBit(KartState::eFlag::RejectRoadTrigger);
         }
 
         return;
     }
 
-    if (state()->isRejectRoad() && !state()->isZipperInvisibleWall() && !state()->isOverZipper() &&
-            !state()->isHalfPipeRamp()) {
+    if (state()->flags().onBit(KartState::eFlag::RejectRoad) &&
+            state()->flags().offBit(KartState::eFlag::ZipperInvisibleWall) &&
+            state()->flags().offBit(KartState::eFlag::OverZipper) &&
+            state()->flags().offBit(KartState::eFlag::HalfPipeRamp)) {
         EGG::Vector3f upXZ = move()->up();
         upXZ.y = 0.0f;
 
@@ -85,8 +87,8 @@ void KartReject::calcRejectRoad() {
                 EGG::Vector3f upCross = EGG::Vector3f::ey.cross(local_88);
                 m_rejectSign = upCross.dot(move()->up()) > 0.0f ? 1.0f : -1.0f;
 
-                state()->setHop(false);
-                state()->setRejectRoadTrigger(true);
+                state()->flags().resetBit(KartState::eFlag::Hop);
+                state()->flags().setBit(KartState::eFlag::RejectRoadTrigger);
             }
         }
     }
@@ -96,7 +98,7 @@ void KartReject::calcRejectRoad() {
 bool KartReject::calcRejection() {
     Field::CollisionInfo colInfo;
     Field::KCLTypeMask mask = KCL_NONE;
-    state()->setNoSparkInvisibleWall(false);
+    state()->flags().resetBit(KartState::eFlag::NoSparkInvisibleWall);
     EGG::Vector3f worldUpPos = dynamics()->pos() + bodyUp() * 100.0f;
     f32 posScalar = 100.0f;
     f32 radius = posScalar;
@@ -129,7 +131,7 @@ bool KartReject::calcRejection() {
         if (hasInvisibleWallCollision && KCL_VARIANT_TYPE(closestColEntry->attribute) == 0) {
             hasRejectCollision = true;
             tangentOff = colInfo.wallNrm;
-            state()->setNoSparkInvisibleWall(true);
+            state()->flags().setBit(KartState::eFlag::NoSparkInvisibleWall);
         } else {
             if (!(mask & KCL_TYPE_DRIVER_FLOOR)) {
                 hasFloorCollision = false;
@@ -153,7 +155,8 @@ bool KartReject::calcRejection() {
         move()->setSmoothedUp(move()->up());
 
         bool bVar15 = tangentOff.dot(EGG::Vector3f::ey) < -0.17f;
-        if (bVar15 || extVel().y < 0.0f || state()->isNoSparkInvisibleWall()) {
+        if (bVar15 || extVel().y < 0.0f ||
+                state()->flags().onBit(KartState::eFlag::NoSparkInvisibleWall)) {
             radius = -radius;
             colInfo.tangentOff += worldPos;
 

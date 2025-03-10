@@ -46,8 +46,10 @@ void KartAction::calcVehicleSpeed() {
 bool KartAction::start(Action action) {
     ASSERT(action != Action::None);
 
-    if (state()->isInRespawn() || state()->isAfterRespawn() || state()->isBeforeRespawn() ||
-            state()->isInCannon()) {
+    if (state()->flags().onBit(KartState::eFlag::InRespawn) ||
+            state()->flags().onBit(KartState::eFlag::AfterRespawn) ||
+            state()->flags().onBit(KartState::eFlag::BeforeRespawn) ||
+            state()->flags().onBit(KartState::eFlag::InCannon)) {
         return false;
     }
 
@@ -63,7 +65,7 @@ bool KartAction::start(Action action) {
     m_onStart = s_onStart[actionIdx];
     m_onCalc = s_onCalc[actionIdx];
     m_onEnd = s_onEnd[actionIdx];
-    state()->setInAction(true);
+    state()->flags().setBit(KartState::eFlag::InAction);
     m_frame = 0;
     m_flags.makeAllZero();
     m_up = move()->up();
@@ -102,7 +104,7 @@ const KartAction::Flags &KartAction::flags() const {
 
 /// @addr{0x80567B98}
 void KartAction::end() {
-    state()->setInAction(false);
+    state()->flags().resetBit(KartState::eFlag::InAction);
     dynamics()->setForceUpright(true);
 
     m_currentAction = Action::None;

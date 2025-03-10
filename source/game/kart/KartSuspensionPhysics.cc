@@ -70,7 +70,7 @@ void WheelPhysics::realign(const EGG::Vector3f &bottom, const EGG::Vector3f &veh
 /// @addr{0x80599690}
 void WheelPhysics::updateCollision(const EGG::Vector3f &bottom, const EGG::Vector3f &topmostPos) {
     m_targetEffectiveRadius = m_bspWheel->wheelRadius;
-    if (!state()->isSkipWheelCalc()) {
+    if (state()->flags().offBit(KartState::eFlag::SkipWheelCalc)) {
         f32 nextRadius = m_bspWheel->sphereRadius;
         f32 scalar = m_effectiveRadius * scale().y - nextRadius * move()->totalScale();
 
@@ -78,11 +78,11 @@ void WheelPhysics::updateCollision(const EGG::Vector3f &bottom, const EGG::Vecto
         scalar = 0.3f * (nextRadius * move()->leanRot()) * move()->totalScale();
         center += scalar * bodyForward();
 
-        if (state()->isInCannon()) {
+        if (state()->flags().onBit(KartState::eFlag::InCannon)) {
             collisionData().reset();
         } else {
             m_hitboxGroup->setHitboxScale(move()->totalScale());
-            if (state()->isUNK2()) {
+            if (state()->flags().onBit(KartState::eFlag::UNK2)) {
                 m_hitboxGroup->hitbox(0).setLastPos(dynamics()->pos());
             }
 
@@ -178,7 +178,7 @@ void KartSuspensionPhysics::calcCollision(f32 dt, const EGG::Vector3f &gravity,
     m_tirePhysics->setColVel(dt * 10.0f * gravity);
     m_tirePhysics->setPos(topmostPos + m_tirePhysics->suspTravel() * m_bottomDir);
 
-    if (!state()->isSkipWheelCalc()) {
+    if (state()->flags().offBit(KartState::eFlag::SkipWheelCalc)) {
         m_tirePhysics->updateCollision(m_bottomDir, topmostPos);
         m_topmostPos = topmostPos;
     }
@@ -222,16 +222,21 @@ void KartSuspensionPhysics::calcSuspension(const EGG::Vector3f &forward,
     fLinear.y += rotProj.y;
     fLinear.y = std::min(fLinear.y, param()->stats().maxNormalAcceleration);
 
-    if (dynamics()->extVel().y > 5.0f || state()->isJumpPadDisableYsusForce()) {
+    if (dynamics()->extVel().y > 5.0f ||
+            state()->flags().onBit(KartState::eFlag::JumpPadDisableYsusForce)) {
         fLinear.y = 0.0f;
     }
 
-    dynamics()->applySuspensionWrench(m_topmostPos, fLinear, fRot, state()->isWheelieRot());
+    dynamics()->applySuspensionWrench(m_topmostPos, fLinear, fRot,
+            state()->flags().onBit(KartState::eFlag::WheelieRot));
 
-    f32 rate = state()->isSomethingWallCollision() ? 0.01f : collide()->floorMomentRate();
+    f32 rate = state()->flags().onBit(KartState::eFlag::SomethingWallCollision) ?
+            0.01f :
+            collide()->floorMomentRate();
 
     collide()->applySomeFloorMoment(0.1f, rate, hitboxGroup, forward, move()->dir(),
-            m_tirePhysics->speed(), true, true, !state()->isWheelieRot());
+            m_tirePhysics->speed(), true, true,
+            state()->flags().offBit(KartState::eFlag::WheelieRot));
 }
 
 } // namespace Kart
