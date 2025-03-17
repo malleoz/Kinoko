@@ -5,7 +5,9 @@
 namespace Field {
 
 /// @addr{0x8081A6D0}
-ObjectDrivable::ObjectDrivable(const System::MapdataGeoObj &params) : ObjectBase(params) {}
+ObjectDrivable::ObjectDrivable(const System::MapdataGeoObj &params) : ObjectBase(params) {
+    
+}
 
 /// @addr{0x8067EB3C}
 ObjectDrivable::~ObjectDrivable() = default;
