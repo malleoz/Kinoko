@@ -13,6 +13,7 @@ enum class ObjectId {
     OilSFC = 0x15d,
     ParasolR = 0x16e,
     PuchiPakkun = 0x1aa,
+    TownBridge = 0x1ff,
     Aurora = 0x204,
     Mdush = 0x217,
 };
