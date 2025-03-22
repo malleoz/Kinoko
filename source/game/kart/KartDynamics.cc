@@ -147,7 +147,7 @@ void KartDynamics::calc(f32 dt, f32 maxSpeed, bool air) {
         forceUpright();
     }
 
-    EGG::Vector3f angVelSum = m_angVel2 + m_angVel1 + m_angVel0Factor * m_angVel0;
+    EGG::Vector3f angVelSum = m_angVel2 + m_angVel1 + m_angVel0Factor * m_angVel0; // m_angVel2.x wrong
 
     if (std::numeric_limits<f32>::epsilon() < angVelSum.squaredLength()) {
         m_mainRot += m_mainRot.multSwap(angVelSum) * (dt * 0.5f);
