@@ -56,6 +56,11 @@ void ResourceManager::unmount(MultiDvdArchive *archive) {
     archive->unmount();
 }
 
+/// @addr{0x8055BA00}
+bool ResourceManager::fileExists(ArchiveId id, const char *filename) {
+    return getFile(filename, nullptr, id) != nullptr;
+}
+
 /// @addr{0x8053FC4C}
 ResourceManager *ResourceManager::CreateInstance() {
     ASSERT(!s_instance);

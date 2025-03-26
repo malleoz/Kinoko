@@ -20,6 +20,7 @@ public:
     [[nodiscard]] MultiDvdArchive *load(Course courseId);
     [[nodiscard]] MultiDvdArchive *load(s32 idx, const char *filename);
     void unmount(MultiDvdArchive *archive);
+    [[nodiscard]] bool fileExists(ArchiveId id, const char *filename);
 
     /// @addr{0x805419EC}
     [[nodiscard]] static const char *GetVehicleName(Vehicle vehicle) {
