@@ -13,6 +13,7 @@ enum class ObjectId {
     TownTreeDsc = 0x15b,
     OilSFC = 0x15d,
     ParasolR = 0x16e,
+    Sanbo = 0x199,
     PuchiPakkun = 0x1aa,
     Aurora = 0x204,
     Sandcone = 0x209,

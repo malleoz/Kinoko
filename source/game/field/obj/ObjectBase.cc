@@ -64,4 +64,11 @@ void ObjectBase::calcTransform() {
     }
 }
 
+/// @addr{0x80821910}
+void ObjectBase::setMatrixTangentTo(const EGG::Vector3f &up, const EGG::Vector3f &tangent) {
+    m_flags |= 4;
+    m_transform.setRotTangentHorizontal(up, tangent);
+    m_transform.setBase(3, m_pos);
+}
+
 } // namespace Field

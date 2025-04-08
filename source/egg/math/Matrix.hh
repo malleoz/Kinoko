@@ -41,6 +41,7 @@ public:
     void setAxisRotation(f32 angle, const Vector3f &axis);
     void mulRow33(size_t rowIdx, const Vector3f &row);
     void setBase(size_t col, const Vector3f &base);
+    void setRotTangentHorizontal(const Vector3f &up, const Vector3f &tangent);
 
     [[nodiscard]] Matrix34f multiplyTo(const Matrix34f &rhs) const;
     [[nodiscard]] Vector3f multVector(const Vector3f &vec) const;

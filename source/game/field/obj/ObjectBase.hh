@@ -48,6 +48,7 @@ public:
 
 protected:
     void calcTransform();
+    void setMatrixTangentTo(const EGG::Vector3f &up, const EGG::Vector3f &tangent);
 
     ObjectId m_id;
     RailInterpolator *m_railInterpolator;
