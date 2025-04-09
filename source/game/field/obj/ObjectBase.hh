@@ -23,6 +23,16 @@ public:
     virtual void loadRail();
     virtual void calcCollisionTransform() = 0;
 
+    /// @addr{0x80821DEC}
+    virtual void disableCollision() const {
+        m_boxColUnit->m_flag.setBit(eBoxColFlag::Intangible);
+    }
+
+    /// @addr{0x80821E00}
+    virtual void enableCollision() const {
+        m_boxColUnit->m_flag.resetBit(eBoxColFlag::Intangible);
+    }
+
     /// @addr{0x806BF434}
     [[nodiscard]] virtual u32 loadFlags() const {
         // TODO: This references LOD to determine load flags
@@ -42,8 +52,20 @@ public:
     }
 
     /// @addr{0x80572574}
-    [[nodiscard]] ObjectId id() const {
+    [[nodiscard]] virtual ObjectId id() const {
         return m_id;
+    }
+
+    void setFlag(u16 flag) {
+        m_flags |= flag;
+    }
+
+    void setTransform(const EGG::Matrix34f &mat) {
+        m_transform = mat;
+    }
+
+    void setPos(const EGG::Vector3f &pos) {
+        m_pos = pos;
     }
 
 protected:

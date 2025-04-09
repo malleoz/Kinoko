@@ -92,12 +92,13 @@ bool ObjectCollidable::checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &d
 
 /// @addr{0x8081F224}
 void ObjectCollidable::createCollision() {
+    ObjectId objId = id();
     const auto &flowTable = ObjectDirector::Instance()->flowTable();
-    const auto *collisionSet = flowTable.set(flowTable.slot(m_id));
+    const auto *collisionSet = flowTable.set(flowTable.slot(objId));
 
     if (!collisionSet) {
         PANIC("Invalid object ID when creating primitive collision! ID: %d",
-                static_cast<size_t>(m_id));
+                static_cast<size_t>(objId));
     }
 
     switch (static_cast<CollisionMode>(parse<s16>(collisionSet->mode))) {
@@ -116,7 +117,7 @@ void ObjectCollidable::createCollision() {
         break;
     default:
         PANIC("Invalid collision mode when creating primitive collision! ID: %d; Mode: %d",
-                static_cast<size_t>(m_id), parse<s16>(collisionSet->mode));
+                static_cast<size_t>(objId), parse<s16>(collisionSet->mode));
         break;
     }
 }
