@@ -6,6 +6,7 @@
 #include "game/field/obj/ObjectNoImpl.hh"
 #include "game/field/obj/ObjectOilSFC.hh"
 #include "game/field/obj/ObjectParasolR.hh"
+#include "game/field/obj/ObjectPillar.hh"
 #include "game/field/obj/ObjectPuchiPakkun.hh"
 #include "game/field/obj/ObjectSanbo.hh"
 #include "game/field/obj/ObjectSandcone.hh"
