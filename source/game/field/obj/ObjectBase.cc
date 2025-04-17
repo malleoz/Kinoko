@@ -45,6 +45,14 @@ void ObjectBase::loadRail() {
     }
 }
 
+/// @addr{0x80680784}
+const char *ObjectBase::getName() const {
+    const auto &flowTable = ObjectDirector::Instance()->flowTable();
+    const auto *collisionSet = flowTable.set(flowTable.slot(m_id));
+    ASSERT(collisionSet);
+    return collisionSet->name;
+}
+
 /// @addr{0x806806DC}
 const char *ObjectBase::getKclName() const {
     const auto &flowTable = ObjectDirector::Instance()->flowTable();
@@ -60,8 +68,9 @@ void ObjectBase::calcTransform() {
         m_flags &= ~0x3;
     } else if (m_flags & 1) {
         m_transform.setBase(3, m_pos);
-        m_flags |= 4;
     }
+
+    m_flags |= 4;
 }
 
 /// @addr{0x80821910}

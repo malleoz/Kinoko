@@ -184,6 +184,9 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
         return new ObjectSanbo(params);
     case ObjectId::PuchiPakkun:
         return new ObjectPuchiPakkun(params);
+    case ObjectId::BulldozerL:
+    case ObjectId::BulldozerR:
+        return new ObjectBulldozer(params);
     case ObjectId::Aurora:
         return new ObjectAurora(params);
     case ObjectId::DCPillar:
