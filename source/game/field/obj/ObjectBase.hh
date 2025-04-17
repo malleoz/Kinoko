@@ -39,6 +39,8 @@ public:
         return 0;
     }
 
+    [[nodiscard]] virtual const char *getName() const;
+
     [[nodiscard]] virtual const char *getKclName() const;
 
     /// @addr{0x80681598}

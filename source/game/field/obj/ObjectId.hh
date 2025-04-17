@@ -16,6 +16,8 @@ enum class ObjectId {
     Sanbo = 0x199,
     DCPillarC = 0x1a7,
     PuchiPakkun = 0x1aa,
+    BulldozerL = 0x1f8,
+    BulldozerR = 0x1f9,
     Aurora = 0x204,
     DCPillar = 0x208,
     Sandcone = 0x209,

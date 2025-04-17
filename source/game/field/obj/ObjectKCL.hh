@@ -73,6 +73,11 @@ public:
     virtual void update(u32 timeOffset);
     virtual void calcScale(u32 timeOffset);
 
+    /// @addr{0x80681450}
+    virtual void setMovingObjVel(const EGG::Vector3f &v) {
+        m_objColMgr->setMovingObjVel(v);
+    }
+
     [[nodiscard]] virtual const EGG::Matrix34f &getUpdatedMatrix(u32 timeOffset);
 
     /// @addr{0x80687DB0}
@@ -104,9 +109,9 @@ public:
 
 protected:
     ObjColMgr *m_objColMgr;
+    EGG::Vector3f m_kclMidpoint;
 
 private:
-    EGG::Vector3f m_kclMidpoint;
     f32 m_bboxHalfSideLength;
     s32 m_lastMtxUpdateFrame;
     s32 m_lastScaleUpdateFrame;
