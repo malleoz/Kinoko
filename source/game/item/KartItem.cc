@@ -63,6 +63,11 @@ void KartItem::clear() {
     }
 }
 
+/// @addr{0x80798A30}
+void KartItem::FUN_80798A30() {
+    m_inventory.FUN_807BC610();
+}
+
 /// @addr{0x8079864C}
 void KartItem::activateMushroom() {
     move()->activateMushroom();

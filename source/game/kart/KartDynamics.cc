@@ -149,10 +149,10 @@ void KartDynamics::calc(f32 dt, f32 maxSpeed, bool air) {
 
     EGG::Vector3f angVelSum = m_angVel2 + m_angVel1 + m_angVel0Factor * m_angVel0;
 
-    if (std::numeric_limits<f32>::epsilon() < angVelSum.squaredLength()) {
+    if (angVelSum.squaredLength() >= std::numeric_limits<f32>::epsilon()) {
         m_mainRot += m_mainRot.multSwap(angVelSum) * (dt * 0.5f);
 
-        if (EGG::Mathf::abs(m_mainRot.norm()) < std::numeric_limits<f32>::epsilon()) {
+        if (EGG::Mathf::abs(m_mainRot.squaredNorm()) <= std::numeric_limits<f32>::epsilon()) {
             m_mainRot = EGG::Quatf::ident;
         } else {
             m_mainRot.normalise();
@@ -163,7 +163,7 @@ void KartDynamics::calc(f32 dt, f32 maxSpeed, bool air) {
         stabilize();
     }
 
-    if (EGG::Mathf::abs(m_mainRot.norm()) < std::numeric_limits<f32>::epsilon()) {
+    if (EGG::Mathf::abs(m_mainRot.squaredNorm()) <= std::numeric_limits<f32>::epsilon()) {
         m_mainRot = EGG::Quatf::ident;
     } else {
         m_mainRot.normalise();

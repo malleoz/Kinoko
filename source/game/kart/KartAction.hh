@@ -25,6 +25,7 @@ enum class Action {
 class KartAction : KartObjectProxy {
 public:
     enum class eFlags {
+        TouchingGround = 1,
         Rotating = 3,
     };
     typedef EGG::TBitFlag<u32, eFlags> Flags;
@@ -37,6 +38,7 @@ public:
     void calcVehicleSpeed();
     bool start(Action action);
     void startRotation(size_t idx);
+    void vf_18();
 
     void setHitDepth(const EGG::Vector3f &hitDepth);
 
@@ -74,12 +76,15 @@ private:
     void applyStartSpeed();
     void setRotation(size_t idx);
 
+    void initRotAndExtVel(f32 scalar, f32 velKart, f32 velBike, f32 rotations, u32 type);
+
     /* ================================ *
      *     START FUNCTIONS
      * ================================ */
 
     void startStub();
     void startAction1();
+    void startAction3();
 
     /* ================================ *
      *     CALC FUNCTIONS
@@ -87,6 +92,7 @@ private:
 
     bool calcStub();
     bool calcAction1();
+    bool calcAction3();
 
     /* ================================ *
      *     END FUNCTIONS
@@ -94,10 +100,14 @@ private:
 
     void endStub(bool arg);
     void endAction1(bool arg);
+    void endAction3(bool arg);
 
+    EGG::Vector3f m_10;
     Action m_currentAction;
     f32 m_rotationDirection;
+    f32 m_targetRot;
     EGG::Vector3f m_hitDepth;
+    EGG::Vector3f m_rotAxis;
 
     StartActionFunc m_onStart;
     CalcActionFunc m_onCalc;

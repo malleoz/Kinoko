@@ -10,6 +10,11 @@ public:
     ItemInventory();
     ~ItemInventory();
 
+    /// @addr{0x807BC610}
+    void FUN_807BC610() {
+        clear();
+    }
+
     /// @beginSetters
     void setItem(ItemId id);
     void useItem(int count);

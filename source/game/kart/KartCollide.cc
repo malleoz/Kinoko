@@ -780,7 +780,7 @@ void KartCollide::applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitbo
         }
     }
 
-    f32 dVar5 = rate * EGG::Mathf::abs(scalar);
+    f32 dVar5 = rate * EGG::Mathf::abs(scalar); // rate wrong
     if (dVar5 < EGG::Mathf::abs(rejNorm)) {
         rejNorm_ = dVar5;
         if (rejNorm < 0.0f) {
@@ -792,9 +792,9 @@ void KartCollide::applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitbo
     rej.normalise();
 
     proj *= projNorm_;
-    rej *= rejNorm_;
+    rej *= rejNorm_; // rejNorm_ wrong
 
-    EGG::Vector3f projRejSum = proj + rej;
+    EGG::Vector3f projRejSum = proj + rej; // rej.x wrong
     EGG::Vector3f projRejSumOrig = projRejSum;
 
     if (!b1) {
@@ -805,9 +805,9 @@ void KartCollide::applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitbo
         projRejSum.y = 0.0f;
     }
 
-    projRejSum = projRejSum.rej(nextDir);
+    projRejSum = projRejSum.rej(nextDir); // projRejSum.x wrong
 
-    dynamics()->setExtVel(dynamics()->extVel() + projRejSum);
+    dynamics()->setExtVel(dynamics()->extVel() + projRejSum); // projRejSum.x wrong
 
     if (b3) {
         EGG::Vector3f rotation = colData.relPos.cross(projRejSumOrig);
@@ -918,7 +918,10 @@ void KartCollide::startFloorMomentRate() {
 
 /// @addr{0x805713FC}
 void KartCollide::calcFloorMomentRate() {
-    m_floorMomentRate = state()->isInAction() ? 0.01f : std::min(m_floorMomentRate + 0.01f, 0.8f);
+    m_floorMomentRate =
+            (!state()->isInAction() || action()->flags().offBit(KartAction::eFlags::Rotating)) ?
+            std::min(m_floorMomentRate + 0.01f, 0.8f) :
+            0.01f;
 }
 
 /// @addr{0x8056E564}

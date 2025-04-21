@@ -4,6 +4,8 @@
 #include "game/kart/KartPhysics.hh"
 #include "game/kart/KartState.hh"
 
+#include "game/item/ItemDirector.hh"
+
 #include <egg/math/Math.hh>
 
 namespace Kart {
@@ -90,6 +92,16 @@ void KartAction::startRotation(size_t idx) {
     m_rotationDirection = dir.cross(bodyFront()).dot(bodyUp()) > 0.0f ? 1.0f : -1.0f;
     setRotation(idx);
     m_flags.setBit(eFlags::Rotating);
+}
+
+/// @addr{0x80569AE8}
+void KartAction::vf_18() {
+    m_hitDepth.normalise();
+    m_10 = m_hitDepth.perpInPlane(move()->smoothedUp(), true);
+
+    if (m_10.squaredLength() <= std::numeric_limits<f32>::min()) {
+        m_10 = EGG::Vector3f::ey;
+    }
 }
 
 void KartAction::setHitDepth(const EGG::Vector3f &hitDepth) {
@@ -184,6 +196,25 @@ void KartAction::setRotation(size_t idx) {
     m_multiplier = 1.0f;
 }
 
+/// @addr{0x80568794}
+void KartAction::initRotAndExtVel(f32 scalar, f32 velKart, f32 velBike, f32 rotations, u32 type) {
+    m_targetRot = 360.0f * rotations;
+
+    EGG::Vector3f extVel = EGG::Vector3f::zero;
+    extVel.y += isBike() ? velBike : velKart;
+
+    if (type != 1) {
+        PANIC("Type not implemented yet!");
+    }
+
+    vf_18();
+    extVel += scalar * m_10;
+
+    setRotation(static_cast<u32>(rotations + 3.0f));
+    m_rotAxis = move()->smoothedUp().cross(m_10);
+    dynamics()->setExtVel(dynamics()->extVel() + extVel);
+}
+
 /* ================================ *
  *     START FUNCTIONS
  * ================================ */
@@ -193,6 +224,12 @@ void KartAction::startStub() {}
 /// @addr{0x80567FB4}
 void KartAction::startAction1() {
     startRotation(2);
+}
+
+/// @addr{0x80568718}
+void KartAction::startAction3() {
+    initRotAndExtVel(25.0f, 30.0f, 30.0f, 1.0f, 1);
+    Item::ItemDirector::Instance()->kartItem(0).FUN_80798A30();
 }
 
 /* ================================ *
@@ -213,6 +250,49 @@ bool KartAction::calcAction1() {
     return finished;
 }
 
+/// @addr{0x80568AA8}
+bool KartAction::calcAction3() {
+    bool end = false;
+
+    if (m_flags.offBit(eFlags::TouchingGround)) {
+        if (m_rotationParams) {
+            if (m_finalAngle * m_rotationParams->slowdownThreshold < m_currentAngle) {
+                m_angleIncrement = std::max(m_rotationParams->minAngleIncrement,
+                        m_angleIncrement * m_multiplier);
+
+                m_multiplier = std::max(m_rotationParams->minMultiplier,
+                        m_multiplier - m_multiplierDecrement);
+            }
+
+            m_currentAngle = std::min(m_finalAngle, m_currentAngle + m_angleIncrement);
+        }
+
+        if (m_currentAngle >= m_targetRot && state()->isTouchingGround()) {
+            m_flags.setBit(eFlags::TouchingGround);
+
+            if (!isBike()) {
+                dynamics()->setForceUpright(false);
+            }
+
+            physics()->composeDecayingExtraRot(m_rotation);
+        }
+    }
+
+    if (m_frame < 100) {
+        if (m_flags.offBit(eFlags::TouchingGround)) {
+            m_rotation.setAxisRotation(DEG2RAD * m_currentAngle, m_rotAxis);
+            physics()->composeExtraRot(m_rotation);
+        }
+    } else {
+        end = true;
+        if (m_flags.offBit(eFlags::TouchingGround)) {
+            physics()->composeDecayingExtraRot(m_rotation);
+        }
+    }
+
+    return end;
+}
+
 /* ================================ *
  *     END FUNCTIONS
  * ================================ */
@@ -221,6 +301,13 @@ void KartAction::endStub(bool /*arg*/) {}
 
 /// @addr{0x8056837C}
 void KartAction::endAction1(bool arg) {
+    if (arg) {
+        physics()->composeDecayingExtraRot(m_rotation);
+    }
+}
+
+/// @addr{0x80568C7C}
+void KartAction::endAction3(bool arg) {
     if (arg) {
         physics()->composeDecayingExtraRot(m_rotation);
     }
@@ -263,7 +350,7 @@ const std::array<KartAction::StartActionFunc, KartAction::MAX_ACTION> KartAction
         &KartAction::startStub,
         &KartAction::startAction1,
         &KartAction::startStub,
-        &KartAction::startStub,
+        &KartAction::startAction3,
         &KartAction::startStub,
         &KartAction::startStub,
         &KartAction::startStub,
@@ -284,7 +371,7 @@ const std::array<KartAction::CalcActionFunc, KartAction::MAX_ACTION> KartAction:
         &KartAction::calcStub,
         &KartAction::calcAction1,
         &KartAction::calcStub,
-        &KartAction::calcStub,
+        &KartAction::calcAction3,
         &KartAction::calcStub,
         &KartAction::calcStub,
         &KartAction::calcStub,
@@ -305,7 +392,7 @@ const std::array<KartAction::EndActionFunc, KartAction::MAX_ACTION> KartAction::
         &KartAction::endStub,
         &KartAction::endAction1,
         &KartAction::endStub,
-        &KartAction::endStub,
+        &KartAction::endAction3,
         &KartAction::endStub,
         &KartAction::endStub,
         &KartAction::endStub,
