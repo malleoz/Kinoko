@@ -698,7 +698,8 @@ void CollisionInfo::update(f32 now_dist, const EGG::Vector3f &offset, const EGG:
 }
 
 /// @addr{0x807C26AC}
-void CollisionInfo::transformInfo(CollisionInfo &rhs, const EGG::Matrix34f &mtx, const EGG::Vector3f &v) {
+void CollisionInfo::transformInfo(CollisionInfo &rhs, const EGG::Matrix34f &mtx,
+        const EGG::Vector3f &v) {
     rhs.bbox.min = mtx.ps_multVector33(rhs.bbox.min);
     rhs.bbox.max = mtx.ps_multVector33(rhs.bbox.max);
 

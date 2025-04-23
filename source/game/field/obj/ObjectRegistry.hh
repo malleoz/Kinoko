@@ -11,3 +11,4 @@
 #include "game/field/obj/ObjectPuchiPakkun.hh"
 #include "game/field/obj/ObjectSanbo.hh"
 #include "game/field/obj/ObjectSandcone.hh"
+#include "game/field/obj/ObjectWLWallGC.hh"
