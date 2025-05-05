@@ -74,6 +74,8 @@ protected:
     void calcTransform();
     void setMatrixTangentTo(const EGG::Vector3f &up, const EGG::Vector3f &tangent);
 
+    EGG::Vector3f FUN_806B3AC4(f32 angle, const EGG::Vector3f &v0, const EGG::Vector3f &v1);
+
     ObjectId m_id;
     RailInterpolator *m_railInterpolator;
     BoxColUnit *m_boxColUnit;

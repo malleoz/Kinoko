@@ -182,6 +182,8 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
         return new ObjectOilSFC(params);
     case ObjectId::ParasolR:
         return new ObjectParasolR(params);
+    case ObjectId::WLFirebarGC:
+        return new ObjectFirebar(params);
     case ObjectId::Sanbo:
         return new ObjectSanbo(params);
     case ObjectId::PuchiPakkun:

@@ -80,4 +80,13 @@ void ObjectBase::setMatrixTangentTo(const EGG::Vector3f &up, const EGG::Vector3f
     m_transform.setBase(3, m_pos);
 }
 
+/// @addr{0x806B3AC4}
+EGG::Vector3f ObjectBase::FUN_806B3AC4(f32 angle, const EGG::Vector3f &v0,
+        const EGG::Vector3f &v1) {
+    EGG::Matrix34f mat;
+    mat.setBase(3, EGG::Vector3f::zero);
+    mat.setAxisRotation(angle, v0);
+    return mat.ps_multVector(v1);
+}
+
 } // namespace Field
