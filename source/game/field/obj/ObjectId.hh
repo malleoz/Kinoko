@@ -17,6 +17,7 @@ enum class ObjectId {
     ParasolR = 0x16e,
     WLFirebarGC = 0x195,
     Sanbo = 0x199,
+    WLFireRingGC = 0x1a1,
     DCPillarC = 0x1a7,
     PuchiPakkun = 0x1aa,
     BulldozerL = 0x1f8,

@@ -3,6 +3,7 @@
 #include "game/field/obj/ObjectAurora.hh"
 #include "game/field/obj/ObjectBulldozer.hh"
 #include "game/field/obj/ObjectDokan.hh"
+#include "game/field/obj/ObjectFireRing.hh"
 #include "game/field/obj/ObjectFirebar.hh"
 #include "game/field/obj/ObjectKCL.hh"
 #include "game/field/obj/ObjectNoImpl.hh"
