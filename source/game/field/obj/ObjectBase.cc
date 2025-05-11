@@ -118,7 +118,7 @@ void ObjectBase::setMatrixTangentTo(const EGG::Vector3f &up, const EGG::Vector3f
 }
 
 /// @addr{0x808218B0}
-void ObjectBase::FUN_808218B0(const EGG::Vector3f &v) {
+void ObjectBase::setMatrixLookAt(const EGG::Vector3f &v) {
     m_flags |= 4;
     m_transform = FUN_806B3CA4(v);
     m_transform.setBase(3, m_pos);

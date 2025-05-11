@@ -28,6 +28,13 @@ public:
     virtual void loadRail();
     virtual void calcCollisionTransform() = 0;
 
+    /// @addr{0x80821DB8}
+    virtual void vf88(f32 radius, f32 param2) {
+        m_boxColUnit->m_radius = radius;
+        m_boxColUnit->m_range = radius + param2;
+        m_boxColUnit->m_flag.setBit(eBoxColFlag::TempRecalcAABB);
+    }
+
     /// @addr{0x806BF434}
     [[nodiscard]] virtual u32 loadFlags() const {
         // TODO: This references LOD to determine load flags
@@ -35,6 +42,16 @@ public:
     }
 
     [[nodiscard]] virtual const char *getKclName() const;
+
+    /// @addr{0x80821DEC}
+    virtual void disableCollision() {
+        m_boxColUnit->m_flag.setBit(eBoxColFlag::Intangible);
+    }
+
+    /// @addr{0x80821E00}
+    virtual void enableCollision() {
+        m_boxColUnit->m_flag.resetBit(eBoxColFlag::Intangible);
+    }
 
     /// @addr{0x80681598}
     [[nodiscard]] virtual const EGG::Vector3f &getPosition() const {
@@ -55,8 +72,10 @@ protected:
     void calcTransform();
     void linkAnims(const std::span<const char *> &names, const std::span<Render::AnmType> types);
     void setMatrixTangentTo(const EGG::Vector3f &up, const EGG::Vector3f &tangent);
-    void FUN_808218B0(const EGG::Vector3f &v);
+    void setMatrixLookAt(const EGG::Vector3f &v);
     [[nodiscard]] EGG::Matrix34f FUN_806B3CA4(const EGG::Vector3f &v);
+    [[nodiscard]] EGG::Vector3f FUN_806B3AC4(f32 angle, const EGG::Vector3f &v0,
+            const EGG::Vector3f &v1);
 
     [[nodiscard]] Render::DrawMdl *drawMdl() {
         return m_drawMdl;

@@ -174,6 +174,8 @@ void ObjectDirector::createObjects() {
 ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
     ObjectId id = static_cast<ObjectId>(params.id());
     switch (id) {
+    case ObjectId::KoopaBall:
+        return new ObjectKoopaFireball(params);
     case ObjectId::DokanSFC:
         return new ObjectDokan(params);
     case ObjectId::OilSFC:
