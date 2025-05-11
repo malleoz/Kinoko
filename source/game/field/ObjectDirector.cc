@@ -84,9 +84,9 @@ size_t ObjectDirector::checkKartObjectCollision(Kart::KartObject *kartObj,
         m_reactions[count] = reaction;
 
         if (reaction == Kart::Reaction::WallAllSpeed || reaction == Kart::Reaction::WallSpark) {
-            obj->onWallCollision(kartObj, m_hitDepths[count]);
-        } else {
             obj->onObjectCollision(kartObj);
+        } else {
+            obj->onWallCollision(kartObj, m_hitDepths[count]);
         }
 
         m_collidingObjects[count] = obj;
@@ -174,6 +174,8 @@ void ObjectDirector::createObjects() {
 ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
     ObjectId id = static_cast<ObjectId>(params.id());
     switch (id) {
+    case ObjectId::Basabasa:
+        return new ObjectBasabasa(params);
     case ObjectId::DokanSFC:
         return new ObjectDokan(params);
     case ObjectId::OilSFC:

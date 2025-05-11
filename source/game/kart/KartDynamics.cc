@@ -221,6 +221,11 @@ void KartDynamics::applyWrenchScaled(const EGG::Vector3f &p, const EGG::Vector3f
     m_totalTorque += invPosRot.cross(invForceRot) * scale;
 }
 
+/// @addr{0x805B6388}
+void KartDynamics::addForce(const EGG::Vector3f &f) {
+    m_totalForce += f;
+}
+
 KartDynamicsBike::KartDynamicsBike() = default;
 
 /// @addr{0x805B66E4}

@@ -974,6 +974,14 @@ Action KartCollide::handleReactLongCrushLoseItem(size_t /*idx*/) {
     return Action::UNK_12;
 }
 
+/// @addr{0x805737B8}
+Action KartCollide::handleReactSmallBump(size_t idx) {
+    EGG::Vector3f hitDir = objectCollisionKart()->GetHitDirection(idx);
+    move()->applyForce(30.0f, hitDir, false);
+
+    return Action::None;
+}
+
 /// @addr{0x805733E4}
 Action KartCollide::handleReactHighLaunchLoseItem(size_t /*idx*/) {
     return Action::UNK_8;
@@ -1032,7 +1040,7 @@ std::array<KartCollide::ObjectCollisionHandler, 33> KartCollide::s_objectCollisi
         &KartCollide::handleReactLaunchSpinLoseItem,
         &KartCollide::handleReactKnockbackBumpLoseItem,
         &KartCollide::handleReactLongCrushLoseItem,
-        &KartCollide::handleReactNone,
+        &KartCollide::handleReactSmallBump,
         &KartCollide::handleReactNone,
         &KartCollide::handleReactNone,
         &KartCollide::handleReactHighLaunchLoseItem,

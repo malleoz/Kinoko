@@ -117,6 +117,13 @@ void ObjectBase::setMatrixTangentTo(const EGG::Vector3f &up, const EGG::Vector3f
     m_transform.setBase(3, m_pos);
 }
 
+/// @addr{0x808218B0}
+void ObjectBase::setMatrixLookAt(const EGG::Vector3f &v) {
+    m_flags |= 4;
+    m_transform = makeOrthonormalBasisXZ(v);
+    m_transform.setBase(3, m_pos);
+}
+
 /// @addr{0x806B41E0}
 void ObjectBase::SetRotTangentHorizontal(EGG::Matrix34f &mat, const EGG::Vector3f &up,
         const EGG::Vector3f &tangent) {
@@ -126,6 +133,34 @@ void ObjectBase::SetRotTangentHorizontal(EGG::Matrix34f &mat, const EGG::Vector3
     mat.setBase(0, up.cross(vec));
     mat.setBase(1, up);
     mat.setBase(2, vec);
+}
+
+/// @addr{0x806B3CA4}
+EGG::Matrix34f ObjectBase::makeOrthonormalBasisXZ(const EGG::Vector3f &v) {
+    EGG::Vector3f z = v;
+
+    if (EGG::Mathf::abs(z.y) < 0.001f) {
+        z.y = 0.001f;
+    }
+
+    EGG::Vector3f h = v;
+    h.y = 0.0f;
+    h.normalise2();
+
+    EGG::Vector3f x = h.cross(z);
+
+    if (z.y > 0.0f) {
+        x = -x;
+    }
+    x.normalise2();
+
+    EGG::Matrix34f mat;
+    mat.setBase(3, EGG::Vector3f::zero);
+    mat.setBase(0, x);
+    mat.setBase(1, z.cross(x));
+    mat.setBase(2, z);
+
+    return mat;
 }
 
 } // namespace Field

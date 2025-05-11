@@ -111,6 +111,10 @@ public:
         return STAGE_COUNTDOWN_DURATION - m_timer;
     }
 
+    [[nodiscard]] Random &random() {
+        return m_random;
+    }
+
     [[nodiscard]] const Player &player() const {
         return m_player;
     }

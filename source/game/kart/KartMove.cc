@@ -201,6 +201,7 @@ void KartMove::init(bool b1, bool b2) {
     m_respawnPreLandTimer = 0;
     m_respawnPostLandTimer = 0;
     m_respawnTimer = 0;
+    m_bumpTimer = 0;
     m_drivingDirection = DrivingDirection::Forwards;
     m_padType.makeAllZero();
     m_flags.makeAllZero();
@@ -277,6 +278,9 @@ void KartMove::calc() {
     calcRespawnBoost();
     calcSpecialFloor();
     m_jump->calc();
+
+    m_bumpTimer = std::max<s16>(m_bumpTimer - 1, 0);
+
     calcAutoDrift();
     calcDirs();
     calcStickyRoad();
@@ -1657,6 +1661,23 @@ f32 KartMove::calcSlerpRate(f32 scale, const EGG::Quatf &from, const EGG::Quatf 
     f32 dotNorm = std::max(-1.0f, std::min(1.0f, from.dot(to)));
     f32 acos = EGG::Mathf::acos(dotNorm);
     return acos > 0.0f ? std::min(0.1f, scale / acos) : 0.1f;
+}
+
+/// @addr{0x80586DB4}
+void KartMove::applyForce(f32 force, const EGG::Vector3f &hitDir, bool stop) {
+    if (m_bumpTimer >= 1) {
+        return;
+    }
+
+    dynamics()->addForce(force * hitDir.perpInPlane(m_up, true));
+
+    collide()->startFloorMomentRate();
+
+    m_bumpTimer = 5;
+
+    if (stop) {
+        m_speed = 0.0f;
+    }
 }
 
 /// @addr{0x8057CF0C}

@@ -33,6 +33,7 @@ public:
     void applySuspensionWrench(const EGG::Vector3f &p, const EGG::Vector3f &Flinear,
             const EGG::Vector3f &Frot, bool ignoreX);
     void applyWrenchScaled(const EGG::Vector3f &p, const EGG::Vector3f &f, f32 scale);
+    void addForce(const EGG::Vector3f &f);
 
     /// @beginSetters
     void setPos(const EGG::Vector3f &pos) {

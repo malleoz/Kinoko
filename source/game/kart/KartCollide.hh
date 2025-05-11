@@ -122,6 +122,7 @@ public:
     Action handleReactLaunchSpinLoseItem(size_t idx);
     Action handleReactKnockbackBumpLoseItem(size_t idx);
     Action handleReactLongCrushLoseItem(size_t idx);
+    Action handleReactSmallBump(size_t idx);
     Action handleReactHighLaunchLoseItem(size_t idx);
     Action handleReactWeakWall(size_t idx);
     Action handleReactLaunchSpin(size_t idx);

@@ -84,6 +84,7 @@ public:
     [[nodiscard]] BoxColUnit *insertDrivable(f32 radius, f32 maxSpeed, const EGG::Vector3f *pos,
             bool alwaysRecalc, void *userData);
 
+    void remove(BoxColUnit *&pUnit);
     void reinsertUnit(BoxColUnit *unit);
     void search(BoxColUnit *unit, const BoxColFlag &flag);
     void search(f32 radius, const EGG::Vector3f &pos, const BoxColFlag &flag);
@@ -100,7 +101,6 @@ private:
     void iterate(s32 &iter, const BoxColFlag &flag);
     [[nodiscard]] BoxColUnit *insert(f32 radius, f32 maxSpeed, const EGG::Vector3f *pos,
             const BoxColFlag &flag, void *userData);
-    void remove(BoxColUnit *&pUnit);
     void searchImpl(BoxColUnit *unit, const BoxColFlag &flag);
     void searchImpl(f32 radius, const EGG::Vector3f &pos, const BoxColFlag &flag);
 

@@ -28,6 +28,11 @@ public:
     virtual void loadRail();
     virtual void calcCollisionTransform() = 0;
 
+    /// @addr{0x80821DD8}
+    virtual void unregisterCollision() {
+        BoxColManager::Instance()->remove(m_boxColUnit);
+    }
+
     /// @addr{0x806BF434}
     [[nodiscard]] virtual u32 loadFlags() const {
         // TODO: This references LOD to determine load flags
@@ -55,9 +60,11 @@ protected:
     void calcTransform();
     void linkAnims(const std::span<const char *> &names, const std::span<Render::AnmType> types);
     void setMatrixTangentTo(const EGG::Vector3f &up, const EGG::Vector3f &tangent);
+    void setMatrixLookAt(const EGG::Vector3f &v);
 
     static void SetRotTangentHorizontal(EGG::Matrix34f &mat, const EGG::Vector3f &up,
             const EGG::Vector3f &tangent);
+    [[nodiscard]] static EGG::Matrix34f makeOrthonormalBasisXZ(const EGG::Vector3f &v);
 
     Render::DrawMdl *m_drawMdl;
     Abstract::g3d::ResFile *m_resFile;
