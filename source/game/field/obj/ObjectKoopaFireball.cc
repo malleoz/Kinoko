@@ -5,6 +5,8 @@
 
 #include "game/kart/KartCollide.hh"
 
+#include <abstract/g3d/ResFile.hh>
+
 namespace Field {
 
 /// @addr{0x80770384}
@@ -17,6 +19,7 @@ ObjectKoopaFireball::~ObjectKoopaFireball() = default;
 /// @addr{0x807703D0}
 void ObjectKoopaFireball::init() {
     constexpr u32 START_COOLDOWN = 221;
+    constexpr const char *RES_FILENAME = "bombCore.brres";
 
     m_state = State::Exploding;
     m_cooldownTimer = START_COOLDOWN;
@@ -39,16 +42,19 @@ void ObjectKoopaFireball::init() {
     m_angSpeed = INITIAL_ANGULAR_SPEED;
     m_collisionTranslation.y = -30.0f;
 
-    std::array<const char *, 1> names = {{
-            "bombCore",
-    }};
+    m_bombCoreDrawMdl = new Render::DrawMdl;
 
-    std::array<Render::AnmType, 1> types = {{
-            Render::AnmType::Chr,
-    }};
+    Abstract::g3d::ResFile *resFile = nullptr;
+    auto *resMgr = System::ResourceManager::Instance();
+    const void *file = resMgr->getFile(RES_FILENAME, nullptr, System::ArchiveId::Core);
+    if (file) {
+        resFile = new Abstract::g3d::ResFile(file);
+    }
 
-    linkAnims(names, types);
-    auto *anmMgr = m_drawMdl->anmMgr();
+    ASSERT(resFile);
+
+    m_bombCoreDrawMdl->linkAnims(0, resFile, "bombCore", Render::AnmType::Chr);
+    auto *anmMgr = m_bombCoreDrawMdl->anmMgr();
     anmMgr->playAnim(0.0f, 1.0f, 0);
     m_animFramecount = anmMgr->activeAnim(Render::AnmType::Chr)->frameCount();
 

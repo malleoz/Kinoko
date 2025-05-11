@@ -2,6 +2,8 @@
 
 #include "game/field/obj/ObjectCollidable.hh"
 
+#include "game/render/DrawMdl.hh"
+
 namespace Field {
 
 class ObjectKoopaFireball : public ObjectCollidable {
@@ -43,12 +45,13 @@ private:
     f32 m_startYpos;                      // 0xc4
     EGG::Vector3f m_collisionTranslation; // 0xc8
     f32 m_angSpeed;                       // 0xd8
-    s32 m_cooldownTimer;           // 0xe0, Frames until koopa will start to shoot the fireball
-    s32 m_explodeTimer;            // 0xe8
-    u32 m_animFramecount;          // 0xec, Length of the animation
-    EGG::Matrix34f m_curTransform; // 0xf0
-    f32 m_angleRad;                // 0x120
-    f32 m_curScale;                // 0x128
+    s32 m_cooldownTimer;                // 0xe0, Frames until koopa will start to shoot the fireball
+    Render::DrawMdl *m_bombCoreDrawMdl; // 0xe4
+    s32 m_explodeTimer;                 // 0xe8
+    u32 m_animFramecount;               // 0xec, Length of the animation
+    EGG::Matrix34f m_curTransform;      // 0xf0
+    f32 m_angleRad;                     // 0x120
+    f32 m_curScale;                     // 0x128
 
     static constexpr f32 SCALE_INITIAL = ((870.0f * 2.0f) / 940.0f) * 0.5f;
     static constexpr f32 SCALE_DELTA = SCALE_INITIAL / 25.0f; // 0x12c
