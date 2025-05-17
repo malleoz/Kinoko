@@ -5,6 +5,7 @@
 #include "game/kart/KartJump.hh"
 #include "game/kart/KartParam.hh"
 #include "game/kart/KartPhysics.hh"
+#include "game/kart/KartScale.hh"
 #include "game/kart/KartSub.hh"
 #include "game/kart/KartSuspension.hh"
 
@@ -50,12 +51,14 @@ KartMove::KartMove() : m_smoothedUp(EGG::Vector3f::ey), m_scale(1.0f, 1.0f, 1.0f
 KartMove::~KartMove() {
     delete m_jump;
     delete m_halfPipe;
+    delete m_kartScale;
 }
 
 /// @addr{0x8057821C}
 void KartMove::createSubsystems() {
     m_jump = new KartJump(this);
     m_halfPipe = new KartHalfPipe();
+    m_kartScale = new KartScale();
 }
 
 /// @stage All
@@ -121,6 +124,7 @@ void KartMove::setTurnParams() {
     m_landingDir = m_dir;
     m_outsideDriftLastDir = m_dir;
     m_driftingParams = &DRIFTING_PARAMS_ARRAY[static_cast<u32>(param()->stats().driftType)];
+    m_kartScale->reset();
 }
 
 /// @addr{0x805784D4}
@@ -181,6 +185,7 @@ void KartMove::init(bool b1, bool b2) {
         m_totalScale = 1.0f;
         m_hitboxScale = 1.0f;
         m_mushroomBoostTimer = 0;
+        m_crushTimer = 0;
     }
 
     m_jumpPadMinSpeed = 0.0f;
@@ -299,6 +304,8 @@ void KartMove::calc() {
     calcBoost();
     calcMushroomBoost();
     calcZipperBoost();
+    calcCrushed();
+    calcScale();
 
     if (state()->isInCannon()) {
         calcCannon();
@@ -1363,13 +1370,21 @@ void KartMove::calcAcceleration() {
     const f32 boostSpdLimit = m_boost.speedLimit();
     m_jumpPadBoostMultiplier = boostMultiplier;
 
-    if (!state()->isJumpPadFixedSpeed()) {
-        speedLimit *= (boostMultiplier + getWheelieSoftSpeedLimitBonus()) * m_kclSpeedFactor;
+    f32 crushMultiplier = state()->isCrushed() ? 0.7f : 1.0f;
+    f32 wheelieBonus = boostMultiplier + getWheelieSoftSpeedLimitBonus();
+    speedLimit *= state()->isJumpPadFixedSpeed() ?
+            1.0f :
+            crushMultiplier * (wheelieBonus * m_kclSpeedFactor);
+
+    bool ignoreCrushSpeed = state()->isRampBoost() || state()->isZipperInvisibleWall() ||
+            state()->isOverZipper() || state()->isHalfPipeRamp();
+    f32 boostSpeed = ignoreCrushSpeed ? 1.0f : crushMultiplier;
+    boostSpeed *= boostSpdLimit * m_kclSpeedFactor;
+
+    if (!state()->isJumpPad() && boostSpeed > 0.0f && boostSpeed > speedLimit) {
+        speedLimit = boostSpeed;
     }
 
-    if (!state()->isJumpPad()) {
-        speedLimit = std::max(speedLimit, boostSpdLimit * m_kclSpeedFactor);
-    }
     m_jumpPadSoftSpeedLimit = boostSpdLimit * m_kclSpeedFactor;
 
     if (state()->isRampBoost()) {
@@ -2079,6 +2094,32 @@ void KartMove::landTrick() {
     activateBoost(KartBoost::Type::TrickAndZipper, duration);
 }
 
+/// @addr{0x80580F28}
+void KartMove::activateCrush(u16 timer) {
+    state()->setCrushed(true);
+    m_crushTimer = timer;
+    m_kartScale->resetScale();
+}
+
+/// @addr{0x80580F9C}
+void KartMove::calcCrushed() {
+    if (!state()->isCrushed()) {
+        return;
+    }
+
+    if (--m_crushTimer == 0) {
+        state()->setCrushed(false);
+        state()->setUNK20000(false);
+        m_kartScale->calcCrushAnimation();
+    }
+}
+
+/// @addr{0x8058160C}
+void KartMove::calcScale() {
+    m_kartScale->calc();
+    setScale(m_kartScale->targetScale());
+}
+
 /// @addr{0x8058498C}
 void KartMove::enterCannon() {
     init(true, true);
@@ -2244,6 +2285,7 @@ void KartMoveBike::cancelWheelie() {
 void KartMoveBike::createSubsystems() {
     m_jump = new KartJumpBike(this);
     m_halfPipe = new KartHalfPipe();
+    m_kartScale = new KartScale();
 }
 
 /// @stage All

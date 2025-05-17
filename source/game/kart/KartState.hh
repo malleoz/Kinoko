@@ -227,6 +227,14 @@ public:
         m_bAfterRespawn = isSet;
     }
 
+    void setCrushed(bool isSet) {
+        m_bCrushed = isSet;
+    }
+
+    void setUNK20000(bool isSet) {
+        m_bUNK20000 = isSet;
+    }
+
     void setJumpPadFixedSpeed(bool isSet) {
         m_bJumpPadFixedSpeed = isSet;
     }
@@ -537,6 +545,14 @@ public:
         return m_bAfterRespawn;
     }
 
+    [[nodiscard]] bool isCrushed() const {
+        return m_bCrushed;
+    }
+
+    [[nodiscard]] bool isUNK20000() const {
+        return m_bUNK20000;
+    }
+
     [[nodiscard]] bool isJumpPadFixedSpeed() const {
         return m_bJumpPadFixedSpeed;
     }
@@ -679,6 +695,8 @@ private:
     bool m_bNoSparkInvisibleWall;
     bool m_bInRespawn;
     bool m_bAfterRespawn;
+    bool m_bCrushed;
+    bool m_bUNK20000; // I believe this can be removed for Kinoko
     bool m_bJumpPadFixedSpeed;
     bool m_bJumpPadDisableYsusForce;
     /// @}

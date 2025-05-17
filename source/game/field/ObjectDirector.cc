@@ -201,6 +201,12 @@ void ObjectDirector::createObjects() {
         ObjectBase *object = createObject(*pObj);
         object->load();
     }
+
+    auto course = System::RaceConfig::Instance()->raceScenario().course;
+    if (course == Course::Moonview_Highway) {
+        auto *highwayMgr = new ObjectHighwayManager;
+        highwayMgr->load();
+    }
 }
 
 /// @addr{0x80821E14}
