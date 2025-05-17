@@ -15,6 +15,8 @@ namespace Field {
 class ObjectBase {
 public:
     ObjectBase(const System::MapdataGeoObj &params);
+    ObjectBase(const char *objName, const EGG::Vector3f &pos, const EGG::Vector3f &rot,
+            const EGG::Vector3f &scale);
     virtual ~ObjectBase();
 
     virtual void init() {}
@@ -27,6 +29,8 @@ public:
     virtual void createCollision() = 0;
     virtual void loadRail();
     virtual void calcCollisionTransform() = 0;
+
+    [[nodiscard]] virtual const char *getName() const;
 
     /// @addr{0x806BF434}
     [[nodiscard]] virtual u32 loadFlags() const {
@@ -65,6 +69,7 @@ protected:
             const EGG::Vector3f &v1);
     static void SetRotTangentHorizontal(EGG::Matrix34f &mat, const EGG::Vector3f &up,
             const EGG::Vector3f &tangent);
+    static EGG::Matrix34f FUN_806B3CA4(const EGG::Vector3f &v);
 
     /// @addr{0x8086C098}
     [[nodiscard]] static EGG::Vector3f Interpolate(f32 t, const EGG::Vector3f &v0,

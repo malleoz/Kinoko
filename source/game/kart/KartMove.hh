@@ -141,6 +141,9 @@ public:
     void calcMushroomBoost();
     void calcZipperBoost();
     void landTrick();
+    void activateCrush(u16 timer);
+    void calcCrushed();
+    void calcScale();
 
     void enterCannon();
     void calcCannon();
@@ -186,6 +189,15 @@ public:
     void setKartSpeedLimit() {
         constexpr f32 LIMIT = 120.0f;
         m_hardSpeedLimit = LIMIT;
+    }
+
+    /// @addr{0x80581720}
+    void setScale(const EGG::Vector3f &v) {
+        m_scale = v; // 2157, 2743, 3604, 4610
+    }
+
+    void setPadType(PadType type) {
+        m_padType = type;
     }
     /// @endSetters
 
@@ -286,6 +298,10 @@ public:
         return m_halfPipe;
     }
 
+    [[nodiscard]] KartScale *kartScale() const {
+        return m_kartScale;
+    }
+
     [[nodiscard]] KartBurnout &burnout() {
         return m_burnout;
     }
@@ -378,11 +394,12 @@ protected:
     s16 m_ssmtLeewayTimer;       ///< Frames to forgive letting go of A before clearing SSMT charge.
     s16 m_ssmtDisableAccelTimer; ///< Counter that tracks delay before starting to reverse.
     f32 m_realTurn; ///< The "true" turn magnitude. Equal to @ref m_weightedTurn unless drifting.
-    f32 m_weightedTurn;    ///< Magnitude+direction of stick input, factoring in the kart's stats.
-    EGG::Vector3f m_scale; ///< @unused Always 1.0f
-    f32 m_totalScale;      ///< @unused Always 1.0f
+    f32 m_weightedTurn; ///< Magnitude+direction of stick input, factoring in the kart's stats.
+    EGG::Vector3f m_scale;
+    f32 m_totalScale; ///< @unused Always 1.0f
     f32 m_hitboxScale;
     u16 m_mushroomBoostTimer; ///< Number of frames until the mushroom boost runs out.
+    u16 m_crushTimer;
     u32 m_nonZipperAirtime;
     f32 m_jumpPadMinSpeed; ///< Snaps the player to a minimum speed when first touching a jump pad.
     f32 m_jumpPadMaxSpeed;
@@ -409,7 +426,8 @@ protected:
     PadType m_padType;
     Flags m_flags;
     KartJump *m_jump;
-    KartHalfPipe *m_halfPipe;                   ///< Pertains to zipper physics.
+    KartHalfPipe *m_halfPipe; ///< Pertains to zipper physics.
+    KartScale *m_kartScale;
     KartBurnout m_burnout;                      ///< Manages the state of start boost burnout.
     const DriftingParameters *m_driftingParams; ///< Drift-type-specific parameters.
     f32 m_rawTurn; ///< Float in range [-1, 1]. Represents stick magnitude + direction.

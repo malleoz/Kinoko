@@ -489,6 +489,8 @@ void KartState::clearBitfield2() {
     m_bNoSparkInvisibleWall = false;
     m_bInRespawn = false;
     m_bAfterRespawn = false;
+    m_bCrushed = false;
+    m_bUNK20000 = false;
     m_bJumpPadFixedSpeed = false;
     m_bJumpPadDisableYsusForce = false;
 }
