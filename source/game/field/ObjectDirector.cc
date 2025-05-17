@@ -59,6 +59,11 @@ void ObjectDirector::addObjectNoImpl(ObjectNoImpl *obj) {
     m_objects.push_back(obj);
 }
 
+/// @addr{0x806C4ED4}
+void ObjectDirector::addManagedObject(ObjectCollidable *obj) {
+    m_managedObjects.push_back(obj);
+}
+
 /// @addr{0x8082AB04}
 size_t ObjectDirector::checkKartObjectCollision(Kart::KartObject *kartObj,
         ObjectCollisionConvexHull *convexHull) {
@@ -196,6 +201,12 @@ void ObjectDirector::createObjects() {
         ObjectBase *object = createObject(*pObj);
         object->load();
     }
+
+    auto course = System::RaceConfig::Instance()->raceScenario().course;
+    if (course == Course::Moonview_Highway) {
+        auto *highwayMgr = new ObjectHighwayManager;
+        highwayMgr->load();
+    }
 }
 
 /// @addr{0x80821E14}
@@ -204,6 +215,9 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
     switch (id) {
     case ObjectId::WLWallGC:
         return new ObjectWLWallGC(params);
+    case ObjectId::KartTruck:
+    case ObjectId::CarBody:
+        return new ObjectCarTGE(params);
     case ObjectId::Boble:
         return new ObjectBoble(params);
     case ObjectId::DokanSFC:

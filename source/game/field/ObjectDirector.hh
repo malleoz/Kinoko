@@ -16,6 +16,7 @@ public:
     void calc();
     void addObject(ObjectCollidable *obj);
     void addObjectNoImpl(ObjectNoImpl *obj);
+    void addManagedObject(ObjectCollidable *obj);
 
     size_t checkKartObjectCollision(Kart::KartObject *kartObj,
             ObjectCollisionConvexHull *convexHull);
@@ -24,7 +25,11 @@ public:
         return m_flowTable;
     }
 
-    [[nodiscard]] const ObjectBase *collidingObject(size_t idx) const {
+    [[nodiscard]] const ObjectHitTable &hitTableKart() const {
+        return m_hitTableKart;
+    }
+
+    [[nodiscard]] const ObjectCollidable *collidingObject(size_t idx) const {
         ASSERT(idx < m_collidingObjects.size());
         return m_collidingObjects[idx];
     }
@@ -37,6 +42,10 @@ public:
     [[nodiscard]] const EGG::Vector3f &hitDepth(size_t idx) const {
         ASSERT(idx < m_hitDepths.size());
         return m_hitDepths[idx];
+    }
+
+    [[nodiscard]] std::vector<ObjectCollidable *> managedObjects() const {
+        return m_managedObjects;
     }
 
     static ObjectDirector *CreateInstance();
@@ -67,6 +76,7 @@ private:
             m_collidingObjects; ///< Objects we are currently colliding with
     std::array<EGG::Vector3f, MAX_UNIT_COUNT> m_hitDepths;
     std::array<Kart::Reaction, MAX_UNIT_COUNT> m_reactions;
+    std::vector<ObjectCollidable *> m_managedObjects;
 
     static ObjectDirector *s_instance;
 };

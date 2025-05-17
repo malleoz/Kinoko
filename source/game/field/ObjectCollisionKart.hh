@@ -22,6 +22,7 @@ public:
 
     static EGG::Vector3f GetHitDirection(u16 objKartHit);
     static constexpr std::span<const EGG::Vector3f> GetVehicleVertices(Vehicle vehicle);
+    static const EGG::Vector3f &translation(size_t idx);
 
 private:
     ObjectCollisionConvexHull *m_hull;
