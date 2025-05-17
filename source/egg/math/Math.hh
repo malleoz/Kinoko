@@ -77,10 +77,24 @@ namespace EGG::Mathf {
             static_cast<f64>(x) * force25Bit(static_cast<f64>(y)) - static_cast<f64>(z));
 }
 
-// frsqrte matching courtesy of Geotale, with reference to https://achurch.org/cpu-tests/ppc750cl.s
+// frsqrte and frse matching courtesy of Geotale, with reference to
+// https://achurch.org/cpu-tests/ppc750cl.s
 struct BaseAndDec {
     u64 base;
     s64 dec;
+};
+
+union c32 {
+    constexpr c32(const f32 p) {
+        f = p;
+    }
+
+    constexpr c32(const u32 p) {
+        u = p;
+    }
+
+    u32 u;
+    f32 f;
 };
 
 union c64 {
@@ -190,6 +204,120 @@ static constexpr std::array<BaseAndDec, 32> RSQRTE_TABLE = {{
     u64 new_mantissa = static_cast<u64>(entry.base + entry.dec * static_cast<s64>(key & 0x7ff));
 
     return c64(new_exp | new_mantissa).f;
+}
+
+// Credit: Geotale, with reference to https://achurch.org/cpu-tests/ppc750cl.s
+
+static constexpr std::array<BaseAndDec, 32> FRES_TABLE = {{
+        {0x00fff000, -0x3e1},
+        {0x00f07000, -0x3a7},
+        {0x00e1d400, -0x371},
+        {0x00d41000, -0x340},
+        {0x00c71000, -0x313},
+        {0x00bac400, -0x2ea},
+        {0x00af2000, -0x2c4},
+        {0x00a41000, -0x2a0},
+        {0x00999000, -0x27f},
+        {0x008f9400, -0x261},
+        {0x00861000, -0x245},
+        {0x007d0000, -0x22a},
+        {0x00745800, -0x212},
+        {0x006c1000, -0x1fb},
+        {0x00642800, -0x1e5},
+        {0x005c9400, -0x1d1},
+        {0x00555000, -0x1be},
+        {0x004e5800, -0x1ac},
+        {0x0047ac00, -0x19b},
+        {0x00413c00, -0x18b},
+        {0x003b1000, -0x17c},
+        {0x00352000, -0x16e},
+        {0x002f5c00, -0x15b},
+        {0x0029f000, -0x15b},
+        {0x00248800, -0x143},
+        {0x001f7c00, -0x143},
+        {0x001a7000, -0x12d},
+        {0x0015bc00, -0x12d},
+        {0x00110800, -0x11a},
+        {0x000ca000, -0x11a},
+        {0x00083800, -0x108},
+        {0x00041800, -0x106},
+}};
+
+[[nodiscard]] static inline f32 fres(const f32 val) {
+    static constexpr u32 EXPONENT_SHIFT_F32 = 23;
+    static constexpr u64 EXPONENT_SHIFT_F64 = 52;
+    static constexpr u32 EXPONENT_MASK_F32 = 0x7f800000UL;
+    static constexpr u64 EXPONENT_MASK_F64 = 0x7ff0000000000000ULL;
+    static constexpr u32 MANTISSA_MASK_F32 = 0x007fffffUL;
+    static constexpr u32 SIGN_MASK_F32 = 0x80000000UL;
+    static constexpr u64 SIGN_MASK_F64 = 0x8000000000000000ULL;
+    static constexpr u64 QUIET_BIT_F64 = 0x0008000000000000ULL;
+    static constexpr c64 LARGEST_FLOAT(static_cast<u64>(0x47d0000000000000ULL));
+
+    c64 bits(val);
+
+    u32 mantissa = static_cast<u32>(
+                           bits.u >> (EXPONENT_SHIFT_F64 - static_cast<u64>(EXPONENT_SHIFT_F32))) &
+            MANTISSA_MASK_F32;
+    s32 exponent = static_cast<s32>((bits.u & EXPONENT_MASK_F64) >> EXPONENT_SHIFT_F64) - 0x380;
+    u32 sign = static_cast<u32>(bits.u >> 32) & SIGN_MASK_F32;
+
+    if (exponent < -1) {
+        bool nonzero = (bits.u & !SIGN_MASK_F64) != 0;
+
+        if (nonzero) {
+            // Create the largest normal number, because no matter what
+            // it'll be a better approximation than infinity!!
+            c32 cresult(sign | (EXPONENT_MASK_F32 - (1 << EXPONENT_SHIFT_F32)) | MANTISSA_MASK_F32);
+            return cresult.f;
+        } else {
+            return std::copysignf(std::numeric_limits<f32>::infinity(), val);
+        }
+    }
+
+    if ((bits.u & EXPONENT_MASK_F64) >= LARGEST_FLOAT.u) {
+        // It's either huge or NaN!
+        if (mantissa == 0 || (bits.u & EXPONENT_MASK_F64) != EXPONENT_MASK_F64) {
+            // Infinity or a number which will flush to 0 -- return 0
+            return std::copysignf(0.0f, val);
+        } else if ((bits.u & QUIET_BIT_F64) != 0) {
+            // QNaN -- Just return the original value
+            return val;
+        } else {
+            // SNaN!!
+            return std::numeric_limits<f32>::quiet_NaN();
+        }
+    }
+
+    // The exponent doesn't matter for a simple recipricol because
+    // the exponent is just a single multiplication!
+    u32 key = mantissa >> 18;
+    s32 new_exp = 253 - exponent;
+    const BaseAndDec &entry = FRES_TABLE[key];
+
+    // The result is given by an estimate then an adjustment based on the original
+    // key that was computed
+    u32 pre_shift =
+            static_cast<u32>(entry.base + entry.dec * (static_cast<s32>((mantissa >> 8) & 0x3ff)));
+    u32 new_mantissa = pre_shift >> 1;
+
+    if (new_exp <= 0) {
+        // Flush the denormal!!
+        c32 cresult(sign);
+        return cresult.f;
+    } else {
+        u32 temp = sign | static_cast<u32>(new_exp) << EXPONENT_SHIFT_F32 | new_mantissa;
+        c32 cresult(temp);
+        return cresult.f;
+    }
+}
+
+/// @brief Fused Newton-Raphson operation.
+[[nodiscard]] static inline f32 finv(f32 x) {
+    f32 inv = fres(x);
+    f32 invDouble = inv + inv;
+    f32 invSquare = inv * inv;
+    return -fms(x, invSquare, invDouble);
 }
 
 } // namespace EGG::Mathf

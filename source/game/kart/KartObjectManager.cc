@@ -4,6 +4,8 @@
 #include "game/kart/KartParamFileManager.hh"
 #include "game/system/RaceConfig.hh"
 
+#include <abstract/g3d/ResFile.hh>
+
 namespace Kart {
 
 /// @addr{0x8058FEE0}
@@ -50,6 +52,9 @@ KartObjectManager::KartObjectManager() {
     m_count = raceScenario.playerCount;
     m_objects = new KartObject *[m_count];
     KartParamFileManager::CreateInstance();
+
+    loadScaleAnimations();
+
     for (size_t i = 0; i < m_count; ++i) {
         const auto &player = raceScenario.players[i];
         KartObject *object = KartObject::Create(player.character, player.vehicle, i);
@@ -78,6 +83,17 @@ KartObjectManager::~KartObjectManager() {
     // gone by that point, this results in a segmentation fault. So, we clear the links here.
     KartObjectProxy::proxyList().clear();
 }
+
+void KartObjectManager::loadScaleAnimations() {
+    auto *resMgr = System::ResourceManager::Instance();
+    const void *file = resMgr->getFile("driver.brres", nullptr, System::ArchiveId::Core);
+    ASSERT(file);
+
+    Abstract::g3d::ResFile resFile(file);
+    s_raceScaleAnmChr = resFile.resAnmChr("press_scale_up");
+}
+
+std::optional<Abstract::g3d::ResAnmChr> KartObjectManager::s_raceScaleAnmChr; ///< @addr{0x809C18B0}
 
 KartObjectManager *KartObjectManager::s_instance = nullptr; ///< @addr{0x809C18F8}
 
