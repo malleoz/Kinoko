@@ -18,6 +18,20 @@ ObjectBase::ObjectBase(const System::MapdataGeoObj &params)
       m_flags(0x3), m_pos(params.pos()), m_rot(params.rot() * DEG2RAD), m_scale(params.scale()),
       m_transform(EGG::Matrix34f::ident), m_mapObj(&params) {}
 
+/// @addr{0x8081FB04}
+ObjectBase::ObjectBase(const char *objName, const EGG::Vector3f &pos, const EGG::Vector3f &rot,
+        const EGG::Vector3f &scale)
+    : m_drawMdl(nullptr) {
+    m_resFile = nullptr;
+    m_id = ObjectDirector::Instance()->flowTable().getIdfFromName(objName);
+    m_mapObj = nullptr;
+    m_transform = EGG::Matrix34f::ident;
+    m_pos = pos;
+    m_rot = rot;
+    m_scale = scale;
+    m_flags = 11;
+}
+
 /// @addr{0x8067E3C4}
 ObjectBase::~ObjectBase() {
     delete m_resFile;
@@ -77,6 +91,12 @@ void ObjectBase::loadRail() {
     }
 }
 
+/// @addr{0x80680784}
+const char *ObjectBase::getName() const {
+    const auto &flowTable = ObjectDirector::Instance()->flowTable();
+    return flowTable.set(flowTable.slot(id()))->name;
+}
+
 /// @addr{0x806806DC}
 const char *ObjectBase::getKclName() const {
     const auto &flowTable = ObjectDirector::Instance()->flowTable();
@@ -134,6 +154,26 @@ void ObjectBase::SetRotTangentHorizontal(EGG::Matrix34f &mat, const EGG::Vector3
     mat.setBase(0, up.cross(vec));
     mat.setBase(1, up);
     mat.setBase(2, vec);
+}
+
+/// @addr{0x806B3CA4}
+EGG::Matrix34f ObjectBase::FUN_806B3CA4(const EGG::Vector3f &v) {
+    EGG::Vector3f z = v;
+    z.y = std::max(z.y, 0.001f);
+
+    EGG::Vector3f h = EGG::Vector3f(v.x, 0.0f, v.z);
+    h.normalise2();
+
+    EGG::Vector3f x = (z.y > 0.0f) ? -h.cross(z) : h.cross(z);
+    x.normalise2();
+
+    EGG::Matrix34f mat;
+    mat.setBase(3, EGG::Vector3f::zero);
+    mat.setBase(0, x);
+    mat.setBase(1, z.cross(x));
+    mat.setBase(2, z);
+
+    return mat;
 }
 
 } // namespace Field

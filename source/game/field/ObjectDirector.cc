@@ -7,6 +7,7 @@
 #include "game/kart/KartObject.hh"
 
 #include "game/system/CourseMap.hh"
+#include "game/system/RaceConfig.hh"
 
 namespace Field {
 
@@ -41,7 +42,8 @@ void ObjectDirector::addObject(ObjectCollidable *obj) {
         m_calcObjects.push_back(obj);
     }
 
-    if (m_flowTable.set(m_flowTable.slot(obj->id()))->mode != 0) {
+    const auto *set = m_flowTable.set(m_flowTable.slot(obj->id()));
+    if (set && set->mode != 0) {
         if (obj->collision()) {
             m_collisionObjects.push_back(obj);
         }
@@ -52,6 +54,11 @@ void ObjectDirector::addObject(ObjectCollidable *obj) {
 
 void ObjectDirector::addObjectNoImpl(ObjectNoImpl *obj) {
     m_objects.push_back(obj);
+}
+
+/// @addr{0x806C4ED4}
+void ObjectDirector::addManagedObject(ObjectCollidable *obj) {
+    m_managedObjects.push_back(obj);
 }
 
 /// @addr{0x8082AB04}
@@ -168,6 +175,12 @@ void ObjectDirector::createObjects() {
         ObjectBase *object = createObject(*pObj);
         object->load();
     }
+
+    auto course = System::RaceConfig::Instance()->raceScenario().course;
+    if (course == Course::Moonview_Highway) {
+        auto *highwayMgr = new ObjectHighwayManager;
+        highwayMgr->load();
+    }
 }
 
 /// @addr{0x80821E14}
@@ -176,10 +189,15 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
     switch (id) {
     case ObjectId::WLWallGC:
         return new ObjectWLWallGC(params);
+    case ObjectId::KartTruck:
+    case ObjectId::CarBody:
+        return new ObjectCarTGE(params);
     case ObjectId::DokanSFC:
         return new ObjectDokan(params);
     case ObjectId::OilSFC:
         return new ObjectOilSFC(params);
+    case ObjectId::KStick:
+        return new ObjectKStick(params);
     case ObjectId::ParasolR:
         return new ObjectParasolR(params);
     case ObjectId::Kuribo:

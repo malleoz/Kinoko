@@ -43,6 +43,15 @@ public:
         return m_points[m_currPointIdx];
     }
 
+    [[nodiscard]] const System::MapdataPointInfo::Point &nextPoint() const {
+        ASSERT(static_cast<size_t>(m_nextPointIdx) < m_points.size());
+        return m_points[m_nextPointIdx];
+    }
+
+    [[nodiscard]] f32 speed() const {
+        return m_speed;
+    }
+
     [[nodiscard]] const EGG::Vector3f &curPos() const {
         return m_curPos;
     }
@@ -51,8 +60,20 @@ public:
         return m_curTangentDir;
     }
 
+    [[nodiscard]] f32 segmentT() const {
+        return m_segmentT;
+    }
+
     [[nodiscard]] bool isMovementDirectionForward() const {
         return m_movementDirectionForward;
+    }
+
+    [[nodiscard]] s16 curPointIdx() const {
+        return m_currPointIdx;
+    }
+
+    [[nodiscard]] s16 nextPointIdx() const {
+        return m_nextPointIdx;
     }
 
 protected:

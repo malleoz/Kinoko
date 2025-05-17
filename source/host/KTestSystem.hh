@@ -24,6 +24,14 @@ public:
         return static_cast<KTestSystem *>(s_instance);
     }
 
+    void enableAlloc() {
+        m_sceneMgr->currentScene()->heap()->enableAllocation();
+    }
+
+    u16 currentFrame() const {
+        return m_currentFrame;
+    }
+
 private:
     struct TestCase {
         std::string name;

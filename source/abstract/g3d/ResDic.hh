@@ -46,6 +46,10 @@ public:
         return nullptr;
     }
 
+    [[nodiscard]] const NodeData *get(size_t idx) const {
+        return &m_data->data[idx];
+    }
+
 private:
     [[nodiscard]] const NodeData *get(const char *pName, u32 len) const;
 

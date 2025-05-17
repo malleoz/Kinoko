@@ -1,0 +1,49 @@
+#pragma once
+
+#include "game/field/obj/ObjectCollidable.hh"
+
+namespace Field {
+
+class ObjectCarTGE;
+class ObjectKStick;
+
+class ObjectHighwayManager : public ObjectCollidable {
+public:
+    ObjectHighwayManager();
+    ~ObjectHighwayManager() override;
+
+    void init() override;
+    void calc() override;
+
+    /// @addr{0x806D5C6C}
+    u32 loadFlags() const override {
+        return 1;
+    }
+
+    /// @addr{0x806D5C68}
+    void loadGraphics() override {}
+
+    /// @addr{0x806D5C60}
+    void createCollision() override {}
+
+    /// @addr{0x806D5C64}
+    void loadRail() override {}
+
+    [[nodiscard]] u32 squashTimer() const {
+        return m_squashTimer;
+    }
+
+private:
+    void calcSquash();
+    void calcSticks();
+
+    std::span<ObjectCarTGE *> m_cars;
+    std::span<ObjectCarTGE *> m_trucks;
+    std::span<ObjectKStick *> m_sticks;
+    std::span<ObjectCarTGE *> m_all;
+    u32 m_squashTimer; ///< Normally an array, one for each player.
+
+    static constexpr u32 SQUASH_MAX = 600;
+};
+
+} // namespace Field

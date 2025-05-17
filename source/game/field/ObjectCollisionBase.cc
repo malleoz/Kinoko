@@ -31,7 +31,7 @@ bool ObjectCollisionBase::check(ObjectCollisionBase &rhs, EGG::Vector3f &distanc
         }
 
         state.m_support1[state.m_idx] = getSupport(-D);
-        state.m_support2[state.m_idx] = rhs.getSupport(D);
+        state.m_support2[state.m_idx] = rhs.getSupport(D); // rhs.getSupport(D) wrong
 
         EGG::Vector3f A = state.m_support1[state.m_idx] - state.m_support2[state.m_idx];
         f32 max2 = max * max;
