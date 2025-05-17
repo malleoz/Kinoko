@@ -77,6 +77,12 @@ void ObjectBase::loadRail() {
     }
 }
 
+/// @addr{0x80680784}
+const char *ObjectBase::getName() const {
+    const auto &flowTable = ObjectDirector::Instance()->flowTable();
+    return flowTable.set(flowTable.slot(id()))->name;
+}
+
 /// @addr{0x806806DC}
 const char *ObjectBase::getKclName() const {
     const auto &flowTable = ObjectDirector::Instance()->flowTable();

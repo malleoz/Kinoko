@@ -28,6 +28,8 @@ public:
     virtual void loadRail();
     virtual void calcCollisionTransform() = 0;
 
+    [[nodiscard]] virtual const char *getName() const;
+
     /// @addr{0x806BF434}
     [[nodiscard]] virtual u32 loadFlags() const {
         // TODO: This references LOD to determine load flags

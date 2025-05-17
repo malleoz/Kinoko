@@ -123,4 +123,9 @@ void ObjectCollidable::createCollision() {
     }
 }
 
+/// @addr{0x8081F170}
+void ObjectCollidable::registerManagedObject() {
+    ObjectDirector::Instance()->addManagedObject(this);
+}
+
 } // namespace Field

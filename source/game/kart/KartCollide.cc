@@ -998,6 +998,14 @@ Action KartCollide::handleReactWallSpark(size_t idx) {
     return Action::None;
 }
 
+/// @addr{0x805735EC}
+Action KartCollide::handleReactUntrickableJumpPad(size_t /*idx*/) {
+    move()->setPadType(KartMove::PadType(KartMove::ePadType::JumpPad));
+    state()->setJumpPadVariant(0);
+
+    return Action::None;
+}
+
 /// @addr{0x805735D4}
 Action KartCollide::handleReactShortCrushLoseItem(size_t /*idx*/) {
     return Action::UNK_14;
@@ -1043,7 +1051,7 @@ std::array<KartCollide::ObjectCollisionHandler, 33> KartCollide::s_objectCollisi
         &KartCollide::handleReactWallSpark,
         &KartCollide::handleReactNone,
         &KartCollide::handleReactNone,
-        &KartCollide::handleReactNone,
+        &KartCollide::handleReactUntrickableJumpPad,
         &KartCollide::handleReactShortCrushLoseItem,
         &KartCollide::handleReactCrushRespawn,
         &KartCollide::handleReactExplosionLoseItem,

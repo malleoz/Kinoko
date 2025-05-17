@@ -54,6 +54,11 @@ void ObjectDirector::addObjectNoImpl(ObjectNoImpl *obj) {
     m_objects.push_back(obj);
 }
 
+/// @addr{0x806C4ED4}
+void ObjectDirector::addManagedObject(ObjectCollidable *obj) {
+    m_managedObjects.push_back(obj);
+}
+
 /// @addr{0x8082AB04}
 size_t ObjectDirector::checkKartObjectCollision(Kart::KartObject *kartObj,
         ObjectCollisionConvexHull *convexHull) {
@@ -174,6 +179,9 @@ void ObjectDirector::createObjects() {
 ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
     ObjectId id = static_cast<ObjectId>(params.id());
     switch (id) {
+    case ObjectId::KartTruck:
+    case ObjectId::CarBody:
+        return new ObjectCarTGE(params);
     case ObjectId::DokanSFC:
         return new ObjectDokan(params);
     case ObjectId::OilSFC:

@@ -37,7 +37,6 @@ public:
     virtual void onWallCollision(Kart::KartObject *, const EGG::Vector3f &) {}
     virtual void onObjectCollision(Kart::KartObject *) {}
 
-    /// @addr{0x80681748}
     virtual bool checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &dist);
 
     /// @addr{0x8068173C}
@@ -52,6 +51,8 @@ public:
 
 protected:
     void createCollision() override;
+
+    void registerManagedObject();
 
     /// @addr{0x806816B8}
     virtual const EGG::Vector3f &collisionCenter() const {

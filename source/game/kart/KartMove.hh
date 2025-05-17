@@ -187,6 +187,10 @@ public:
         constexpr f32 LIMIT = 120.0f;
         m_hardSpeedLimit = LIMIT;
     }
+
+    void setPadType(PadType type) {
+        m_padType = type;
+    }
     /// @endSetters
 
     /// @beginGetters
