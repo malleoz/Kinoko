@@ -146,6 +146,7 @@ void ObjectCarTGE::init() {
         m_nextStateId = 2;
     }
 
+    m_squashed = false;
     m_pos = m_railInterpolator->curPos();
     m_flags |= 1;
     m_currSpeed = m_railInterpolator->getCurrVel();
@@ -247,11 +248,18 @@ Kart::Reaction ObjectCarTGE::onCollision(Kart::KartObject *kartObj, Kart::Reacti
     }
 
     if (m_highwayMgr) {
+        constexpr u32 SQUASH_INVULNERABILITY = 200;
+
+        if (m_highwayMgr->squashTimer() < SQUASH_INVULNERABILITY) {
+            ;
+        }
         // TODO: Check hit table for kart and object. Maybe assert that it's 0?
+        // IntentionalCompilerErrorSoIDontForgetThis();
     }
 
     // In the base game, behavior branches on reactionOnObj, but for time trials it's always 0.
     if (reactionOnKart != Kart::Reaction::None && reactionOnKart != Kart::Reaction::WallAllSpeed) {
+        m_squashed = true;
         calcTransform();
         EGG::Vector3f v2 = m_transform.base(2);
         v2.y = 0.0f;
@@ -341,14 +349,14 @@ void ObjectCarTGE::calcPos() {
     EGG::Vector3f interp = m_curFloorNrm * (1.0f - t) + m_nextFloorNrm * t;
 }
 
-const std::array<StateManagerEntry<ObjectCarTGE>, 4> StateManager<ObjectCarTGE>::STATE_ENTRIES = {{
+const std::array<StateManagerEntry<ObjectCarTGE>, 3> StateManager<ObjectCarTGE>::STATE_ENTRIES = {{
         {0, &ObjectCarTGE::enterStateStub, &ObjectCarTGE::calcStateStub},
         {1, &ObjectCarTGE::enterStateStub, &ObjectCarTGE::calcState1},
         {2, &ObjectCarTGE::enterStateStub, &ObjectCarTGE::calcState2},
 }};
 
 StateManager<ObjectCarTGE>::StateManager(ObjectCarTGE *obj) {
-    constexpr size_t ENTRY_COUNT = 4;
+    constexpr size_t ENTRY_COUNT = 3;
 
     m_obj = obj;
     m_entries = std::span{STATE_ENTRIES};

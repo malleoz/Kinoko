@@ -7,6 +7,7 @@
 #include "game/kart/KartObject.hh"
 
 #include "game/system/CourseMap.hh"
+#include "game/system/RaceConfig.hh"
 
 namespace Field {
 
@@ -41,7 +42,8 @@ void ObjectDirector::addObject(ObjectCollidable *obj) {
         m_calcObjects.push_back(obj);
     }
 
-    if (m_flowTable.set(m_flowTable.slot(obj->id()))->mode != 0) {
+    const auto *set = m_flowTable.set(m_flowTable.slot(obj->id()));
+    if (set && set->mode != 0) {
         if (obj->collision()) {
             m_collisionObjects.push_back(obj);
         }
@@ -172,6 +174,12 @@ void ObjectDirector::createObjects() {
 
         ObjectBase *object = createObject(*pObj);
         object->load();
+    }
+
+    auto course = System::RaceConfig::Instance()->raceScenario().course;
+    if (course == Course::Moonview_Highway) {
+        auto *highwayMgr = new ObjectHighwayManager;
+        highwayMgr->load();
     }
 }
 

@@ -4,6 +4,7 @@
 
 #include "game/field/StateManager.hh"
 #include "game/field/obj/ObjectCollidable.hh"
+#include "game/field/obj/ObjectHighwayManager.hh"
 
 namespace Field {
 
@@ -16,7 +17,7 @@ public:
     ~StateManager() override;
 
 private:
-    static const std::array<StateManagerEntry<ObjectCarTGE>, 4> STATE_ENTRIES;
+    static const std::array<StateManagerEntry<ObjectCarTGE>, 3> STATE_ENTRIES;
 };
 
 class ObjectCarTGE : public ObjectCollidable, public StateManager<ObjectCarTGE> {
@@ -61,6 +62,19 @@ public:
     bool checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &dist) override;
     const EGG::Vector3f &collisionCenter() const override;
 
+    void setHighwayManager(const ObjectHighwayManager *highwayMgr) {
+        m_highwayMgr = highwayMgr;
+    }
+
+    /// @addr{0x806D9A04}
+    void reset() {
+        m_squashed = false;
+    }
+
+    [[nodiscard]] squashed() const {
+        return m_squashed;
+    }
+
 private:
     static constexpr f32 HIGHWAY_SPEED_CHANGE = 200.0f; ///< Speed bonus entering the toll road.
 
@@ -72,7 +86,7 @@ private:
     void calcFloorNrm();
     void calcPos();
 
-    void *m_highwayMgr;
+    const ObjectHighwayManager *m_highwayMgr;
     u32 m_carVariant;
     ObjectCollisionBase *m_auxCollision;
     f32 m_vel0;
@@ -86,6 +100,7 @@ private:
     f32 m_currSpeed;
     EGG::Vector3f m_curFloorNrm;
     EGG::Vector3f m_nextFloorNrm;
+    bool m_squashed;
     bool m_hasAuxCollision;
     f32 m_hitAngle;
 };

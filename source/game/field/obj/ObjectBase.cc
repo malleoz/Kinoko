@@ -18,6 +18,20 @@ ObjectBase::ObjectBase(const System::MapdataGeoObj &params)
       m_flags(0x3), m_pos(params.pos()), m_rot(params.rot() * DEG2RAD), m_scale(params.scale()),
       m_transform(EGG::Matrix34f::ident), m_mapObj(&params) {}
 
+/// @addr{0x8081FB04}
+ObjectBase::ObjectBase(const char *objName, const EGG::Vector3f &pos, const EGG::Vector3f &rot,
+        const EGG::Vector3f &scale)
+    : m_drawMdl(nullptr) {
+    m_resFile = nullptr;
+    m_id = ObjectDirector::Instance()->flowTable().getIdfFromName(objName);
+    m_mapObj = nullptr;
+    m_transform = EGG::Matrix34f::ident;
+    m_pos = pos;
+    m_rot = rot;
+    m_scale = scale;
+    m_flags = 11;
+}
+
 /// @addr{0x8067E3C4}
 ObjectBase::~ObjectBase() {
     delete m_resFile;

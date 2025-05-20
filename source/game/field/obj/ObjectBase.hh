@@ -15,6 +15,8 @@ namespace Field {
 class ObjectBase {
 public:
     ObjectBase(const System::MapdataGeoObj &params);
+    ObjectBase(const char *objName, const EGG::Vector3f &pos, const EGG::Vector3f &rot,
+            const EGG::Vector3f &scale);
     virtual ~ObjectBase();
 
     virtual void init() {}
