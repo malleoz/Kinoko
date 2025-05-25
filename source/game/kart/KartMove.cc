@@ -1923,9 +1923,8 @@ void KartMove::tryStartJumpPad() {
     }
 
     if (jumpPadVariant == 4) {
-        status.setBit(eStatus::JumpPadMushroomTrigger);
-        status.setBit(eStatus::JumpPadMushroomVelYInc);
-        status.setBit(eStatus::JumpPadMushroomCollision);
+        status.setBit(eStatus::JumpPadMushroomTrigger, eStatus::JumpPadMushroomVelYInc,
+                eStatus::JumpPadMushroomCollision);
     } else {
         EGG::Vector3f extVel = dynamics()->extVel();
         EGG::Vector3f totalForce = dynamics()->totalForce();
@@ -2106,7 +2105,7 @@ void KartMove::landTrick() {
             95,
     }};
 
-    if (status().onBit(eStatus::BeforeRespawn) || status().onBit(eStatus::InAction)) {
+    if (status().onBit(eStatus::BeforeRespawn, eStatus::InAction)) {
         return;
     }
 
