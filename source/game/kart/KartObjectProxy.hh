@@ -103,14 +103,16 @@ enum class eStatus {
     BoostOffroadInvincibility = 39, ///< Set if we should ignore offroad slowdown this frame.
     HalfPipeRamp = 41,              ///< Set while colliding with zipper KCL.
     OverZipper = 42,                ///< Set while mid-air from a zipper.
-    ZipperInvisibleWall = 44,       ///< Set when colliding with invisible wall above a zipper.
-    ZipperBoost = 45,               ///< Set when boosting after landing from a zipper.
-    ZipperStick = 46,               ///< Set while mid-air and still influenced by the zipper.
-    ZipperTrick = 47,               ///< Set while tricking mid-air from a zipper.
-    DisableBackwardsAccel = 48,     ///< Enforces a 20f delay when reversing after charging SSMT.
-    RespawnKillY = 49,              ///< Set while respawning to cap external velocity at 0.
-    Burnout = 50,                   ///< Set during a burnout on race start.
+    JumpPadMushroomCollision = 43,
+    ZipperInvisibleWall = 44,   ///< Set when colliding with invisible wall above a zipper.
+    ZipperBoost = 45,           ///< Set when boosting after landing from a zipper.
+    ZipperStick = 46,           ///< Set while mid-air and still influenced by the zipper.
+    ZipperTrick = 47,           ///< Set while tricking mid-air from a zipper.
+    DisableBackwardsAccel = 48, ///< Enforces a 20f delay when reversing after charging SSMT.
+    RespawnKillY = 49,          ///< Set while respawning to cap external velocity at 0.
+    Burnout = 50,               ///< Set during a burnout on race start.
     TrickRot = 54,
+    JumpPadMushroomVelYInc = 55,
     ChargingSSMT = 57,      ///< Tracks whether we are charging a stand-still mini-turbo.
     RejectRoad = 59,        ///< Collision which causes a change in the player's pos and rot.
     RejectRoadTrigger = 60, ///< e.g. DK Summit ending, and Maple Treeway side walls.
@@ -118,9 +120,11 @@ enum class eStatus {
 
     WheelieRot = 68,
     SkipWheelCalc = 69,
+    JumpPadMushroomTrigger = 70,
     NoSparkInvisibleWall = 75,
     InRespawn = 77,
     AfterRespawn = 78,
+    JumpPadFixedSpeed = 84,
     JumpPadDisableYsusForce = 86,
 
     UNK2 = 97,
@@ -128,6 +132,7 @@ enum class eStatus {
     SoftWallDrift = 100,
     HWG = 101, ///< Set when "Horizontal Wall Glitch" is active.
     AfterCannon = 102,
+    ActionMidZipper = 103,  ///< Set when we enter an action while mid-air from a zipper.
     ChargeStartBoost = 104, ///< Like @ref m_bAccelerate but during countdown.
     EndHalfPipe = 107,
 

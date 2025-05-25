@@ -216,8 +216,10 @@ void KartMove::init(bool b1, bool b2) {
 
 /// @addr{0x8058348C}
 void KartMove::clear() {
-    if (state()->isOverZipper()) {
-        state()->setActionMidZipper(true);
+    Status &status = KartObjectProxy::status();
+
+    if (status.onBit(eStatus::OverZipper)) {
+        status.setBit(eStatus::ActionMidZipper);
     }
 
     clearBoost();
@@ -1184,7 +1186,7 @@ void KartMove::calcRotation() {
         if (status.offBit(eStatus::TouchingGround)) {
             if (status.onBit(eStatus::RampBoost) && m_jump->isBoostRampEnabled()) {
                 turn = 0.0f;
-            } else if (!state()->isJumpPadMushroomCollision()) {
+            } else if (status.offBit(eStatus::JumpPadMushroomCollision)) {
                 u32 airtime = state()->airtime();
                 if (airtime >= 70) {
                     turn = 0.0f;
@@ -1916,13 +1918,14 @@ void KartMove::tryStartJumpPad() {
             }};
             m_jumpPadProperties = &JUMP_PAD_PROPERTIES_SHROOM_BOOST[jumpPadVariant != 3];
         }
-        state()->setJumpPadFixedSpeed(true);
+
+        status.setBit(eStatus::JumpPadFixedSpeed);
     }
 
     if (jumpPadVariant == 4) {
-        state()->setJumpPadMushroomTrigger(true);
-        state()->setJumpPadMushroomVelYInc(true);
-        state()->setJumpPadMushroomCollision(true);
+        status.setBit(eStatus::JumpPadMushroomTrigger);
+        status.setBit(eStatus::JumpPadMushroomVelYInc);
+        status.setBit(eStatus::JumpPadMushroomCollision);
     } else {
         EGG::Vector3f extVel = dynamics()->extVel();
         EGG::Vector3f totalForce = dynamics()->totalForce();
@@ -1951,7 +1954,7 @@ void KartMove::tryStartJumpPad() {
 
 /// @addr{0x80582530}
 void KartMove::tryEndJumpPad() {
-    KartStatus &status = status();
+    Status &status = KartObjectProxy::status();
     if (status.onBit(eStatus::JumpPadMushroomTrigger)) {
         if (status.onBit(eStatus::GroundStart)) {
             status.resetBit(eStatus::JumpPadMushroomTrigger, eStatus::JumpPadFixedSpeed,
@@ -1964,7 +1967,6 @@ void KartMove::tryEndJumpPad() {
             if (m_jumpPadProperties->velY < newExtVel.y) {
                 newExtVel.y = m_jumpPadProperties->velY;
                 status.resetBit(eStatus::JumpPadMushroomVelYInc);
-                state()->setJumpPadMushroomVelYInc(false);
             }
             dynamics()->setExtVel(newExtVel);
         }

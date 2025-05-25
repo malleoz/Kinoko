@@ -317,8 +317,8 @@ void KartState::calcCollisions() {
 
         m_status.changeBit(m_trickableTimer > 0, eStatus::Trickable);
 
-        if (!m_bJumpPad) {
-            m_bJumpPadMushroomCollision = false;
+        if (m_status.offBit(eStatus::JumpPad)) {
+            m_status.resetBit(eStatus::JumpPadMushroomCollision);
         }
 
         if (!wasTouchingGround) {

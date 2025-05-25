@@ -5,10 +5,6 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-<<<<<<< HEAD
-=======
-#include <cstdlib>
->>>>>>> 9ba9d9e (Make KartState bitfields a TBitFlagExt)
 #include <limits>
 #include <type_traits>
 
