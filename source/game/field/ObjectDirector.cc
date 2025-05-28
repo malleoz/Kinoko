@@ -41,7 +41,8 @@ void ObjectDirector::addObject(ObjectCollidable *obj) {
         m_calcObjects.push_back(obj);
     }
 
-    if (m_flowTable.set(m_flowTable.slot(obj->id()))->mode != 0) {
+    const auto *set = m_flowTable.set(m_flowTable.slot(obj->id()));
+    if (set && set->mode != 0) {
         if (obj->collision()) {
             m_collisionObjects.push_back(obj);
         }
