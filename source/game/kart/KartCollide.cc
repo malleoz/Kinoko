@@ -425,7 +425,7 @@ void KartCollide::calcWheelCollision(u16 /*wheelIdx*/, CollisionGroup *hitboxGro
 
     bool collided = Field::CollisionDirector::Instance()->checkSphereCachedFullPush(
             firstHitbox.radius(), firstHitbox.worldPos(), firstHitbox.lastPos(),
-            KCL_TYPE_VEHICLE_COLLIDEABLE, &colInfo, &kclOut, 0);
+            KCL_TYPE_VEHICLE_COLLIDEABLE, &colInfo, &kclOut, 0); // worldPos wrong tire 1
 
     CollisionData &collisionData = hitboxGroup->collisionData();
 
@@ -820,7 +820,7 @@ void KartCollide::applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitbo
 
     projRejSum = projRejSum.rej(nextDir);
 
-    dynamics()->setExtVel(dynamics()->extVel() + projRejSum);
+    dynamics()->setExtVel(dynamics()->extVel() + projRejSum); // extVel wrong before this
 
     if (b3) {
         EGG::Vector3f rotation = colData.relPos.cross(projRejSumOrig);

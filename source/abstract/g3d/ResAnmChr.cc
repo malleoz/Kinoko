@@ -75,18 +75,18 @@ public:
     }
 
     f32 GetFrameF32() const {
-        return static_cast<f32>(mPtr->fvs.frame);
+        return static_cast<f32>(GetFrame());
     }
 
     f32 GetValue(const ResAnmChr::FVSData *pFVSData) const {
-        u16 value = (parse<u32>(mPtr->fvsU32) & 0x00FFF000) >> 12;
+        u16 value = parse<u32>((mPtr->fvsU32 & 0x00FFF000) >> 12);
         return parse<f32>(pFVSData->fvs32.scale) * static_cast<f32>(value) +
                 parse<f32>(pFVSData->fvs48.offset);
     }
 
     f32 GetSlope() const {
-        s16 slope = static_cast<s32>((parse<u32>(mPtr->fvsU32) & 0x00000FFF) << 20) >> 20;
-        return static_cast<f32>(slope);
+        s16 slope = parse<s16>(static_cast<s32>((mPtr->fvsU32 & 0x00000FFF) << 20) >> 20);
+        return static_cast<f32>(slope) * (1.0f / 32.0f);
     }
 };
 
@@ -101,7 +101,7 @@ public:
     }
 
     f32 GetFrameF32() const {
-        return static_cast<f32>(parse<s16>(mPtr->frame));
+        return static_cast<f32>(parse<s16>(mPtr->frame)) * (1.0f / 32.0f);
     }
 
     f32 GetValue(const ResAnmChr::FVSData *pFVSData) const {
@@ -110,7 +110,7 @@ public:
     }
 
     f32 GetSlope() const {
-        return static_cast<f32>(parse<f32>(mPtr->slope));
+        return static_cast<f32>(parse<s16>(mPtr->slope)) * (1.0f / 256.0f);
     }
 };
 
@@ -173,7 +173,7 @@ public:
     }
 
     static TFrame QuantizeFrame(f32 frame) {
-        return static_cast<TFrame>(frame);
+        return static_cast<TFrame>(frame * 32.0f);
     }
 };
 
@@ -304,11 +304,11 @@ f32 CalcAnimationFVS(f32 frame, const ResAnmChr::FVSData *pFVSData) {
     f32 t1 = right.GetSlope();
 
     f32 f0 = left.GetFrameF32();
-    f32 f1 = right.GetFrameF32();
+    f32 f1 = right.GetFrameF32(); // f1 wrong 1144 (256 instead of 8)
 
     f32 frameDelta = frame - f0;
     f32 keyFrameDelta = f1 - f0;
-    f32 keyFrameDeltaInv = 1.0f / keyFrameDelta;
+    f32 keyFrameDeltaInv = EGG::Mathf::finv(keyFrameDelta);
 
     return HermiteInterpolation(v0, t0, v1, t1, frameDelta * keyFrameDeltaInv, frameDelta);
 }
@@ -415,7 +415,7 @@ const ResAnmChr::NodeData::AnmData *GetAnmScale(f32 frame, EGG::Vector3f &result
             result.z = result.x;
         } else {
             result.y = CalcResult48(frame, nodeData, anmData++,
-                    flags & ResAnmChr::NodeData::Flag::FLAG_SCALE_Y_CONST);
+                    flags & ResAnmChr::NodeData::Flag::FLAG_SCALE_Y_CONST); // off-by-one 1163
             result.z = CalcResult48(frame, nodeData, anmData++,
                     flags & ResAnmChr::NodeData::Flag::FLAG_SCALE_Z_CONST);
         }

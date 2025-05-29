@@ -77,6 +77,13 @@ namespace EGG::Mathf {
             static_cast<f64>(x) * force25Bit(static_cast<f64>(y)) - static_cast<f64>(z));
 }
 
+[[nodiscard]] static inline f32 finv(f32 x) {
+    f32 inv = 1.0f / x;
+    f32 invDouble = inv + inv;
+    f32 invSquare = inv * inv;
+    return -(x * invSquare - invDouble);
+}
+
 // frsqrte matching
 struct BaseAndDec {
     int base;
