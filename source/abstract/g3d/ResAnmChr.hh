@@ -13,7 +13,7 @@ namespace Abstract {
 namespace g3d {
 
 struct ChrAnmResult {
-    enum class Flag {
+    enum Flag {
         FLAG_ANM_EXISTS = (1 << 0),
         FLAG_MTX_IDENT = (1 << 1),
         FLAG_ROT_TRANS_ZERO = (1 << 2),
@@ -37,12 +37,7 @@ struct ChrAnmResult {
 
     /// @addr{0x800555C0}
     [[nodiscard]] EGG::Vector3f scale() const {
-        const EGG::Vector3f rawScale = m_data.scale;
-        f32 x = parse<f32>(rawScale.x);
-        f32 y = parse<f32>(rawScale.y);
-        f32 z = parse<f32>(rawScale.z);
-
-        return EGG::Vector3f(x, y, z);
+        return s;
     }
 
     u32 flags;
@@ -50,13 +45,99 @@ struct ChrAnmResult {
     EGG::Vector3f rawR;
     EGG::Matrix34f rt;
 };
-STATIC_ASSERT(sizeof(ChrAnmResult) == 0x2C);
 
 /// @brief Represents the CHR0 file format, which pertains to model movement animations.
 class ResAnmChr {
 public:
+    /******************************************************************************
+     *
+     * Frame values (FVS) animation data
+     *
+     ******************************************************************************/
+    struct Frm32Data {
+        union {
+            u32 fvsU32; // at 0x0
+
+            struct {
+                u8 frame; // at 0x0
+                u8 vs[3]; // at 0x1
+            } fvs;
+        };
+    };
+    struct FVS32Data {
+        f32 scale;                // at 0x0
+        f32 offset;               // at 0x4
+        Frm32Data frameValues[1]; // at 0x8
+    };
+
+    struct Frm48Data {
+        s16 frame; // at 0x0
+        u16 value; // at 0x2
+        s16 slope; // at 0x4
+    };
+    struct FVS48Data {
+        f32 scale;                // at 0x0
+        f32 offset;               // at 0x4
+        Frm48Data frameValues[1]; // at 0x8
+    };
+
+    struct Frm96Data {
+        f32 frame; // at 0x0
+        f32 value; // at 0x4
+        f32 slope; // at 0x8
+    };
+    struct FVS96Data {
+        Frm96Data frameValues[1]; // at 0x0
+    };
+
+    struct FVSData {
+        u16 numFrameValues;        // at 0x0
+        u8 PADDING_0x2[0x4 - 0x2]; // at 0x2
+        f32 invKeyFrameRange;      // at 0x4
+
+        union {
+            FVS32Data fvs32; // at 0x8
+            FVS48Data fvs48; // at 0x8
+            FVS96Data fvs96; // at 0x8
+        };
+    };
+
+    /******************************************************************************
+     *
+     * Const value (CV) animation data
+     *
+     ******************************************************************************/
+    struct CV8Data {
+        f32 scale;    // at 0x0
+        f32 offset;   // at 0x4
+        u8 values[1]; // at 0x8
+    };
+    struct CV16Data {
+        f32 scale;     // at 0x0
+        f32 offset;    // at 0x4
+        u16 values[1]; // at 0x8
+    };
+    struct CV32Data {
+        f32 values[1]; // at 0x0
+    };
+
+    struct CVData {
+        union {
+            CV8Data cv8;   // at 0x0
+            CV16Data cv16; // at 0x0
+            CV32Data cv32; // at 0x0
+        };
+    };
+
+    struct AnmData {
+        union {
+            FVSData fvs; // at 0x0
+            CVData cv;   // at 0x0
+        };
+    };
+
     struct NodeData {
-        enum class Flag {
+        enum Flag {
             FLAG_ANM_EXISTS = (1 << 0),
             FLAG_MTX_IDENT = (1 << 1),
             FLAG_ROT_TRANS_ZERO = (1 << 2),
@@ -166,31 +247,7 @@ public:
         m_infoData.read(stream);
     }
 
-    /// @addr{0x80055540}
-    [[nodiscard]] ChrAnmResult getAnmResult(f32 frame, size_t idx) const {
-        ResDic dic = ResDic(reinterpret_cast<void *>(
-                reinterpret_cast<uintptr_t>(m_rawData) + parse<s32>(m_rawData->toChrDataDic)));
-        NodeData *data = reinterpret_cast<NodeData *>(dic.get(idx));
-
-        u32 flags = data->flags;
-
-        ChrAnmResult result;
-        result.flags = flags &
-                (ChrAnmResult::Flag::FLAG_ANM_EXISTS | ChrAnmResult::Flag::FLAG_MTX_IDENT |
-                        ChrAnmResult::Flag::FLAG_ROT_TRANS_ZERO |
-                        ChrAnmResult::Flag::FLAG_SCALE_ONE |
-                        ChrAnmResult::Flag::FLAG_SCALE_UNIFORM | ChrAnmResult::Flag::FLAG_ROT_ZERO |
-                        ChrAnmResult::Flag::FLAG_TRANS_ZERO | ChrAnmResult::Flag::FLAG_PATCH_SCALE |
-                        ChrAnmResult::Flag::FLAG_PATCH_ROT | ChrAnmResult::Flag::FLAG_PATCH_TRANS |
-                        ChrAnmResult::Flag::FLAG_SSC_APPLY | ChrAnmResult::Flag::FLAG_SSC_PARENT |
-                        ChrAnmResult::Flag::FLAG_XSI_SCALING);
-
-        u32 index = (flags & NodeData::Flag::FLAG_HAS_SRT_MASK) >> 22;
-
-        // TODO: Add function pointers to implement gGetAnmResultTable
-
-        return result;
-    }
+    [[nodiscard]] ChrAnmResult getAnmResult(f32 frame, size_t idx) const;
 
     [[nodiscard]] u16 frameCount() const {
         return m_infoData.numFrame;
@@ -201,8 +258,14 @@ public:
     }
 
 private:
+    typedef void (*GetAnmResultFunc)(f32 frame, ChrAnmResult &result,
+            const ResAnmChr::InfoData &infoData, const ResAnmChr::NodeData *nodeData);
+
     const Data *m_rawData;
     InfoData m_infoData;
+
+    static constexpr size_t NUM_RESULT_FUNCS = 8;
+    static const std::array<GetAnmResultFunc, NUM_RESULT_FUNCS> s_getAnmResultTable;
 };
 
 class AnmObjChrRes : public FrameCtrl {

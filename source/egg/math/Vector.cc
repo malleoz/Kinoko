@@ -1,5 +1,7 @@
 #include "Vector.hh"
 
+#include <Common.hh>
+
 namespace EGG {
 
 /// @addr{0x80243A00}

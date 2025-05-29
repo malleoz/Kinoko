@@ -2098,6 +2098,7 @@ void KartMove::calcCrushed() {
     if (--m_crushTimer == 0) {
         state()->setCrushed(false);
         state()->setUNK20000(false);
+        m_kartScale->calcCrushAnimation();
     }
 }
 

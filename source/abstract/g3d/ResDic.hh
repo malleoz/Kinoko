@@ -46,8 +46,15 @@ public:
         return nullptr;
     }
 
-    [[nodiscard]] const NodeData *get(size_t idx) const {
-        return &m_data->data[idx];
+    [[nodiscard]] void *operator[](size_t idx) const {
+        if (!m_data) {
+            return nullptr;
+        }
+
+        const NodeData *node = &m_data->data[idx + 1];
+
+        return reinterpret_cast<void *>(
+                reinterpret_cast<uintptr_t>(m_data) + parse<s32>(node->ofsData));
     }
 
 private:

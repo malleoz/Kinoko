@@ -20,6 +20,8 @@ public:
     }
 
 private:
+    EGG::Vector3f getAnmScale(f32 frame) const;
+
     s32 m_60;
     bool m_64;
     f32 m_scaleAnmFrame;

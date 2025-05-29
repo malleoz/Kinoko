@@ -32,10 +32,9 @@ void KartScale::calc() {
                 m_64 = false;
             }
         } else {
-            const auto &scaleAnm = KartObjectManager::Instance()->RaceScaleAnmChr();
-            auto result = scaleAnm.getAnmResult(m_scaleAnmFrame, 0);
-            m_targetScale = result.scale();
+            m_targetScale = getAnmScale(m_scaleAnmFrame);
 
+            const auto &scaleAnm = KartObjectManager::Instance()->RaceScaleAnmChr();
             if (++m_scaleAnmFrame > static_cast<f32>(scaleAnm.frameCount())) {
                 m_64 = false;
             }
@@ -57,6 +56,13 @@ void KartScale::calcCrushAnimation() {
     m_targetScale = EGG::Vector3f(1.0f, 0.3f, 1.0f);
     m_scaleAnmFrame = 0.0f;
     m_64 = true;
+}
+
+/// @addr{0x8056ACF4}
+EGG::Vector3f KartScale::getAnmScale(f32 frame) const {
+    const auto &scaleAnm = KartObjectManager::Instance()->RaceScaleAnmChr();
+    auto result = scaleAnm.getAnmResult(frame, 0);
+    return result.scale();
 }
 
 } // namespace Kart
