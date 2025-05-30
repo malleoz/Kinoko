@@ -247,7 +247,7 @@ f32 ObjectCarTGE::getCollisionRadius() const {
 Kart::Reaction ObjectCarTGE::onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
         Kart::Reaction /*reactionOnObj*/, EGG::Vector3f &hitDepth) {
     if (!m_hasAuxCollision) {
-        EGG::Vector3f hitDepthNorm = hitDepth;
+        EGG::Vector3f hitDepthNorm = hitDepth; // hitDepth wrong
         hitDepthNorm.normalise2();
         if (hitDepth.y > 0.9f) {
             return Kart::Reaction::UntrickableJumpPad;
@@ -287,7 +287,7 @@ Kart::Reaction ObjectCarTGE::onCollision(Kart::KartObject *kartObj, Kart::Reacti
 /// @addr{0x806DA660}
 bool ObjectCarTGE::checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &dist) {
     dist = EGG::Vector3f::zero;
-    bool hasCol = lhs->check(*m_collision, dist);
+    bool hasCol = lhs->check(*m_collision, dist); // dist wrong 1178 [WORK FROM HERE]
 
     if (!hasCol) {
         hasCol = lhs->check(*m_auxCollision, dist);

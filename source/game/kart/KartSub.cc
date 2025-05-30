@@ -185,7 +185,7 @@ void KartSub::calcPass1() {
     boxColUnit()->search(flags);
 
     collide()->calcObjectCollision();
-    dynamics()->setPos(pos() + collide()->tangentOff());
+    dynamics()->setPos(pos() + collide()->tangentOff()); // tangentOff supposed to be 0
 
     if (state()->isSomethingWallCollision()) {
         const EGG::Vector3f &softWallSpeed = state()->softWallSpeed();

@@ -533,9 +533,9 @@ void KartCollide::calcObjectCollision() {
     m_totalReactionWallNrm = EGG::Vector3f::zero;
     m_surfaceFlags.resetBit(eSurfaceFlags::ObjectWall, eSurfaceFlags::ObjectWall3);
 
-    size_t collisionCount = objectCollisionKart()->checkCollision(pose(), velocity());
-
     const auto *objectDirector = Field::ObjectDirector::Instance();
+
+    size_t collisionCount = objectCollisionKart()->checkCollision(pose(), velocity());
 
     for (size_t i = 0; i < collisionCount; ++i) {
         Reaction reaction = objectDirector->reaction(i);
@@ -743,7 +743,7 @@ void KartCollide::processCannon(Field::KCLTypeMask *maskOut) {
 /// @param speed Tire speed
 void KartCollide::applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitboxGroup,
         const EGG::Vector3f &forward, const EGG::Vector3f &nextDir, const EGG::Vector3f &speed,
-        bool b1, bool b2, bool b3) {
+        bool b1, bool b2, bool b3) { // speed wrong
     CollisionData &colData = hitboxGroup->collisionData();
     if (!colData.bFloor) {
         return;
@@ -820,7 +820,7 @@ void KartCollide::applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitbo
 
     projRejSum = projRejSum.rej(nextDir);
 
-    dynamics()->setExtVel(dynamics()->extVel() + projRejSum); // extVel wrong before this
+    dynamics()->setExtVel(dynamics()->extVel() + projRejSum); // projRejSum wrong
 
     if (b3) {
         EGG::Vector3f rotation = colData.relPos.cross(projRejSumOrig);

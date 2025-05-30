@@ -304,7 +304,7 @@ f32 CalcAnimationFVS(f32 frame, const ResAnmChr::FVSData *pFVSData) {
     f32 t1 = right.GetSlope();
 
     f32 f0 = left.GetFrameF32();
-    f32 f1 = right.GetFrameF32(); // f1 wrong 1144 (256 instead of 8)
+    f32 f1 = right.GetFrameF32();
 
     f32 frameDelta = frame - f0;
     f32 keyFrameDelta = f1 - f0;
