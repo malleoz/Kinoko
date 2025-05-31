@@ -88,13 +88,13 @@ void KartDynamics::setBspParams(f32 rotSpeed, const EGG::Vector3f &m, const EGG:
 /// @param dt Delta time. It's always 1.0f.
 /// @param maxSpeed Always 120.0f.
 void KartDynamics::calc(f32 dt, f32 maxSpeed, bool air) {
-    constexpr f32 TERMINAL_Y_VEL = 120.0f; // m_totalForce wrong
+    constexpr f32 TERMINAL_Y_VEL = 120.0f;
 
     if (!m_noGravity) {
         m_totalForce.y += m_gravity;
     }
 
-    m_acceleration = m_totalForce; // m_acceleration wrong
+    m_acceleration = m_totalForce;
     m_extVel += m_acceleration * dt;
 
     if (m_killExtVelY) {
@@ -112,7 +112,7 @@ void KartDynamics::calc(f32 dt, f32 maxSpeed, bool air) {
         playerBackHoriz.normalise();
         const auto [proj, rej] = m_extVel.projAndRej(playerBackHoriz);
         const EGG::Vector3f &speedBack = proj;
-        m_extVel = rej; // extVel wrong before this
+        m_extVel = rej;
 
         f32 norm = speedBack.squaredLength();
         norm = norm > std::numeric_limits<f32>::epsilon() ? EGG::Mathf::sqrt(norm) : 0.0f;
@@ -196,7 +196,7 @@ void KartDynamics::reset() {
 /// @param ignoreX If true, no x-axis torque is applied (e.g. when in a wheelie)
 void KartDynamics::applySuspensionWrench(const EGG::Vector3f &p, const EGG::Vector3f &Flinear,
         const EGG::Vector3f &Frot, bool ignoreX) {
-    m_totalForce.y += Flinear.y; // Flinear.y wrong
+    m_totalForce.y += Flinear.y;
     EGG::Vector3f fBody = m_fullRot.rotateVectorInv(Frot);
     EGG::Vector3f rBody = m_fullRot.rotateVectorInv(p - m_pos);
     EGG::Vector3f torque = rBody.cross(fBody);

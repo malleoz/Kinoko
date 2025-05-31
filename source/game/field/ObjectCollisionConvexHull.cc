@@ -31,7 +31,7 @@ void ObjectCollisionConvexHull::transform(const EGG::Matrix34f &mat, const EGG::
         }
     } else {
         EGG::Matrix34f temp;
-        temp.makeS(scale);
+        temp.makeS(EGG::Vector3f(scale.x, scale.x, scale.x));
         temp = mat.multiplyTo(temp);
 
         for (size_t i = 0; i < m_points.size(); ++i) {

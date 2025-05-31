@@ -425,7 +425,7 @@ void KartCollide::calcWheelCollision(u16 /*wheelIdx*/, CollisionGroup *hitboxGro
 
     bool collided = Field::CollisionDirector::Instance()->checkSphereCachedFullPush(
             firstHitbox.radius(), firstHitbox.worldPos(), firstHitbox.lastPos(),
-            KCL_TYPE_VEHICLE_COLLIDEABLE, &colInfo, &kclOut, 0); // worldPos wrong tire 1
+            KCL_TYPE_VEHICLE_COLLIDEABLE, &colInfo, &kclOut, 0);
 
     CollisionData &collisionData = hitboxGroup->collisionData();
 
@@ -538,7 +538,7 @@ void KartCollide::calcObjectCollision() {
     size_t collisionCount = objectCollisionKart()->checkCollision(pose(), velocity());
 
     for (size_t i = 0; i < collisionCount; ++i) {
-        Reaction reaction = objectDirector->reaction(i);
+        Reaction reaction = objectDirector->reaction(i); // wrong reaction
         if (reaction != Reaction::None && reaction != Reaction::UNK_7) {
             size_t handlerIdx = static_cast<std::underlying_type_t<Reaction>>(reaction);
             Action newAction = (this->*s_objectCollisionHandlers[handlerIdx])(i);

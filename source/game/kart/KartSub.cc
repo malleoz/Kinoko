@@ -260,7 +260,7 @@ void KartSub::calcPass1() {
     f32 handlingFactor = 0.0f;
     for (u16 i = 0; i < suspCount(); ++i) {
         const EGG::Matrix34f wheelMatrix = body()->wheelMatrix(i);
-        suspensionPhysics(i)->calcCollision(DT, gravity, wheelMatrix);
+        suspensionPhysics(i)->calcCollision(DT, gravity, wheelMatrix); // pos wrong
 
         const CollisionData &colData = tirePhysics(i)->hitboxGroup()->collisionData();
 

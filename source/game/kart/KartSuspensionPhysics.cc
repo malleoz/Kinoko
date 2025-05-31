@@ -53,11 +53,11 @@ void WheelPhysics::reset() {
 
 /// @addr{0x80599AD0}
 void WheelPhysics::realign(const EGG::Vector3f &bottom, const EGG::Vector3f &vehicleMovement) {
-    const EGG::Vector3f topmostPos = m_topmostPos + vehicleMovement; // m_topmostPos wrong
+    const EGG::Vector3f topmostPos = m_topmostPos + vehicleMovement;
     f32 scaledMaxTravel = m_bspWheel->maxTravel * sub()->someScale();
     f32 suspTravel = bottom.dot(m_pos - topmostPos);
     m_suspTravel = std::max(0.0f, std::min(scaledMaxTravel, suspTravel));
-    m_pos = topmostPos + m_suspTravel * bottom;
+    m_pos = topmostPos + m_suspTravel * bottom; // m_suspTravel wrong
     m_speed = m_pos - m_lastPos;
     m_speed -= dynamics()->intVel();
     m_speed -= dynamics()->movingObjVel();
@@ -69,7 +69,7 @@ void WheelPhysics::realign(const EGG::Vector3f &bottom, const EGG::Vector3f &veh
 }
 
 /// @addr{0x80599690}
-void WheelPhysics::updateCollision(const EGG::Vector3f &bottom, const EGG::Vector3f &topmostPos) { // topmostPos wrong
+void WheelPhysics::updateCollision(const EGG::Vector3f &bottom, const EGG::Vector3f &topmostPos) {
     m_targetEffectiveRadius = m_bspWheel->wheelRadius;
     if (!state()->isSkipWheelCalc()) {
         f32 nextRadius = m_bspWheel->sphereRadius;
@@ -91,7 +91,7 @@ void WheelPhysics::updateCollision(const EGG::Vector3f &bottom, const EGG::Vecto
             CollisionData &colData = m_hitboxGroup->collisionData();
 
             if (colData.bFloor || colData.bWall || colData.bWall3) {
-                m_pos += colData.tangentOff;
+                m_pos += colData.tangentOff; // both are wrong lol
                 if (colData.intensity > -1) {
                     f32 sinkDepth = 3.0f * static_cast<f32>(colData.intensity);
                     m_targetEffectiveRadius = m_bspWheel->wheelRadius - sinkDepth;
@@ -105,7 +105,7 @@ void WheelPhysics::updateCollision(const EGG::Vector3f &bottom, const EGG::Vecto
     m_topmostPos = topmostPos;
     m_wheelEdgePos = m_pos + m_effectiveRadius * move()->totalScale() * bottom;
     m_effectiveRadius += (m_targetEffectiveRadius - m_effectiveRadius) * 0.1f;
-    m_suspTravel = bottom.dot(m_pos - topmostPos);
+    m_suspTravel = bottom.dot(m_pos - topmostPos); // m_pos wrong 1178
 
     if (m_suspTravel < 0.0f) {
         m_74 = 1.0f;
@@ -159,7 +159,7 @@ void KartSuspensionPhysics::setInitialState() {
 
 /// @addr{0x8059A278}
 void KartSuspensionPhysics::calcCollision(f32 dt, const EGG::Vector3f &gravity,
-        const EGG::Matrix34f &mat) {
+        const EGG::Matrix34f &mat) { // mat base 3 wrong
     m_maxTravelScaled = m_bspWheel->maxTravel * sub()->someScale();
 
     EGG::Vector3f scaledRelPos = m_bspWheel->relPosition * scale();
@@ -167,7 +167,7 @@ void KartSuspensionPhysics::calcCollision(f32 dt, const EGG::Vector3f &gravity,
         scaledRelPos.x = -scaledRelPos.x;
     }
 
-    const EGG::Vector3f topmostPos = mat.ps_multVector(scaledRelPos); // mat base 3 wrong
+    const EGG::Vector3f topmostPos = mat.ps_multVector(scaledRelPos);
     EGG::Matrix34f mStack_60;
     EGG::Vector3f euler_angles(m_bspWheel->xRot * DEG2RAD, 0.0f, 0.0f);
     mStack_60.makeR(euler_angles);
@@ -177,7 +177,7 @@ void KartSuspensionPhysics::calcCollision(f32 dt, const EGG::Vector3f &gravity,
     f32 y_down = m_tirePhysics->suspTravel() + sub()->someScale() * 5.0f;
     m_tirePhysics->setSuspTravel(std::max(0.0f, std::min(m_maxTravelScaled, y_down)));
     m_tirePhysics->setColVel(dt * 10.0f * gravity);
-    m_tirePhysics->setPos(topmostPos + m_tirePhysics->suspTravel() * m_bottomDir);
+    m_tirePhysics->setPos(topmostPos + m_tirePhysics->suspTravel() * m_bottomDir); // topmostPos wrong
 
     if (!state()->isSkipWheelCalc()) {
         m_tirePhysics->updateCollision(m_bottomDir, topmostPos);
@@ -203,13 +203,13 @@ void KartSuspensionPhysics::calcSuspension(const EGG::Vector3f &forward,
     EGG::Vector3f topDiff = m_tirePhysics->pos() - m_topmostPos;
     f32 yDown = std::max(0.0f, m_bottomDir.dot(topDiff));
     EGG::Vector3f speed = lastPosDiff - topDiff;
-    f32 travel = m_maxTravelScaled - yDown; // m_maxTravelScaled wrong
+    f32 travel = m_maxTravelScaled - yDown;
     f32 speedScalar = m_bottomDir.dot(speed);
 
     f32 springDamp =
             -(m_bspWheel->springStiffness * travel + m_bspWheel->dampingFactor * speedScalar);
 
-    EGG::Vector3f fRot = m_bottomDir * springDamp; // springDamp wrong
+    EGG::Vector3f fRot = m_bottomDir * springDamp;
 
     if (isInRespawn()) {
         fRot.y = std::max(-1.0f, std::min(1.0f, fRot.y));
@@ -220,7 +220,7 @@ void KartSuspensionPhysics::calcSuspension(const EGG::Vector3f &forward,
     rotProj.y = 0.0f;
 
     rotProj = rotProj.proj(collisionData.floorNrm);
-    fLinear.y += rotProj.y; // fLinear.y wrong before this
+    fLinear.y += rotProj.y;
     fLinear.y = std::min(fLinear.y, param()->stats().maxNormalAcceleration);
 
     if (dynamics()->extVel().y > 5.0f || state()->isJumpPadDisableYsusForce()) {
