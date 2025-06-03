@@ -239,8 +239,11 @@ struct Vector3f {
     f32 z;
 
     static const Vector3f zero;
+    static const Vector3f unit;
     static const Vector3f ex, ey, ez;
     static const Vector3f inf;
 };
+
+constexpr Vector3f Vector3f::unit = Vector3f(1.0f, 1.0f, 1.0f);
 
 } // namespace EGG
