@@ -1494,10 +1494,10 @@ void KartMove::calcWallCollisionStart(f32 param_2) {
 
     if (!state()->isOverZipper() && param_2 < 0.9f) {
         f32 speedDiff = m_lastSpeed - m_speed;
+        const CollisionData &colData = collisionData();
 
         if (speedDiff > 30.0f) {
             m_flags.setBit(eFlags::WallBounce);
-            const CollisionData &colData = collisionData();
             EGG::Vector3f newPos = colData.relPos + pos();
             f32 dot = -bodyUp().dot(colData.relPos) * 0.5f;
             EGG::Vector3f scaledUp = dot * bodyUp();
@@ -1527,6 +1527,9 @@ void KartMove::calcWallCollisionStart(f32 param_2) {
             }
 
             dynamics()->applyWrenchScaled(newPos, projRejSum, bumpDeviation);
+        } else if (wallKclType() == COL_TYPE_SPECIAL_WALL && wallKclVariant() == 2) {
+            dynamics()->addForce(colData.wallNrm * 15.0f);
+            collide()->startFloorMomentRate();
         }
     }
 }

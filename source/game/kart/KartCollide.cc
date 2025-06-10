@@ -619,6 +619,9 @@ bool KartCollide::processWall(CollisionData &collisionData, Field::KCLTypeMask *
             colDirector->findClosestCollisionEntry(maskOut,
                     KCL_TYPE_DRIVER_WALL_NO_INVISIBLE_WALL)) {
         auto *entry = colDirector->closestCollisionEntry();
+        collisionData.closestFloorFlags = KCL_ATTRIBUTE_TYPE(entry->attribute);
+        collisionData.closestFloorSettings = KCL_VARIANT_TYPE(entry->attribute);
+
         if (entry->attribute & KCL_TYPE_BIT(COL_TYPE_WALL_2)) {
             collisionData.bSoftWall = true;
         }
