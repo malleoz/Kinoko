@@ -10,33 +10,28 @@ ObjectObakeBlock::ObjectObakeBlock(const System::MapdataGeoObj &params) : Object
     m_fallFrame = static_cast<u32>(params.setting(2) + params.setting(1) * 60);
     m_currPos = params.pos();
 
-    switch (params.rot().y) {
-    case 0.0f:
+    f32 yRot = params.rot().y;
+
+    if (yRot == 0.0f) {
         m_fallVel.z = -1.0f;
         m_fallAngVel.x = -0.02f;
         m_bbox.min = m_pos + EGG::Vector3f(162.5f, 162.5f, 162.5f);
         m_bbox.max = m_pos + EGG::Vector3f(-162.5f, 162.5f, 162.5f);
-        break;
-    case 90.0f:
+    } else if (yRot == 90.0f) {
         m_fallVel.x = -1.0f;
         m_fallAngVel.x = 0.02f;
         m_bbox.min = m_pos + EGG::Vector3f(162.5f, 162.5f, 162.5f);
         m_bbox.max = m_pos + EGG::Vector3f(162.5f, 162.5f, -162.5f);
-        break;
-    case 180.0f:
+    } else if (yRot == 180.0f) {
         m_fallVel.z = 1.0f;
         m_fallAngVel.x = 0.02f;
         m_bbox.min = m_pos + EGG::Vector3f(162.5f, 162.5f, -162.5f);
         m_bbox.max = m_pos + EGG::Vector3f(-162.5f, 162.5f, -162.5f);
-        break;
-    case -90.0f:
+    } else if (yRot == -90.0f) {
         m_fallVel.x = 1.0f;
         m_fallAngVel.z = -0.02f;
         m_bbox.min = m_pos + EGG::Vector3f(-162.5f, 162.5f, 162.5f);
         m_bbox.max = m_pos + EGG::Vector3f(-162.5f, 162.5f, -162.5f);
-        break;
-    default:
-        break;
     }
 }
 
