@@ -8,7 +8,7 @@ namespace Field {
 
 /// @addr{0x8080B0D8}
 ObjectObakeManager::ObjectObakeManager(const System::MapdataGeoObj &params)
-    : ObjectDrivable(params) {
+    : ObjectDrivable(params), m_blockCache({nullptr}) {
     m_colBox = new ObjectCollisionBox(195.0f, 130.0f, 195.0f, EGG::Vector3f::zero);
     m_colSphere = new ObjectCollisionSphere(1.0f, EGG::Vector3f::zero);
 
@@ -187,6 +187,7 @@ bool ObjectObakeManager::checkSpherePartialImpl(f32 radius, const EGG::Vector3f 
             // Bonking on top of block
             if (mask & COL_TYPE_SPECIAL_WALL) {
                 t.makeT(block->pos());
+                m_colBox->setBoundingRadius(85.0f);
                 m_colBox->transform(t, EGG::Vector3f(1.0f, 1.1f, 1.0f), EGG::Vector3f::zero);
 
                 EGG::Vector3f dist;
@@ -272,10 +273,12 @@ bool ObjectObakeManager::checkSpherePartialPushImpl(f32 radius, const EGG::Vecto
             // Bonking on top of block
             if (mask & COL_TYPE_SPECIAL_WALL) {
                 t.makeT(block->pos());
+                m_colBox->setBoundingRadius(85.0f);
                 m_colBox->transform(t, EGG::Vector3f(1.0f, 1.1f, 1.0f), EGG::Vector3f::zero);
 
                 EGG::Vector3f dist;
-                bool collided = m_colSphere->check(*m_colBox, dist);
+                bool collided =
+                        m_colSphere->check(*m_colBox, dist); // This should be returning true on 472
 
                 if (collided) {
                     EGG::Vector3f distNrm = dist;
@@ -361,6 +364,7 @@ bool ObjectObakeManager::checkSphereFullImpl(f32 radius, const EGG::Vector3f &po
             // Bonking on top of block
             if (mask & COL_TYPE_SPECIAL_WALL) {
                 t.makeT(block->pos());
+                m_colBox->setBoundingRadius(85.0f);
                 m_colBox->transform(t, EGG::Vector3f(1.0f, 1.1f, 1.0f), EGG::Vector3f::zero);
 
                 EGG::Vector3f dist;
@@ -449,6 +453,7 @@ bool ObjectObakeManager::checkSphereFullPushImpl(f32 radius, const EGG::Vector3f
             // Bonking on top of block
             if (mask & COL_TYPE_SPECIAL_WALL) {
                 t.makeT(block->pos());
+                m_colBox->setBoundingRadius(85.0f);
                 m_colBox->transform(t, EGG::Vector3f(1.0f, 1.1f, 1.0f), EGG::Vector3f::zero);
 
                 EGG::Vector3f dist;

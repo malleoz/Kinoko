@@ -222,7 +222,7 @@ void ObjectDrivableDirector::DestroyInstance() {
 }
 
 /// @addr{0x8081B324}
-ObjectDrivableDirector::ObjectDrivableDirector() = default;
+ObjectDrivableDirector::ObjectDrivableDirector() : m_obakeManager(nullptr) {}
 
 /// @addr{0x8081B380}
 ObjectDrivableDirector::~ObjectDrivableDirector() {
