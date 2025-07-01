@@ -8,6 +8,12 @@ namespace Field {
 
 class ObjectObakeBlock : public ObjectBase {
 public:
+    enum class FallState {
+        Rest = 0,
+        Falling = 1,
+        Gone = 2,
+    };
+
     ObjectObakeBlock(const System::MapdataGeoObj &params);
     ~ObjectObakeBlock() override;
 
@@ -22,13 +28,19 @@ public:
     /// @addr{0x8080BDD4}
     void calcCollisionTransform() override {}
 
-private:
-    enum class FallState {
-        Rest = 0,
-        Falling = 1,
-        Gone = 2,
-    };
+    void setFallState(FallState state) {
+        m_fallState = state;
+    }
 
+    [[nodiscard]] FallState fallState() {
+        return m_fallState;
+    }
+
+    [[nodiscard]] u32 fallFrame() const {
+        return m_fallFrame;
+    }
+
+private:
     EGG::Vector3f m_currPos;
     FallState m_fallState;
     f32 m_framesFallen;

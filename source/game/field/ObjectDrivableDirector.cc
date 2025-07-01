@@ -30,6 +30,13 @@ void ObjectDrivableDirector::addObject(ObjectDrivable *obj) {
     m_objects.push_back(obj);
 }
 
+/// @brief Creates the rGV2 block manager. Also implicitly adds the block represented by params.
+void ObjectDrivableDirector::createObakeManager(const System::MapdataGeoObj &params) {
+    ASSERT(!m_obakeManager);
+    m_obakeManager = new ObjectObakeManager(params);
+    m_obakeManager->load();
+}
+
 /// @addr{0x8081BC98}
 bool ObjectDrivableDirector::checkSpherePartial(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
@@ -227,6 +234,8 @@ ObjectDrivableDirector::~ObjectDrivableDirector() {
     for (auto *&obj : m_objects) {
         delete obj;
     }
+
+    delete m_obakeManager;
 }
 
 ObjectDrivableDirector *ObjectDrivableDirector::s_instance = nullptr; ///< @addr{0x809C4310}
