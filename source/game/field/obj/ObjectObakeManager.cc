@@ -9,7 +9,10 @@ namespace Field {
 /// @addr{0x8080B0D8}
 ObjectObakeManager::ObjectObakeManager(const System::MapdataGeoObj &params)
     : ObjectDrivable(params), m_blockCache({nullptr}) {
-    m_colBox = new ObjectCollisionBox(195.0f, 130.0f, 195.0f, EGG::Vector3f::zero);
+    static constexpr f32 BLOCK_WIDTH = 195.00002f;
+    static constexpr f32 BLOCK_HEIGHT = 130.0f;
+
+    m_colBox = new ObjectCollisionBox(BLOCK_WIDTH, BLOCK_HEIGHT, BLOCK_WIDTH, EGG::Vector3f::zero);
     m_colSphere = new ObjectCollisionSphere(1.0f, EGG::Vector3f::zero);
 
     addBlock(params);
@@ -457,7 +460,8 @@ bool ObjectObakeManager::checkSphereFullPushImpl(f32 radius, const EGG::Vector3f
                 m_colBox->transform(t, EGG::Vector3f(1.0f, 1.1f, 1.0f), EGG::Vector3f::zero);
 
                 EGG::Vector3f dist;
-                bool collided = m_colSphere->check(*m_colBox, dist);
+                bool collided = m_colSphere->check(*m_colBox,
+                        dist); // third time that collided is true, dist is wrong
 
                 if (collided) {
                     EGG::Vector3f distNrm = dist;
