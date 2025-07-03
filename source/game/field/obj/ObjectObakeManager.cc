@@ -188,7 +188,7 @@ bool ObjectObakeManager::checkSpherePartialImpl(f32 radius, const EGG::Vector3f 
             }
 
             // Bonking on top of block
-            if (mask & COL_TYPE_SPECIAL_WALL) {
+            if (mask & KCL_TYPE_BIT(COL_TYPE_SPECIAL_WALL)) {
                 t.makeT(block->pos());
                 m_colBox->setBoundingRadius(85.0f);
                 m_colBox->transform(t, EGG::Vector3f(1.0f, 1.1f, 1.0f), EGG::Vector3f::zero);
@@ -216,7 +216,7 @@ bool ObjectObakeManager::checkSpherePartialImpl(f32 radius, const EGG::Vector3f 
                 collision |= collided;
             }
 
-            if (mask & COL_TYPE_ROAD) {
+            if (mask & KCL_TYPE_BIT(COL_TYPE_ROAD)) {
                 t.makeT(block->pos());
                 m_colBox->transform(t, EGG::Vector3f(1.0f, 0.95f, 1.0f), EGG::Vector3f::zero);
 
@@ -274,7 +274,7 @@ bool ObjectObakeManager::checkSpherePartialPushImpl(f32 radius, const EGG::Vecto
             }
 
             // Bonking on top of block
-            if (mask & COL_TYPE_SPECIAL_WALL) {
+            if (mask & KCL_TYPE_BIT(COL_TYPE_SPECIAL_WALL)) {
                 t.makeT(block->pos());
                 m_colBox->setBoundingRadius(85.0f);
                 m_colBox->transform(t, EGG::Vector3f(1.0f, 1.1f, 1.0f), EGG::Vector3f::zero);
@@ -306,7 +306,7 @@ bool ObjectObakeManager::checkSpherePartialPushImpl(f32 radius, const EGG::Vecto
                 collision |= collided;
             }
 
-            if (mask & COL_TYPE_ROAD) {
+            if (mask & KCL_TYPE_BIT(COL_TYPE_ROAD)) {
                 t.makeT(block->pos());
                 m_colBox->transform(t, EGG::Vector3f(1.0f, 0.95f, 1.0f), EGG::Vector3f::zero);
 
@@ -365,7 +365,7 @@ bool ObjectObakeManager::checkSphereFullImpl(f32 radius, const EGG::Vector3f &po
             }
 
             // Bonking on top of block
-            if (mask & COL_TYPE_SPECIAL_WALL) {
+            if (mask & KCL_TYPE_BIT(COL_TYPE_SPECIAL_WALL)) {
                 t.makeT(block->pos());
                 m_colBox->setBoundingRadius(85.0f);
                 m_colBox->transform(t, EGG::Vector3f(1.0f, 1.1f, 1.0f), EGG::Vector3f::zero);
@@ -393,7 +393,7 @@ bool ObjectObakeManager::checkSphereFullImpl(f32 radius, const EGG::Vector3f &po
                 collision |= collided;
             }
 
-            if (mask & COL_TYPE_ROAD) {
+            if (mask & KCL_TYPE_BIT(COL_TYPE_ROAD)) {
                 t.makeT(block->pos());
                 m_colBox->transform(t, EGG::Vector3f(1.0f, 0.95f, 1.0f), EGG::Vector3f::zero);
 
@@ -454,14 +454,14 @@ bool ObjectObakeManager::checkSphereFullPushImpl(f32 radius, const EGG::Vector3f
             }
 
             // Bonking on top of block
-            if (mask & COL_TYPE_SPECIAL_WALL) {
+            if (mask & KCL_TYPE_BIT(COL_TYPE_SPECIAL_WALL)) {
                 t.makeT(block->pos());
                 m_colBox->setBoundingRadius(85.0f);
                 m_colBox->transform(t, EGG::Vector3f(1.0f, 1.1f, 1.0f), EGG::Vector3f::zero);
 
                 EGG::Vector3f dist;
                 bool collided = m_colSphere->check(*m_colBox,
-                        dist); // third time that collided is true, dist is wrong
+                        dist); // i = 11, j = 17 - dist wrong
 
                 if (collided) {
                     EGG::Vector3f distNrm = dist;
@@ -486,7 +486,7 @@ bool ObjectObakeManager::checkSphereFullPushImpl(f32 radius, const EGG::Vector3f
                 collision |= collided;
             }
 
-            if (mask & COL_TYPE_ROAD) {
+            if (mask & KCL_TYPE_BIT(COL_TYPE_ROAD)) {
                 t.makeT(block->pos());
                 m_colBox->transform(t, EGG::Vector3f(1.0f, 0.95f, 1.0f), EGG::Vector3f::zero);
 
