@@ -53,7 +53,7 @@ void WheelPhysics::reset() {
 
 /// @addr{0x80599AD0}
 void WheelPhysics::realign(const EGG::Vector3f &bottom, const EGG::Vector3f &vehicleMovement) {
-    const EGG::Vector3f topmostPos = m_topmostPos + vehicleMovement;
+    const EGG::Vector3f topmostPos = m_topmostPos + vehicleMovement; // m_topmostPos wrong
     f32 scaledMaxTravel = m_bspWheel->maxTravel * sub()->someScale();
     f32 suspTravel = bottom.dot(m_pos - topmostPos);
     m_suspTravel = std::max(0.0f, std::min(scaledMaxTravel, suspTravel));

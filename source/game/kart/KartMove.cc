@@ -204,6 +204,7 @@ void KartMove::init(bool b1, bool b2) {
     m_respawnPreLandTimer = 0;
     m_respawnPostLandTimer = 0;
     m_respawnTimer = 0;
+    m_bumpTimer = 0;
     m_drivingDirection = DrivingDirection::Forwards;
     m_padType.makeAllZero();
     m_flags.makeAllZero();
@@ -284,6 +285,9 @@ void KartMove::calc() {
     calcRespawnBoost();
     calcSpecialFloor();
     m_jump->calc();
+
+    m_bumpTimer = std::max(m_bumpTimer - 1, 0);
+
     calcAutoDrift();
     calcDirs();
     calcStickyRoad();
@@ -1381,7 +1385,9 @@ void KartMove::calcAcceleration() {
     f32 local_c8 = 1.0f;
     speedLimit *= calcWallCollisionSpeedFactor(local_c8);
 
-    if (!state()->isWallCollision() && !state()->isWall3Collision()) {
+    if (m_softSpeedLimit <= speedLimit) {
+        m_softSpeedLimit = speedLimit;
+    } else if (!state()->isWallCollision() && !state()->isWall3Collision()) {
         m_softSpeedLimit = std::max(m_softSpeedLimit - 3.0f, speedLimit);
     } else {
         m_softSpeedLimit = speedLimit;
@@ -2074,6 +2080,24 @@ void KartMove::landTrick() {
     }
 
     activateBoost(KartBoost::Type::TrickAndZipper, duration);
+}
+
+/// @addr{0x80586DB4}
+void KartMove::applyBumpForce(f32 speed, const EGG::Vector3f &hitDir, bool resetSpeed) {
+    constexpr s16 BUMP_COOLDOWN = 5;
+
+    if (m_bumpTimer >= 1) {
+        return;
+    }
+
+    dynamics()->addForce(speed * hitDir.perpInPlane(move()->up(), true));
+    collide()->startFloorMomentRate();
+
+    m_bumpTimer = BUMP_COOLDOWN;
+
+    if (resetSpeed) {
+        m_speed = 0.0f;
+    }
 }
 
 /// @addr{0x8058498C}

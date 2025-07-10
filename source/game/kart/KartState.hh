@@ -219,6 +219,10 @@ public:
         m_bNoSparkInvisibleWall = isSet;
     }
 
+    void setUNK1000(bool isSet) {
+        m_bUNK1000 = isSet;
+    }
+
     void setInRespawn(bool isSet) {
         m_bInRespawn = isSet;
     }
@@ -529,6 +533,10 @@ public:
         return m_bNoSparkInvisibleWall;
     }
 
+    [[nodiscard]] bool isUNK1000() const {
+        return m_bUNK1000;
+    }
+
     [[nodiscard]] bool isInRespawn() const {
         return m_bInRespawn;
     }
@@ -677,6 +685,7 @@ private:
     bool m_bSkipWheelCalc;
     bool m_bJumpPadMushroomTrigger;
     bool m_bNoSparkInvisibleWall;
+    bool m_bUNK1000;
     bool m_bInRespawn;
     bool m_bAfterRespawn;
     bool m_bJumpPadFixedSpeed;

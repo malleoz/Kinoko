@@ -185,7 +185,7 @@ void KartSub::calcPass1() {
     boxColUnit()->search(flags);
 
     collide()->calcObjectCollision();
-    dynamics()->setPos(pos() + collide()->tangentOff());
+    dynamics()->setPos(pos() + collide()->tangentOff()); // tangentOff wrong, supposed to be 0
 
     if (state()->isSomethingWallCollision()) {
         const EGG::Vector3f &softWallSpeed = state()->softWallSpeed();
@@ -311,6 +311,12 @@ void KartSub::calcPass1() {
         }
 
         move()->calcHopPhysics();
+    }
+
+    if (state()->isUNK1000()) {
+        const auto &stats = param()->stats();
+        speedFactor = stats.kclSpeed[3];
+        handlingFactor = stats.kclRot[3];
     }
 
     move()->setKCLWheelSpeedFactor(speedFactor);

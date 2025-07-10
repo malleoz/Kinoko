@@ -190,6 +190,9 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
         return new ObjectParasolR(params);
     case ObjectId::Kuribo:
         return new ObjectKuribo(params);
+    case ObjectId::Choropu:
+    case ObjectId::Choropu2:
+        return new ObjectChoropu(params);
     case ObjectId::WLFirebarGC:
         return new ObjectFirebar(params);
     case ObjectId::WLFireRingGC:
@@ -209,6 +212,7 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
     case ObjectId::DummyPole:
     case ObjectId::CastleTree1c:
     case ObjectId::PalmTree:
+    case ObjectId::GardenTreeDSc:
     case ObjectId::DKtreeA64c:
     case ObjectId::TownTreeDsc:
         return new ObjectCollidable(params);

@@ -410,7 +410,7 @@ void KartCollide::activateOob(bool /*detachCamera*/, Field::KCLTypeMask * /*mask
 /// @param center The wheel's position
 /// @param radius The wheel's size
 void KartCollide::calcWheelCollision(u16 /*wheelIdx*/, CollisionGroup *hitboxGroup,
-        const EGG::Vector3f &colVel, const EGG::Vector3f &center, f32 radius) {
+        const EGG::Vector3f &colVel, const EGG::Vector3f &center, f32 radius) { // center wrong
     Hitbox &firstHitbox = hitboxGroup->hitbox(0);
     BSP::Hitbox *bspHitbox = const_cast<BSP::Hitbox *>(firstHitbox.bspHitbox());
     bspHitbox->radius = radius;
@@ -743,7 +743,7 @@ void KartCollide::processCannon(Field::KCLTypeMask *maskOut) {
 /// @param speed Tire speed
 void KartCollide::applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitboxGroup,
         const EGG::Vector3f &forward, const EGG::Vector3f &nextDir, const EGG::Vector3f &speed,
-        bool b1, bool b2, bool b3) {
+        bool b1, bool b2, bool b3) { // speed wrong
     CollisionData &colData = hitboxGroup->collisionData();
     if (!colData.bFloor) {
         return;
@@ -991,6 +991,12 @@ Action KartCollide::handleReactLongCrushLoseItem(size_t /*idx*/) {
     return Action::UNK_12;
 }
 
+/// @addr{0x805737B8}
+Action KartCollide::handleReactSmallBump(size_t idx) {
+    move()->applyBumpForce(30.0f, objectCollisionKart()->GetHitDirection(idx), false);
+    return Action::None;
+}
+
 /// @addr{0x805733E4}
 Action KartCollide::handleReactHighLaunchLoseItem(size_t /*idx*/) {
     return Action::UNK_8;
@@ -999,6 +1005,13 @@ Action KartCollide::handleReactHighLaunchLoseItem(size_t /*idx*/) {
 /// @addr{0x80573754}
 Action KartCollide::handleReactWeakWall(size_t /*idx*/) {
     move()->setSpeed(move()->speed() * 0.82f);
+    return Action::None;
+}
+
+/// @addr{0x80573790}
+Action KartCollide::handleReactWall(size_t /*idx*/) {
+    state()->setUNK1000(true);
+    m_surfaceFlags.setBit(eSurfaceFlags::Offroad);
     return Action::None;
 }
 
@@ -1049,13 +1062,13 @@ std::array<KartCollide::ObjectCollisionHandler, 33> KartCollide::s_objectCollisi
         &KartCollide::handleReactLaunchSpinLoseItem,
         &KartCollide::handleReactKnockbackBumpLoseItem,
         &KartCollide::handleReactLongCrushLoseItem,
-        &KartCollide::handleReactNone,
+        &KartCollide::handleReactSmallBump,
         &KartCollide::handleReactNone,
         &KartCollide::handleReactNone,
         &KartCollide::handleReactHighLaunchLoseItem,
         &KartCollide::handleReactNone,
         &KartCollide::handleReactWeakWall,
-        &KartCollide::handleReactNone,
+        &KartCollide::handleReactWall,
         &KartCollide::handleReactLaunchSpin,
         &KartCollide::handleReactWallSpark,
         &KartCollide::handleReactNone,
