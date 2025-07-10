@@ -55,8 +55,16 @@ public:
         return m_curTangentDir;
     }
 
+    [[nodiscard]] const EGG::Vector3f &currVel() const {
+        return m_currVel;
+    }
+
     [[nodiscard]] bool isMovementDirectionForward() const {
         return m_movementDirectionForward;
+    }
+
+    [[nodiscard]] s16 curPointIdx() const {
+        return m_currPointIdx;
     }
 
 protected:

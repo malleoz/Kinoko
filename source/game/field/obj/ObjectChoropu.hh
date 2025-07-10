@@ -60,6 +60,7 @@ private:
     s16 m_startFrameOffset;
     bool m_isStationary; ///< rPG moles don't move while MMM moles do
     EGG::Matrix34f m_transMat;
+    EGG::Matrix34f m_railMat;
     bool m_isColliding;
 
     static constexpr f32 M_SPEED_RELATED = 3000.0f;

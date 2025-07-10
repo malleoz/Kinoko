@@ -80,7 +80,12 @@ public:
         m_scale = scale;
     }
 
-    [[nodiscard]] scale() const {
+    void setTransform(const EGG::Matrix34f &mat) {
+        m_flags |= 4;
+        m_transform = mat;
+    }
+
+    [[nodiscard]] const EGG::Vector3f &scale() const {
         return m_scale;
     }
 

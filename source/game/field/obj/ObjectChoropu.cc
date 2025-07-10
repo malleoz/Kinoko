@@ -70,10 +70,9 @@ void ObjectChoropu::init() {
         m_railInterpolator->init(0.0f, 0);
         m_railInterpolator->setPerPointVelocities(true);
 
-        EGG::Matrix34f mat = FUN_806B46A4(m_railInterpolator);
-        m_pos = mat.base(3);
+        m_railMat = FUN_806B46A4(m_railInterpolator);
+        m_pos = m_railMat.base(3);
         m_flags |= 1;
-
         disableCollision();
         m_objHoll->disableCollision();
         m_nextStateId = 0;
@@ -182,13 +181,79 @@ void ObjectChoropu::enterState0() {
 }
 
 /// @addr{0x806BABEC}
-void ObjectChoropu::enterState1() {}
+void ObjectChoropu::enterState1() {
+    if (m_isStationary) {
+        m_pos = m_transMat.base(3);
+        m_flags |= 4;
+        m_rot.z = 0.0f;
 
-void ObjectChoropu::enterState3() {}
+        enableCollision();
+        m_isColliding = false;
+
+        m_drawMdl->anmMgr()->playAnim(0.0f, 1.0f, 0);
+    } else {
+        m_pos = m_railMat.base(3);
+        m_flags |= 4;
+        m_rot.z = 0.0f;
+        m_rot.y = 0.0f;
+
+        enableCollision();
+
+        const auto &curTanDir = m_railInterpolator->curTangentDir();
+        s16 curPointIdx = m_railInterpolator->curPointIdx();
+        EGG::Matrix34f mat;
+        SetRotTangentHorizontal(mat, m_railInterpolator->floorNrm(curPointIdx), curTanDir);
+        mat.setBase(3, m_railInterpolator->curPos());
+        m_objHoll->setTransform(mat);
+        m_obj->setPos(mat.base(3));
+        m_objHoll->enableCollision();
+        m_isColliding = false;
+
+        m_drawMdl->anmMgr()->playAnim(0.0f, 1.0f, 0);
+    }
+}
+
+/// @addr{0x806BB39C}
+void ObjectChoropu::enterState3() {
+    enableCollision();
+    m_isColliding = false;
+    m_drawMdl->anmMgr()->playAnim(0.0f, 1.0f, 1);
+
+    if (m_isStationary) {
+        m_pos = m_transMat.base(3);
+        m_flags |= 1;
+    } else {
+        m_pos = m_railMat.base(3);
+        m_flags |= 1;
+    }
+
+    m_flags |= 2;
+    m_rot.z = 0.0f;
+}
 
 void ObjectChoropu::calcStateStub() {}
 
-void ObjectChoropu::calcState0() {}
+/// @addr{0x806BA7FC}
+void ObjectChoropu::calcState0() {
+    if (!m_isStationary) {
+        m_pos = m_railInterpolator->curPos();
+        m_flags |= 1;
+
+        if (m_railInterpolator->calc() == RailInterpolator::Status::SegmentEnd) {
+            if (m_railInterpolator->curPoint().setting[1] == 1) {
+                m_nextStateId = 1;
+            } else {
+                f32 currVel = m_railInterpolator->getCurrVel();
+                if (currVel < 0.1f) {
+                    currVel = m_railInterpolator->currVel();
+                }
+
+            TODO:
+                m_164;
+            }
+        }
+    }
+}
 
 void ObjectChoropu::calcState1() {}
 
