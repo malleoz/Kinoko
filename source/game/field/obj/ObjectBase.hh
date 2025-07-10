@@ -15,6 +15,8 @@ namespace Field {
 class ObjectBase {
 public:
     ObjectBase(const System::MapdataGeoObj &params);
+    ObjectBase(const char *objName, const EGG::Vector3f &pos, const EGG::Vector3f &rot,
+            const EGG::Vector3f &scale);
     virtual ~ObjectBase();
 
     virtual void init() {}
@@ -28,6 +30,8 @@ public:
     virtual void loadRail();
     virtual void calcCollisionTransform() = 0;
 
+    [[nodiscard]] virtual const char *getName() const;
+
     /// @addr{0x806BF434}
     [[nodiscard]] virtual u32 loadFlags() const {
         // TODO: This references LOD to determine load flags
@@ -35,6 +39,21 @@ public:
     }
 
     [[nodiscard]] virtual const char *getKclName() const;
+
+    /// @addr{0x80821DB8}
+    virtual void resize(f32 radius, f32 maxSpeed) {
+        m_boxColUnit->resize(radius, maxSpeed);
+    }
+
+    /// @addr{0x80821DEC}
+    virtual void disableCollision() const {
+        m_boxColUnit->m_flag.setBit(eBoxColFlag::Intangible);
+    }
+
+    /// @addr{0x80821E00}
+    virtual void enableCollision() const {
+        m_boxColUnit->m_flag.resetBit(eBoxColFlag::Intangible);
+    }
 
     /// @addr{0x80681598}
     [[nodiscard]] virtual const EGG::Vector3f &getPosition() const {
@@ -56,6 +75,15 @@ public:
         m_pos = pos;
     }
 
+    void setScale(const EGG::Vector3f &scale) {
+        m_flags |= 0x8;
+        m_scale = scale;
+    }
+
+    [[nodiscard]] scale() const {
+        return m_scale;
+    }
+
 protected:
     void calcTransform();
     void linkAnims(const std::span<const char *> &names, const std::span<Render::AnmType> types);
@@ -65,6 +93,8 @@ protected:
             const EGG::Vector3f &v1);
     static void SetRotTangentHorizontal(EGG::Matrix34f &mat, const EGG::Vector3f &up,
             const EGG::Vector3f &tangent);
+    static EGG::Matrix34f FUN_806B3CA4(const EGG::Vector3f &v);
+    static EGG::Matrix34f FUN_806B46A4(RailInterpolator *railInterpolator);
 
     /// @addr{0x8086C098}
     [[nodiscard]] static EGG::Vector3f Interpolate(f32 t, const EGG::Vector3f &v0,
