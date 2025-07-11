@@ -36,6 +36,8 @@ ObjectChoropu::ObjectChoropu(const System::MapdataGeoObj &params)
             objGround->load();
             objGround->resize(300.0f, 20.0f);
         }
+
+        m_groundHeight = m_groundObjs[0]->height();
     }
 
     m_objHoll = new ObjectChoropuHoll(params);
@@ -59,6 +61,7 @@ void ObjectChoropu::init() {
         m_objHoll->setScale(EGG::Vector3f(1.0f, m_objHoll->scale().y, 1.0f));
         m_nextStateId = 0;
         m_isColliding = false;
+        m_164 = 0.0f;
 
         calcTransform();
         m_transMat = m_transform;
@@ -177,6 +180,7 @@ void ObjectChoropu::enterState0() {
         disableCollision();
         m_objHoll->disableCollision();
         m_isColliding = false;
+        m_164 = 0.0f;
     }
 }
 
@@ -205,7 +209,7 @@ void ObjectChoropu::enterState1() {
         SetRotTangentHorizontal(mat, m_railInterpolator->floorNrm(curPointIdx), curTanDir);
         mat.setBase(3, m_railInterpolator->curPos());
         m_objHoll->setTransform(mat);
-        m_obj->setPos(mat.base(3));
+        m_objHoll->setPos(mat.base(3));
         m_objHoll->enableCollision();
         m_isColliding = false;
 
@@ -248,8 +252,12 @@ void ObjectChoropu::calcState0() {
                     currVel = m_railInterpolator->currVel();
                 }
 
-            TODO:
-                m_164;
+                m_164 = m_railInterpolator->getCurrVel();
+                if (m_164 > M_SPEED_RELATED) {
+                    m_164 = M_SPEED_RELATED - 1.0f;
+                }
+
+                calcGround();
             }
         }
     }
@@ -258,6 +266,22 @@ void ObjectChoropu::calcState0() {
 void ObjectChoropu::calcState1() {}
 
 void ObjectChoropu::calcState3() {}
+
+/// @addr{0x806BB840}
+void ObjectChoropu::calcGround() {
+    size_t groundCount = static_cast<s32>(m_groundObjs.size());
+    size_t idx = std::min(static_cast<size_t>(m_164 / m_groundHeight) + 1, groundCount);
+
+    for (auto *&obj : m_groundObjs) {
+        obj->enableCollision();
+    }
+
+    for (size_t i = idx; i < m_groundObjs.size(); ++i) {
+        m_groundObjs[i]->disableCollision();
+    }
+
+    TODO;
+}
 
 const std::array<StateManagerEntry<ObjectChoropu>, 5> StateManager<ObjectChoropu>::STATE_ENTRIES = {
         {
@@ -292,7 +316,15 @@ StateManager<ObjectChoropu>::~StateManager() {
 /// @addr{0x806B8F94}
 ObjectChoropuGround::ObjectChoropuGround(const EGG::Vector3f &pos, const EGG::Vector3f &rot,
         const EGG::Vector3f &scale)
-    : ObjectCollidable("choropu_ground", pos, rot, scale) {}
+    : ObjectCollidable("choropu_ground", pos, rot, scale) {
+    const auto &flowTable = ObjectDirector::Instance()->flowTable();
+    const auto *collisionSet =
+            flowTable.set(flowTable.slot(flowTable.getIdFromName("choropu_ground")));
+    ASSERT(collisionSet);
+
+    s16 height = parse<s16>(collisionSet->params.cylinder.height);
+    m_height = 2.0f * EGG::Mathf::abs(static_cast<f32>(height));
+}
 
 /// @addr{0x806BBE6C}
 ObjectChoropuGround::~ObjectChoropuGround() = default;

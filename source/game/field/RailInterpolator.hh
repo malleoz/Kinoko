@@ -55,7 +55,7 @@ public:
         return m_curTangentDir;
     }
 
-    [[nodiscard]] const EGG::Vector3f &currVel() const {
+    [[nodiscard]] f32 currVel() const {
         return m_currVel;
     }
 

@@ -55,13 +55,17 @@ private:
     void calcState1();
     void calcState3();
 
+    void calcGround();
+
     std::vector<ObjectChoropuGround *> m_groundObjs;
     ObjectChoropuHoll *m_objHoll;
     s16 m_startFrameOffset;
+    f32 m_groundHeight;
     bool m_isStationary; ///< rPG moles don't move while MMM moles do
     EGG::Matrix34f m_transMat;
     EGG::Matrix34f m_railMat;
     bool m_isColliding;
+    f32 m_164;
 
     static constexpr f32 M_SPEED_RELATED = 3000.0f;
 };
@@ -76,6 +80,13 @@ public:
     [[nodiscard]] u32 loadFlags() const override {
         return 1;
     }
+
+    [[nodiscard]] f32 height() const {
+        return m_height;
+    }
+
+private:
+    f32 m_height;
 };
 
 class ObjectChoropuHoll : public ObjectCollidable {
