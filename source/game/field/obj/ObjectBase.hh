@@ -101,6 +101,12 @@ protected:
     static EGG::Matrix34f FUN_806B3CA4(const EGG::Vector3f &v);
     static EGG::Matrix34f FUN_806B46A4(RailInterpolator *railInterpolator);
 
+    /// @addr{0x806B59A8}
+    static f32 FUN_806B59A8(f32 f1, f32 f2, s32 s3) {
+        return f1 * static_cast<f32>(s3) -
+                (static_cast<f32>(s3) * (0.5f * f2 * static_cast<f32>(s3)));
+    }
+
     /// @addr{0x8086C098}
     [[nodiscard]] static EGG::Vector3f Interpolate(f32 t, const EGG::Vector3f &v0,
             const EGG::Vector3f &v1) {

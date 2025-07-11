@@ -56,16 +56,21 @@ private:
     void calcState3();
 
     void calcGround();
+    [[nodiscard]] EGG::Matrix34f FUN_806B46F8(f32 t) const;
 
     std::vector<ObjectChoropuGround *> m_groundObjs;
     ObjectChoropuHoll *m_objHoll;
     s16 m_startFrameOffset;
+    f32 m_e4;
+    f32 m_e8;
+    u16 m_idleDuration;
     f32 m_groundHeight;
     bool m_isStationary; ///< rPG moles don't move while MMM moles do
     EGG::Matrix34f m_transMat;
     EGG::Matrix34f m_railMat;
     bool m_isColliding;
     f32 m_164;
+    u32 m_17c;
 
     static constexpr f32 M_SPEED_RELATED = 3000.0f;
 };
@@ -80,6 +85,8 @@ public:
     [[nodiscard]] u32 loadFlags() const override {
         return 1;
     }
+
+    void calc(f32 t, const EGG::Matrix34f &mat);
 
     [[nodiscard]] f32 height() const {
         return m_height;

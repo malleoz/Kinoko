@@ -11,6 +11,7 @@ namespace Field {
 ObjectChoropu::ObjectChoropu(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), StateManager(this) {
     m_startFrameOffset = static_cast<s16>(params.setting(1));
+    m_idleDuration = params.setting(0);
     m_isStationary = strcmp(getName(), "choropu") != 0;
 
     s16 railIdx = params.pathId();
@@ -60,6 +61,8 @@ void ObjectChoropu::init() {
         m_scale.x = 1.0f;
         m_objHoll->setScale(EGG::Vector3f(1.0f, m_objHoll->scale().y, 1.0f));
         m_nextStateId = 0;
+        m_e4 = 60.0f;
+        m_e8 = 2.0f;
         m_isColliding = false;
         m_164 = 0.0f;
 
@@ -79,6 +82,8 @@ void ObjectChoropu::init() {
         disableCollision();
         m_objHoll->disableCollision();
         m_nextStateId = 0;
+        m_e4 = 60.0f;
+        m_e8 = 2.0f;
         m_isColliding = false;
     }
 }
@@ -193,6 +198,7 @@ void ObjectChoropu::enterState1() {
 
         enableCollision();
         m_isColliding = false;
+        m_17c = 0;
 
         m_drawMdl->anmMgr()->playAnim(0.0f, 1.0f, 0);
     } else {
@@ -219,6 +225,8 @@ void ObjectChoropu::enterState1() {
 
 /// @addr{0x806BB39C}
 void ObjectChoropu::enterState3() {
+    m_e4 = 65.0f;
+    m_e8 = 2.7f;
     enableCollision();
     m_isColliding = false;
     m_drawMdl->anmMgr()->playAnim(0.0f, 1.0f, 1);
@@ -259,13 +267,87 @@ void ObjectChoropu::calcState0() {
 
                 calcGround();
             }
+        } else {
+            bool skipGroundCalc = false;
+
+            if (m_railInterpolator->nextPoint().setting[1] == 1) {
+                f32 invT = 1.0f - m_railInterpolator->segmentT();
+                if (invT * m_railInterpolator->getCurrSegmentLength() < 250.0f) {
+                    skipGroundCalc = true;
+                }
+            }
+
+            if (!skipGroundCalc) {
+                m_164 += m_railInterpolator->getCurrVel();
+                if (m_164 > M_SPEED_RELATED) {
+                    m_164 = M_SPEED_RELATED - 1.0f;
+                }
+
+                calcGround();
+            }
         }
+    } else if (m_currentFrame > m_idleDuration) {
+        m_nextStateId = 1;
     }
 }
 
-void ObjectChoropu::calcState1() {}
+/// @addr{0x806BB144}
+void ObjectChoropu::calcState1() {
+    constexpr s16 PEEK_DURATION = 40;
+    constexpr s16 STATE_DURATION = 100;
 
-void ObjectChoropu::calcState3() {}
+    if (!m_isStationary) {
+        m_164 = std::max(0.0f, m_164 - m_railInterpolator->speed());
+
+        calcGround();
+    }
+
+    if (STATE_DURATION > 100) {
+        m_nextStateId = 3;
+    }
+
+    if (m_currentFrame > PEEK_DURATION) {
+        disableCollision();
+    }
+
+    if (!m_isColliding) {
+        return;
+    }
+
+    f32 fVar5 = FUN_806B59A8(0.7f * 65.0f, 2.7f, m_17c);
+    if (m_isStationary) {
+        m_flags |= 1;
+        m_pos.y = fVar5 + m_railInterpolator->curPos().y;
+    } else {
+        m_flags |= 1;
+        m_pos.y = fVar5 + m_transMat.base(3).y;
+    }
+
+    ++m_17c;
+}
+
+/// @addr{0x806BB5F0}
+void ObjectChoropu::calcState3() {
+    if (!m_isStationary) {
+        m_164 = std::max(0.0f, m_164 - m_railInterpolator->speed());
+        calcGround();
+    }
+
+    f32 dVar3 = m_e4 * static_cast<f32>(m_currentFrame) -
+            static_cast<f32>(m_currentFrame) * 0.5f * m_e8 * static_cast<f32>(m_currentFrame);
+
+    if (dVar3 < 0.0f) {
+        m_nextStateId = 0;
+    }
+
+    if (m_isStationary) {
+        m_flags |= 1;
+        m_pos.y = dVar3 + m_transMat.base(3).y;
+    } else {
+        m_flags |= 1;
+        m_pos.y = dVar3 + m_railInterpolator->curPos().y;
+    }
+}
 
 /// @addr{0x806BB840}
 void ObjectChoropu::calcGround() {
@@ -280,7 +362,31 @@ void ObjectChoropu::calcGround() {
         m_groundObjs[i]->disableCollision();
     }
 
-    TODO;
+    if (m_164 > 300.0f) {
+        f32 height = std::min(m_groundHeight, m_164) - 300.0f;
+        EGG::Matrix34f mat = FUN_806B46F8(300.0f + 0.5f * height);
+        m_groundObjs[0]->calc(height, mat);
+    }
+
+    for (size_t i = 1; i < idx - 1; ++i) {
+        f32 height = 0.5f * m_groundHeight + m_groundHeight * static_cast<f32>(i);
+        EGG::Matrix34f mat = FUN_806B46F8(height);
+        m_groundObjs[i]->calc(m_groundHeight, mat);
+    }
+
+    f32 height = m_164 - m_groundHeight * static_cast<f32>(idx - 1);
+    EGG::Matrix34f mat = FUN_806B46F8(0.5f * height + static_cast<f32>(idx - 1));
+    m_groundObjs[idx - 1]->calc(height, mat);
+}
+
+/// @addr{0x806B46F8}
+EGG::Matrix34f ObjectChoropu::FUN_806B46F8(f32 t) const {
+    EGG::Vector3f curDir;
+    EGG::Vector3f curTanDir;
+    m_railInterpolator->evalCubicBezierOnPath(t, curDir, curTanDir);
+    EGG::Matrix34f mat = FUN_806B3CA4(curTanDir);
+    mat.setBase(3, curDir);
+    return mat;
 }
 
 const std::array<StateManagerEntry<ObjectChoropu>, 5> StateManager<ObjectChoropu>::STATE_ENTRIES = {
@@ -328,6 +434,21 @@ ObjectChoropuGround::ObjectChoropuGround(const EGG::Vector3f &pos, const EGG::Ve
 
 /// @addr{0x806BBE6C}
 ObjectChoropuGround::~ObjectChoropuGround() = default;
+
+/// @addr{0x806B9274}
+void ObjectChoropuGround::calc(f32 t, const EGG::Matrix34f &mat) {
+    EGG::Vector3f base2 = mat.base(2);
+    EGG::Matrix34f matTemp;
+    SetRotTangentHorizontal(matTemp, base2, EGG::Vector3f::ey);
+    EGG::Vector3f base1 = matTemp.base(1);
+    EGG::Vector3f scaledBase1 = base1 * (t / m_height);
+    matTemp.setBase(1, scaledBase1);
+    EGG::Vector3f base3 = mat.base(3);
+    matTemp.setBase(3, base3);
+    m_flags |= 4;
+    m_transform = matTemp;
+    m_pos = base3;
+}
 
 /// @addr{0x806B93CC}
 ObjectChoropuHoll::ObjectChoropuHoll(const System::MapdataGeoObj &params)
