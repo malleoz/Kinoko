@@ -71,6 +71,15 @@ public:
         return Vector3f(mtx[0][col], mtx[1][col], mtx[2][col]);
     }
 
+    /// @addr{0x8059A4F8}
+    [[nodiscard]] Vector3f vec3FromMat33Mul(const Vector3f &vec) const {
+        EGG::Vector3f ret;
+        ret.z = mtx[2][2] * vec.z + (mtx[2][0] * vec.x + mtx[2][1] * vec.y);
+        ret.y = mtx[1][2] * vec.z + (mtx[1][0] * vec.x + mtx[1][1] * vec.y);
+        ret.x = mtx[0][2] * vec.z + (mtx[0][0] * vec.x + mtx[0][1] * vec.y);
+        return ret;
+    }
+
     static const Matrix34f ident;
     static const Matrix34f zero;
 
