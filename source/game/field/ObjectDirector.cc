@@ -224,6 +224,8 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
         return new ObjectKinokoUd(params);
     case ObjectId::KinokoBend:
         return new ObjectKinokoBend(params);
+    case ObjectId::VolcanoRock:
+        return new ObjectVolcanoRock(params);
     case ObjectId::KinokoNm:
         return new ObjectKinokoNm(params);
     case ObjectId::Aurora:

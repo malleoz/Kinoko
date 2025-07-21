@@ -35,6 +35,7 @@ enum class ObjectId {
     PuchiPakkun = 0x1aa,
     KinokoUd = 0x1f5,
     KinokoBend = 0x1f6,
+    VolcanoRock = 0x1f7,
     KinokoNm = 0x1fa,
     Aurora = 0x204,
     Mdush = 0x217,
