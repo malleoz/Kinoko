@@ -228,6 +228,8 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
         return new ObjectVolcanoRock(params);
     case ObjectId::KinokoNm:
         return new ObjectKinokoNm(params);
+    case ObjectId::VolcanoPiece:
+        return new ObjectVolcanoPiece(params);
     case ObjectId::Aurora:
         return new ObjectAurora(params);
     // Non-specified objects are stock collidable objects by default

@@ -37,6 +37,7 @@ enum class ObjectId {
     KinokoBend = 0x1f6,
     VolcanoRock = 0x1f7,
     KinokoNm = 0x1fa,
+    VolcanoPiece = 0x1fc,
     Aurora = 0x204,
     Mdush = 0x217,
 };
