@@ -11,24 +11,36 @@ public:
 
     void init() override;
     void calc() override;
-    [[nodiscard]] u32 loadFlags() const override;
-    void createCollision() override;
-    void calcCollisionTransform() override;
-    f32 getCollisionRadius() const override;
+
+    /// @addr{0x80814910}
+    [[nodiscard]] u32 loadFlags() const override {
+        return 1;
+    }
+
+    /// @addr{0x8081490C}
+    void createCollision() override {}
+
+    /// @addr{0x80814908}
+    void calcCollisionTransform() override {}
+
+    /// @addr{0x808148F8}
+    [[nodiscard]] f32 getCollisionRadius() const override {
+        return COLLISION_RADIUS;
+    }
 
     [[nodiscard]] bool checkPointPartial(const EGG::Vector3f &v0, const EGG::Vector3f &v1,
-            KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut) override;
+            KCLTypeMask flags, CollisionInfoPartial *pInfo, KCLTypeMask *pFlagsOut) override;
     [[nodiscard]] bool checkPointPartialPush(const EGG::Vector3f &v0, const EGG::Vector3f &v1,
-            KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut) override;
+            KCLTypeMask flags, CollisionInfoPartial *pInfo, KCLTypeMask *pFlagsOut) override;
     [[nodiscard]] bool checkPointFull(const EGG::Vector3f &v0, const EGG::Vector3f &v1,
             KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut) override;
     [[nodiscard]] bool checkPointFullPush(const EGG::Vector3f &v0, const EGG::Vector3f &v1,
             KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut) override;
     [[nodiscard]] bool checkSpherePartial(f32 radius, const EGG::Vector3f &v0,
-            const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo,
+            const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfoPartial *pInfo,
             KCLTypeMask *pFlagsOut, u32 timeOffset) override;
     [[nodiscard]] bool checkSpherePartialPush(f32 radius, const EGG::Vector3f &v0,
-            const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo,
+            const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfoPartial *pInfo,
             KCLTypeMask *pFlagsOut, u32 timeOffset) override;
     [[nodiscard]] bool checkSphereFull(f32 radius, const EGG::Vector3f &v0, const EGG::Vector3f &v1,
             KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut,
@@ -37,18 +49,18 @@ public:
             const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo,
             KCLTypeMask *pFlagsOut, u32 timeOffset) override;
     [[nodiscard]] bool checkPointCachedPartial(const EGG::Vector3f &v0, const EGG::Vector3f &v1,
-            KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut) override;
+            KCLTypeMask flags, CollisionInfoPartial *pInfo, KCLTypeMask *pFlagsOut) override;
     [[nodiscard]] bool checkPointCachedPartialPush(const EGG::Vector3f &v0, const EGG::Vector3f &v1,
-            KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut) override;
+            KCLTypeMask flags, CollisionInfoPartial *pInfo, KCLTypeMask *pFlagsOut) override;
     [[nodiscard]] bool checkPointCachedFull(const EGG::Vector3f &v0, const EGG::Vector3f &v1,
             KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut) override;
     [[nodiscard]] bool checkPointCachedFullPush(const EGG::Vector3f &v0, const EGG::Vector3f &v1,
             KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut) override;
     [[nodiscard]] bool checkSphereCachedPartial(f32 radius, const EGG::Vector3f &v0,
-            const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo,
+            const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfoPartial *pInfo,
             KCLTypeMask *pFlagsOut, u32 timeOffset) override;
     [[nodiscard]] bool checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &v0,
-            const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo,
+            const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfoPartial *pInfo,
             KCLTypeMask *pFlagsOut, u32 timeOffset) override;
     [[nodiscard]] bool checkSphereCachedFull(f32 radius, const EGG::Vector3f &v0,
             const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo,
@@ -59,10 +71,10 @@ public:
 
 private:
     [[nodiscard]] bool checkSpherePartialImpl(f32 radius, const EGG::Vector3f &v0,
-            const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo,
+            const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfoPartial *pInfo,
             KCLTypeMask *pFlagsOut, u32 timeOffset);
     [[nodiscard]] bool checkSpherePartialPushImpl(f32 radius, const EGG::Vector3f &v0,
-            const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo,
+            const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfoPartial *pInfo,
             KCLTypeMask *pFlagsOut, u32 timeOffset);
     [[nodiscard]] bool checkSphereFullImpl(f32 radius, const EGG::Vector3f &v0,
             const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo,
@@ -72,23 +84,23 @@ private:
             KCLTypeMask *pFlagsOut, u32 timeOffset);
 
     [[nodiscard]] bool checkSphereImpl(f32 radius, const EGG::Vector3f &v0, const EGG::Vector3f &v1,
-            KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut, u32 timeOffset,
+            KCLTypeMask flags, CollisionInfoPartial *pInfo, KCLTypeMask *pFlagsOut, u32 timeOffset,
             bool full, bool push);
 
-    [[nodiscard]] bool checkSpherePoleCollision(f32 radius, f32 param_3, const EGG::Vector3f &relativePos,
-            EGG::Vector3f &v0, EGG::Vector3f &fnrm, f32 &dist);
+    [[nodiscard]] bool checkSpherePoleCollision(f32 radius, f32 param_3,
+            const EGG::Vector3f &relativePos, EGG::Vector3f &v0, EGG::Vector3f &fnrm, f32 &dist);
 
     [[nodiscard]] f32 calcWallHeightOffset(f32 zAxisProgress, s32 phase);
 
     [[nodiscard]] bool checkSphereWallCollision(f32 heightOffset, f32 radius, s32 phase,
-            const EGG::Vector3f &relativePos, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut,
+            const EGG::Vector3f &relativePos, CollisionInfoPartial *pInfo, KCLTypeMask *pFlagsOut,
             bool full, bool push);
 
     [[nodiscard]] bool checkSphereRoadCollision(f32 heightOffset, f32 radius,
-            const EGG::Vector3f &relativePos, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut,
+            const EGG::Vector3f &relativePos, CollisionInfoPartial *pInfo, KCLTypeMask *pFlagsOut,
             bool full, bool push);
 
-    u32 m_preRaceTimer = 1000;
+    u32 m_preRaceTimer;
 
     static constexpr f32 AMPLITUDE = 0.2f;
     static constexpr f32 WAVINESS = 4.0f;
