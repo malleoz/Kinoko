@@ -1,3 +1,4 @@
+#include "host/KHostSystem.hh"
 #include "host/KReplaySystem.hh"
 #include "host/KTestSystem.hh"
 #include "host/Option.hh"
@@ -48,6 +49,7 @@ int main(int argc, char **argv) {
     const std::unordered_map<std::string, std::function<KSystem *()>> modeMap = {
             {"test", []() -> KSystem * { return KTestSystem::CreateInstance(); }},
             {"replay", []() -> KSystem * { return KReplaySystem::CreateInstance(); }},
+            {"host", []() -> KSystem * { return KHostSystem::CreateInstance(); }},
     };
 
     if (argc < 3) {
