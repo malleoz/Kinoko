@@ -3,11 +3,20 @@
 #include <Common.hh>
 
 #include <abstract/Archive.hh>
+#include <abstract/memory/List.hh>
+
+class SavestateManager;
+
+namespace Abstract::Memory {
+struct MEMList;
+}
 
 /// @brief EGG core library
 namespace EGG {
 
 class Archive : Disposer {
+    friend class ::SavestateManager;
+
 public:
     ~Archive();
 
@@ -18,13 +27,19 @@ public:
     [[nodiscard]] static Archive *FindArchive(void *archiveStart);
     [[nodiscard]] static Archive *Mount(void *archiveStart);
 
+    [[nodiscard]] static constexpr uintptr_t getLinkOffset() {
+        // offsetof doesn't work, so instead of hardcoding an offset, we derive it ourselves
+        return reinterpret_cast<uintptr_t>(&reinterpret_cast<Archive *>(NULL)->m_link);
+    }
+
 private:
     Archive(void *archiveStart);
 
     Abstract::ArchiveHandle m_handle;
     s32 m_refCount = 1;
+    Abstract::Memory::MEMLink m_link;
 
-    static std::list<Archive *> s_archiveList; ///< The linked list of all mounted archives.
+    static Abstract::Memory::MEMList s_archiveList; ///< The linked list of all mounted archives.
 };
 
 } // namespace EGG
