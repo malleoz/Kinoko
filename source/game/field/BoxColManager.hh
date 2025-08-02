@@ -91,9 +91,8 @@ public:
     [[nodiscard]] bool isSphereInSpatialCache(f32 radius, const EGG::Vector3f &pos,
             const BoxColFlag &flag) const;
 
-    static BoxColManager *CreateInstance();
-    static void DestroyInstance();
-    [[nodiscard]] static BoxColManager *Instance();
+    [[nodiscard]] static BoxColManager *CreateInstance();
+    void DestroyInstance();
 
 private:
     [[nodiscard]] void *getNextImpl(s32 &id, const BoxColFlag &flag);
@@ -123,8 +122,6 @@ private:
     EGG::Vector3f m_cachePoint;
     f32 m_cacheRadius;
     BoxColFlag m_cacheFlag;
-
-    static BoxColManager *s_instance;
 };
 
 } // namespace Field

@@ -1,5 +1,7 @@
 #include "ObjectDrivable.hh"
 
+#include "Singleton.hh"
+
 #include "game/field/ObjectDrivableDirector.hh"
 
 namespace Field {
@@ -21,7 +23,7 @@ void ObjectDrivable::load() {
 
 /// @addr{0x8081A85C}
 void ObjectDrivable::loadAABB(f32 radius) {
-    auto *boxColMgr = BoxColManager::Instance();
+    auto *boxColMgr = Singleton<BoxColManager>::Instance();
     const EGG::Vector3f &pos = getPosition();
     m_boxColUnit = boxColMgr->insertDrivable(radius, 0.0f, &pos, false, this);
 }

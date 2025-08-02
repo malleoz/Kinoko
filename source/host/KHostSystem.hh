@@ -27,6 +27,15 @@ public:
     }
 
 private:
+    enum class Options {
+        Invalid = -1,
+        SetInputs,
+        FrameAdvance,
+        LoadState,
+        SaveState,
+        Max,
+    };
+
     struct KRaceParams {
         Course course;
         Character character;
@@ -39,6 +48,8 @@ private:
     KHostSystem(KHostSystem &&) = delete;
     ~KHostSystem() override;
 
+    void promptAndSetInputs();
+
     static Course PromptForCourse();
     static Character PromptForCharacter();
     static Vehicle PromptForVehicle();
@@ -50,5 +61,5 @@ private:
     EGG::SceneManager *m_sceneMgr;
     KRaceParams m_params;
 
-    const System::KPadHostController *m_controller;
+    System::KPadHostController *m_controller;
 };

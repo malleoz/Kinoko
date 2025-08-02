@@ -1,5 +1,7 @@
 #include "KartSub.hh"
 
+#include "Singleton.hh"
+
 #include "game/kart/KartAction.hh"
 #include "game/kart/KartBody.hh"
 #include "game/kart/KartCollide.hh"
@@ -60,8 +62,8 @@ void KartSub::initAABB(KartAccessor &accessor, KartObject *object) {
     f32 radius = 25.0f + collide()->boundingRadius();
     f32 hardSpeedLimit = move()->hardSpeedLimit();
 
-    accessor.boxColUnit = Field::BoxColManager::Instance()->insertDriver(radius, hardSpeedLimit,
-            &pos(), true, object);
+    accessor.boxColUnit = Singleton<Field::BoxColManager>::Instance()->insertDriver(radius,
+            hardSpeedLimit, &pos(), true, object);
 }
 
 /// @addr{0x80597934}

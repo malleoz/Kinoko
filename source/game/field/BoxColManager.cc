@@ -1,5 +1,7 @@
 #include "BoxColManager.hh"
 
+#include "Singleton.hh"
+
 #include "game/field/obj/ObjectCollidable.hh"
 #include "game/field/obj/ObjectDrivable.hh"
 
@@ -40,12 +42,12 @@ void BoxColUnit::resize(f32 radius, f32 maxSpeed) {
 
 /// @addr{0x80786F98}
 void BoxColUnit::reinsert() {
-    BoxColManager::Instance()->reinsertUnit(this);
+    Singleton<BoxColManager>::Instance()->reinsertUnit(this);
 }
 
 /// @addr{0x80786FA8}
 void BoxColUnit::search(const BoxColFlag &flag) {
-    BoxColManager::Instance()->search(this, flag);
+    Singleton<BoxColManager>::Instance()->search(this, flag);
 }
 
 /// @brief Creates two intangible units to represent the spatial bounds.
@@ -69,12 +71,7 @@ BoxColManager::BoxColManager() {
 }
 
 /// @addr{0x807854E4}
-BoxColManager::~BoxColManager() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("BoxColManager instance not explicitly handled!");
-    }
-}
+BoxColManager::~BoxColManager() = default;
 
 /// @addr{0x8078597C}
 void BoxColManager::clear() {
@@ -277,21 +274,12 @@ bool BoxColManager::isSphereInSpatialCache(f32 radius, const EGG::Vector3f &pos,
 
 /// @addr{0x807855DC}
 BoxColManager *BoxColManager::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = new BoxColManager;
-    return s_instance;
+    return new BoxColManager;
 }
 
 /// @addr{0x8078562C}
 void BoxColManager::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    delete instance;
-}
-
-BoxColManager *BoxColManager::Instance() {
-    return s_instance;
+    delete this;
 }
 
 /// @brief Helper function since the getters share all code except the flag.
@@ -621,7 +609,5 @@ void BoxColManager::searchImpl(f32 radius, const EGG::Vector3f &pos, const BoxCo
         }
     }
 }
-
-BoxColManager *BoxColManager::s_instance = nullptr; ///< @addr{0x809C2EF0}
 
 } // namespace Field

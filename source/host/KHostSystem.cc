@@ -5,7 +5,12 @@
 #include <game/system/KPadDirector.hh>
 #include <game/system/RaceManager.hh>
 
+#include <cstring>
 #include <iostream>
+
+#include <game/kart/KartObjectManager.hh>
+
+// 8 22 23 0 for LC FK FR Manual
 
 /// @brief Initializes the system.
 void KHostSystem::init() {
@@ -25,15 +30,40 @@ void KHostSystem::init() {
     m_controller = System::KPadDirector::Instance()->hostController();
 }
 
-/// @brief Executes an action.
+/// @brief Executes a frame.
 void KHostSystem::calc() {
-    // TODO
+    m_sceneMgr->calc();
+
+    const auto &pos = Kart::KartObjectManager::Instance()->object(0)->pos();
+    REPORT("X: %f | Y: %f | Z: %f", static_cast<double>(pos.x), static_cast<double>(pos.y),
+            static_cast<double>(pos.z));
 }
 
 /// @brief Persistant command line polling for a command
 bool KHostSystem::run() {
-    // TODO
-    return false;
+    while (true) {
+        s32 input;
+        std::cin >> input;
+
+        while (input <= static_cast<s32>(Options::Invalid) ||
+                input >= static_cast<s32>(Options::Max)) {
+            std::cin >> input;
+        }
+
+        Options option = static_cast<Options>(input);
+
+        switch (option) {
+        case Options::SetInputs:
+            promptAndSetInputs();
+            break;
+        case Options::FrameAdvance:
+            calc();
+        default:
+            break;
+        }
+    }
+
+    return true;
 }
 
 /// @brief Parses non-generic command line options.
@@ -65,6 +95,44 @@ KHostSystem::~KHostSystem() {
     delete m_sceneMgr;
 }
 
+void KHostSystem::promptAndSetInputs() {
+    std::cout << "Set inputs (ABL UDLR 0-14 0-14)\n";
+    char face[4];
+    char dpad;
+    u32 x, y;
+
+    std::cin >> face >> dpad >> x >> y;
+
+    REPORT("%s", face);
+    REPORT("%c", dpad);
+    REPORT("%u", x);
+    REPORT("%u", y);
+
+    u16 buttons = 0;
+    System::Trick trick = System::Trick::None;
+    if (strchr(face, 'A') || strchr(face, 'a')) {
+        buttons |= 1;
+    }
+    if (strchr(face, 'B') || strchr(face, 'b')) {
+        buttons |= 2;
+    }
+    if (strchr(face, 'L') || strchr(face, 'l')) {
+        buttons |= 4;
+    }
+
+    if (dpad == 'U' || dpad == 'u') {
+        trick = System::Trick::Up;
+    } else if (dpad == 'D' || dpad == 'd') {
+        trick = System::Trick::Down;
+    } else if (dpad == 'L' || dpad == 'l') {
+        trick = System::Trick::Left;
+    } else if (dpad == 'R' || dpad == 'r') {
+        trick = System::Trick::Right;
+    }
+
+    m_controller->setInputsRawStick(buttons, x, y, trick);
+}
+
 Course KHostSystem::PromptForCourse() {
     std::cout << "Choose course: ";
 
@@ -88,7 +156,7 @@ Character KHostSystem::PromptForCharacter() {
 }
 
 Vehicle KHostSystem::PromptForVehicle() {
-    std::cout << "Choose character: ";
+    std::cout << "Choose vehicle: ";
 
     u32 vehicle;
     std::cin >> vehicle;

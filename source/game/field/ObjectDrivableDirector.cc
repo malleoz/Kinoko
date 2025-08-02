@@ -1,5 +1,7 @@
 #include "ObjectDrivableDirector.hh"
 
+#include "Singleton.hh"
+
 namespace Field {
 
 /// @addr{0x8081B500}
@@ -46,7 +48,7 @@ bool ObjectDrivableDirector::checkSpherePartial(f32 radius, const EGG::Vector3f 
     }
 
     bool hasCollision = false;
-    auto *boxColMgr = BoxColManager::Instance();
+    auto *boxColMgr = Singleton<BoxColManager>::Instance();
     boxColMgr->search(radius, pos, eBoxColFlag::Drivable);
 
     while (ObjectDrivable *obj = boxColMgr->getNextDrivable()) {
@@ -66,7 +68,7 @@ bool ObjectDrivableDirector::checkSpherePartialPush(f32 radius, const EGG::Vecto
     }
 
     bool hasCollision = false;
-    auto *boxColMgr = BoxColManager::Instance();
+    auto *boxColMgr = Singleton<BoxColManager>::Instance();
     boxColMgr->search(radius, pos, eBoxColFlag::Drivable);
 
     while (ObjectDrivable *obj = boxColMgr->getNextDrivable()) {
@@ -86,7 +88,7 @@ bool ObjectDrivableDirector::checkSphereFull(f32 radius, const EGG::Vector3f &po
     }
 
     bool hasCollision = false;
-    auto *boxColMgr = BoxColManager::Instance();
+    auto *boxColMgr = Singleton<BoxColManager>::Instance();
     boxColMgr->search(radius, pos, eBoxColFlag::Drivable);
 
     while (ObjectDrivable *obj = boxColMgr->getNextDrivable()) {
@@ -105,7 +107,7 @@ bool ObjectDrivableDirector::checkSphereFullPush(f32 radius, const EGG::Vector3f
     }
 
     bool hasCollision = false;
-    auto *boxColMgr = BoxColManager::Instance();
+    auto *boxColMgr = Singleton<BoxColManager>::Instance();
     boxColMgr->search(radius, pos, eBoxColFlag::Drivable);
 
     while (ObjectDrivable *obj = boxColMgr->getNextDrivable()) {
@@ -124,7 +126,7 @@ bool ObjectDrivableDirector::checkSphereCachedPartial(f32 radius, const EGG::Vec
         return false;
     }
 
-    auto *boxColMgr = BoxColManager::Instance();
+    auto *boxColMgr = Singleton<BoxColManager>::Instance();
 
     if (boxColMgr->isSphereInSpatialCache(radius, pos, eBoxColFlag::Drivable)) {
         boxColMgr->resetIterators();
@@ -149,7 +151,7 @@ bool ObjectDrivableDirector::checkSphereCachedPartialPush(f32 radius, const EGG:
         return false;
     }
 
-    auto *boxColMgr = BoxColManager::Instance();
+    auto *boxColMgr = Singleton<BoxColManager>::Instance();
 
     if (boxColMgr->isSphereInSpatialCache(radius, pos, eBoxColFlag::Drivable)) {
         boxColMgr->resetIterators();
@@ -174,7 +176,7 @@ bool ObjectDrivableDirector::checkSphereCachedFullPush(f32 radius, const EGG::Ve
         return false;
     }
 
-    auto *boxColMgr = BoxColManager::Instance();
+    auto *boxColMgr = Singleton<BoxColManager>::Instance();
 
     if (boxColMgr->isSphereInSpatialCache(radius, pos, eBoxColFlag::Drivable)) {
         bool hasCollision = false;
@@ -198,7 +200,7 @@ void ObjectDrivableDirector::colNarScLocal(f32 radius, const EGG::Vector3f &pos,
         return;
     }
 
-    auto *boxColMgr = BoxColManager::Instance();
+    auto *boxColMgr = Singleton<BoxColManager>::Instance();
     boxColMgr->search(radius, pos, eBoxColFlag::Drivable);
 
     while (ObjectDrivable *obj = boxColMgr->getNextDrivable()) {

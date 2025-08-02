@@ -1,5 +1,7 @@
 #include "RaceScene.hh"
 
+#include "Singleton.hh"
+
 #include "game/field/BoxColManager.hh"
 #include "game/field/CollisionDirector.hh"
 #include "game/field/ObjectDirector.hh"
@@ -38,7 +40,7 @@ void RaceScene::createEngines() {
 
     {
         ScopeLock<GroupID> lock(GroupID::Object);
-        Field::BoxColManager::CreateInstance();
+        Singleton<Field::BoxColManager>::CreateInstance();
     }
 
     {
@@ -94,7 +96,7 @@ void RaceScene::initEngines() {
 void RaceScene::calcEngines() {
     auto *raceMgr = System::RaceManager::Instance();
     raceMgr->calc();
-    Field::BoxColManager::Instance()->calc();
+    Singleton<Field::BoxColManager>::Instance()->calc();
     Field::ObjectDirector::Instance()->calc();
     Kart::KartObjectManager::Instance()->calc();
     Item::ItemDirector::Instance()->calc();
@@ -109,7 +111,7 @@ void RaceScene::destroyEngines() {
     Field::RailManager::DestroyInstance();
     Field::CollisionDirector::DestroyInstance();
     Item::ItemDirector::DestroyInstance();
-    Field::BoxColManager::DestroyInstance();
+    Singleton<Field::BoxColManager>::DestroyInstance();
     System::RaceManager::DestroyInstance();
     System::CourseMap::DestroyInstance();
 }

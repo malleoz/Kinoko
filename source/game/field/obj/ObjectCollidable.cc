@@ -1,5 +1,7 @@
 #include "ObjectCollidable.hh"
 
+#include "Singleton.hh"
+
 #include "game/field/ObjectCollisionBox.hh"
 #include "game/field/ObjectCollisionCylinder.hh"
 #include "game/field/ObjectCollisionSphere.hh"
@@ -65,7 +67,7 @@ void ObjectCollidable::loadAABB(f32 maxSpeed) {
 
 /// @addr{0x8081F180}
 void ObjectCollidable::loadAABB(f32 radius, f32 maxSpeed) {
-    auto *boxColMgr = BoxColManager::Instance();
+    auto *boxColMgr = Singleton<BoxColManager>::Instance();
     const EGG::Vector3f &pos = getPosition();
     bool alwaysRecalc = loadFlags() & 0x5;
     m_boxColUnit = boxColMgr->insertObject(radius, maxSpeed, &pos, alwaysRecalc, this);

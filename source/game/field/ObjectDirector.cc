@@ -1,5 +1,7 @@
 #include "ObjectDirector.hh"
 
+#include "Singleton.hh"
+
 #include "game/field/BoxColManager.hh"
 #include "game/field/ObjectDrivableDirector.hh"
 #include "game/field/obj/ObjectRegistry.hh"
@@ -69,7 +71,7 @@ size_t ObjectDirector::checkKartObjectCollision(Kart::KartObject *kartObj,
         ObjectCollisionConvexHull *convexHull) {
     size_t count = 0;
 
-    while (ObjectCollidable *obj = BoxColManager::Instance()->getNextObject()) {
+    while (ObjectCollidable *obj = Singleton<BoxColManager>::Instance()->getNextObject()) {
         auto *objCollision = obj->collision();
         if (!objCollision) {
             continue;
