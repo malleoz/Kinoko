@@ -1,5 +1,7 @@
 #include "KartMove.hh"
 
+#include "Singleton.hh"
+
 #include "game/kart/KartCollide.hh"
 #include "game/kart/KartDynamics.hh"
 #include "game/kart/KartJump.hh"
@@ -243,8 +245,8 @@ void KartMove::setInitialPhysicsValues(const EGG::Vector3f &position, const EGG:
     Field::CollisionInfo info;
     Field::KCLTypeMask kcl_flags = KCL_NONE;
 
-    bool bColliding = Field::CollisionDirector::Instance()->checkSphereFullPush(100.0f, newPos,
-            EGG::Vector3f::inf, KCL_ANY, &info, &kcl_flags, 0);
+    bool bColliding = Singleton<Field::CollisionDirector>::Instance()->checkSphereFullPush(100.0f,
+            newPos, EGG::Vector3f::inf, KCL_ANY, &info, &kcl_flags, 0);
 
     if (bColliding && (kcl_flags & KCL_TYPE_FLOOR)) {
         newPos = newPos + info.tangentOff + (info.floorNrm * -100.0f);
@@ -321,7 +323,7 @@ void KartMove::calc() {
 void KartMove::calcRespawnStart() {
     constexpr float RESPAWN_HEIGHT = 700.0f;
 
-    const auto *jugemPoint = System::RaceManager::Instance()->jugemPoint();
+    const auto *jugemPoint = Singleton<System::RaceManager>::Instance()->jugemPoint();
     const EGG::Vector3f &jugemPos = jugemPoint->pos();
     const EGG::Vector3f &jugemRot = jugemPoint->rot();
 
@@ -331,7 +333,7 @@ void KartMove::calcRespawnStart() {
 
     setInitialPhysicsValues(respawnPos, respawnRot);
 
-    Item::ItemDirector::Instance()->kartItem(0).clear();
+    Singleton<Item::ItemDirector>::Instance()->kartItem(0).clear();
 
     state()->setTriggerRespawn(false);
     state()->setInRespawn(true);
@@ -491,7 +493,7 @@ void KartMove::calcAirtimeTop() {
 /// @brief Every frame, calculates any boost resulting from a boost panel.
 /// @addr{0x80587590}
 void KartMove::calcSpecialFloor() {
-    const auto *raceMgr = System::RaceManager::Instance();
+    const auto *raceMgr = Singleton<System::RaceManager>::Instance();
     if (!raceMgr->isStageReached(System::RaceManager::Stage::Race)) {
         return;
     }
@@ -613,7 +615,7 @@ void KartMove::calcStickyRoad() {
 
     for (size_t i = 0; i < 3; ++i) {
         EGG::Vector3f newPos = pos + vel;
-        if (Field::CollisionDirector::Instance()->checkSphereFull(STICKY_RADIUS, newPos,
+        if (Singleton<Field::CollisionDirector>::Instance()->checkSphereFull(STICKY_RADIUS, newPos,
                     EGG::Vector3f::inf, STICKY_MASK, &colInfo, &kcl_flags, 0)) {
             m_vel1Dir = m_vel1Dir.perpInPlane(colInfo.floorNrm, true);
             stickyRoad = true;
@@ -1198,7 +1200,7 @@ void KartMove::calcRotation() {
 /// @brief Every frame, computes speed based on acceleration and any active boosts.
 /// @addr{0x8057AB68}
 void KartMove::calcVehicleSpeed() {
-    const auto *raceMgr = System::RaceManager::Instance();
+    const auto *raceMgr = Singleton<System::RaceManager>::Instance();
     if (raceMgr->isStageReached(System::RaceManager::Stage::Race)) {
         f32 speedFix = dynamics()->speedFix();
         if (state()->isInAction() ||
@@ -1431,7 +1433,7 @@ void KartMove::calcAcceleration() {
     local_90.setAxisRotation(rotationScalar * DEG2RAD, crossVec);
     m_vel1Dir = local_90.multVector33(m_vel1Dir);
 
-    const auto *raceMgr = System::RaceManager::Instance();
+    const auto *raceMgr = Singleton<System::RaceManager>::Instance();
     if (!state()->isInAction() && !state()->isDisableBackwardsAccel() &&
             state()->isTouchingGround() && !state()->isAccelerate() &&
             raceMgr->isStageReached(System::RaceManager::Stage::Race)) {
@@ -1560,7 +1562,8 @@ void KartMove::calcStandstillBoostRot() {
     f32 scalar = 1.0f;
 
     if (state()->isTouchingGround()) {
-        if (System::RaceManager::Instance()->stage() == System::RaceManager::Stage::Countdown) {
+        if (Singleton<System::RaceManager>::Instance()->stage() ==
+                System::RaceManager::Stage::Countdown) {
             next = 0.015f * -state()->startBoostCharge();
         } else if (!state()->isChargingSsmt()) {
             if (!state()->isJumpPad() && !state()->isRampBoost() && !state()->isSoftWallDrift()) {
@@ -1687,7 +1690,7 @@ bool KartMove::calcZipperCollision(f32 radius, f32 scale, EGG::Vector3f &pos,
     upLocal = mainRot().rotateVector(EGG::Vector3f::ey);
     pos = dynamics()->pos() + (-scale * m_scale.y) * upLocal;
 
-    auto *colDir = Field::CollisionDirector::Instance();
+    auto *colDir = Singleton<Field::CollisionDirector>::Instance();
     return colDir->checkSphereFullPush(radius, pos, prevPos, flags, colInfo, maskOut, 0);
 }
 
@@ -2176,7 +2179,7 @@ void KartMove::calcCannon() {
     }
     m_speed = m_baseSpeed;
     const auto *cannonPoint =
-            System::CourseMap::Instance()->getCannonPoint(state()->cannonPointId());
+            Singleton<System::CourseMap>::Instance()->getCannonPoint(state()->cannonPointId());
     size_t cannonParameterIdx = std::max<s16>(0, cannonPoint->parameterIdx());
     ASSERT(cannonParameterIdx < CANNON_PARAMETERS.size());
     const auto &cannonParams = CANNON_PARAMETERS[cannonParameterIdx];
@@ -2293,7 +2296,7 @@ void KartMoveBike::createSubsystems() {
 void KartMoveBike::calcVehicleRotation(f32 turn) {
     f32 leanRotInc = m_turningParams->leanRotIncRace;
     f32 leanRotCap = m_turningParams->leanRotCapRace;
-    const auto *raceManager = System::RaceManager::Instance();
+    const auto *raceManager = Singleton<System::RaceManager>::Instance();
 
     if (!state()->isChargingSsmt()) {
         if (!raceManager->isStageReached(System::RaceManager::Stage::Race) ||
@@ -2413,7 +2416,8 @@ void KartMoveBike::setTurnParams() {
         m_turningParams = &TURNING_PARAMS_ARRAY[1];
     }
 
-    if (System::RaceManager::Instance()->isStageReached(System::RaceManager::Stage::Race)) {
+    if (Singleton<System::RaceManager>::Instance()->isStageReached(
+                System::RaceManager::Stage::Race)) {
         m_leanRotInc = m_turningParams->leanRotIncRace;
         m_leanRotCap = m_turningParams->leanRotCapRace;
     } else {

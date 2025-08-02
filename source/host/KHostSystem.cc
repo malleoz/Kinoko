@@ -1,5 +1,7 @@
 #include "KHostSystem.hh"
 
+#include "Singleton.hh"
+
 #include "host/SceneCreatorDynamic.hh"
 
 #include <game/system/KPadDirector.hh>
@@ -27,14 +29,14 @@ void KHostSystem::init() {
     System::RaceConfig::RegisterInitCallback(OnInit, &m_params);
     m_sceneMgr->changeScene(0);
 
-    m_controller = System::KPadDirector::Instance()->hostController();
+    m_controller = Singleton<System::KPadDirector>::Instance()->hostController();
 }
 
 /// @brief Executes a frame.
 void KHostSystem::calc() {
     m_sceneMgr->calc();
 
-    const auto &pos = Kart::KartObjectManager::Instance()->object(0)->pos();
+    const auto &pos = Singleton<Kart::KartObjectManager>::Instance()->object(0)->pos();
     REPORT("X: %f | Y: %f | Z: %f", static_cast<double>(pos.x), static_cast<double>(pos.y),
             static_cast<double>(pos.z));
 }
@@ -72,7 +74,6 @@ void KHostSystem::parseOptions(int /*argc*/, char ** /*argv*/) {
 }
 
 KHostSystem *KHostSystem::CreateInstance() {
-    ASSERT(!s_instance);
     s_instance = new KHostSystem;
     return static_cast<KHostSystem *>(s_instance);
 }

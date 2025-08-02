@@ -150,11 +150,7 @@ public:
     /// @endGetters
 
     static CourseMap *CreateInstance();
-    static void DestroyInstance();
-
-    [[nodiscard]] static CourseMap *Instance() {
-        return s_instance;
-    }
+    void DestroyInstance();
 
 private:
     CourseMap();
@@ -192,8 +188,6 @@ private:
     f32 m_startTmp3;
 
     static void *LoadFile(const char *filename); ///< @addr{0x809BD6E8}
-
-    static CourseMap *s_instance;
 };
 
 } // namespace System

@@ -1,5 +1,7 @@
 #include "RailManager.hh"
 
+#include "Singleton.hh"
+
 #include "game/system/CourseMap.hh"
 #include "game/system/map/MapdataGeoObj.hh"
 
@@ -7,44 +9,18 @@ namespace Field {
 
 /// @addr{0x806F09C8}
 RailManager *RailManager::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = new RailManager;
-    s_instance->createPaths();
-    return s_instance;
+    auto *instance = new RailManager;
+    return instance;
 }
 
 /// @addr{0x806F0A4C}
 void RailManager::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    delete instance;
-}
-
-/// @addr{0x806F0A3C}
-RailManager::RailManager() = default;
-
-/// @addr{0x806F0A98}
-RailManager::~RailManager() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("RailManager instance not explicitly handled!");
-    }
-
-    for (auto *&rail : m_rails) {
-        delete rail;
-    }
-
-    for (auto *&interpolator : m_interpolators) {
-        delete interpolator;
-    }
-
-    delete m_interpolators.data();
+    delete this;
 }
 
 /// @addr{0x806F0AD8}
 void RailManager::createPaths() {
-    auto *courseMap = System::CourseMap::Instance();
+    auto *courseMap = Singleton<System::CourseMap>::Instance();
     m_pointCount = courseMap->getPointInfoCount();
     m_extraInterplatorCount = 8;
     u16 geoCount = courseMap->getGeoObjCount();
@@ -107,6 +83,20 @@ void RailManager::createPaths() {
     }
 }
 
-RailManager *RailManager::s_instance = nullptr; ///> @addr{0x809C22B0}
+/// @addr{0x806F0A3C}
+RailManager::RailManager() = default;
+
+/// @addr{0x806F0A98}
+RailManager::~RailManager() {
+    for (auto *&rail : m_rails) {
+        delete rail;
+    }
+
+    for (auto *&interpolator : m_interpolators) {
+        delete interpolator;
+    }
+
+    delete m_interpolators.data();
+}
 
 } // namespace Field

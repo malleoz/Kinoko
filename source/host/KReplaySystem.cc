@@ -1,5 +1,7 @@
 #include "KReplaySystem.hh"
 
+#include "Singleton.hh"
+
 #include "host/Option.hh"
 #include "host/SceneCreatorDynamic.hh"
 
@@ -115,7 +117,7 @@ KReplaySystem::~KReplaySystem() {
 bool KReplaySystem::calcEnd() const {
     constexpr u16 MAX_MINUTE_COUNT = 10;
 
-    const auto *raceManager = System::RaceManager::Instance();
+    const auto *raceManager = Singleton<System::RaceManager>::Instance();
     if (raceManager->stage() == System::RaceManager::Stage::FinishGlobal) {
         return true;
     }
@@ -146,7 +148,7 @@ bool KReplaySystem::success() const {
         return oss.str();
     };
 
-    const auto *raceManager = System::RaceManager::Instance();
+    const auto *raceManager = Singleton<System::RaceManager>::Instance();
     if (raceManager->stage() != System::RaceManager::Stage::FinishGlobal) {
         m_sceneMgr->currentScene()->heap()->enableAllocation();
         reportFail("Race didn't finish");
@@ -176,7 +178,7 @@ bool KReplaySystem::success() const {
 /// @brief Finds the desyncing timer index, if one exists.
 /// @return -1 if there's no desync, 0 if the final timer desyncs, and 1+ if a lap timer desyncs.
 s32 KReplaySystem::getDesyncingTimerIdx() const {
-    const auto &player = System::RaceManager::Instance()->player();
+    const auto &player = Singleton<System::RaceManager>::Instance()->player();
     if (m_currentGhost->raceTimer() != player.raceTimer()) {
         return 0;
     }
@@ -199,12 +201,12 @@ KReplaySystem::DesyncingTimerPair KReplaySystem::getDesyncingTimer(s32 i) const 
 
     if (cond == std::strong_ordering::equal) {
         const auto &correct = m_currentGhost->raceTimer();
-        const auto &incorrect = System::RaceManager::Instance()->player().raceTimer();
+        const auto &incorrect = Singleton<System::RaceManager>::Instance()->player().raceTimer();
         ASSERT(correct != incorrect);
         return DesyncingTimerPair(correct, incorrect);
     } else if (cond == std::strong_ordering::greater) {
         const auto &correct = m_currentGhost->lapTimer(i - 1);
-        const auto &incorrect = System::RaceManager::Instance()->player().lapTimer(i - 1);
+        const auto &incorrect = Singleton<System::RaceManager>::Instance()->player().lapTimer(i - 1);
         ASSERT(correct != incorrect);
         return DesyncingTimerPair(correct, incorrect);
     }

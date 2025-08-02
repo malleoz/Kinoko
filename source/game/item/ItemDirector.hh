@@ -19,19 +19,13 @@ public:
     }
 
     static ItemDirector *CreateInstance();
-    static void DestroyInstance();
-
-    [[nodiscard]] static ItemDirector *Instance() {
-        return s_instance;
-    }
+    void DestroyInstance();
 
 private:
     ItemDirector();
     ~ItemDirector() override;
 
     std::span<KartItem> m_karts;
-
-    static ItemDirector *s_instance; ///< @addr{0x809C3618}
 };
 
 } // namespace Item

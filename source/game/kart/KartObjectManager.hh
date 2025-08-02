@@ -23,14 +23,10 @@ public:
     /// @endGetters
 
     static KartObjectManager *CreateInstance();
-    static void DestroyInstance();
+    void DestroyInstance();
 
     [[nodiscard]] static const Abstract::g3d::ResAnmChr *PressScaleUpAnmChr() {
         return s_pressScaleUpAnmChr;
-    }
-
-    [[nodiscard]] static KartObjectManager *Instance() {
-        return s_instance;
     }
 
 private:
@@ -43,7 +39,6 @@ private:
     KartObject **m_objects;
 
     static Abstract::g3d::ResAnmChr *s_pressScaleUpAnmChr; ///< @addr{0x809C18B0}
-    static KartObjectManager *s_instance;                  ///< @addr{0x809C18F8}
 };
 
 } // namespace Kart

@@ -1,5 +1,7 @@
 #include "ObjectAurora.hh"
 
+#include "Singleton.hh"
+
 #include "game/field/CollisionDirector.hh"
 
 #include "game/system/RaceManager.hh"
@@ -175,7 +177,7 @@ bool ObjectAurora::checkSpherePartialImpl(f32 radius, const EGG::Vector3f &v0,
         return false;
     }
 
-    u32 t = timeOffset + System::RaceManager::Instance()->timer();
+    u32 t = timeOffset + Singleton<System::RaceManager>::Instance()->timer();
     EGG::Vector3f bbox;
     EGG::Vector3f fnrm;
     f32 dist;
@@ -190,7 +192,7 @@ bool ObjectAurora::checkSpherePartialImpl(f32 radius, const EGG::Vector3f &v0,
     }
 
     if (pFlagsOut) {
-        auto *colDirector = CollisionDirector::Instance();
+        auto *colDirector = Singleton<CollisionDirector>::Instance();
 
         if (push) {
             colDirector->pushCollisionEntry(dist, pFlagsOut, KCL_TYPE_BIT(COL_TYPE_ROAD2),
@@ -230,7 +232,7 @@ bool ObjectAurora::checkSphereFullImpl(f32 radius, const EGG::Vector3f &v0,
         return false;
     }
 
-    u32 t = timeOffset + System::RaceManager::Instance()->timer();
+    u32 t = timeOffset + Singleton<System::RaceManager>::Instance()->timer();
     EGG::Vector3f bbox;
     EGG::Vector3f fnrm;
     f32 dist;
@@ -247,7 +249,7 @@ bool ObjectAurora::checkSphereFullImpl(f32 radius, const EGG::Vector3f &v0,
     }
 
     if (pFlagsOut) {
-        auto *colDirector = CollisionDirector::Instance();
+        auto *colDirector = Singleton<CollisionDirector>::Instance();
 
         if (push) {
             colDirector->pushCollisionEntry(dist, pFlagsOut, KCL_TYPE_BIT(COL_TYPE_ROAD2),

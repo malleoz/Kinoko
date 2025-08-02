@@ -22,17 +22,13 @@ public:
     /// @endGetters
 
     static RailManager *CreateInstance();
-    static void DestroyInstance();
+    void DestroyInstance();
 
-    [[nodiscard]] static RailManager *Instance() {
-        return s_instance;
-    }
+    void createPaths();
 
 private:
     RailManager();
     ~RailManager();
-
-    void createPaths();
 
     std::vector<Rail *> m_rails;
     std::span<RailInterpolator *> m_interpolators;
@@ -42,8 +38,6 @@ private:
     u16 m_pointCount;
     u16 m_cameraPointCount;
     u16 m_cameraCount;
-
-    static RailManager *s_instance; ///< @addr{0x809C22B0}
 };
 
 } // namespace Field

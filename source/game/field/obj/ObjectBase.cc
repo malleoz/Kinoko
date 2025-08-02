@@ -1,5 +1,7 @@
 #include "ObjectBase.hh"
 
+#include "Singleton.hh"
+
 #include "game/field/ObjectDirector.hh"
 
 #include "game/system/CourseMap.hh"
@@ -23,7 +25,7 @@ ObjectBase::ObjectBase(const char *name, const EGG::Vector3f &pos, const EGG::Ve
         const EGG::Vector3f &scale)
     : m_drawMdl(nullptr), m_resFile(nullptr), m_flags(11), m_pos(pos), m_rot(rot), m_scale(scale),
       m_transform(EGG::Matrix34f::ident), m_mapObj(nullptr) {
-    m_id = ObjectDirector::Instance()->flowTable().getIdfFromName(name);
+    m_id = Singleton<ObjectDirector>::Instance()->flowTable().getIdfFromName(name);
 }
 
 /// @addr{0x8067E3C4}
@@ -39,7 +41,7 @@ void ObjectBase::calcModel() {
 
 /// @addr{0x80680730}
 const char *ObjectBase::getResources() const {
-    const auto &flowTable = ObjectDirector::Instance()->flowTable();
+    const auto &flowTable = Singleton<ObjectDirector>::Instance()->flowTable();
     const auto *collisionSet = flowTable.set(flowTable.slot(m_id));
     ASSERT(collisionSet);
     return collisionSet->resources;
@@ -55,7 +57,7 @@ void ObjectBase::loadGraphics() {
     char filename[128];
     snprintf(filename, sizeof(filename), "%s.brres", name);
 
-    auto *resMgr = System::ResourceManager::Instance();
+    auto *resMgr = Singleton<System::ResourceManager>::Instance();
     const void *resFile = resMgr->getFile(filename, nullptr, System::ArchiveId::Course);
     if (resFile) {
         m_resFile = new Abstract::g3d::ResFile(resFile);
@@ -75,7 +77,7 @@ void ObjectBase::loadRail() {
         return;
     }
 
-    auto *point = System::CourseMap::Instance()->getPointInfo(pathId);
+    auto *point = Singleton<System::CourseMap>::Instance()->getPointInfo(pathId);
     f32 speed = static_cast<f32>(m_mapObj->setting(0));
 
     if (point->setting(0) == 0) {
@@ -87,13 +89,13 @@ void ObjectBase::loadRail() {
 
 /// @addr{0x80680784}
 [[nodiscard]] const char *ObjectBase::getName() const {
-    const auto &flowTable = ObjectDirector::Instance()->flowTable();
+    const auto &flowTable = Singleton<ObjectDirector>::Instance()->flowTable();
     return flowTable.set(flowTable.slot(id()))->name;
 }
 
 /// @addr{0x806806DC}
 const char *ObjectBase::getKclName() const {
-    const auto &flowTable = ObjectDirector::Instance()->flowTable();
+    const auto &flowTable = Singleton<ObjectDirector>::Instance()->flowTable();
     const auto *collisionSet = flowTable.set(flowTable.slot(m_id));
     ASSERT(collisionSet);
     return collisionSet->resources;

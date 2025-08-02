@@ -58,17 +58,12 @@ void ResourceManager::unmount(MultiDvdArchive *archive) {
 
 /// @addr{0x8053FC4C}
 ResourceManager *ResourceManager::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = new ResourceManager;
-    return s_instance;
+    return new ResourceManager;
 }
 
 /// @addr{0x8053FC9C}
 void ResourceManager::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    delete instance;
+    delete this;
 }
 
 /// @addr{0x8053FCEC}
@@ -80,12 +75,7 @@ ResourceManager::ResourceManager() {
 }
 
 /// @addr{0x8053FF1C}
-ResourceManager::~ResourceManager() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("ResourceManager instance not explicitly handled!");
-    }
-}
+ResourceManager::~ResourceManager() = default;
 
 /// @addr{Inlined in 0x8053FCEC}
 MultiDvdArchive *ResourceManager::Create(u8 i) {
@@ -94,7 +84,5 @@ MultiDvdArchive *ResourceManager::Create(u8 i) {
         return new MultiDvdArchive;
     }
 }
-
-ResourceManager *ResourceManager::s_instance = nullptr;
 
 } // namespace System

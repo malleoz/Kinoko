@@ -1,5 +1,7 @@
 #include "ObjectFlowTable.hh"
 
+#include "Singleton.hh"
+
 #include "game/system/ResourceManager.hh"
 
 #include <cstring>
@@ -8,8 +10,8 @@ namespace Field {
 
 /// @addr{0x8082C10C}
 ObjectFlowTable::ObjectFlowTable(const char *filename) {
-    SFile *file = reinterpret_cast<SFile *>(System::ResourceManager::Instance()->getFile(filename,
-            nullptr, System::ArchiveId::Core));
+    SFile *file = reinterpret_cast<SFile *>(Singleton<System::ResourceManager>::Instance()->getFile(
+            filename, nullptr, System::ArchiveId::Core));
 
     m_count = parse<s16>(file->count);
     m_sets = file->sets;

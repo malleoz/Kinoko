@@ -1,5 +1,7 @@
 #include "KartParam.hh"
 
+#include "Singleton.hh"
+
 #include "game/kart/KartParamFileManager.hh"
 
 namespace Kart {
@@ -18,7 +20,7 @@ KartParam::~KartParam() = default;
 
 /// @addr{0x80591FA4}
 void KartParam::initStats(Character character, Vehicle vehicle) {
-    auto *fileManager = KartParamFileManager::Instance();
+    auto *fileManager = Singleton<KartParamFileManager>::Instance();
 
     auto vehicleStream = fileManager->getVehicleStream(vehicle);
     auto driverStream = fileManager->getDriverStream(character);
@@ -28,14 +30,14 @@ void KartParam::initStats(Character character, Vehicle vehicle) {
 }
 
 void KartParam::initBikeDispParams(Vehicle vehicle) {
-    auto *fileManager = KartParamFileManager::Instance();
+    auto *fileManager = Singleton<KartParamFileManager>::Instance();
 
     auto dispParamsStream = fileManager->getBikeDispParamsStream(vehicle);
     m_bikeDisp = BikeDisp(dispParamsStream);
 }
 
 void KartParam::initHitboxes(Vehicle vehicle) {
-    auto *fileManager = KartParamFileManager::Instance();
+    auto *fileManager = Singleton<KartParamFileManager>::Instance();
 
     auto hitboxStream = fileManager->getHitboxStream(vehicle);
     m_bsp = BSP(hitboxStream);

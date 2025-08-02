@@ -1,5 +1,7 @@
 #include "KartCollide.hh"
 
+#include "Singleton.hh"
+
 #include "game/kart/KartBody.hh"
 #include "game/kart/KartMove.hh"
 #include "game/kart/KartPhysics.hh"
@@ -230,15 +232,16 @@ void KartCollide::calcBodyCollision(f32 totalScale, f32 sinkDepth, const EGG::Qu
 
         if (hitbox.bspHitbox()->wallsOnly != 0) {
             flags = 0x4A109000;
-            Field::CourseColMgr::Instance()->setNoBounceWallInfo(&noBounceWallInfo);
+            Singleton<Field::CourseColMgr>::Instance()->setNoBounceWallInfo(&noBounceWallInfo);
         }
 
         hitbox.calc(totalScale, sinkDepth, scale, rot, pos());
 
-        if (Field::CollisionDirector::Instance()->checkSphereCachedFullPush(hitbox.radius(),
-                    hitbox.worldPos(), hitbox.lastPos(), flags, &colInfo, &maskOut, 0)) {
+        if (Singleton<Field::CollisionDirector>::Instance()->checkSphereCachedFullPush(
+                    hitbox.radius(), hitbox.worldPos(), hitbox.lastPos(), flags, &colInfo, &maskOut,
+                    0)) {
             if (!!(maskOut & KCL_TYPE_VEHICLE_COLLIDEABLE)) {
-                Field::CollisionDirector::Instance()->findClosestCollisionEntry(&maskOut,
+                Singleton<Field::CollisionDirector>::Instance()->findClosestCollisionEntry(&maskOut,
                         KCL_TYPE_VEHICLE_COLLIDEABLE);
             }
 
@@ -284,7 +287,7 @@ void KartCollide::calcFloorEffect() {
     if (m_solidOobTimer >= 3 && m_surfaceFlags.onBit(eSurfaceFlags::SolidOOB) &&
             m_surfaceFlags.offBit(eSurfaceFlags::Wall)) {
         if (mask & KCL_TYPE_BIT(COL_TYPE_SOLID_OOB)) {
-            Field::CollisionDirector::Instance()->findClosestCollisionEntry(&mask,
+            Singleton<Field::CollisionDirector>::Instance()->findClosestCollisionEntry(&mask,
                     KCL_TYPE_BIT(COL_TYPE_SOLID_OOB));
         }
 
@@ -312,8 +315,8 @@ void KartCollide::calcTriggers(Field::KCLTypeMask *mask, const EGG::Vector3f &po
     scalar = m_smoothedBack * -physics()->fc() * 1.8f * move()->totalScale();
     scaledPos += scalar * back;
 
-    bool collide = Field::CollisionDirector::Instance()->checkSphereCachedPartialPush(radius,
-            scaledPos, v1, typeMask, nullptr, mask, 0);
+    bool collide = Singleton<Field::CollisionDirector>::Instance()->checkSphereCachedPartialPush(
+            radius, scaledPos, v1, typeMask, nullptr, mask, 0);
 
     if (!collide) {
         return;
@@ -323,7 +326,8 @@ void KartCollide::calcTriggers(Field::KCLTypeMask *mask, const EGG::Vector3f &po
         handleTriggers(mask);
     } else {
         if (*mask & KCL_TYPE_FLOOR) {
-            Field::CollisionDirector::Instance()->findClosestCollisionEntry(mask, KCL_TYPE_FLOOR);
+            Singleton<Field::CollisionDirector>::Instance()->findClosestCollisionEntry(mask,
+                    KCL_TYPE_FLOOR);
         }
 
         if (*mask & KCL_TYPE_WALL) {
@@ -342,7 +346,7 @@ void KartCollide::handleTriggers(Field::KCLTypeMask *mask) {
     processCannon(mask);
 
     if (*mask & KCL_TYPE_BIT(COL_TYPE_EFFECT_TRIGGER)) {
-        auto *colDir = Field::CollisionDirector::Instance();
+        auto *colDir = Singleton<Field::CollisionDirector>::Instance();
         if (colDir->findClosestCollisionEntry(mask, KCL_TYPE_BIT(COL_TYPE_EFFECT_TRIGGER))) {
             if (KCL_VARIANT_TYPE(colDir->closestCollisionEntry()->attribute) == 4) {
                 halfPipe()->end(true);
@@ -359,7 +363,7 @@ void KartCollide::calcFallBoundary(Field::KCLTypeMask *mask, bool /*shortBoundar
         return;
     }
 
-    auto *colDir = Field::CollisionDirector::Instance();
+    auto *colDir = Singleton<Field::CollisionDirector>::Instance();
     if (!colDir->findClosestCollisionEntry(mask, KCL_TYPE_BIT(COL_TYPE_FALL_BOUNDARY))) {
         return;
     }
@@ -421,9 +425,9 @@ void KartCollide::calcWheelCollision(u16 /*wheelIdx*/, CollisionGroup *hitboxGro
     colInfo.bbox.setZero();
     Field::KCLTypeMask kclOut;
     Field::CourseColMgr::NoBounceWallColInfo noBounceWallInfo;
-    Field::CourseColMgr::Instance()->setNoBounceWallInfo(&noBounceWallInfo);
+    Singleton<Field::CourseColMgr>::Instance()->setNoBounceWallInfo(&noBounceWallInfo);
 
-    bool collided = Field::CollisionDirector::Instance()->checkSphereCachedFullPush(
+    bool collided = Singleton<Field::CollisionDirector>::Instance()->checkSphereCachedFullPush(
             firstHitbox.radius(), firstHitbox.worldPos(), firstHitbox.lastPos(),
             KCL_TYPE_VEHICLE_COLLIDEABLE, &colInfo, &kclOut, 0);
 
@@ -462,7 +466,7 @@ void KartCollide::calcWheelCollision(u16 /*wheelIdx*/, CollisionGroup *hitboxGro
         return;
     }
 
-    Field::CollisionDirector::Instance()->findClosestCollisionEntry(&kclOut,
+    Singleton<Field::CollisionDirector>::Instance()->findClosestCollisionEntry(&kclOut,
             KCL_TYPE_VEHICLE_COLLIDEABLE);
 }
 
@@ -503,9 +507,9 @@ void KartCollide::calcSideCollision(CollisionData &collisionData, Hitbox &hitbox
         EGG::Vector3f effectivePos = hitbox.worldPos() + effectiveRadius * right;
         Field::CollisionInfoPartial tempColInfo;
 
-        if (Field::CollisionDirector::Instance()->checkSphereCachedPartial(hitbox.radius(),
-                    effectivePos, hitbox.lastPos(), KCL_TYPE_DRIVER_WALL, &tempColInfo, nullptr,
-                    0)) {
+        if (Singleton<Field::CollisionDirector>::Instance()->checkSphereCachedPartial(
+                    hitbox.radius(), effectivePos, hitbox.lastPos(), KCL_TYPE_DRIVER_WALL,
+                    &tempColInfo, nullptr, 0)) {
             tangents[i] = colInfo->tangentOff.squaredLength();
         }
     }
@@ -535,7 +539,7 @@ void KartCollide::calcObjectCollision() {
 
     size_t collisionCount = objectCollisionKart()->checkCollision(pose(), velocity());
 
-    const auto *objectDirector = Field::ObjectDirector::Instance();
+    const auto *objectDirector = Singleton<Field::ObjectDirector>::Instance();
 
     for (size_t i = 0; i < collisionCount; ++i) {
         Reaction reaction = objectDirector->reaction(i);
@@ -610,7 +614,7 @@ bool KartCollide::processWall(CollisionData &collisionData, Field::KCLTypeMask *
         return false;
     }
 
-    auto *colDirector = Field::CollisionDirector::Instance();
+    auto *colDirector = Singleton<Field::CollisionDirector>::Instance();
     if (!colDirector->findClosestCollisionEntry(maskOut, KCL_TYPE_DRIVER_WALL_NO_INVISIBLE_WALL2)) {
         return false;
     }
@@ -650,7 +654,7 @@ void KartCollide::processFloor(CollisionData &collisionData, Hitbox &hitbox,
         return;
     }
 
-    auto *colDirector = Field::CollisionDirector::Instance();
+    auto *colDirector = Singleton<Field::CollisionDirector>::Instance();
 
     if (!colDirector->findClosestCollisionEntry(maskOut, KCL_TYPE_FLOOR)) {
         return;
@@ -728,7 +732,7 @@ void KartCollide::processFloor(CollisionData &collisionData, Hitbox &hitbox,
 /// @addr{0x8056F490}
 /// @brief Checks if we are colliding with a cannon trigger and sets the state flag if so.
 void KartCollide::processCannon(Field::KCLTypeMask *maskOut) {
-    auto *colDirector = Field::CollisionDirector::Instance();
+    auto *colDirector = Singleton<Field::CollisionDirector>::Instance();
     if (colDirector->findClosestCollisionEntry(maskOut, KCL_TYPE_BIT(COL_TYPE_CANNON_TRIGGER))) {
         state()->setCannonPointId(
                 KCL_VARIANT_TYPE(colDirector->closestCollisionEntry()->attribute));

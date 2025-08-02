@@ -139,7 +139,7 @@ void KartSub::calcPass0() {
     dynamics()->setTop(move()->up());
 
     // Pertains to startslides / leaning in stage 0 and 1
-    const auto *raceManager = System::RaceManager::Instance();
+    const auto *raceManager = Singleton<System::RaceManager>::Instance();
     if (!raceManager->isStageReached(System::RaceManager::Stage::Race)) {
         dynamics()->setIntVel(EGG::Vector3f::zero);
 
@@ -230,7 +230,7 @@ void KartSub::calcPass1() {
 
     body()->calcSinkDepth();
 
-    Field::CollisionDirector::Instance()->checkCourseColNarrScLocal(250.0f, pos(),
+    Singleton<Field::CollisionDirector>::Instance()->checkCourseColNarrScLocal(250.0f, pos(),
             KCL_TYPE_VEHICLE_INTERACTABLE, 0);
 
     if (!state()->isInCannon()) {

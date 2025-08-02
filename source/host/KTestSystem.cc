@@ -1,5 +1,7 @@
 #include "KTestSystem.hh"
 
+#include "Singleton.hh"
+
 #include "host/Option.hh"
 #include "host/SceneCreatorDynamic.hh"
 
@@ -299,7 +301,7 @@ KTestSystem::TestData KTestSystem::findCurrentFrameEntry() {
 /// @brief Tests the frame against the provided test data.
 /// @param data The test data to compare against.
 void KTestSystem::testFrame(const TestData &data) {
-    auto *object = Kart::KartObjectManager::Instance()->object(0);
+    auto *object = Singleton<Kart::KartObjectManager>::Instance()->object(0);
     const auto &pos = object->pos();
     const auto &fullRot = object->fullRot();
     const auto &extVel = object->extVel();
@@ -310,7 +312,7 @@ void KTestSystem::testFrame(const TestData &data) {
     const auto &mainRot = object->mainRot();
     const auto &angVel2 = object->angVel2();
 
-    const auto &player = System::RaceManager::Instance()->player();
+    const auto &player = Singleton<System::RaceManager>::Instance()->player();
     f32 raceCompletion = player.raceCompletion();
     u16 checkpointId = player.checkpointId();
     u8 jugemId = player.jugemId();

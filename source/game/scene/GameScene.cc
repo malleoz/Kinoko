@@ -1,5 +1,7 @@
 #include "GameScene.hh"
 
+#include "Singleton.hh"
+
 #include "game/system/KPadDirector.hh"
 #include "game/system/ResourceManager.hh"
 
@@ -47,7 +49,7 @@ GameScene::~GameScene() {
 
 /// @addr{0x8051B3C8}
 void GameScene::calc() {
-    System::KPadDirector::Instance()->calc();
+    Singleton<System::KPadDirector>::Instance()->calc();
     calcEngines();
 }
 
@@ -86,7 +88,7 @@ GameScene::Resource::Resource(System::MultiDvdArchive *archive, s32 id)
 /// @addr{0x8051A4DC}
 void GameScene::initScene() {
     createEngines();
-    System::KPadDirector::Instance()->reset();
+    Singleton<System::KPadDirector>::Instance()->reset();
     initEngines();
 #ifdef BUILD_DEBUG
     checkMemory();
@@ -100,12 +102,12 @@ void GameScene::deinitScene() {
     }
 
     destroyEngines();
-    System::KPadDirector::Instance()->clear();
+    Singleton<System::KPadDirector>::Instance()->clear();
 }
 
 /// @addr{0x8051AAE8}
 void GameScene::unmountResources() {
-    auto *resourceManager = System::ResourceManager::Instance();
+    auto *resourceManager = Singleton<System::ResourceManager>::Instance();
     for (auto iter = m_resources.begin(); iter != m_resources.end();) {
         Resource *resource = *iter;
         resourceManager->unmount(resource->archive);

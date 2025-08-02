@@ -1,5 +1,7 @@
 #include "RaceConfig.hh"
 
+#include "Singleton.hh"
+
 #include "game/system/KPadDirector.hh"
 
 #include <abstract/File.hh>
@@ -33,7 +35,7 @@ void RaceConfig::initControllers() {
         initGhost();
         break;
     case Player::Type::Local:
-        KPadDirector::Instance()->setHostPad(m_raceScenario.players[0].driftIsAuto);
+        Singleton<KPadDirector>::Instance()->setHostPad(m_raceScenario.players[0].driftIsAuto);
         break;
     default:
         PANIC("Players must be either local or ghost!");
@@ -53,34 +55,24 @@ void RaceConfig::initGhost() {
     player.vehicle = ghost.vehicle();
     player.driftIsAuto = ghost.driftIsAuto();
 
-    KPadDirector::Instance()->setGhostPad(ghost.inputs(), ghost.driftIsAuto());
+    Singleton<KPadDirector>::Instance()->setGhostPad(ghost.inputs(), ghost.driftIsAuto());
 }
 
 /// @addr{0x8052FE58}
 RaceConfig *RaceConfig::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = new RaceConfig;
-    return s_instance;
+    return new RaceConfig;
 }
 
 /// @addr{0x8052FFE8}
 void RaceConfig::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    delete instance;
+    delete this;
 }
 
 /// @addr{0x8053015C}
 RaceConfig::RaceConfig() = default;
 
 /// @addr{0x80530038}
-RaceConfig::~RaceConfig() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("RaceConfig instance not explicitly handled!");
-    }
-}
+RaceConfig::~RaceConfig() = default;
 
 /// @addr{Inlined in 0x8052DD40}
 void RaceConfig::Scenario::init() {
@@ -94,8 +86,6 @@ void RaceConfig::Scenario::init() {
         player.type = Player::Type::None;
     }
 }
-
-RaceConfig *RaceConfig::s_instance = nullptr; ///< @addr{0x809BD728}
 
 /** @brief Host-agnostic way of initializing RaceConfig.
     The type of the first player *must* be set to either Local or Ghost.

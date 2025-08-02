@@ -37,7 +37,7 @@ void ObjectCollidable::load() {
 
     loadRail();
 
-    ObjectDirector::Instance()->addObject(this);
+    Singleton<ObjectDirector>::Instance()->addObject(this);
 }
 
 /// @addr{0x8081F7C8}
@@ -51,7 +51,7 @@ void ObjectCollidable::calcCollisionTransform() {
 /// @details We refer to the collision parameters as a box due to its use of axes.
 /// This does not imply that all collidable objects are boxes!
 f32 ObjectCollidable::getCollisionRadius() const {
-    const auto &flowTable = ObjectDirector::Instance()->flowTable();
+    const auto &flowTable = Singleton<ObjectDirector>::Instance()->flowTable();
     const auto *collisionSet = flowTable.set(flowTable.slot(id()));
 
     f32 zRadius = m_scale.z * static_cast<f32>(parse<s16>(collisionSet->params.box.z));
@@ -102,7 +102,7 @@ bool ObjectCollidable::checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &d
 
 /// @addr{0x8081F224}
 void ObjectCollidable::createCollision() {
-    const auto &flowTable = ObjectDirector::Instance()->flowTable();
+    const auto &flowTable = Singleton<ObjectDirector>::Instance()->flowTable();
     const auto *collisionSet = flowTable.set(flowTable.slot(id()));
 
     if (!collisionSet) {
@@ -133,7 +133,7 @@ void ObjectCollidable::createCollision() {
 
 /// @addr{0x8081F170}
 void ObjectCollidable::registerManagedObject() {
-    ObjectDirector::Instance()->addManagedObject(this);
+    Singleton<ObjectDirector>::Instance()->addManagedObject(this);
 }
 
 } // namespace Field

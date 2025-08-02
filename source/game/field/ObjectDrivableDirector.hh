@@ -43,11 +43,7 @@ public:
     }
 
     static ObjectDrivableDirector *CreateInstance();
-    static void DestroyInstance();
-
-    [[nodiscard]] static ObjectDrivableDirector *Instance() {
-        return s_instance;
-    }
+    void DestroyInstance();
 
 private:
     ObjectDrivableDirector();
@@ -56,8 +52,6 @@ private:
     std::vector<ObjectDrivable *> m_objects;     ///< All objects live here
     std::vector<ObjectDrivable *> m_calcObjects; ///< Objects needing calc() live here too.
     ObjectObakeManager *m_obakeManager;          ///< Manages rGV2 blocks and spatial indexing.
-
-    static ObjectDrivableDirector *s_instance;
 };
 
 } // namespace Field

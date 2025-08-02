@@ -40,16 +40,12 @@ void KPadDirector::setHostPad(bool driftIsAuto) {
 
 /// @addr{0x8052313C}
 KPadDirector *KPadDirector::CreateInstance() {
-    ASSERT(!s_instance);
-    return s_instance = new KPadDirector;
+    return new KPadDirector;
 }
 
 /// @addr{0x8052318C}
 void KPadDirector::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    delete instance;
+    delete this;
 }
 
 /// @addr{0x805232F0}
@@ -59,13 +55,6 @@ KPadDirector::KPadDirector() {
 }
 
 /// @addr{0x805231DC}
-KPadDirector::~KPadDirector() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("KPadDirector instance not explicitly handled!");
-    }
-}
-
-KPadDirector *KPadDirector::s_instance = nullptr; ///< @addr{0x809BD70C}
+KPadDirector::~KPadDirector() = default;
 
 } // namespace System

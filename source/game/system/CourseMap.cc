@@ -1,5 +1,7 @@
 #include "CourseMap.hh"
 
+#include "Singleton.hh"
+
 #include "game/system/ResourceManager.hh"
 
 namespace System {
@@ -182,17 +184,12 @@ f32 CourseMap::getCheckPointEntryOffsetExact(u16 i, const EGG::Vector3f &pos,
 
 /// @addr{0x80512694}
 CourseMap *CourseMap::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = new CourseMap;
-    return s_instance;
+    return new CourseMap;
 }
 
 /// @addr{0x8051271C}
 void CourseMap::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    delete instance;
+    delete this;
 }
 
 /// @addr{0x8051276C}
@@ -202,11 +199,6 @@ CourseMap::CourseMap()
 
 /// @addr{0x805127AC}
 CourseMap::~CourseMap() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("CourseMap instance not explicitly handled!");
-    }
-
     delete m_course;
     delete m_startPoint;
     delete m_checkPath;
@@ -464,9 +456,7 @@ void CourseMap::clearSectorChecked() {
 
 /// @addr{0x80512C10}
 void *CourseMap::LoadFile(const char *filename) {
-    return ResourceManager::Instance()->getFile(filename, nullptr, ArchiveId::Course);
+    return Singleton<ResourceManager>::Instance()->getFile(filename, nullptr, ArchiveId::Course);
 }
-
-CourseMap *CourseMap::s_instance = nullptr; ///< @addr{0x809BD6E8}
 
 } // namespace System

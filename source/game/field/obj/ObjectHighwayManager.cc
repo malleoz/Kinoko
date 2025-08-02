@@ -1,5 +1,7 @@
 #include "ObjectHighwayManager.hh"
 
+#include "Singleton.hh"
+
 #include "game/field/ObjectDirector.hh"
 #include "game/field/obj/ObjectCarTGE.hh"
 
@@ -10,7 +12,7 @@ ObjectHighwayManager::ObjectHighwayManager()
     : ObjectCollidable("HighwayManager", EGG::Vector3f::zero, EGG::Vector3f::ez,
               EGG::Vector3f::unit) {
     size_t carCount = 0;
-    auto *objDir = ObjectDirector::Instance();
+    auto *objDir = Singleton<ObjectDirector>::Instance();
 
     for (auto *const &obj : objDir->managedObjects()) {
         const char *objName = obj->getName();

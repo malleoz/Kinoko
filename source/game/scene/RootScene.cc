@@ -1,5 +1,7 @@
 #include "RootScene.hh"
 
+#include "Singleton.hh"
+
 #include "game/system/KPadDirector.hh"
 #include "game/system/RaceConfig.hh"
 #include "game/system/ResourceManager.hh"
@@ -33,13 +35,13 @@ void RootScene::enter() {
 void RootScene::allocate() {
     {
         ScopeLock<GroupID> lock(GroupID::Resource);
-        System::ResourceManager::CreateInstance();
+        Singleton<System::ResourceManager>::CreateInstance();
     }
 
     {
         ScopeLock<GroupID> lock(GroupID::Race);
-        System::KPadDirector::CreateInstance();
-        System::RaceConfig::CreateInstance();
+        Singleton<System::KPadDirector>::CreateInstance();
+        Singleton<System::RaceConfig>::CreateInstance();
     }
 }
 
@@ -47,7 +49,7 @@ void RootScene::allocate() {
 void RootScene::init() {
     {
         ScopeLock<GroupID> lock(GroupID::Race);
-        System::RaceConfig::Instance()->init();
+        Singleton<System::RaceConfig>::Instance()->init();
     }
 }
 

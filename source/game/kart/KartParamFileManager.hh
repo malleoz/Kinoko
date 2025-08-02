@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Singleton.hh"
+
 #include "game/kart/KartParam.hh"
 
 #include "game/system/ResourceManager.hh"
@@ -19,11 +21,7 @@ public:
     [[nodiscard]] EGG::RamStream getBikeDispParamsStream(Vehicle vehicle) const;
 
     static KartParamFileManager *CreateInstance();
-    static void DestroyInstance();
-
-    [[nodiscard]] static KartParamFileManager *Instance() {
-        return s_instance;
-    }
+    void DestroyInstance();
 
 private:
     template <typename T>
@@ -39,7 +37,7 @@ private:
         }
 
         void load(const char *filename) {
-            auto *resourceManager = System::ResourceManager::Instance();
+            auto *resourceManager = Singleton<System::ResourceManager>::Instance();
             file = resourceManager->getFile(filename, &size, System::ArchiveId::Core);
         }
 
@@ -55,8 +53,6 @@ private:
     FileInfo m_kartParam;     // kartParam.bin
     FileInfo m_driverParam;   // driverParam.bin
     FileInfo m_bikeDispParam; // bikePartsDispParam.bin
-
-    static KartParamFileManager *s_instance;
 };
 
 } // namespace Kart

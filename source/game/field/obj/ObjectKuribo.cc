@@ -1,5 +1,7 @@
 #include "ObjectKuribo.hh"
 
+#include "Singleton.hh"
+
 #include "game/field/CollisionDirector.hh"
 
 #include <cmath>
@@ -149,7 +151,7 @@ void ObjectKuribo::checkSphereFull() {
     EGG::Vector3f pos = m_pos;
     pos.y += RADIUS;
 
-    bool hasCol = CollisionDirector::Instance()->checkSphereFull(RADIUS, pos, EGG::Vector3f::inf,
+    bool hasCol = Singleton<CollisionDirector>::Instance()->checkSphereFull(RADIUS, pos, EGG::Vector3f::inf,
             KCL_TYPE_FLOOR, &colInfo, nullptr, 0);
 
     if (hasCol) {

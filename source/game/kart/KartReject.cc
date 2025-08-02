@@ -1,5 +1,7 @@
 #include "KartReject.hh"
 
+#include "Singleton.hh"
+
 #include "game/kart/KartDynamics.hh"
 #include "game/kart/KartMove.hh"
 #include "game/kart/KartParam.hh"
@@ -105,7 +107,7 @@ bool KartReject::calcRejection() {
         EGG::Vector3f local_d0 = dynamics()->mainRot().rotateVector(EGG::Vector3f::ey);
         EGG::Vector3f worldPos = pos() + (-posScalar * move()->scale().y) * local_d0;
 
-        auto *colDir = Field::CollisionDirector::Instance();
+        auto *colDir = Singleton<Field::CollisionDirector>::Instance();
         if (!colDir->checkSphereFullPush(radius, worldPos, worldUpPos, KCL_TYPE_B0E82DFF, &colInfo,
                     &mask, 0)) {
             if (i == 0) {

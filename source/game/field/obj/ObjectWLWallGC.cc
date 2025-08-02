@@ -1,5 +1,7 @@
 #include "ObjectWLWallGC.hh"
 
+#include "Singleton.hh"
+
 #include "game/system/RaceManager.hh"
 
 namespace Field {
@@ -60,7 +62,7 @@ void ObjectWLWallGC::calc() {
 
 /// @addr{0x8086BF30}
 const EGG::Matrix34f &ObjectWLWallGC::getUpdatedMatrix(u32 timeOffset) {
-    s32 time = cycleFrame(System::RaceManager::Instance()->timer() - timeOffset);
+    s32 time = cycleFrame(Singleton<System::RaceManager>::Instance()->timer() - timeOffset);
 
     f32 t;
     if (time < m_hiddenDuration) {

@@ -1,5 +1,7 @@
 #include "KartItem.hh"
 
+#include "Singleton.hh"
+
 #include "game/kart/KartMove.hh"
 #include "game/kart/KartState.hh"
 
@@ -41,7 +43,7 @@ void KartItem::calc() {
                 state()->isCannonStart() || state()->isInCannon()) {
             m_flags.setBit(eFlags::Lockout);
         } else {
-            const auto *raceMgr = System::RaceManager::Instance();
+            const auto *raceMgr = Singleton<System::RaceManager>::Instance();
             bool canUse = m_flags.onBit(eFlags::ItemButtonActivation);
             canUse = canUse && raceMgr->isStageReached(System::RaceManager::Stage::Race);
             canUse = canUse && !state()->isInAction();

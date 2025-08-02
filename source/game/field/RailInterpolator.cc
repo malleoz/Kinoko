@@ -1,5 +1,7 @@
 #include "RailInterpolator.hh"
 
+#include "Singleton.hh"
+
 #include "game/field/RailManager.hh"
 
 namespace Field {
@@ -7,7 +9,7 @@ namespace Field {
 /// @addr{0x806ED160}
 RailInterpolator::RailInterpolator(f32 speed, u32 idx) {
     m_railIdx = idx;
-    auto *rail = RailManager::Instance()->rail(idx);
+    auto *rail = Singleton<RailManager>::Instance()->rail(idx);
     m_pointCount = rail->pointCount();
     m_points = rail->points();
     m_isOscillating = rail->isOscillating();
@@ -19,12 +21,12 @@ RailInterpolator::~RailInterpolator() = default;
 
 /// @addr{0806ED24C}
 const EGG::Vector3f &RailInterpolator::floorNrm(size_t idx) const {
-    return RailManager::Instance()->rail(m_railIdx)->floorNrm(idx);
+    return Singleton<RailManager>::Instance()->rail(m_railIdx)->floorNrm(idx);
 }
 
 /// @addr{0x806ED30C}
 f32 RailInterpolator::railLength() const {
-    return RailManager::Instance()->rail(m_railIdx)->getPathLength();
+    return Singleton<RailManager>::Instance()->rail(m_railIdx)->getPathLength();
 }
 
 /// @addr{0x806ED3E4}
@@ -93,7 +95,7 @@ void RailInterpolator::calcNextIndices() {
 
 /// @addr{0x806EFDC4}
 RailLinearInterpolator::RailLinearInterpolator(f32 speed, u32 idx) : RailInterpolator(speed, idx) {
-    m_transitions = RailManager::Instance()->rail(m_railIdx)->getLinearTransitions();
+    m_transitions = Singleton<RailManager>::Instance()->rail(m_railIdx)->getLinearTransitions();
     init(0.0f, 0);
 }
 
@@ -242,7 +244,7 @@ EGG::Vector3f RailLinearInterpolator::lerp(f32 t, u32 currIdx, u32 nextIdx) cons
 
 /// @addr{0x806EE830}
 RailSmoothInterpolator::RailSmoothInterpolator(f32 speed, u32 idx) : RailInterpolator(speed, idx) {
-    auto *rail = RailManager::Instance()->rail(m_railIdx);
+    auto *rail = Singleton<RailManager>::Instance()->rail(m_railIdx);
     m_transitions = rail->getSplineTransitions();
     m_estimatorSampleCount = static_cast<u32>(rail->getEstimatorSampleCount());
     m_estimatorStep = rail->getEstimatorStep();

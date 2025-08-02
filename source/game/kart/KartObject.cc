@@ -1,5 +1,7 @@
 #include "KartObject.hh"
 
+#include "Singleton.hh"
+
 #include "game/kart/KartParam.hh"
 #include "game/kart/KartSub.hh"
 #include "game/kart/KartSuspension.hh"
@@ -107,7 +109,7 @@ void KartObject::initImpl() {
 void KartObject::prepare() {
     EGG::Vector3f euler_angles_deg, position;
 
-    System::RaceManager::Instance()->findKartStartPoint(position, euler_angles_deg);
+    Singleton<System::RaceManager>::Instance()->findKartStartPoint(position, euler_angles_deg);
     move()->setInitialPhysicsValues(position, euler_angles_deg);
 }
 

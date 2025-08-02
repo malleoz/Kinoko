@@ -1,5 +1,7 @@
 #include "MapdataCheckPoint.hh"
 
+#include "Singleton.hh"
+
 #include "game/system/CourseMap.hh"
 #include "game/system/map/MapdataCheckPath.hh"
 
@@ -32,7 +34,7 @@ void MapdataCheckPoint::read(EGG::Stream &stream) {
 /// LinkedCheckpoint for each.
 void MapdataCheckPoint::initCheckpointLinks(MapdataCheckPointAccessor &accessor, int id) {
     m_id = id;
-    const auto *checkPathAccessor = CourseMap::Instance()->checkPath();
+    const auto *checkPathAccessor = Singleton<CourseMap>::Instance()->checkPath();
 
     // Calculate the quadrilateral's `m_prevPoints`. If the check point is the first in its group,
     // it has multiple previous checkpoints defined by its preceding checkpaths

@@ -18,7 +18,7 @@ void ObjectDrivable::load() {
     initCollision();
     loadAABB(getCollisionRadius());
 
-    ObjectDrivableDirector::Instance()->addObject(this);
+    Singleton<ObjectDrivableDirector>::Instance()->addObject(this);
 }
 
 /// @addr{0x8081A85C}

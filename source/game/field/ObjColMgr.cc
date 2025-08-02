@@ -1,5 +1,7 @@
 #include "ObjColMgr.hh"
 
+#include "Singleton.hh"
+
 #include "game/field/CourseColMgr.hh"
 
 namespace Field {
@@ -20,7 +22,7 @@ ObjColMgr::~ObjColMgr() {
 /// @addr{0x807C4DC8}
 void ObjColMgr::narrScLocal(f32 radius, const EGG::Vector3f &pos, KCLTypeMask flags) {
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
-    CourseColMgr::Instance()->scaledNarrowScopeLocal(m_kclScale, radius, m_data, posWrtModel,
+    Singleton<CourseColMgr>::Instance()->scaledNarrowScopeLocal(m_kclScale, radius, m_data, posWrtModel,
             flags);
 }
 
@@ -42,7 +44,7 @@ bool ObjColMgr::checkPointPartial(const EGG::Vector3f &pos, const EGG::Vector3f 
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
-    auto *courseColMgr = CourseColMgr::Instance();
+    auto *courseColMgr = Singleton<CourseColMgr>::Instance();
 
     if (info) {
         CollisionInfoPartial tempInfo;
@@ -80,7 +82,7 @@ bool ObjColMgr::checkPointPartialPush(const EGG::Vector3f &pos, const EGG::Vecto
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
-    auto *courseColMgr = CourseColMgr::Instance();
+    auto *courseColMgr = Singleton<CourseColMgr>::Instance();
 
     if (info) {
         CollisionInfoPartial tempInfo;
@@ -118,7 +120,7 @@ bool ObjColMgr::checkPointFull(const EGG::Vector3f &pos, const EGG::Vector3f &pr
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
-    auto *courseColMgr = CourseColMgr::Instance();
+    auto *courseColMgr = Singleton<CourseColMgr>::Instance();
 
     if (info) {
         CollisionInfo tempInfo;
@@ -148,7 +150,7 @@ bool ObjColMgr::checkPointFullPush(const EGG::Vector3f &pos, const EGG::Vector3f
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
-    auto *courseColMgr = CourseColMgr::Instance();
+    auto *courseColMgr = Singleton<CourseColMgr>::Instance();
 
     if (info) {
         CollisionInfo tempInfo;
@@ -179,7 +181,7 @@ bool ObjColMgr::checkSpherePartial(f32 radius, const EGG::Vector3f &pos,
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
-    auto *courseColMgr = CourseColMgr::Instance();
+    auto *courseColMgr = Singleton<CourseColMgr>::Instance();
 
     if (info) {
         CollisionInfoPartial tempInfo;
@@ -218,7 +220,7 @@ bool ObjColMgr::checkSpherePartialPush(f32 radius, const EGG::Vector3f &pos,
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
-    auto *courseColMgr = CourseColMgr::Instance();
+    auto *courseColMgr = Singleton<CourseColMgr>::Instance();
 
     if (info) {
         CollisionInfoPartial tempInfo;
@@ -256,7 +258,7 @@ bool ObjColMgr::checkSphereFull(f32 radius, const EGG::Vector3f &pos, const EGG:
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
-    auto *courseColMgr = CourseColMgr::Instance();
+    auto *courseColMgr = Singleton<CourseColMgr>::Instance();
 
     if (info) {
         CollisionInfo tempInfo;
@@ -287,7 +289,7 @@ bool ObjColMgr::checkSphereFullPush(f32 radius, const EGG::Vector3f &pos,
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
-    auto *courseColMgr = CourseColMgr::Instance();
+    auto *courseColMgr = Singleton<CourseColMgr>::Instance();
 
     if (info) {
         CollisionInfo tempInfo;
@@ -321,7 +323,7 @@ bool ObjColMgr::checkPointCachedPartial(const EGG::Vector3f &pos, const EGG::Vec
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
-    auto *courseColMgr = CourseColMgr::Instance();
+    auto *courseColMgr = Singleton<CourseColMgr>::Instance();
 
     if (info) {
         CollisionInfoPartial tempInfo;
@@ -363,7 +365,7 @@ bool ObjColMgr::checkPointCachedPartialPush(const EGG::Vector3f &pos, const EGG:
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
-    auto *courseColMgr = CourseColMgr::Instance();
+    auto *courseColMgr = Singleton<CourseColMgr>::Instance();
 
     if (info) {
         CollisionInfoPartial tempInfo;
@@ -405,7 +407,7 @@ bool ObjColMgr::checkPointCachedFull(const EGG::Vector3f &pos, const EGG::Vector
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
-    auto *courseColMgr = CourseColMgr::Instance();
+    auto *courseColMgr = Singleton<CourseColMgr>::Instance();
 
     if (info) {
         CollisionInfo tempInfo;
@@ -439,7 +441,7 @@ bool ObjColMgr::checkPointCachedFullPush(const EGG::Vector3f &pos, const EGG::Ve
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
-    auto *courseColMgr = CourseColMgr::Instance();
+    auto *courseColMgr = Singleton<CourseColMgr>::Instance();
 
     if (info) {
         CollisionInfo tempInfo;
@@ -474,7 +476,7 @@ bool ObjColMgr::checkSphereCachedPartial(f32 radius, const EGG::Vector3f &pos,
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
-    auto *courseColMgr = CourseColMgr::Instance();
+    auto *courseColMgr = Singleton<CourseColMgr>::Instance();
 
     if (info) {
         CollisionInfoPartial tempInfo;
@@ -517,7 +519,7 @@ bool ObjColMgr::checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &po
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
-    auto *courseColMgr = CourseColMgr::Instance();
+    auto *courseColMgr = Singleton<CourseColMgr>::Instance();
 
     if (info) {
         CollisionInfoPartial tempInfo;
@@ -560,7 +562,7 @@ bool ObjColMgr::checkSphereCachedFull(f32 radius, const EGG::Vector3f &pos,
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
-    auto *courseColMgr = CourseColMgr::Instance();
+    auto *courseColMgr = Singleton<CourseColMgr>::Instance();
 
     if (info) {
         CollisionInfo tempInfo;
@@ -595,7 +597,7 @@ bool ObjColMgr::checkSphereCachedFullPush(f32 radius, const EGG::Vector3f &pos,
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
-    auto *courseColMgr = CourseColMgr::Instance();
+    auto *courseColMgr = Singleton<CourseColMgr>::Instance();
 
     if (info) {
         CollisionInfo tempInfo;

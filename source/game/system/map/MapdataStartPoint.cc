@@ -1,5 +1,7 @@
 #include "MapdataStartPoint.hh"
 
+#include "Singleton.hh"
+
 #include "game/system/CourseMap.hh"
 #include "game/system/map/MapdataStageInfo.hh"
 
@@ -47,7 +49,7 @@ MapdataStartPoint::MapdataStartPoint(const SData *data) : m_rawData(data) {
 void MapdataStartPoint::read(EGG::Stream &stream) {
     m_position.read(stream);
     m_rotation.read(stream);
-    if (CourseMap::Instance()->version() > 1830) {
+    if (Singleton<CourseMap>::Instance()->version() > 1830) {
         m_playerIndex = stream.read_s16();
     } else {
         m_playerIndex = 0;
@@ -64,7 +66,7 @@ void MapdataStartPoint::findKartStartPoint(EGG::Vector3f &pos, EGG::Vector3f &an
     EGG::Vector3f zAxis = rotation.rotateVector(-EGG::Vector3f::ez);
     EGG::Vector3f xAxis = rotation.rotateVector(-EGG::Vector3f::ex);
 
-    CourseMap *courseMap = CourseMap::Instance();
+    CourseMap *courseMap = Singleton<CourseMap>::Instance();
     const MapdataStageInfo *stageInfo = courseMap->getStageInfo();
     ASSERT(stageInfo);
     int translationDirection = stageInfo->polePosition() == 1 ? -1 : 1;
@@ -104,7 +106,7 @@ void MapdataStartPoint::findKartStartPoint(EGG::Vector3f &pos, EGG::Vector3f &an
 /// @addr{0x80514258}
 MapdataStartPointAccessor::MapdataStartPointAccessor(const MapSectionHeader *header)
     : MapdataAccessorBase<MapdataStartPoint, MapdataStartPoint::SData>(header) {
-    if (CourseMap::Instance()->version() > 1830) {
+    if (Singleton<CourseMap>::Instance()->version() > 1830) {
         init(reinterpret_cast<const MapdataStartPoint::SData *>(m_sectionHeader + 1),
                 parse<u16>(m_sectionHeader->count));
     } else {

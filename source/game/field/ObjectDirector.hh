@@ -53,17 +53,14 @@ public:
     }
 
     static ObjectDirector *CreateInstance();
-    static void DestroyInstance();
+    void DestroyInstance();
 
-    [[nodiscard]] static ObjectDirector *Instance() {
-        return s_instance;
-    }
+    void createObjects();
 
 private:
     ObjectDirector();
     ~ObjectDirector() override;
 
-    void createObjects();
     [[nodiscard]] ObjectBase *createObject(const System::MapdataGeoObj &params);
 
     ObjectFlowTable m_flowTable;
@@ -81,8 +78,6 @@ private:
     std::array<EGG::Vector3f, MAX_UNIT_COUNT> m_hitDepths;
     std::array<Kart::Reaction, MAX_UNIT_COUNT> m_reactions;
     std::vector<ObjectCollidable *> m_managedObjects;
-
-    static ObjectDirector *s_instance;
 };
 
 } // namespace Field

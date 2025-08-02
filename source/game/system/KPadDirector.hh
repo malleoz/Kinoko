@@ -30,11 +30,7 @@ public:
     void setHostPad(bool driftIsAuto);
 
     static KPadDirector *CreateInstance();
-    static void DestroyInstance();
-
-    [[nodiscard]] static KPadDirector *Instance() {
-        return s_instance;
-    }
+    void DestroyInstance();
 
 private:
     KPadDirector();
@@ -43,8 +39,6 @@ private:
     KPadPlayer m_playerInput;
     KPadGhostController *m_ghostController;
     KPadHostController *m_hostController;
-
-    static KPadDirector *s_instance; ///< @addr{0x809BD70C}
 };
 
 } // namespace System

@@ -1,5 +1,7 @@
 #include "ObjectCollisionKart.hh"
 
+#include "Singleton.hh"
+
 #include "game/field/ObjectDirector.hh"
 
 #include "game/kart/KartObjectManager.hh"
@@ -22,10 +24,10 @@ void ObjectCollisionKart::init(u32 idx) {
         return;
     }
 
-    m_kartObject = Kart::KartObjectManager::Instance()->object(idx);
+    m_kartObject = Singleton<Kart::KartObjectManager>::Instance()->object(idx);
     m_playerIdx = idx;
 
-    auto vehicle = System::RaceConfig::Instance()->raceScenario().players[idx].vehicle;
+    auto vehicle = Singleton<System::RaceConfig>::Instance()->raceScenario().players[idx].vehicle;
     m_hull = new ObjectCollisionConvexHull(GetVehicleVertices(vehicle));
 }
 
@@ -39,12 +41,12 @@ size_t ObjectCollisionKart::checkCollision(const EGG::Matrix34f &mat, const EGG:
     m_hull->transform(mat, scale, v);
     m_hull->setBoundingRadius(scale.x * m_hull->getBoundingRadius());
 
-    return ObjectDirector::Instance()->checkKartObjectCollision(m_kartObject, m_hull);
+    return Singleton<ObjectDirector>::Instance()->checkKartObjectCollision(m_kartObject, m_hull);
 }
 
 /// @addr{0x80572544}
 EGG::Vector3f ObjectCollisionKart::GetHitDirection(u16 objKartHit) {
-    EGG::Vector3f hitDepth = ObjectDirector::Instance()->hitDepth(objKartHit);
+    EGG::Vector3f hitDepth = Singleton<ObjectDirector>::Instance()->hitDepth(objKartHit);
     hitDepth.normalise();
     return hitDepth;
 }
@@ -383,7 +385,7 @@ constexpr std::span<const EGG::Vector3f> ObjectCollisionKart::GetVehicleVertices
 
 /// @addr{0x80573464}
 const EGG::Vector3f &ObjectCollisionKart::translation(size_t idx) {
-    const auto *objCol = ObjectDirector::Instance()->collidingObject(idx)->collision();
+    const auto *objCol = Singleton<ObjectDirector>::Instance()->collidingObject(idx)->collision();
     return objCol ? objCol->translation() : EGG::Vector3f::zero;
 }
 

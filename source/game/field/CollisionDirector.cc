@@ -1,5 +1,7 @@
 #include "CollisionDirector.hh"
 
+#include "Singleton.hh"
+
 #include "game/field/ObjectDrivableDirector.hh"
 
 namespace Field {
@@ -7,8 +9,8 @@ namespace Field {
 /// @addr{0x8078E4F0}
 void CollisionDirector::checkCourseColNarrScLocal(f32 radius, const EGG::Vector3f &pos,
         KCLTypeMask mask, u32 timeOffset) {
-    CourseColMgr::Instance()->scaledNarrowScopeLocal(1.0f, radius, nullptr, pos, mask);
-    ObjectDrivableDirector::Instance()->colNarScLocal(radius, pos, mask, timeOffset);
+    Singleton<CourseColMgr>::Instance()->scaledNarrowScopeLocal(1.0f, radius, nullptr, pos, mask);
+    Singleton<ObjectDrivableDirector>::Instance()->colNarScLocal(radius, pos, mask, timeOffset);
 }
 
 /// @addr{0x8078F500}
@@ -23,7 +25,7 @@ bool CollisionDirector::checkSphereFull(f32 radius, const EGG::Vector3f &v0,
         *pFlagsOut = KCL_NONE;
     }
 
-    auto *courseColMgr = CourseColMgr::Instance();
+    auto *courseColMgr = Singleton<CourseColMgr>::Instance();
     auto *noBounceInfo = courseColMgr->noBounceWallInfo();
     if (noBounceInfo) {
         noBounceInfo->bbox.setZero();
@@ -33,8 +35,8 @@ bool CollisionDirector::checkSphereFull(f32 radius, const EGG::Vector3f &v0,
     bool colliding = flags &&
             courseColMgr->checkSphereFull(1.0f, radius, nullptr, v0, v1, flags, pInfo, pFlagsOut);
 
-    colliding |= ObjectDrivableDirector::Instance()->checkSphereFull(radius, v0, v1, flags, pInfo,
-            pFlagsOut, timeOffset);
+    colliding |= Singleton<ObjectDrivableDirector>::Instance()->checkSphereFull(radius, v0, v1,
+            flags, pInfo, pFlagsOut, timeOffset);
 
     if (colliding) {
         if (pInfo) {
@@ -63,7 +65,7 @@ bool CollisionDirector::checkSphereFullPush(f32 radius, const EGG::Vector3f &v0,
         resetCollisionEntries(pFlagsOut);
     }
 
-    auto *courseColMgr = CourseColMgr::Instance();
+    auto *courseColMgr = Singleton<CourseColMgr>::Instance();
     auto *noBounceInfo = courseColMgr->noBounceWallInfo();
     if (noBounceInfo) {
         noBounceInfo->bbox.setZero();
@@ -74,8 +76,8 @@ bool CollisionDirector::checkSphereFullPush(f32 radius, const EGG::Vector3f &v0,
             courseColMgr->checkSphereFullPush(1.0f, radius, nullptr, v0, v1, flags, pInfo,
                     pFlagsOut);
 
-    colliding |= ObjectDrivableDirector::Instance()->checkSphereFullPush(radius, v0, v1, flags,
-            pInfo, pFlagsOut, timeOffset);
+    colliding |= Singleton<ObjectDrivableDirector>::Instance()->checkSphereFullPush(radius, v0, v1,
+            flags, pInfo, pFlagsOut, timeOffset);
 
     if (colliding) {
         if (pInfo) {
@@ -104,7 +106,7 @@ bool CollisionDirector::checkSphereCachedPartial(f32 radius, const EGG::Vector3f
         *typeMaskOut = KCL_NONE;
     }
 
-    auto *courseColMgr = CourseColMgr::Instance();
+    auto *courseColMgr = Singleton<CourseColMgr>::Instance();
     auto *noBounceInfo = courseColMgr->noBounceWallInfo();
     if (noBounceInfo) {
         noBounceInfo->bbox.setZero();
@@ -114,8 +116,8 @@ bool CollisionDirector::checkSphereCachedPartial(f32 radius, const EGG::Vector3f
     bool colliding = courseColMgr->checkSphereCachedPartial(1.0f, radius, nullptr, pos, prevPos,
             typeMask, info, typeMaskOut);
 
-    colliding |= ObjectDrivableDirector::Instance()->checkSphereCachedPartial(radius, pos, prevPos,
-            typeMask, info, typeMaskOut, timeOffset);
+    colliding |= Singleton<ObjectDrivableDirector>::Instance()->checkSphereCachedPartial(radius,
+            pos, prevPos, typeMask, info, typeMaskOut, timeOffset);
 
     if (colliding) {
         if (info) {
@@ -144,7 +146,7 @@ bool CollisionDirector::checkSphereCachedPartialPush(f32 radius, const EGG::Vect
         resetCollisionEntries(typeMaskOut);
     }
 
-    auto *courseColMgr = CourseColMgr::Instance();
+    auto *courseColMgr = Singleton<CourseColMgr>::Instance();
     auto *noBounceInfo = courseColMgr->noBounceWallInfo();
     if (noBounceInfo) {
         noBounceInfo->bbox.setZero();
@@ -154,8 +156,8 @@ bool CollisionDirector::checkSphereCachedPartialPush(f32 radius, const EGG::Vect
     bool colliding = courseColMgr->checkSphereCachedPartialPush(1.0f, radius, nullptr, pos, prevPos,
             typeMask, info, typeMaskOut);
 
-    colliding |= ObjectDrivableDirector::Instance()->checkSphereCachedPartialPush(radius, pos,
-            prevPos, typeMask, info, typeMaskOut, timeOffset);
+    colliding |= Singleton<ObjectDrivableDirector>::Instance()->checkSphereCachedPartialPush(radius,
+            pos, prevPos, typeMask, info, typeMaskOut, timeOffset);
 
     courseColMgr->clearNoBounceWallInfo();
 
@@ -174,7 +176,7 @@ bool CollisionDirector::checkSphereCachedFullPush(f32 radius, const EGG::Vector3
         resetCollisionEntries(typeMaskOut);
     }
 
-    auto *courseColMgr = CourseColMgr::Instance();
+    auto *courseColMgr = Singleton<CourseColMgr>::Instance();
     auto *info = courseColMgr->noBounceWallInfo();
     if (info) {
         info->bbox.setZero();
@@ -184,8 +186,8 @@ bool CollisionDirector::checkSphereCachedFullPush(f32 radius, const EGG::Vector3
     bool colliding = courseColMgr->checkSphereCachedFullPush(1.0f, radius, nullptr, pos, prevPos,
             typeMask, colInfo, typeMaskOut);
 
-    colliding |= ObjectDrivableDirector::Instance()->checkSphereCachedFullPush(radius, pos, prevPos,
-            typeMask, colInfo, typeMaskOut, timeOffset);
+    colliding |= Singleton<ObjectDrivableDirector>::Instance()->checkSphereCachedFullPush(radius,
+            pos, prevPos, typeMask, colInfo, typeMaskOut, timeOffset);
 
     if (colliding) {
         if (colInfo) {
@@ -247,36 +249,24 @@ bool CollisionDirector::findClosestCollisionEntry(KCLTypeMask * /*typeMask*/, KC
 
 /// @addr{0x8078DFE8}
 CollisionDirector *CollisionDirector::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = new CollisionDirector;
-    return s_instance;
+    return new CollisionDirector;
 }
 
 /// @addr{0x8078E124}
 void CollisionDirector::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    delete instance;
+    delete this;
 }
 
 /// @addr{0x8078E33C}
 CollisionDirector::CollisionDirector() {
     m_collisionEntryCount = 0;
     m_closestCollisionEntry = nullptr;
-    CourseColMgr::CreateInstance()->init();
+    Singleton<CourseColMgr>::CreateInstance()->init();
 }
 
 /// @addr{0x8078E454}
 CollisionDirector::~CollisionDirector() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("CollisionDirector instance not explicitly handled!");
-    }
-
-    CourseColMgr::DestroyInstance();
+    Singleton<CourseColMgr>::DestroyInstance();
 }
-
-CollisionDirector *CollisionDirector::s_instance = nullptr; ///< @addr{0x809C2F44}
 
 } // namespace Field

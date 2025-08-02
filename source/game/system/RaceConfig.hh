@@ -67,11 +67,7 @@ public:
     }
 
     static RaceConfig *CreateInstance();
-    static void DestroyInstance();
-
-    [[nodiscard]] static RaceConfig *Instance() {
-        return s_instance;
-    }
+    void DestroyInstance();
 
 private:
     RaceConfig();
@@ -80,7 +76,6 @@ private:
     Scenario m_raceScenario;
     RawGhostFile m_ghost;
 
-    static RaceConfig *s_instance; ///< @addr{0x809BD728}
     static InitCallback s_onInitCallback;
     static void *s_onInitCallbackArg;
 };

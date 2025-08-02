@@ -1,5 +1,7 @@
 #include "CourseColMgr.hh"
 
+#include "Singleton.hh"
+
 #include "game/field/CollisionDirector.hh"
 
 #include "game/system/ResourceManager.hh"
@@ -361,23 +363,18 @@ bool CourseColMgr::checkSphereCachedFullPush(f32 scale, f32 radius, KColData *da
 
 /// @brief Loads a particular section of a .szs file
 void *CourseColMgr::LoadFile(const char *filename) {
-    auto *resMgr = System::ResourceManager::Instance();
+    auto *resMgr = Singleton<System::ResourceManager>::Instance();
     return resMgr->getFile(filename, nullptr, System::ArchiveId::Course);
 }
 
 /// @addr{0x807C2824}
 CourseColMgr *CourseColMgr::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = new CourseColMgr;
-    return s_instance;
+    return new CourseColMgr;
 }
 
 /// @addr{0x807C2884}
 void CourseColMgr::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    delete instance;
+    delete this;
 }
 
 /// @addr{0x807C29E4}
@@ -386,11 +383,6 @@ CourseColMgr::CourseColMgr()
 
 /// @addr{0x807C2A04}
 CourseColMgr::~CourseColMgr() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("CourseColMgr instance not explicitly handled!");
-    }
-
     ASSERT(m_data);
     delete m_data;
 }
@@ -451,7 +443,8 @@ bool CourseColMgr::doCheckWithPartialInfoPush(KColData *data, CollisionCheckFunc
         if (!m_noBounceWallInfo || !(attribute & KCL_SOFT_WALL_MASK)) {
             u32 flags = KCL_ATTRIBUTE_TYPE_BIT(attribute);
             if (typeMask) {
-                CollisionDirector::Instance()->pushCollisionEntry(dist, typeMask, flags, attribute);
+                Singleton<CollisionDirector>::Instance()->pushCollisionEntry(dist, typeMask, flags,
+                        attribute);
             }
             if (flags & KCL_TYPE_SOLID_SURFACE) {
                 EGG::Vector3f offset = fnrm * dist;
@@ -542,7 +535,7 @@ bool CourseColMgr::doCheckWithFullInfoPush(KColData *data, CollisionCheckFunc co
         } else {
             u32 kclAttributeTypeBit = KCL_ATTRIBUTE_TYPE_BIT(attribute);
             if (flagsOut) {
-                CollisionDirector::Instance()->pushCollisionEntry(dist, flagsOut,
+                Singleton<CollisionDirector>::Instance()->pushCollisionEntry(dist, flagsOut,
                         kclAttributeTypeBit, attribute);
             }
             if (kclAttributeTypeBit & KCL_TYPE_SOLID_SURFACE) {
@@ -582,7 +575,7 @@ bool CourseColMgr::doCheckMaskOnlyPush(KColData *data, CollisionCheckFunc collis
 
     while ((data->*collisionCheckFunc)(&dist, nullptr, &attribute)) {
         if ((!m_noBounceWallInfo || !(attribute & KCL_SOFT_WALL_MASK)) && maskOut) {
-            CollisionDirector::Instance()->pushCollisionEntry(dist, maskOut,
+            Singleton<CollisionDirector>::Instance()->pushCollisionEntry(dist, maskOut,
                     KCL_ATTRIBUTE_TYPE_BIT(attribute), attribute);
         }
         hasCol = true;
@@ -590,7 +583,5 @@ bool CourseColMgr::doCheckMaskOnlyPush(KColData *data, CollisionCheckFunc collis
 
     return hasCol;
 }
-
-CourseColMgr *CourseColMgr::s_instance = nullptr; ///< @addr{0x809C3C10}
 
 } // namespace Field

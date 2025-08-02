@@ -1,5 +1,7 @@
 #include "ObjectNoImpl.hh"
 
+#include "Singleton.hh"
+
 #include "game/field/ObjectDirector.hh"
 
 namespace Field {
@@ -9,7 +11,7 @@ ObjectNoImpl::ObjectNoImpl(const System::MapdataGeoObj &params) : ObjectBase(par
 ObjectNoImpl::~ObjectNoImpl() = default;
 
 void ObjectNoImpl::load() {
-    ObjectDirector::Instance()->addObjectNoImpl(this);
+    Singleton<ObjectDirector>::Instance()->addObjectNoImpl(this);
 }
 
 } // namespace Field

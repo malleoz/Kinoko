@@ -27,11 +27,7 @@ public:
     }
 
     static ResourceManager *CreateInstance();
-    static void DestroyInstance();
-
-    [[nodiscard]] static ResourceManager *Instance() {
-        return s_instance;
-    }
+    void DestroyInstance();
 
 private:
     ResourceManager();
@@ -42,7 +38,6 @@ private:
     MultiDvdArchive **m_archives;
 
     [[nodiscard]] static MultiDvdArchive *Create(u8 i);
-    static ResourceManager *s_instance; ///< @addr{0x809BD738}
 };
 
 } // namespace System

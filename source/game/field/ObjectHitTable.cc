@@ -1,5 +1,7 @@
 #include "ObjectHitTable.hh"
 
+#include "Singleton.hh"
+
 #include "game/system/ResourceManager.hh"
 
 #include <egg/util/Stream.hh>
@@ -10,7 +12,7 @@ namespace Field {
 ObjectHitTable::ObjectHitTable(const char *filename) {
     size_t size;
     void *file =
-            System::ResourceManager::Instance()->getFile(filename, &size, System::ArchiveId::Core);
+            Singleton<System::ResourceManager>::Instance()->getFile(filename, &size, System::ArchiveId::Core);
 
     EGG::RamStream stream = EGG::RamStream(file, size);
 

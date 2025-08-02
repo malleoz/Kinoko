@@ -1,5 +1,7 @@
 #include "KartState.hh"
 
+#include "Singleton.hh"
+
 #include "game/kart/CollisionGroup.hh"
 #include "game/kart/KartCollide.hh"
 #include "game/kart/KartDynamics.hh"
@@ -68,7 +70,7 @@ void KartState::reset() {
 /// @brief Each frame, read input and save related bit flags. Also handles start boosts.
 /// @addr{0x8059487C}
 void KartState::calcInput() {
-    const auto *raceMgr = System::RaceManager::Instance();
+    const auto *raceMgr = Singleton<System::RaceManager>::Instance();
     if (raceMgr->isStageReached(System::RaceManager::Stage::Race)) {
         if (!m_bInAction && !m_bBeforeRespawn && !m_bCannonStart && !m_bInCannon &&
                 !m_bOverZipper) {
@@ -377,7 +379,7 @@ void KartState::calcStartBoost() {
 /// @brief On countdown end, calculates and applies our start boost charge.
 /// @addr{0x805959D4}
 void KartState::calcHandleStartBoost() {
-    if (System::RaceManager::Instance()->getCountdownTimer() != 0) {
+    if (Singleton<System::RaceManager>::Instance()->getCountdownTimer() != 0) {
         return;
     }
 

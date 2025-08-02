@@ -1,5 +1,7 @@
 #include "KartObjectProxy.hh"
 
+#include "Singleton.hh"
+
 #include "game/kart/CollisionGroup.hh"
 #include "game/kart/KartObject.hh"
 #include "game/kart/KartObjectManager.hh"
@@ -223,7 +225,7 @@ const CollisionData &KartObjectProxy::collisionData() const {
 
 /// @addr{0x805903F4}
 const System::KPad *KartObjectProxy::inputs() const {
-    return System::RaceManager::Instance()->player().inputs();
+    return Singleton<System::RaceManager>::Instance()->player().inputs();
 }
 
 /// @addr{0x80590A40}
@@ -381,7 +383,8 @@ bool KartObjectProxy::hasFloorCollision(const WheelPhysics *wheelPhysics) const 
 
 /// @addr{0x8058539C}
 std::pair<EGG::Vector3f, EGG::Vector3f> KartObjectProxy::getCannonPosRot() {
-    auto *cannon = System::CourseMap::Instance()->getCannonPoint(state()->cannonPointId());
+    auto *cannon =
+            Singleton<System::CourseMap>::Instance()->getCannonPoint(state()->cannonPointId());
     const EGG::Vector3f &cannonPos = cannon->pos();
     EGG::Vector3f cannonRot = cannon->rot();
     EGG::Vector3f radRot = cannon->rot() * DEG2RAD;
@@ -422,7 +425,7 @@ u32 KartObjectProxy::wallKclVariant() const {
 
 /// @addr{0x805901D0}
 void KartObjectProxy::apply(size_t idx) {
-    m_accessor = KartObjectManager::Instance()->object(idx)->accessor();
+    m_accessor = Singleton<KartObjectManager>::Instance()->object(idx)->accessor();
 }
 
 /// @addr{0x80590138}

@@ -80,7 +80,7 @@ EGG::RamStream KartParamFileManager::getHitboxStream(Vehicle vehicle) const {
         PANIC("Uh oh.");
     }
 
-    auto *resourceManager = System::ResourceManager::Instance();
+    auto *resourceManager = Singleton<System::ResourceManager>::Instance();
     size_t size;
 
     auto *file = resourceManager->getBsp(vehicle, &size);
@@ -104,28 +104,18 @@ EGG::RamStream KartParamFileManager::getBikeDispParamsStream(Vehicle vehicle) co
 }
 
 KartParamFileManager *KartParamFileManager::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = new KartParamFileManager;
-    return s_instance;
+    return new KartParamFileManager;
 }
 
 void KartParamFileManager::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    delete instance;
+    delete this;
 }
 
 KartParamFileManager::KartParamFileManager() {
     init();
 }
 
-KartParamFileManager::~KartParamFileManager() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("KartParamFileManager instance not explicitly handled!");
-    }
-}
+KartParamFileManager::~KartParamFileManager() = default;
 
 /// @brief Performs a few checks to make sure the files were loaded successfully.
 bool KartParamFileManager::validate() const {
@@ -161,7 +151,5 @@ bool KartParamFileManager::validate() const {
 
     return true;
 }
-
-KartParamFileManager *KartParamFileManager::s_instance = nullptr;
 
 } // namespace Kart

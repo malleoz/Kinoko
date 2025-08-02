@@ -1,5 +1,7 @@
 #include "Rail.hh"
 
+#include "Singleton.hh"
+
 #include "game/field/CollisionDirector.hh"
 
 namespace Field {
@@ -40,7 +42,7 @@ void Rail::checkSphereFull() {
         CollisionInfo info;
         info.bbox.setZero();
 
-        bool hasCourseCol = CollisionDirector::Instance()->checkSphereFull(100.0f, m_points[i].pos,
+        bool hasCourseCol = Singleton<CollisionDirector>::Instance()->checkSphereFull(100.0f, m_points[i].pos,
                 EGG::Vector3f::inf, KCL_TYPE_FLOOR, &info, nullptr, 0);
 
         if (hasCourseCol) {

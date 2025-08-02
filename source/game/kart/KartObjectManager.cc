@@ -1,5 +1,7 @@
 #include "KartObjectManager.hh"
 
+#include "Singleton.hh"
+
 #include "game/kart/KartCollide.hh"
 #include "game/kart/KartParamFileManager.hh"
 #include "game/system/RaceConfig.hh"
@@ -33,25 +35,20 @@ void KartObjectManager::calc() {
 
 /// @addr{0x8058FAA8}
 KartObjectManager *KartObjectManager::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = new KartObjectManager;
-    return s_instance;
+    return new KartObjectManager;
 }
 
 /// @addr{0x8058FAF8}
 void KartObjectManager::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    delete instance;
+    delete this;
 }
 
 /// @addr{0x8058FB2C}
 KartObjectManager::KartObjectManager() {
-    const auto &raceScenario = System::RaceConfig::Instance()->raceScenario();
+    const auto &raceScenario = Singleton<System::RaceConfig>::Instance()->raceScenario();
     m_count = raceScenario.playerCount;
     m_objects = new KartObject *[m_count];
-    KartParamFileManager::CreateInstance();
+    Singleton<KartParamFileManager>::CreateInstance();
 
     loadScaleAnimations();
 
@@ -65,12 +62,7 @@ KartObjectManager::KartObjectManager() {
 
 /// @addr{0x8058FDD4}
 KartObjectManager::~KartObjectManager() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("KartObjectManager instance not explicitly handled!");
-    }
-
-    KartParamFileManager::DestroyInstance();
+    Singleton<KartParamFileManager>::DestroyInstance();
 
     for (size_t i = 0; i < m_count; ++i) {
         delete m_objects[i];
@@ -88,7 +80,7 @@ KartObjectManager::~KartObjectManager() {
 
 /// @addr{0x8056AB6C}
 void KartObjectManager::loadScaleAnimations() {
-    auto *resMgr = System::ResourceManager::Instance();
+    auto *resMgr = Singleton<System::ResourceManager>::Instance();
     const void *file = resMgr->getFile("driver.brres", nullptr, System::ArchiveId::Core);
     ASSERT(file);
 
@@ -98,7 +90,5 @@ void KartObjectManager::loadScaleAnimations() {
 }
 
 Abstract::g3d::ResAnmChr *KartObjectManager::s_pressScaleUpAnmChr = nullptr; ///< @addr{0x809C18B0}
-
-KartObjectManager *KartObjectManager::s_instance = nullptr; ///< @addr{0x809C18F8}
 
 } // namespace Kart

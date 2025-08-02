@@ -1,5 +1,7 @@
 #include "KartAction.hh"
 
+#include "Singleton.hh"
+
 #include "game/kart/KartMove.hh"
 #include "game/kart/KartPhysics.hh"
 #include "game/kart/KartState.hh"
@@ -230,7 +232,7 @@ void KartAction::startLaunch(f32 extVelScalar, f32 extVelKart, f32 extVelBike, f
 /// @addr{0x805696CC}
 void KartAction::activateCrush(u16 timer) {
     move()->activateCrush(m_crushTimer + timer);
-    Item::ItemDirector::Instance()->kartItem(0).clear();
+    Singleton<Item::ItemDirector>::Instance()->kartItem(0).clear();
 }
 
 /// @addr{0x80567C68}

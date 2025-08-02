@@ -210,17 +210,12 @@ void ObjectDrivableDirector::colNarScLocal(f32 radius, const EGG::Vector3f &pos,
 
 /// @addr{0x8081B428}
 ObjectDrivableDirector *ObjectDrivableDirector::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = new ObjectDrivableDirector;
-    return s_instance;
+    return new ObjectDrivableDirector;
 }
 
 /// @addr{0x8081B4B0}
 void ObjectDrivableDirector::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    delete instance;
+    delete this;
 }
 
 /// @addr{0x8081B324}
@@ -228,16 +223,9 @@ ObjectDrivableDirector::ObjectDrivableDirector() : m_obakeManager(nullptr) {}
 
 /// @addr{0x8081B380}
 ObjectDrivableDirector::~ObjectDrivableDirector() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("ObjectDrivableDirector instance not explicitly handled!");
-    }
-
     for (auto *&obj : m_objects) {
         delete obj;
     }
 }
-
-ObjectDrivableDirector *ObjectDrivableDirector::s_instance = nullptr; ///< @addr{0x809C4310}
 
 } // namespace Field

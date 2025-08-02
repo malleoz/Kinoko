@@ -1,5 +1,7 @@
 #include "ObjectDokan.hh"
 
+#include "Singleton.hh"
+
 #include "game/field/CollisionDirector.hh"
 
 #include "game/kart/KartCollide.hh"
@@ -71,8 +73,8 @@ void ObjectDokan::calcFloor() {
     pos.y += PIPE_RADIUS;
     KCLTypeMask typeMask;
 
-    if (!CollisionDirector::Instance()->checkSphereFull(PIPE_RADIUS, pos, EGG::Vector3f::inf,
-                KCL_TYPE_64EBDFFF, &colInfo, &typeMask, 0)) {
+    if (!Singleton<CollisionDirector>::Instance()->checkSphereFull(PIPE_RADIUS, pos,
+                EGG::Vector3f::inf, KCL_TYPE_64EBDFFF, &colInfo, &typeMask, 0)) {
         return;
     }
 

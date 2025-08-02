@@ -105,11 +105,7 @@ public:
     static void *LoadFile(const char *filename);
 
     static CourseColMgr *CreateInstance();
-    static void DestroyInstance();
-
-    [[nodiscard]] static CourseColMgr *Instance() {
-        return s_instance;
-    }
+    void DestroyInstance();
 
 private:
     CourseColMgr();
@@ -133,8 +129,6 @@ private:
     f32 m_kclScale;
     NoBounceWallColInfo *m_noBounceWallInfo;
     EGG::Matrix34f *m_localMtx;
-
-    static CourseColMgr *s_instance; ///< @addr{0x809C3C10}
 };
 
 } // namespace Field

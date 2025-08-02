@@ -30,12 +30,12 @@ RaceScene::~RaceScene() = default;
 void RaceScene::createEngines() {
     {
         ScopeLock<GroupID> lock(GroupID::Course);
-        System::CourseMap::CreateInstance()->init();
+        Singleton<System::CourseMap>::CreateInstance()->init();
     }
 
     {
         ScopeLock<GroupID> lock(GroupID::Race);
-        System::RaceManager::CreateInstance();
+        Singleton<System::RaceManager>::CreateInstance();
     }
 
     {
@@ -45,23 +45,23 @@ void RaceScene::createEngines() {
 
     {
         ScopeLock<GroupID> lock(GroupID::Kart);
-        Kart::KartObjectManager::CreateInstance();
+        Singleton<Kart::KartObjectManager>::CreateInstance();
     }
 
     {
         ScopeLock<GroupID> lock(GroupID::Course);
-        Field::CollisionDirector::CreateInstance();
+        Singleton<Field::CollisionDirector>::CreateInstance();
     }
 
     {
         ScopeLock<GroupID> lock(GroupID::Item);
-        Item::ItemDirector::CreateInstance();
+        Singleton<Item::ItemDirector>::CreateInstance();
     }
 
     {
         ScopeLock<GroupID> lock(GroupID::Object);
-        Field::RailManager::CreateInstance();
-        Field::ObjectDirector::CreateInstance();
+        Singleton<Field::RailManager>::CreateInstance()->createPaths();
+        Singleton<Field::ObjectDirector>::CreateInstance()->createObjects();
     }
 }
 
@@ -69,22 +69,22 @@ void RaceScene::createEngines() {
 void RaceScene::initEngines() {
     {
         ScopeLock<GroupID> lock(GroupID::Kart);
-        Kart::KartObjectManager::Instance()->init();
+        Singleton<Kart::KartObjectManager>::Instance()->init();
     }
 
     {
         ScopeLock<GroupID> lock(GroupID::Race);
-        System::RaceManager::Instance()->init();
+        Singleton<System::RaceManager>::Instance()->init();
     }
 
     {
         ScopeLock<GroupID> lock(GroupID::Item);
-        Item::ItemDirector::Instance()->init();
+        Singleton<Item::ItemDirector>::Instance()->init();
     }
 
     {
         ScopeLock<GroupID> lock(GroupID::Object);
-        Field::ObjectDirector::Instance()->init();
+        Singleton<Field::ObjectDirector>::Instance()->init();
     }
 
     m_heap->disableAllocation();
@@ -94,33 +94,33 @@ void RaceScene::initEngines() {
 /// @details In Kinoko, it is not possible to pause the race scene, so Kinoko's implementation for
 /// this function is really the base game's `calcEnginesUnpaused` located at `0x80554AD4`.
 void RaceScene::calcEngines() {
-    auto *raceMgr = System::RaceManager::Instance();
+    auto *raceMgr = Singleton<System::RaceManager>::Instance();
     raceMgr->calc();
     Singleton<Field::BoxColManager>::Instance()->calc();
-    Field::ObjectDirector::Instance()->calc();
-    Kart::KartObjectManager::Instance()->calc();
-    Item::ItemDirector::Instance()->calc();
+    Singleton<Field::ObjectDirector>::Instance()->calc();
+    Singleton<Kart::KartObjectManager>::Instance()->calc();
+    Singleton<Item::ItemDirector>::Instance()->calc();
     // raceMgr->random1()->nextU32();
 }
 
 /// @addr{0x805549B0}
 void RaceScene::destroyEngines() {
-    System::KPadDirector::Instance()->endGhostProxies();
-    Kart::KartObjectManager::DestroyInstance();
-    Field::ObjectDirector::DestroyInstance();
-    Field::RailManager::DestroyInstance();
-    Field::CollisionDirector::DestroyInstance();
-    Item::ItemDirector::DestroyInstance();
+    Singleton<System::KPadDirector>::Instance()->endGhostProxies();
+    Singleton<Kart::KartObjectManager>::DestroyInstance();
+    Singleton<Field::ObjectDirector>::DestroyInstance();
+    Singleton<Field::RailManager>::DestroyInstance();
+    Singleton<Field::CollisionDirector>::DestroyInstance();
+    Singleton<Item::ItemDirector>::DestroyInstance();
     Singleton<Field::BoxColManager>::DestroyInstance();
-    System::RaceManager::DestroyInstance();
-    System::CourseMap::DestroyInstance();
+    Singleton<System::RaceManager>::DestroyInstance();
+    Singleton<System::CourseMap>::DestroyInstance();
 }
 
 /// @brief Retrieves Common.szs and the course archive.
 /// @addr{0x80553C50}
 void RaceScene::configure() {
-    auto *raceCfg = System::RaceConfig::Instance();
-    auto *resMgr = System::ResourceManager::Instance();
+    auto *raceCfg = Singleton<System::RaceConfig>::Instance();
+    auto *resMgr = Singleton<System::ResourceManager>::Instance();
 
     raceCfg->initRace();
 

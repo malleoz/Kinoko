@@ -1,5 +1,7 @@
 #include "ObjectKCL.hh"
 
+#include "Singleton.hh"
+
 #include "game/system/RaceManager.hh"
 #include "game/system/ResourceManager.hh"
 
@@ -21,7 +23,7 @@ void ObjectKCL::createCollision() {
     char filepath[128];
     snprintf(filepath, sizeof(filepath), "%s.kcl", getKclName());
 
-    auto *resMgr = System::ResourceManager::Instance();
+    auto *resMgr = Singleton<System::ResourceManager>::Instance();
     m_objColMgr = new ObjColMgr(resMgr->getFile(filepath, nullptr, System::ArchiveId::Course));
 }
 
@@ -236,7 +238,7 @@ bool ObjectKCL::checkSphereCachedFullPush(f32 radius, const EGG::Vector3f &pos,
 
 /// @addr{0x8081AD6C}
 void ObjectKCL::update(u32 timeOffset) {
-    u32 time = System::RaceManager::Instance()->timer() - timeOffset;
+    u32 time = Singleton<System::RaceManager>::Instance()->timer() - timeOffset;
     if (m_lastMtxUpdateFrame == static_cast<s32>(time)) {
         return;
     }
@@ -260,7 +262,7 @@ void ObjectKCL::update(u32 timeOffset) {
 
 /// @addr{0x8081AF28}
 void ObjectKCL::calcScale(u32 timeOffset) {
-    u32 time = System::RaceManager::Instance()->timer() - timeOffset;
+    u32 time = Singleton<System::RaceManager>::Instance()->timer() - timeOffset;
     if (m_lastScaleUpdateFrame == static_cast<s32>(time)) {
         return;
     }

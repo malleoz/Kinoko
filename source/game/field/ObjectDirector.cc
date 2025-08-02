@@ -20,7 +20,7 @@ void ObjectDirector::init() {
         obj->calcModel();
     }
 
-    ObjectDrivableDirector::Instance()->init();
+    Singleton<ObjectDrivableDirector>::Instance()->init();
 }
 
 /// @addr{0x8082A8F4}
@@ -33,7 +33,7 @@ void ObjectDirector::calc() {
         obj->calcModel();
     }
 
-    ObjectDrivableDirector::Instance()->calc();
+    Singleton<ObjectDrivableDirector>::Instance()->calc();
 }
 
 /// @addr{0x8082B0E8}
@@ -114,46 +114,23 @@ size_t ObjectDirector::checkKartObjectCollision(Kart::KartObject *kartObj,
 
 /// @addr{0x8082A784}
 ObjectDirector *ObjectDirector::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = new ObjectDirector;
+    auto *instance = new ObjectDirector;
 
-    ObjectDrivableDirector::CreateInstance();
+    Singleton<ObjectDrivableDirector>::CreateInstance();
 
-    s_instance->createObjects();
-
-    return s_instance;
+    return instance;
 }
 
 /// @addr{0x8082A824}
 void ObjectDirector::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    delete instance;
+    delete this;
 
-    ObjectDrivableDirector::DestroyInstance();
-}
-
-/// @addr{0x8082A38C}
-ObjectDirector::ObjectDirector()
-    : m_flowTable("ObjFlow.bin"), m_hitTableKart("GeoHitTableKart.bin"),
-      m_hitTableKartObject("GeoHitTableKartObj.bin") {}
-
-/// @addr{0x8082A694}
-ObjectDirector::~ObjectDirector() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("ObjectDirector instance not explicitly handled!");
-    }
-
-    for (auto *&obj : m_objects) {
-        delete obj;
-    }
+    Singleton<ObjectDrivableDirector>::DestroyInstance();
 }
 
 /// @addr{0x80826E8C}
 void ObjectDirector::createObjects() {
-    const auto *courseMap = System::CourseMap::Instance();
+    const auto *courseMap = Singleton<System::CourseMap>::Instance();
     size_t objectCount = courseMap->getGeoObjCount();
 
     // It's possible for the KMP to specify settings for objects that aren't tracked here
@@ -163,8 +140,8 @@ void ObjectDirector::createObjects() {
     m_calcObjects.reserve(maxCount);
     m_collisionObjects.reserve(maxCount);
 
-    auto *objDrivableDir = ObjectDrivableDirector::Instance();
-    const auto &raceScenario = System::RaceConfig::Instance()->raceScenario();
+    auto *objDrivableDir = Singleton<ObjectDrivableDirector>::Instance();
+    const auto &raceScenario = Singleton<System::RaceConfig>::Instance()->raceScenario();
     bool rGV2 = raceScenario.course == Course::SNES_Ghost_Valley_2;
 
     for (size_t i = 0; i < objectCount; ++i) {
@@ -207,6 +184,18 @@ void ObjectDirector::createObjects() {
     if (raceScenario.course == Course::Moonview_Highway) {
         auto *highwayMgr = new ObjectHighwayManager;
         highwayMgr->load();
+    }
+}
+
+/// @addr{0x8082A38C}
+ObjectDirector::ObjectDirector()
+    : m_flowTable("ObjFlow.bin"), m_hitTableKart("GeoHitTableKart.bin"),
+      m_hitTableKartObject("GeoHitTableKartObj.bin") {}
+
+/// @addr{0x8082A694}
+ObjectDirector::~ObjectDirector() {
+    for (auto *&obj : m_objects) {
+        delete obj;
     }
 }
 
@@ -266,7 +255,5 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
         return new ObjectNoImpl(params);
     }
 }
-
-ObjectDirector *ObjectDirector::s_instance = nullptr; ///< @addr{0x809C4330}
 
 } // namespace Field

@@ -1,5 +1,7 @@
 #include "ObjectCarTGE.hh"
 
+#include "Singleton.hh"
+
 #include "game/field/ObjectCollisionCylinder.hh"
 #include "game/field/ObjectDirector.hh"
 #include "game/field/RailManager.hh"
@@ -37,7 +39,7 @@ ObjectCarTGE::ObjectCarTGE(const System::MapdataGeoObj &params)
     }
 
     // The base game preemptively calculates collision for all points along the rail.
-    RailManager::Instance()->rail(pathId)->checkSphereFull();
+    Singleton<RailManager>::Instance()->rail(pathId)->checkSphereFull();
 
     const auto *name = getName();
 
@@ -83,17 +85,20 @@ ObjectCarTGE::ObjectCarTGE(const System::MapdataGeoObj &params)
 
     switch (m_carType) {
     case CarType::Normal:
-        m_dummyId = ObjectDirector::Instance()->flowTable().getIdfFromName("car_body_dummy");
+        m_dummyId =
+                Singleton<ObjectDirector>::Instance()->flowTable().getIdfFromName("car_body_dummy");
         break;
     case CarType::Truck:
-        m_dummyId = ObjectDirector::Instance()->flowTable().getIdfFromName("kart_truck_dummy");
+        m_dummyId = Singleton<ObjectDirector>::Instance()->flowTable().getIdfFromName(
+                "kart_truck_dummy");
         break;
     default:
         PANIC("Bomb cars are not implemented!");
         break;
     }
 
-    if (System::RaceConfig::Instance()->raceScenario().course == Course::Moonview_Highway) {
+    if (Singleton<System::RaceConfig>::Instance()->raceScenario().course ==
+            Course::Moonview_Highway) {
         registerManagedObject();
     }
 }
@@ -115,7 +120,7 @@ void ObjectCarTGE::init() {
     u16 idx = m_mapObj->setting(0);
     m_railInterpolator->init(0.0f, idx);
 
-    auto *rail = RailManager::Instance()->rail(m_mapObj->pathId());
+    auto *rail = Singleton<RailManager>::Instance()->rail(m_mapObj->pathId());
     u16 speedSetting = rail->points()[idx].setting[1];
     if (speedSetting == 1) {
         m_railInterpolator->setCurrVel(m_highwayVel);
@@ -233,7 +238,7 @@ Kart::Reaction ObjectCarTGE::onCollision(Kart::KartObject *kartObj, Kart::Reacti
     }
 
     if (m_highwayMgr && m_highwayMgr->squashTimer() < SQUASH_INVULNERABILITY) {
-        const auto &hitTable = ObjectDirector::Instance()->hitTableKart();
+        const auto &hitTable = Singleton<ObjectDirector>::Instance()->hitTableKart();
         reactionOnKart = hitTable.reaction(hitTable.slot(static_cast<ObjectId>(m_dummyId)));
     }
 
