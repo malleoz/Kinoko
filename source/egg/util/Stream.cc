@@ -56,6 +56,46 @@ f64 Stream::read_f64() {
     return read<f64>();
 }
 
+void Stream::write_u8(u8 val) {
+    return write<u8>(val);
+}
+
+void Stream::write_u16(u16 val) {
+    return write<u16>(val);
+}
+
+void Stream::write_u32(u32 val) {
+    return write<u32>(val);
+}
+
+void Stream::write_u64(u64 val) {
+    return write<u64>(val);
+}
+
+void Stream::write_s8(s8 val) {
+    return write<s8>(val);
+}
+
+void Stream::write_s16(s16 val) {
+    return write<s16>(val);
+}
+
+void Stream::write_s32(s32 val) {
+    return write<s32>(val);
+}
+
+void Stream::write_s64(s64 val) {
+    return write<s64>(val);
+}
+
+void Stream::write_f32(f32 val) {
+    return write<f32>(val);
+}
+
+void Stream::write_f64(f64 val) {
+    return write<f64>(val);
+}
+
 RamStream::RamStream() : m_buffer(nullptr), m_size(0) {}
 
 RamStream::RamStream(const void *buffer, u32 size) {

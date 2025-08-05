@@ -11,6 +11,8 @@ namespace System {
 static constexpr size_t RKG_HEADER_SIZE = 0x88;
 static constexpr size_t RKG_UNCOMPRESSED_INPUT_DATA_SECTION_SIZE = 0x2774;
 
+class GhostFile;
+
 /// @brief The binary data of a ghost saved to a file.
 /// Offset  | Size | Description
 ///------------- | ------------- | -------------
@@ -43,6 +45,8 @@ static constexpr size_t RKG_UNCOMPRESSED_INPUT_DATA_SECTION_SIZE = 0x2774;
 /// 0x86 | 2 bytes | **CRC-16-CCITT-XModem** of Mii data
 /// Source: https://wiki.tockdom.com/wiki/RKG_(File_Format)
 class RawGhostFile {
+    friend class GhostFile;
+
 public:
     RawGhostFile();
     RawGhostFile(const u8 *rkg);
@@ -53,6 +57,10 @@ public:
     void init(const u8 *rkg);
     [[nodiscard]] bool decompress(const u8 *rkg);
     [[nodiscard]] bool isValid(const u8 *rkg) const;
+
+    [[nodiscard]] u8 *buffer() {
+        return m_buffer;
+    }
 
     [[nodiscard]] const u8 *buffer() const {
         return m_buffer;
@@ -77,9 +85,13 @@ STATIC_ASSERT(sizeof(RawGhostFile) == 0x2800);
 class GhostFile {
 public:
     GhostFile(const RawGhostFile &raw);
+    GhostFile(u32 playerIdx = 0);
     ~GhostFile();
 
+    void reset();
     void read(EGG::RamStream &stream); ///< Organizes binary data into members. See RawGhostFile.
+
+    [[nodiscard]] RawGhostFile writeUncompressed();
 
     /// @beginGetters
     [[nodiscard]] const Timer &lapTimer(size_t i) const {
@@ -113,6 +125,8 @@ public:
     /// @endGetters
 
 private:
+    void writeHeader(RawGhostFile &outFile) const;
+
     std::array<wchar_t, 11> m_userData;
     std::array<u8, 76> m_miiData;
     u8 m_lapCount;
