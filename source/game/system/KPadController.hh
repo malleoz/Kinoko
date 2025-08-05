@@ -1,6 +1,7 @@
 #pragma once
 
 #include "game/system/GhostFile.hh"
+#include "game/system/GhostWriter.hh"
 
 #include <egg/math/Vector.hh>
 
@@ -104,22 +105,43 @@ struct KPadGhostButtonsStream {
     KPadGhostButtonsStream();
     ~KPadGhostButtonsStream();
 
+    virtual void writeFrame(u8 data);
     [[nodiscard]] virtual u8 readFrame();
+
+    /// @addr{0x80524F78} @addr{0x80524FE0}
+    virtual void writeSequenceStart(u8 val) {
+        *buffer.dataAtIndex() = val;
+        *(buffer.dataAtIndex() + 1) = 0;
+    }
+
+    /// @addr{0x80524F88}
+    virtual void writeIncrementSequenceFrames() {
+        ++*(buffer.dataAtIndex() + 1);
+    }
+
+    /// @addr{0x80524F98}
+    [[nodiscard]] virtual bool writeIsNewSequence(u8 val) const {
+        u8 bufferVal = *buffer.dataAtIndex();
+        u8 bufferValLen = *(buffer.dataAtIndex() + 1);
+        return bufferVal != val || bufferValLen == 0xFF;
+    }
 
     /// @addr{0x8052502C} @addr{0x80524FC4}
     [[nodiscard]] virtual bool readIsNewSequence() const {
-        return readSequenceFrames >= (currentSequence & 0xFF);
+        return readSequenceFrames >= (sequenceCount & 0xFF);
     }
 
     /// @addr{0x80525024} @addr{0x80524FBC}
     [[nodiscard]] virtual u8 readVal() const {
-        return currentSequence >> 8;
+        return sequenceCount >> 8;
     }
 
     EGG::RamStream buffer;
-    u32 currentSequence;
+    s32 sequenceCount;
     u16 readSequenceFrames;
     u32 state;
+
+    static constexpr u32 SEQUENCE_SIZE = 2;
 };
 
 /// @brief A specialized stream for button presses (not tricks).
@@ -160,16 +182,47 @@ struct KPadGhostTrickButtonsStream : public KPadGhostButtonsStream {
     KPadGhostTrickButtonsStream();
     ~KPadGhostTrickButtonsStream();
 
+    /// @addr{0x80525048}
+    void writeSequenceStart(u8 val) override {
+        u16 *tuple = reinterpret_cast<u16 *>(buffer.dataAtIndex());
+        *tuple = parse<u16>(static_cast<u16>(val) << 0xC);
+    }
+
+    /// @addr{0x8052505C}
+    void writeIncrementSequenceFrames() override {
+        u16 *tuplePtr = reinterpret_cast<u16 *>(buffer.dataAtIndex());
+        u16 tuple = parse<u16>(*tuplePtr);
+
+        // Extract the duration component
+        u16 duration = tuple & 0xFFF;
+        ++duration;
+        tuple = (duration & 0xFFF) | (tuple & 0xF000);
+        *tuplePtr = parse<u16>(tuple);
+    }
+
+    /// @addr{0x80525074}
+    [[nodiscard]] bool writeIsNewSequence(u8 val) const override {
+        const u16 *tuplePtr = reinterpret_cast<const u16 *>(buffer.dataAtIndex());
+        u16 tuple = parse<u16>(*tuplePtr);
+
+        // TODO: Validate endianness is okay
+        if ((tuple >> 0xC) == val && (tuple & 0xFFF) < 0xFFF) {
+            return false;
+        }
+
+        return true;
+    }
+
     /// @addr{0x805250A8}
     [[nodiscard]] bool readIsNewSequence() const override {
-        u16 duration = currentSequence & 0xFF;
-        duration += 256 * (currentSequence >> 8 & 0xF);
+        u16 duration = sequenceCount & 0xFF;
+        duration += 256 * (sequenceCount >> 8 & 0xF);
         return duration <= readSequenceFrames;
     }
 
     /// @addr{0x8052509C}
     [[nodiscard]] u8 readVal() const override {
-        return currentSequence >> 0x8 & ~0x80;
+        return static_cast<u8>(sequenceCount >> 0xC);
     }
 };
 
@@ -313,8 +366,12 @@ public:
     KPad();
     ~KPad();
 
-    void calc();
-    void reset();
+    virtual void calc();
+    virtual void reset();
+
+    [[nodiscard]] const KPadController *controller() const {
+        return m_controller;
+    }
 
     [[nodiscard]] const RaceInputState &currentState() const {
         return m_currentInputState;
@@ -340,14 +397,29 @@ public:
     KPadPlayer();
     ~KPadPlayer();
 
+    void calc() override;
+    void reset() override;
+
+    void end();
+
     void setGhostController(KPadGhostController *controller, const u8 *inputs, bool driftIsAuto);
     void setHostController(KPadHostController *controller, bool driftIsAuto);
 
     void startGhostProxy(); ///< Signals to start reading ghost data after fade-in.
     void endGhostProxy();   ///< Signals to stop reading ghost data after race completion.
 
+    [[nodiscard]] const u8 *toFileBuffer() const {
+        return m_toFileBuffer.data();
+    }
+
+    [[nodiscard]] size_t toFileBufferSize() const {
+        return m_toFileBuffer.size();
+    }
+
 private:
     u8 m_ghostBuffer[RKG_UNCOMPRESSED_INPUT_DATA_SECTION_SIZE];
+    std::span<u8> m_toFileBuffer;
+    GhostWriter m_ghostWriter;
 };
 
 } // namespace System

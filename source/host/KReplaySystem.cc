@@ -5,8 +5,10 @@
 
 #include <abstract/File.hh>
 
+#include <game/system/KPadDirector.hh>
 #include <game/system/RaceManager.hh>
 
+#include <fstream>
 #include <iomanip>
 
 /// @brief Initializes the system.
@@ -36,6 +38,17 @@ bool KReplaySystem::run() {
     while (!calcEnd()) {
         calc();
     }
+
+    System::KPadDirector::Instance()->endGhostProxies();
+
+    // TESTING //
+    // Create a GhostFile and RawGhostFile to write RKG to disk
+    System::GhostFile ghostFile; // This retrieves playerIdx 0
+    System::RawGhostFile rawFile = ghostFile.writeUncompressed();
+
+    std::ofstream outFile("test.rkg", std::ios::binary);
+    outFile.write(reinterpret_cast<const char *>(rawFile.buffer()), 0x2800);
+    outFile.close();
 
     return success();
 }

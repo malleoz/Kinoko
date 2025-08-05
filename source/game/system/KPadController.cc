@@ -28,7 +28,7 @@ void KPadGhostController::reset(bool driftIsAuto) {
     m_raceInputState.reset();
 
     for (auto &stream : m_buttonsStreams) {
-        stream->currentSequence = 0;
+        stream->sequenceCount = 0;
         stream->readSequenceFrames = 0;
         stream->state = 1;
     }
@@ -84,7 +84,7 @@ void KPadGhostController::calcImpl() {
             RawStickToState(m_raceInputState.stickYRaw));
     m_raceInputState.trickRaw = m_buttonsStreams[2]->readFrame();
 
-    switch (m_raceInputState.trickRaw >> 4) {
+    switch (m_raceInputState.trickRaw) {
     case 1:
         m_raceInputState.trick = Trick::Up;
         break;
@@ -160,10 +160,47 @@ bool RaceInputState::isStickValid(f32 stick) const {
     return false;
 }
 
-KPadGhostButtonsStream::KPadGhostButtonsStream()
-    : currentSequence(std::numeric_limits<u32>::max()), state(2) {}
+KPadGhostButtonsStream::KPadGhostButtonsStream() : sequenceCount(-1), state(2) {}
 
 KPadGhostButtonsStream::~KPadGhostButtonsStream() = default;
+
+/// @addr{0x80522974} @addr{0x80522AE8} @addr{0x80522DCC}
+void KPadGhostButtonsStream::writeFrame(u8 data) {
+    if (state != 0) {
+        return;
+    }
+
+    bool needNewSequence = false;
+
+    if (sequenceCount < 0) {
+        sequenceCount = 0;
+        needNewSequence = true;
+    } else {
+        if (writeIsNewSequence(data)) {
+            needNewSequence = true;
+            sequenceCount++;
+
+            // Increment the stream index so we can write to the next tuple
+            buffer.skip(2);
+
+            if (sequenceCount * SEQUENCE_SIZE > GhostWriter::RKG_BUFFER_SIZE) {
+                state = 2;
+            }
+        }
+    }
+
+    if (state == 0) {
+        if (sequenceCount < 0) {
+            PANIC("Invalid sequenceCount when writing button stream frame!");
+        }
+
+        if (needNewSequence) {
+            writeSequenceStart(data);
+        }
+
+        writeIncrementSequenceFrames();
+    }
+}
 
 /// @brief Reads the data from the corresponding tuple in the buffer.
 /// @addr{0x80520D4C} @addr{0x80522C5C} @addr{0x80522F40}
@@ -172,13 +209,13 @@ u8 KPadGhostButtonsStream::readFrame() {
         return 0;
     }
 
-    if (currentSequence == std::numeric_limits<u32>::max()) {
+    if (sequenceCount == -1) {
         readSequenceFrames = 0;
-        currentSequence = buffer.read_u16();
+        sequenceCount = buffer.read_u16();
     } else {
         if (readIsNewSequence()) {
             readSequenceFrames = 0;
-            currentSequence = buffer.read_u16();
+            sequenceCount = buffer.read_u16();
         }
     }
 
@@ -252,6 +289,23 @@ KPadPlayer::KPadPlayer() = default;
 /// @addr{0x805222F4}
 KPadPlayer::~KPadPlayer() = default;
 
+/// @addr{0x80521768}
+void KPadPlayer::calc() {
+    KPad::calc();
+    const auto &state = m_currentInputState;
+    m_ghostWriter.writeFrame(state.buttons, state.stickXRaw, state.stickYRaw, state.trickRaw);
+}
+
+/// @addr{0x80522708}
+void KPadPlayer::reset() {
+    m_ghostWriter.reset();
+    m_toFileBuffer = {};
+
+    if (m_controller) {
+        m_controller->reset(m_controller->driftIsAuto());
+    }
+}
+
 /// @addr{0x80521844}
 void KPadPlayer::setGhostController(KPadGhostController *controller, const u8 *inputs,
         bool driftIsAuto) {
@@ -271,22 +325,45 @@ void KPadPlayer::setHostController(KPadHostController *controller, bool driftIsA
 
 /// @addr{0x805215D4}
 void KPadPlayer::startGhostProxy() {
-    if (!m_controller || m_controller->controlSource() != ControlSource::Ghost) {
+    if (!m_controller) {
         return;
     }
 
     KPadGhostController *ghostController = reinterpret_cast<KPadGhostController *>(m_controller);
     ghostController->setAcceptingInputs(true);
+
+    // if (m_controller->controlSource() != ControlSource::Ghost) {
+    m_ghostWriter.setState(GhostWriter::State::Active);
+    //}
 }
 
 /// @addr{0x80521688}
 void KPadPlayer::endGhostProxy() {
-    if (!m_controller || m_controller->controlSource() != ControlSource::Ghost) {
+    if (!m_controller) {
         return;
     }
 
     KPadGhostController *ghostController = reinterpret_cast<KPadGhostController *>(m_controller);
     ghostController->setAcceptingInputs(false);
+
+    // if (m_controller->controlSource() != ControlSource::Ghost) {
+    auto writeState = m_ghostWriter.state();
+
+    if (writeState == GhostWriter::State::Active) {
+        m_ghostWriter.setState(GhostWriter::State::Inactive);
+    } else if (writeState == GhostWriter::State::ExceededBufferSize) {
+        return;
+    }
+
+    // ERASE THIS LINE AFTER TESTING. IN REPLAY MODE I AM BOTH USING THE GHOST BUFFER FOR THE GHOST
+    // CONTROLLER AND ALSO USING IT FOR WRITING THE SAME INPUTS BACK TO THE BUFFER
+    memset(m_ghostBuffer, 0, RKG_UNCOMPRESSED_INPUT_DATA_SECTION_SIZE);
+    EGG::RamStream bufferStream(m_ghostBuffer, RKG_UNCOMPRESSED_INPUT_DATA_SECTION_SIZE);
+
+    if (m_ghostWriter.saveToBuffer(bufferStream)) {
+        m_toFileBuffer = std::span<u8>(m_ghostBuffer, RKG_UNCOMPRESSED_INPUT_DATA_SECTION_SIZE);
+    }
+    //}
 }
 
 } // namespace System
