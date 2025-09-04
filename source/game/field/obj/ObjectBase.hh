@@ -49,6 +49,16 @@ public:
 
     [[nodiscard]] virtual const char *getKclName() const;
 
+    /// @addr{0x80821DEC}
+    void disableCollision() {
+        m_boxColUnit->m_flag.setBit(eBoxColFlag::Intangible);
+    }
+
+    /// @addr{0x80821E00}
+    void enableCollision() {
+        m_boxColUnit->m_flag.resetBit(eBoxColFlag::Intangible);
+    }
+
     /// @addr{0x80681598}
     [[nodiscard]] virtual const EGG::Vector3f &getPosition() const {
         return m_pos;

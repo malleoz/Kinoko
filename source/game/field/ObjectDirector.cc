@@ -237,6 +237,8 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
         return new ObjectKuribo(params);
     case ObjectId::WLFirebarGC:
         return new ObjectFirebar(params);
+    case ObjectId::Wanwan:
+        return new ObjectWanwan(params);
     case ObjectId::Sanbo:
         return new ObjectSanbo(params);
     case ObjectId::Press:
