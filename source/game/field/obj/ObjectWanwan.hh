@@ -4,6 +4,8 @@
 #include "game/field/StateManager.hh"
 #include "game/field/obj/ObjectCollidable.hh"
 
+#include "game/kart/KartCollide.hh"
+
 namespace Field {
 
 class ObjectPile;
@@ -40,15 +42,17 @@ public:
 
 private:
     void calcLurch();
+    void calcChain();
     void checkCollision();
     void FUN_806E7638();
     void FUN_806E79E4();
+    void FUN_806E8520();
+    void FUN_806E87C8();
 
     void enterStateStub();
     void enterState0();
     void enterState1();
     void enterState2();
-    void enterState4();
     void enterState5();
     void enterState6();
 
@@ -79,7 +83,7 @@ private:
         f32 sin = EGG::Mathf::SinFIdx(RAD2FIDX * 0.5f * param1);
         f32 cos = EGG::Mathf::CosFIdx(RAD2FIDX * 0.5f * param1);
 
-        EGG::Quatf quat = EGG::Quatf(param1, 0.0f, sin, 0.0f);
+        EGG::Quatf quat = EGG::Quatf(cos, 0.0f, sin, 0.0f);
         EGG::Vector3f local_3c = EGG::Vector3f(v.x, 0.0f, v.z);
         return quat.rotateVector(local_3c);
     }
@@ -90,7 +94,7 @@ private:
         return v0 + (v1 - v0) * param1;
     }
 
-    std::span<ObjectWanwanChain *> m_chain;
+    std::span<ObjectWanwanChain *> m_chains;
     ObjectPile *m_pile;
     EGG::Vector3f m_velocity;
     EGG::Vector3f m_accel;
@@ -100,6 +104,9 @@ private:
     EGG::Vector3f m_120;
     EGG::Vector3f m_floorNrm;
     f32 m_lurchDistance;
+    f32 m_43c;
+    f32 m_angle1;
+    f32 m_angle2;
     EGG::Vector3f m_450;
     EGG::Vector3f m_468;
     EGG::Vector3f m_474;
@@ -110,13 +117,16 @@ private:
     EGG::Vector3f m_4a0;
     EGG::Vector3f m_4ac;
     bool m_4b8;
-    f32 m_4bc;
+    EGG::Vector3f m_4bc;
     f32 m_4c8;
     f32 m_4cc;
     u32 m_4d4;
     bool m_4d8;
+    bool m_4d9;
     u32 m_idleFrames; ///< How long the chain chomp bounces for before lurching
+    f32 m_4e4;
     f32 m_4e8;
+    EGG::Vector3f m_4ec;
     s32 m_4f8;
     f32 m_4fc;
     f32 m_508;
@@ -124,6 +134,8 @@ private:
 };
 
 class ObjectWanwanChain final : public ObjectCollidable {
+    friend class ObjectWanwan;
+
 public:
     ObjectWanwanChain(const System::MapdataGeoObj &params) : ObjectCollidable(params) {}
 

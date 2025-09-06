@@ -38,6 +38,13 @@ public:
         return ResAnmChr(anmChrData);
     }
 
+    /// @addr{0x8004D150}
+    [[nodiscard]] bool hasResAnmShp() const {
+        ResDic dic = ResDic(&m_data->dict.topLevel);
+        void *dicData = dic["AnmShp(NW4R)"];
+        return !!dicData;
+    }
+
 private:
     const Data *m_data;
 };

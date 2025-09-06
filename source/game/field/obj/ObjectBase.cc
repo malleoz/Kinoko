@@ -63,6 +63,9 @@ void ObjectBase::loadGraphics() {
     if (resFile) {
         m_resFile = new Abstract::g3d::ResFile(resFile);
         m_drawMdl = new Render::DrawMdl;
+
+        // TODO: If we implement low model, then we'll need to check which model to use here
+        m_drawMdl->initAnims(getKclName(), m_resFile, nullptr);
     }
 }
 

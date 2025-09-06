@@ -3,6 +3,8 @@
 #include "game/field/CollisionDirector.hh"
 #include "game/field/obj/ObjectPile.hh"
 
+#include "game/kart/KartObject.hh"
+
 #include "game/system/RaceConfig.hh"
 #include "game/system/RaceManager.hh"
 
@@ -10,17 +12,26 @@ namespace Field {
 
 /// @addr{0x806E4224}
 ObjectWanwan::ObjectWanwan(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), StateManager(this), m_4fc(0.0f), m_508(0.0f), m_518(false) {
+    : ObjectCollidable(params), StateManager(this), m_110(0.0f), m_4fc(0.0f), m_508(0.0f),
+      m_518(false) {
     constexpr EGG::Vector3f MARIO_CIRCUIT_INIT_POS = EGG::Vector3f(14500.0f, 1300.0f, 44850.0f);
     constexpr EGG::Vector3f GCN_MARIO_CIRCUIT_INIT_POS = EGG::Vector3f(8012.0f, 1668.0f, -30150.0f);
     constexpr EGG::Vector3f UNK_1 = EGG::Vector3f(0.0f, 20.0f, 0.0f);
     constexpr EGG::Vector3f CHN_SCALE = EGG::Vector3f(2.0f, 2.0f, 2.0f);
 
     m_lurchDistance = static_cast<f32>(params.setting(0));
+    m_43c = static_cast<f32>(params.setting(2)) + 4800.0f;
+    m_angle1 = 10.0f * static_cast<f32>(params.setting(3));
+    m_angle2 = 10.0f * static_cast<f32>(params.setting(4));
     m_idleFrames = static_cast<u32>(params.setting(5));
+    m_4e4 = static_cast<f32>(params.setting(6));
 
     if (m_idleFrames == 0) {
         m_idleFrames = 300.0f;
+    }
+
+    if (m_4e4 == 0.0f) {
+        m_4e4 = 30.0f;
     }
 
     m_pile = new ObjectPile(m_pos, m_rot, m_scale);
@@ -43,9 +54,9 @@ ObjectWanwan::ObjectWanwan(const System::MapdataGeoObj &params)
         --chainCount;
     }
 
-    m_chain = std::span<ObjectWanwanChain *>(new ObjectWanwanChain *[chainCount], chainCount);
+    m_chains = std::span<ObjectWanwanChain *>(new ObjectWanwanChain *[chainCount], chainCount);
 
-    for (auto *&chain : m_chain) {
+    for (auto *&chain : m_chains) {
         chain = new ObjectWanwanChain(params);
         chain->m_flags.setBit(eFlags::Scale);
         chain->m_scale = CHN_SCALE;
@@ -76,7 +87,7 @@ ObjectWanwan::ObjectWanwan(const System::MapdataGeoObj &params)
 
 /// @addr{0x806E4AEC}
 ObjectWanwan::~ObjectWanwan() {
-    delete m_chain.data();
+    delete m_chains.data();
 }
 
 /// @addr{0x806E4B9C}
@@ -92,7 +103,7 @@ void ObjectWanwan::init() {
     m_floorNrm = EGG::Vector3f::ey;
     m_bTouchingFloor = false;
     m_494 = false;
-    m_49c = 135.0f * m_chains[0]->scale().y;
+    m_49c = 135.0f * m_chains[0]->m_scale.y;
     m_4a0 = EGG::Vector3f::zero;
     m_4ac = EGG::Vector3f::ez;
     m_4b8 = false;
@@ -102,6 +113,8 @@ void ObjectWanwan::init() {
     m_4d4 = 0;
     m_4d8 = false;
     m_4f8 = -1;
+    m_4ec = EGG::Vector3f::ex;
+    m_nextStateId = 0;
 }
 
 /// @addr{0x806E4F2C}
@@ -122,9 +135,8 @@ void ObjectWanwan::calc() {
 
     m_velocity += m_accel - EGG::Vector3f(0.0f, 2.5f, 0.0f);
     m_pos += m_velocity;
-    m_flags.setBit(eFlags::Position);
+    m_flags.setBit(eFlags::Position); // m_pos wrong t=51
     m_accel.setZero();
-    m_tangent = EGG::Vector3f::ex;
 
     calcLurch();
     checkCollision();
@@ -147,6 +159,7 @@ void ObjectWanwan::calc() {
         mat = mat.multiplyTo(mat48);
     }
 
+    mat.setBase(3, m_pos);
     m_flags.setBit(eFlags::Matrix);
     m_transform = mat;
     m_pos = mat.base(3);
@@ -154,13 +167,21 @@ void ObjectWanwan::calc() {
     if (m_4f8 != -1) {
         FUN_806E7638();
     }
+
+    calcChain();
+
+    if (m_pos.y < m_474.y - 1000.0f) {
+        m_flags.setBit(eFlags::Position);
+        m_pos.y = m_474.y + 1000.0f;
+        m_velocity.y = 0.0f;
+    }
 }
 
 /// @addr{0x806E526C}
 Kart::Reaction ObjectWanwan::onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
-        Kart::Reaction /*reactionOnObj*/, EGG::Vector3f &hitDepth) {
+        Kart::Reaction /*reactionOnObj*/, EGG::Vector3f & /*hitDepth*/) {
     // Assume reactionObObj is None
-    if (m_kartObj->speedRatioCapped() < 0.5f && (m_currentStateId != 5 || m_4d8)) {
+    if (kartObj->speedRatioCapped() < 0.5f && (m_currentStateId != 5 || m_4d8)) {
         return Kart::Reaction::WallAllSpeed;
     }
 
@@ -183,7 +204,7 @@ void ObjectWanwan::calcLurch() {
     mStack_88.makeRT(local_1a8, EGG::Vector3f::zero);
 
     if (m_4f8 == -1) {
-        mat = mStack_88.multiplyTo(mat);
+        mat = mat.multiplyTo(mStack_88);
     }
 
     mat.setBase(3, m_pos);
@@ -203,13 +224,18 @@ void ObjectWanwan::calcLurch() {
 
     EGG::Vector3f vStack_c4 = m_450 - m_474;
     m_4e8 = vStack_c4.normalise();
-    f32 norm = m_4e8 - m_49c * static_cast<f32>(m_chain.size());
+    f32 norm = m_4e8 - m_49c * static_cast<f32>(m_chains.size());
 
     if (norm > 0.0f || m_4d8) {
         m_494 = true;
         m_pos = m_pos - vStack_c4 * norm + vStack_c4 * 35.0f;
         m_flags.setBit(eFlags::Position);
     }
+}
+
+/// @addr{0x806E7BA4}
+void ObjectWanwan::calcChain() {
+    ;
 }
 
 /// @addr{0x806E5A8C}
@@ -235,7 +261,7 @@ void ObjectWanwan::checkCollision() {
     m_pos += EGG::Vector3f::ey * scale;
     m_flags.setBit(eFlags::Position);
 
-    if (info.floorNrm > -std::numeric_limits<f32>::min()) {
+    if (info.floorDist > -std::numeric_limits<f32>::min()) {
         m_floorNrm = info.floorNrm;
     }
 
@@ -284,6 +310,25 @@ void ObjectWanwan::FUN_806E79E4() {
     ++m_4d4;
 }
 
+/// @addr{0x806E8520}
+void ObjectWanwan::FUN_806E8520() {
+    FUN_806E87C8();
+}
+
+/// @addr{0x806E87C8}
+void ObjectWanwan::FUN_806E87C8() {
+    f32 fVar4 = System::RaceManager::Instance()->random().getF32(2.0f * m_4e4);
+    EGG::Vector3f local_3c = EGG::Vector3f(m_angle1, 0.0f, m_angle2);
+    EGG::Vector3f vStack_48 = local_3c - m_474;
+    vStack_48.y = 0.0f;
+    vStack_48.normalise2();
+
+    m_4a0 = m_474 + FUN_806B3900((fVar4 - m_4e4) * DEG2RAD, vStack_48) * m_43c;
+    m_4ac = m_4a0 - m_pos;
+    m_4ac.y = 0.0f;
+    m_4ac.normalise2();
+}
+
 void ObjectWanwan::enterStateStub() {
     ;
 }
@@ -310,7 +355,7 @@ void ObjectWanwan::enterState0() {
     EGG::Vector3f local_34 = EGG::Vector3f(m_pos.x, m_474.y, m_pos.z);
     EGG::Vector3f local_40 = m_474 - local_34;
     local_40.normalise();
-    EGG::Vector3f vStack_4c = FUN_806B3900(dVar1 * DEG2RAD);
+    EGG::Vector3f vStack_4c = FUN_806B3900(dVar1 * DEG2RAD, local_40);
     f32 fVar2 = m_lurchDistance < 3000.0f ? 0.5f : 0.7f;
     m_4a0 = vStack_4c * m_lurchDistance * fVar2 + m_474;
 }
@@ -347,19 +392,35 @@ void ObjectWanwan::enterState2() {
     m_110 = 0.0f;
 }
 
-/// @addr{0x806E6DD4}
-void ObjectWanwan::enterState4() {
-    ;
-}
-
 /// @addr{0x806E6EB0}
 void ObjectWanwan::enterState5() {
-    ;
+    m_velocity.x = 0.0f;
+    m_velocity.z = 0.0f;
+    m_accel.x = 0.0f;
+    m_accel.z = 0.0f;
+    m_10c = 0.0f;
+    m_110 = 0.0f;
+    m_4d4 = 0;
+    m_4d8 = false;
+    m_494 = false;
+    m_474.y += 30.0f;
+
+    FUN_806E8520();
 }
 
 /// @addr{0x806E73C4}
 void ObjectWanwan::enterState6() {
-    ;
+    m_velocity.x = 0.0f;
+    m_velocity.z = 0.0f;
+    m_accel.x = 0.0f;
+    m_accel.z = 0.0f;
+    m_10c = 15.0f;
+    m_110 = -(-30.0f);
+    m_4ec = m_474 - m_pos;
+    m_4ec.normalise2();
+    m_4d8 = false;
+    m_494 = false;
+    m_474.y -= 30.0f;
 }
 
 void ObjectWanwan::calcStateStub() {
@@ -424,8 +485,8 @@ void ObjectWanwan::calcState0() {
         m_10c = 8.0f;
         m_accel.x = 0.0f;
         m_accel.z = 0.0f;
-        m_velocity = m_tangent.x * 8.0f;
-        m_velocity = m_tangent.z * 8.0f;
+        m_velocity.x = m_tangent.x * 8.0f;
+        m_velocity.z = m_tangent.z * 8.0f;
     }
 
     if (m_bTouchingFloor) {
@@ -484,8 +545,8 @@ void ObjectWanwan::calcState1() {
         m_10c = 8.0f;
         m_accel.x = 0.0f;
         m_accel.z = 0.0f;
-        m_velocity = m_tangent.x * 8.0f;
-        m_velocity = m_tangent.z * 8.0f;
+        m_velocity.x = m_tangent.x * 8.0f;
+        m_velocity.z = m_tangent.z * 8.0f;
     }
 
     if (m_bTouchingFloor) {
@@ -522,21 +583,115 @@ void ObjectWanwan::calcState2() {
 void ObjectWanwan::calcState3() {
     f32 sin = EGG::Mathf::SinFIdx(
             DEG2FIDX * ((360.0f * (0.25f * 35.0f + static_cast<f32>(m_currentFrame))) / 35.0f));
+    m_110 = -60.0f * sin;
+
+    if (m_bTouchingFloor) {
+        m_velocity.y = 0.0f;
+        m_accel += EGG::Vector3f::ey * 12.0f;
+    } else {
+        m_accel.y = 0.0f;
+    }
+
+    FUN_806E79E4();
+
+    if (static_cast<f32>(m_currentFrame) > 0.5f * 35.0f) {
+        m_nextStateId = 4;
+    }
 }
 
 /// @addr{0x806E6DD8}
 void ObjectWanwan::calcState4() {
-    ;
+    m_110 += -60.0f / 15.0f;
+
+    if (EGG::Mathf::abs(m_110) < 2.0f) {
+        m_nextStateId = 1;
+    }
+
+    if (m_bTouchingFloor) {
+        m_velocity.y = 0.0f;
+        m_accel += EGG::Vector3f::ey * 12.0f;
+    } else {
+        m_accel.y = 0.0f;
+    }
+
+    FUN_806E79E4();
 }
 
 /// @addr{0x806E6F6C}
 void ObjectWanwan::calcState5() {
-    ;
+    if (m_currentFrame > 120) {
+        m_nextStateId = 6;
+    }
+
+    if (EGG::Mathf::abs(m_110) < EGG::Mathf::abs(-30.0f)) {
+        m_110 -= -30.0f / 25.0f;
+    }
+
+    m_tangent = Interpolate(10.0f * 0.04f, m_tangent, m_4ac);
+
+    if (m_tangent.squaredLength() > std::numeric_limits<f32>::epsilon()) {
+        m_tangent.normalise2();
+    } else {
+        m_tangent = m_4ac;
+    }
+
+    m_120 = Interpolate(0.1f, m_120, m_floorNrm);
+
+    if (m_120.squaredLength() > std::numeric_limits<f32>::epsilon()) {
+        m_120.normalise2();
+    } else {
+        m_120 = EGG::Vector3f::ey;
+    }
+
+    if (!m_494 && !m_4d8) { // m_494 wrong
+        m_velocity.x = m_tangent.x * 120.0f;
+        m_velocity.z = m_tangent.z * 120.0f;
+
+        return;
+    }
+
+    m_4a0 = m_474 + (m_450 - m_474) * 2.0f;
+    m_4ac = m_4a0 - m_pos;
+    m_4ac.normalise2();
+
+    EGG::Vector3f local_44 = m_pos - m_450;
+    local_44.y = 0.0f;
+    f32 fVar6 = local_44.length();
+    EGG::Vector3f local_50 = m_450 - m_474; // m_450 wrong
+    local_50.y = 0.0f;
+    local_50.normalise2();
+    m_flags.setBit(eFlags::Position);
+    m_pos.x = m_450.x + local_50.x * fVar6; // local_50 wrong
+    m_pos.z = m_450.z + local_50.z * fVar6;
+    EGG::Vector3f local_5c = m_tangent + local_50;
+    local_5c.y = 0.0f;
+    if (local_5c.squaredLength() > std::numeric_limits<f32>::epsilon()) {
+        local_5c.normalise2();
+    }
+
+    m_tangent = local_5c;
+    m_4d8 = true;
+    m_velocity.y = 0.0f;
+    m_velocity.x *= -0.85f;
+    m_velocity.y = -0.0f;
+    m_velocity.z *= -0.85f;
 }
 
 /// @addr{0x806E7494}
 void ObjectWanwan::calcState6() {
-    ;
+    m_velocity.x = 1.5f * m_4ec.x * m_10c;
+    m_velocity.z = 1.5f * m_4ec.z * m_10c;
+
+    if (m_bTouchingFloor) {
+        m_velocity.y = 0.0f;
+        m_accel += EGG::Vector3f::ey * 12.0f;
+    } else {
+        m_accel.y = 0.0f;
+    }
+
+    if (m_currentFrame > 90) {
+        m_nextStateId = 0;
+    }
 }
 
 const std::array<StateManagerEntry<ObjectWanwan>, 7> StateManager<ObjectWanwan>::STATE_ENTRIES = {{
@@ -544,7 +699,7 @@ const std::array<StateManagerEntry<ObjectWanwan>, 7> StateManager<ObjectWanwan>:
         {1, &ObjectWanwan::enterState1, &ObjectWanwan::calcState1},
         {2, &ObjectWanwan::enterState2, &ObjectWanwan::calcState2},
         {3, &ObjectWanwan::enterStateStub, &ObjectWanwan::calcState3},
-        {4, &ObjectWanwan::enterState4, &ObjectWanwan::calcState4},
+        {4, &ObjectWanwan::enterStateStub, &ObjectWanwan::calcState4},
         {5, &ObjectWanwan::enterState5, &ObjectWanwan::calcState5},
         {6, &ObjectWanwan::enterState6, &ObjectWanwan::calcState6},
 
