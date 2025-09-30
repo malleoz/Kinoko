@@ -164,6 +164,7 @@ void ObjectDirector::createObjects() {
     auto *objDrivableDir = ObjectDrivableDirector::Instance();
     const auto &raceScenario = System::RaceConfig::Instance()->raceScenario();
     bool rGV2 = raceScenario.course == Course::SNES_Ghost_Valley_2;
+    bool sun = false;
 
     for (size_t i = 0; i < objectCount; ++i) {
         const auto *pObj = courseMap->getGeoObj(i);
@@ -200,11 +201,20 @@ void ObjectDirector::createObjects() {
 
         ObjectBase *object = createObject(*pObj);
         object->load();
+
+        if (object->id() == ObjectId::SunDS) {
+            sun = true;
+        }
     }
 
     if (raceScenario.course == Course::Moonview_Highway) {
         auto *highwayMgr = new ObjectHighwayManager;
         highwayMgr->load();
+    }
+
+    if (sun) {
+        auto *sunMgr = new ObjectSunManager;
+        sunMgr->load();
     }
 }
 
@@ -225,6 +235,8 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
         return new ObjectCarTGE(params);
     case ObjectId::W_Woodbox:
         return new ObjectWoodboxW(params);
+    case ObjectId::SunDS:
+        return new ObjectSunDS(params);
     case ObjectId::ItemboxLine:
         return new ObjectItemboxLine(params);
     case ObjectId::Boble:
@@ -252,6 +264,8 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
         return new ObjectPress(params);
     case ObjectId::WLFireRingGC:
         return new ObjectFireRing(params);
+    case ObjectId::FireSnake:
+        return new ObjectFireSnake(params);
     case ObjectId::PuchiPakkun:
         return new ObjectPuchiPakkun(params);
     case ObjectId::KinokoUd:
