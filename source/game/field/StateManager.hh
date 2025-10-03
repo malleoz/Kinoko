@@ -6,15 +6,18 @@
 
 namespace Field {
 
-template <typename T>
 struct StateManagerEntry {
-    using StateEnterFunc = void (T::*)();
-    using StateCalcFunc = void (T::*)();
-
     u16 id;
-    StateEnterFunc onEnter;
-    StateCalcFunc onCalc;
+    void (*onEnter)(void *);
+    void (*onCalc)(void *);
 };
+
+template <typename T, void (T::*Enter)(), void (T::*Calc)()>
+constexpr StateManagerEntry StateEntry(u16 id) {
+    auto enter = [](void *obj) { (static_cast<T *>(obj)->*Enter)(); };
+    auto calc = [](void *obj) { (static_cast<T *>(obj)->*Calc)(); };
+    return {id, enter, calc};
+}
 
 template <typename T>
 class StateManager {
@@ -33,20 +36,20 @@ protected:
             self.m_currentFrame = 0;
 
             auto enterFunc = self.m_entries[self.m_entryIds[self.m_currentStateId]].onEnter;
-            (self.*enterFunc)();
+            enterFunc(&self);
         } else {
             ++self.m_currentFrame;
         }
 
         auto calcFunc = self.m_entries[self.m_entryIds[self.m_currentStateId]].onCalc;
-        (self.*calcFunc)();
+        calcFunc(&self);
     }
 
     u16 m_currentStateId;
     s32 m_nextStateId;
     u32 m_currentFrame;
     std::span<u16> m_entryIds;
-    std::span<const StateManagerEntry<T>> m_entries;
+    std::span<const StateManagerEntry> m_entries;
 };
 
 /// @brief Defined outside of the class declaration so that typename T will be a complete type.
@@ -55,7 +58,7 @@ StateManager<T>::StateManager() : m_currentStateId(0), m_nextStateId(-1), m_curr
     // Concepts don't work here due to CRTP causing incomplete class type use.
     STATIC_ASSERT((std::is_base_of_v<ObjectBase, T>));
     STATIC_ASSERT((std::is_same_v<decltype(T::STATE_ENTRIES),
-            const std::array<StateManagerEntry<T>, T::STATE_ENTRIES.size()>>));
+            const std::array<StateManagerEntry, T::STATE_ENTRIES.size()>>));
 
     m_entryIds = std::span(new u16[T::STATE_ENTRIES.size()], T::STATE_ENTRIES.size());
 
@@ -68,7 +71,7 @@ StateManager<T>::StateManager() : m_currentStateId(0), m_nextStateId(-1), m_curr
         m_entryIds[T::STATE_ENTRIES[i].id] = i;
     }
 
-    m_entries = std::span<const StateManagerEntry<T>>(T::STATE_ENTRIES);
+    m_entries = std::span<const StateManagerEntry>(T::STATE_ENTRIES);
 }
 
 } // namespace Field

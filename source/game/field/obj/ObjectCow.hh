@@ -86,10 +86,10 @@ private:
     AnmType m_state1AnmType;
     u16 m_eatFrames; ///< Length of the state 1 eat animation
 
-    static constexpr std::array<StateManagerEntry<ObjectCowLeader>, 3> STATE_ENTRIES = {{
-            {0, &ObjectCowLeader::enterWait, &ObjectCowLeader::calcWait},
-            {1, &ObjectCowLeader::enterEat, &ObjectCowLeader::calcEat},
-            {2, &ObjectCowLeader::enterRoam, &ObjectCowLeader::calcRoam},
+    static constexpr std::array<StateManagerEntry, 3> STATE_ENTRIES = {{
+            {StateEntry<ObjectCowLeader, &enterWait, &calcWait>(0)},
+            {StateEntry<ObjectCowLeader, &enterEat, &calcEat>(1)},
+            {StateEntry<ObjectCowLeader, &enterRoam, &calcRoam>(2)},
     }};
 };
 
@@ -137,10 +137,10 @@ private:
     /// @brief Distance at which a cow is considered close enough to the rail to stop moving.
     static constexpr f32 DIST_THRESHOLD = 200.0f;
 
-    static constexpr std::array<StateManagerEntry<ObjectCowFollower>, 3> STATE_ENTRIES = {{
-            {0, &ObjectCowFollower::enterWait, &ObjectCowFollower::calcWait},
-            {1, &ObjectCowFollower::enterFreeRoam, &ObjectCowFollower::calcFreeRoam},
-            {2, &ObjectCowFollower::enterFollowLeader, &ObjectCowFollower::calcFollowLeader},
+    static constexpr std::array<StateManagerEntry, 3> STATE_ENTRIES = {{
+            {StateEntry<ObjectCowFollower, &enterWait, &calcWait>(0)},
+            {StateEntry<ObjectCowFollower, &enterFreeRoam, &calcFreeRoam>(1)},
+            {StateEntry<ObjectCowFollower, &enterFollowLeader, &calcFollowLeader>(2)},
     }};
 };
 

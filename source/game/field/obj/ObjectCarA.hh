@@ -56,10 +56,10 @@ private:
     MotionState m_motionState;
     bool m_changingDir;
 
-    static constexpr std::array<StateManagerEntry<ObjectCarA>, 3> STATE_ENTRIES = {{
-            {0, &ObjectCarA::enterStop, &ObjectCarA::calcStop},
-            {1, &ObjectCarA::enterAccel, &ObjectCarA::calcAccel},
-            {2, &ObjectCarA::enterCruising, &ObjectCarA::calcCruising},
+    static constexpr std::array<StateManagerEntry, 3> STATE_ENTRIES = {{
+            {StateEntry<ObjectCarA, &enterStop, &calcStop>(0)},
+            {StateEntry<ObjectCarA, &enterAccel, &calcAccel>(1)},
+            {StateEntry<ObjectCarA, &enterCruising, &calcCruising>(2)},
     }};
 };
 

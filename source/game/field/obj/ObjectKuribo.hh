@@ -45,11 +45,11 @@ private:
     EGG::Vector3f m_floorNrm;
     f32 m_animTimer;
 
-    static constexpr std::array<StateManagerEntry<ObjectKuribo>, 4> STATE_ENTRIES = {{
-            {0, &ObjectKuribo::enterStateStub, &ObjectKuribo::calcStateReroute},
-            {1, &ObjectKuribo::enterStateStub, &ObjectKuribo::calcStateWalk},
-            {2, &ObjectKuribo::enterStateStub, &ObjectKuribo::calcStateStub},
-            {3, &ObjectKuribo::enterStateStub, &ObjectKuribo::calcStateStub},
+    static constexpr std::array<StateManagerEntry, 4> STATE_ENTRIES = {{
+            {StateEntry<ObjectKuribo, &enterStateStub, &calcStateReroute>(0)},
+            {StateEntry<ObjectKuribo, &enterStateStub, &calcStateWalk>(1)},
+            {StateEntry<ObjectKuribo, &enterStateStub, &calcStateStub>(2)},
+            {StateEntry<ObjectKuribo, &enterStateStub, &calcStateStub>(3)},
     }};
 };
 

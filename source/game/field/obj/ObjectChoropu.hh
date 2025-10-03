@@ -62,12 +62,12 @@ private:
     static constexpr f32 RADIUS = 300.0f;
     static constexpr f32 MAX_GROUND_LEN = 3000.0f; ///< Max length of the dirt trail
 
-    static constexpr std::array<StateManagerEntry<ObjectChoropu>, 5> STATE_ENTRIES = {{
-            {0, &ObjectChoropu::enterDigging, &ObjectChoropu::calcDigging},
-            {1, &ObjectChoropu::enterPeeking, &ObjectChoropu::calcPeeking},
-            {2, &ObjectChoropu::enterStateStub, &ObjectChoropu::calcStateStub},
-            {3, &ObjectChoropu::enterJumping, &ObjectChoropu::calcJumping},
-            {4, &ObjectChoropu::enterStateStub, &ObjectChoropu::calcStateStub},
+    static constexpr std::array<StateManagerEntry, 5> STATE_ENTRIES = {{
+            StateEntry<ObjectChoropu, &enterDigging, &calcDigging>(0),
+            StateEntry<ObjectChoropu, &enterPeeking, &calcPeeking>(1),
+            StateEntry<ObjectChoropu, &enterStateStub, &calcStateStub>(2),
+            StateEntry<ObjectChoropu, &enterJumping, &calcJumping>(3),
+            StateEntry<ObjectChoropu, &enterStateStub, &calcStateStub>(4),
     }};
 };
 
