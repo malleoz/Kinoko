@@ -19,27 +19,27 @@ struct StateManagerEntry {
 template <typename T>
 class StateManager {
 public:
-    StateManager(T *obj);
+    StateManager();
 
     virtual ~StateManager() {
         delete[] m_entryIds.data();
     }
 
 protected:
-    void calc() {
-        if (m_nextStateId >= 0) {
-            m_currentStateId = m_nextStateId;
-            m_nextStateId = -1;
-            m_currentFrame = 0;
+    void calc(this T &self) {
+        if (self.m_nextStateId >= 0) {
+            self.m_currentStateId = self.m_nextStateId;
+            self.m_nextStateId = -1;
+            self.m_currentFrame = 0;
 
-            auto enterFunc = m_entries[m_entryIds[m_currentStateId]].onEnter;
-            (m_obj->*enterFunc)();
+            auto enterFunc = self.m_entries[self.m_entryIds[self.m_currentStateId]].onEnter;
+            (self.*enterFunc)();
         } else {
-            ++m_currentFrame;
+            ++self.m_currentFrame;
         }
 
-        auto calcFunc = m_entries[m_entryIds[m_currentStateId]].onCalc;
-        (m_obj->*calcFunc)();
+        auto calcFunc = self.m_entries[self.m_entryIds[self.m_currentStateId]].onCalc;
+        (self.*calcFunc)();
     }
 
     u16 m_currentStateId;
@@ -47,13 +47,11 @@ protected:
     u32 m_currentFrame;
     std::span<u16> m_entryIds;
     std::span<const StateManagerEntry<T>> m_entries;
-    T *m_obj;
 };
 
 /// @brief Defined outside of the class declaration so that typename T will be a complete type.
 template <typename T>
-StateManager<T>::StateManager(T *obj)
-    : m_currentStateId(0), m_nextStateId(-1), m_currentFrame(0), m_obj(obj) {
+StateManager<T>::StateManager() : m_currentStateId(0), m_nextStateId(-1), m_currentFrame(0) {
     // Concepts don't work here due to CRTP causing incomplete class type use.
     STATIC_ASSERT((std::is_base_of_v<ObjectBase, T>));
     STATIC_ASSERT((std::is_same_v<decltype(T::STATE_ENTRIES),
