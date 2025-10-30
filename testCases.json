@@ -1,7 +1,7 @@
 {
-    "KoopaFireball": {
-        "rkgPath": "samples/koopafireball.rkg",
-        "krkgPath": "samples/koopafireball.krkg",
-        "targetFrame": 12369
+    "Geyser": {
+        "rkgPath": "samples/geyser.rkg",
+        "krkgPath": "samples/geyser.krkg",
+        "targetFrame": 22118
     }
 }
