@@ -67,6 +67,7 @@ enum class ObjectId {
     FlamePoleEff = 0x203,
     Aurora = 0x204,
     Sandcone = 0x209,
+    FlamePoleV = 0x212,
     Ami = 0x20e,
     Mdush = 0x217,
     BeltEasy = 0x25a,
