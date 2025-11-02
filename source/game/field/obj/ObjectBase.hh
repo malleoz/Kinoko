@@ -133,6 +133,12 @@ protected:
     [[nodiscard]] static EGG::Matrix34f RailOrthonormalBasis(
             const RailInterpolator &railInterpolator);
 
+    /// @addr{0x806B59A8}
+    [[nodiscard]] static f32 FUN_806B59A8(f32 param1, f32 param2, u32 frame) {
+        f32 frameF = static_cast<f32>(frame);
+        return param1 * frameF - frameF * (0.5f * param2 * frameF);
+    }
+
     /// @addr{0x8086C098}
     [[nodiscard]] static EGG::Vector3f Interpolate(f32 t, const EGG::Vector3f &v0,
             const EGG::Vector3f &v1) {
