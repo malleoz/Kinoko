@@ -1,7 +1,7 @@
 {
     "Geyser": {
-        "rkgPath": "samples/geyser.rkg",
-        "krkgPath": "samples/geyser.krkg",
-        "targetFrame": 22118
+        "rkgPath": "samples/syuukai.rkg",
+        "krkgPath": "samples/syuukai.krkg",
+        "targetFrame": 14409
     }
 }
