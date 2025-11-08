@@ -102,6 +102,11 @@ public:
         m_pos = pos;
     }
 
+    void setRotation(const EGG::Vector3f &rot) {
+        m_flags.setBit(eFlags::Rotation);
+        m_rot = rot;
+    }
+
     void setScale(const EGG::Vector3f &scale) {
         m_flags.setBit(eFlags::Scale);
         m_scale = scale;
