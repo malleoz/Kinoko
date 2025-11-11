@@ -304,6 +304,8 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
         return new ObjectFlamePoleV(params);
     case ObjectId::Ami:
         return new ObjectAmi(params);
+    case ObjectId::FlamePoleVBig:
+        return new ObjectFlamePoleV(params);
     case ObjectId::BeltEasy:
         return new ObjectBeltEasy(params);
     case ObjectId::BeltCrossing:
