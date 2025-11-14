@@ -210,7 +210,7 @@ void ObjectFireSnakeV::FUN_806C2DA4() {
             StateManager<ObjectFireSnakeV>::m_currentStateId == 3 ||
             StateManager<ObjectFireSnakeV>::m_currentStateId == 4) {
         ++m_age;
-        if (m_age > 600 && StateManager<ObjectFireSnakeV>::m_currentStateId == 3) {
+        if (m_age >= 600 && StateManager<ObjectFireSnakeV>::m_currentStateId == 3) {
             StateManager<ObjectFireSnakeV>::m_nextStateId = 0;
         }
     }
