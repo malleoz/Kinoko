@@ -120,9 +120,10 @@ public:
     }
 
     /// @addr{0x8057EA94}
+    /// @details This doesn't bytematch the base game. The base game's implementation is designed to
+    /// allow for the comparison to be either > or >=. In practice, > is only ever used once. To try
+    /// to simplify, we write this function such that it is used for the >= scenario.
     bool canStartDrift() const {
-        constexpr f32 MINIMUM_DRIFT_THRESOLD = 0.55f;
-
         return m_speed >= MINIMUM_DRIFT_THRESOLD * m_baseSpeed;
     }
 
@@ -433,6 +434,8 @@ protected:
     KartBurnout m_burnout;                      ///< Manages the state of start boost burnout.
     const DriftingParameters *m_driftingParams; ///< Drift-type-specific parameters.
     f32 m_rawTurn; ///< Float in range [-1, 1]. Represents stick magnitude + direction.
+
+    static constexpr f32 MINIMUM_DRIFT_THRESOLD = 0.55f;
 };
 
 /// @brief Responsible for reacting to player inputs and moving the bike.
