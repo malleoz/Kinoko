@@ -58,17 +58,16 @@ public:
     void calcDespawning() {}
 
 protected:
-    void calcChildren();
+    virtual void calcChildren();
 
     EGG::Vector3f m_sunPos;
     EGG::Vector3f m_initialPos;
-    EGG::Vector3f m_dirFromPipe;
-    EGG::Vector3f m_tangent;
+    EGG::Vector3f m_bounceDir;
     u16 m_age; ///< How long the firesnake has been spawned
     u16 m_delayFrame;
 
-private:
-    void calcBounce(f32 initialVel);
+protected:
+    virtual void calcBounce(f32 initialVel);
 
     bool isCollisionEnabled() const {
         return m_currentStateId == 2 || m_currentStateId == 3 || m_currentStateId == 4;
@@ -78,13 +77,11 @@ private:
     const s16 m_maxAge; ///< Number of frames until the snake will disappear
     EGG::Vector3f m_xzSunDist;
     EGG::Vector3f m_fallAxis;
-
-    f32 m_xzSpeed;
-    u16 m_fallDuration; ///< How long the firesnake falls from the sun
     EGG::Vector3f m_initRot;
+    f32 m_xzSpeed;
+    u16 m_fallDuration;                              ///< How long the firesnake falls from the sun
     std::array<EGG::Matrix34f, 21> m_prevTransforms; ///< The last 21 transformation matrices
     EGG::Vector3f m_visualPos;
-    EGG::Vector3f m_bounceDir;
 
     static constexpr std::array<StateManagerEntry<ObjectFireSnake>, 6> STATE_ENTRIES = {{
             {0, &ObjectFireSnake::enterDespawned, &ObjectFireSnake::calcDespawned},

@@ -17,6 +17,9 @@ public:
     void calc() override;
 
 private:
+    void calcBounce(f32 initialVel) override;
+    void calcChildren() override;
+
     /// @addr{0x806C30F0}
     void enterDespawned() {
         ObjectFireSnake::enterDespawned();
@@ -32,6 +35,7 @@ private:
 
     void calcFalling();
     void calcHighBounce();
+    void calcRest();
 
     void FUN_806C2DA4();
 
@@ -39,12 +43,11 @@ private:
             {0, &ObjectFireSnakeV::enterDespawned, &ObjectFireSnakeV::calcDespawned},
             {1, &ObjectFireSnakeV::enterFalling, &ObjectFireSnakeV::calcFalling},
             {2, &ObjectFireSnakeV::enterHighBounce, &ObjectFireSnakeV::calcHighBounce},
-            {3, &ObjectFireSnake::enterRest, &ObjectFireSnake::calcRest},
+            {3, &ObjectFireSnake::enterRest, &ObjectFireSnakeV::calcRest},
             {4, &ObjectFireSnake::enterBounce, &ObjectFireSnake::calcBounce},
             {5, &ObjectFireSnake::enterDespawning, &ObjectFireSnake::calcDespawning},
     }};
 
-    EGG::Vector3f m_nextPos; ///< In the base game it's in the base class but never used there
     const u16 m_cycleDuration;
     const f32 m_distFromPipe;
     f32 m_fallSpeed;
