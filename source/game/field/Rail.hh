@@ -53,6 +53,9 @@ public:
     }
 
     [[nodiscard]] const EGG::Vector3f &floorNrm(u16 idx) const {
+        if (!m_floorNrms.data() || idx >= m_floorNrms.size()) {
+            PANIC("BRUH");
+        }
         ASSERT(m_floorNrms.data() && idx < m_floorNrms.size());
         return m_floorNrms[idx];
     }
