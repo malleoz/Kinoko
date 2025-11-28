@@ -265,7 +265,7 @@ void ObjectKCL::calcScale(u32 timeOffset) {
         return;
     }
 
-    if (time == 0) {
+    if (timeOffset == 0) {
         m_objColMgr->setScale(m_scale.y);
     } else {
         m_objColMgr->setScale(getScaleY(timeOffset));
