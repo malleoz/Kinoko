@@ -736,18 +736,19 @@ void KartMove::calcSsmt() {
             m_flags.resetBit(eFlags::SsmtCharged, eFlags::SsmtLeeway);
             m_ssmtDisableAccelTimer = DISABLE_ACCEL_FRAMES;
             state()->setDisableBackwardsAccel(true);
-        } else {
-            if (!state()->isAccelerate() && !state()->isBrake()) {
+        } else if (!state()->isAccelerate() && !state()->isBrake() && !state()->isBeforeRespawn() &&
+                !state()->isInAction()) {
+            activateBoost(KartBoost::Type::AllMt, SSMT_BOOST_FRAMES);
+            m_ssmtLeewayTimer = 0;
+            m_flags.resetBit(eFlags::SsmtCharged, eFlags::SsmtLeeway);
+        }
+    } else {
+        if (state()->isAccelerate() && !state()->isBrake()) {
+            if (!state()->isBeforeRespawn() && !state()->isInAction()) {
                 activateBoost(KartBoost::Type::AllMt, SSMT_BOOST_FRAMES);
                 m_ssmtLeewayTimer = 0;
                 m_flags.resetBit(eFlags::SsmtCharged, eFlags::SsmtLeeway);
             }
-        }
-    } else {
-        if (state()->isAccelerate() && !state()->isBrake()) {
-            activateBoost(KartBoost::Type::AllMt, SSMT_BOOST_FRAMES);
-            m_ssmtLeewayTimer = 0;
-            m_flags.resetBit(eFlags::SsmtCharged, eFlags::SsmtLeeway);
         } else {
             m_ssmtLeewayTimer = LEEWAY_FRAMES;
             m_flags.setBit(eFlags::SsmtLeeway);
@@ -2069,7 +2070,7 @@ void KartMove::calcZipperBoost() {
         state()->setZipperBoost(false);
     }
 
-    if (m_zipperBoostTimer < 10) {
+    if (!state()->isInAction() && m_zipperBoostTimer < 10) {
         EGG::Vector3f angVel = dynamics()->angVel0();
         angVel.y = 0.0f;
         dynamics()->setAngVel0(angVel);
