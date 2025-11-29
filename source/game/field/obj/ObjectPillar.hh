@@ -94,7 +94,8 @@ private:
     State m_state;               ///< 0 when upright, 1 when falling, and 2 afterwards.
     const u32 m_fallStart;       ///< The number of frames before the pillar will start to fall.
     const f32 m_fallRotation;    ///< How much the pillar rotates during the fall, in radians.
-    EGG::Vector3f m_startRot;    ///< Initial rotation of the pillar.
+    const f32 m_startRot;        ///< @todo: Disambiguate
+    EGG::Vector3f m_setupRot;    ///< Initial rotation of the pillar.
     ObjectPillarBase *m_base;    ///< Stationary portion of pillar.
     ObjectPillarC *m_collidable; ///< Wall and hazard collision of the upright/falling pillar.
     EGG::Matrix34f m_workMat;    ///< Rotation and translation matrix;

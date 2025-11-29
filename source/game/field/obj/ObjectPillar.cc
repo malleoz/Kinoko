@@ -35,11 +35,10 @@ void ObjectPillarC::calcCollisionTransform() {
     m_collision->transform(m_transform.multiplyTo(mat), m_scale, speed);
 }
 
-/// @addr0x807FED80}
+/// @addr{0x807FED80}
 ObjectPillar::ObjectPillar(const System::MapdataGeoObj &params)
     : ObjectKCL(params), m_state(State::Upright), m_fallStart(static_cast<u32>(params.setting(0))),
-      m_fallRotation(static_cast<f32>(params.setting(1)) * DEG2RAD) {
-    m_startRot = m_rot;
+      m_fallRotation(F_PI * static_cast<f32>(params.setting(1)) / 180.0f), m_startRot(m_rot.x) {
     m_base = new ObjectPillarBase(params);
     m_collidable = new ObjectPillarC(params);
 
@@ -57,7 +56,7 @@ void ObjectPillar::init() {
     ObjectBase::init();
 
     m_collidable->disableCollision();
-    m_startRot = m_rot;
+    m_setupRot = m_rot;
     disableCollision();
 }
 
@@ -80,7 +79,7 @@ void ObjectPillar::calc() {
             m_collidable->setPos(m_pos);
 
             m_flags.setBit(eFlags::Matrix, eFlags::Rotation);
-            m_rot = EGG::Vector3f(rot, m_startRot.y, m_startRot.z);
+            m_rot = EGG::Vector3f(rot, m_setupRot.y, m_setupRot.z);
         } else {
             // The pillar has finished falling.
             // We can now drive on top of the base and on the pillar itself.
@@ -99,7 +98,7 @@ void ObjectPillar::calc() {
 /// @addr{0x807FF83C}
 const EGG::Matrix34f &ObjectPillar::getUpdatedMatrix(u32 timeOffset) {
     f32 rot = calcRot(System::RaceManager::Instance()->timer() - timeOffset);
-    m_workMat.makeRT(EGG::Vector3f(rot, m_startRot.y, m_startRot.z), m_pos);
+    m_workMat.makeRT(EGG::Vector3f(rot, m_setupRot.y, m_setupRot.z), m_pos);
     return m_workMat;
 }
 
@@ -112,7 +111,7 @@ f32 ObjectPillar::calcRot(s32 frame) const {
     }
 
     frame -= m_fallStart;
-    return std::min(m_fallRotation, m_startRot.x + STEP * static_cast<f32>(frame * frame * frame));
+    return std::min(m_fallRotation, m_startRot + STEP * static_cast<f32>(frame * frame * frame));
 }
 
 } // namespace Field
