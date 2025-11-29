@@ -594,7 +594,8 @@ void KartCollide::calcObjectCollision() {
 
 /// @addr{Inlined in 0x80571F10}
 void KartCollide::calcPoleTimer() {
-    if (m_poleAngVelTimer > 0 && (state()->isAccelerate() || state()->isBrake())) {
+    if (m_poleAngVelTimer > 0 && !state()->isInAction() &&
+            (state()->isAccelerate() || state()->isBrake())) {
         EGG::Vector3f angVel2 = dynamics()->angVel2();
         angVel2.y += m_poleYaw;
         dynamics()->setAngVel2(angVel2);
