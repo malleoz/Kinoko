@@ -17,7 +17,7 @@ void KartScale::reset() {
     m_crushState = CrushState::None;
     m_calcCrush = false;
     m_uncrushAnmFrame = 0.0f;
-    m_currScale = EGG::Vector3f(1.0f, 1.0f, 1.0f);
+    m_currScale.set(1.0f);
 }
 
 /// @addr{0x8056B218}
@@ -28,7 +28,7 @@ void KartScale::calc() {
 /// @addr{0x8056B060}
 void KartScale::startCrush() {
     m_crushState = CrushState::Crush;
-    m_currScale = EGG::Vector3f(1.0f, 1.0f, 1.0f);
+    m_currScale.set(1.0f);
     m_uncrushAnmFrame = 0.0f;
     m_calcCrush = true;
 }

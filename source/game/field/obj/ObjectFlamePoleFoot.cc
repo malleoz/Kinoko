@@ -69,7 +69,7 @@ void ObjectFlamePoleFoot::calc() {
 
     f32 scale = getScaleY(0);
     m_flags.setBit(eFlags::Scale);
-    m_scale = EGG::Vector3f(scale, scale, scale);
+    m_scale.set(scale);
 
     EGG::Vector3f polePos = m_pole->pos();
     m_pole->setPos(

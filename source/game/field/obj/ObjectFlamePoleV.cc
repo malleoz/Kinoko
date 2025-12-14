@@ -38,7 +38,7 @@ void ObjectFlamePoleV::init() {
         m_scale = BIG_SCALE;
         m_flags.setBit(eFlags::Scale);
     } else if (0.0f != m_scaleFactor) {
-        m_scale = EGG::Vector3f(m_scaleFactor, m_scaleFactor, m_scaleFactor);
+        m_scale.set(m_scaleFactor);
         m_flags.setBit(eFlags::Scale);
     }
 

@@ -108,9 +108,8 @@ void ObjectHeyhoBall::calcExploding() {
         f32 shrinkFrames = static_cast<f32>(m_currentFrame) - 40.0f;
         f32 scale = 1.2f * m_blastRadiusRatio + -m_scaleChangeRate * shrinkFrames * shrinkFrames;
 
-        scale = std::min(m_blastRadiusRatio, scale);
         m_flags.setBit(eFlags::Scale);
-        m_scale = EGG::Vector3f(scale, scale, scale);
+        m_scale.set(std::min(m_blastRadiusRatio, scale));
 
         m_intensity = m_currentFrame >= SPIN_FRAME ? ExplosionIntensity::SpinSomeSpeed :
                                                      ExplosionIntensity::ExplosionLoseItem;

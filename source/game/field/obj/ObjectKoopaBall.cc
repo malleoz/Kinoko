@@ -104,7 +104,7 @@ void ObjectKoopaBall::calcTangible() {
         m_state = State::Exploding;
         m_flags.setBit(eFlags::Scale);
         m_curScale = SCALE_INITIAL;
-        m_scale = EGG::Vector3f(SCALE_INITIAL, SCALE_INITIAL, SCALE_INITIAL);
+        m_scale.set(SCALE_INITIAL);
         m_explodeTimer = m_animFramecount;
     } break;
     default:
@@ -139,7 +139,7 @@ void ObjectKoopaBall::calcExploding() {
     if (m_explodeTimer > EXPLOSION_EXPAND_FRAME) {
         m_flags.setBit(eFlags::Scale);
         m_curScale += SCALE_DELTA;
-        m_scale = EGG::Vector3f(m_curScale, m_curScale, m_curScale);
+        m_scale.set(m_curScale);
     }
 
     if (m_explodeTimer == EXPLODE_COLLISION_DURATION) {

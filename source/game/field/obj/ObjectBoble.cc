@@ -14,7 +14,7 @@ void ObjectBoble::init() {
     m_curTangentDir = m_railInterpolator->curTangentDir();
     m_railInterpolator->setPerPointVelocities(true);
     m_flags.setBit(eFlags::Scale);
-    m_scale = EGG::Vector3f(1.0f, 1.0f, 1.0f);
+    m_scale.set(1.0f);
 }
 
 /// @addr{0x8075DCA0}
