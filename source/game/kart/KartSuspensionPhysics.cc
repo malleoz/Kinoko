@@ -123,7 +123,7 @@ void WheelPhysics::calcSuspension(const EGG::Vector3f &forward) {
     f32 rate =
             status().onBit(eStatus::SomethingWallCollision) ? 0.01f : collide()->floorMomentRate();
 
-    collide()->applySomeFloorMoment(0.1f, rate, m_hitboxGroup, forward, move()->dir(), speed(),
+    collide()->applySomeFloorMoment(0.1f, rate, m_hitboxGroup, forward, move()->dir(), m_speed,
             true, true, status().offBit(eStatus::LargeFlipHit, eStatus::WheelieRot));
 }
 

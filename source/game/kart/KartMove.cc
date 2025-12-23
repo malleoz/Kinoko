@@ -43,6 +43,8 @@ static constexpr std::array<CannonParameter, 3> CANNON_PARAMETERS = {{
 KartMove::KartMove() : m_smoothedUp(EGG::Vector3f::ey), m_scale(1.0f, 1.0f, 1.0f) {
     m_totalScale = 1.0f;
     m_hitboxScale = 1.0f;
+    m_shockSpeedMultiplier = 1.0f;
+    m_invScale = 1.0f;
     m_padType.makeAllZero();
     m_flags.makeAllZero();
     m_jump = nullptr;
@@ -187,7 +189,10 @@ void KartMove::init(bool b1, bool b2) {
         m_scale.set(1.0f);
         m_totalScale = 1.0f;
         m_hitboxScale = 1.0f;
+        m_shockSpeedMultiplier = 1.0f;
+        m_invScale = 1.0f;
         m_mushroomBoostTimer = 0;
+        m_shockTimer = 0;
         m_crushTimer = 0;
     }
 
@@ -314,6 +319,7 @@ void KartMove::calc() {
     calcBoost();
     calcMushroomBoost();
     calcZipperBoost();
+    calcShock();
     calcCrushed();
     calcScale();
 
@@ -1443,15 +1449,19 @@ void KartMove::calcAcceleration() {
     const f32 boostSpdLimit = m_boost.speedLimit();
     m_jumpPadBoostMultiplier = boostMultiplier;
 
-    f32 crushMultiplier = status.onBit(eStatus::Crushed) ? 0.7f : 1.0f;
+    f32 scaleMultiplier = m_shockSpeedMultiplier;
+    if (status.onBit(eStatus::Crushed)) {
+        scaleMultiplier *= 0.7f;
+    }
+
     f32 wheelieBonus = boostMultiplier + getWheelieSoftSpeedLimitBonus();
     speedLimit *= status.onBit(eStatus::JumpPadFixedSpeed) ?
             1.0f :
-            crushMultiplier * (wheelieBonus * m_kclSpeedFactor);
+            scaleMultiplier * (wheelieBonus * m_kclSpeedFactor);
 
     bool ignoreCrushSpeed = status.onBit(eStatus::RampBoost, eStatus::ZipperInvisibleWall,
             eStatus::OverZipper, eStatus::HalfPipeRamp);
-    f32 boostSpeed = ignoreCrushSpeed ? 1.0f : crushMultiplier;
+    f32 boostSpeed = ignoreCrushSpeed ? 1.0f : scaleMultiplier;
     boostSpeed *= boostSpdLimit * m_kclSpeedFactor;
 
     if (status.offBit(eStatus::JumpPad) && boostSpeed > 0.0f && boostSpeed > speedLimit) {
@@ -1674,7 +1684,7 @@ void KartMove::calcStandstillBoostRot() {
     if (m_flags.onBit(eFlags::WallBounce)) {
         m_standStillBoostRot = isBike() ? next * 3.0f : next * 10.0f;
     } else {
-        m_standStillBoostRot += scalar * (next - m_standStillBoostRot);
+        m_standStillBoostRot += scalar * (next * m_invScale - m_standStillBoostRot);
     }
 }
 
@@ -1835,7 +1845,8 @@ void KartMove::calcVehicleRotation(f32 turn) {
         dynamics()->setAngVel0(angVel0);
     }
 
-    f32 lean = EGG::Mathf::abs(m_weightedTurn) * (tiltMagnitude * param()->stats().tilt);
+    f32 lean =
+            m_invScale * (tiltMagnitude * param()->stats().tilt * EGG::Mathf::abs(m_weightedTurn));
 
     calcStandstillBoostRot();
 
@@ -2237,24 +2248,57 @@ void KartMove::calcCrushed() {
 /// @addr{0x8058160C}
 void KartMove::calcScale() {
     m_kartScale->calc();
-    setScale(m_kartScale->currScale());
+    setScale(m_kartScale->_2c() * m_kartScale->currScale());
+    m_totalScale = m_shockSpeedMultiplier;
+    m_hitboxScale = std::max(m_kartScale->_2c().z, m_totalScale);
+
+    if (m_kartScale->_2c().z != 1.0f) {
+        setInertiaScale(m_scale);
+    }
+
+    m_invScale = m_scale.z > 1.0f ? 1.0f / m_scale.z : 1.0f;
 }
 
-/// @addr{0x80586DB4}
-void KartMove::applyBumpForce(f32 speed, const EGG::Vector3f &hitDir, bool resetSpeed) {
-    constexpr s16 BUMP_COOLDOWN = 5;
+/// @addr{0x80580778}
+void KartMove::applyShrink(u16 timer) {
+    auto &status = state()->status();
 
-    if (m_bumpTimer >= 1) {
+    if (status.onBit(eStatus::InRespawn, eStatus::AfterRespawn, eStatus::CannonStart)) {
         return;
     }
 
-    dynamics()->addForce(speed * hitDir.perpInPlane(move()->up(), true));
-    collide()->startFloorMomentRate();
+    Item::ItemDirector::Instance()->kartItem(0).clear();
+    status.setBit(eStatus::Shocked);
 
-    m_bumpTimer = BUMP_COOLDOWN;
+    if (timer > m_shockTimer) {
+        m_shockTimer = timer;
+        m_kartScale->FUN_8056AFB4(0);
+    }
+}
+
+/// @addr{0x80580998}
+void KartMove::calcShock() {
+    auto &status = state()->status();
+
+    if (status.onBit(eStatus::Shocked)) {
+        if (--m_shockTimer == 0) {
+            deactivateShock(false);
+        }
+
+        m_shockSpeedMultiplier = std::max(0.7f, m_shockSpeedMultiplier - 0.03f);
+    } else {
+        m_shockSpeedMultiplier = std::min(1.0f, m_shockSpeedMultiplier + 0.05f);
+    }
+}
+
+/// @addr{0x80580A84}
+void KartMove::deactivateShock(bool resetSpeed) {
+    status().resetBit(eStatus::Shocked);
+    m_shockTimer = 0;
+    m_kartScale->FUN_8056B168(0);
 
     if (resetSpeed) {
-        m_speed = 0.0f;
+        m_shockSpeedMultiplier = 1.0f;
     }
 }
 
