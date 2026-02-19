@@ -161,7 +161,7 @@ private:
     static constexpr u16 STAGE_COUNTDOWN_DURATION = 240;
     static constexpr u32 RNG_SEED = 0x74A1B095;
 
-    static RaceManager *s_instance; ///< @addr{0x809BD730}
+    static thread_local RaceManager *s_instance; ///< @addr{0x809BD730}
 };
 
 } // namespace System

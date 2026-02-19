@@ -591,6 +591,6 @@ bool CourseColMgr::doCheckMaskOnlyPush(KColData *data, CollisionCheckFunc collis
     return hasCol;
 }
 
-CourseColMgr *CourseColMgr::s_instance = nullptr; ///< @addr{0x809C3C10}
+thread_local CourseColMgr *CourseColMgr::s_instance = nullptr; ///< @addr{0x809C3C10}
 
 } // namespace Field

@@ -180,7 +180,7 @@ private:
 
     const KartAccessor *m_accessor;
 
-    static std::list<KartObjectProxy *> s_proxyList; ///< List of all KartObjectProxy children.
+    static thread_local std::list<KartObjectProxy *> s_proxyList; ///< List of all KartObjectProxy children.
 };
 
 } // namespace Kart

@@ -66,6 +66,6 @@ KPadDirector::~KPadDirector() {
     }
 }
 
-KPadDirector *KPadDirector::s_instance = nullptr; ///< @addr{0x809BD70C}
+thread_local KPadDirector *KPadDirector::s_instance = nullptr; ///< @addr{0x809BD70C}
 
 } // namespace System

@@ -9,8 +9,8 @@
 namespace Field {
 
 /// @brief Scoped within the TU so that ObjectBasabasa can set and ObjectBasabasaDummy can access.
-static f32 s_initialX;
-static f32 s_initialY;
+static thread_local f32 s_initialX;
+static thread_local f32 s_initialY;
 
 /// @addr{0x806B5C84}
 ObjectBasabasaDummy::ObjectBasabasaDummy(const System::MapdataGeoObj &params)

@@ -215,6 +215,6 @@ void ObjectFlamePoleFoot::calcEruptingStay() {
     m_heightOffset = m_scaledHeight + AMPLITUDE * EGG::Mathf::SinFIdx(DEG2FIDX * angle);
 }
 
-u32 ObjectFlamePoleFoot::FLAMEPOLE_COUNT = 0;
+thread_local u32 ObjectFlamePoleFoot::FLAMEPOLE_COUNT = 0;
 
 } // namespace Field

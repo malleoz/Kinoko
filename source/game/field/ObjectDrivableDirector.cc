@@ -236,6 +236,6 @@ ObjectDrivableDirector::~ObjectDrivableDirector() {
     }
 }
 
-ObjectDrivableDirector *ObjectDrivableDirector::s_instance = nullptr; ///< @addr{0x809C4310}
+thread_local ObjectDrivableDirector *ObjectDrivableDirector::s_instance = nullptr; ///< @addr{0x809C4310}
 
 } // namespace Field

@@ -494,6 +494,6 @@ void *CourseMap::LoadFile(const char *filename) {
     return ResourceManager::Instance()->getFile(filename, nullptr, ArchiveId::Course);
 }
 
-CourseMap *CourseMap::s_instance = nullptr; ///< @addr{0x809BD6E8}
+thread_local CourseMap *CourseMap::s_instance = nullptr; ///< @addr{0x809BD6E8}
 
 } // namespace System

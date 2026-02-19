@@ -51,6 +51,6 @@ ItemDirector::~ItemDirector() {
     }
 }
 
-ItemDirector *ItemDirector::s_instance = nullptr; ///< @addr{0x809C3618}
+thread_local ItemDirector *ItemDirector::s_instance = nullptr; ///< @addr{0x809C3618}
 
 } // namespace Item

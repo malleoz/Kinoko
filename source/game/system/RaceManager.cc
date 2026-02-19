@@ -287,6 +287,6 @@ void RaceManager::Player::endRace(const Timer &finishTime) {
     RaceManager::Instance()->endPlayerRace(0);
 }
 
-RaceManager *RaceManager::s_instance = nullptr; ///< @addr{0x809BD730}
+thread_local RaceManager *RaceManager::s_instance = nullptr; ///< @addr{0x809BD730}
 
 } // namespace System

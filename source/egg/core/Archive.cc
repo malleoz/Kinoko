@@ -68,7 +68,7 @@ Archive *Archive::Mount(void *archiveStart) {
 /// @addr{Inlined in 0x8020F768}
 Archive::Archive(void *archiveStart) : m_handle(archiveStart) {}
 
-Abstract::Memory::MEMList Archive::s_archiveList =
+thread_local Abstract::Memory::MEMList Archive::s_archiveList =
         Abstract::Memory::MEMList(Archive::GetLinkOffset());
 
 } // namespace EGG

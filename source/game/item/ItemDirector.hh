@@ -26,14 +26,14 @@ public:
         return m_karts[idx];
     }
 
-    static ItemDirector *CreateInstance();
+    static thread_local ItemDirector *CreateInstance();
     static void DestroyInstance();
 
     [[nodiscard]] const ItemInventory &itemInventory(s16 idx) const {
         return m_karts[idx].inventory();
     }
 
-    [[nodiscard]] static ItemDirector *Instance() {
+    [[nodiscard]] static thread_local ItemDirector *Instance() {
         return s_instance;
     }
 
@@ -43,7 +43,7 @@ private:
 
     owning_span<KartItem> m_karts;
 
-    static ItemDirector *s_instance; ///< @addr{0x809C3618}
+    static thread_local ItemDirector *s_instance; ///< @addr{0x809C3618}
 };
 
 } // namespace Item

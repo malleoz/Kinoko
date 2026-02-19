@@ -146,7 +146,7 @@ private:
     NoBounceWallColInfo *m_noBounceWallInfo;
     EGG::Matrix34f *m_localMtx;
 
-    static CourseColMgr *s_instance; ///< @addr{0x809C3C10}
+    static thread_local CourseColMgr *s_instance; ///< @addr{0x809C3C10}
 };
 
 } // namespace Field

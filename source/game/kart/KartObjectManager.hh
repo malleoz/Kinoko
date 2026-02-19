@@ -58,10 +58,10 @@ private:
     size_t m_count;
     KartObject **m_objects;
 
-    static Abstract::g3d::ResAnmChr *s_thunderScaleUpAnmChr;   ///< @addr{0x809C18A0}
-    static Abstract::g3d::ResAnmChr *s_thunderScaleDownAnmChr; ///< @addr{0x809C18A4}
-    static Abstract::g3d::ResAnmChr *s_pressScaleUpAnmChr;     ///< @addr{0x809C18B0}
-    static KartObjectManager *s_instance;                      ///< @addr{0x809C18F8}
+    static thread_local Abstract::g3d::ResAnmChr *s_thunderScaleUpAnmChr;   ///< @addr{0x809C18A0}
+    static thread_local Abstract::g3d::ResAnmChr *s_thunderScaleDownAnmChr; ///< @addr{0x809C18A4}
+    static thread_local Abstract::g3d::ResAnmChr *s_pressScaleUpAnmChr;     ///< @addr{0x809C18B0}
+    static thread_local KartObjectManager *s_instance;                      ///< @addr{0x809C18F8}
 };
 
 } // namespace Kart

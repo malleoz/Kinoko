@@ -106,7 +106,7 @@ private:
     f32 m_eruptAccel;
     f32 m_initEruptVel;
 
-    static u32 FLAMEPOLE_COUNT;
+    static thread_local u32 FLAMEPOLE_COUNT;
 
     static constexpr std::array<StateManagerEntry, 6> STATE_ENTRIES = {{
             {StateEntry<ObjectFlamePoleFoot, &ObjectFlamePoleFoot::enterExpanding,

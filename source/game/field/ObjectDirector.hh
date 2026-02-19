@@ -109,9 +109,9 @@ private:
     ObjectPsea *m_psea;
     std::vector<ObjectCollidable *> m_managedObjects;
 
-    static f32 s_wanwanMaxPitch; ///< @addr{0x808C70E8}
+    static thread_local f32 s_wanwanMaxPitch; ///< @addr{0x808C70E8}
 
-    static ObjectDirector *s_instance;
+    static thread_local ObjectDirector *s_instance;
 };
 
 } // namespace Field

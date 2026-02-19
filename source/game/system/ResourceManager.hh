@@ -50,7 +50,7 @@ private:
     MultiDvdArchive **m_archives;
 
     [[nodiscard]] static MultiDvdArchive *Create(u8 i);
-    static ResourceManager *s_instance; ///< @addr{0x809BD738}
+    static thread_local ResourceManager *s_instance; ///< @addr{0x809BD738}
 };
 
 } // namespace System

@@ -78,6 +78,6 @@ void RailManager::createPaths() {
     }
 }
 
-RailManager *RailManager::s_instance = nullptr; ///> @addr{0x809C22B0}
+thread_local RailManager *RailManager::s_instance = nullptr; ///> @addr{0x809C22B0}
 
 } // namespace Field

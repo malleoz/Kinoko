@@ -297,6 +297,6 @@ void ObjectCollisionBase::calcSimplex(GJKState &state) const {
             (_3_2 * state.m_scales[7][0] + _3_3 * state.m_scales[7][1]);
 }
 
-std::array<std::array<f32, 4>, 4> ObjectCollisionBase::s_dotProductCache = {{}};
+thread_local std::array<std::array<f32, 4>, 4> ObjectCollisionBase::s_dotProductCache = {{}};
 
 } // namespace Field

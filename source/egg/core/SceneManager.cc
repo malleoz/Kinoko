@@ -213,9 +213,9 @@ void SceneManager::setupNextSceneId() {
     m_nextSceneId = -1;
 }
 
-Heap *SceneManager::s_heapForCreateScene = nullptr;
-u16 SceneManager::s_heapOptionFlg = DEFAULT_OPT;
+thread_local Heap *SceneManager::s_heapForCreateScene = nullptr;
+thread_local u16 SceneManager::s_heapOptionFlg = DEFAULT_OPT;
 
-Heap *SceneManager::s_rootHeap = nullptr;
+thread_local Heap *SceneManager::s_rootHeap = nullptr;
 
 } // namespace EGG

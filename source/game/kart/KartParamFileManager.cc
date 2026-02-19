@@ -207,6 +207,6 @@ bool KartParamFileManager::validate() const {
     return true;
 }
 
-KartParamFileManager *KartParamFileManager::s_instance = nullptr;
+thread_local KartParamFileManager *KartParamFileManager::s_instance = nullptr;
 
 } // namespace Kart

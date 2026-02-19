@@ -132,7 +132,7 @@ private:
     f32 m_cacheRadius;
     BoxColFlag m_cacheFlag;
 
-    static BoxColManager *s_instance;
+    static thread_local BoxColManager *s_instance;
 };
 
 } // namespace Field

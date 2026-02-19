@@ -45,7 +45,7 @@ private:
     s32 m_refCount = 1;
     Abstract::Memory::MEMLink m_link;
 
-    static Abstract::Memory::MEMList s_archiveList; ///< The linked list of all mounted archives.
+    static thread_local Abstract::Memory::MEMList s_archiveList; ///< The linked list of all mounted archives.
 };
 
 } // namespace EGG

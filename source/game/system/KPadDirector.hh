@@ -52,7 +52,7 @@ private:
     KPadGhostController *m_ghostController;
     KPadHostController *m_hostController;
 
-    static KPadDirector *s_instance; ///< @addr{0x809BD70C}
+    static thread_local KPadDirector *s_instance; ///< @addr{0x809BD70C}
 };
 
 } // namespace System

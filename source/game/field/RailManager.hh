@@ -47,7 +47,7 @@ private:
     u16 m_extraInterplatorCount;
     u16 m_pointCount;
 
-    static RailManager *s_instance; ///< @addr{0x809C22B0}
+    static thread_local RailManager *s_instance; ///< @addr{0x809C22B0}
 };
 
 } // namespace Field

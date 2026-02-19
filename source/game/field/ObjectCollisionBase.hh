@@ -54,7 +54,7 @@ private:
 
     EGG::Vector3f m_00;
 
-    static std::array<std::array<f32, 4>, 4> s_dotProductCache;
+    static thread_local std::array<std::array<f32, 4>, 4> s_dotProductCache;
 };
 
 } // namespace Field

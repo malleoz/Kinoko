@@ -103,9 +103,9 @@ void KartObjectManager::loadScaleAnimations() {
     s_pressScaleUpAnmChr = new Abstract::g3d::ResAnmChr(resAnmChr);
 }
 
-Abstract::g3d::ResAnmChr *KartObjectManager::s_thunderScaleUpAnmChr = nullptr;
-Abstract::g3d::ResAnmChr *KartObjectManager::s_thunderScaleDownAnmChr = nullptr;
-Abstract::g3d::ResAnmChr *KartObjectManager::s_pressScaleUpAnmChr = nullptr;
-KartObjectManager *KartObjectManager::s_instance = nullptr;
+thread_local Abstract::g3d::ResAnmChr *KartObjectManager::s_thunderScaleUpAnmChr = nullptr;
+thread_local Abstract::g3d::ResAnmChr *KartObjectManager::s_thunderScaleDownAnmChr = nullptr;
+thread_local Abstract::g3d::ResAnmChr *KartObjectManager::s_pressScaleUpAnmChr = nullptr;
+thread_local KartObjectManager *KartObjectManager::s_instance = nullptr;
 
 } // namespace Kart

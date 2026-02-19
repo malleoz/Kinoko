@@ -623,6 +623,6 @@ void BoxColManager::searchImpl(f32 radius, const EGG::Vector3f &pos, const BoxCo
     }
 }
 
-BoxColManager *BoxColManager::s_instance = nullptr; ///< @addr{0x809C2EF0}
+thread_local BoxColManager *BoxColManager::s_instance = nullptr; ///< @addr{0x809C2EF0}
 
 } // namespace Field

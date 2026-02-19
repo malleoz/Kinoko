@@ -68,7 +68,7 @@ private:
     FileInfo m_kartDispParam;   // kartPartsDispParam.bin
     FileInfo m_kartCameraParam; // kartCameraParam.bin
 
-    static KartParamFileManager *s_instance;
+    static thread_local KartParamFileManager *s_instance;
 };
 
 } // namespace Kart

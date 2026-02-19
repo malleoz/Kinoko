@@ -406,8 +406,8 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
     }
 }
 
-f32 ObjectDirector::s_wanwanMaxPitch; ///< @addr{0x808C70E8}
+thread_local f32 ObjectDirector::s_wanwanMaxPitch; ///< @addr{0x808C70E8}
 
-ObjectDirector *ObjectDirector::s_instance = nullptr; ///< @addr{0x809C4330}
+thread_local ObjectDirector *ObjectDirector::s_instance = nullptr; ///< @addr{0x809C4330}
 
 } // namespace Field

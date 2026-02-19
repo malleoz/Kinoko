@@ -471,6 +471,6 @@ void KartObjectProxy::ApplyAll(const KartAccessor *pointers) {
     }
 }
 
-std::list<KartObjectProxy *> KartObjectProxy::s_proxyList; ///< @addr{0x809C1900}
+thread_local std::list<KartObjectProxy *> KartObjectProxy::s_proxyList; ///< @addr{0x809C1900}
 
 } // namespace Kart

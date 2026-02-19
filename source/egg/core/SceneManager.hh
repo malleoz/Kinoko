@@ -93,10 +93,10 @@ private:
     int m_currentSceneId;
     int m_prevSceneId;
 
-    static Heap *s_heapForCreateScene;
-    static u16 s_heapOptionFlg;
+    static thread_local Heap *s_heapForCreateScene;
+    static thread_local u16 s_heapOptionFlg;
 
-    static Heap *s_rootHeap;
+    static thread_local Heap *s_rootHeap;
 };
 
 } // namespace EGG

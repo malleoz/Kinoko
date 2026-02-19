@@ -277,6 +277,6 @@ CollisionDirector::~CollisionDirector() {
     CourseColMgr::DestroyInstance();
 }
 
-CollisionDirector *CollisionDirector::s_instance = nullptr; ///< @addr{0x809C2F44}
+thread_local CollisionDirector *CollisionDirector::s_instance = nullptr; ///< @addr{0x809C2F44}
 
 } // namespace Field

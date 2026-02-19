@@ -95,6 +95,6 @@ MultiDvdArchive *ResourceManager::Create(u8 i) {
     }
 }
 
-ResourceManager *ResourceManager::s_instance = nullptr;
+thread_local ResourceManager *ResourceManager::s_instance = nullptr;
 
 } // namespace System
