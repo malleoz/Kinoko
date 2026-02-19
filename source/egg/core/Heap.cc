@@ -180,7 +180,7 @@ void operator delete[](void *block, size_t /* size */) noexcept {
     EGG::Heap::free(block, nullptr);
 }
 
-MEMList EGG::Heap::s_heapList = MEMList(EGG::Heap::getOffset()); ///< @addr{0x80384320}
+thread_local MEMList EGG::Heap::s_heapList = MEMList(EGG::Heap::getOffset()); ///< @addr{0x80384320}
 
-EGG::Heap *EGG::Heap::s_currentHeap = nullptr;     ///< @addr{0x80386EA0}
-EGG::Heap *EGG::Heap::s_allocatableHeap = nullptr; ///< @addr{0x80386EA8}
+thread_local EGG::Heap *EGG::Heap::s_currentHeap = nullptr;     ///< @addr{0x80386EA0}
+thread_local EGG::Heap *EGG::Heap::s_allocatableHeap = nullptr; ///< @addr{0x80386EA8}

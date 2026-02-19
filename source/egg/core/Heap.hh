@@ -128,10 +128,10 @@ protected:
     Abstract::Memory::MEMList m_children;
     const char *m_name;
 
-    static Abstract::Memory::MEMList s_heapList;
+    static thread_local Abstract::Memory::MEMList s_heapList;
 
-    static Heap *s_currentHeap;
-    static Heap *s_allocatableHeap;
+    static thread_local Heap *s_currentHeap;
+    static thread_local Heap *s_allocatableHeap;
 };
 
 } // namespace EGG

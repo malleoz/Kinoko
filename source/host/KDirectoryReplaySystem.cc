@@ -16,37 +16,43 @@ static auto rkgFilter = [](const std::filesystem::path &path) -> bool {
     return path.has_extension() && memcmp(path.extension().string().c_str(), ".rkg", 4) == 0;
 };
 
-void KDirectoryReplaySystem::init() {
-    auto *sceneCreator = new Host::SceneCreatorDynamic;
-    m_sceneMgr = new EGG::SceneManager(sceneCreator);
+// Entrypoint for each thread
+void KDirectoryReplaySystem::startThread() {
+    // Each thread must have its own root heap
+    static thread_local std::unique_ptr<void, void (*)(void *)> s_memorySpace(
+            malloc(MEMORY_SPACE_SIZE), free);
+    static thread_local EGG::ExpHeap *s_rootHeap =
+            EGG::ExpHeap::create(s_memorySpace.get(), MEMORY_SPACE_SIZE, DEFAULT_OPT);
+    char name[32];
+    snprintf(name, sizeof(name), "ReplayRootThread%zu",
+            std::hash<std::thread::id>{}(std::this_thread::get_id()));
+    s_rootHeap->setName(name);
+    s_rootHeap->becomeCurrentHeap();
 
-    System::RaceConfig::RegisterInitCallback(OnInit, nullptr);
-    Abstract::File::Remove("results.txt");
+    EGG::SceneManager::SetRootHeap(s_rootHeap);
 
+    static thread_local auto sceneCreator = std::make_unique<Host::SceneCreatorDynamic>();
+    m_sceneMgr = std::make_unique<EGG::SceneManager>(sceneCreator.get());
+
+    m_startLatch->wait();
+
+    REPORT("Thread started!");
+
+    auto *prevHeap = EGG::Heap::getCurrentHeap();
     m_ghostHeap = EGG::ExpHeap::create(0x100000, EGG::SceneManager::rootHeap(), DEFAULT_OPT);
     m_ghostHeap->setName("GhostHeap");
-}
-
-void KDirectoryReplaySystem::calc() {
-    m_sceneMgr->calc();
-}
-
-bool KDirectoryReplaySystem::run() {
-    using std::chrono::duration;
-    using std::chrono::duration_cast;
-    using std::chrono::high_resolution_clock;
-    using std::chrono::milliseconds;
-
-    auto t1 = high_resolution_clock::now();
-
-    // Switch to the ghost heap so that the generator consumes memory in the ghost heap
-    auto *prevHeap = EGG::Heap::getCurrentHeap();
     m_ghostHeap->becomeCurrentHeap();
 
-    for (auto file : *m_fileGenerator) {
+    while (true) {
+        auto nextGhost = getNextGhost();
+
         prevHeap->becomeCurrentHeap();
 
-        m_currentGhostFile = std::move(file);
+        if (!nextGhost) {
+            break;
+        }
+
+        m_currentGhostFile = std::move(*nextGhost);
 
         runGhost();
 
@@ -54,20 +60,58 @@ bool KDirectoryReplaySystem::run() {
             REPORT("Ghost #%zu", m_replayCount.load());
         }
 
-        // Hack - wipe the heap because it becomes fragmented over time
-        m_ghostHeap->destroy();
-        m_ghostHeap = EGG::ExpHeap::create(0x10000, EGG::SceneManager::rootHeap(), DEFAULT_OPT);
         m_ghostHeap->becomeCurrentHeap();
     }
 
-    auto t2 = high_resolution_clock::now();
+    REPORT("No more ghosts! Thread exiting");
+}
 
-    /* Getting number of milliseconds as an integer. */
-    auto ms_int = duration_cast<milliseconds>(t2 - t1);
+/// @brief Provides thread-safe access to the std::generator
+std::optional<Abstract::DVDFile> KDirectoryReplaySystem::getNextGhost() {
+    std::lock_guard<std::mutex> lock(m_generatorMutex);
 
-    REPORT("Analyzed %zu ghosts in %ld milliseconds", m_replayCount.load(), ms_int.count());
+    if (!m_fileGenerator || !m_generatorIt) {
+        return std::nullopt;
+    }
+
+    auto &it = *m_generatorIt;
+    if (it == m_fileGenerator->end()) {
+        return std::nullopt;
+    }
+
+    auto file = *it;
+    ++it;
+
+    return file;
+}
+
+void KDirectoryReplaySystem::init() {
+    // The init function probably should be registered thread_local as well, however static
+    // thread_local storage means that the std::function will be destroyed after the ExpHeap is
+    // destroyed, causing a segfault.
+    System::RaceConfig::RegisterInitCallback(OnInit, nullptr);
+
+    // Create and initialize m_threadCount threads
+    m_startLatch = std::make_unique<std::latch>(1);
+    m_threads = std::span<std::thread>(new std::thread[m_threadCount], m_threadCount);
+    for (auto &thread : m_threads) {
+        thread = std::thread(startThread, this);
+    }
+}
+
+bool KDirectoryReplaySystem::run() {
+    // Tell each thread to start
+    m_startLatch->count_down();
+
+    for (auto &thread : m_threads) {
+        thread.join();
+    }
 
     return true;
+}
+
+void KDirectoryReplaySystem::calc() {
+    m_sceneMgr->calc();
 }
 
 /// @brief Parses non-generic command line options.
@@ -75,11 +119,32 @@ bool KDirectoryReplaySystem::run() {
 /// @param argc The number of arguments.
 /// @param argv The arguments.
 void KDirectoryReplaySystem::parseOptions(int argc, char **argv) {
-    if (argc < 1) {
+    if (argc-- < 1) {
         PANIC("Expected directory argument");
     }
 
-    m_fileGenerator = Abstract::Filesystem::iterate(*argv, rkgFilter);
+    m_fileGenerator = Abstract::Filesystem::iterate(*argv++, rkgFilter);
+    m_generatorIt = m_fileGenerator->begin();
+
+    if (argc++ > 0) {
+        // Check for thread count
+        std::optional<Host::EOption> flag = Host::Option::CheckFlag(*argv++);
+        if (flag == Host::EOption::Threads) {
+            // Expect thread count following
+            if (argc == 0) {
+                PANIC("Expected count after thread argument");
+            }
+
+            int count = atoi(*argv);
+
+            // Check for reasonable thread count
+            if (count < 1 || count > 64) {
+                PANIC("Invalid thread count of %d", count);
+            }
+
+            m_threadCount = static_cast<u16>(count);
+        }
+    }
 }
 
 KDirectoryReplaySystem *KDirectoryReplaySystem::CreateInstance() {
@@ -95,13 +160,15 @@ void KDirectoryReplaySystem::DestroyInstance() {
     delete instance;
 }
 
-KDirectoryReplaySystem::KDirectoryReplaySystem() : m_replayCount(0) {}
+KDirectoryReplaySystem::KDirectoryReplaySystem() : m_replayCount(0), m_threadCount(1) {}
 
 KDirectoryReplaySystem::~KDirectoryReplaySystem() {
     if (s_instance) {
         s_instance = nullptr;
         WARN("KDirectoryReplaySystem instance not explicitly handled!");
     }
+
+    delete[] m_threads.data();
 }
 
 void KDirectoryReplaySystem::runGhost() {
@@ -246,3 +313,8 @@ void KDirectoryReplaySystem::OnInit(System::RaceConfig *config, void * /* arg */
     config->setGhost(static_cast<const u8 *>(Instance()->m_currentGhostFile.data()));
     config->raceScenario().players[0].type = System::RaceConfig::Player::Type::Ghost;
 }
+
+thread_local std::unique_ptr<EGG::SceneManager> KDirectoryReplaySystem::m_sceneMgr;
+thread_local Abstract::DVDFile KDirectoryReplaySystem::m_currentGhostFile;
+thread_local std::optional<System::GhostFile> KDirectoryReplaySystem::m_currentGhost;
+thread_local EGG::ExpHeap *KDirectoryReplaySystem::m_ghostHeap = nullptr;

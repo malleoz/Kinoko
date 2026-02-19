@@ -30,6 +30,10 @@ std::optional<EOption> CheckFlag(const char *arg) {
             return EOption::TargetFrame;
         }
 
+        if (strcmp(verbose_arg, "threads") == 0) {
+            return EOption::Threads;
+        }
+
         return EOption::Invalid;
     } else {
         switch (arg[1]) {
@@ -45,6 +49,9 @@ std::optional<EOption> CheckFlag(const char *arg) {
         case 'F':
         case 'f':
             return EOption::TargetFrame;
+        case 'T':
+        case 't':
+            return EOption::Threads;
         default:
             return EOption::Invalid;
         }

@@ -13,6 +13,7 @@ enum class EOption {
     Ghost,
     KRKG,
     TargetFrame,
+    Threads,
 };
 
 namespace Option {
