@@ -19,6 +19,16 @@ DVDFile::DVDFile(DVDFile &&rhs) {
     rhs.mSize = 0;
 }
 
+DVDFile &DVDFile::operator=(DVDFile &&rhs) {
+    mData = rhs.mData;
+    mSize = rhs.mSize;
+
+    rhs.mData = nullptr;
+    rhs.mSize = 0;
+
+    return *this;
+}
+
 DVDFile::DVDFile(const char *path) : DVDFile() {
     ASSERT(path);
     load(path);

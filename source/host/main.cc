@@ -1,3 +1,4 @@
+#include "host/KDirectoryReplaySystem.hh"
 #include "host/KReplaySystem.hh"
 #include "host/KTestSystem.hh"
 #include "host/Option.hh"
@@ -40,6 +41,7 @@ int main(int argc, char **argv) {
     const std::unordered_map<std::string, std::function<KSystem *()>> modeMap = {
             {"test", []() -> KSystem * { return KTestSystem::CreateInstance(); }},
             {"replay", []() -> KSystem * { return KReplaySystem::CreateInstance(); }},
+            {"dir_replay", []() -> KSystem * { return KDirectoryReplaySystem::CreateInstance(); }},
     };
 
     if (argc < 2) {

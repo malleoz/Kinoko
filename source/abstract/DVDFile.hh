@@ -28,6 +28,11 @@ public:
     DVDFile(DVDFile &&rhs);
 
     /* ================================================================ *
+            Move assignment operator. Leaves rhs in invalid state.
+     * ================================================================ */
+    DVDFile &operator=(DVDFile &&rhs);
+
+    /* ================================================================ *
             Path constructor. Loads the requested file.
      * ================================================================ */
     DVDFile(const char *path);

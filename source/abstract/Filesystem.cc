@@ -135,7 +135,6 @@ static std::generator<DVDFile> iterate_(const TChar *path, FilenameFilter pathFi
 
         if (pathFilter) {
             if (!(*pathFilter)(entry.path())) {
-                REPORT("Filtering out %s", entry.path().string().c_str());
                 continue;
             }
         }
@@ -145,7 +144,6 @@ static std::generator<DVDFile> iterate_(const TChar *path, FilenameFilter pathFi
         if (dataFilter) {
             if (!(*dataFilter)(
                         std::span<std::byte>(static_cast<std::byte *>(file.data()), file.size()))) {
-                REPORT("Data Filtering out %s", entry.path().string().c_str());
                 continue;
             }
         }
