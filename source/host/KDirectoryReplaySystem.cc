@@ -23,8 +23,7 @@ void KDirectoryReplaySystem::init() {
     System::RaceConfig::RegisterInitCallback(OnInit, nullptr);
     Abstract::File::Remove("results.txt");
 
-    m_memorySpace = malloc(MEMORY_SPACE_SIZE);
-    m_ghostHeap = EGG::ExpHeap::create(m_memorySpace, MEMORY_SPACE_SIZE, DEFAULT_OPT);
+    m_ghostHeap = EGG::ExpHeap::create(0x100000, EGG::SceneManager::rootHeap(), DEFAULT_OPT);
     m_ghostHeap->setName("GhostHeap");
 }
 
@@ -46,8 +45,6 @@ bool KDirectoryReplaySystem::run() {
 
     for (auto file : *m_fileGenerator) {
         prevHeap->becomeCurrentHeap();
-        m_ghostHeap->destroy();
-        m_ghostHeap = EGG::ExpHeap::create(m_memorySpace, MEMORY_SPACE_SIZE, DEFAULT_OPT);
 
         m_currentGhostFile = std::move(file);
 
@@ -57,6 +54,9 @@ bool KDirectoryReplaySystem::run() {
             REPORT("Ghost #%zu", m_replayCount.load());
         }
 
+        // Hack - wipe the heap because it becomes fragmented over time
+        m_ghostHeap->destroy();
+        m_ghostHeap = EGG::ExpHeap::create(0x10000, EGG::SceneManager::rootHeap(), DEFAULT_OPT);
         m_ghostHeap->becomeCurrentHeap();
     }
 

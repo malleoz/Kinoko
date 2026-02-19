@@ -50,6 +50,5 @@ private:
     std::atomic<size_t> m_replayCount;
 
     // Every thread will need its own ghost heap most likely
-    void *m_memorySpace;
     EGG::ExpHeap *m_ghostHeap;
 };

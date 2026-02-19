@@ -66,6 +66,10 @@ public:
         return s_heapForCreateScene;
     }
 
+    [[nodiscard]] static Heap *rootHeap() {
+        return s_rootHeap;
+    }
+
     /*----------*
         Setters
      *----------*/
