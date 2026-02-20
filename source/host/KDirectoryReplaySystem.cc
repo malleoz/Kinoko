@@ -48,6 +48,15 @@ void RKGFileGenerator::produce() {
         m_doneProducing = true;
     }
 
+    // Even if we're done producing, if the queue is not empty, we need to wait for all consumers to
+    // take the files away
+    while (!m_queuedFiles.empty()) {
+        std::unique_lock<std::mutex> lock(m_queueMutex);
+        m_cvProducer.wait(lock, [this]() { return m_pop.load(); });
+
+        m_queuedFiles.pop();
+    }
+
     m_cvConsumer.notify_all();
 }
 
@@ -58,14 +67,12 @@ std::optional<Abstract::DVDFile> RKGFileGenerator::consume() {
     m_cvConsumer.wait(lock,
             [this]() { return (!m_pop && !m_queuedFiles.empty()) || m_doneProducing; });
 
-    if (m_doneProducing) {
+    if (m_queuedFiles.empty()) {
         return std::nullopt;
     }
 
     // Copy constructor, so that the file's data is allocated on the consuming thread's heap
     Abstract::DVDFile file = m_queuedFiles.front();
-
-    // REPORT("Consuming %s", file.path().string().c_str());
 
     // Files are added to the queue by the producer using the producer's root heap.
     // We have to communicate to the producer that it should delete files
@@ -131,7 +138,7 @@ void KDirectoryReplaySystem::init() {
     m_threads = std::span<std::thread>(new std::thread[m_threadCount], m_threadCount);
 
     for (auto &thread : m_threads) {
-        thread = std::thread(startThread, this);
+        thread = std::thread(&KDirectoryReplaySystem::startThread, this);
     }
 }
 
@@ -157,7 +164,7 @@ bool KDirectoryReplaySystem::run() {
     /* Getting number of milliseconds as an integer. */
     auto ms_int = duration_cast<milliseconds>(t2 - t1);
 
-    REPORT("Replayed %zu ghosts in %ld milliseconds", m_replayCount.load(), ms_int.count());
+    REPORT("Analyzed %zu ghosts in %ld seconds", m_replayCount.load(), ms_int.count() / 1000);
 
     return true;
 }
@@ -249,7 +256,7 @@ void KDirectoryReplaySystem::runGhost() {
     }
 
     if (!success()) {
-        WARN("DESYNC! TODO: Not sure how to communicate filepath");
+        WARN("DESYNC! %s", m_currentGhostFile.path().string().c_str());
     }
 
     scene->heap()->enableAllocation();
