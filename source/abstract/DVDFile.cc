@@ -8,6 +8,7 @@ DVDFile::DVDFile(const DVDFile &rhs) : DVDFile() {
     if (rhs.ok()) {
         mSize = rhs.mSize;
         mData = new u8[mSize];
+        memcpy(mData, rhs.mData, mSize);
     }
 }
 

@@ -16,6 +16,64 @@ static auto rkgFilter = [](const std::filesystem::path &path) -> bool {
     return path.has_extension() && memcmp(path.extension().string().c_str(), ".rkg", 4) == 0;
 };
 
+RKGFileGenerator::RKGFileGenerator(const char *path) : m_pop(false), m_doneProducing(false) {
+    m_fileGenerator = Abstract::Filesystem::iterate(path, rkgFilter);
+}
+
+void RKGFileGenerator::produce() {
+    // Producer thread needs its own root heap
+    void *memorySpace = malloc(MEMORY_SPACE_SIZE);
+    s_rootHeap = EGG::ExpHeap::create(memorySpace, MEMORY_SPACE_SIZE, DEFAULT_OPT);
+    s_rootHeap->setName("GeneratorThread");
+    s_rootHeap->becomeCurrentHeap();
+
+    EGG::SceneManager::SetRootHeap(s_rootHeap);
+
+    // Start producing files, pausing when the queue is full
+    for (auto file : *m_fileGenerator) {
+        std::unique_lock<std::mutex> lock(m_queueMutex);
+        m_cvProducer.wait(lock,
+                [this]() { return m_pop || m_queuedFiles.size() < MAX_QUEUE_SIZE; });
+
+        if (m_pop) {
+            m_queuedFiles.pop();
+            m_pop = false;
+        }
+
+        m_queuedFiles.push(std::move(file));
+    }
+
+    {
+        std::unique_lock<std::mutex> lock(m_queueMutex);
+        m_doneProducing = true;
+    }
+
+    m_cvConsumer.notify_all();
+}
+
+/// @brief Accessed by consumer threads to get the next queued file. Also signals to the producer
+/// thread to fill the queue back up
+std::optional<Abstract::DVDFile> RKGFileGenerator::consume() {
+    std::unique_lock<std::mutex> lock(m_queueMutex);
+    m_cvConsumer.wait(lock, [this]() { return !m_queuedFiles.empty() || m_doneProducing; });
+
+    if (m_queuedFiles.empty() && m_doneProducing) {
+        return std::nullopt;
+    }
+
+    // Copy constructor, so that the file's data is allocated on the consuming thread's heap
+    Abstract::DVDFile file = m_queuedFiles.front();
+
+    // Files are added to the queue by the producer using the producer's root heap.
+    // We have to communicate to the producer that it should delete files
+    m_pop = true;
+
+    // Notify producer
+    m_cvProducer.notify_one();
+
+    return file;
+}
+
 // Entrypoint for each thread
 void KDirectoryReplaySystem::startThread() {
     // Each thread must have its own root heap
@@ -38,54 +96,28 @@ void KDirectoryReplaySystem::startThread() {
 
     REPORT("Thread started!");
 
-    auto *prevHeap = EGG::Heap::getCurrentHeap();
-    m_ghostHeap = EGG::ExpHeap::create(0x100000, EGG::SceneManager::rootHeap(), DEFAULT_OPT);
-    m_ghostHeap->setName("GhostHeap");
-    m_ghostHeap->becomeCurrentHeap();
-
     while (true) {
-        auto nextGhost = getNextGhost();
-
-        prevHeap->becomeCurrentHeap();
-
-        if (!nextGhost) {
+        auto file = m_generator->consume();
+        if (!file.has_value()) {
             break;
         }
 
-        m_currentGhostFile = std::move(*nextGhost);
+        m_currentGhostFile = std::move(*file);
 
         runGhost();
 
         if (++m_replayCount % 100 == 0) {
             REPORT("Ghost #%zu", m_replayCount.load());
         }
-
-        m_ghostHeap->becomeCurrentHeap();
     }
 
     REPORT("No more ghosts! Thread exiting");
 }
 
-/// @brief Provides thread-safe access to the std::generator
-std::optional<Abstract::DVDFile> KDirectoryReplaySystem::getNextGhost() {
-    std::lock_guard<std::mutex> lock(m_generatorMutex);
-
-    if (!m_fileGenerator || !m_generatorIt) {
-        return std::nullopt;
-    }
-
-    auto &it = *m_generatorIt;
-    if (it == m_fileGenerator->end()) {
-        return std::nullopt;
-    }
-
-    auto file = *it;
-    ++it;
-
-    return file;
-}
-
 void KDirectoryReplaySystem::init() {
+    // Before we do anything, kick off a thread that will start iterating files
+    m_producerThread = std::thread(RKGFileGenerator::produce, &m_generator.value());
+
     // The init function probably should be registered thread_local as well, however static
     // thread_local storage means that the std::function will be destroyed after the ExpHeap is
     // destroyed, causing a segfault.
@@ -102,6 +134,8 @@ void KDirectoryReplaySystem::init() {
 bool KDirectoryReplaySystem::run() {
     // Tell each thread to start
     m_startLatch->count_down();
+
+    m_producerThread.join();
 
     for (auto &thread : m_threads) {
         thread.join();
@@ -123,8 +157,7 @@ void KDirectoryReplaySystem::parseOptions(int argc, char **argv) {
         PANIC("Expected directory argument");
     }
 
-    m_fileGenerator = Abstract::Filesystem::iterate(*argv++, rkgFilter);
-    m_generatorIt = m_fileGenerator->begin();
+    m_generator.emplace(*argv++);
 
     if (argc++ > 0) {
         // Check for thread count
@@ -313,6 +346,8 @@ void KDirectoryReplaySystem::OnInit(System::RaceConfig *config, void * /* arg */
     config->setGhost(static_cast<const u8 *>(Instance()->m_currentGhostFile.data()));
     config->raceScenario().players[0].type = System::RaceConfig::Player::Type::Ghost;
 }
+
+thread_local EGG::ExpHeap *RKGFileGenerator::s_rootHeap = nullptr;
 
 thread_local std::unique_ptr<EGG::SceneManager> KDirectoryReplaySystem::m_sceneMgr;
 thread_local Abstract::DVDFile KDirectoryReplaySystem::m_currentGhostFile;

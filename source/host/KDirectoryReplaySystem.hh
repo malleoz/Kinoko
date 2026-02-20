@@ -7,10 +7,34 @@
 #include <game/system/RaceConfig.hh>
 
 #include <atomic>
+#include <condition_variable>
 #include <generator>
 #include <latch>
+#include <queue>
 #include <thread>
 #include <utility>
+
+class RKGFileGenerator {
+public:
+    RKGFileGenerator(const char *path);
+
+    void produce();
+    std::optional<Abstract::DVDFile> consume();
+
+private:
+    std::optional<std::generator<Abstract::DVDFile>> m_fileGenerator;
+
+    std::mutex m_queueMutex;
+    std::condition_variable m_cvProducer;
+    std::condition_variable m_cvConsumer;
+    std::queue<Abstract::DVDFile> m_queuedFiles;
+    std::atomic<bool> m_pop;
+    bool m_doneProducing;
+
+    static thread_local EGG::ExpHeap *s_rootHeap;
+
+    static constexpr size_t MAX_QUEUE_SIZE = 16;
+};
 
 /// @brief Kinoko system designed to execute replays from a given directory
 class KDirectoryReplaySystem : public KSystem {
@@ -43,22 +67,18 @@ private:
     DesyncingTimerPair getDesyncingTimer(s32 i) const;
 
     void startThread();
-    std::optional<Abstract::DVDFile> getNextGhost();
 
     static void OnInit(System::RaceConfig *config, void *arg);
-
-    std::mutex m_generatorMutex;
-    std::optional<std::generator<Abstract::DVDFile>> m_fileGenerator;
-    std::optional<decltype(std::declval<std::generator<Abstract::DVDFile> &>().begin())>
-            m_generatorIt;
 
     static thread_local std::unique_ptr<EGG::SceneManager> m_sceneMgr;
     static thread_local Abstract::DVDFile m_currentGhostFile;
     static thread_local std::optional<System::GhostFile> m_currentGhost;
 
+    std::optional<RKGFileGenerator> m_generator;
     std::atomic<size_t> m_replayCount;
     u16 m_threadCount;
     std::span<std::thread> m_threads;
+    std::thread m_producerThread;
     std::unique_ptr<std::latch> m_startLatch;
 
     // Every thread will need its own ghost heap most likely
