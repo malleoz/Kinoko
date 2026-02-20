@@ -55,14 +55,17 @@ void RKGFileGenerator::produce() {
 /// thread to fill the queue back up
 std::optional<Abstract::DVDFile> RKGFileGenerator::consume() {
     std::unique_lock<std::mutex> lock(m_queueMutex);
-    m_cvConsumer.wait(lock, [this]() { return !m_queuedFiles.empty() || m_doneProducing; });
+    m_cvConsumer.wait(lock,
+            [this]() { return (!m_pop && !m_queuedFiles.empty()) || m_doneProducing; });
 
-    if (m_queuedFiles.empty() && m_doneProducing) {
+    if (m_doneProducing) {
         return std::nullopt;
     }
 
     // Copy constructor, so that the file's data is allocated on the consuming thread's heap
     Abstract::DVDFile file = m_queuedFiles.front();
+
+    // REPORT("Consuming %s", file.path().string().c_str());
 
     // Files are added to the queue by the producer using the producer's root heap.
     // We have to communicate to the producer that it should delete files
@@ -126,12 +129,20 @@ void KDirectoryReplaySystem::init() {
     // Create and initialize m_threadCount threads
     m_startLatch = std::make_unique<std::latch>(1);
     m_threads = std::span<std::thread>(new std::thread[m_threadCount], m_threadCount);
+
     for (auto &thread : m_threads) {
         thread = std::thread(startThread, this);
     }
 }
 
 bool KDirectoryReplaySystem::run() {
+    using std::chrono::duration;
+    using std::chrono::duration_cast;
+    using std::chrono::high_resolution_clock;
+    using std::chrono::milliseconds;
+
+    auto t1 = high_resolution_clock::now();
+
     // Tell each thread to start
     m_startLatch->count_down();
 
@@ -140,6 +151,13 @@ bool KDirectoryReplaySystem::run() {
     for (auto &thread : m_threads) {
         thread.join();
     }
+
+    auto t2 = high_resolution_clock::now();
+
+    /* Getting number of milliseconds as an integer. */
+    auto ms_int = duration_cast<milliseconds>(t2 - t1);
+
+    REPORT("Replayed %zu ghosts in %ld milliseconds", m_replayCount.load(), ms_int.count());
 
     return true;
 }

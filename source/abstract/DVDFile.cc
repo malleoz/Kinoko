@@ -6,6 +6,7 @@ DVDFile::DVDFile(void) : mData(nullptr), mSize(0) {}
 
 DVDFile::DVDFile(const DVDFile &rhs) : DVDFile() {
     if (rhs.ok()) {
+        mPath = rhs.mPath;
         mSize = rhs.mSize;
         mData = new u8[mSize];
         memcpy(mData, rhs.mData, mSize);
@@ -13,31 +14,30 @@ DVDFile::DVDFile(const DVDFile &rhs) : DVDFile() {
 }
 
 DVDFile::DVDFile(DVDFile &&rhs) {
+    mPath = rhs.mPath;
     mData = rhs.mData;
     mSize = rhs.mSize;
 
+    rhs.mPath.clear();
     rhs.mData = nullptr;
     rhs.mSize = 0;
 }
 
 DVDFile &DVDFile::operator=(DVDFile &&rhs) {
+    mPath = rhs.mPath;
     mData = rhs.mData;
     mSize = rhs.mSize;
 
+    rhs.mPath.clear();
     rhs.mData = nullptr;
     rhs.mSize = 0;
 
     return *this;
 }
 
-DVDFile::DVDFile(const char *path) : DVDFile() {
-    ASSERT(path);
-    load(path);
-}
-
-DVDFile::DVDFile(const wchar_t *path) : DVDFile() {
-    ASSERT(path);
-    load(path);
+DVDFile::DVDFile(const std::filesystem::path &path) : DVDFile() {
+    mPath = path;
+    load(path.native().data());
 }
 
 DVDFile::~DVDFile(void) {
@@ -56,6 +56,7 @@ void DVDFile::unload(void) {
     }
 
     delete[] cast<u8>();
+    mPath.clear();
     mData = nullptr;
     mSize = 0;
 }

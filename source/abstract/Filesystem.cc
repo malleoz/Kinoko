@@ -139,7 +139,7 @@ static std::generator<DVDFile> iterate_(const TChar *path, FilenameFilter pathFi
             }
         }
 
-        auto file = DVDFile(entry.path().native().data());
+        auto file = DVDFile(entry.path());
 
         if (dataFilter) {
             if (!(*dataFilter)(

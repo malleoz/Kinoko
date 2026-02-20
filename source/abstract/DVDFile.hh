@@ -2,6 +2,7 @@
 
 #include <Common.hh>
 
+#include <filesystem>
 #include <type_traits>
 
 namespace Abstract {
@@ -35,8 +36,7 @@ public:
     /* ================================================================ *
             Path constructor. Loads the requested file.
      * ================================================================ */
-    DVDFile(const char *path);
-    DVDFile(const wchar_t *path);
+    DVDFile(const std::filesystem::path &path);
 
     /* ================================================================ *
             Destructor. Unloads the file.
@@ -93,6 +93,10 @@ public:
         return reinterpret_cast<T *>(mData);
     }
 
+    const std::filesystem::path &path() const {
+        return mPath;
+    }
+
     /* ================================================================ *
             Gets the raw data for the file.
      * ================================================================ */
@@ -112,6 +116,7 @@ public:
     }
 
 private:
+    std::filesystem::path mPath;
     void *mData;
     size_t mSize;
 };
