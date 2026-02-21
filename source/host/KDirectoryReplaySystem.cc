@@ -17,7 +17,7 @@ static auto rkgFilter = [](const std::filesystem::path &path) -> bool {
     return path.has_extension() && memcmp(path.extension().string().c_str(), ".rkg", 4) == 0;
 };
 
-RKGFileGenerator::RKGFileGenerator(const char *path) : m_pop(false), m_doneProducing(false) {
+RKGFileGenerator::RKGFileGenerator(const char *path) : m_doneProducing(false) {
     m_fileGenerator = Abstract::Filesystem::iterate(path, rkgFilter);
 }
 
@@ -33,15 +33,15 @@ void RKGFileGenerator::produce() {
     // Start producing files, pausing when the queue is full
     for (auto file : *m_fileGenerator) {
         std::unique_lock<std::mutex> lock(m_queueMutex);
-        m_cvProducer.wait(lock,
-                [this]() { return m_pop || m_queuedFiles.size() < MAX_QUEUE_SIZE; });
-
-        if (m_pop) {
-            m_queuedFiles.pop();
-            m_pop = false;
-        }
+        m_cvProducer.wait(lock, [this]() { return m_queuedFiles.size() < MAX_QUEUE_SIZE; });
 
         m_queuedFiles.push(std::move(file));
+        m_cvConsumer.notify_one();
+
+        // Reclaim any returned files
+        while (!m_reclaimQueue.empty()) {
+            m_reclaimQueue.pop(); // Destroys the file
+        }
     }
 
     {
@@ -54,12 +54,9 @@ void RKGFileGenerator::produce() {
     // take the files away
     {
         std::unique_lock<std::mutex> lock(m_queueMutex);
-        while (!m_queuedFiles.empty()) {
-            m_cvProducer.wait(lock, [this]() { return m_pop.load(); });
-
-            m_queuedFiles.pop();
-            m_pop = false;
-        }
+        m_cvProducer.wait(lock,
+                [this]() { return m_queuedFiles.empty() && m_reclaimQueue.empty(); });
+        m_reclaimQueue.pop();
     }
 
     REPORT("Queue is now empty");
@@ -74,19 +71,17 @@ void RKGFileGenerator::produce() {
 /// thread to fill the queue back up
 std::optional<Abstract::DVDFile> RKGFileGenerator::consume() {
     std::unique_lock<std::mutex> lock(m_queueMutex);
-    m_cvConsumer.wait(lock,
-            [this]() { return (!m_pop && !m_queuedFiles.empty()) || m_doneProducing; });
+    m_cvConsumer.wait(lock, [this]() { return (!m_queuedFiles.empty()) || m_doneProducing; });
 
     if (m_queuedFiles.empty()) {
+        m_cvProducer.notify_all();
         return std::nullopt;
     }
 
     // Copy constructor, so that the file's data is allocated on the consuming thread's heap
     Abstract::DVDFile file = m_queuedFiles.front();
-
-    // Files are added to the queue by the producer using the producer's root heap.
-    // We have to communicate to the producer that it should delete files
-    m_pop = true;
+    m_reclaimQueue.push(std::move(m_queuedFiles.front()));
+    m_queuedFiles.pop();
 
     // Notify producer
     m_cvProducer.notify_one();

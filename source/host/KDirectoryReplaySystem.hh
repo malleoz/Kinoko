@@ -28,7 +28,7 @@ private:
     std::condition_variable m_cvProducer;
     std::condition_variable m_cvConsumer;
     std::queue<Abstract::DVDFile> m_queuedFiles;
-    std::atomic<bool> m_pop;
+    std::queue<Abstract::DVDFile> m_reclaimQueue;
     bool m_doneProducing;
 
     static constexpr size_t MAX_QUEUE_SIZE = 16;

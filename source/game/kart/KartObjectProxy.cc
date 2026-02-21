@@ -21,7 +21,11 @@ namespace Kart {
 
 /// @addr{0x8059018C}
 KartObjectProxy::KartObjectProxy() : m_accessor(nullptr) {
-    s_proxyList.push_back(this);
+    if (!s_proxyList) {
+        s_proxyList.emplace();
+    }
+
+    s_proxyList->push_back(this);
 }
 
 KartObjectProxy::~KartObjectProxy() = default;
@@ -467,11 +471,12 @@ void KartObjectProxy::apply(size_t idx) {
 /// @brief For all proxies in the static list, synchronizes all pointers to the KartAccessor.
 /// @param pointers The pointer to synchronize all other proxies to.
 void KartObjectProxy::ApplyAll(const KartAccessor *pointers) {
-    for (auto iter = s_proxyList.begin(); iter != s_proxyList.end(); ++iter) {
+    for (auto iter = s_proxyList->begin(); iter != s_proxyList->end(); ++iter) {
         (*iter)->m_accessor = pointers;
     }
 }
 
-thread_local std::list<KartObjectProxy *> KartObjectProxy::s_proxyList; ///< @addr{0x809C1900}
+thread_local std::optional<std::list<KartObjectProxy *>>
+        KartObjectProxy::s_proxyList; ///< @addr{0x809C1900}
 
 } // namespace Kart
