@@ -8,6 +8,7 @@
 
 #include <egg/core/ExpHeap.hh>
 
+#include <game/kart/KartObjectProxy.hh>
 #include <game/system/RaceManager.hh>
 
 #include <chrono>
@@ -23,11 +24,11 @@ RKGFileGenerator::RKGFileGenerator(const char *path) : m_pop(false), m_doneProdu
 void RKGFileGenerator::produce() {
     // Producer thread needs its own root heap
     void *memorySpace = malloc(MEMORY_SPACE_SIZE);
-    s_rootHeap = EGG::ExpHeap::create(memorySpace, MEMORY_SPACE_SIZE, DEFAULT_OPT);
-    s_rootHeap->setName("GeneratorThread");
-    s_rootHeap->becomeCurrentHeap();
+    EGG::ExpHeap *rootHeap = EGG::ExpHeap::create(memorySpace, MEMORY_SPACE_SIZE, DEFAULT_OPT);
+    rootHeap->setName("GeneratorThread");
+    rootHeap->becomeCurrentHeap();
 
-    EGG::SceneManager::SetRootHeap(s_rootHeap);
+    EGG::SceneManager::SetRootHeap(rootHeap);
 
     // Start producing files, pausing when the queue is full
     for (auto file : *m_fileGenerator) {
@@ -46,18 +47,27 @@ void RKGFileGenerator::produce() {
     {
         std::unique_lock<std::mutex> lock(m_queueMutex);
         m_doneProducing = true;
+        REPORT("Done producing!");
     }
 
     // Even if we're done producing, if the queue is not empty, we need to wait for all consumers to
     // take the files away
-    while (!m_queuedFiles.empty()) {
+    {
         std::unique_lock<std::mutex> lock(m_queueMutex);
-        m_cvProducer.wait(lock, [this]() { return m_pop.load(); });
+        while (!m_queuedFiles.empty()) {
+            m_cvProducer.wait(lock, [this]() { return m_pop.load(); });
 
-        m_queuedFiles.pop();
+            m_queuedFiles.pop();
+            m_pop = false;
+        }
     }
 
+    REPORT("Queue is now empty");
+
     m_cvConsumer.notify_all();
+
+    // Intentionally leak the rootHeap so that statics in other TUs are torn down before the heap
+    // is!
 }
 
 /// @brief Accessed by consumer threads to get the next queued file. Also signals to the producer
@@ -87,20 +97,18 @@ std::optional<Abstract::DVDFile> RKGFileGenerator::consume() {
 // Entrypoint for each thread
 void KDirectoryReplaySystem::startThread() {
     // Each thread must have its own root heap
-    static thread_local std::unique_ptr<void, void (*)(void *)> s_memorySpace(
-            malloc(MEMORY_SPACE_SIZE), free);
-    static thread_local EGG::ExpHeap *s_rootHeap =
-            EGG::ExpHeap::create(s_memorySpace.get(), MEMORY_SPACE_SIZE, DEFAULT_OPT);
+    void *memorySpace = malloc(MEMORY_SPACE_SIZE);
+    EGG::ExpHeap *rootHeap = EGG::ExpHeap::create(memorySpace, MEMORY_SPACE_SIZE, DEFAULT_OPT);
     char name[32];
     snprintf(name, sizeof(name), "ReplayRootThread%zu",
             std::hash<std::thread::id>{}(std::this_thread::get_id()));
-    s_rootHeap->setName(name);
-    s_rootHeap->becomeCurrentHeap();
+    rootHeap->setName(name);
+    rootHeap->becomeCurrentHeap();
 
-    EGG::SceneManager::SetRootHeap(s_rootHeap);
+    EGG::SceneManager::SetRootHeap(rootHeap);
 
-    static thread_local auto sceneCreator = std::make_unique<Host::SceneCreatorDynamic>();
-    m_sceneMgr = std::make_unique<EGG::SceneManager>(sceneCreator.get());
+    auto sceneCreator = new Host::SceneCreatorDynamic;
+    m_sceneMgr = new EGG::SceneManager(sceneCreator);
 
     m_startLatch->wait();
 
@@ -122,6 +130,14 @@ void KDirectoryReplaySystem::startThread() {
     }
 
     REPORT("No more ghosts! Thread exiting");
+
+    // Intentionally leak the rootHeap so that statics in other TUs are torn down before the heap
+    // is! also We have to explicitly delete the nodes in the KartObjectManager::s_proxyList to make
+    // sure that the heap-allocated nodes in the linked list are destroyed on the right thread.
+    Kart::KartObjectProxy::clearProxyList();
+
+    // TODO, on thread exit, save the objects that need to be deleted so we can delete once we leave
+    // thread scope?
 }
 
 void KDirectoryReplaySystem::init() {
@@ -281,7 +297,7 @@ bool KDirectoryReplaySystem::calcEnd() const {
 /// @brief Reports failure to file.
 /// @param msg The message to report.
 void KDirectoryReplaySystem::reportFail(const std::string &msg) const {
-    std::string report("TODO_FILENAME");
+    std::string report(m_currentGhostFile.path().string().c_str());
     report += "\n" + std::string(msg);
     Abstract::File::Append("results.txt", report.c_str(), report.size());
 }
@@ -372,9 +388,7 @@ void KDirectoryReplaySystem::OnInit(System::RaceConfig *config, void * /* arg */
     config->raceScenario().players[0].type = System::RaceConfig::Player::Type::Ghost;
 }
 
-thread_local EGG::ExpHeap *RKGFileGenerator::s_rootHeap = nullptr;
-
-thread_local std::unique_ptr<EGG::SceneManager> KDirectoryReplaySystem::m_sceneMgr;
+thread_local EGG::SceneManager *KDirectoryReplaySystem::m_sceneMgr;
 thread_local Abstract::DVDFile KDirectoryReplaySystem::m_currentGhostFile;
 thread_local std::optional<System::GhostFile> KDirectoryReplaySystem::m_currentGhost;
 thread_local EGG::ExpHeap *KDirectoryReplaySystem::m_ghostHeap = nullptr;

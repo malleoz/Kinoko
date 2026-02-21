@@ -170,6 +170,10 @@ public:
     [[nodiscard]] static std::list<KartObjectProxy *> &proxyList() {
         return s_proxyList;
     }
+
+    static void clearProxyList() {
+        s_proxyList.clear();
+    }
     /// @endGetters
 
 protected:
@@ -180,7 +184,8 @@ private:
 
     const KartAccessor *m_accessor;
 
-    static thread_local std::list<KartObjectProxy *> s_proxyList; ///< List of all KartObjectProxy children.
+    static thread_local std::list<KartObjectProxy *>
+            s_proxyList; ///< List of all KartObjectProxy children.
 };
 
 } // namespace Kart

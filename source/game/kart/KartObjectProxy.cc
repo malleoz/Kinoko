@@ -15,6 +15,7 @@
 #include <egg/math/Math.hh>
 
 #include <algorithm>
+#include <thread>
 
 namespace Kart {
 

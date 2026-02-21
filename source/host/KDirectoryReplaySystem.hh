@@ -31,8 +31,6 @@ private:
     std::atomic<bool> m_pop;
     bool m_doneProducing;
 
-    static thread_local EGG::ExpHeap *s_rootHeap;
-
     static constexpr size_t MAX_QUEUE_SIZE = 16;
 };
 
@@ -70,7 +68,7 @@ private:
 
     static void OnInit(System::RaceConfig *config, void *arg);
 
-    static thread_local std::unique_ptr<EGG::SceneManager> m_sceneMgr;
+    static thread_local EGG::SceneManager *m_sceneMgr;
     static thread_local Abstract::DVDFile m_currentGhostFile;
     static thread_local std::optional<System::GhostFile> m_currentGhost;
 
