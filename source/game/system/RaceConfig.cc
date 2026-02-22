@@ -105,9 +105,9 @@ thread_local RaceConfig *RaceConfig::s_instance = nullptr; ///< @addr{0x809BD728
     - If the type is Local, the race scenario's course and the first player's character, vehicle,
     and driftIsAuto must be set.
 */
-RaceConfig::InitCallback RaceConfig::s_onInitCallback = nullptr;
+thread_local RaceConfig::InitCallback RaceConfig::s_onInitCallback = nullptr;
 
 /// @brief The argument sent into the callback. This is expected to be reinterpret_casted.
-void *RaceConfig::s_onInitCallbackArg = nullptr;
+thread_local void *RaceConfig::s_onInitCallbackArg = nullptr;
 
 } // namespace System

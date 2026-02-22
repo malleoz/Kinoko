@@ -89,8 +89,8 @@ private:
     RawGhostFile m_ghost;
 
     static thread_local RaceConfig *s_instance; ///< @addr{0x809BD728}
-    static InitCallback s_onInitCallback;
-    static void *s_onInitCallbackArg;
+    static thread_local InitCallback s_onInitCallback;
+    static thread_local void *s_onInitCallbackArg;
 };
 
 } // namespace System

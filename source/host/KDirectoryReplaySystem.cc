@@ -107,6 +107,8 @@ void KDirectoryReplaySystem::startThread() {
 
     EGG::SceneManager::SetRootHeap(rootHeap);
 
+    System::RaceConfig::RegisterInitCallback(OnInit, nullptr);
+
     auto sceneCreator = new Host::SceneCreatorDynamic;
     m_sceneMgr = new EGG::SceneManager(sceneCreator);
 
@@ -148,11 +150,6 @@ void KDirectoryReplaySystem::startThread() {
 void KDirectoryReplaySystem::init() {
     // Before we do anything, kick off a thread that will start iterating files
     m_producerThread = std::thread(&RKGFileGenerator::produce, &m_generator.value());
-
-    // The init function probably should be registered thread_local as well, however static
-    // thread_local storage means that the std::function will be destroyed after the ExpHeap is
-    // destroyed, causing a segfault.
-    System::RaceConfig::RegisterInitCallback(OnInit, nullptr);
 
     // Create and initialize m_threadCount threads
     m_startLatch = std::make_unique<std::latch>(1);
