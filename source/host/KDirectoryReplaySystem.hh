@@ -59,8 +59,8 @@ private:
 
     void runGhost();
     bool calcEnd() const;
-    bool success() const;
-    void reportFail(const std::string &msg) const;
+    bool success();
+    void reportFail(const std::string &msg);
     s32 getDesyncingTimerIdx() const;
     DesyncingTimerPair getDesyncingTimer(s32 i) const;
 
@@ -78,6 +78,7 @@ private:
     std::span<std::thread> m_threads;
     std::thread m_producerThread;
     std::unique_ptr<std::latch> m_startLatch;
+    std::mutex m_resultsMutex;
 
     // Every thread will need its own ghost heap most likely
     static thread_local EGG::ExpHeap *m_ghostHeap;

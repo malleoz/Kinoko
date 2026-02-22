@@ -132,7 +132,9 @@ void KDirectoryReplaySystem::startThread() {
     REPORT("No more ghosts! Thread exiting");
 
     // Prevent filesystem::path heap memory getting freed on the static dtor thread
-    m_currentGhostFile.unload();
+    if (m_currentGhostFile.ok()) {
+        m_currentGhostFile.unload();
+    }
 
     // Intentionally leak the rootHeap so that statics in other TUs are torn down before the heap
     // is! also We have to explicitly delete the nodes in the KartObjectManager::s_proxyList to make
@@ -299,15 +301,17 @@ bool KDirectoryReplaySystem::calcEnd() const {
 
 /// @brief Reports failure to file.
 /// @param msg The message to report.
-void KDirectoryReplaySystem::reportFail(const std::string &msg) const {
+void KDirectoryReplaySystem::reportFail(const std::string &msg) {
     std::string report(m_currentGhostFile.path().string().c_str());
-    report += "\n" + std::string(msg);
+    report += "\n" + std::string(msg) + "\n";
+
+    std::lock_guard<std::mutex> lock(m_resultsMutex);
     Abstract::File::Append("results.txt", report.c_str(), report.size());
 }
 
 /// @brief Determines whether the simulation was a success or not.
 /// @return Whether the simulation was a success or not.
-bool KDirectoryReplaySystem::success() const {
+bool KDirectoryReplaySystem::success() {
     auto format = [](const System::Timer &timer) {
         std::ostringstream oss;
         oss << std::setw(2) << std::setfill('0') << timer.min << ":" << std::setw(2)
@@ -336,6 +340,8 @@ bool KDirectoryReplaySystem::success() const {
         }
 
         msg += " Expected " + format(correct) + ", got " + format(incorrect);
+        printf("Expected %d:%d:%d, got %d, %d, %d", correct.min, correct.sec, correct.mil,
+                incorrect.min, incorrect.sec, incorrect.mil);
         reportFail(msg);
         return false;
     }
