@@ -18,14 +18,12 @@ static auto rkgFilter = [](const std::filesystem::path &path) -> bool {
 };
 
 RKGFileGenerator::RKGFileGenerator(const char *path) : m_doneProducing(false) {
-    m_fileGenerator = Abstract::Filesystem::iterate(path, rkgFilter);
+    m_fileGenerator = Abstract::Filesystem::iterate(path, true, rkgFilter);
 }
 
 void RKGFileGenerator::produce() {
     // Producer thread needs its own root heap
     void *memorySpace = malloc(MEMORY_SPACE_SIZE);
-    REPORT("produce memorySpace: %p - %p", memorySpace,
-            reinterpret_cast<uintptr_t>(memorySpace) + MEMORY_SPACE_SIZE);
     EGG::ExpHeap *rootHeap = EGG::ExpHeap::create(memorySpace, MEMORY_SPACE_SIZE, DEFAULT_OPT);
     rootHeap->setName("GeneratorThread");
     rootHeap->becomeCurrentHeap();
@@ -100,8 +98,6 @@ std::optional<Abstract::DVDFile> RKGFileGenerator::consume() {
 void KDirectoryReplaySystem::startThread() {
     // Each thread must have its own root heap
     void *memorySpace = malloc(MEMORY_SPACE_SIZE);
-    REPORT("startThread memorySpace: %p - %p", memorySpace,
-            reinterpret_cast<uintptr_t>(memorySpace) + MEMORY_SPACE_SIZE);
     EGG::ExpHeap *rootHeap = EGG::ExpHeap::create(memorySpace, MEMORY_SPACE_SIZE, DEFAULT_OPT);
     char name[32];
     snprintf(name, sizeof(name), "ReplayRootThread%zu",
@@ -128,7 +124,7 @@ void KDirectoryReplaySystem::startThread() {
 
         runGhost();
 
-        if (++m_replayCount % 100 == 0) {
+        if (++m_replayCount % 1000 == 0) {
             REPORT("Ghost #%zu", m_replayCount.load());
         }
     }
@@ -141,15 +137,10 @@ void KDirectoryReplaySystem::startThread() {
     // Intentionally leak the rootHeap so that statics in other TUs are torn down before the heap
     // is! also We have to explicitly delete the nodes in the KartObjectManager::s_proxyList to make
     // sure that the heap-allocated nodes in the linked list are destroyed on the right thread.
-    REPORT("About to clear");
     Kart::KartObjectProxy::clearProxyList();
-    REPORT("Done clearing");
 
     // TODO, on thread exit, save the objects that need to be deleted so we can delete once we leave
     // thread scope?
-    if (Kart::KartObjectProxy::proxyList()) {
-        REPORT("WTF");
-    }
 }
 
 void KDirectoryReplaySystem::init() {

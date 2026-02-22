@@ -43,7 +43,7 @@ DVDFile loadFile(const wchar_t *path);
  * ================================================================ */
 DVDFile loadSystemFile(const char *path);
 
-std::generator<DVDFile> iterate(const char *path, FilenameFilter pathFilter = std::nullopt,
+std::generator<DVDFile> iterate(const char *path, bool recursive, FilenameFilter pathFilter = std::nullopt,
         FiledataFilter dataFilter = std::nullopt);
 
 }; // namespace Abstract::Filesystem

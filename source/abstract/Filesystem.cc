@@ -108,8 +108,8 @@ DVDFile loadSystemFile(const char *path) {
 
 template <typename TChar>
     requires std::is_same_v<TChar, char> || std::is_same_v<TChar, wchar_t>
-static std::generator<DVDFile> iterate_(const TChar *path, FilenameFilter pathFilter,
-        FiledataFilter dataFilter) {
+static std::generator<DVDFile> iterate_(const TChar *path, bool recursive,
+        FilenameFilter pathFilter, FiledataFilter dataFilter) {
     if (!std::filesystem::exists(path)) {
         if constexpr (std::is_same_v<TChar, wchar_t>) {
             WARN("Requested directory %ls doesn't exist", path);
@@ -128,33 +128,58 @@ static std::generator<DVDFile> iterate_(const TChar *path, FilenameFilter pathFi
         co_return;
     }
 
-    for (const auto &entry : std::filesystem::directory_iterator(path)) {
-        if (!std::filesystem::is_regular_file(entry.path())) {
-            continue;
-        }
-
-        if (pathFilter) {
-            if (!(*pathFilter)(entry.path())) {
+    if (recursive) {
+        for (const auto &entry : std::filesystem::recursive_directory_iterator(path)) {
+            if (!std::filesystem::is_regular_file(entry.path())) {
                 continue;
             }
+
+            if (pathFilter) {
+                if (!(*pathFilter)(entry.path())) {
+                    continue;
+                }
+            }
+
+            auto file = DVDFile(entry.path());
+
+            if (dataFilter) {
+                if (!(*dataFilter)(std::span<std::byte>(static_cast<std::byte *>(file.data()),
+                            file.size()))) {
+                    continue;
+                }
+            }
+
+            co_yield std::move(file);
         }
-
-        auto file = DVDFile(entry.path());
-
-        if (dataFilter) {
-            if (!(*dataFilter)(
-                        std::span<std::byte>(static_cast<std::byte *>(file.data()), file.size()))) {
+    } else {
+        for (const auto &entry : std::filesystem::directory_iterator(path)) {
+            if (!std::filesystem::is_regular_file(entry.path())) {
                 continue;
             }
-        }
 
-        co_yield std::move(file);
+            if (pathFilter) {
+                if (!(*pathFilter)(entry.path())) {
+                    continue;
+                }
+            }
+
+            auto file = DVDFile(entry.path());
+
+            if (dataFilter) {
+                if (!(*dataFilter)(std::span<std::byte>(static_cast<std::byte *>(file.data()),
+                            file.size()))) {
+                    continue;
+                }
+            }
+
+            co_yield std::move(file);
+        }
     }
 }
 
-std::generator<DVDFile> iterate(const char *path, FilenameFilter pathFilter,
+std::generator<DVDFile> iterate(const char *path, bool recursive, FilenameFilter pathFilter,
         FiledataFilter dataFilter) {
-    return iterate_(path, pathFilter, dataFilter);
+    return iterate_(path, recursive, pathFilter, dataFilter);
 }
 
 } // namespace Abstract::Filesystem
