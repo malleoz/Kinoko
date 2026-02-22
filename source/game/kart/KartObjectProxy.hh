@@ -167,13 +167,17 @@ public:
     [[nodiscard]] s32 hopStickX() const;
     [[nodiscard]] KartParam::Stats::DriftType vehicleType() const;
 
-    [[nodiscard]] static std::list<KartObjectProxy *> &proxyList() {
-        return *s_proxyList;
+    [[nodiscard]] static std::list<KartObjectProxy *> *proxyList() {
+        return s_proxyList;
     }
 
     static void clearProxyList() {
-        s_proxyList->clear();
-        s_proxyList = std::nullopt;
+        if (s_proxyList) {
+            s_proxyList->clear();
+        }
+
+        delete s_proxyList;
+        s_proxyList = nullptr;
     }
     /// @endGetters
 
@@ -185,8 +189,8 @@ private:
 
     const KartAccessor *m_accessor;
 
-    static thread_local std::optional<std::list<KartObjectProxy *>>
-            s_proxyList; ///< List of all KartObjectProxy children.
+    static thread_local std::list<KartObjectProxy *>
+            *s_proxyList; ///< List of all KartObjectProxy children.
 };
 
 } // namespace Kart

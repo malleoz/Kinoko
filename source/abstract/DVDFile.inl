@@ -15,7 +15,7 @@ void DVDFile::load_(const TChar *path) {
         PANIC("File already loaded!");
     }
 
-    std::ifstream file(path, std::ios::binary);
+    std::ifstream file(std::filesystem::path(path), std::ios::binary);
     if (!file) {
         if constexpr (std::is_same_v<TChar, wchar_t>) {
             WARN("File with path %ls wasn't loaded correctly!", path);

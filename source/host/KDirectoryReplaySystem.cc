@@ -24,6 +24,8 @@ RKGFileGenerator::RKGFileGenerator(const char *path) : m_doneProducing(false) {
 void RKGFileGenerator::produce() {
     // Producer thread needs its own root heap
     void *memorySpace = malloc(MEMORY_SPACE_SIZE);
+    REPORT("produce memorySpace: %p - %p", memorySpace,
+            reinterpret_cast<uintptr_t>(memorySpace) + MEMORY_SPACE_SIZE);
     EGG::ExpHeap *rootHeap = EGG::ExpHeap::create(memorySpace, MEMORY_SPACE_SIZE, DEFAULT_OPT);
     rootHeap->setName("GeneratorThread");
     rootHeap->becomeCurrentHeap();
@@ -48,15 +50,20 @@ void RKGFileGenerator::produce() {
         std::unique_lock<std::mutex> lock(m_queueMutex);
         m_doneProducing = true;
         REPORT("Done producing!");
-    }
 
-    // Even if we're done producing, if the queue is not empty, we need to wait for all consumers to
-    // take the files away
-    {
-        std::unique_lock<std::mutex> lock(m_queueMutex);
-        m_cvProducer.wait(lock,
-                [this]() { return m_queuedFiles.empty() && m_reclaimQueue.empty(); });
-        m_reclaimQueue.pop();
+        // Even if we're done producing, if the queue is not empty, we need to wait for all
+        // consumers to take the files away
+        while (true) {
+            m_cvProducer.wait(lock, [this]() { return !m_reclaimQueue.empty(); });
+            m_reclaimQueue.pop();
+
+            // If there are still files to be consumed,
+            if (!m_queuedFiles.empty()) {
+                m_cvConsumer.notify_one();
+            } else {
+                break;
+            }
+        }
     }
 
     REPORT("Queue is now empty");
@@ -93,6 +100,8 @@ std::optional<Abstract::DVDFile> RKGFileGenerator::consume() {
 void KDirectoryReplaySystem::startThread() {
     // Each thread must have its own root heap
     void *memorySpace = malloc(MEMORY_SPACE_SIZE);
+    REPORT("startThread memorySpace: %p - %p", memorySpace,
+            reinterpret_cast<uintptr_t>(memorySpace) + MEMORY_SPACE_SIZE);
     EGG::ExpHeap *rootHeap = EGG::ExpHeap::create(memorySpace, MEMORY_SPACE_SIZE, DEFAULT_OPT);
     char name[32];
     snprintf(name, sizeof(name), "ReplayRootThread%zu",
@@ -126,18 +135,26 @@ void KDirectoryReplaySystem::startThread() {
 
     REPORT("No more ghosts! Thread exiting");
 
+    // Prevent filesystem::path heap memory getting freed on the static dtor thread
+    m_currentGhostFile.unload();
+
     // Intentionally leak the rootHeap so that statics in other TUs are torn down before the heap
     // is! also We have to explicitly delete the nodes in the KartObjectManager::s_proxyList to make
     // sure that the heap-allocated nodes in the linked list are destroyed on the right thread.
+    REPORT("About to clear");
     Kart::KartObjectProxy::clearProxyList();
+    REPORT("Done clearing");
 
     // TODO, on thread exit, save the objects that need to be deleted so we can delete once we leave
     // thread scope?
+    if (Kart::KartObjectProxy::proxyList()) {
+        REPORT("WTF");
+    }
 }
 
 void KDirectoryReplaySystem::init() {
     // Before we do anything, kick off a thread that will start iterating files
-    m_producerThread = std::thread(RKGFileGenerator::produce, &m_generator.value());
+    m_producerThread = std::thread(&RKGFileGenerator::produce, &m_generator.value());
 
     // The init function probably should be registered thread_local as well, however static
     // thread_local storage means that the std::function will be destroyed after the ExpHeap is

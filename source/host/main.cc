@@ -19,7 +19,7 @@ static void FlushDenormalsToZero() {
 }
 #endif
 
-static void *s_memorySpace = nullptr;
+static thread_local void *s_memorySpace = nullptr;
 static EGG::Heap *s_rootHeap = nullptr;
 
 static void InitMemory() {

@@ -85,7 +85,10 @@ KartObjectManager::~KartObjectManager() {
     // If the proxy list is not cleared when we're done with the KartObjectManager, the list's
     // destructor calls delete on all of the links remaining in the list. Since the heaps are
     // gone by that point, this results in a segmentation fault. So, we clear the links here.
-    KartObjectProxy::proxyList().clear();
+    auto *proxyList = KartObjectProxy::proxyList();
+    if (proxyList) {
+        proxyList->clear();
+    }
 }
 
 /// @addr{0x8056AB6C}

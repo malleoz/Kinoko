@@ -63,7 +63,7 @@ private:
     void *m_heapStart;
     void *m_heapEnd;
 
-    static MEMList s_rootList;
+    static thread_local MEMList s_rootList;
     static constexpr std::array<u32, 3> s_fillVals = {{
             0xC3C3C3C3,
             0xF3F3F3F3,

@@ -96,6 +96,6 @@ MEMList &MEMiHeapHead::findListContainHeap() const {
     return containHeap ? containHeap->getChildList() : getRootList();
 }
 
-MEMList MEMiHeapHead::s_rootList = MEMList(MEMiHeapHead::getLinkOffset());
+thread_local MEMList MEMiHeapHead::s_rootList = MEMList(MEMiHeapHead::getLinkOffset());
 
 } // namespace Abstract::Memory

@@ -177,10 +177,6 @@ const KartAccessor *KartObject::accessor() const {
 
 /// @addr{0x8058F5B4}
 KartObject *KartObject::Create(Character character, Vehicle vehicle, u8 playerIdx) {
-    if (s_proxyList) {
-        s_proxyList->clear();
-    }
-
     KartParam *param = new KartParam(character, vehicle, playerIdx);
 
     KartObject *object = nullptr;

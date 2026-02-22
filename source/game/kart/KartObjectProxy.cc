@@ -22,13 +22,15 @@ namespace Kart {
 /// @addr{0x8059018C}
 KartObjectProxy::KartObjectProxy() : m_accessor(nullptr) {
     if (!s_proxyList) {
-        s_proxyList.emplace();
+        s_proxyList = new std::list<KartObjectProxy *>;
     }
 
     s_proxyList->push_back(this);
 }
 
-KartObjectProxy::~KartObjectProxy() = default;
+KartObjectProxy::~KartObjectProxy() {
+    clearProxyList();
+}
 
 /// @addr{0x80590238}
 void KartObjectProxy::setPos(const EGG::Vector3f &pos) {
@@ -476,7 +478,7 @@ void KartObjectProxy::ApplyAll(const KartAccessor *pointers) {
     }
 }
 
-thread_local std::optional<std::list<KartObjectProxy *>>
-        KartObjectProxy::s_proxyList; ///< @addr{0x809C1900}
+thread_local std::list<KartObjectProxy *> *KartObjectProxy::s_proxyList =
+        nullptr; ///< @addr{0x809C1900}
 
 } // namespace Kart

@@ -1,5 +1,7 @@
 #include "DVDFile.hh"
 
+#include <cstring>
+
 namespace Abstract {
 
 DVDFile::DVDFile(void) : mData(nullptr), mSize(0) {}
