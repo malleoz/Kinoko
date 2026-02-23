@@ -13,6 +13,20 @@
 
 #include <chrono>
 
+#if defined(__arm64__) || defined(__aarch64__)
+static void FlushDenormalsToZero() {
+    uint64_t fpcr;
+    asm("mrs %0,   fpcr" : "=r"(fpcr));
+    asm("msr fpcr, %0" ::"r"(fpcr | (1 << 24)));
+}
+#elif defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
+#include <immintrin.h>
+
+static void FlushDenormalsToZero() {
+    _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
+}
+#endif
+
 static auto rkgFilter = [](const std::filesystem::path &path) -> bool {
     return path.has_extension() && memcmp(path.extension().string().c_str(), ".rkg", 4) == 0;
 };
@@ -33,7 +47,8 @@ void RKGFileGenerator::produce() {
     // Start producing files, pausing when the queue is full
     for (auto file : *m_fileGenerator) {
         std::unique_lock<std::mutex> lock(m_queueMutex);
-        m_cvProducer.wait(lock, [this]() { return m_queuedFiles.size() < MAX_QUEUE_SIZE; });
+        m_cvProducer.wait(lock,
+                [this]() { return m_queuedFiles.size() < m_queuedFiles.capacity(); });
 
         m_queuedFiles.push(std::move(file));
         m_cvConsumer.notify_one();
@@ -96,6 +111,9 @@ std::optional<Abstract::DVDFile> RKGFileGenerator::consume() {
 
 // Entrypoint for each thread
 void KDirectoryReplaySystem::startThread() {
+    // Flushing denormals to 0 must be done on each thread
+    FlushDenormalsToZero();
+
     // Each thread must have its own root heap
     void *memorySpace = malloc(MEMORY_SPACE_SIZE);
     EGG::ExpHeap *rootHeap = EGG::ExpHeap::create(memorySpace, MEMORY_SPACE_SIZE, DEFAULT_OPT);

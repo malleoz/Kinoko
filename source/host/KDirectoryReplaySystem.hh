@@ -27,11 +27,11 @@ private:
     std::mutex m_queueMutex;
     std::condition_variable m_cvProducer;
     std::condition_variable m_cvConsumer;
-    Abstract::Queue<Abstract::DVDFile, 32> m_queuedFiles;
-    Abstract::Queue<Abstract::DVDFile, 32> m_reclaimQueue;
     bool m_doneProducing;
 
-    static constexpr size_t MAX_QUEUE_SIZE = 16;
+    static constexpr size_t MAX_QUEUE_SIZE = 32;
+    Abstract::Queue<Abstract::DVDFile, MAX_QUEUE_SIZE> m_queuedFiles;
+    Abstract::Queue<Abstract::DVDFile, MAX_QUEUE_SIZE> m_reclaimQueue;
 };
 
 /// @brief Kinoko system designed to execute replays from a given directory
