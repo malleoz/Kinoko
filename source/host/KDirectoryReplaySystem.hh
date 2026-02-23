@@ -1,6 +1,7 @@
 #include "host/KSystem.hh"
 
 #include <abstract/DVDFile.hh>
+#include <abstract/Queue.hh>
 
 #include <egg/core/SceneManager.hh>
 
@@ -10,7 +11,6 @@
 #include <condition_variable>
 #include <generator>
 #include <latch>
-#include <queue>
 #include <thread>
 #include <utility>
 
@@ -27,8 +27,8 @@ private:
     std::mutex m_queueMutex;
     std::condition_variable m_cvProducer;
     std::condition_variable m_cvConsumer;
-    std::queue<Abstract::DVDFile> m_queuedFiles;
-    std::queue<Abstract::DVDFile> m_reclaimQueue;
+    Abstract::Queue<Abstract::DVDFile, 32> m_queuedFiles;
+    Abstract::Queue<Abstract::DVDFile, 32> m_reclaimQueue;
     bool m_doneProducing;
 
     static constexpr size_t MAX_QUEUE_SIZE = 16;
@@ -60,7 +60,7 @@ private:
     void runGhost();
     bool calcEnd() const;
     bool success();
-    //void reportFail(const std::string &msg);
+    // void reportFail(const std::string &msg);
     s32 getDesyncingTimerIdx() const;
     DesyncingTimerPair getDesyncingTimer(s32 i) const;
 

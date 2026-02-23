@@ -26,14 +26,14 @@ public:
         return m_karts[idx];
     }
 
-    static thread_local ItemDirector *CreateInstance();
+    static ItemDirector *CreateInstance();
     static void DestroyInstance();
 
     [[nodiscard]] const ItemInventory &itemInventory(s16 idx) const {
         return m_karts[idx].inventory();
     }
 
-    [[nodiscard]] static thread_local ItemDirector *Instance() {
+    [[nodiscard]] static ItemDirector *Instance() {
         return s_instance;
     }
 
