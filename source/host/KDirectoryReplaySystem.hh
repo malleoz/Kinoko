@@ -60,7 +60,7 @@ private:
     void runGhost();
     bool calcEnd() const;
     bool success();
-    void reportFail(const std::string &msg);
+    //void reportFail(const std::string &msg);
     s32 getDesyncingTimerIdx() const;
     DesyncingTimerPair getDesyncingTimer(s32 i) const;
 

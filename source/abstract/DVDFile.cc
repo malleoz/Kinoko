@@ -4,41 +4,67 @@
 
 namespace Abstract {
 
-DVDFile::DVDFile(void) : mData(nullptr), mSize(0) {}
+DVDFile::DVDFile(void) : mData(nullptr), mSize(0), mArraySize(0) {}
 
 DVDFile::DVDFile(const DVDFile &rhs) : DVDFile() {
     if (rhs.ok()) {
-        mPath = rhs.mPath;
+        // mPath = rhs.mPath;
         mSize = rhs.mSize;
-        mData = new u8[mSize];
+        mArraySize = rhs.mArraySize;
+        mData = new u8[mArraySize];
         memcpy(mData, rhs.mData, mSize);
     }
 }
 
 DVDFile::DVDFile(DVDFile &&rhs) {
-    mPath = rhs.mPath;
+    // mPath = rhs.mPath;
     mData = rhs.mData;
     mSize = rhs.mSize;
+    mArraySize = rhs.mArraySize;
 
-    rhs.mPath.clear();
+    // rhs.mPath.clear();
     rhs.mData = nullptr;
     rhs.mSize = 0;
+    rhs.mArraySize = 0;
 }
 
 DVDFile &DVDFile::operator=(DVDFile &&rhs) {
-    mPath = rhs.mPath;
+    // mPath = rhs.mPath;
     mData = rhs.mData;
     mSize = rhs.mSize;
+    mArraySize = rhs.mArraySize;
 
-    rhs.mPath.clear();
+    // rhs.mPath.clear();
     rhs.mData = nullptr;
     rhs.mSize = 0;
+    rhs.mArraySize = 0;
+
+    return *this;
+}
+
+DVDFile &DVDFile::operator=(DVDFile &rhs) {
+    // Don't deallocate the data if we can just re-use it
+    if (ok()) {
+        if (mArraySize < rhs.mSize || rhs.ok()) {
+            unload();
+        }
+    }
+
+    // mPath = rhs.mPath;
+    mSize = rhs.mSize;
+
+    if (!mData) {
+        mArraySize = rhs.mArraySize;
+        mData = new u8[mArraySize];
+    }
+
+    memcpy(mData, rhs.mData, mSize);
 
     return *this;
 }
 
 DVDFile::DVDFile(const std::filesystem::path &path) : DVDFile() {
-    mPath = path;
+    // mPath = path;
     load(path.native().data());
 }
 
@@ -58,9 +84,10 @@ void DVDFile::unload(void) {
     }
 
     delete[] cast<u8>();
-    mPath.clear();
+    // mPath.clear();
     mData = nullptr;
     mSize = 0;
+    mArraySize = 0;
 }
 
 bool DVDFile::ok(void) const {

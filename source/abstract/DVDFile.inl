@@ -29,6 +29,7 @@ void DVDFile::load_(const TChar *path) {
     mSize = file.tellg();
     file.seekg(0, std::ios::beg);
 
+    mArraySize = mSize;
     mData = new u8[mSize];
     file.read(cast<char>(), mSize);
 }

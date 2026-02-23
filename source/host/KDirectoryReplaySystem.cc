@@ -118,11 +118,13 @@ void KDirectoryReplaySystem::startThread() {
 
     while (true) {
         auto file = m_generator->consume();
+
         if (!file.has_value()) {
             break;
         }
 
-        m_currentGhostFile = std::move(*file);
+        // Copy assignment, so that the file contents are transferred to the rootHeap
+        m_currentGhostFile = *file;
 
         runGhost();
 
@@ -274,7 +276,10 @@ void KDirectoryReplaySystem::runGhost() {
     }
 
     if (!success()) {
-        WARN("DESYNC! %s", m_currentGhostFile.path().string().c_str());
+        auto course = m_currentGhost->course();
+        const auto &timer = m_currentGhost->raceTimer();
+        WARN("DESYNC! %s - %d:%d.%d", COURSE_NAMES[static_cast<s32>(course)], timer.min, timer.sec,
+                timer.mil);
     }
 
     scene->heap()->enableAllocation();
@@ -298,13 +303,13 @@ bool KDirectoryReplaySystem::calcEnd() const {
 
 /// @brief Reports failure to file.
 /// @param msg The message to report.
-void KDirectoryReplaySystem::reportFail(const std::string &msg) {
+/*void KDirectoryReplaySystem::reportFail(const std::string &msg) {
     std::string report(m_currentGhostFile.path().string().c_str());
     report += "\n" + std::string(msg) + "\n";
 
     std::lock_guard<std::mutex> lock(m_resultsMutex);
     Abstract::File::Append("results.txt", report.c_str(), report.size());
-}
+}*/
 
 /// @brief Determines whether the simulation was a success or not.
 /// @return Whether the simulation was a success or not.
@@ -320,7 +325,7 @@ bool KDirectoryReplaySystem::success() {
     const auto *raceManager = System::RaceManager::Instance();
     if (raceManager->stage() != System::RaceManager::Stage::FinishGlobal) {
         m_sceneMgr->currentScene()->heap()->enableAllocation();
-        reportFail("Race didn't finish");
+        // reportFail("Race didn't finish");
         return false;
     }
 
@@ -339,7 +344,7 @@ bool KDirectoryReplaySystem::success() {
         msg += " Expected " + format(correct) + ", got " + format(incorrect);
         printf("Expected %d:%d:%d, got %d, %d, %d", correct.min, correct.sec, correct.mil,
                 incorrect.min, incorrect.sec, incorrect.mil);
-        reportFail(msg);
+        // reportFail(msg);
         return false;
     }
 

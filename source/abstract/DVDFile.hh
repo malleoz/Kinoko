@@ -34,6 +34,11 @@ public:
     DVDFile &operator=(DVDFile &&rhs);
 
     /* ================================================================ *
+            Copy assignment operator. Sets state identical to rhs.
+     * ================================================================ */
+    DVDFile &operator=(DVDFile &rhs);
+
+    /* ================================================================ *
             Path constructor. Loads the requested file.
      * ================================================================ */
     DVDFile(const std::filesystem::path &path);
@@ -93,9 +98,9 @@ public:
         return reinterpret_cast<T *>(mData);
     }
 
-    const std::filesystem::path &path() const {
+    /*const std::filesystem::path &path() const {
         return mPath;
-    }
+    }*/
 
     /* ================================================================ *
             Gets the raw data for the file.
@@ -116,9 +121,10 @@ public:
     }
 
 private:
-    std::filesystem::path mPath;
+    // std::filesystem::path mPath;
     void *mData;
     size_t mSize;
+    size_t mArraySize; ///< May be >= mSize
 };
 
 /* ================================================================ *
