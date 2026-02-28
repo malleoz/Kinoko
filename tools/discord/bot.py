@@ -15,6 +15,9 @@ KINOKO_EXEC = os.getenv("kinoko_exec")
 IS_GENERATING_KRKG = False
 IS_REPLAYING_GHOST = False
 
+# A 6 minute ghost takes about 60 seconds to run in Dolphin on the Pi
+DOLPHIN_TIMEOUT = 70.0
+
 client = discord.Client(intents=discord.Intents.default())
 tree = discord.app_commands.CommandTree(client)
 
@@ -28,6 +31,7 @@ async def dolphin_clear_io():
     krkg_path = os.path.join(NAND_PATH, "test.krkg")
     ok_path = os.path.join(NAND_PATH, "ok")
     fail_path = os.path.join(NAND_PATH, "fail")
+    timeout_path = os.path.join(NAND_PATH, "timeout")
 
     if os.path.exists(rkg_path):
         os.remove(rkg_path)
@@ -41,6 +45,9 @@ async def dolphin_clear_io():
     if os.path.exists(fail_path):
         os.remove(fail_path)
 
+    if os.path.exists(timeout_path):
+        os.remove(timeout_path)
+
 
 async def dolphin_set_ghost(ghost: bytes):
     with open(os.path.join(NAND_PATH, "test.rkg"), "wb") as f:
@@ -50,20 +57,33 @@ async def dolphin_set_ghost(ghost: bytes):
 async def dolphin_run():
     uncap_speed = ["-C", "Dolphin.Core.EmulationSpeed=0"]
     null_renderer = ["-v", "Null"]
-    silent_run = ["-C", "Dolphin.Display.RenderToMain=true"]
+    headless_profile = ["-p", "headless"]
     no_audio = ["-C", 'Dolphin.DSP.Backend="No Audio Output"']
+    default_iso = ["-C", "Dolphin.Core.DefaultISO=/home/malleo/iso/MKWPAL.iso"]
+    mmu = ["-C", "Dolphin.Core.MMU=True"]
 
-    proc = await asyncio.create_subprocess_exec(
-        DOLPHIN_PATH,
-        "-e",
-        SP_PATH,
-        "-b",
-        *uncap_speed,
-        *null_renderer,
-        *silent_run,
-        *no_audio,
-    )
-    await proc.communicate()
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            DOLPHIN_PATH,
+            "-e",
+            SP_PATH,
+            *uncap_speed,
+            *headless_profile,
+            *null_renderer,
+            *no_audio,
+            *default_iso,
+            *mmu,
+        )
+
+        await asyncio.wait_for(
+            proc.communicate(),
+            timeout=DOLPHIN_TIMEOUT
+        )
+    except asyncio.TimeoutError:
+        # Write a timeout file to nand
+        timeout_path = os.path.join(NAND_PATH, "timeout")
+        with open(timeout_path, 'w'):
+            os.utime(timeout_path, None)
 
 
 async def dolphin_ok() -> bool:
@@ -104,7 +124,8 @@ async def dolphin_generate_krkg(ghost: bytes, interaction: discord.Interaction):
 
         await respond_krkg_success(
             interaction,
-            discord.File(os.path.join(NAND_PATH, "test.krkg"), filename="test.krkg"),
+            discord.File(os.path.join(NAND_PATH, "test.krkg"),
+                         filename="test.krkg"),
         )
         return
 
@@ -116,6 +137,12 @@ async def dolphin_generate_krkg(ghost: bytes, interaction: discord.Interaction):
     elif os.path.exists(os.path.join(NAND_PATH, "fail")):
         await respond_bug_error(
             interaction, "Dolphin returned fail, but there's no explanation"
+        )
+        return
+    elif os.path.exists(os.path.join(NAND_PATH, "timeout")):
+        await respond_fail_error(
+            interaction, f"Ghost replay exceeded {DOLPHIN_TIMEOUT:.0f} second limit. \
+                It's likely the ghost doesn't sync on console."
         )
         return
 
@@ -165,6 +192,8 @@ async def replay_exec(ghost: bytes, interaction: discord.Interaction):
     await replay_clear_io()
     await replay_set_ghost(ghost)
 
+    print("About to replay run")
+
     return_code = await replay_run()
 
     if return_code == 0:
@@ -174,8 +203,8 @@ async def replay_exec(ghost: bytes, interaction: discord.Interaction):
         )
         return
 
-    if return_code != 3:
-        await respond_bug_error(interaction, "Unknown error! Possibly a segfault")
+    if return_code != 1:
+        await respond_bug_error(interaction, f"Unknown error! Return code {return_code}. Possibly a segfault")
         return
 
     fail = await replay_results()
@@ -204,7 +233,8 @@ async def replay_exec(ghost: bytes, interaction: discord.Interaction):
 async def respond_generic_error(
     interaction: discord.Interaction, error: str, tip: Optional[str] = None
 ):
-    embed = discord.Embed(color=0xFF595E, title="Error!", description=f"### {error}")
+    embed = discord.Embed(color=0xFF595E, title="Error!",
+                          description=f"### {error}")
     embed.set_footer(text=tip)
     if (
         interaction.response.type
@@ -218,7 +248,8 @@ async def respond_generic_error(
 async def respond_generic_success(
     interaction: discord.Interaction, msg: str, tip: Optional[str] = None
 ):
-    embed = discord.Embed(color=0x5EFF59, title="Success!", description=f"### {msg}")
+    embed = discord.Embed(color=0x5EFF59, title="Success!",
+                          description=f"### {msg}")
     embed.set_footer(text=tip)
 
     if (
@@ -233,7 +264,8 @@ async def respond_generic_success(
 async def respond_fail_error(
     interaction: discord.Interaction, error: str, tip: Optional[str] = None
 ):
-    embed = discord.Embed(color=0xFF595E, title="Fail!", description=f"### {error}")
+    embed = discord.Embed(color=0xFF595E, title="Fail!",
+                          description=f"### {error}")
     embed.set_footer(text=tip)
 
     if (
@@ -246,7 +278,8 @@ async def respond_fail_error(
 
 
 async def respond_bug_error(interaction: discord.Interaction, error: str):
-    embed = discord.Embed(color=0xFFCA3A, title="BUG!", description=f"### {error}")
+    embed = discord.Embed(color=0xFFCA3A, title="BUG!",
+                          description=f"### {error}")
     embed.set_footer(
         text="This should never be visible. "
         "Please report this to a Kinoko developer if you see this!"
