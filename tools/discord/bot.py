@@ -1,3 +1,5 @@
+from . import responses
+
 import asyncio
 import discord
 from dotenv import load_dotenv
@@ -8,6 +10,7 @@ from typing import Optional
 load_dotenv()
 TOKEN = os.getenv("token")
 DOLPHIN_PATH = os.getenv("dolphin_path")
+MKW_PATH = os.getenv("mkw_path")
 SP_PATH = os.getenv("sp_path")
 NAND_PATH = os.getenv("nand_path")
 KINOKO_PATH = os.getenv("kinoko_path")
@@ -15,8 +18,16 @@ KINOKO_EXEC = os.getenv("kinoko_exec")
 IS_GENERATING_KRKG = False
 IS_REPLAYING_GHOST = False
 
-# A 6 minute ghost takes about 60 seconds to run in Dolphin on the Pi
-DOLPHIN_TIMEOUT = 70.0
+DOLPHIN_TIMEOUT = 70.0  # Max time Dolphin will run
+RKG_FILENAME = "test.rkg"  # The .rkg file to be replayed
+KRKG_FILE_NAME = "test.krkg"  # The .krkg filename to be generated
+
+# Paths
+RKG_PATH = os.path.join(NAND_PATH, RKG_FILENAME)
+KRKG_PATH = os.path.join(NAND_PATH, KRKG_FILE_NAME)
+OK_PATH = os.path.join(NAND_PATH, "ok")
+FAIL_PATH = os.path.join(NAND_PATH, "fail")  # if exists, error playing ghost
+TIMEOUT_PATH = os.path.join(NAND_PATH, "timeout")  # Dolphin ran too long
 
 client = discord.Client(intents=discord.Intents.default())
 tree = discord.app_commands.CommandTree(client)
@@ -26,40 +37,50 @@ tree = discord.app_commands.CommandTree(client)
 # ================================
 
 
-async def dolphin_clear_io():
-    rkg_path = os.path.join(NAND_PATH, "test.rkg")
-    krkg_path = os.path.join(NAND_PATH, "test.krkg")
-    ok_path = os.path.join(NAND_PATH, "ok")
-    fail_path = os.path.join(NAND_PATH, "fail")
-    timeout_path = os.path.join(NAND_PATH, "timeout")
+async def dolphin_clear_io() -> None:
+    """
+    Removes files in the NAND that pertain to KRKG generation and success/failure validation.
+    """
+    files_to_remove = [
+        RKG_PATH,
+        KRKG_PATH,
+        OK_PATH,
+        FAIL_PATH,
+        TIMEOUT_PATH,
+    ]
 
-    if os.path.exists(rkg_path):
-        os.remove(rkg_path)
-
-    if os.path.exists(krkg_path):
-        os.remove(krkg_path)
-
-    if os.path.exists(ok_path):
-        os.remove(ok_path)
-
-    if os.path.exists(fail_path):
-        os.remove(fail_path)
+    for file in files_to_remove:
+        if os.path.exists(file):
+            os.remove(file)
 
     if os.path.exists(timeout_path):
         os.remove(timeout_path)
 
 
 async def dolphin_set_ghost(ghost: bytes):
-    with open(os.path.join(NAND_PATH, "test.rkg"), "wb") as f:
+    """
+    Writes the provided array of bytes to RKG_PATH.
+    """
+    with open(RKG_PATH, "wb") as f:
         f.write(ghost)
 
 
 async def dolphin_run():
+    """
+    Spawns a Dolphin subprocess which executes dolphin-emu-nogui with the following settings:
+      - EmulationSpeed=0 ==> Unlimited Speed
+      - Null Renderer ==> No graphics output
+      - Headless Profile ==> No GUI
+      - No Audio Output
+      - Runs SP_PATH (the MKW-SP patch .dol)
+      - Default ISO ==> Boots into MKW after patch is loaded
+    Enforces a max runtime duration of DOLPHIN_TIMEOUT to avoid getting stuck indefinitely.
+    """
     uncap_speed = ["-C", "Dolphin.Core.EmulationSpeed=0"]
     null_renderer = ["-v", "Null"]
     headless_profile = ["-p", "headless"]
     no_audio = ["-C", 'Dolphin.DSP.Backend="No Audio Output"']
-    default_iso = ["-C", "Dolphin.Core.DefaultISO=/home/malleo/iso/MKWPAL.iso"]
+    default_iso = ["-C", f"Dolphin.Core.DefaultISO={MKW_PATH}"]
     mmu = ["-C", "Dolphin.Core.MMU=True"]
 
     try:
@@ -87,24 +108,32 @@ async def dolphin_run():
 
 
 async def dolphin_ok() -> bool:
-    return os.path.exists(os.path.join(NAND_PATH, "ok"))
+    """
+    Checks for the presence of the "ok" file.
+    If present, then the ghost replay succeeded and the krkg was generated.
+    """
+    return os.path.exists(OK_PATH)
 
 
 async def dolphin_fail() -> Optional[str]:
-    fail_path = os.path.join(NAND_PATH, "fail")
-    if os.path.exists(fail_path):
-        with open(fail_path, "r") as f:
+    """
+    If "fail" file exists, returns the contents of the file, otherwise None.
+    """
+    try:
+        with open(FAIL_PATH, "r") as f:
             return f.read()
-    else:
+    except FileNotFoundError:
         return None
 
 
 async def dolphin_krkg() -> Optional[bytes]:
-    krkg_path = os.path.join(NAND_PATH, "test.krkg")
-    if os.path.exists(krkg_path):
-        with open(krkg_path, "rb") as f:
+    """
+    If krkg file exists, returns the contents of the file, otherwise None
+    """
+    try:
+        with open(KRKG_PATH, "rb") as f:
             return f.read()
-    else:
+    except FileNotFoundError:
         return None
 
 
@@ -117,36 +146,35 @@ async def dolphin_generate_krkg(ghost: bytes, interaction: discord.Interaction):
     if await dolphin_ok():
         krkg = await dolphin_krkg()
         if not krkg:
-            await respond_bug_error(
+            await responses.respond_bug_error(
                 interaction, "Dolphin returned OK, but there's no KRKG"
             )
             return
 
-        await respond_krkg_success(
+        await responses.respond_krkg_success(
             interaction,
-            discord.File(os.path.join(NAND_PATH, "test.krkg"),
-                         filename="test.krkg"),
+            discord.File(KRKG_PATH),
         )
         return
 
     fail = await dolphin_fail()
     if fail:
-        await respond_fail_error(interaction, fail)
+        await responses.respond_fail_error(interaction, fail)
         return
     # Empty string is falsey, leading to two situations where fail is False
     elif os.path.exists(os.path.join(NAND_PATH, "fail")):
-        await respond_bug_error(
+        await responses.respond_bug_error(
             interaction, "Dolphin returned fail, but there's no explanation"
         )
         return
     elif os.path.exists(os.path.join(NAND_PATH, "timeout")):
-        await respond_fail_error(
+        await responses.respond_fail_error(
             interaction, f"Ghost replay exceeded {DOLPHIN_TIMEOUT:.0f} second limit. \
                 It's likely the ghost doesn't sync on console."
         )
         return
 
-    await respond_bug_error(interaction, "Dolphin returned nothing")
+    await responses.respond_bug_error(interaction, "Dolphin returned nothing")
 
 
 # ================================
@@ -197,19 +225,19 @@ async def replay_exec(ghost: bytes, interaction: discord.Interaction):
     return_code = await replay_run()
 
     if return_code == 0:
-        await respond_generic_success(
+        await responses.respond_generic_success(
             interaction,
             "Run synced successfully!",
         )
         return
 
     if return_code != 1:
-        await respond_bug_error(interaction, f"Unknown error! Return code {return_code}. Possibly a segfault")
+        await responses.respond_bug_error(interaction, f"Unknown error! Return code {return_code}. Possibly a segfault")
         return
 
     fail = await replay_results()
     if fail:
-        await respond_fail_error(
+        await responses.respond_fail_error(
             interaction,
             fail.split("\n")[1],
             tip="This is a desync! Send the ghost in the Kinoko Discord server!",
@@ -217,91 +245,12 @@ async def replay_exec(ghost: bytes, interaction: discord.Interaction):
         return
     # Empty string is falsey, leading to two situations where fail is False
     elif os.path.exists(os.path.join(KINOKO_PATH, "results.txt")):
-        await respond_bug_error(
+        await responses.respond_bug_error(
             interaction, "Kinoko closed, but there's no explanation"
         )
         return
 
-    await respond_bug_error(interaction, "Kinoko returned nothing")
-
-
-# ================================
-#     RESPONSES
-# ================================
-
-
-async def respond_generic_error(
-    interaction: discord.Interaction, error: str, tip: Optional[str] = None
-):
-    embed = discord.Embed(color=0xFF595E, title="Error!",
-                          description=f"### {error}")
-    embed.set_footer(text=tip)
-    if (
-        interaction.response.type
-        == discord.InteractionResponseType.deferred_channel_message
-    ):
-        await interaction.followup.send(embed=embed, ephemeral=True)
-    else:
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-
-async def respond_generic_success(
-    interaction: discord.Interaction, msg: str, tip: Optional[str] = None
-):
-    embed = discord.Embed(color=0x5EFF59, title="Success!",
-                          description=f"### {msg}")
-    embed.set_footer(text=tip)
-
-    if (
-        interaction.response.type
-        == discord.InteractionResponseType.deferred_channel_message
-    ):
-        await interaction.followup.send(embed=embed, ephemeral=True)
-    else:
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-
-async def respond_fail_error(
-    interaction: discord.Interaction, error: str, tip: Optional[str] = None
-):
-    embed = discord.Embed(color=0xFF595E, title="Fail!",
-                          description=f"### {error}")
-    embed.set_footer(text=tip)
-
-    if (
-        interaction.response.type
-        == discord.InteractionResponseType.deferred_channel_message
-    ):
-        await interaction.followup.send(embed=embed, ephemeral=True)
-    else:
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-
-async def respond_bug_error(interaction: discord.Interaction, error: str):
-    embed = discord.Embed(color=0xFFCA3A, title="BUG!",
-                          description=f"### {error}")
-    embed.set_footer(
-        text="This should never be visible. "
-        "Please report this to a Kinoko developer if you see this!"
-    )
-
-    if (
-        interaction.response.type
-        == discord.InteractionResponseType.deferred_channel_message
-    ):
-        await interaction.followup.send(embed=embed, ephemeral=True)
-    else:
-        await interaction.response.send_message(embed=embed, ephemeral=True)
-
-
-async def respond_krkg_success(interaction: discord.Interaction, file: discord.File):
-    if (
-        interaction.response.type
-        == discord.InteractionResponseType.deferred_channel_message
-    ):
-        await interaction.followup.send(file=file, ephemeral=True)
-    else:
-        await interaction.response.send_message(file=file, ephemeral=True)
+    await responses.respond_bug_error(interaction, "Kinoko returned nothing")
 
 
 # ================================
@@ -337,7 +286,7 @@ async def command_generate_krkg(
     # Check if the file claims to be a ghost
     file_extension = ghost.filename.split(".")[-1]
     if file_extension != "rkg":
-        await respond_generic_error(
+        await responses.respond_generic_error(
             interaction,
             "File is not an RKG",
             "Double check that the file extension is .rkg!",
@@ -346,7 +295,7 @@ async def command_generate_krkg(
 
     # Check if the size is too small or big to be a ghost
     if ghost.size < 0x8C or ghost.size > 0x2800:
-        await respond_generic_error(
+        await responses.respond_generic_error(
             interaction,
             f"File is too {"small" if ghost.size < 0x8c else "big"} to be an RKG",
         )
@@ -357,7 +306,7 @@ async def command_generate_krkg(
     # the chances of a collision are incredibly unlikely
     # TODO: This command should use a mutex to add to a queue that another thread reads from
     if IS_GENERATING_KRKG:
-        await respond_generic_error(
+        await responses.respond_generic_error(
             interaction,
             "Already generating a KRKG",
             "I can only handle one ghost at a time. Try again later!",
@@ -382,7 +331,7 @@ async def command_replay_ghost(
     # Check if the file claims to be a ghost
     file_extension = ghost.filename.split(".")[-1]
     if file_extension != "rkg":
-        await respond_generic_error(
+        await responses.respond_generic_error(
             interaction,
             "File is not an RKG",
             "Double check that the file extension is .rkg!",
@@ -391,7 +340,7 @@ async def command_replay_ghost(
 
     # Check if the size is too small or big to be a ghost
     if ghost.size < 0x8C or ghost.size > 0x2800:
-        await respond_generic_error(
+        await responses.respond_generic_error(
             interaction,
             f"File is too {"small" if ghost.size < 0x8c else "big"} to be an RKG",
         )
@@ -402,7 +351,7 @@ async def command_replay_ghost(
     # the chances of a collision are incredibly unlikely
     # TODO: This command should use a mutex to add to a queue that another thread reads from
     if IS_REPLAYING_GHOST:
-        await respond_generic_error(
+        await responses.respond_generic_error(
             interaction,
             "Already replaying a ghost",
             "I can only handle one ghost at a time. Try again later!",
@@ -420,6 +369,9 @@ if __name__ == "__main__":
     assert (
         DOLPHIN_PATH
     ), 'Missing path for Dolphin, ensure "dolphin_path" exists in environment'
+    assert (
+        MKW_PATH
+    ), 'Missing path for MKW ISO, ensure "mkw_path" exists in environment'
     assert SP_PATH, 'Missing path for SP DOL, ensure "sp_path" exists in environment'
     assert (
         NAND_PATH
