@@ -1,4 +1,5 @@
 import asyncio
+from dolphin import *
 import os
 from responses import *
 from typing import Optional
@@ -84,11 +85,8 @@ async def replay_exec(ghost: bytes, interaction: discord.Interaction):
 
     fail = await replay_results()
     if fail:
-        await respond_fail_error(
-            interaction,
-            fail.split("\n")[1],
-            tip="This is a desync! Send the ghost in the Kinoko Discord server!",
-        )
+        # Desync occurred! Generate a KRKG and display the KRKG desync information
+        dolphin_compare_krkg(ghost, interaction)
         return
     # Empty string is falsey, leading to two situations where fail is False
     elif os.path.exists(os.path.join(KINOKO_PATH, "results.txt")):

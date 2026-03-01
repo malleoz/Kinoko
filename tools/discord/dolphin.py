@@ -3,6 +3,7 @@ import discord
 from dotenv import load_dotenv
 import os
 from responses import *
+from test import *
 
 DOLPHIN_PATH = os.getenv("dolphin_path")
 MKW_PATH = os.getenv("mkw_path")
@@ -114,11 +115,15 @@ async def dolphin_fail() -> Optional[str]:
         return None
 
 
-async def dolphin_krkg() -> bool:
+async def dolphin_krkg() -> Optional[bytes]:
     """
     Checks for the presence of the .krkg file.
     """
-    return os.path.exists(KRKG_PATH)
+    try:
+        with open(KRKG_PATH, "rb") as f:
+            return f.read()
+    except FileNotFoundError:
+        return None
 
 
 async def dolphin_generate_krkg(ghost: bytes, interaction: discord.Interaction):
@@ -162,3 +167,48 @@ async def dolphin_generate_krkg(ghost: bytes, interaction: discord.Interaction):
         return
 
     await respond_bug_error(interaction, "Dolphin returned nothing")
+
+
+async def dolphin_compare_krkg(ghost: bytes, interaction: discord.Interaction):
+    """
+    Create KRKG and test against it
+    """
+    await dolphin_clear_io()
+    await dolphin_write_rkg(ghost)
+
+    await dolphin_run()
+
+    if await dolphin_ok():
+        krkg = await dolphin_krkg()
+        if not krkg:
+            await respond_bug_error(
+                interaction, "Ghost did not replay in Kinoko. When attempting to create a KRKG,"
+                "Dolphin returned OK, but there's no KRKG!"
+            )
+            return
+        # KRKG successfully created ==> Need to run ghost against krkg
+        await kinoko_test_rkg(ghost, krkg, interaction)
+        return
+
+    # If "ok" wasn't present, something went wrong
+    fail = await dolphin_fail()
+    if fail:
+        await respond_fail_error(interaction, fail)
+        return
+    # Empty string is falsey, leading to two situations where fail is False
+    elif os.path.exists(FAIL_PATH):
+        await respond_bug_error(
+            interaction, "Ghost did not replay in Kinoko. When attempting to create a KRKG,"
+            "Dolphin returned fail, but there's no explanation"
+        )
+        return
+    elif os.path.exists(TIMEOUT_PATH):
+        await respond_fail_error(
+            interaction, f"Ghost did not replay in Kinoko. When attempting to create a KRKG, \
+            Ghost replay exceeded {DOLPHIN_TIMEOUT:.0f} second limit. \
+                It's likely the ghost doesn't sync on console."
+        )
+        return
+
+    await respond_bug_error(interaction, "Ghost did not replay in Kinoko."
+                            "When attempting to create a KRKG, Dolphin returned nothing")
