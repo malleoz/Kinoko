@@ -1,12 +1,24 @@
+import discord
+from typing import Optional
+
 # ================================
 #     RESPONSES
 # ================================
+
+ERROR_COLOR = 0xFF595E
+BUG_COLOR = 0xFFCA3A
+SUCCESS_COLOR = 0x5EFF59
 
 
 async def respond_generic_error(
     interaction: discord.Interaction, error: str, tip: Optional[str] = None
 ):
-    embed = discord.Embed(color=0xFF595E, title="Error!",
+    """
+    Used when an error occurs not related to actual replay or krkg generation, such as:
+    - File provided is not an rkg
+    - Someone is already generating a KRKG
+    """
+    embed = discord.Embed(color=ERROR_COLOR, title="Error!",
                           description=f"### {error}")
     embed.set_footer(text=tip)
     if (
@@ -21,7 +33,7 @@ async def respond_generic_error(
 async def respond_generic_success(
     interaction: discord.Interaction, msg: str, tip: Optional[str] = None
 ):
-    embed = discord.Embed(color=0x5EFF59, title="Success!",
+    embed = discord.Embed(color=SUCCESS_COLOR, title="Success!",
                           description=f"### {msg}")
     embed.set_footer(text=tip)
 
@@ -37,7 +49,7 @@ async def respond_generic_success(
 async def respond_fail_error(
     interaction: discord.Interaction, error: str, tip: Optional[str] = None
 ):
-    embed = discord.Embed(color=0xFF595E, title="Fail!",
+    embed = discord.Embed(color=ERROR_COLOR, title="Fail!",
                           description=f"### {error}")
     embed.set_footer(text=tip)
 
@@ -51,7 +63,7 @@ async def respond_fail_error(
 
 
 async def respond_bug_error(interaction: discord.Interaction, error: str):
-    embed = discord.Embed(color=0xFFCA3A, title="BUG!",
+    embed = discord.Embed(color=BUG_COLOR, title="BUG!",
                           description=f"### {error}")
     embed.set_footer(
         text="This should never be visible. "
