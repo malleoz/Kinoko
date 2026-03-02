@@ -215,7 +215,7 @@ async def parse_vehicle_and_character(ghost: bytes) -> Tuple[str, str]:
 async def parse_controller(ghost: bytes) -> str:
     # Controller ID is upper 4 bits
     controller_bytes = ghost[11]
-    controller = controller_bytes >> 4
+    controller = controller_bytes & 0x4
 
     return CONTROLLER_NAMES[controller]
 
