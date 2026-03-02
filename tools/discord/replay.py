@@ -86,7 +86,7 @@ async def replay_exec(ghost: bytes, interaction: discord.Interaction):
     fail = await replay_results()
     if fail:
         # Desync occurred! Generate a KRKG and display the KRKG desync information
-        dolphin_compare_krkg(ghost, interaction)
+        await dolphin_compare_krkg(ghost, interaction)
         return
     # Empty string is falsey, leading to two situations where fail is False
     elif os.path.exists(os.path.join(KINOKO_PATH, "results.txt")):

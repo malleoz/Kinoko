@@ -1,4 +1,5 @@
 from dolphin import *
+from info import *
 from replay import *
 from responses import *
 
@@ -23,6 +24,38 @@ RKG_MAX_SIZE = 0x2800
 
 client = discord.Client(intents=discord.Intents.default())
 tree = discord.app_commands.CommandTree(client)
+
+
+async def valid_rkg(ghost: discord.Attachment, interaction: discord.Interaction) -> bool:
+    # Check if the file claims to be a ghost
+    file_extension = ghost.filename.split(".")[-1]
+    if file_extension != "rkg":
+        await respond_generic_error(
+            interaction,
+            "File is not an RKG",
+            "Double check that the file extension is .rkg!",
+        )
+        return False
+
+    # Check if the size is too small or big to be a ghost
+    if ghost.size < RKG_MIN_SIZE or ghost.size > RKG_MAX_SIZE:
+        await respond_generic_error(
+            interaction,
+            f"File is too {"small" if ghost.size < RKG_MIN_SIZE else "big"} to be an RKG",
+        )
+        return False
+
+    # Check that the first 4 bytes are 'RKGD'
+    data = await ghost.read()
+    if data[:4] != b'RKGD':
+        await respond_generic_error(
+            interaction,
+            "File is not an RKG",
+            "Double check the contents of the file",
+        )
+        return False
+
+    return True
 
 
 # ================================
@@ -55,22 +88,7 @@ async def command_generate_krkg(
     # Log when people generate KRKGs
     print(f"{interaction.user.name} is requesting to generate a KRKG!")
 
-    # Check if the file claims to be a ghost
-    file_extension = ghost.filename.split(".")[-1]
-    if file_extension != "rkg":
-        await respond_generic_error(
-            interaction,
-            "File is not an RKG",
-            "Double check that the file extension is .rkg!",
-        )
-        return
-
-    # Check if the size is too small or big to be a ghost
-    if ghost.size < RKG_MIN_SIZE or ghost.size > RKG_MAX_SIZE:
-        await respond_generic_error(
-            interaction,
-            f"File is too {"small" if ghost.size < RKG_MIN_SIZE else "big"} to be an RKG",
-        )
+    if not await valid_rkg(ghost, interaction):
         return
 
     # We can only generate one KRKG at a time, due to how we I/O with Dolphin
@@ -100,22 +118,7 @@ async def command_replay_ghost(
     # Log when people replay ghosts
     print(f"{interaction.user.name} is requesting to replay a ghost!")
 
-    # Check if the file claims to be a ghost
-    file_extension = ghost.filename.split(".")[-1]
-    if file_extension != "rkg":
-        await respond_generic_error(
-            interaction,
-            "File is not an RKG",
-            "Double check that the file extension is .rkg!",
-        )
-        return
-
-    # Check if the size is too small or big to be a ghost
-    if ghost.size < RKG_MIN_SIZE or ghost.size > RKG_MAX_SIZE:
-        await respond_generic_error(
-            interaction,
-            f"File is too {"small" if ghost.size < RKG_MIN_SIZE else "big"} to be an RKG",
-        )
+    if not await valid_rkg(ghost, interaction):
         return
 
     # We can only replay one ghost at a time, due to how we I/O with Kinoko
@@ -135,6 +138,18 @@ async def command_replay_ghost(
     await replay_exec(await ghost.read(), interaction)
     IS_REPLAYING_GHOST = False
 
+
+@tree.command(name="get_ghost_info")
+async def command_get_ghost_info(
+        interaction: discord.Interaction, ghost: discord.Attachment):
+    # Log when people request ghost info
+    print(f"{interaction.user.name} is requesting ghost info!")
+
+    if not await valid_rkg(ghost, interaction):
+        return
+
+    embed = await embed_ghost_info(await ghost.read())
+    await interaction.response.send_message(embed=embed, ephemeral=True)
 
 if __name__ == "__main__":
     assert TOKEN, 'Missing token for Discord bot, ensure "token" exists in environment'
