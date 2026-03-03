@@ -2,6 +2,7 @@ import asyncio
 import discord
 import os
 from responses import *
+from save import *
 from typing import Tuple
 
 KINOKO_PATH = os.getenv("kinoko_path")
@@ -88,6 +89,9 @@ async def kinoko_test_rkg(ghost: bytes, krkg: bytes, interaction: discord.Intera
         )
         return
     else:
+        # Save ghost and krkg so that it can be analyzed later
+        await save_to_folder(folder_name="desyncs", ghost=ghost, krkg=krkg)
+
         # Format the stdout output so that it just has desync information
         # Remove "Test Cast Failed" line
         stdout = stdout.splitlines()

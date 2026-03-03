@@ -48,17 +48,6 @@ async def replay_run() -> int:
     return proc.returncode
 
 
-async def replay_results() -> Optional[str]:
-    """
-    Returns the contents of results.txt, if present.
-    """
-    try:
-        with open(RESULTS_PATH, "r") as f:
-            return f.read()
-    except FileNotFoundError:
-        return None
-
-
 async def replay_exec(ghost: bytes, interaction: discord.Interaction):
     """
     Top-level function which does the following:
@@ -83,16 +72,5 @@ async def replay_exec(ghost: bytes, interaction: discord.Interaction):
         await respond_bug_error(interaction, f"Unknown error! Return code {return_code}. Possibly a segfault")
         return
 
-    fail = await replay_results()
-    if fail:
-        # Desync occurred! Generate a KRKG and display the KRKG desync information
-        await dolphin_compare_krkg(ghost, interaction)
-        return
-    # Empty string is falsey, leading to two situations where fail is False
-    elif os.path.exists(os.path.join(KINOKO_PATH, "results.txt")):
-        await respond_bug_error(
-            interaction, "Kinoko closed, but there's no explanation"
-        )
-        return
-
-    await respond_bug_error(interaction, "Kinoko returned nothing")
+    # Desync occurred! Generate a KRKG and display the KRKG desync information
+    await dolphin_compare_krkg(ghost, interaction)
