@@ -33,7 +33,7 @@ void KTestSystem::init() {
     m_sceneMgr = new EGG::SceneManager(sceneCreator);
 
     System::RaceConfig::RegisterInitCallback(OnInit, nullptr);
-    Abstract::File::Remove("results.txt");
+    //Abstract::File::Remove("results.txt");
 
     if (m_testMode == Host::EOption::Suite) {
         initSuite();
@@ -443,11 +443,11 @@ bool KTestSystem::runTest() {
 /// @brief Writes details about the current test to file.
 /// @details This is designed to be cumulative across multiple tests.
 void KTestSystem::writeTestOutput() const {
-    std::string outStr(getCurrentTestCase().name.data());
+    /*std::string outStr(getCurrentTestCase().name.data());
     outStr += "\n" + std::string(m_sync ? "1" : "0") + "\n";
     outStr += std::to_string(getCurrentTestCase().targetFrame) + "\n";
     outStr += std::to_string(m_frameCount) + "\n";
-    Abstract::File::Append("results.txt", outStr.c_str(), outStr.size());
+    Abstract::File::Append("results.txt", outStr.c_str(), outStr.size());*/
 }
 
 /// @brief Gets the current test case.

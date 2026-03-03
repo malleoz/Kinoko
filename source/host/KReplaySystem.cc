@@ -19,7 +19,7 @@ void KReplaySystem::init() {
     m_sceneMgr = new EGG::SceneManager(sceneCreator);
 
     System::RaceConfig::RegisterInitCallback(OnInit, nullptr);
-    Abstract::File::Remove("results.txt");
+    //Abstract::File::Remove("results.txt");
 
     m_sceneMgr->changeScene(0);
 }
@@ -129,10 +129,10 @@ bool KReplaySystem::calcEnd() const {
 
 /// @brief Reports failure to file.
 /// @param msg The message to report.
-void KReplaySystem::reportFail(const std::string &msg) const {
-    std::string report(m_currentGhostFileName);
+void KReplaySystem::reportFail(const std::string &/*msg*/) const {
+    /*std::string report(m_currentGhostFileName);
     report += "\n" + std::string(msg);
-    Abstract::File::Append("results.txt", report.c_str(), report.size());
+    Abstract::File::Append("results.txt", report.c_str(), report.size());*/
 }
 
 /// @brief Determines whether the simulation was a success or not.

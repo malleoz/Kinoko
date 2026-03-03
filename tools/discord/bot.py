@@ -121,22 +121,8 @@ async def command_replay_ghost(
     if not await valid_rkg(ghost, interaction):
         return
 
-    # We can only replay one ghost at a time, due to how we I/O with Kinoko
-    # This theoretically creates a race condition, but with low traffic in mind,
-    # the chances of a collision are incredibly unlikely
-    # TODO: This command should use a mutex to add to a queue that another thread reads from
-    if IS_REPLAYING_GHOST:
-        await respond_generic_error(
-            interaction,
-            "Already replaying a ghost",
-            "I can only handle one ghost at a time. Try again later!",
-        )
-        return
-
-    IS_REPLAYING_GHOST = True
     await interaction.response.defer(ephemeral=True, thinking=True)
     await replay_exec(await ghost.read(), interaction)
-    IS_REPLAYING_GHOST = False
 
 
 @tree.command(name="get_ghost_info")
