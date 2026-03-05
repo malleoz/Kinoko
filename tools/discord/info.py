@@ -1,5 +1,8 @@
 from dataclasses import dataclass
 import discord
+import os
+from PIL import Image
+import requests
 from typing import BinaryIO, List, Optional, Tuple
 
 
@@ -57,7 +60,7 @@ VEHICLE_NAMES = {
     10: "Super Blooper",
     11: "Piranha Prowler",
     12: "Tiny Titan",
-    13: "Daytripped",
+    13: "Daytripper",
     14: "Jetsetter",
     15: "Blue Falcon",
     16: "Sprinter",
@@ -258,7 +261,11 @@ async def parse_metadata(ghost: bytes) -> Metadata:
     return Metadata(race_time, course, vehicle, character, controller, lap_times, drift_type, player_name, ctgp_ghost)
 
 
-async def embed_ghost_info(ghost: bytes) -> Optional[discord.Embed]:
+async def parse_mii_bytes(ghost: bytes) -> bytes:
+    return ghost[0x3C:0x86]
+
+
+async def embed_ghost_info(ghost: bytes) -> Tuple[discord.Embed, Optional[discord.File]]:
     metadata = await parse_metadata(ghost)
 
     TITLE = "Ghost Overview"
@@ -275,4 +282,48 @@ async def embed_ghost_info(ghost: bytes) -> Optional[discord.Embed]:
     for i in range(len(metadata.lap_times)):
         description += f"Lap {i+1}: {metadata.lap_times[i]}\n"
 
-    return discord.Embed(color=0xFFFFFF, title=TITLE, description=description)
+    embed = discord.Embed(color=0xFFFFFF, title=TITLE, description=description)
+
+    COURSE_IMG_ROOT = os.path.join(os.getcwd(), "assets", "courses")
+    CHARACTER_IMG_ROOT = os.path.join(os.getcwd(), "assets", "characters")
+    VEHICLES_IMG_ROOT = os.path.join(os.getcwd(), "assets", "vehicles")
+
+    # TODO: Run locally
+    MII_RENDERER_URL = "https://mii-unsecure.ariankordi.net/miis/image.png?data={mii_bytes}&type=face&width=70"
+    mii_bytes = await parse_mii_bytes(ghost)
+    mii_url = MII_RENDERER_URL.replace("{mii_bytes}", mii_bytes.hex())
+
+    course_img_path = os.path.join(COURSE_IMG_ROOT, metadata.track.replace(
+        " ", "").replace("\'", "") + ".png")
+
+    character_img_path = os.path.join(CHARACTER_IMG_ROOT, metadata.character.replace(
+        " ", "").replace("\'", "") + ".png")
+
+    vehicle_img_path = os.path.join(VEHICLES_IMG_ROOT, metadata.vehicle.replace(
+        " ", "").replace("\'", "") + ".png")
+
+    course_img = Image.open(course_img_path)
+    character_img = Image.open(character_img_path)
+    vehicle_img = Image.open(vehicle_img_path)
+
+    mii_img = Image.open(requests.get(mii_url, stream=True).raw)
+
+    # Convert to RGBA
+    course_img = course_img.convert("RGBA")
+    mii_img = mii_img.convert("RGBA")
+    character_img = character_img.convert("RGBA")
+    vehicle_img = vehicle_img.convert("RGBA")
+
+    course_img.paste(mii_img, (-10, -10), mii_img)
+    course_img.paste(character_img, (course_img.width - character_img.width - vehicle_img.width,
+                     int((course_img.height - character_img.height) / 2)), character_img)
+    course_img.paste(vehicle_img, (course_img.width - vehicle_img.width,
+                     int((course_img.height - vehicle_img.height) / 2)), vehicle_img)
+    course_img.save(os.path.join(COURSE_IMG_ROOT, "tmp.png"))
+
+    img_file = discord.File(os.path.join(
+        COURSE_IMG_ROOT, "tmp.png"), filename="tmp.png")
+
+    embed.set_image(url="attachment://tmp.png")
+
+    return (embed, img_file)

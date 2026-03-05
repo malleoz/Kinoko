@@ -34,7 +34,7 @@ async def respond_generic_error(
 async def respond_generic_success(
     ghost: bytes, interaction: discord.Interaction, msg: str, tip: Optional[str] = None
 ):
-    info_embed = await embed_ghost_info(ghost)
+    info_embed, course_file = await embed_ghost_info(ghost)
     embed = discord.Embed(color=SUCCESS_COLOR, title="Success!",
                           description=f"### {msg}")
     embed.set_footer(text=tip)
@@ -43,9 +43,9 @@ async def respond_generic_success(
         interaction.response.type
         == discord.InteractionResponseType.deferred_channel_message
     ):
-        await interaction.followup.send(embeds=[info_embed, embed], ephemeral=True)
+        await interaction.followup.send(file=course_file, embeds=[info_embed, embed], ephemeral=True)
     else:
-        await interaction.response.send_message(embeds=[info_embed, embed], ephemeral=True)
+        await interaction.response.send_message(file=course_file, embeds=[info_embed, embed], ephemeral=True)
 
 
 async def respond_fail_error(
@@ -92,7 +92,7 @@ async def respond_krkg_success(interaction: discord.Interaction, file: discord.F
 
 
 async def respond_desync_error(ghost: bytes, interaction: discord.Interaction, error: str):
-    info_embed = await embed_ghost_info(ghost)
+    info_embed, course_file = await embed_ghost_info(ghost)
     embed = discord.Embed(color=BUG_COLOR, title="DESYNC!",
                           description=f"### {error}")
 
@@ -104,6 +104,6 @@ async def respond_desync_error(ghost: bytes, interaction: discord.Interaction, e
         interaction.response.type
         == discord.InteractionResponseType.deferred_channel_message
     ):
-        await interaction.followup.send(embeds=[info_embed, embed], ephemeral=True)
+        await interaction.followup.send(file=course_file, embeds=[info_embed, embed], ephemeral=True)
     else:
-        await interaction.response.send_message(embeds=[info_embed, embed], ephemeral=True)
+        await interaction.response.send_message(file=course_file, embeds=[info_embed, embed], ephemeral=True)

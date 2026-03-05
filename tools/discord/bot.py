@@ -134,8 +134,8 @@ async def command_get_ghost_info(
     if not await valid_rkg(ghost, interaction):
         return
 
-    embed = await embed_ghost_info(await ghost.read())
-    await interaction.response.send_message(embed=embed, ephemeral=True)
+    embed, course_file = await embed_ghost_info(await ghost.read())
+    await interaction.response.send_message(file=course_file, embed=embed, ephemeral=True)
 
 if __name__ == "__main__":
     assert TOKEN, 'Missing token for Discord bot, ensure "token" exists in environment'
