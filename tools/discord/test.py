@@ -86,7 +86,7 @@ async def kinoko_test_rkg(ghost: bytes, krkg: bytes, interaction: discord.Intera
         await respond_generic_success(ghost,
                                       interaction,
                                       "Ghost syncs up until end of input stream!",
-                                      "This ghost likely used instand finish code as it does not finish the race.")
+                                      "This ghost likely used instant finish code as it does not finish the race.")
         return
     else:
         # Save ghost and krkg so that it can be analyzed later
