@@ -32,8 +32,9 @@ async def respond_generic_error(
 
 
 async def respond_generic_success(
-    interaction: discord.Interaction, msg: str, tip: Optional[str] = None
+    ghost: bytes, interaction: discord.Interaction, msg: str, tip: Optional[str] = None
 ):
+    info_embed = await embed_ghost_info(ghost)
     embed = discord.Embed(color=SUCCESS_COLOR, title="Success!",
                           description=f"### {msg}")
     embed.set_footer(text=tip)
@@ -42,9 +43,9 @@ async def respond_generic_success(
         interaction.response.type
         == discord.InteractionResponseType.deferred_channel_message
     ):
-        await interaction.followup.send(embed=embed, ephemeral=True)
+        await interaction.followup.send(embeds=[info_embed, embed], ephemeral=True)
     else:
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(embeds=[info_embed, embed], ephemeral=True)
 
 
 async def respond_fail_error(

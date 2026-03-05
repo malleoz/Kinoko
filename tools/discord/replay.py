@@ -62,10 +62,10 @@ async def replay_exec(ghost: bytes, interaction: discord.Interaction):
     return_code = await replay_run()
 
     if return_code == 0:
-        await respond_generic_success(
-            interaction,
-            "Run synced successfully!",
-        )
+        await respond_generic_success(ghost,
+                                      interaction,
+                                      "Run synced successfully!",
+                                      )
         return
 
     if return_code != 1:

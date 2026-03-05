@@ -83,10 +83,10 @@ async def kinoko_test_rkg(ghost: bytes, krkg: bytes, interaction: discord.Intera
     return_code, stdout = await test_run()
 
     if (return_code == 0):
-        await respond_bug_error(
-            interaction,
-            "Run desynced in replay mode, but upon running in test mode, it syncs!",
-        )
+        await respond_generic_success(ghost,
+                                      interaction,
+                                      "Ghost syncs up until end of input stream!",
+                                      "This ghost likely used instand finish code as it does not finish the race.")
         return
     else:
         # Save ghost and krkg so that it can be analyzed later
