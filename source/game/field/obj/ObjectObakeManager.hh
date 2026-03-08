@@ -87,7 +87,7 @@ public:
 
     void addBlock(const System::MapdataGeoObj &params);
 
-    const std::vector<ObjectObakeBlock *> blocks() const {
+    const std::vector<ObjectObakeBlock *> &blocks() const {
         return m_blocks;
     }
 
