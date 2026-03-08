@@ -87,6 +87,10 @@ public:
 
     void addBlock(const System::MapdataGeoObj &params);
 
+    const std::vector<ObjectObakeBlock *> blocks() const {
+        return m_blocks;
+    }
+
 private:
     static constexpr size_t CACHE_SIZE_X = 122;
     static constexpr size_t CACHE_SIZE_Z = 116;
