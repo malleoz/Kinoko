@@ -116,6 +116,10 @@ public:
         return m_scale;
     }
 
+    [[nodiscard]] const EGG::Vector3f &rot() const {
+        return m_rot;
+    }
+
 protected:
     void calcTransform();
     void calcRotLock();
