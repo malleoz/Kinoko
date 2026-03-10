@@ -139,6 +139,10 @@ public:
         return m_boundingRadius;
     }
 
+    [[nodiscard]] const std::span<Hitbox> &hitboxes() const {
+        return m_hitboxes;
+    }
+
     [[nodiscard]] Hitbox &hitbox(u16 hitboxIdx) {
         return m_hitboxes[hitboxIdx];
     }
