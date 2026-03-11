@@ -100,7 +100,7 @@ private:
     KartCameraState m_forwardCamera;  ///< Forward camera state
     KartCameraState m_backwardCamera; ///< Rear camera state
 
-    static KartCamera *s_instance;
+    static thread_local KartCamera *s_instance;
 };
 
 } // namespace Render

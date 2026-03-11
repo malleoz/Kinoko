@@ -198,6 +198,6 @@ void KartCamera::calcCollision(KartCameraState &state, bool isBackwards) const {
     }
 }
 
-KartCamera *KartCamera::s_instance = nullptr;
+thread_local KartCamera *KartCamera::s_instance = nullptr;
 
 } // namespace Render
