@@ -72,6 +72,8 @@ void ObjectCrab::calc() {
     }
 }
 
+/// @brief Tries to move the crab along its rail, unless it's still
+/// @return True if the crab is starting to move this frame
 bool ObjectCrab::calcRail() {
     if (m_still) {
         if (m_stillDuration <= ++m_stillFrame) {
@@ -98,6 +100,11 @@ bool ObjectCrab::calcRail() {
     return true;
 }
 
+/// @brief Manages the crab's still-pause state machine
+/// @details If the crab is not still, then it returns Walking. Otherwise:
+/// - Start phase -> Snaps the crab to the rail, resetting its rotation and advances to Middle
+/// - Middle phase -> Holds until the still duration has elapsed, then advances to End
+/// - End phase -> Resets the state to Walking and returns BeginWalking
 ObjectCrab::StateResult ObjectCrab::calcState() {
     if (m_state != State::Still) {
         return StateResult::Walking;
@@ -124,12 +131,14 @@ ObjectCrab::StateResult ObjectCrab::calcState() {
     return StateResult::BeginWalking;
 }
 
+/// @brief Sets rotation, factoring in the crab's backwards setting and rail direction
 void ObjectCrab::calcCurRot(const EGG::Vector3f &rot) {
     m_curRot = rot;
     m_curRot = m_backwards ? -m_curRot : m_curRot;
     m_curRot.y = m_railInterpolator->isMovementDirectionForward() ? m_curRot.y : -m_curRot.y;
 }
 
+/// @brief Sets transformation matrix based on the provided rotation and the rail's tangent
 void ObjectCrab::calcTransMat(const EGG::Vector3f &rot) {
     EGG::Matrix34f rotMat;
     rotMat.makeR(rot);

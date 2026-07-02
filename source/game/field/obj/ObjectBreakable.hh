@@ -4,6 +4,9 @@
 
 namespace Kinoko::Field {
 
+/// @brief Represents objects that can be broken by kart collision, such as the rDS/TF wooden boxes
+/// @details This class effectively does nothing currently (except maintaining an "active" state)
+/// and is implemented only to maintain the inheritance heirarchy used by @ref ObjectWoodbox.
 class ObjectBreakable : public ObjectCollidable {
 public:
     /// @addr{0x8076EBE0}
@@ -29,7 +32,7 @@ public:
     }
 
 protected:
-    u32 m_state;
+    u32 m_state; ///< 0 = inactive, 1 = active (collidable)
 };
 
 } // namespace Kinoko::Field

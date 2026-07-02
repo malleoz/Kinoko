@@ -4,6 +4,7 @@
 
 namespace Kinoko::Field {
 
+/// @brief Rising and falling fireballs on GBA Bowser Castle 3
 class ObjectBoble : public ObjectCollidable {
 public:
     ObjectBoble(const System::MapdataGeoObj &params);
@@ -26,7 +27,7 @@ public:
 private:
     void calcTangent();
 
-    EGG::Vector3f m_curTangentDir;
+    EGG::Vector3f m_curTangentDir; ///< Direction of the tangent to the rail at the current position
 };
 
 } // namespace Kinoko::Field

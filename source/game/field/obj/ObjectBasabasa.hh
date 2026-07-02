@@ -41,16 +41,17 @@ public:
 
 private:
     /// @addr{0x806B5C80}
+    /// @brief Run when the bat enters default state 0
     void enterState0() {}
 
     /// @addr{0x806B6288}
-    /// @brief This is run when a bat is hit with a start or other item. We can ignore for Kinoko.
+    /// @brief Runs when the bat enters state 1, which happens when the bat is hit by a hazard
     void enterState1() {}
 
     void calcState0();
 
     /// @addr{0x806B652C}
-    /// @brief This is run when a bat is hit with a start or other item. We can ignore for Kinoko.
+    /// @brief Runs when the bat is in state 1, which happens after the bat is hit by a hazard
     void calcState1() {}
 
     const bool m_bigBump;       ///< Affects the severity of the "push" when colliding with bat
@@ -106,8 +107,8 @@ private:
     u32 m_cycleTimer;         ///< Used to determine when to spawn next bat
     u32 m_batsActive;         ///< The number of bats currently spawned
 
-    static f32 s_initialXRange;
-    static f32 s_initialYRange;
+    static f32 s_initialXRange; ///< Range of random X offsets for the bats' initial positions
+    static f32 s_initialYRange; ///< Range of random Y offsets for the bats' initial positions
 };
 
 } // namespace Kinoko::Field

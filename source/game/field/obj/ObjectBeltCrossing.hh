@@ -5,6 +5,8 @@
 namespace Kinoko::Field {
 
 /// @brief The conveyers in the first section of Toad's Factory.
+/// @details Comprises of two conveyers that move in opposite directions with variant 0 moving in
+/// the negative direction and variant 1 moving in the positive direction.
 class ObjectBeltCrossing final : public ObjectBelt {
 public:
     ObjectBeltCrossing(const System::MapdataGeoObj &params);

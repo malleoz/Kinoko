@@ -5,6 +5,9 @@
 
 namespace Kinoko::Field {
 
+/// @brief Oscillating cars on Coconut Mall
+/// @details These cars move along a rail and have a trapezoidal motion profile; they accelerate to
+/// a set velocity, drive at that velocity for a set amount of time, and then decelerate to a stop.
 class ObjectCarA : public ObjectCollidable, public StateManager {
 public:
     ObjectCarA(const System::MapdataGeoObj &params);
@@ -35,22 +38,25 @@ private:
     void calcPos();
 
     void enterStop();
+
+    /// @brief Runs once when the car starts accelerating
     void enterAccel() {}
+
     void enterCruising();
 
     void calcStop();
     void calcAccel();
     void calcCruising();
 
-    const f32 m_finalVel;
-    const f32 m_accel;
-    const u32 m_stopTime;
+    const f32 m_finalVel;        ///< Target velocity after accelerating
+    const f32 m_accel;           ///< Acceleration and deceleration rate
+    const u32 m_stopTime;        ///< How long to spend at 0 velocity before accelerating.
     f32 m_cruiseTime;            ///< How long to spend at cruising speed before decelerating.
     EGG::Vector3f m_currTangent; ///< It's @ref EGG::Vector3f::ey unless it flies up in the air.
     EGG::Vector3f m_currUp;      ///< It's @ref EGG::Vector3f::ey unless it flies up in the air.
-    f32 m_currVel;
-    MotionState m_motionState;
-    bool m_changingDir;
+    f32 m_currVel;               ///< Current velocity of the car this frame
+    MotionState m_motionState;   ///< The current motion state of the car
+    bool m_changingDir;          ///< Triggers the deceleration-to-stop logic
 
     static constexpr std::array<StateManagerEntry, 3> STATE_ENTRIES = {{
             {StateEntry<ObjectCarA, &ObjectCarA::enterStop, &ObjectCarA::calcStop>(0)},

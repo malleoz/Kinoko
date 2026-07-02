@@ -76,6 +76,7 @@ void ObjectDossun::init() {
 }
 
 /// @addr{0x807648A4}
+/// @brief Scales up the height of the Thwomp's transformation matrix
 void ObjectDossun::calcCollisionTransform() {
     constexpr f32 HEIGHT = 400.0f;
 
@@ -92,6 +93,10 @@ void ObjectDossun::calcCollisionTransform() {
 }
 
 /// @addr{0x8075FF98}
+/// @brief Squishes the player if they are within a certain distance of a falling Thwomp
+/// @details A squish can still technically occur when the Thwomp is touching the ground, but this
+/// is not possible in practice because the player will be pushed away by the Thwomp's collision
+/// before it gets within the squish radius.
 Kart::Reaction ObjectDossun::onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
         Kart::Reaction /*reactionOnObj*/, EGG::Vector3f & /*hitDepth*/) {
     constexpr f32 SQUISH_DISTANCE = 375.0f;
@@ -139,7 +144,7 @@ void ObjectDossun::calcStomp() {
         break;
     }
 
-    if (m_cycleTimer-- == 0) {
+    if (m_stompDuration-- == 0) {
         startStill();
     }
 }

@@ -36,11 +36,7 @@ ObjectBase::~ObjectBase() {
     EGG::egg_delete(m_railInterpolator);
 }
 
-/// @addr{0x808217B8}
-void ObjectBase::calcModel() {
-    calcTransform();
-}
-
+/// @brief Fetches the name of the resource file (.brres) associated with the object, if any
 /// @addr{0x80680730}
 const char *ObjectBase::getResources() const {
     const auto &flowTable = ObjectDirector::Instance()->flowTable();
@@ -49,6 +45,7 @@ const char *ObjectBase::getResources() const {
     return collisionSet->resources;
 }
 
+/// @brief Loads the resources associated with the object, if any
 /// @addr{0x8081FD10}
 void ObjectBase::loadGraphics() {
     const char *name = getResources();
@@ -67,6 +64,7 @@ void ObjectBase::loadGraphics() {
     }
 }
 
+/// @brief Loads the rail interpolator for the object, if any
 /// @addr{0x80820980}
 void ObjectBase::loadRail() {
     if (!m_mapObj) {
@@ -89,6 +87,7 @@ void ObjectBase::loadRail() {
     }
 }
 
+/// @brief Fetches the name of the object
 /// @addr{0x80680784}
 [[nodiscard]] const char *ObjectBase::getName() const {
     const auto &flowTable = ObjectDirector::Instance()->flowTable();
@@ -97,6 +96,7 @@ void ObjectBase::loadRail() {
     return collisionSet->name;
 }
 
+/// @brief Fetches the name of the KCL resource associated with the object
 /// @addr{0x806806DC}
 const char *ObjectBase::getKclName() const {
     const auto &flowTable = ObjectDirector::Instance()->flowTable();
@@ -106,6 +106,7 @@ const char *ObjectBase::getKclName() const {
 }
 
 /// @addr{0x80821640}
+/// @brief Updates the transform matrix of the object based on its position and rotation
 void ObjectBase::calcTransform() {
     if (m_flags.onBit(eFlags::Rotation)) {
         m_transform.makeRT(m_rot, m_pos);
@@ -116,6 +117,9 @@ void ObjectBase::calcTransform() {
     }
 }
 
+/// @brief Refreshes the object's rotation vector based on its transform matrix
+/// @details This is used when the object's transform matrix is modified directly, such as via
+/// setMatrixTangentTo().
 void ObjectBase::calcRotLock() {
     if (!m_rotLock) {
         m_rotLock = true;
@@ -124,6 +128,7 @@ void ObjectBase::calcRotLock() {
 }
 
 /// @addr{0x80820EB8}
+/// @brief Links animations from the object's resource file to the DrawMdl
 void ObjectBase::linkAnims(const std::span<const char *> &names,
         const std::span<Render::AnmType> types) {
     if (!m_drawMdl) {
@@ -138,6 +143,7 @@ void ObjectBase::linkAnims(const std::span<const char *> &names,
 }
 
 /// @addr{0x80821910}
+/// @brief Sets the object's transformation matrix based on an up vector and a tangent vector
 void ObjectBase::setMatrixTangentTo(const EGG::Vector3f &up, const EGG::Vector3f &tangent) {
     m_rotLock = false;
     m_flags.setBit(eFlags::Matrix);
@@ -146,6 +152,7 @@ void ObjectBase::setMatrixTangentTo(const EGG::Vector3f &up, const EGG::Vector3f
 }
 
 /// @addr{0x808218B0}
+/// @brief Sets the transformation matrix based on an orthonormal basis and the object's position
 void ObjectBase::setMatrixFromOrthonormalBasisAndPos(const EGG::Vector3f &v) {
     m_flags.setBit(eFlags::Matrix);
     m_transform = OrthonormalBasis(v);
@@ -154,6 +161,8 @@ void ObjectBase::setMatrixFromOrthonormalBasisAndPos(const EGG::Vector3f &v) {
 
 /// @addr{0x806B38A8}
 /// @brief Calculates on what side of line segment ab point lies.
+/// @returns a positive value if point is on the left side of the line segment, negative if on the
+/// right side, and 0 if on the line segment.
 f32 ObjectBase::CheckPointAgainstLineSegment(const EGG::Vector3f &point, const EGG::Vector3f &a,
         const EGG::Vector3f &b) {
     return (b.x - a.x) * (point.z - a.z) - (point.x - a.x) * (b.z - a.z);
@@ -169,6 +178,7 @@ EGG::Vector3f ObjectBase::RotateXZByYaw(f32 angle, const EGG::Vector3f &v) {
 }
 
 /// @addr{0x806B3AC4}
+/// @brief Rotates a vector around an arbitrary axis by a given angle
 EGG::Vector3f ObjectBase::RotateAxisAngle(f32 angle, const EGG::Vector3f &axis,
         const EGG::Vector3f &v1) {
     EGG::Matrix34f mat;
@@ -178,6 +188,7 @@ EGG::Vector3f ObjectBase::RotateAxisAngle(f32 angle, const EGG::Vector3f &axis,
 }
 
 /// @addr{0x806B41E0}
+/// @brief Sets the rotation of a matrix based on an up vector and a tangent vector
 void ObjectBase::SetRotTangentHorizontal(EGG::Matrix34f &mat, const EGG::Vector3f &up,
         const EGG::Vector3f &tangent) {
     EGG::Vector3f vec = tangent - up * tangent.dot(up);
@@ -189,6 +200,7 @@ void ObjectBase::SetRotTangentHorizontal(EGG::Matrix34f &mat, const EGG::Vector3
 }
 
 /// @addr{0x806B3CA4}
+/// @brief Creates an orthonormal basis from a given vector
 EGG::Matrix34f ObjectBase::OrthonormalBasis(const EGG::Vector3f &v) {
     EGG::Vector3f z = v;
 
@@ -212,6 +224,7 @@ EGG::Matrix34f ObjectBase::OrthonormalBasis(const EGG::Vector3f &v) {
 }
 
 /// @addr{0x806B46A4}
+/// @brief Creates an orthonormal basis from a rail interpolator
 EGG::Matrix34f ObjectBase::RailOrthonormalBasis(const RailInterpolator &railInterpolator) {
     EGG::Matrix34f mat = OrthonormalBasis(railInterpolator.curTangentDir());
     mat.setBase(3, railInterpolator.curPos());
@@ -219,6 +232,7 @@ EGG::Matrix34f ObjectBase::RailOrthonormalBasis(const RailInterpolator &railInte
 }
 
 /// @addr{0x807DE934}
+/// @brief Adjusts a vector based on sideways and forward scalars, ensuring a minimum magnitude
 EGG::Vector3f ObjectBase::AdjustVecForward(f32 sidewaysScalar, f32 forwardScalar, f32 minSpeed,
         const EGG::Vector3f &src, EGG::Vector3f forward) {
     if (forward.y > 0.0f) {

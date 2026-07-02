@@ -4,6 +4,9 @@
 
 namespace Kinoko::Field {
 
+/// @brief The net after the last turn of Maple Treeway
+/// @details The net acts as an oscillating sine wave. Its vertical displacement varies over time
+/// and along its z-axis, producing the largest displacement near the middle.
 class ObjectAmi final : public ObjectDrivable {
 public:
     ObjectAmi(const System::MapdataGeoObj &params);
@@ -97,6 +100,7 @@ private:
     [[nodiscard]] static f32 SpatialSin(f32 phase);
     [[nodiscard]] static f32 TemporalSin(u32 t);
 
+    /// @brief The size of the net's bounding box
     static constexpr EGG::Vector3f DIMS = EGG::Vector3f(2600.0f, 2000.0f, 13800.0f);
 };
 

@@ -34,6 +34,11 @@ void BoxColUnit::makeInactive() {
 }
 
 /// @addr{0x80786F7C}
+/// @brief Updates the radius and range of the unit
+/// @details This effectively adjusts how close the player needs to be to the object before
+/// collision checks are performed.
+/// @param radius The new radius of the collision box
+/// @param maxSpeed The maximum speed for the collision box
 void BoxColUnit::resize(f32 radius, f32 maxSpeed) {
     m_radius = radius;
     m_range = radius + maxSpeed;

@@ -36,9 +36,9 @@ void ObjectCow::setup() {
     m_up = EGG::Vector3f::ey;
     m_velocity = EGG::Vector3f::zero;
     m_xzSpeed = 0.0f;
-    m_tangentFactor = 0.0f;
+    m_tangentAccel = 0.0f;
     m_floorNrm = EGG::Vector3f::ey;
-    m_state1TargetPos = pos();
+    m_targetPos = pos();
     m_targetDir = EGG::Vector3f::ez;
     m_upForce = EGG::Vector3f::zero;
     m_interpRate = 0.05f;
@@ -71,7 +71,7 @@ void ObjectCow::calcFloor() {
 /// @addr{0x806BC6D8}
 void ObjectCow::calcPos() {
     EGG::Vector3f accel =
-            m_tangent * m_tangentFactor + (m_tangent - m_prevTangent) * m_xzSpeed + m_upForce;
+            m_tangent * m_tangentAccel + (m_tangent - m_prevTangent) * m_xzSpeed + m_upForce;
     m_velocity += accel - GRAVITY_FORCE;
     m_xzSpeed = EGG::Mathf::sqrt(m_velocity.x * m_velocity.x + m_velocity.z * m_velocity.z);
 
@@ -82,15 +82,15 @@ void ObjectCow::calcPos() {
     }
 
     addPos(m_velocity);
-    m_tangentFactor = 0.0f;
+    m_tangentAccel = 0.0f;
 }
 
 /// @addr{0x806BCDC4}
 f32 ObjectCow::setTarget(const EGG::Vector3f &v) {
-    m_state1TargetPos = v;
-    EGG::Vector3f posDiff = m_state1TargetPos - pos();
+    m_targetPos = v;
+    EGG::Vector3f posDiff = m_targetPos - pos();
     f32 dist = posDiff.normalise();
-    m_targetDir = m_state1TargetPos + posDiff * 1000.0f - pos();
+    m_targetDir = m_targetPos + posDiff * 1000.0f - pos();
     m_targetDir.normalise2();
 
     return dist;
@@ -115,7 +115,7 @@ void ObjectCowLeader::init() {
 
     m_railSpeed = 0.0f;
     m_endedRailSegment = false;
-    m_state1AnmType = AnmType::EatST;
+    m_eatAnmType = EatAnmType::EatST;
     m_eatFrames = 0;
     m_interpRate = 1.0f;
     m_nextStateId = 2;
@@ -166,7 +166,7 @@ void ObjectCowLeader::enterWait() {
 
 /// @addr{0x806BD7D8}
 void ObjectCowLeader::enterEat() {
-    m_state1AnmType = AnmType::EatST;
+    m_eatAnmType = EatAnmType::EatST;
     u32 rand = System::RaceManager::Instance()->random().getU32(120);
     m_eatFrames = rand + 120;
 }
@@ -188,18 +188,18 @@ void ObjectCowLeader::calcEat() {
     constexpr u16 EAT_ST_FRAMES = 40;
     constexpr u16 EAT_ED_FRAMES = 60;
 
-    switch (m_state1AnmType) {
-    case AnmType::EatST: {
+    switch (m_eatAnmType) {
+    case EatAnmType::EatST: {
         if (m_currentFrame == EAT_ST_FRAMES) {
-            m_state1AnmType = AnmType::Eat;
+            m_eatAnmType = EatAnmType::Eat;
         }
     } break;
-    case AnmType::Eat: {
+    case EatAnmType::Eat: {
         if (m_currentFrame > static_cast<u16>(m_eatFrames + EAT_ST_FRAMES)) {
-            m_state1AnmType = AnmType::EatED;
+            m_eatAnmType = EatAnmType::EatED;
         }
     } break;
-    case AnmType::EatED: {
+    case EatAnmType::EatED: {
         if (static_cast<u16>(m_eatFrames + EAT_ST_FRAMES + EAT_ED_FRAMES) == m_currentFrame) {
             m_nextStateId = 2;
         }
@@ -375,18 +375,18 @@ void ObjectCowFollower::calcWait() {
 /// @addr{0x806BE794}
 void ObjectCowFollower::calcFreeRoam() {
     if (m_bStopping) {
-        m_tangentFactor = -0.1f;
+        m_tangentAccel = -0.1f;
 
         if (m_xzSpeed == 0.0f) {
             m_nextStateId = 0;
         }
     } else {
         if (m_xzSpeed < m_topSpeed) {
-            m_tangentFactor = 0.1f;
+            m_tangentAccel = 0.1f;
         }
     }
 
-    EGG::Vector3f local_28 = m_state1TargetPos - pos();
+    EGG::Vector3f local_28 = m_targetPos - pos();
     if (local_28.x * local_28.x + local_28.z * local_28.z < DIST_THRESHOLD * DIST_THRESHOLD) {
         m_bStopping = true;
     }
@@ -401,7 +401,7 @@ void ObjectCowFollower::calcFollowLeader() {
     f32 dist = 0.0f;
 
     if (m_bStopping) {
-        m_tangentFactor = -0.1f;
+        m_tangentAccel = -0.1f;
 
         if (m_xzSpeed == 0.0f) {
             m_interpRate = 0.05f;
@@ -412,7 +412,7 @@ void ObjectCowFollower::calcFollowLeader() {
 
         if (m_xzSpeed < m_topSpeed) {
             m_interpRate = 0.05f;
-            m_tangentFactor = 0.1f;
+            m_tangentAccel = 0.1f;
         }
     }
 

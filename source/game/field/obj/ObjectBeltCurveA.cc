@@ -4,12 +4,12 @@ namespace Kinoko::Field {
 
 /// @addr{0x807FC90C}
 ObjectBeltCurveA::ObjectBeltCurveA(const System::MapdataGeoObj &params) : ObjectBelt(params) {
-    constexpr EGG::Vector3f INITIAL_ROT = EGG::Vector3f(0.0f, 1.5707964f, 0.0f);
+    constexpr EGG::Vector3f INITIAL_ROT = EGG::Vector3f(0.0f, HALF_PI, 0.0f);
 
     m_startForward = params.setting(1) == 1;
     m_dirChange1Frame = params.setting(2) * 60;
     m_dirChange2Frame = params.setting(3) * 60;
-    m_initMat.makeR(INITIAL_ROT);
+    m_rotMat.makeR(INITIAL_ROT);
 }
 
 /// @addr{0x807FD7BC}
@@ -21,7 +21,7 @@ EGG::Vector3f ObjectBeltCurveA::calcRoadVelocity(u32 variant, const EGG::Vector3
     EGG::Vector3f posDelta = pos - this->pos();
     posDelta.y = 0.0f;
 
-    EGG::Vector3f dir = m_initMat.ps_multVector(posDelta);
+    EGG::Vector3f dir = m_rotMat.ps_multVector(posDelta);
     bool forward;
 
     if (timeOffset <= m_dirChange1Frame) {
@@ -44,6 +44,7 @@ EGG::Vector3f ObjectBeltCurveA::calcRoadVelocity(u32 variant, const EGG::Vector3
 }
 
 /// @addr{0x807FD5A0}
+/// @brief Calculates the velocity of the conveyor belt during a direction switch
 f32 ObjectBeltCurveA::calcDirSwitchVelocity(u32 t) const {
     s32 change1Delta = static_cast<s32>(t) - static_cast<s32>(m_dirChange1Frame);
     s32 change2Delta = static_cast<s32>(t) - static_cast<s32>(m_dirChange2Frame);

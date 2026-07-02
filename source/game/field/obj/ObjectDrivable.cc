@@ -10,6 +10,7 @@ ObjectDrivable::ObjectDrivable(const System::MapdataGeoObj &params) : ObjectBase
 /// @addr{0x8067EB3C}
 ObjectDrivable::~ObjectDrivable() = default;
 
+/// @brief Creates collision and BoxColUnit, and registers the object to the ObjectDrivableDirector
 /// @addr{0x8081A79C}
 void ObjectDrivable::load() {
     createCollision();
@@ -19,6 +20,7 @@ void ObjectDrivable::load() {
     ObjectDrivableDirector::Instance()->addObject(this);
 }
 
+/// @brief Inserts this object into the BoxColManager as a drivable entry
 /// @addr{0x8081A85C}
 void ObjectDrivable::loadAABB(f32 radius) {
     auto *boxColMgr = BoxColManager::Instance();

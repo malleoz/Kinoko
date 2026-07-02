@@ -159,6 +159,7 @@ void ObjectCarTGE::calc() {
 }
 
 /// @addr{0x806D7AF8}
+/// @brief Creates two collision objects, the second being a cylinder scaled based off vehicle type
 void ObjectCarTGE::createCollision() {
     constexpr f32 TRUCK_RADIUS = 190.0f;
     constexpr f32 TRUCK_HEIGHT = 500.0f;
@@ -205,6 +206,9 @@ f32 ObjectCarTGE::getCollisionRadius() const {
 }
 
 /// @addr{0x806D7328}
+/// @brief Causes the player to be hit, squished, or bounce depending on the collision scenario
+/// @details Interfaces with the @ref ObjectHighwayManager to enforce a squish cooldown for the
+/// player.
 Kart::Reaction ObjectCarTGE::onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
         Kart::Reaction /*reactionOnObj*/, EGG::Vector3f &hitDepth) {
     constexpr u32 SQUASH_INVULNERABILITY = 200;
@@ -245,6 +249,7 @@ Kart::Reaction ObjectCarTGE::onCollision(Kart::KartObject *kartObj, Kart::Reacti
 }
 
 /// @addr{0x806DA660}
+/// @brief Checks kart collision against both the primary and auxiliary collision objects
 bool ObjectCarTGE::checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &dist) {
     dist = EGG::Vector3f::zero;
     bool hasCol = lhs->check(*m_collision, dist);
@@ -273,14 +278,11 @@ const EGG::Vector3f &ObjectCarTGE::collisionCenter() const {
     }
 }
 
-void ObjectCarTGE::enterStateStub() {}
-
-void ObjectCarTGE::calcStateStub() {}
-
 /// @addr{0x806D7D70}
-/// @brief The state when cars are speeding up.
-/// @details On Moonview Highway, the speed cap m_highwayVel is 70, which means this state is only
-/// executed for 1 frame when cars get on the highway.
+/// @brief Runs once per frame when cars are speeding up
+/// @details On Moonview Highway, the speed cap (@ref m_highwayVel) is 70. Since this function
+/// increases speed by 200 units per frame, this means this state is only executed for 1 frame
+/// when cars get on the highway.
 void ObjectCarTGE::calcState1() {
     m_currSpeed += TOLL_BOOTH_ACCEL;
 
@@ -310,6 +312,8 @@ void ObjectCarTGE::calcState2() {
 }
 
 /// @addr{0x806D9000}
+/// @brief Calculates the position and orientation of the car along the rail
+/// @details Computes position and orientation by computing a cubic bezier along the rail.
 void ObjectCarTGE::calcPos() {
     constexpr f32 NORMAL_SPEED = 1500.0f;
     constexpr f32 TRUCK_SPEED = 1600.0f;

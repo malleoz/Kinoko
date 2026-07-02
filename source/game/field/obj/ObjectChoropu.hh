@@ -33,11 +33,11 @@ public:
             Kart::Reaction reactionOnObj, EGG::Vector3f &hitDepth) override;
 
 private:
-    void enterStateStub();
+    void enterStateStub() {}
     void enterDigging();
     void enterPeeking();
     void enterJumping();
-    void calcStateStub();
+    void calcStateStub() {}
     void calcDigging();
     void calcPeeking();
     void calcJumping();
@@ -46,17 +46,17 @@ private:
     void calcGroundObjs();
     [[nodiscard]] EGG::Matrix34f calcInterpolatedPose(f32 t) const;
 
-    owning_span<ObjectChoropuGround *> m_groundObjs;
-    ObjectChoropuHoll *m_objHoll;
-    s16 m_startFrameOffset;
-    u16 m_idleDuration;
-    f32 m_groundHeight;
-    bool m_isStationary; ///< rPG moles don't move while MMM moles do
-    EGG::Matrix34f m_transMat;
-    EGG::Matrix34f m_railMat;
-    f32 m_groundLength;
+    owning_span<ObjectChoropuGround *> m_groundObjs; ///< Dirt trail segments behind moles on MMM
+    ObjectChoropuHoll *m_objHoll;                    ///< The hole the mole emerges from
+    s16 m_startFrameOffset; ///< Initial delay before the mole starts its behavior cycle
+    u16 m_idleDuration;     ///< Frames that stationary moles stay underground before peeking
+    f32 m_groundHeight;     ///< Height of a single dirt trail cylinder. Used to space out segments.
+    bool m_isStationary;    ///< rPG moles don't move while MMM moles do
+    EGG::Matrix34f m_transMat; ///< Initial transform for statinary moles
+    EGG::Matrix34f m_railMat;  ///< Orthonormal basis for moving mole's current pos and orientation
+    f32 m_groundLength;        ///< Cumulative length of dirt trail behind moving monty moles on MMM
 
-    static constexpr f32 RADIUS = 300.0f;
+    static constexpr f32 RADIUS = 300.0f; ///< Radius of the dirt trail segments' collision sphere
     static constexpr f32 MAX_GROUND_LEN = 3000.0f; ///< Max length of the dirt trail
 
     static constexpr std::array<StateManagerEntry, 5> STATE_ENTRIES = {{
@@ -70,6 +70,7 @@ private:
     }};
 };
 
+/// @brief A dirt trail segment left behind by the moving monty moles on Moo Moo Meadows
 class ObjectChoropuGround : public ObjectCollidable {
 public:
     ObjectChoropuGround(const EGG::Vector3f &pos, const EGG::Vector3f &rot,
@@ -95,9 +96,10 @@ public:
     }
 
 private:
-    f32 m_height;
+    f32 m_height; ///< Height of the dirt trail segment. Used to space out segments.
 };
 
+/// @brief The hole that the monty mole pops out from
 class ObjectChoropuHoll : public ObjectCollidable {
 public:
     ObjectChoropuHoll(const System::MapdataGeoObj &params);
@@ -139,7 +141,7 @@ public:
     }
 
 private:
-    static constexpr f32 RADIUS = 300.0f;
+    static constexpr f32 RADIUS = 300.0f; ///< Radius of the collision sphere for the mole's hole
 };
 
 } // namespace Kinoko::Field

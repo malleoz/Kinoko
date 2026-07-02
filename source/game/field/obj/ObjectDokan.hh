@@ -4,6 +4,7 @@
 
 namespace Kinoko::Field {
 
+/// @brief Represents a pipe, like on SNES Mario Circuit 3
 class ObjectDokan final : public ObjectCollidable {
 public:
     ObjectDokan(const System::MapdataGeoObj &params);
@@ -25,8 +26,8 @@ public:
 private:
     void calcFloor();
 
-    bool m_b0;
-    EGG::Vector3f m_velocity;
+    bool m_isAirborne;        ///< Whether the pipe is currently mid-air
+    EGG::Vector3f m_velocity; ////< The current velocity of the pipe
 };
 
 } // namespace Kinoko::Field

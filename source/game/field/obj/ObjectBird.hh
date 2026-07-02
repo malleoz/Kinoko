@@ -42,8 +42,8 @@ public:
     }
 
 protected:
-    ObjectBirdLeader *m_leader;
-    owning_span<ObjectBirdFollower *> m_followers;
+    ObjectBirdLeader *m_leader; ///< The main bird in the flock; other birds follow this leader
+    owning_span<ObjectBirdFollower *> m_followers; ///< The other birds that follow the leader
 };
 
 /// @brief The main bird within an @ref ObjectBird. Other birds follow this leader.
@@ -69,7 +69,7 @@ protected:
     ObjectBird *m_bird;
 };
 
-/// @brief Represents all but one of the birds in an @ObjectBird group.
+/// @brief Represents all but one of the birds in an @ref ObjectBird group.
 /// @details These birds initialize their position based off of the @ref ObjectBirdLeader. They
 /// perform collision checks in their calc function to prevent them from flying through floors. We
 /// have to implement this class because it can induce a collision transformation matrix update when
@@ -85,7 +85,7 @@ public:
 private:
     void calcPos();
 
-    const u32 m_idx;
+    const u32 m_idx; ///< Index of this follower in the flock
     EGG::Vector3f m_velocity;
     f32 m_baseSpeed;
 };

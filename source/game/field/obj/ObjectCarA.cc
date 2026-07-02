@@ -84,16 +84,19 @@ Kart::Reaction ObjectCarA::onCollision(Kart::KartObject *kartObj, Kart::Reaction
 }
 
 /// @addr{0x806B84FC}
+/// @brief Runs once when the car has entered the stop state
 void ObjectCarA::enterStop() {
     m_currVel = 0.0f;
 }
 
 /// @addr{0x806B8838}
+/// @brief Runs once when the car has entered the cruising state
 void ObjectCarA::enterCruising() {
     m_currVel = m_finalVel;
 }
 
 /// @addr{0x806B8588}
+/// @brief Runs once per frame when the car is in the stop state
 void ObjectCarA::calcStop() {
     if (m_currentFrame > m_stopTime) {
         m_motionState = MotionState::Accelerating;
@@ -102,6 +105,7 @@ void ObjectCarA::calcStop() {
 }
 
 /// @addr{0x806B86F0}
+/// @brief Runs once per frame when the car is in the accelerating or decelerating state
 void ObjectCarA::calcAccel() {
     if (m_motionState == MotionState::Accelerating) {
         m_currVel += m_accel;
@@ -130,6 +134,7 @@ void ObjectCarA::calcAccel() {
 }
 
 /// @addr{0x806B8844}
+/// @brief Runs once per frame when the car is in the cruising state
 void ObjectCarA::calcCruising() {
     // We might've had decimals, better to undershoot the cruising time and handle it in decel
     if (static_cast<f32>(m_currentFrame) > m_cruiseTime - 1.0f) {
@@ -139,6 +144,7 @@ void ObjectCarA::calcCruising() {
 }
 
 /// @addr{0x806B8D3C}
+/// @brief Helper function that updates the car's position based on the rail interpolator
 void ObjectCarA::calcPos() {
     m_currUp = Interpolate(0.1f, m_currUp, EGG::Vector3f::ey);
     m_currUp.normalise2();

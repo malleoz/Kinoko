@@ -18,12 +18,30 @@ public:
         return 5000.0f;
     }
 
+    /// @brief Called once after collision creation
     virtual void initCollision() {}
+
     virtual void loadAABB(f32 radius);
 
+    /// @brief Checks collision between a point and the object, writing only partial collision info
+    /// @param pos The point to check
+    /// @param prevPos The previous position of the point, used for calculating collision depth
+    /// @param mask The KCL flags to check collision against (other types are ignored)
+    /// @param info Out parameter for retrieving collision information (if any)
+    /// @param maskOut The KCL flags that were hit during the collision check (if any)
+    /// @return Whether a collision was detected
     [[nodiscard]] virtual bool checkPointPartial(const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
             KCLTypeMask *maskOut) = 0;
+
+    /// @brief Checks collision between a point and the object, writing only partial collision info.
+    ///        Additionally pushes the collision entry into the CollisionDirector's cache.
+    /// @param pos The point to check
+    /// @param prevPos The previous position of the point, used for calculating collision depth
+    /// @param mask The KCL flags to check collision against (other types are ignored)
+    /// @param info Out parameter for retrieving collision information (if any)
+    /// @param maskOut The KCL flags that were hit during the collision check (if any)
+    /// @return Whether a collision was detected
     [[nodiscard]] virtual bool checkPointPartialPush(const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask flags, CollisionInfoPartial *info,
             KCLTypeMask *maskOut) = 0;

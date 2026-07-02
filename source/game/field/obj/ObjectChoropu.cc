@@ -108,9 +108,8 @@ Kart::Reaction ObjectChoropu::onCollision(Kart::KartObject * /*kartObj*/,
     return m_currentStateId == 1 ? Kart::Reaction::SmallBump : reactionOnKart;
 }
 
-void ObjectChoropu::enterStateStub() {}
-
 /// @addr{0x806BA6D8}
+/// @brief Runs once when the mole lands back in its hole after a jump
 void ObjectChoropu::enterDigging() {
     if (m_isStationary) {
         disableCollision();
@@ -126,6 +125,7 @@ void ObjectChoropu::enterDigging() {
 }
 
 /// @addr{0x806BABEC}
+/// @brief Runs once when the mole peeks out of its hole before jumping
 void ObjectChoropu::enterPeeking() {
     if (m_isStationary) {
         setPos(m_transMat.base(3));
@@ -149,6 +149,7 @@ void ObjectChoropu::enterPeeking() {
 }
 
 /// @addr{0x806BB39C}
+/// @brief Runs once when the mole jumps out of its hole
 void ObjectChoropu::enterJumping() {
     enableCollision();
 
@@ -156,9 +157,8 @@ void ObjectChoropu::enterJumping() {
     setRot(EGG::Vector3f(rot().x, rot().y, 0.0f));
 }
 
-void ObjectChoropu::calcStateStub() {}
-
 /// @addr{0x806BA7FC}
+/// @brief Runs once every frame while the mole is neither peeking nor jumping
 void ObjectChoropu::calcDigging() {
     if (m_isStationary) {
         if (m_currentFrame > m_idleDuration) {
@@ -193,6 +193,7 @@ void ObjectChoropu::calcDigging() {
 }
 
 /// @addr{0x806BB144}
+/// @brief Runs once every frame while the mole is peeking out of its hole
 void ObjectChoropu::calcPeeking() {
     constexpr s16 PEEK_DURATION = 40;
     constexpr s16 STATE_DURATION = 100;
@@ -213,6 +214,7 @@ void ObjectChoropu::calcPeeking() {
 }
 
 /// @addr{0x806BB5F0}
+/// @brief Runs once every frame while the mole is jumping out of its hole
 void ObjectChoropu::calcJumping() {
     constexpr f32 JUMP_LINEAR_COEFFICIENT = 65.0f;
     constexpr f32 JUMP_QUADRATIC_COEFFICIENT = 2.7f;
@@ -236,6 +238,7 @@ void ObjectChoropu::calcJumping() {
 }
 
 /// @addr{0x806BBA7C}
+/// @brief Calculates the total length of the dirt trail behind the monty moles on MMM
 void ObjectChoropu::calcGround() {
     m_groundLength += m_railInterpolator->getCurrVel();
     if (m_groundLength > MAX_GROUND_LEN) {
@@ -246,6 +249,10 @@ void ObjectChoropu::calcGround() {
 }
 
 /// @addr{0x806BB840}
+/// @brief Calculates the position and orientation of the dirt trail behind the monty moles on MMM
+/// @details Dirt objects that lie beyond the dirt trail length have their collision disabled. As
+/// the monty mole moves and the dirt trail length increases, the dirt objects are repositioned and
+/// additional dirt objects will have their collision enabled.
 void ObjectChoropu::calcGroundObjs() {
     size_t idx =
             std::min(static_cast<size_t>(m_groundLength / m_groundHeight) + 1, m_groundObjs.size());
@@ -275,6 +282,7 @@ void ObjectChoropu::calcGroundObjs() {
 }
 
 /// @addr{0x806B46F8}
+/// @brief Calculates position and rotation along the bezier curve of the rail at a given t
 EGG::Matrix34f ObjectChoropu::calcInterpolatedPose(f32 t) const {
     EGG::Vector3f curDir;
     EGG::Vector3f curTanDir;
@@ -301,6 +309,7 @@ ObjectChoropuGround::ObjectChoropuGround(const EGG::Vector3f &pos, const EGG::Ve
 ObjectChoropuGround::~ObjectChoropuGround() = default;
 
 /// @addr{0x806B9274}
+/// @brief Sets the ground object's transformation matrix based off of the provided pose
 void ObjectChoropuGround::calcPosAndMat(f32 height, const EGG::Matrix34f &mat) {
     EGG::Matrix34f matTemp;
     SetRotTangentHorizontal(matTemp, mat.base(2), EGG::Vector3f::ey);

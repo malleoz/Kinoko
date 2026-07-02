@@ -25,7 +25,7 @@ ObjectBulldozer::~ObjectBulldozer() = default;
 /// @addr{0x807FDC50}
 void ObjectBulldozer::calc() {
     u32 timer = System::RaceManager::Instance()->timer();
-    f32 posOffset = calcStateAndPosition(m_timeOffset + timer);
+    f32 posOffset = calcPosOffset(m_timeOffset + timer);
     EGG::Vector3f prevPos = pos();
     f32 xPos = m_left ? m_initialPos.x + posOffset : m_initialPos.x - posOffset;
     setPos(EGG::Vector3f(xPos, prevPos.y, prevPos.z));
@@ -54,7 +54,7 @@ void ObjectBulldozer::initCollision() {
 const EGG::Matrix34f &ObjectBulldozer::getUpdatedMatrix(u32 timeOffset) {
     EGG::Vector3f pos = m_initialPos;
     u32 timer = System::RaceManager::Instance()->timer();
-    f32 posOffset = calcStateAndPosition(m_timeOffset + timer - timeOffset);
+    f32 posOffset = calcPosOffset(m_timeOffset + timer - timeOffset);
 
     pos.x = m_left ? pos.x + posOffset : pos.x - posOffset;
     m_rtMat.makeRT(m_initialRot, pos);
@@ -83,7 +83,8 @@ bool ObjectBulldozer::checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
 }
 
 /// @addr{0x807FDE5C}
-f32 ObjectBulldozer::calcStateAndPosition(u32 timeOffset) const {
+/// @brief Based off timeOffset, determine the position offset from the bulldozer's initial position
+f32 ObjectBulldozer::calcPosOffset(u32 timeOffset) const {
     u16 t = timeOffset % m_fullPeriod;
 
     if (t >= m_halfPeriod - m_restFrames) {

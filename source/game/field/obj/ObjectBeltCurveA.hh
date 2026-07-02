@@ -4,7 +4,7 @@
 
 namespace Kinoko::Field {
 
-/// @brief The curved conveyor belt at the end of the factory on Toad's Factory.
+/// @brief The set of curved conveyor belts at the end of the factory on Toad's Factory
 /// @details This conveyor switches direction twice.
 class ObjectBeltCurveA final : public ObjectBelt {
 public:
@@ -22,10 +22,10 @@ public:
 private:
     [[nodiscard]] f32 calcDirSwitchVelocity(u32 t) const;
 
-    bool m_startForward;
-    u16 m_dirChange1Frame;
-    u16 m_dirChange2Frame;
-    EGG::Matrix34f m_initMat;
+    bool m_startForward;   ///< Whether the belts start moving forward or backward
+    u16 m_dirChange1Frame; ///< Frame of first direction change
+    u16 m_dirChange2Frame; ///< Frame of second direction change
+    EGG::Matrix34f m_rotMat;
 };
 
 } // namespace Kinoko::Field

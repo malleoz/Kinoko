@@ -231,7 +231,7 @@ f32 ObjectAmi::SpatialSin(f32 phase) {
     return 550.0f * EGG::Mathf::SinFIdx(RAD2FIDX * (phase * 0.5f));
 }
 
-/// @brief Not emitted by the game, but computes a sine wave as a function of time.
+/// @brief Computes a sine wave as a function of time.
 /// @details This computes the up/down motion of the net, with a period of 70 frames.
 f32 ObjectAmi::TemporalSin(u32 t) {
     return EGG::Mathf::SinFIdx(RAD2FIDX * (F_PI * static_cast<f32>(t) / 35.0f));

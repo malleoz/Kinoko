@@ -5,6 +5,7 @@ namespace Kinoko::Field {
 class ObjectDossunTsuibiHolder;
 
 /// @brief Represents one of the two thwomps that oscillate and stomp in the long rBC hallway.
+/// @details Interfaces with @ref ObjectDossunTsuibiHolder so both Thwomps stop at the same time.
 class ObjectDossunTsuibi final : public ObjectDossun {
     friend ObjectDossunTsuibiHolder;
 
@@ -28,7 +29,7 @@ public:
     }
 
 private:
-    ObjectDossunTsuibiHolder *m_holder;
+    ObjectDossunTsuibiHolder *m_holder; ///< Pointer to the manager class
 };
 
 } // namespace Kinoko::Field

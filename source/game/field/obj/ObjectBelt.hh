@@ -141,13 +141,15 @@ public:
         return calcCollision(pos, prevPos, mask, info, maskOut, timeOffset);
     }
 
+    /// @brief Calculates the conveyer belt's velocity at a given position based on its variant
     [[nodiscard]] virtual EGG::Vector3f calcRoadVelocity(u32 variant, const EGG::Vector3f &pos,
             u32 timeOffset) const = 0;
 
+    /// @brief Determines whether or not the conveyer belt is moving based on its variant
     [[nodiscard]] virtual bool isMoving(u32 variant, const EGG::Vector3f &pos) const = 0;
 
 protected:
-    f32 m_roadVel;
+    f32 m_roadVel; ///< Velocity of the moving conveyer belt.
 
 private:
     [[nodiscard]] virtual bool calcCollision(const EGG::Vector3f &v0, const EGG::Vector3f &v1,

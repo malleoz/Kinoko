@@ -14,14 +14,14 @@ ObjectDokan::~ObjectDokan() = default;
 
 /// @addr{0x80778830}
 void ObjectDokan::init() {
-    m_b0 = false;
+    m_isAirborne = false;
 }
 
 /// @addr{0x807788C8}
 void ObjectDokan::calc() {
     constexpr f32 ACCEL = 2.0f;
 
-    if (!m_b0) {
+    if (!m_isAirborne) {
         return;
     }
 
@@ -50,8 +50,8 @@ Kart::Reaction ObjectDokan::onCollision(Kart::KartObject * /*kartObj*/,
     constexpr f32 INITIAL_VELOCITY = 100.0f;
 
     if (reactionOnObj == Kart::Reaction::UNK_3 || reactionOnObj == Kart::Reaction::UNK_5) {
-        if (!m_b0) {
-            m_b0 = true;
+        if (!m_isAirborne) {
+            m_isAirborne = true;
             m_velocity = INITIAL_VELOCITY * EGG::Vector3f::ey;
         }
     }
@@ -60,6 +60,7 @@ Kart::Reaction ObjectDokan::onCollision(Kart::KartObject * /*kartObj*/,
 }
 
 /// @addr{0x807789BC}
+/// @brief Performs a collision check against the floor to stop the pipe if it's falling
 void ObjectDokan::calcFloor() {
     constexpr f32 PIPE_RADIUS = 100.0f;
     constexpr f32 PIPE_SQRT_RADIUS = 10.0f;
@@ -80,7 +81,7 @@ void ObjectDokan::calcFloor() {
     if (typeMask & KCL_TYPE_FLOOR) {
         m_velocity.y *= -ACCELERATION;
         if (m_velocity.length() < ACCELERATION * PIPE_SQRT_RADIUS) {
-            m_b0 = false;
+            m_isAirborne = false;
         }
     }
 }

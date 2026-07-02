@@ -14,7 +14,7 @@ void ObjectDossunSyuukai::init() {
     ObjectDossun::init();
 
     m_state = State::Moving;
-    m_initRotY = rot().y;
+    m_initYaw = rot().y;
     m_rotating = true;
 }
 
@@ -39,6 +39,7 @@ void ObjectDossunSyuukai::calc() {
 }
 
 /// @addr{0x80760D18}
+/// @brief Runs once per frame while the Thwomp is moving
 void ObjectDossunSyuukai::calcMoving() {
     if (m_railInterpolator->calc() == RailInterpolator::Status::SegmentEnd) {
         m_state = State::RotatingBeforeStomp;
@@ -48,6 +49,7 @@ void ObjectDossunSyuukai::calcMoving() {
 }
 
 /// @addr{0x80760D8C}
+/// @brief Runs once per frame while the Thwomp is rotating
 void ObjectDossunSyuukai::calcRotating() {
     constexpr f32 ANG_VEL = 0.08726646f; /// Approximately 5 degrees
     constexpr f32 BEFORE_FALL_FRAMES = 10;
@@ -55,7 +57,7 @@ void ObjectDossunSyuukai::calcRotating() {
     addRot(EGG::Vector3f(0.0f, ANG_VEL, 0.0f));
 
     if (m_state == State::RotatingBeforeStomp) {
-        f32 targetRot = m_initRotY;
+        f32 targetRot = m_initYaw;
         if (targetRot < 0.0f) {
             targetRot += F_TAU;
         } else if (targetRot >= F_TAU) {
@@ -66,16 +68,16 @@ void ObjectDossunSyuukai::calcRotating() {
             if (m_rotating) {
                 subRot(EGG::Vector3f(0.0f, F_TAU, 0.0f));
             } else {
-                setRot(EGG::Vector3f(rot().x, m_initRotY, rot().z));
+                setRot(EGG::Vector3f(rot().x, m_initYaw, rot().z));
                 m_anmState = AnmState::BeforeFall;
                 m_beforeFallTimer = BEFORE_FALL_FRAMES;
 
-                m_currRot = rot().y;
-                if (m_currRot >= F_PI) {
-                    m_currRot -= F_TAU;
+                m_currYaw = rot().y;
+                if (m_currYaw >= F_PI) {
+                    m_currYaw -= F_TAU;
                 }
 
-                m_cycleTimer = m_fullDuration;
+                m_stompDuration = m_fullDuration;
                 m_state = State::Stomping;
             }
         }

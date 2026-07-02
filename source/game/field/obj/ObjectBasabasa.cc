@@ -47,6 +47,7 @@ Kart::Reaction ObjectBasabasaDummy::onCollision(Kart::KartObject * /*kartObj*/,
 }
 
 /// @addr{0x806B6100}
+/// @brief Calculates the bat's position based off the rail interpolator
 void ObjectBasabasaDummy::calcState0() {
     if (!m_active) {
         return;

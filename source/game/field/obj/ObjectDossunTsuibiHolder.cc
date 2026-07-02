@@ -25,7 +25,7 @@ void ObjectDossunTsuibiHolder::init() {
     }
 
     m_initPos = pos();
-    m_initRotY = rot().y;
+    m_initYaw = rot().y;
     m_state = State::Still;
     m_railInterpolator->init(0.0f, 0);
     m_vel = m_railInterpolator->currVel();
@@ -66,8 +66,8 @@ void ObjectDossunTsuibiHolder::calc() {
         calcRot();
 
         break;
-    case State::SillRotating:
-        calcStillRotating();
+    case State::StillRotating:
+        calcResetZ();
         calcRot();
 
         break;
@@ -75,12 +75,15 @@ void ObjectDossunTsuibiHolder::calc() {
 }
 
 /// @addr{0x807624F0}
+/// @brief Runs every frame while the Thwomps are moving forward down the hallway
 void ObjectDossunTsuibiHolder::calcForward() {
+    constexpr u32 FORWARD_DELAY_FRAMES = 45;
+
     ++m_forwardTimer;
 
     if (m_movingForward) {
         calcForwardRail();
-    } else if (m_forwardTimer == 45) {
+    } else if (m_forwardTimer == FORWARD_DELAY_FRAMES) {
         m_movingForward = true;
     }
 
@@ -94,23 +97,25 @@ void ObjectDossunTsuibiHolder::calcForward() {
     }
 }
 
+/// @brief Runs once when the Thwomps begin to stomp
 void ObjectDossunTsuibiHolder::calcStartStomp() {
     for (auto *&dossun : m_dossuns) {
         dossun->m_anmState = ObjectDossun::AnmState::BeforeFall;
         dossun->m_beforeFallTimer = 10;
         f32 rot = dossun->rot().y;
-        dossun->m_currRot = rot;
+        dossun->m_currYaw = rot;
 
         if (rot >= F_PI) {
-            dossun->m_currRot = rot - F_TAU;
+            dossun->m_currYaw = rot - F_TAU;
         }
 
-        dossun->m_cycleTimer = dossun->m_fullDuration;
+        dossun->m_stompDuration = dossun->m_fullDuration;
     }
 
     m_state = State::Stomping;
 }
 
+/// @brief Runs every frame while the Thwomps are stomping downwards
 void ObjectDossunTsuibiHolder::calcStomp() {
     for (auto *&dossun : m_dossuns) {
         dossun->calcStomp();
@@ -118,6 +123,7 @@ void ObjectDossunTsuibiHolder::calcStomp() {
 }
 
 /// @addr{0x80762EEC}
+/// @brief Runs every frame while the Thwomps are moving backwards up the hallway towards home
 void ObjectDossunTsuibiHolder::calcBackwards() {
     if (m_railInterpolator->calc() == RailInterpolator::Status::ChangingDirection) {
         m_resetZVel = (m_lastStompZ - m_railInterpolator->curPos().z) /
@@ -125,7 +131,7 @@ void ObjectDossunTsuibiHolder::calcBackwards() {
 
         m_resetAngVel = m_facingBackwards ? 5.0f : 10.0f;
         m_backwardsCounter = 0;
-        m_state = State::SillRotating;
+        m_state = State::StillRotating;
         m_facingBackwards = false;
         m_railInterpolator->init(0.0f, 0);
     }
@@ -134,6 +140,7 @@ void ObjectDossunTsuibiHolder::calcBackwards() {
 }
 
 /// @addr{0x807625F0}
+/// @brief Runs every frame in order to update the Thwomps' rotation
 void ObjectDossunTsuibiHolder::calcRot() {
     constexpr f32 DEGREES_5_RAD = DEG2RAD * 5.0f;
     STATIC_ASSERT(DEGREES_5_RAD == 0.08726646f);
@@ -153,11 +160,11 @@ void ObjectDossunTsuibiHolder::calcRot() {
         } else if (m_backwardsCounter < HOME_RESET_FRAMES) {
             updateRot(rot().y + DEGREES_5_RAD);
         }
-    } else if (m_state == State::SillRotating) {
+    } else if (m_state == State::StillRotating) {
         updateRot(rot().y + m_resetAngVel * DEG2RAD);
 
         if (++m_backwardsCounter == HOME_RESET_FRAMES) {
-            updateRot(m_initRotY);
+            updateRot(m_initYaw);
 
             m_state = State::Still;
             m_stillTimer = m_stillDuration;
@@ -166,6 +173,7 @@ void ObjectDossunTsuibiHolder::calcRot() {
 }
 
 /// @addr{0x8076321C}
+/// @brief Updates position from the rail every frame while the Thwomps are moving forward
 void ObjectDossunTsuibiHolder::calcForwardRail() {
     m_railInterpolator->setCurrVel(m_forwardVel);
 
@@ -180,6 +188,7 @@ void ObjectDossunTsuibiHolder::calcForwardRail() {
 }
 
 /// @addr{0x807634C0}
+/// @brief Calculates sideways oscillation of the Thwomps while moving forward down the hallway
 void ObjectDossunTsuibiHolder::calcForwardOscillation() {
     constexpr f32 AMPLITUDE = 1500.0f;
     constexpr f32 STOMP_PHASE = 170.0f;
@@ -203,6 +212,7 @@ void ObjectDossunTsuibiHolder::calcForwardOscillation() {
 }
 
 /// @addr{0x80762054}
+/// @brief Synchronizes the position of the Thwomps based off the provided position
 void ObjectDossunTsuibiHolder::updatePos(const EGG::Vector3f &pos) {
     setPos(pos);
     m_dossuns[0]->setPos(EGG::Vector3f(pos.x, pos.y, pos.z + DOSSUN_POS_OFFSET));
@@ -210,6 +220,7 @@ void ObjectDossunTsuibiHolder::updatePos(const EGG::Vector3f &pos) {
 }
 
 /// @addr{0x80762190}
+/// @brief Synchronizes the rotation of the Thwomps based off the provided yaw
 void ObjectDossunTsuibiHolder::updateRot(f32 yaw) {
     setRot(EGG::Vector3f(rot().x, yaw, rot().z));
 

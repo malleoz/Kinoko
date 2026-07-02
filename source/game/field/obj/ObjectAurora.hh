@@ -4,6 +4,8 @@
 
 namespace Kinoko::Field {
 
+/// @brief The wavy section after the first turn of Rainbow Road
+/// @details Acts as a sine wave whose period is shortened over time.
 class ObjectAurora : public ObjectDrivable {
 public:
     ObjectAurora(const System::MapdataGeoObj &params);

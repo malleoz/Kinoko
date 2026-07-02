@@ -14,6 +14,8 @@ ObjectBelt::ObjectBelt(const System::MapdataGeoObj &params)
 ObjectBelt::~ObjectBelt() = default;
 
 /// @addr{0x807FC294}
+/// @brief Checks if an object at a given position is colliding with the conveyer and applies road
+/// velocity if so
 bool ObjectBelt::calcCollision(const EGG::Vector3f &v0, const EGG::Vector3f & /*v1*/,
         KCLTypeMask /*mask*/, CollisionInfo *info, KCLTypeMask *maskOut, u32 timeOffset) {
     if ((*maskOut & KCL_TYPE_BIT(COL_TYPE_MOVING_ROAD)) == 0) {

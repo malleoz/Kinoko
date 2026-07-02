@@ -58,11 +58,13 @@ f32 ObjectCollidable::getCollisionRadius() const {
     return std::max(xRadius, zRadius);
 }
 
+/// @brief Creates a BoxColUnit based off the collision radius and the provided maxSpeed
 /// @addr{0x806816D8}
 void ObjectCollidable::loadAABB(f32 maxSpeed) {
     loadAABB(getCollisionRadius(), maxSpeed);
 }
 
+/// @brief Created a BoxColUnit based off the provided radius and maxSpeed
 /// @addr{0x8081F180}
 void ObjectCollidable::loadAABB(f32 radius, f32 maxSpeed) {
     auto *boxColMgr = BoxColManager::Instance();
@@ -71,6 +73,7 @@ void ObjectCollidable::loadAABB(f32 radius, f32 maxSpeed) {
     m_boxColUnit = boxColMgr->insertObject(radius, maxSpeed, &pos, alwaysRecalc, this);
 }
 
+/// @brief Runs on collision to conditionally modify the hit reaction applied on the player
 /// @addr{0x8081F66C}
 void ObjectCollidable::processKartReactions(Kart::KartObject *kartObj,
         Kart::Reaction &reactionOnKart, Kart::Reaction &reactionOnObj) {
@@ -93,7 +96,11 @@ void ObjectCollidable::processKartReactions(Kart::KartObject *kartObj,
     }
 }
 
+/// @brief Performs a collision check between this object and another collision object
 /// @addr{0x80681748}
+/// @param lhs The object to check collision against (usually the player)
+/// @param dist If a collision occurs, set to the distance between the two objects
+/// @return Whether or not a collision occurred
 bool ObjectCollidable::checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &dist) {
     return lhs->check(*collision(), dist);
 }
@@ -131,6 +138,7 @@ void ObjectCollidable::createCollision() {
 }
 
 /// @addr{0x8081F170}
+/// @brief Registers this object to the ObjectDirector's vector of managed objects
 void ObjectCollidable::registerManagedObject() {
     ObjectDirector::Instance()->addManagedObject(this);
 }

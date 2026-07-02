@@ -15,6 +15,8 @@ enum class Reaction;
 
 namespace Field {
 
+/// @brief %Abstract base class for all objects that can collide with karts
+/// @details Declares virtual methods for collision checks and collision callbacks.
 class ObjectCollidable : public ObjectBase {
 public:
     ObjectCollidable(const System::MapdataGeoObj &params);
@@ -31,19 +33,26 @@ public:
     virtual void processKartReactions(Kart::KartObject *kartObj, Kart::Reaction &reactionOnKart,
             Kart::Reaction &reactionOnObj);
 
+    /// @brief Called when a collision occurs between a kart and this object
     /// @addr{0x8068179C}
+    /// @returns The reaction that should be applied to the kart
     virtual Kart::Reaction onCollision(Kart::KartObject * /*kartObj*/,
             Kart::Reaction reactionOnKart, Kart::Reaction /*reactionOnObj*/,
             EGG::Vector3f & /*hitDepth*/) {
         return reactionOnKart;
     }
 
+    /// @brief Called when a wall-like collision occurs
     virtual void onWallCollision(Kart::KartObject *, const EGG::Vector3f &) {}
+
+    /// @brief Called when a non-wall collision occurs
     virtual void onObjectCollision(Kart::KartObject *) {}
+
     virtual bool checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &dist);
 
+    /// @brief The translation applied on top of the object's world transform for collision checks
     /// @addr{0x8068173C}
-    virtual const EGG::Vector3f &getCollisionTranslation() const {
+    [[nodiscard]] virtual const EGG::Vector3f &getCollisionTranslation() const {
         return EGG::Vector3f::zero;
     }
 
@@ -55,6 +64,7 @@ public:
 protected:
     void createCollision() override;
 
+    /// @brief Defines a local offset for the GJK collision object
     /// @addr{0x806816B8}
     [[nodiscard]] virtual const EGG::Vector3f &collisionCenter() const {
         return EGG::Vector3f::zero;
@@ -62,7 +72,7 @@ protected:
 
     void registerManagedObject();
 
-    ObjectCollisionBase *m_collision;
+    ObjectCollisionBase *m_collision; ///< GJK collision object
 };
 
 } // namespace Field

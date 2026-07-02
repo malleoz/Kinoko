@@ -9,8 +9,14 @@ namespace Kinoko::Field {
 
 class ObjectHighwayManager;
 
+/// @brief Represents a vehicle (car, truck, or bomb car) on Moonview Highway
+/// @details Interfaces with a @ref ObjectHighwayManager to enforce a squish cooldown for the
+/// player. Bomb cars are not present in Time Trial mode and are thus not implemented in Kinoko.
+/// Each vehicle has two GJK collision primitives in order for the collision detection to better
+/// reflect the shape of the vehicle.
 class ObjectCarTGE : public ObjectCollidable, public StateManager {
 public:
+    /// @brief The type of vehicle represented by the object
     enum class CarType {
         Normal = 0,
         Truck = 1,
@@ -46,6 +52,7 @@ public:
     bool checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &dist) override;
     [[nodiscard]] const EGG::Vector3f &collisionCenter() const override;
 
+    /// @beginSetters
     void setHighwayManager(const ObjectHighwayManager *highwayMgr) {
         m_highwayMgr = highwayMgr;
     }
@@ -54,36 +61,40 @@ public:
     void reset() {
         m_squashed = false;
     }
+    /// @endSetters
 
+    /// @beginGetters
     [[nodiscard]] bool squashed() const {
         return m_squashed;
     }
+    /// @endGetters
 
 private:
+    /// @brief Rate of speed increase when a vehicle enters and exits the highway
     static constexpr f32 TOLL_BOOTH_ACCEL = 200.0f;
 
-    void enterStateStub();
-    void calcStateStub();
+    void enterStateStub() {}
+    void calcStateStub() {}
     void calcState1();
     void calcState2();
 
     void calcPos();
 
-    const ObjectHighwayManager *m_highwayMgr;
-    ObjectCollisionBase *m_auxCollision;
-    f32 m_highwayVel; ///< Speed while on the highway
-    f32 m_localVel;   ///< Speed while off the highway
-    char m_carName[32];
-    char m_mdlName[32];
-    CarType m_carType; ///< Car, truck, or bomb car
-    ObjectId m_dummyId;
-    EGG::Vector3f m_scaledTangentDir;
-    f32 m_currSpeed;
-    EGG::Vector3f m_up;
-    EGG::Vector3f m_tangent;
-    bool m_squashed;
-    bool m_hasAuxCollision;
-    f32 m_hitAngle;
+    const ObjectHighwayManager *m_highwayMgr; ///< Manager that handles squish cooldowns
+    ObjectCollisionBase *m_auxCollision; ///< Secondary collision cylinder for more accurate shape
+    f32 m_highwayVel;                    ///< Speed while on the highway
+    f32 m_localVel;                      ///< Speed while off the highway
+    char m_carName[32];                  ///< Resource (.brres) name
+    char m_mdlName[32];                  ///< Model/KCL name
+    CarType m_carType;                   ///< Car, truck, or bomb car
+    ObjectId m_dummyId;                  ///< Dummy id (CarBody or KartTruck) used for hit reaction
+    EGG::Vector3f m_scaledTangentDir;    ///< %Rail tangent scaled by current speed
+    f32 m_currSpeed;                     ///< Current speed of the vehicle along the rail
+    EGG::Vector3f m_up;                  ///< Smoothed up vector
+    EGG::Vector3f m_tangent;             ///< Smoothed forward direction along the rail
+    bool m_squashed;                     ///< Set if this vehicle squashed player in last 200 frames
+    bool m_hasAuxCollision; ///< Set when a collision was the result of @ref m_auxCollision
+    f32 m_hitAngle; ///< Angular threshold for determining if player should be launched or squished
 
     static constexpr std::array<StateManagerEntry, 3> STATE_ENTRIES = {{
             {StateEntry<ObjectCarTGE, &ObjectCarTGE::enterStateStub, &ObjectCarTGE::calcStateStub>(
