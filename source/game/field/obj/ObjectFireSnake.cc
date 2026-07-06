@@ -16,7 +16,7 @@ ObjectFireSnakeKid::~ObjectFireSnakeKid() = default;
 
 /// @addr{0x806C0F30}
 ObjectFireSnake::ObjectFireSnake(const System::MapdataGeoObj &params)
-    : StateManager(this, STATE_ENTRIES), ObjectProjectile(params), m_initialPos(params.pos()),
+    : StateManager(this, STATE_ENTRIES), ObjectProjectile(params), m_initPos(params.pos()),
       m_maxAge(static_cast<s16>(params.setting(1))) {
     if (ObjectDirector::Instance()->managedObjects().size() > 0) {
         registerManagedObject();
@@ -41,7 +41,7 @@ void ObjectFireSnake::init() {
     m_nextStateId = 0;
     enterDespawned();
 
-    m_sunPos.setZero();
+    m_spawnPos.setZero();
 
     calcTransform();
     m_initRot = transform().base(0);
@@ -63,37 +63,34 @@ void ObjectFireSnake::calc() {
 
 /// @addr{0x806C23C8}
 void ObjectFireSnake::initProjectile(const EGG::Vector3f &pos) {
-    m_sunPos = pos;
+    m_spawnPos = pos;
 
-    m_xzSunDist = m_initialPos - m_sunPos;
+    m_xzSunDist = m_initPos - m_spawnPos;
     m_xzSunDist.y = 0.0f;
     m_xzSunDist.normalise2();
 
-    EGG::Vector3f xzDist = m_sunPos - m_initialPos;
+    EGG::Vector3f xzDist = m_spawnPos - m_initPos;
     xzDist.y = 0.0f;
     f32 dist = xzDist.length();
 
-    m_fallAxis = RotateXZByYaw(F_PI / 2.0f, m_xzSunDist);
-    m_xzSpeed = dist * EGG::Mathf::sqrt(GRAVITY * 0.5f / (m_sunPos.y - m_initialPos.y));
-    m_fallDuration = static_cast<u16>(dist / m_xzSpeed);
-}
-
-/// @addr{0x806C29FC}
-void ObjectFireSnake::onLaunch() {
-    m_nextStateId = 1;
+    m_fallDir = RotateXZByYaw(F_PI / 2.0f, m_xzSunDist);
+    m_xzFallSpeed = dist * EGG::Mathf::sqrt(GRAVITY * 0.5f / (m_spawnPos.y - m_initPos.y));
+    m_fallDuration = static_cast<u16>(dist / m_xzFallSpeed);
 }
 
 /// @addr{0x806C1930}
+/// @brief Runs once when the fire snake despawns
 void ObjectFireSnake::enterDespawned() {
     if (getUnit()) {
         unregisterCollision();
     }
 
-    m_visualPos = m_sunPos;
-    setPos(m_sunPos);
+    m_trajectoryPos = m_spawnPos;
+    setPos(m_spawnPos);
 }
 
 /// @addr{0x806C19E8}
+/// @brief Runs once when the fire snake respawns
 void ObjectFireSnake::enterFalling() {
     if (!getUnit()) {
         loadAABB(0.0f);
@@ -101,9 +98,11 @@ void ObjectFireSnake::enterFalling() {
 }
 
 /// @addr{0x806C1DCC}
+/// @brief Runs once after landing from the sun (for the case of @ref ObjectFireSnake), or runs once
+/// upon re-spawning (for the case of @ref ObjectFireSnakeV).
 void ObjectFireSnake::enterHighBounce() {
-    m_visualPos = m_initialPos;
-    setPos(m_initialPos);
+    m_trajectoryPos = m_initPos;
+    setPos(m_initPos);
 
     f32 rand = System::RaceManager::Instance()->random().getF32();
     m_bounceDir = rand >= 0.5f ? m_initRot : -m_initRot;
@@ -112,12 +111,13 @@ void ObjectFireSnake::enterHighBounce() {
 }
 
 /// @addr{0x806C2000}
+/// @brief Runs once after landing from a jump
 void ObjectFireSnake::enterRest() {
     constexpr f32 XZ_RANGE = 1000.0f * 1000.0f;
 
     // If it strays too far from original position, start bouncing the opposite direction
-    if (m_visualPos.sqDistance(m_initialPos) >= XZ_RANGE) {
-        m_bounceDir = m_initialPos - m_visualPos;
+    if (m_trajectoryPos.sqDistance(m_initPos) >= XZ_RANGE) {
+        m_bounceDir = m_initPos - m_trajectoryPos;
         m_bounceDir.normalise2();
     } else {
         // 45 degree random fluctuation, with a 50% chance to flip direction
@@ -133,25 +133,27 @@ void ObjectFireSnake::enterRest() {
 }
 
 /// @addr{0x806C1A88}
+/// @brief Runs every frame while falling from the sun
 void ObjectFireSnake::calcFalling() {
     EGG::Vector2f fallVel;
     fallVel.y = -GRAVITY * static_cast<f32>(m_currentFrame);
     f32 fallVelY = fallVel.y;
-    f32 posY = m_visualPos.y + fallVel.y;
+    f32 posY = m_trajectoryPos.y + fallVel.y;
 
-    if (posY <= m_initialPos.y) {
+    if (posY <= m_initPos.y) {
         m_nextStateId = 2;
-        setPos(m_visualPos * 0.5f + m_initialPos * 0.5f);
+        setPos(m_trajectoryPos * 0.5f + m_initPos * 0.5f);
     } else {
-        fallVel.x = m_xzSpeed;
-        m_visualPos.y = posY;
-        m_visualPos.x += m_xzSunDist.x * fallVel.x;
-        m_visualPos.z += m_xzSunDist.z * fallVel.x;
+        fallVel.x = m_xzFallSpeed;
+        m_trajectoryPos.y = posY;
+        m_trajectoryPos.x += m_xzSunDist.x * fallVel.x;
+        m_trajectoryPos.z += m_xzSunDist.z * fallVel.x;
         fallVel.normalise2();
 
         f32 angle = fallVel.x;
-        EGG::Vector3f up = RotateAxisAngle(EGG::Mathf::acos(angle), m_fallAxis, EGG::Vector3f::ey);
-        auto axis = EGG::Vector3f(m_xzSunDist.x * m_xzSpeed, -fallVelY, m_xzSunDist.z * m_xzSpeed);
+        EGG::Vector3f up = RotateAxisAngle(EGG::Mathf::acos(angle), m_fallDir, EGG::Vector3f::ey);
+        auto axis = EGG::Vector3f(m_xzSunDist.x * m_xzFallSpeed, -fallVelY,
+                m_xzSunDist.z * m_xzFallSpeed);
         axis.normalise2();
         auto spiral = RotateAxisAngle(50.0f * static_cast<f32>(m_currentFrame) * DEG2RAD, axis, up);
 
@@ -159,20 +161,16 @@ void ObjectFireSnake::calcFalling() {
         f32 phase = m_currentFrame - static_cast<u16>(scaledDuration);
         f32 spiralRadius = phase < 0 ? 200.0f : 200.0f - (200.0f / scaledDuration) * phase;
 
-        setPos(m_visualPos + spiral * spiralRadius);
+        setPos(m_trajectoryPos + spiral * spiralRadius);
     }
 }
 
-/// @addr{0x806C1E90}
-void ObjectFireSnake::calcHighBounce() {
-    constexpr f32 INITIAL_VELOCITY = 1.6f * 60.0f;
-
-    calcBounce(INITIAL_VELOCITY);
-}
-
 /// @addr{0x806C2138}
+/// @brief Runs every frame while the fire snake is in between jumps
 void ObjectFireSnake::calcRest() {
-    if (m_currentFrame >= 30) {
+    constexpr u32 REST_DURATION = 30;
+
+    if (m_currentFrame >= REST_DURATION) {
         m_nextStateId = 4;
     }
 
@@ -184,14 +182,11 @@ void ObjectFireSnake::calcRest() {
     setMatrixTangentTo(EGG::Vector3f::ey, tangent);
 }
 
-/// @addr{0x806C2254}
-void ObjectFireSnake::calcBounce() {
-    constexpr f32 INITIAL_VELOCITY = 60.0f;
-
-    calcBounce(INITIAL_VELOCITY);
-}
-
 /// @addr{0x806C2530}
+/// @brief Runs every frame. Updates the children positions and enables/disables their collision
+/// @details Children's positions are set based off previous transform matrices of the parent. The
+/// first child takes on the matrix from 10 frames ago, and the second child takes on the matrix
+/// from 20 frames ago.
 void ObjectFireSnake::calcChildren() {
     // Shift all matrices up by one index
     for (size_t i = m_prevTransforms.size() - 1; i > 0; --i) {
@@ -232,23 +227,23 @@ void ObjectFireSnake::calcBounce(f32 initialVel) {
     constexpr f32 RADIUS = 130.0f;
     constexpr f32 BOUNCE_SPEED = 20.0f;
 
-    m_visualPos.x += m_bounceDir.x * BOUNCE_SPEED;
-    m_visualPos.z += m_bounceDir.z * BOUNCE_SPEED;
-    m_visualPos.y += initialVel - GRAVITY * static_cast<f32>(m_currentFrame);
+    m_trajectoryPos.x += m_bounceDir.x * BOUNCE_SPEED;
+    m_trajectoryPos.z += m_bounceDir.z * BOUNCE_SPEED;
+    m_trajectoryPos.y += initialVel - GRAVITY * static_cast<f32>(m_currentFrame);
 
     CollisionInfo info;
 
     if (m_currentFrame > BOUNCE_COL_CHECK_DELAY) {
-        bool hasCol = CollisionDirector::Instance()->checkSphereFull(RADIUS, m_visualPos,
+        bool hasCol = CollisionDirector::Instance()->checkSphereFull(RADIUS, m_trajectoryPos,
                 EGG::Vector3f::inf, KCL_TYPE_64EBDFFF, &info, nullptr, 0);
 
         if (hasCol) {
-            m_visualPos += info.tangentOff;
+            m_trajectoryPos += info.tangentOff;
             m_nextStateId = 3;
         }
     }
 
-    setPos(m_visualPos);
+    setPos(m_trajectoryPos);
 }
 
 } // namespace Kinoko::Field

@@ -7,13 +7,17 @@
 
 namespace Kinoko::Field {
 
-/// @brief Class that interfaces with the chain links corresponding to wiggler body parts.
+/// @brief Class that interfaces with the chain links corresponding to Wiggler body parts.
+/// @details Responsible for updating chain link objects and enforcing constraints when the chain is
+/// taut. @ref ObjectHanachan uses this class to retrieve chain link positions so it can update the
+/// Wiggler body parts accordingly.
 class HanachanChainManager {
 public:
     HanachanChainManager(const std::span<const f32> &linkDistances);
     ~HanachanChainManager();
 
     /// @addr{0x806F3370}
+    /// @brief Initializes all SphereLink objects in the chain
     void init() {
         for (auto &link : m_links) {
             link.init();
@@ -21,6 +25,8 @@ public:
     }
 
     void calc();
+
+    /// @beginSetters
 
     /// @addr{0x806F43E8}
     void setPos(size_t idx, const EGG::Vector3f &pos) {
@@ -34,6 +40,15 @@ public:
         m_links[idx].setVel(v);
     }
 
+    /// @addr{0x806F45A4}
+    void addSpringForce(size_t idx, const EGG::Vector3f &v) {
+        ASSERT(idx < m_links.size());
+        m_links[idx].addSpringForce(v);
+    }
+    /// @endSetters
+
+    /// @beginGetters
+
     /// @addr{0x806F47B0}
     [[nodiscard]] const EGG::Vector3f &pos(size_t idx) const {
         ASSERT(idx < m_links.size());
@@ -45,12 +60,7 @@ public:
         ASSERT(idx < m_links.size());
         return m_links[idx].up();
     }
-
-    /// @addr{0x806F45A4}
-    void addSpringForce(size_t idx, const EGG::Vector3f &v) {
-        ASSERT(idx < m_links.size());
-        m_links[idx].addSpringForce(v);
-    }
+    /// @endGetters
 
 private:
     /// @addr{0x806F5290}
@@ -63,6 +73,7 @@ private:
     owning_span<SphereLink> m_links;
 };
 
+/// @brief Base class for one of the spherical body segments of a Wiggler
 class ObjectHanachanPart : public ObjectCollidable {
     friend class ObjectHanachan;
 

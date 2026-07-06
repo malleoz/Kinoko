@@ -59,6 +59,10 @@ void ObjectFlamePoleV::calc() {
 }
 
 /// @addr{0x806C42A0}
+/// @brief Runs every frame after the geyser has erupted and before ther geyser descends to dormancy
+/// @note It's intended that m_dormantFrames is less than m_cycleDuration. If m_dormantFrames is
+/// greater, then this will result in the geyser skipping its bobbing animation after eruption and
+/// instead it will immediately descend.
 void ObjectFlamePoleV::calcErupted() {
     constexpr f32 AMPLITUDE = BEFORE_ERUPT_FRAMES;
 
@@ -73,6 +77,7 @@ void ObjectFlamePoleV::calcErupted() {
 }
 
 /// @addr{0x806C43E8}
+/// @brief Runs every frame the geyser is lowering to dormancy
 void ObjectFlamePoleV::calcLowering() {
     if (m_isBig) {
         if (m_currOffsetY <= -300.0f) {

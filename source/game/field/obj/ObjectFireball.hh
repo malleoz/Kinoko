@@ -4,6 +4,9 @@
 
 namespace Kinoko::Field {
 
+/// @brief An individual fireball within an @ref ObjectFirebar or @ref ObjectFireRing
+/// @details The owning object sets the fireball's distance from the center of the owning object and
+/// sets the angle of the fireball around the owning object's axis of rotation
 class ObjectFireball : public ObjectCollidable {
 public:
     /// @addr{0x80768650}
@@ -39,8 +42,8 @@ public:
     }
 
 private:
-    f32 m_distance;
-    f32 m_angle;
+    f32 m_distance; ///< Distance from the center of the parent object
+    f32 m_angle;    ///< Angle of the fireball about the axis of rotation
 };
 
 } // namespace Kinoko::Field

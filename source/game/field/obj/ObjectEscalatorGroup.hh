@@ -32,8 +32,8 @@ public:
     void createCollision() override {}
 
 private:
-    ObjectEscalator *m_rightEscalator;
-    ObjectEscalator *m_leftEscalator;
+    ObjectEscalator *m_rightEscalator; ///< Pointer to the right escalator
+    ObjectEscalator *m_leftEscalator;  ///< Pointer to the left escalator
 };
 
 } // namespace Kinoko::Field

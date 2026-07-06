@@ -5,6 +5,8 @@
 namespace Kinoko::Field {
 
 /// @brief Abstract class that moves along its own rail and throws projectiles.
+/// @ TODO: I THINK THIS MUST BE CONSTRUCTED BEFORE THE PROJECTILES, OTHERWISE ObjectFireSnake WILL
+/// NOT REGISTER ITSELF AS A MANAGED OBJECT SINCE IT CHECKS THE SIZE OF THE MANAGED OBJECT VECTOR
 class ObjectProjectileLauncher : public ObjectCollidable {
 public:
     /// @addr{Inlined in 0x806DDDD8} @addr{Inlined in 0x806D18FC}

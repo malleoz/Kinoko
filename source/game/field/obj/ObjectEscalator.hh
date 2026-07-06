@@ -117,14 +117,13 @@ private:
             const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info, KCLTypeMask *maskOut,
             u32 timeOffset);
 
-    [[nodiscard]] f32 calcStepFactor(s32 t);
+    [[nodiscard]] f32 calcWrappedStepCount(s32 t);
     [[nodiscard]] f32 calcSpeed(s32 t);
 
-    EGG::Vector3f m_initialPos;
-    EGG::Vector3f m_initialRot;
-    f32 m_stepFactor; ///< Used so that the steps have a tangible height difference on the escalator
+    const EGG::Vector3f m_initialPos; ///< Initial position of the escalator
+    f32 m_wrappedStepCount;           ///< Step count modulo 20
     EGG::Vector3f m_stepDims; ///< Length and height of steps but aligned with its facing direction
-    EGG::Matrix34f m_workMatrix;
+    EGG::Matrix34f m_workMatrix; ///< Represents the current object collision matrix
     const std::array<s32, 2> m_stillFrames; ///< When escalators change direction (two times)
     const std::array<f32, 3> m_speed;       ///< Velocity for each of the three directions it moves
     const f32 m_checkColYPosMax; ///< Collision checks early return if you are above this height
@@ -136,15 +135,19 @@ private:
     const std::array<f32, 2> m_fullSpeedFrames; ///< When escalator reaches max speed
     const f32 m_midDuration; /// Duration of full speed in between the dir changes
 
+    /// @brief Height in units of a single step
     static constexpr f32 STEP_HEIGHT = 10.0f;
 
-    ///< Frames from full speed to still or vice versa
+    /// @brief Frames from full speed to still or vice versa
     static constexpr f32 REVERSE_FRAMES_F32 = 240.0f;
 
-    ///< Frames the escalator waits before speeding up
+    /// @brief Frames the escalator waits before speeding up
     static constexpr f32 STANDSTILL_FRAMES = 50.0f;
 
+    /// @brief Maximum height offset to still perform collision checks
     static constexpr f32 MAX_HEIGHT_OFFSET = STEP_HEIGHT * (17.5f * STEP_HEIGHT);
+
+    /// @brief Minimum height offset to still perform collision checks
     static constexpr f32 MIN_HEIGHT_OFFSET = 0.5f * (17.5f * STEP_HEIGHT);
 };
 

@@ -4,7 +4,10 @@
 
 namespace Kinoko::Field {
 
-/// @brief The flamepole that erupts from a geyser on Bowser's Castle.
+/// @brief A flamepole that erupts from a geyser on Bowser's Castle.
+/// @details Though this object does not have any logic to oscillate its position, @ref
+/// ObjectFlamePoleFoot dynamically adjusts the pole's Y-scale. The pole will then resize its
+/// GJK collision to reflect the scale change.
 class ObjectFlamePole final : public ObjectCollidable {
 public:
     /// @addr{0x8067E280}
@@ -31,16 +34,17 @@ public:
         return "FlamePole";
     }
 
+    /// @brief Enables or disables GJK collision resizing
     void setActive(bool isSet) {
         m_isActive = isSet;
     }
 
-    static constexpr f32 HEIGHT = 384.0f;
+    static constexpr f32 HEIGHT = 384.0f; ///< Normal height of the pole
 
 private:
-    bool m_isActive;
+    bool m_isActive; ///< Used to toggle collision resizing on and off
 
-    static constexpr f32 RADIUS = 70.0f;
+    static constexpr f32 RADIUS = 70.0f; ///< Normal radius of the pole
 };
 
 } // namespace Kinoko::Field

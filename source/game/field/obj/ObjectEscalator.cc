@@ -11,7 +11,7 @@ namespace Kinoko::Field {
 
 /// @addr{0x807FFB20}
 ObjectEscalator::ObjectEscalator(const System::MapdataGeoObj &params, bool reverse /* = false */)
-    : ObjectKCL(params), m_initialPos(pos()), m_initialRot(rot()),
+    : ObjectKCL(params), m_initialPos(pos()),
       m_stillFrames(
               {static_cast<s32>(params.setting(2)) * 60, static_cast<s32>(params.setting(4)) * 60}),
       m_speed({(reverse ? -1.0f : 1.0f) *
@@ -31,10 +31,10 @@ ObjectEscalator::ObjectEscalator(const System::MapdataGeoObj &params, bool rever
       m_midDuration(m_stopFrames[1] - m_fullSpeedFrames[0]) {
     constexpr EGG::Vector3f STEP_DIMS = EGG::Vector3f(0.0f, STEP_HEIGHT, -30.0f);
 
-    m_stepFactor = 0.0f;
+    m_wrappedStepCount = 0.0f;
 
     EGG::Matrix34f mat;
-    mat.makeR(m_initialRot);
+    mat.makeR(rot());
     m_stepDims = mat.ps_multVector(STEP_DIMS);
 }
 
@@ -46,8 +46,8 @@ void ObjectEscalator::calc() {
     s32 t = static_cast<s32>(System::RaceManager::Instance()->timer());
     setMovingObjVel(m_stepDims * calcSpeed(t));
 
-    m_stepFactor = calcStepFactor(t);
-    setPos(m_initialPos + m_stepDims * m_stepFactor);
+    m_wrappedStepCount = calcWrappedStepCount(t);
+    setPos(m_initialPos + m_stepDims * m_wrappedStepCount);
 }
 
 /// @addr{0x80803910}
@@ -182,7 +182,7 @@ bool ObjectEscalator::checkSphereCachedFullPush(f32 radius, const EGG::Vector3f 
 /// @addr{0x80800A10}
 const EGG::Matrix34f &ObjectEscalator::getUpdatedMatrix(u32 timeOffset) {
     u32 t = System::RaceManager::Instance()->timer() - timeOffset;
-    m_workMatrix.makeRT(rot(), m_initialPos + m_stepDims * calcStepFactor(t));
+    m_workMatrix.makeRT(rot(), m_initialPos + m_stepDims * calcWrappedStepCount(t));
     return m_workMatrix;
 }
 
@@ -254,6 +254,16 @@ bool ObjectEscalator::checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
     return true;
 }
 
+/// @brief Helper function which re-uses some shared code amongst various collision check variants
+/// @tparam T CollisionInfo or CollisionInfoPartial
+/// @param shouldCheckFunc Virtual function that determines whether to perform a collision check
+/// @param checkFunc The function to use for the actual collision check
+/// @param pos The point to check collision against
+/// @param prevPos The previous position of the kart (used to compute collision depth)
+/// @param mask The KCL masks to filter collision checks to (ignores other collision types)
+/// @param info Out param that collision info is saved to (if any)
+/// @param maskOut Type mask of the KCL the kart is colliding with (if any)
+/// @return Whether or not a collision occurred
 template <typename T>
     requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
 bool ObjectEscalator::checkPointImpl(ShouldCheckFunc shouldCheckFunc, CheckPointFunc<T> checkFunc,
@@ -270,6 +280,17 @@ bool ObjectEscalator::checkPointImpl(ShouldCheckFunc shouldCheckFunc, CheckPoint
     return (m_objColMgr->*checkFunc)(pos, prevPos, mask, info, maskOut);
 }
 
+/// @brief Helper function which re-uses some shared code amongst various collision check variants
+/// @tparam T CollisionInfo or CollisionInfoPartial
+/// @param shouldCheckFunc Virtual function that determines whether to perform a collision check
+/// @param checkFunc The function to use for the actual collision check
+/// @param radius The radius of the sphere to check collision against
+/// @param pos The position of the sphere to check collision against
+/// @param prevPos The previous position of the kart (used to compute collision depth)
+/// @param mask The KCL masks to filter collision checks to (ignores other collision types)
+/// @param info Out param that collision info is saved to (if any)
+/// @param maskOut Type mask of the KCL the kart is colliding with (if any)
+/// @return Whether or not a collision occurred
 template <typename T>
     requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
 bool ObjectEscalator::checkSphereImpl(ShouldCheckFunc shouldCheckFunc, CheckSphereFunc<T> checkFunc,
@@ -290,7 +311,45 @@ bool ObjectEscalator::checkSphereImpl(ShouldCheckFunc shouldCheckFunc, CheckSphe
 }
 
 /// @addr{0x80800ABC}
-f32 ObjectEscalator::calcStepFactor(s32 t) {
+/// @brief Evaluates a piecewise function to calculate a wrapped step count.
+/// @details The escalator's geometry repeats every 20 steps / 200 units, so this function computes
+/// a displacement modulo 200. This is the analytical integral of the piecewise-linear speed profile
+/// from
+/// @ref calcSpeed, height-scaled and wrapped to the span of a single step.
+/// @par Piecewise Position Function
+/// Let \f$v_0, v_1, v_2\f$ be @ref m_speed, let \f$t_{s0}, t_{s1}\f$ be @ref m_stopFrames, let
+/// \f$t_{a0}, t_{a1}\f$ be @ref m_startFrames, let \f$t_{f0} = t_{a0} + R\f$ and
+/// \f$t_{f1} = t_{a1} + R\f$ be @ref m_fullSpeedFrames, and let \f$R\f$ be REVERSE_FRAMES_F32
+/// (240). Define the cumulative distances at each breakpoint:
+/// \f[
+/// C_1 = v_0 t_{s0}, \quad C_2 = C_1 + \frac{v_0 R}{2}, \quad C_3 = C_2 + \frac{v_1 R}{2}, \quad
+/// C_4 = C_3 + v_1 (t_{s1} - t_{f0}), \quad C_5 = C_4 + \frac{v_1 R}{2}, \quad
+/// C_6 = C_5 + \frac{v_2 R}{2} \, .
+/// \f]
+/// The escalator's total displacement \f$D(t)\f$ is then
+/// \f[
+/// D(t) =
+/// \begin{cases}
+///     v_0 t & 0 \le t < t_{s0}
+///     \\ C_1 + \frac{v_0}{2}(t - t_{s0})\left(2 - \frac{t - t_{s0}}{R}\right)
+///         & t_{s0} \le t < t_{s0} + R
+///     \\ C_2 & t_{s0} + R \le t < t_{a0}
+///     \\ C_2 + \frac{v_1 (t - t_{a0})^2}{2R} & t_{a0} \le t < t_{f0}
+///     \\ C_3 + v_1 (t - t_{f0}) & t_{f0} \le t < t_{s1}
+///     \\ C_4 + \frac{v_1}{2}(t - t_{s1})\left(2 - \frac{t - t_{s1}}{R}\right)
+///         & t_{s1} \le t < t_{s1} + R
+///     \\ C_5 & t_{s1} + R \le t < t_{a1}
+///     \\ C_5 + \frac{v_2 (t - t_{a1})^2}{2R} & t_{a1} \le t < t_{f1}
+///     \\ C_6 + v_2 (t - t_{f1}) & t \ge t_{f1}
+/// \end{cases}
+/// \f]
+/// Finally, the result is wrapped to the span of a single step, where \f$H\f$ is
+/// STEP_HEIGHT and \f$M = 200\f$ is the number of discrete step offsets:
+/// \f[
+/// \text{calcWrappedStepCount}(t) = \frac{\left(\left\lfloor H \cdot D(t) \right\rfloor \bmod M + M
+/// \right) \bmod M}{H} \, .
+/// \f]
+f32 ObjectEscalator::calcWrappedStepCount(s32 t) {
     constexpr s32 REVERSE_FRAMES_S32 = static_cast<s32>(REVERSE_FRAMES_F32);
     constexpr s32 DISCRETE_STEP_OFFSETS = 200;
 
@@ -365,6 +424,27 @@ f32 ObjectEscalator::calcStepFactor(s32 t) {
 }
 
 /// @addr{0x80800FBC}
+/// @brief Calculates the speed of the escalator at a given time t
+/// @details This is the derivative of the position function @ref calcWrappedStepCount integrates.
+/// @par Piecewise Speed Function
+/// Using the same symbols as @ref calcWrappedStepCount: \f$v_0, v_1, v_2\f$ are @ref m_speed,
+/// \f$t_{s0}, t_{s1}\f$ are @ref m_stopFrames, \f$t_{a0}, t_{a1}\f$ are @ref m_startFrames,
+/// \f$t_{f0} = t_{a0} + R\f$ and \f$t_{f1} = t_{a1} + R\f$ are @ref m_fullSpeedFrames, and
+/// \f$R\f$ is REVERSE_FRAMES_F32.
+/// \f[
+/// v(t) =
+/// \begin{cases}
+///     v_0 & t < t_{s0}
+///     \\ v_0 \frac{t_{s0} + R - t}{R} & t_{s0} \le t < t_{s0} + R
+///     \\ 0 & t_{s0} + R \le t \le t_{a0}
+///     \\ v_1 \frac{t - t_{a0}}{R} & t_{a0} < t < t_{f0}
+///     \\ v_1 & t_{f0} \le t < t_{s1}
+///     \\ v_1 \frac{t_{s1} + R - t}{R} & t_{s1} \le t < t_{s1} + R
+///     \\ 0 & t_{s1} + R \le t \le t_{a1}
+///     \\ v_2 \frac{t - t_{a1}}{R} & t_{a1} < t < t_{f1}
+///     \\ v_2 & t \ge t_{f1}
+/// \end{cases}
+/// \f]
 f32 ObjectEscalator::calcSpeed(s32 t) {
     // Escalator has not stopped yet
     if (static_cast<f32>(t) < m_stopFrames[0]) {

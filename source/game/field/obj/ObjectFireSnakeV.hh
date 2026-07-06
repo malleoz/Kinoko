@@ -15,59 +15,49 @@ public:
 private:
     void calcSub();
 
+    void enterStateStub() {}
+
     /// @addr{0x806C30F0}
+    /// @brief Runs once when the fire snake despawns
     void enterDespawned() {
         ObjectFireSnake::enterDespawned();
     }
 
     void enterFalling();
 
-    /// @addr{0x806C33B4}
-    void enterHighBounce() {}
-
+    /// @brief Runs once after landing from a jump
     void enterRest() {
         ObjectFireSnake::enterRest();
     }
 
-    void enterBounce() {
-        ObjectFireSnake::enterBounce();
-    }
-
-    void enterDespawning() {
-        ObjectFireSnake::enterDespawning();
-    }
-
-    /// @addr{0x806C30F4}
-    void calcDespawned() {}
-
+    void calcStateStub() {}
     void calcFalling();
     void calcHighBounce();
 
+    /// @brief Runs every frame while the fire snake is in between jumps
     void calcRest() {
         ObjectFireSnake::calcRest();
     }
 
+    /// @addr{0x806C2254}
+    /// @brief Runs every frame the fire snake is bouncing, except the first bounce
     void calcBounce() {
         ObjectFireSnake::calcBounce();
     }
 
-    void calcDespawning() {
-        ObjectFireSnake::calcDespawning();
-    }
-
     static constexpr std::array<StateManagerEntry, 6> STATE_ENTRIES = {{
             {StateEntry<ObjectFireSnakeV, &ObjectFireSnakeV::enterDespawned,
-                    &ObjectFireSnakeV::calcDespawned>(0)},
+                    &ObjectFireSnakeV::calcStateStub>(0)},
             {StateEntry<ObjectFireSnakeV, &ObjectFireSnakeV::enterFalling,
                     &ObjectFireSnakeV::calcFalling>(1)},
-            {StateEntry<ObjectFireSnakeV, &ObjectFireSnakeV::enterHighBounce,
+            {StateEntry<ObjectFireSnakeV, &ObjectFireSnakeV::enterStateStub,
                     &ObjectFireSnakeV::calcHighBounce>(2)},
             {StateEntry<ObjectFireSnakeV, &ObjectFireSnakeV::enterRest,
                     &ObjectFireSnakeV::calcRest>(3)},
-            {StateEntry<ObjectFireSnakeV, &ObjectFireSnakeV::enterBounce,
+            {StateEntry<ObjectFireSnakeV, &ObjectFireSnakeV::enterStateStub,
                     &ObjectFireSnakeV::calcBounce>(4)},
-            {StateEntry<ObjectFireSnakeV, &ObjectFireSnakeV::enterDespawning,
-                    &ObjectFireSnakeV::calcDespawning>(5)},
+            {StateEntry<ObjectFireSnakeV, &ObjectFireSnakeV::enterStateStub,
+                    &ObjectFireSnakeV::calcStateStub>(5)},
     }};
 
     const u16 m_cycleDuration;
