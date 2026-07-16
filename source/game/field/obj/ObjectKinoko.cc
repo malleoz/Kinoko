@@ -4,7 +4,7 @@ namespace Kinoko::Field {
 
 /// @addr{0x8080761C}
 ObjectKinoko::ObjectKinoko(const System::MapdataGeoObj &params)
-    : ObjectKCL(params), m_objPos(pos()), m_objRot(rot()) {
+    : ObjectKCL(params), m_initPos(pos()), m_initRot(rot()) {
     m_type = static_cast<KinokoType>(params.setting(0));
 
     m_restFrame = 0;
@@ -41,21 +41,21 @@ void ObjectKinoko::calc() {
 }
 
 /// @addr{0x80807950}
-ObjectKinokoUd::ObjectKinokoUd(const System::MapdataGeoObj &params) : ObjectKinoko(params) {
+ObjectKinokoUd::ObjectKinokoUd(const System::MapdataGeoObj &params)
+    : ObjectKinoko(params), m_period(std::max<u16>(params.setting(2), 2)),
+      m_waitDuration(params.setting(4)), m_amplitude(params.setting(1)),
+      m_angFreq(F_TAU / static_cast<f32>(m_period)) {
     m_waitFrame = 0;
     m_oscFrame = params.setting(3);
-    m_waitDuration = params.setting(4);
-    m_amplitude = params.setting(1);
-    m_period = std::max<u16>(params.setting(2), 2);
-    m_angFreq = F_TAU / static_cast<f32>(m_period);
 }
 
 /// @addr{0x80807E1C}
 ObjectKinokoUd::~ObjectKinokoUd() = default;
 
 /// @addr{0x80807A54}
+/// @details Sinusoidal oscillation with a pause at the bottom of the cycle.
 void ObjectKinokoUd::calcOscillation() {
-    f32 posY = m_objPos.y +
+    f32 posY = m_initPos.y +
             static_cast<f32>(m_amplitude) *
                     (EGG::Mathf::cos(m_angFreq * static_cast<f32>(m_oscFrame)) + 1.0f) * 0.5f;
     setPos(EGG::Vector3f(pos().x, posY, pos().z));
@@ -75,20 +75,21 @@ void ObjectKinokoUd::calcOscillation() {
 }
 
 /// @addr{0x80807B7C}
-ObjectKinokoBend::ObjectKinokoBend(const System::MapdataGeoObj &params) : ObjectKinoko(params) {
+ObjectKinokoBend::ObjectKinokoBend(const System::MapdataGeoObj &params)
+    : ObjectKinoko(params), m_period(std::max<u16>(params.setting(2), 2)),
+      m_amplitude(static_cast<f32>(params.setting(1)) * DEG2RAD),
+      m_angFreq(F_TAU / static_cast<f32>(m_period)) {
     m_currentFrame = params.setting(3);
-    m_amplitude = static_cast<f32>(params.setting(1)) * DEG2RAD;
-    m_period = std::max<u16>(params.setting(2), 2);
-    m_angFreq = F_TAU / static_cast<f32>(m_period);
 }
 
 /// @addr{0x80807DB4}
 ObjectKinokoBend::~ObjectKinokoBend() = default;
 
 /// @addr{0x80807C98}
+/// @details Applies an oscillating rotation that bends the mushroom.
 void ObjectKinokoBend::calcOscillation() {
     const f32 s = EGG::Mathf::sin(m_angFreq * static_cast<f32>(m_currentFrame));
-    EGG::Vector3f rot = m_objRot + (EGG::Vector3f::ez * s) * m_amplitude;
+    EGG::Vector3f rot = m_initRot + (EGG::Vector3f::ez * s) * m_amplitude;
 
     calcTransform();
     setRot(transform().multVector33(rot));
@@ -98,9 +99,8 @@ void ObjectKinokoBend::calcOscillation() {
     }
 }
 
-ObjectKinokoNm::ObjectKinokoNm(const System::MapdataGeoObj &params) : ObjectKCL(params) {
-    m_type = static_cast<KinokoType>(params.setting(0));
-}
+ObjectKinokoNm::ObjectKinokoNm(const System::MapdataGeoObj &params)
+    : ObjectKCL(params), m_type(static_cast<KinokoType>(params.setting(0))) {}
 
 /// @addr{0x80827A9C}
 ObjectKinokoNm::~ObjectKinokoNm() = default;

@@ -5,6 +5,7 @@
 
 namespace Kinoko::Field {
 
+/// @brief Represents a walking Goomba
 class ObjectKuribo : public ObjectCollidable, public StateManager {
 public:
     ObjectKuribo(const System::MapdataGeoObj &params);
@@ -21,30 +22,36 @@ public:
     void loadAnims() override;
 
 private:
-    void enterStateStub();
-    void calcStateStub();
-    void calcStateReroute();
-    void calcStateWalk();
+    void enterStateStub() {}
+
+    void calcStateStub() {}
+
+    void calcReroute();
+
+    /// @addr{0x806DC3F8}
+    /// @brief Called when Goomba is walking along the rail
+    void calcWalk() {
+        calcAnim();
+    }
 
     void calcAnim();
     void calcRot();
     void checkSphereFull();
 
-    f32 m_speedStep;
-    f32 m_animStep;
-    EGG::Vector3f m_origin;
-    f32 m_maxAnimTimer;
-    u32 m_frameCount;
-    f32 m_currSpeed;
-    EGG::Vector3f m_rot;
-    EGG::Vector3f m_floorNrm;
-    f32 m_animTimer;
+    const f32 m_accel;        ///< Acceleration applied when the Goomba is moving
+    const f32 m_animRate;     ///< Animation playback rate
+    EGG::Vector3f m_forward;  ///< Initial forward direction
+    f32 m_animDuration;       ///< Total framecount of walk animation
+    u32 m_currFrame;          ///< Number of frames elapsed since the Goomba was initialized
+    f32 m_currSpeed;          ///< Current rail velocity
+    EGG::Vector3f m_rot;      ///< Smoothed rotation based off of the floor normal
+    EGG::Vector3f m_floorNrm; ///< Up vector of the floor beneath the Goomba
+    f32 m_animTimer;          ///< m_animDuration wrapped timer, determines if Goomba should walk
 
     static constexpr std::array<StateManagerEntry, 4> STATE_ENTRIES = {{
-            {StateEntry<ObjectKuribo, &ObjectKuribo::enterStateStub,
-                    &ObjectKuribo::calcStateReroute>(0)},
-            {StateEntry<ObjectKuribo, &ObjectKuribo::enterStateStub, &ObjectKuribo::calcStateWalk>(
-                    1)},
+            {StateEntry<ObjectKuribo, &ObjectKuribo::enterStateStub, &ObjectKuribo::calcReroute>(
+                    0)},
+            {StateEntry<ObjectKuribo, &ObjectKuribo::enterStateStub, &ObjectKuribo::calcWalk>(1)},
             {StateEntry<ObjectKuribo, &ObjectKuribo::enterStateStub, &ObjectKuribo::calcStateStub>(
                     2)},
             {StateEntry<ObjectKuribo, &ObjectKuribo::enterStateStub, &ObjectKuribo::calcStateStub>(

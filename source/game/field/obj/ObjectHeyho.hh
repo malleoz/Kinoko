@@ -5,7 +5,11 @@
 
 namespace Kinoko::Field {
 
-/// @brief Shy guys on DK Summit.
+/// @brief Snowboarding Shy Guys on DK Summit
+/// @details The Shy Guys move along a rail and jump over the zipper. When they go off a zipper, all
+/// color variants perform a 180, except for red Shy Guys which perform a 720. The gravitational
+/// acceleration is calculated based on the apex, the midpoint (lowest point), and the maximum
+/// velocity param setting.
 class ObjectHeyho : public ObjectCollidable, public StateManager {
 public:
     ObjectHeyho(const System::MapdataGeoObj &params);
@@ -22,23 +26,30 @@ public:
     }
 
 private:
+    /// @brief Current animation of the Shy Guy
     enum class Animation {
-        Move = 1,
-        Jump = 2,
-        Jumped = 3,
+        Move = 1,   ///< On the ground
+        Jump = 2,   ///< In the air
+        Jumped = 3, ///< Landed after a jump
     };
 
+    /// @brief The color of the Shy Guy
+    enum class Color {
+        Red = 0,
+        Yellow = 1,
+        Green = 2,
+    };
+
+    /// @brief Sets the specified animation (move or jump)
     void changeAnimation(Animation anim) {
         m_drawMdl->anmMgr()->playAnim(0.0f, 1.0f, static_cast<size_t>(anim));
         m_currentAnim = anim;
     }
 
-    // State methods
-
-    /// @addr{0x806CF4CC}
-    void enterMove() {}
+    void enterStateStub() {}
 
     /// @addr{0x806CF714}
+    /// @brief Runs once when the Shy Guy goes above the zipper
     void enterJump() {
         m_spinFrame = 0;
     }
@@ -50,29 +61,31 @@ private:
     void calcMotion();
     void calcInterp();
 
-    const s32 m_color;
-    f32 m_apex;
-    EGG::Vector3f m_midpoint;
-    EGG::Vector3f m_transformOffset;
-    f32 m_currentVel;
-    f32 m_accel;
-    f32 m_maxVelSq;
-    EGG::Vector3f m_up;
-    EGG::Vector3f m_forward;
-    EGG::Vector3f m_floorNrm;
-    bool m_floorCollision;
-    Animation m_currentAnim;
-    bool m_freeFall;
-    f32 m_launchVel;
-    s16 m_spinFrame;
+    const Color m_color;      ///< Color of the Shy Guy, used to determine if it spins
+    f32 m_apex;               ///< Highest Y position between the rail endpoints
+    EGG::Vector3f m_midpoint; ///< Middle point (and lowest Y position) of the rai
+    EGG::Vector3f m_initVel;  ///< Initial velocity vector
+    f32 m_currentVel;         ///< Current speed along the rail
+    f32 m_accel;              ///< Gravity based off apex, midpoint, and max velocity
+    f32 m_maxVelSq;           ///< Square of the maximum velocity specified by param setting 1
+    EGG::Vector3f m_up;       ///< Smoothed up vector
+    EGG::Vector3f m_forward;  ///< Facing direction
+    EGG::Vector3f m_floorNrm; ///< Floor normal from the most recent collision
+    bool m_floorCollision;    ///< Whether the Shy Guy is currently colliding with the floor
+    Animation m_currentAnim;  ///< Currently playing animation
+    bool m_freeFall;          ///< Shy Guy has left the rail due to asymmetric endpoint heights
+    f32 m_launchVel;          ///< Speed at moment of leaving the rail, used to snap back on landing
+    s16 m_spinFrame;          ///< Frame counter that ticks up while the Shy Guy is spinning mid-air
 
     static constexpr std::array<StateManagerEntry, 2> STATE_ENTRIES = {{
-            {StateEntry<ObjectHeyho, &ObjectHeyho::enterMove, &ObjectHeyho::calcMove>(0)},
+            {StateEntry<ObjectHeyho, &ObjectHeyho::enterStateStub, &ObjectHeyho::calcMove>(0)},
             {StateEntry<ObjectHeyho, &ObjectHeyho::enterJump, &ObjectHeyho::calcJump>(1)},
     }};
 
+    /// @brief Height offset applied to the position passed into collision checks
     static constexpr EGG::Vector3f COLLISION_OFFSET = EGG::Vector3f(0.0f, 10.0f, 0.0f);
-    static constexpr f32 COLLISION_RADIUS = 100.0f;
+
+    static constexpr f32 COLLISION_RADIUS = 100.0f; ///< Radius of the collision sphere
 };
 
 } // namespace Kinoko::Field

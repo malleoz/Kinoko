@@ -5,7 +5,11 @@
 namespace Kinoko::Field {
 
 /// @brief Represents the piranhas on GCN Mario Circuit.
-/// @details This object does not include the pipe that is normally found underneath the piranha.
+/// @details These piranhas often exist above a pipe, but these piranha objects are separate from
+/// the pipe object, which is a primitive @ref ObjectCollidable represented with
+/// @ref ObjectId::PakkunDokan. Piranhas cycle between a waiting state and an attacking state. When
+/// they attack, their collision transformation matrix is updated to reflect the piranha chomping
+/// forward and downward.
 class ObjectPakkunF final : public ObjectCollidable {
 public:
     ObjectPakkunF(const System::MapdataGeoObj &params);
@@ -23,28 +27,40 @@ public:
     void calcCollisionTransform() override;
 
     /// @addr{0x80775458}
+    /// @details Extends the collision radius to ensure GJK collision checks occur from far enough
+    /// away when the piranha chomps forward.
     [[nodiscard]] f32 getCollisionRadius() const override {
         return 1000.0f;
     }
 
 private:
+    /// @brief Distinguishes between whether the piranha is idle or chomping
     enum class State {
-        Wait = 0,
-        Attack = 1,
+        Wait = 0,   ///< The piranha is idle
+        Attack = 1, ///< The piranha is chomping
     };
 
-    void calcWait();
+    /// @addr{0x80774A00}
+    /// @briefs Runs every frame when the piranha is idle
+    /// @details When the the wait timer reaches 0, the piranha will enter the attack state.
+    void calcWait() {
+        if (--m_waitFrames == 0) {
+            enterAttack();
+        }
+    }
+
     void calcAttack();
     void enterAttack();
 
-    State m_state;
+    State m_state;         ///< Tracks whether the piranha is idle or chomping
     s32 m_waitFrames;      ///< How long until the piranha starts chomping
     s32 m_attackFrames;    ///< How long until the piranha stops chomping
     u32 m_currAttackFrame; /// How long the piranhas has been attacking for
 
-    /// Total time the piranha will be idle for. Not in the base game, but this prevents
-    /// having to dereference m_mapObj multiple times.
-    const u32 m_waitDuration;
+    /// @brief Total time the piranha will be idle for
+    /// @details Not in the base game, but caching this prevents having to dereference m_mapObj
+    /// multiple times.
+    const s32 m_waitDuration;
 };
 
 } // namespace Kinoko::Field

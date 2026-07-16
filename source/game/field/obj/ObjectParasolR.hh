@@ -4,6 +4,8 @@
 
 namespace Kinoko::Field {
 
+/// @brief The beach umbrellas on GBA Shy Guy Beach
+/// @details Simply acts as a wall for collision purposes.
 class ObjectParasolR : public ObjectCollidable {
 public:
     ObjectParasolR(const System::MapdataGeoObj &params);

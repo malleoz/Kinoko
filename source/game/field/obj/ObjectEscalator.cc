@@ -53,53 +53,49 @@ void ObjectEscalator::calc() {
 /// @addr{0x80803910}
 bool ObjectEscalator::checkPointPartial(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
         KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) {
-    return checkPointImpl(&ObjectEscalator::shouldCheckColNoPush, &ObjColMgr::checkPointPartial,
-            pos, prevPos, mask, info, maskOut);
+    return checkPointImpl(&ObjColMgr::checkPointPartial, pos, prevPos, mask, info, maskOut);
 }
 
 /// @addr{0x80803A04}
 bool ObjectEscalator::checkPointPartialPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
         KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) {
-    return checkPointImpl(&ObjectEscalator::shouldCheckColPush, &ObjColMgr::checkPointPartialPush,
-            pos, prevPos, mask, info, maskOut);
+    return checkPointImpl(&ObjColMgr::checkPointPartialPush, pos, prevPos, mask, info, maskOut);
 }
 
 /// @addr{0x80803AF8}
 bool ObjectEscalator::checkPointFull(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
         KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
-    return checkPointImpl(&ObjectEscalator::shouldCheckColNoPush, &ObjColMgr::checkPointFull, pos,
-            prevPos, mask, info, maskOut);
+    return checkPointImpl(&ObjColMgr::checkPointFull, pos, prevPos, mask, info, maskOut);
 }
 
 /// @addr{0x80803BEC}
 bool ObjectEscalator::checkPointFullPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
         KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
-    return checkPointImpl(&ObjectEscalator::shouldCheckColPush, &ObjColMgr::checkPointFullPush, pos,
-            prevPos, mask, info, maskOut);
+    return checkPointImpl(&ObjColMgr::checkPointFullPush, pos, prevPos, mask, info, maskOut);
 }
 
 /// @addr{0x80803540}
 bool ObjectEscalator::checkSpherePartial(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
         KCLTypeMask *maskOut, u32 timeOffset) {
-    return checkSphereImpl(&ObjectEscalator::shouldCheckColNoPush, &ObjColMgr::checkSpherePartial,
-            radius, pos, prevPos, mask, info, maskOut, timeOffset);
+    return checkSphereImpl(&ObjColMgr::checkSpherePartial, radius, pos, prevPos, mask, info,
+            maskOut, timeOffset);
 }
 
 /// @addr{0x80803680}
 bool ObjectEscalator::checkSpherePartialPush(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
         KCLTypeMask *maskOut, u32 timeOffset) {
-    return checkSphereImpl(&ObjectEscalator::shouldCheckColPush, &ObjColMgr::checkSpherePartialPush,
-            radius, pos, prevPos, mask, info, maskOut, timeOffset);
+    return checkSphereImpl(&ObjColMgr::checkSpherePartialPush, radius, pos, prevPos, mask, info,
+            maskOut, timeOffset);
 }
 
 /// @addr{0x808037C0}
 bool ObjectEscalator::checkSphereFull(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
         u32 timeOffset) {
-    return checkSphereImpl(&ObjectEscalator::shouldCheckColNoPush, &ObjColMgr::checkSphereFull,
-            radius, pos, prevPos, mask, info, maskOut, timeOffset);
+    return checkSphereImpl(&ObjColMgr::checkSphereFull, radius, pos, prevPos, mask, info, maskOut,
+            timeOffset);
 }
 
 /// @addr{0x80803900}
@@ -119,57 +115,51 @@ void ObjectEscalator::narrScLocal(f32 radius, const EGG::Vector3f &pos, KCLTypeM
 bool ObjectEscalator::checkPointCachedPartial(const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
         KCLTypeMask *maskOut) {
-    return checkPointImpl(&ObjectEscalator::shouldCheckColNoPush,
-            &ObjColMgr::checkPointCachedPartial, pos, prevPos, mask, info, maskOut);
+    return checkPointImpl(&ObjColMgr::checkPointCachedPartial, pos, prevPos, mask, info, maskOut);
 }
 
 /// @addr{0x80803264}
 bool ObjectEscalator::checkPointCachedPartialPush(const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
         KCLTypeMask *maskOut) {
-    return checkPointImpl(&ObjectEscalator::shouldCheckColPush,
-            &ObjColMgr::checkPointCachedPartialPush, pos, prevPos, mask, info, maskOut);
+    return checkPointImpl(&ObjColMgr::checkPointCachedPartialPush, pos, prevPos, mask, info,
+            maskOut);
 }
 
 /// @addr{0x80803358}
 bool ObjectEscalator::checkPointCachedFull(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
         KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
-    return checkPointImpl(&ObjectEscalator::shouldCheckColNoPush, &ObjColMgr::checkPointCachedFull,
-            pos, prevPos, mask, info, maskOut);
+    return checkPointImpl(&ObjColMgr::checkPointCachedFull, pos, prevPos, mask, info, maskOut);
 }
 
 /// @addr{0x8080344C}
 bool ObjectEscalator::checkPointCachedFullPush(const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
-    return checkPointImpl(&ObjectEscalator::shouldCheckColPush,
-            &ObjColMgr::checkPointCachedFullPush, pos, prevPos, mask, info, maskOut);
+    return checkPointImpl(&ObjColMgr::checkPointCachedFullPush, pos, prevPos, mask, info, maskOut);
 }
 
 /// @addr{0x80802DA0}
 bool ObjectEscalator::checkSphereCachedPartial(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
         KCLTypeMask *maskOut, u32 timeOffset) {
-    return checkSphereImpl(&ObjectEscalator::shouldCheckColNoPush,
-            &ObjColMgr::checkSphereCachedPartial, radius, pos, prevPos, mask, info, maskOut,
-            timeOffset);
+    return checkSphereImpl(&ObjColMgr::checkSphereCachedPartial, radius, pos, prevPos, mask, info,
+            maskOut, timeOffset);
 }
 
 /// @addr{0x80802EE0}
 bool ObjectEscalator::checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
         KCLTypeMask *maskOut, u32 timeOffset) {
-    return checkSphereImpl(&ObjectEscalator::shouldCheckColPush,
-            &ObjColMgr::checkSphereCachedPartialPush, radius, pos, prevPos, mask, info, maskOut,
-            timeOffset);
+    return checkSphereImpl(&ObjColMgr::checkSphereCachedPartialPush, radius, pos, prevPos, mask,
+            info, maskOut, timeOffset);
 }
 
 /// @addr{0x80803020}
 bool ObjectEscalator::checkSphereCachedFull(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
         u32 timeOffset) {
-    return checkSphereImpl(&ObjectEscalator::shouldCheckColNoPush,
-            &ObjColMgr::checkSphereCachedFull, radius, pos, prevPos, mask, info, maskOut,
-            timeOffset);
+    return checkSphereImpl(&ObjColMgr::checkSphereCachedFull, radius, pos, prevPos, mask, info,
+            maskOut, timeOffset);
 }
 
 /// @addr{0x80803160}
@@ -256,7 +246,6 @@ bool ObjectEscalator::checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
 
 /// @brief Helper function which re-uses some shared code amongst various collision check variants
 /// @tparam T CollisionInfo or CollisionInfoPartial
-/// @param shouldCheckFunc Virtual function that determines whether to perform a collision check
 /// @param checkFunc The function to use for the actual collision check
 /// @param pos The point to check collision against
 /// @param prevPos The previous position of the kart (used to compute collision depth)
@@ -266,14 +255,9 @@ bool ObjectEscalator::checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
 /// @return Whether or not a collision occurred
 template <typename T>
     requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
-bool ObjectEscalator::checkPointImpl(ShouldCheckFunc shouldCheckFunc, CheckPointFunc<T> checkFunc,
-        const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info,
-        KCLTypeMask *maskOut) {
+bool ObjectEscalator::checkPointImpl(CheckPointFunc<T> checkFunc, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info, KCLTypeMask *maskOut) {
     if (m_checkColYPosMin > pos.y || pos.y >= m_checkColYPosMax) {
-        return false;
-    }
-
-    if (!(this->*shouldCheckFunc)()) {
         return false;
     }
 
@@ -282,7 +266,6 @@ bool ObjectEscalator::checkPointImpl(ShouldCheckFunc shouldCheckFunc, CheckPoint
 
 /// @brief Helper function which re-uses some shared code amongst various collision check variants
 /// @tparam T CollisionInfo or CollisionInfoPartial
-/// @param shouldCheckFunc Virtual function that determines whether to perform a collision check
 /// @param checkFunc The function to use for the actual collision check
 /// @param radius The radius of the sphere to check collision against
 /// @param pos The position of the sphere to check collision against
@@ -293,14 +276,10 @@ bool ObjectEscalator::checkPointImpl(ShouldCheckFunc shouldCheckFunc, CheckPoint
 /// @return Whether or not a collision occurred
 template <typename T>
     requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
-bool ObjectEscalator::checkSphereImpl(ShouldCheckFunc shouldCheckFunc, CheckSphereFunc<T> checkFunc,
-        f32 radius, const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask mask,
-        T *info, KCLTypeMask *maskOut, u32 timeOffset) {
+bool ObjectEscalator::checkSphereImpl(CheckSphereFunc<T> checkFunc, f32 radius,
+        const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info,
+        KCLTypeMask *maskOut, u32 timeOffset) {
     if (m_checkColYPosMin > pos.y || pos.y >= m_checkColYPosMax) {
-        return false;
-    }
-
-    if (!(this->*shouldCheckFunc)()) {
         return false;
     }
 

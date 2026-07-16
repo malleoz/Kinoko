@@ -110,11 +110,13 @@ public:
         return m_boxColUnit;
     }
 
+    /// @brief The position of the object in world space
     /// @addr{0x80681598}
     [[nodiscard]] virtual const EGG::Vector3f &getPosition() const {
         return m_pos;
     }
 
+    /// @brief Collision radius to use for GJK checks
     /// @addr{0x8080BDC0}
     [[nodiscard]] virtual f32 getCollisionRadius() const {
         return 100.0f;

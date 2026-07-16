@@ -8,11 +8,9 @@ namespace Kinoko::Field {
 
 /// @addr{0x806DB184}
 ObjectKuribo::ObjectKuribo(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), StateManager(this, STATE_ENTRIES) {
-    ASSERT(m_mapObj);
-    m_animStep = static_cast<f32>(m_mapObj->setting(2)) / 100.0f;
-    m_speedStep = static_cast<f32>(m_mapObj->setting(1)) / 100.0f;
-}
+    : ObjectCollidable(params), StateManager(this, STATE_ENTRIES),
+      m_accel(static_cast<f32>(params.setting(1)) / 100.0f),
+      m_animRate(static_cast<f32>(params.setting(2)) / 100.0f) {}
 
 /// @addr{0x806DB3A0}
 ObjectKuribo::~ObjectKuribo() = default;
@@ -20,28 +18,31 @@ ObjectKuribo::~ObjectKuribo() = default;
 /// @addr{0x806DB40C}
 void ObjectKuribo::init() {
     calcTransform();
-    m_origin = transform().base(2);
+    m_forward = transform().base(2);
 
     m_railInterpolator->init(0.0f, 0);
     m_railInterpolator->setCurrVel(0.0f);
 
     m_currSpeed = 0.0f;
     m_animTimer = 0.0f;
-    m_frameCount = 0;
+    m_currFrame = 0;
 
     auto *anmMgr = m_drawMdl->anmMgr();
-    anmMgr->playAnim(0.0f, m_animStep, 0);
-    m_maxAnimTimer = anmMgr->activeAnim(Render::AnmType::Chr)->frameCount();
+    anmMgr->playAnim(0.0f, m_animRate, 0);
+    m_animDuration = anmMgr->activeAnim(Render::AnmType::Chr)->frameCount();
     m_nextStateId = 1;
 }
 
 /// @addr{0x806DB5B0}
+/// @details Updates the animation timer mod the total animation duration, then calls the
+/// StateManager to run state-specific logic depending on whether the Goomba is changing direction
+/// or walking along the rail.
 void ObjectKuribo::calc() {
-    m_animTimer = ::fmodf(static_cast<f32>(m_frameCount) * m_animStep, m_maxAnimTimer);
+    m_animTimer = ::fmodf(static_cast<f32>(m_currFrame) * m_animRate, m_animDuration);
 
     StateManager::calc();
 
-    ++m_frameCount;
+    ++m_currFrame;
 }
 
 /// @addr{0x806dd278}
@@ -59,26 +60,16 @@ void ObjectKuribo::loadAnims() {
     linkAnims(names, types);
 }
 
-void ObjectKuribo::enterStateStub() {}
-
-void ObjectKuribo::calcStateStub() {}
-
 /// @addr{0x806DC220}
-/// @brief Called when the Goomba is changing direction.
-void ObjectKuribo::calcStateReroute() {
+/// @brief Called when the Goomba is changing direction
+void ObjectKuribo::calcReroute() {
     if (m_railInterpolator->curPoint().setting[0] < m_currentFrame) {
         m_nextStateId = 1;
     }
 
     checkSphereFull();
     calcRot();
-    setMatrixTangentTo(m_rot, m_origin);
-}
-
-/// @addr{0x806DC3F8}
-/// @brief Called when Goomba is walking along the rail.
-void ObjectKuribo::calcStateWalk() {
-    calcAnim();
+    setMatrixTangentTo(m_rot, m_forward);
 }
 
 /// @addr{0x806DCDDC}
@@ -92,9 +83,9 @@ void ObjectKuribo::calcAnim() {
     }
 
     if (shouldMove) {
-        m_currSpeed = std::min(10.0f, m_currSpeed + m_speedStep);
+        m_currSpeed = std::min(10.0f, m_currSpeed + m_accel);
     } else {
-        m_currSpeed = std::max(0.0f, m_currSpeed - m_speedStep);
+        m_currSpeed = std::max(0.0f, m_currSpeed - m_accel);
     }
 
     m_railInterpolator->setCurrVel(m_currSpeed);
@@ -108,10 +99,11 @@ void ObjectKuribo::calcAnim() {
 
     checkSphereFull();
     calcRot();
-    setMatrixTangentTo(m_rot, m_origin);
+    setMatrixTangentTo(m_rot, m_forward);
 }
 
 /// @addr{0x806DCC9C}
+/// @brief Smoothly interpolates the Goomba's up vector to match the floor normal beneath it
 void ObjectKuribo::calcRot() {
     m_rot = Interpolate(0.1f, m_rot, m_floorNrm);
 
@@ -123,6 +115,7 @@ void ObjectKuribo::calcRot() {
 }
 
 /// @addr{0x806DCB58}
+/// @brief Checks for floor collision beneath the Goomba
 void ObjectKuribo::checkSphereFull() {
     constexpr f32 RADIUS = 50.0f;
 

@@ -20,14 +20,9 @@ public:
     [[nodiscard]] const char *getKclName() const override {
         return "dc_pillar_base";
     }
-
-    /// @addr{0x807FFA88}
-    [[nodiscard]] virtual f32 colRadiusAdditionalLength() const override {
-        return 0.0f;
-    }
 };
 
-/// @brief Represents the part of the Dry Dry Ruins pillar that falls.
+/// @brief Represents the part of the Dry Dry Ruins pillar that falls
 /// @details Acts as a wall before the pillar starts to fall, acts as a hazard while falling, and
 /// disables once the pillar has fallen.
 class ObjectPillarC : public ObjectCollidable {
@@ -55,10 +50,10 @@ public:
     }
 
 private:
-    const u32 m_fallStart; ///< The number of frames before the pillar will start to fall.
+    const u32 m_fallStart; ///< The number of frames before the pillar will start to fall
 };
 
-/// @brief Represents the entirety of a pillar that falls on Dry Dry Ruins.
+/// @brief Represents the entirety of a pillar that falls on Dry Dry Ruins
 /// @details There are really three parts that comprise a pillar: the upright pillar collision, the
 /// pilar base collision, and the trickable pillar KCL once it has fallen.
 class ObjectPillar : public ObjectKCL {
@@ -82,23 +77,24 @@ public:
     [[nodiscard]] const EGG::Matrix34f &getUpdatedMatrix(u32 timeOffset) override;
 
 private:
+    /// @brief The state of the pillar in terms of whether it is falling or not
     enum class State {
-        Upright = 0,
-        Break = 1,
-        Ground = 2,
+        Upright = 0, ///< The pillar is upright and has not yet started to fall
+        Break = 1,   ///< The pillar is falling and can be collided with as a hazard
+        Ground = 2,  ///< The pillar has finished falling and can be collided with as a wall
     };
 
     [[nodiscard]] f32 calcRot(s32 frame) const;
 
-    State m_state;              ///< 0 when upright, 1 when falling, and 2 afterwards.
-    const u32 m_fallStart;      ///< The number of frames before the pillar will start to fall.
-    const f32 m_targetRotation; ///< How much the pillar rotates during the fall, in radians.
-    const f32 m_initRot;
-    EGG::Vector3f m_setupRot;    ///< Initial rotation of the pillar.
-    ObjectPillarBase *m_base;    ///< Stationary portion of pillar.
-    ObjectPillarC *m_collidable; ///< Wall and hazard collision of the upright/falling pillar.
-    EGG::Matrix34f m_workMat;    ///< Rotation and translation matrix;
-    s32 m_groundFrame;           ///< Frame the pillar has finished falling.
+    State m_state;               ///< Falling state of the pillar
+    const u32 m_fallStart;       ///< The number of frames before the pillar will start to fall
+    const f32 m_targetRotation;  ///< How much the pillar rotates during the fall, in radians
+    const f32 m_initRot;         ///< Initial rotation of the pillar
+    EGG::Vector3f m_currRot;     ///< Current rotation of the pillar
+    ObjectPillarBase *m_base;    ///< Stationary portion of pillar
+    ObjectPillarC *m_collidable; ///< Wall and hazard collision of the upright/falling pillar
+    EGG::Matrix34f m_workMat;    ///< Rotation and translation matrix
+    s32 m_groundFrame;           ///< Frame the pillar has finished falling
 };
 
 } // namespace Kinoko::Field

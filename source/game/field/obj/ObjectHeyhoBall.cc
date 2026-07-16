@@ -21,14 +21,16 @@ void ObjectHeyhoBall::init() {
     m_workingPos = pos();
     m_intensity = ExplosionIntensity::ExplosionLoseItem;
 
-    resize(BLAST_RADIUS, 0.0f);
+    resize(INIT_BLAST_RADIUS, 0.0f);
 
     const auto &flowTable = ObjectDirector::Instance()->flowTable();
-    m_blastRadiusRatio = BLAST_RADIUS /
+    m_blastRadiusRatio = INIT_BLAST_RADIUS /
             static_cast<f32>(parse<s16>(flowTable.set(flowTable.slot(id()))->params.sphere.radius));
 }
 
 /// @addr{0x806D0880}
+/// @brief Called when a collision occurs between a kart and this object
+/// @details References the explosion intensity to determine what reaction to apply
 Kart::Reaction ObjectHeyhoBall::onCollision(Kart::KartObject * /*kartObj*/,
         Kart::Reaction /*reactionOnKart*/, Kart::Reaction /*reactionOnObj*/,
         EGG::Vector3f &hitDepth) {
@@ -58,14 +60,16 @@ void ObjectHeyhoBall::initProjectile(const EGG::Vector3f &pos) {
 }
 
 /// @addr{0x806D0A3C}
+/// @brief Runs once when the cannonball is fired
 void ObjectHeyhoBall::enterFalling() {
     if (!getUnit()) {
         loadAABB(0.0f);
-        resize(BLAST_RADIUS, 0.0f);
+        resize(INIT_BLAST_RADIUS, 0.0f);
     }
 }
 
 /// @addr{0x806D0AD8}
+/// @brief Runs every frame that the cannonball is falling
 void ObjectHeyhoBall::calcFalling() {
     f32 currentHeight = m_workingPos.y + (m_initYSpeed - 4.0f * static_cast<f32>(m_currentFrame));
     if (currentHeight > m_initPos.y + -BALL_RADIUS) {
@@ -79,6 +83,8 @@ void ObjectHeyhoBall::calcFalling() {
 }
 
 /// @addr{0x806D0F24}
+/// @brief Scales the explosion sphere over 46 frames using a capped downward parabola
+/// @todo Describe the parabola once we better understand the significance of the "40" term
 void ObjectHeyhoBall::calcExploding() {
     constexpr u32 EXPLODE_FRAMES = 46;
     constexpr EGG::Vector3f BALL_SCALE = EGG::Vector3f(1.001f, 1.001f, 1.001f);

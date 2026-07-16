@@ -18,8 +18,8 @@ void ObjectPoihanaBase::init() {
     m_accel.setZero();
     m_extVel.setZero();
     m_vel.setZero();
-    m_curRot = EGG::Vector3f::ey;
-    m_up = EGG::Vector3f::ez;
+    m_up = EGG::Vector3f::ey;
+    m_forward = EGG::Vector3f::ez;
     m_floorNrm = EGG::Vector3f::ey;
     m_walkState = WalkState::NeedTarget;
     m_workMat.setBase(3, pos());
@@ -46,33 +46,38 @@ void ObjectPoihana::init() {
 }
 
 /// @addr{0x80747530}
-void ObjectPoihana::calcCurRot(f32 t) {
-    m_curRot = Interpolate(t, m_curRot, m_floorNrm);
-    if (m_curRot.squaredLength() > std::numeric_limits<f32>::epsilon()) {
-        m_curRot.normalise2();
+/// @brief Interpolates the up vector between itself and the floor normal using the provided
+/// interpolation factor
+void ObjectPoihana::calcUp(f32 t) {
+    m_up = Interpolate(t, m_up, m_floorNrm);
+    if (m_up.squaredLength() > std::numeric_limits<f32>::epsilon()) {
+        m_up.normalise2();
     } else {
-        m_curRot = EGG::Vector3f::ey;
+        m_up = EGG::Vector3f::ey;
     }
 }
 
 /// @addr{0x807475DC}
+/// @brief Forms an orthonormal basis from the up and forward vectors, and updates the current
+/// transformation matrix accordingly
 void ObjectPoihana::calcOrthonormalBasis() {
-    EGG::Vector3f side = m_curRot.cross(m_up);
+    EGG::Vector3f side = m_up.cross(m_forward);
     side.normalise2();
 
     if (side.squaredLength() <= std::numeric_limits<f32>::epsilon()) {
         side = EGG::Vector3f::ex;
     }
 
-    EGG::Vector3f up = side.cross(m_curRot);
+    EGG::Vector3f up = side.cross(m_up);
     up.normalise2();
 
     m_workMat.setBase(0, side);
-    m_workMat.setBase(1, m_curRot);
+    m_workMat.setBase(1, m_up);
     m_workMat.setBase(2, up);
 }
 
 /// @addr{0x80747788}
+/// @brief Checks for floor collision and updates the transformation matrix and velocity accordingly
 void ObjectPoihana::calcCollision() {
     CollisionInfo info;
     EGG::Vector3f pos = collisionPos();
@@ -96,7 +101,31 @@ void ObjectPoihana::calcCollision() {
     }
 }
 
-/// @addr{0x80748D98}
+/** @addr{0x80748D98}
+ * @brief Manages the cataquack's walking behavior, including selecting a target position and
+ * updating its velocity
+ * @details When the cataquack needs a new target position, it generates a pseudo-random position
+ * as follows:
+ * 1. Build a position-based seed. \n
+ *    \f$ s = \left|x_{\mathrm{pos}} + z_{\mathrm{pos}}\right| \f$ \n
+ *    This collapses world position into one non-negative scalar.
+ * 2. Quantize the seed at two different scales. \n
+ *    \f$ t_1 = \left\lfloor 0.1\,s \right\rfloor,\quad t_2 = \left\lfloor 100\,s \right\rfloor \f$
+ * 3. Fold both quantized values into a small periodic range. \n
+ *    \f$ r = (t_1 \bmod 100) + (t_2 \bmod 100) \f$ \n
+ *    This gives a bounded integer used as the main pseudo-random driver.
+ * 4. Derive normalized X/Z components in [0, 1). \n
+ *    \f$ x_u = \frac{r \bmod 100}{100},\quad z_u = \frac{(7r) \bmod 100}{100} \f$ \n
+ *    The factor 7 decorrelates the Z component from X.
+ * 5. Convert normalized values into a unit direction on the XZ plane. \n
+ *    \f$ \mathbf{d} = \mathrm{normalize}(x_u - 0.5,\ 0,\ z_u - 0.5) \f$ \n
+ *    Subtracting 0.5 recenters around the origin before normalization.
+ * 6. Compute a travel radius in [1000, 2000). \n
+ *    \f$ \mathrm{dist} = 1000 + 1000\cdot\frac{(3r)\bmod 100}{100} \f$ \n
+ *    The factor 3 provides another decorrelated component for distance.
+ * 7. Build the final target position around the initial spawn. \n
+ *    \f$ \mathbf{target} = \mathbf{initPos} + \mathbf{d}\cdot\mathrm{dist} \f$
+ **/
 void ObjectPoihana::calcStep() {
     constexpr f32 COARSE_SCALAR = 0.1f;
     constexpr f32 FINE_SCALAR = 100.0f;
@@ -146,13 +175,14 @@ void ObjectPoihana::calcStep() {
         }
     }
 
-    calcCurRot(0.1f);
-    calcUp();
+    calcUp(0.1f);
+    calcForward();
 
     m_vel = Interpolate(0.05f, m_vel, m_targetVel);
 }
 
 /// @addr{0x80749610}
+/// @brief Calculates the direction vector between the current position and the target position
 void ObjectPoihana::calcDir() {
     EGG::Vector3f delta = m_targetPos - curPos();
     delta.y = 0.0f;
@@ -163,15 +193,16 @@ void ObjectPoihana::calcDir() {
 }
 
 /// @addr{0x807496C4}
-void ObjectPoihana::calcUp() {
-    EGG::Vector3f up = Interpolate(0.1f, m_workMat.base(2), m_dir);
-    if (up.squaredLength() > std::numeric_limits<f32>::epsilon()) {
-        up.normalise2();
+/// @brief Calculates the smoothed forward vector based on @ref m_dir and the previous forward
+void ObjectPoihana::calcForward() {
+    EGG::Vector3f forward = Interpolate(0.1f, m_workMat.base(2), m_dir);
+    if (forward.squaredLength() > std::numeric_limits<f32>::epsilon()) {
+        forward.normalise2();
     } else {
-        up = EGG::Vector3f::ez;
+        forward = EGG::Vector3f::ez;
     }
 
-    m_up = up;
+    m_forward = forward;
 }
 
 } // namespace Kinoko::Field

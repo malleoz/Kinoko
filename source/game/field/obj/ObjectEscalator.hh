@@ -92,8 +92,6 @@ public:
             KCLTypeMask *maskOut, u32 timeOffset) override;
 
 private:
-    using ShouldCheckFunc = bool (ObjectEscalator::*)() const;
-
     template <typename T>
         requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
     using CheckPointFunc = bool(ObjColMgr::*)(const EGG::Vector3f &pos,
@@ -106,24 +104,22 @@ private:
 
     template <typename T>
         requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
-    [[nodiscard]] bool checkPointImpl(ShouldCheckFunc shouldCheckFunc, CheckPointFunc<T> checkFunc,
-            const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info,
-            KCLTypeMask *maskOut);
+    [[nodiscard]] bool checkPointImpl(CheckPointFunc<T> checkFunc, const EGG::Vector3f &pos,
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info, KCLTypeMask *maskOut);
 
     template <typename T>
         requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
-    [[nodiscard]] bool checkSphereImpl(ShouldCheckFunc shouldCheckFunc,
-            CheckSphereFunc<T> checkFunc, f32 radius, const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info, KCLTypeMask *maskOut,
-            u32 timeOffset);
+    [[nodiscard]] bool checkSphereImpl(CheckSphereFunc<T> checkFunc, f32 radius,
+            const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info,
+            KCLTypeMask *maskOut, u32 timeOffset);
 
     [[nodiscard]] f32 calcWrappedStepCount(s32 t);
     [[nodiscard]] f32 calcSpeed(s32 t);
 
-    const EGG::Vector3f m_initialPos; ///< Initial position of the escalator
-    f32 m_wrappedStepCount;           ///< Step count modulo 20
+    EGG::Vector3f m_initialPos; ///< Initial position of the escalator
+    f32 m_wrappedStepCount;     ///< Step count modulo 20
     EGG::Vector3f m_stepDims; ///< Length and height of steps but aligned with its facing direction
-    EGG::Matrix34f m_workMatrix; ///< Represents the current object collision matrix
+    EGG::Matrix34f m_workMatrix;            ///< Represents the current object collision matrix
     const std::array<s32, 2> m_stillFrames; ///< When escalators change direction (two times)
     const std::array<f32, 3> m_speed;       ///< Velocity for each of the three directions it moves
     const f32 m_checkColYPosMax; ///< Collision checks early return if you are above this height

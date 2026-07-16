@@ -30,6 +30,7 @@ ObjectObakeManager::~ObjectObakeManager() {
 }
 
 /// @addr{0x8080BB28}
+/// @details Checks if any blocks should start falling and updates the state of any falling blocks.
 void ObjectObakeManager::calc() {
     u32 frame = System::RaceManager::Instance()->timer();
 
@@ -41,123 +42,17 @@ void ObjectObakeManager::calc() {
                 block->fallState() == ObjectObakeBlock::FallState::Rest) {
             block->setFallState(ObjectObakeBlock::FallState::Falling);
             block->calc();
-            m_calcBlocks.push_back(block);
+            m_fallingBlocks.push_back(block);
         }
     }
 
-    for (auto *&block : m_calcBlocks) {
+    for (auto *&block : m_fallingBlocks) {
         block->calc();
     }
 }
 
-/// @addr{0x8080BE44}
-bool ObjectObakeManager::checkPointPartial(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) {
-    return checkSpherePartialImpl(0.0f, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x8080BE54}
-bool ObjectObakeManager::checkPointPartialPush(const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-        KCLTypeMask *maskOut) {
-    return checkSpherePartialPushImpl(0.0f, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x8080BE64}
-bool ObjectObakeManager::checkPointFull(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
-    return checkSphereFullImpl(0.0f, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x8080BE74}
-bool ObjectObakeManager::checkPointFullPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
-    return checkSphereFullPushImpl(0.0f, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x8080BE34}
-bool ObjectObakeManager::checkSpherePartial(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-        KCLTypeMask *maskOut, u32 /*timeOffset*/) {
-    return checkSpherePartialImpl(radius, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x8080BE38}
-bool ObjectObakeManager::checkSpherePartialPush(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-        KCLTypeMask *maskOut, u32 /*timeOffset*/) {
-    return checkSpherePartialPushImpl(radius, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x8080BE3C}
-bool ObjectObakeManager::checkSphereFull(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
-        u32 /*timeOffset*/) {
-    return checkSphereFullImpl(radius, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x8080BE40}
-bool ObjectObakeManager::checkSphereFullPush(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
-        u32 /*timeOffset*/) {
-    return checkSphereFullPushImpl(radius, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x8080BDF4}
-bool ObjectObakeManager::checkPointCachedPartial(const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-        KCLTypeMask *maskOut) {
-    return checkSpherePartialImpl(0.0f, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x8080BE04}
-bool ObjectObakeManager::checkPointCachedPartialPush(const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-        KCLTypeMask *maskOut) {
-    return checkSpherePartialPushImpl(0.0f, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x8080BE14}
-bool ObjectObakeManager::checkPointCachedFull(const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
-    return checkSphereFullImpl(0.0f, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x8080BE24}
-bool ObjectObakeManager::checkPointCachedFullPush(const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
-    return checkSphereFullPushImpl(0.0f, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x8080BDE4}
-bool ObjectObakeManager::checkSphereCachedPartial(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-        KCLTypeMask *maskOut, u32 /*timeOffset*/) {
-    return checkSpherePartialImpl(radius, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x8080BDE8}
-bool ObjectObakeManager::checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-        KCLTypeMask *maskOut, u32 /*timeOffset*/) {
-    return checkSpherePartialPushImpl(radius, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x8080BDEC}
-bool ObjectObakeManager::checkSphereCachedFull(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
-        u32 /*timeOffset*/) {
-    return checkSphereFullImpl(radius, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x8080BDF0}
-bool ObjectObakeManager::checkSphereCachedFullPush(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
-        u32 /*timeOffset*/) {
-    return checkSphereFullPushImpl(radius, pos, prevPos, mask, info, maskOut);
-}
-
 /// @addr{0x8080B244}
+/// @brief Public interface that adds a new block to the manager and caches it for collision checks
 void ObjectObakeManager::addBlock(const System::MapdataGeoObj &params) {
     auto *block = EGG::egg_new<ObjectObakeBlock>(params);
     m_blocks.push_back(block);
@@ -166,6 +61,16 @@ void ObjectObakeManager::addBlock(const System::MapdataGeoObj &params) {
 }
 
 /// @addr{0x8080BEE4}
+/// @brief Checks collision between a sphere and the cached blocks, writing partial collision info
+/// @param radius The radius of the sphere to check
+/// @param pos The position of the sphere to check
+/// @param mask The KCL flags to check collision against (other types are ignored)
+/// @param info Out parameter for retrieving collision information (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
+/// @return Whether a collision was detected
+/// @details Checks all cells in a 3x3 grid around the sphere's position for potential collisions.
+/// Two independent collision checks occur: one for the blocks' wall collision and one for the
+/// blocks' road collision (when a player is driving on top of a block).
 bool ObjectObakeManager::checkSpherePartialImpl(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f & /*prevPos*/, KCLTypeMask mask, CollisionInfoPartial *info,
         KCLTypeMask *maskOut) {
@@ -191,8 +96,8 @@ bool ObjectObakeManager::checkSpherePartialImpl(f32 radius, const EGG::Vector3f 
 
             if (mask & KCL_TYPE_BIT(COL_TYPE_SPECIAL_WALL)) {
                 t.makeT(block->pos());
-                m_colBox->setBoundingRadius(SPECIAL_WALL_BOUNDING_RADIUS);
-                m_colBox->transform(t, SPECIAL_WALL_SCALE, EGG::Vector3f::zero);
+                m_colBox->setBoundingRadius(WALL_BOUNDING_RADIUS);
+                m_colBox->transform(t, WALL_SCALE, EGG::Vector3f::zero);
 
                 EGG::Vector3f dist;
                 bool collided = m_colSphere->check(*m_colBox, dist);
@@ -250,6 +155,17 @@ bool ObjectObakeManager::checkSpherePartialImpl(f32 radius, const EGG::Vector3f 
 }
 
 /// @addr{0x8080C41C}
+/// @brief Checks collision between a sphere and the cached blocks, writing partial collision info
+///        Additionally pushes the collision entry into the CollisionDirector's cache.
+/// @param radius The radius of the sphere to check
+/// @param pos The position of the sphere to check
+/// @param mask The KCL flags to check collision against (other types are ignored)
+/// @param info Out parameter for retrieving collision information (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
+/// @return Whether a collision was detected
+/// @details Checks all cells in a 3x3 grid around the sphere's position for potential collisions.
+/// Two independent collision checks occur: one for the blocks' wall collision and one for the
+/// blocks' road collision (when a player is driving on top of a block).
 bool ObjectObakeManager::checkSpherePartialPushImpl(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f & /*prevPos*/, KCLTypeMask mask, CollisionInfoPartial *info,
         KCLTypeMask *maskOut) {
@@ -276,8 +192,8 @@ bool ObjectObakeManager::checkSpherePartialPushImpl(f32 radius, const EGG::Vecto
 
             if (mask & KCL_TYPE_BIT(COL_TYPE_SPECIAL_WALL)) {
                 t.makeT(block->pos());
-                m_colBox->setBoundingRadius(SPECIAL_WALL_BOUNDING_RADIUS);
-                m_colBox->transform(t, SPECIAL_WALL_SCALE, EGG::Vector3f::zero);
+                m_colBox->setBoundingRadius(WALL_BOUNDING_RADIUS);
+                m_colBox->transform(t, WALL_SCALE, EGG::Vector3f::zero);
 
                 EGG::Vector3f dist;
                 bool collided = m_colSphere->check(*m_colBox, dist);
@@ -340,6 +256,16 @@ bool ObjectObakeManager::checkSpherePartialPushImpl(f32 radius, const EGG::Vecto
 }
 
 /// @addr{0x8080C980}
+/// @brief Checks collision between a sphere and the cached blocks, writing full collision info
+/// @param radius The radius of the sphere to check
+/// @param pos The position of the sphere to check
+/// @param mask The KCL flags to check collision against (other types are ignored)
+/// @param info Out parameter for retrieving collision information (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
+/// @return Whether a collision was detected
+/// @details Checks all cells in a 3x3 grid around the sphere's position for potential collisions.
+/// Two independent collision checks occur: one for the blocks' wall collision and one for the
+/// blocks' road collision (when a player is driving on top of a block).
 bool ObjectObakeManager::checkSphereFullImpl(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f & /*prevPos*/, KCLTypeMask mask, CollisionInfo *info,
         KCLTypeMask *maskOut) {
@@ -366,8 +292,8 @@ bool ObjectObakeManager::checkSphereFullImpl(f32 radius, const EGG::Vector3f &po
             // Bonking on top of block
             if (mask & KCL_TYPE_BIT(COL_TYPE_SPECIAL_WALL)) {
                 t.makeT(block->pos());
-                m_colBox->setBoundingRadius(SPECIAL_WALL_BOUNDING_RADIUS);
-                m_colBox->transform(t, SPECIAL_WALL_SCALE, EGG::Vector3f::zero);
+                m_colBox->setBoundingRadius(WALL_BOUNDING_RADIUS);
+                m_colBox->transform(t, WALL_SCALE, EGG::Vector3f::zero);
 
                 EGG::Vector3f dist;
                 bool collided = m_colSphere->check(*m_colBox, dist);
@@ -425,6 +351,17 @@ bool ObjectObakeManager::checkSphereFullImpl(f32 radius, const EGG::Vector3f &po
 }
 
 /// @addr{0x8080D12C}
+/// @brief Checks collision between a sphere and the cached blocks, writing full collision info
+///        Additionally pushes the collision entry into the CollisionDirector's cache.
+/// @param radius The radius of the sphere to check
+/// @param pos The position of the sphere to check
+/// @param mask The KCL flags to check collision against (other types are ignored)
+/// @param info Out parameter for retrieving collision information (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
+/// @return Whether a collision was detected
+/// @details Checks all cells in a 3x3 grid around the sphere's position for potential collisions.
+/// Two independent collision checks occur: one for the blocks' wall collision and one for the
+/// blocks' road collision (when a player is driving on top of a block).
 bool ObjectObakeManager::checkSphereFullPushImpl(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f & /*prevPos*/, KCLTypeMask mask, CollisionInfo *info,
         KCLTypeMask *maskOut) {
@@ -451,8 +388,8 @@ bool ObjectObakeManager::checkSphereFullPushImpl(f32 radius, const EGG::Vector3f
             // Bonking on top of block
             if (mask & KCL_TYPE_BIT(COL_TYPE_SPECIAL_WALL)) {
                 t.makeT(block->pos());
-                m_colBox->setBoundingRadius(SPECIAL_WALL_BOUNDING_RADIUS);
-                m_colBox->transform(t, SPECIAL_WALL_SCALE, EGG::Vector3f::zero);
+                m_colBox->setBoundingRadius(WALL_BOUNDING_RADIUS);
+                m_colBox->transform(t, WALL_SCALE, EGG::Vector3f::zero);
 
                 EGG::Vector3f dist;
                 bool collided = m_colSphere->check(*m_colBox, dist);

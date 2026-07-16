@@ -52,6 +52,10 @@ void ObjectPakkunF::loadAnims() {
 }
 
 /// @addr{0x80775108}
+/// @details Offsets the collision position when the piranha is attacking. For the first 10 frames,
+/// it remains at an initial position. For the next 10 frames, it linearly interpolates from the
+/// initial position to a "final" position. For the next 10 frames, it linearly interpolates back to
+/// the initial position where it remains until the cycle is reset.
 void ObjectPakkunF::calcCollisionTransform() {
     constexpr EGG::Vector3f INIT_POS = EGG::Vector3f(0.0f, 620.0f, 70.0f);
     constexpr EGG::Vector3f FINAL_POS = EGG::Vector3f(0.0f, 160.0f, 550.0f);
@@ -91,14 +95,8 @@ void ObjectPakkunF::calcCollisionTransform() {
     m_collision->transform(transformMat, scale());
 }
 
-/// @addr{0x80774A00}
-void ObjectPakkunF::calcWait() {
-    if (--m_waitFrames == 0) {
-        enterAttack();
-    }
-}
-
 /// @addr{0x80774A84}
+/// @brief Runs every frame while the piranha is attacking
 void ObjectPakkunF::calcAttack() {
     ++m_currAttackFrame;
 
@@ -109,6 +107,7 @@ void ObjectPakkunF::calcAttack() {
 }
 
 /// @addr{0x80774CB0}
+/// @brief Runs once when the piranha stops idling and is about to start attacking
 void ObjectPakkunF::enterAttack() {
     constexpr s32 LINGERING_FRAMES = 60; ///< Additional frames before switching back to idle state
 

@@ -23,7 +23,7 @@ public:
     }
 
 protected:
-    const s16 m_idx;
+    const s16 m_idx; ///< Unique index in the @ref ObjectSniper's list of projectiles
 };
 
 } // namespace Kinoko::Field

@@ -26,7 +26,7 @@ void ObjectKoopaFigure64::init() {
         resize(BIG_SCALE * static_cast<f32>(radius), 0.0f);
     }
 
-    m_cycleFrame = FIRE_DURATION + COOLDOWN_DURATION;
+    m_cycleFrame = CYCLE_DURATION;
 
     if (m_isBigStatue) {
         disableCollision();
@@ -34,6 +34,8 @@ void ObjectKoopaFigure64::init() {
 }
 
 /// @addr{0x806DAB5C}
+/// @details Waits until m_startDelay have elapsed. Then, the statue will shoot fire for
+/// FIRE_DURATION frames, then stop for COOLDOWN_DURATION frames.
 void ObjectKoopaFigure64::calc() {
     u32 timer = System::RaceManager::Instance()->timer();
     if (timer < m_startDelay) {
@@ -57,6 +59,7 @@ void ObjectKoopaFigure64::calc() {
 }
 
 /// @addr{0x806DAFB8}
+/// @details Applies the size of the fire blast to the collision transform.
 void ObjectKoopaFigure64::calcCollisionTransform() {
     constexpr EGG::Vector3f FIRE_POS_OFFSET = EGG::Vector3f(0.0f, -280.0f, 4000.0f);
 

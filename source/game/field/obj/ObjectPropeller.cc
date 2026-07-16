@@ -18,6 +18,8 @@ ObjectPropeller::~ObjectPropeller() {
 }
 
 /// @addr{0x80764EB4}
+/// @brief Initializes the propeller's angular velocity and rotation matrix
+/// @details The rotation direction is flipped if param setting 2 is set to 1.
 void ObjectPropeller::init() {
     ASSERT(m_mapObj);
     m_angVel = static_cast<f32>(static_cast<s16>(m_mapObj->setting(0)));
@@ -25,9 +27,9 @@ void ObjectPropeller::init() {
         m_angVel = -m_angVel;
     }
 
-    m_rotMat.makeR(rot());
-    m_rotMat.setBase(3, pos());
-    m_axis = m_rotMat.base(2);
+    m_initMat.makeR(rot());
+    m_initMat.setBase(3, pos());
+    m_axis = m_initMat.base(2);
 }
 
 /// @addr{0x80765068}
@@ -35,12 +37,13 @@ void ObjectPropeller::calc() {
     m_angle += m_angVel * 0.5f;
     m_curRot = EGG::Matrix34f::ident;
     m_curRot.setAxisRotation(m_angle * DEG2RAD, m_axis);
-    EGG::Matrix34f transform = m_curRot.multiplyTo(m_rotMat);
+    EGG::Matrix34f transform = m_curRot.multiplyTo(m_initMat);
     transform.setBase(3, pos());
     setTransform(transform);
 }
 
 /// @addr{0x807655B4}
+/// @details Creates cylindrical collision for the shell and each of the 3 blades
 void ObjectPropeller::createCollision() {
     ObjectCollidable::createCollision();
 
@@ -56,6 +59,7 @@ void ObjectPropeller::createCollision() {
 }
 
 /// @addr{0x80765738}
+/// @details Rotates the transformation matrix of each blade around the propeller's center point
 void ObjectPropeller::calcCollisionTransform() {
     constexpr f32 BLADE_LENGTH = 250.0f;
 
@@ -86,6 +90,7 @@ f32 ObjectPropeller::getCollisionRadius() const {
 }
 
 /// @addr{0x80765A54}
+/// @details Checks collision against each of the 3 blades and sums the resulting distance vectors
 bool ObjectPropeller::checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &dist) {
     EGG::Vector3f dist0 = EGG::Vector3f::zero;
     EGG::Vector3f dist1 = EGG::Vector3f::zero;

@@ -67,7 +67,6 @@ void ObjectPenguinS::calc() {
     }
 }
 
-/// TODO: Maybe not needed
 void ObjectPenguinS::loadAnims() {
     std::array<const char *, 4> names = {{
             "walk",
@@ -87,6 +86,7 @@ void ObjectPenguinS::loadAnims() {
 }
 
 /// @addr{0x80776498}
+/// @brief Runs every frame the penguin is sliding on its belly full speed
 void ObjectPenguinS::calcSlider() {
     calcRail();
     calcPos();
@@ -98,6 +98,7 @@ void ObjectPenguinS::calcSlider() {
 }
 
 /// @addr{0x80776670}
+/// @brief Runs every frame the penguin is standing up from a slide
 void ObjectPenguinS::calcStandUp() {
     calcRail();
     calcPos();
@@ -109,6 +110,8 @@ void ObjectPenguinS::calcStandUp() {
 }
 
 /// @addr{0x807768A0}
+/// @brief Runs every frame to update the penguin's position along the rail and update its state and
+/// current animation timer
 void ObjectPenguinS::calcRail() {
     if (m_railInterpolator->calc() != RailInterpolator::Status::SegmentEnd) {
         return;

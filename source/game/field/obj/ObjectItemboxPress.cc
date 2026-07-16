@@ -27,6 +27,7 @@ void ObjectItemboxPress::calc() {
     }
 }
 
+/// @addr{0x8076DA98}
 /// @brief Used by @ref ObjectItemboxLine to activate the stomper.
 void ObjectItemboxPress::startPress() {
     m_state = 2;
@@ -35,11 +36,12 @@ void ObjectItemboxPress::startPress() {
 }
 
 /// @addr{0x8076DF44}
+/// @brief Updates the rail interpolator and stomper state
 void ObjectItemboxPress::calcRail() {
     auto result = m_railInterpolator->calc();
     if (result == RailInterpolator::Status::SegmentEnd) {
         if (m_railInterpolator->curPoint().setting[1] == 1) {
-            m_senko->setWindup(true);
+            m_senko->beginStomp();
         }
     } else if (result == RailInterpolator::Status::ChangingDirection) {
         m_state = 0;

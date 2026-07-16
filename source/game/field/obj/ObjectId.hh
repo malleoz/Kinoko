@@ -4,6 +4,7 @@
 
 namespace Kinoko::Field {
 
+/// @brief Unique identifiers for each object
 enum class ObjectId {
     None = 0x0,
     Psea = 0x2,
@@ -105,6 +106,9 @@ enum class ObjectId {
     EscalatorGroup = 0x260,
 };
 
+/// @brief Unique identifiers for objects which are not implemented in Kinoko
+/// @details These objects are purely cosmetic and do not have actual collision, or in the case of
+/// Itembox they are not enabled in Time Trial mode, which is our current focus for now.
 enum class BlacklistedObjectId {
     Itembox = 0x65,
     CastleTree2 = 0x131,
@@ -135,6 +139,7 @@ enum class BlacklistedObjectId {
     EnvSnow = 0x2ef,
 };
 
+/// @brief Returns true if the object ID is blacklisted and should not be loaded in Kinoko
 static constexpr bool IsObjectBlacklisted(u16 id) {
     BlacklistedObjectId objectId = static_cast<BlacklistedObjectId>(id);
     switch (objectId) {

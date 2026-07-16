@@ -64,13 +64,15 @@ public:
 
 private:
     /// @addr{0x806F5290}
+    /// @brief Calculates the constraints for all SphereLink objects in the chain, ensuring that
+    /// they do not stretch beyond their maximum link length
     void calcConstraints() {
         for (size_t i = 1; i < m_links.size(); ++i) {
             m_links[i].calcConstraints(1.0f);
         }
     }
 
-    owning_span<SphereLink> m_links;
+    owning_span<SphereLink> m_links; ///< Array of links representing the Wiggler's body segments
 };
 
 /// @brief Base class for one of the spherical body segments of a Wiggler
@@ -102,6 +104,7 @@ public:
 
 private:
     /// @addr{0x806CA5E4}
+    /// @brief Sets the transform matrix of the object based on its position, up vector, and tangent
     void calcTransformFromUpAndTangent(const EGG::Vector3f &pos, const EGG::Vector3f &up,
             const EGG::Vector3f &tangent) {
         EGG::Matrix34f mat;
@@ -111,6 +114,8 @@ private:
     }
 };
 
+/// @brief Represents the head of a Wiggler, which is the leading segment of the body chain
+/// @details The head segment has a larger collision sphere than the body segments
 class ObjectHanachanHead final : public ObjectHanachanPart {
 public:
     ObjectHanachanHead(const char *name, const EGG::Vector3f &pos, const EGG::Vector3f &rot,
@@ -125,9 +130,10 @@ public:
     void calcCollisionTransform() override;
 
 private:
-    EGG::Vector3f m_lastPos;
+    EGG::Vector3f m_lastPos; ///< Position from last frame, used to calculate speed
 };
 
+/// @brief Represents one of the body segments of a Wiggler that trails behind the head segment
 class ObjectHanachanBody final : public ObjectHanachanPart {
     friend class ObjectHanachan;
 
@@ -145,11 +151,13 @@ public:
     void calcCollisionTransform() override;
 
 protected:
-    const char *m_mdlName;
-    bool m_lastSegment;
-    EGG::Vector3f m_lastPos;
+    const char *m_mdlName;   ///< KCL name that corresponds to this body segment
+    bool m_lastSegment;      ///< True if this is the last segment in the Wiggler's body chain
+    EGG::Vector3f m_lastPos; ///< Position from last frame, used to calculate speed
 
 private:
+    /// @brief Static array of model names for the Wiggler's body segments, used to determine which
+    /// model to load for each segment
     static constexpr std::array<const char *, 4> MDL_NAMES = {
             "hanachan_body1",
             "hanachan_body2",
@@ -158,6 +166,7 @@ private:
     };
 };
 
+/// @brief Represents a Wiggler, which is comprised of multiple @ref ObjectHanachanPart segments
 class ObjectHanachan final : public ObjectCollidable, public StateManager {
 public:
     ObjectHanachan(const System::MapdataGeoObj &params);
@@ -180,21 +189,21 @@ public:
     /// @addr{0x806CC9F8}
     void loadGraphics() override {}
 
+    /// @brief Does not creat collision since the body parts have their own collision spheres
     /// @addr{0x806CC9F4}
     void createCollision() override {}
 
 private:
+    /// @brief Tracks whether the Wiggler is following its rail correctly or has deviated
     enum class RailAlignment {
         Aligned = -1,
-        Unknown = 0,
+        Unknown = 0, ///< Uninitialized
         MisalignedLeft = 1,
         MisalignedRight = 2,
     };
 
-    void initWalk();
-
-    /// @addr{0x806C9EC8}
-    void initWait() {}
+    void enterStateStub() {}
+    void enterWalk();
 
     void calcWalk();
     void calcWait();
@@ -208,15 +217,17 @@ private:
     void calcRailAlignmentMotion();
 
     /// @addr{0x806CAC74}
-    void calcSlowMotion() {
+    /// @brief Applies a lateral motion when walking and standing still
+    void calcDefaultLateralMotion() {
         constexpr f32 PERIOD = 50.0f;
         constexpr f32 WAVELENGTH = 4000.0f;
 
-        calcLateralMotion(m_stillAngVel, PERIOD, WAVELENGTH, m_currentFrame);
+        calcLateralMotion(m_swayAmplitude, PERIOD, WAVELENGTH, m_currentFrame);
     }
 
     /// @addr{0x806CAC94}
-    void calcFastMotion(s32 frame) {
+    /// @brief Applies a large lateral motion when the Wiggler is misaligned from the rail
+    void calcFastLateralMotion(s32 frame) {
         constexpr f32 AMPLITUDE = 25.0f;
         constexpr f32 PERIOD = 300.0f;
         constexpr f32 WAVELENGTH = 5500.0f;
@@ -233,8 +244,9 @@ private:
     }
 
     /// @addr{0x806CBE2C}
-    void setMovingVel() {
-        m_railInterpolator->setCurrVel(m_movingVel);
+    /// @brief Sets the rail interpolator's velocity to the Wiggler's movement speed
+    void setRailVel() {
+        m_railInterpolator->setCurrVel(m_walkSpeed);
     }
 
     [[nodiscard]] ObjectHanachanHead *&headPart() {
@@ -245,17 +257,17 @@ private:
         return std::span(m_parts.begin() + 1, m_parts.size() - 1);
     }
 
-    std::array<ObjectHanachanPart *, 7> m_parts;
-    HanachanChainManager m_chain;
-    const f32 m_movingVel;
+    std::array<ObjectHanachanPart *, 7> m_parts; ///< Array of pointers to the body segments
+    HanachanChainManager m_chain; ///< Manager that enforces stretch constraints of the chain link
+    const f32 m_walkSpeed;        ///< The speed at which the Wiggler moves along its rail
     std::array<float, 7> m_partDisplacement; ///< Total distance between a given part and the head
-    u16 m_stillDuration;
-    f32 m_stillAngVel; ///< Affects body part swaying when coming to a standstill
-    bool m_still;
+    u16 m_stillDuration;     ///< How long the Wiggler waits at the current rail point
+    f32 m_swayAmplitude;     ///< Amplitude of lateral sway motion when walking or standing still
+    bool m_still;            ///< True if the Wiggler is standing still, false if it is walking
     u16 m_leftMisalignFrame; ///< Frame at which the wiggler became left-misaligned from the rail
-    EGG::Vector3f m_right;
-    RailAlignment m_railAlignment; ///< Captures when the wiggle takes sharp turns
-    RailAlignment m_prevRailAlignment;
+    EGG::Vector3f m_prevRailTangent; ///< Previous frame's rail tangent, used to detect sharp turns
+    RailAlignment m_railAlignment;   ///< Describes if the Wiggler has deviated from its rail
+    RailAlignment m_prevRailAlignment; ///< Used to detect when the Wiggler becomes misaligned
 
     /// @brief The distance between each body part link in the chain
     static constexpr std::array<f32, 6> BODY_PART_DISTANCES = {{
@@ -268,9 +280,13 @@ private:
     }};
 
     static constexpr std::array<StateManagerEntry, 2> STATE_ENTRIES = {{
-            {StateEntry<ObjectHanachan, &ObjectHanachan::initWalk, &ObjectHanachan::calcWalk>(0)},
-            {StateEntry<ObjectHanachan, &ObjectHanachan::initWait, &ObjectHanachan::calcWait>(1)},
+            {StateEntry<ObjectHanachan, &ObjectHanachan::enterWalk, &ObjectHanachan::calcWalk>(0)},
+            {StateEntry<ObjectHanachan, &ObjectHanachan::enterStateStub, &ObjectHanachan::calcWait>(
+                    1)},
     }};
+
+    /// @brief Initial amplitude of lateral sway motion when walking or standing still
+    static constexpr f32 INIT_SWAY_AMPLITUDE = 15.0f;
 };
 
 } // namespace Kinoko::Field

@@ -6,7 +6,7 @@ namespace Kinoko::Field {
 
 class ObjectPressSenko;
 
-/// @brief Responsible for stomper state management.
+/// @brief Manages stomper state for the first left/right set of Toad's Factory stompers
 /// @details Actually inherits from ObjectItembox, but we don't need to implement.
 class ObjectItemboxPress final : public ObjectCollidable {
 public:
@@ -42,10 +42,6 @@ public:
 
     void startPress();
 
-    void setState(u32 state) {
-        m_state = state;
-    }
-
     void setSenko(ObjectPressSenko *senko) {
         m_senko = senko;
     }
@@ -53,8 +49,8 @@ public:
 private:
     void calcRail();
 
-    u32 m_state;
-    ObjectPressSenko *m_senko;
+    u32 m_state;               ///< Current state of the stomper (0 = idle, 2 = stomping)
+    ObjectPressSenko *m_senko; ///< Pointer to the underlying stomper object
 };
 
 } // namespace Kinoko::Field

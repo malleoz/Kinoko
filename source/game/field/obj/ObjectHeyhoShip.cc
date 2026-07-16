@@ -49,6 +49,7 @@ void ObjectHeyhoShip::calc() {
 }
 
 /// @addr{0x806D1D10}
+/// @brief Updates the ship's position along the rail and applies a bobbing effect
 void ObjectHeyhoShip::calcPos() {
     constexpr f32 PERIOD = 100.0f;
 

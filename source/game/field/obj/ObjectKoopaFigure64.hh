@@ -6,6 +6,7 @@ namespace Kinoko::Field {
 
 /// @brief The Bowser statues on N64 Bowser's Castle.
 /// @details The big statue by the first turn has collision while the mini ones do not.
+/// The big statue will shoot fire for a set duration, then stop for a cooldown period.
 class ObjectKoopaFigure64 final : public ObjectCollidable {
 public:
     ObjectKoopaFigure64(const System::MapdataGeoObj &params);
@@ -21,6 +22,7 @@ public:
     }
 
     /// @addr{0x806DB154}
+    /// @details Collision is only created for the large statue, not the mini ones.
     void createCollision() override {
         if (m_isBigStatue) {
             ObjectCollidable::createCollision();
@@ -38,11 +40,13 @@ public:
 
 private:
     const bool m_isBigStatue; ///< Differentiates the first rBC turn statue from tiny statues
-    const u32 m_startDelay;
-    u32 m_cycleFrame;
+    const u32 m_startDelay;   ///< Frame delay before the statue starts shooting fire
+    u32 m_cycleFrame;         ///< Tracks the current frame in the fire/cooldown cycle
 
     static constexpr u32 FIRE_DURATION = 300; ///< How long the statue shoots fire for in a cycle
     static constexpr u32 COOLDOWN_DURATION = 180; ///< How long fire is disabled for in a cycle
+
+    /// @brief Framecount of the entire cycle duration, including fire and cooldown
     static constexpr u32 CYCLE_DURATION = FIRE_DURATION + COOLDOWN_DURATION;
 };
 

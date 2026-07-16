@@ -8,6 +8,9 @@ namespace Kinoko::Field {
 /// @details In the base game, there are 5 subclasses owned by ObjectPsea. In terms of collision,
 /// the water's height is only a function of one of them. We can simplify in Kinoko and remove that
 /// subclass entirely since its position can be easily represented without an instance of the class.
+/// This object is used in an unusual way - the @ref ObjectDirector keeps a pointer to it and uses
+/// it to determine the height of the rising water. @ref KartMove will then use that height to
+/// determine whether the kart is submerged and should be slowed down.
 class ObjectPsea final : public ObjectCollidable {
 public:
     ObjectPsea(const System::MapdataGeoObj &params);
@@ -26,11 +29,11 @@ public:
     void createCollision() override {}
 
 private:
-    u16 m_frame;
-    const f32 m_period;
-    f32 m_initPosY;
+    u16 m_frame;        ///< Frame within the sinusoidal cycle of the rising water
+    const f32 m_period; ///< Period of the sinusoidal cycle
+    f32 m_initPosY;     ///< Initial position after applying hard-coded offsets
 
-    static constexpr s16 CYCLE_DURATION = 1200;
+    static constexpr s16 CYCLE_DURATION = 1200; ///< Framecount of full cycle
 };
 
 } // namespace Kinoko::Field

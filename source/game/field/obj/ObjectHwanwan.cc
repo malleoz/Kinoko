@@ -20,7 +20,6 @@ void ObjectHwanwan::init() {
     m_up = EGG::Vector3f::ey;
     m_targetUp = EGG::Vector3f::ey;
     m_touchingGround = false;
-    m_initJumpVel = 0.0f;
     m_targetY = m_workPos.y;
 
     calcTransform();
@@ -30,6 +29,8 @@ void ObjectHwanwan::init() {
 
 /// @addr{0x806E9A78}
 void ObjectHwanwan::calc() {
+    constexpr EGG::Vector3f GRAVITY = EGG::Vector3f(0.0f, 2.5f, 0.0f);
+
     StateManager::calc();
 
     m_extVel += m_bounceVel - GRAVITY;
@@ -45,6 +46,9 @@ void ObjectHwanwan::calc() {
 }
 
 /// @addr{0x806EA784}
+/// @brief Checks for a collision between the Chain Chomp and the floor
+/// @details If a collision is detected, the Chain Chomp's position is offset to be on the floor,
+/// the target up vector is set to the floor's normal, and the external velocity is reset to zero.
 void ObjectHwanwan::checkFloorCollision() {
     constexpr f32 RADIUS = DIAMETER * 0.5f;
 
@@ -73,6 +77,7 @@ void ObjectHwanwan::checkFloorCollision() {
 }
 
 /// @addr{0x806EAAE8}
+/// @brief Smoothly interpolates the Chain Chomp's up vector towards the target up vector
 void ObjectHwanwan::calcUp() {
     m_up = Interpolate(0.1f, m_up, m_targetUp);
     if (m_up.squaredLength() > std::numeric_limits<f32>::epsilon()) {
@@ -110,6 +115,8 @@ void ObjectHwanwanManager::init() {
 }
 
 /// @addr{0x806C5AC4}
+/// @details Snaps the Chain Chomp's X and Z position to the rail and sets the target Y position to
+/// the rail's height. Also updates the Chain Chomp's tangent direction.
 void ObjectHwanwanManager::calc() {
     calcState();
 
@@ -121,6 +128,10 @@ void ObjectHwanwanManager::calc() {
 }
 
 /// @addr{0x806C5DE0}
+/// @brief Updates the Chain Chomp's state based on the current rail segment
+/// @details In practice, for Nintendo tracks, this does nothing. Rail point setting 2, which
+/// represents the Chain Chomp entering a roll animation is only ever set to 2 in the Rainbow Road
+/// tournament.
 void ObjectHwanwanManager::calcState() {
     if (m_railInterpolator->calc() == RailInterpolator::Status::SegmentEnd &&
             m_railInterpolator->curPoint().setting[1] == 1 && m_hwanwan->m_currentStateId != 2) {

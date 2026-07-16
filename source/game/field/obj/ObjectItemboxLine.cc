@@ -44,6 +44,7 @@ void ObjectItemboxLine::init() {
 }
 
 /// @addr{0x8076D64C}
+/// @details Decrements the cooldown timer and activates the next stomper when it reaches 0
 void ObjectItemboxLine::calc() {
     if (--m_stompCooldown > 0) {
         return;

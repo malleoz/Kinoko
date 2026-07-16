@@ -5,6 +5,7 @@
 
 namespace Kinoko::Field {
 
+/// @brief %Abstract class that represents a drivable object with KCL collision data
 class ObjectKCL : public ObjectDrivable {
 public:
     ObjectKCL(const System::MapdataGeoObj &params);
@@ -14,11 +15,13 @@ public:
     void calcCollisionTransform() override;
 
     /// @addr{0x80681448}
+    /// @details Computed as the midpoint of the KCL's bounding box
     [[nodiscard]] const EGG::Vector3f &getPosition() const override {
         return m_kclMidpoint;
     }
 
     /// @addr{0x80687D70}
+    /// @details Computed as the sum of half the KCL width and an optional additional length
     f32 getCollisionRadius() const override {
         return m_bboxHalfSideLength + colRadiusAdditionalLength();
     }
@@ -73,35 +76,30 @@ public:
     virtual void update(u32 timeOffset);
     virtual void calcScale(u32 timeOffset);
 
+    /// @brief Sets the velocity that describes the movement effect when a player is on the object
     /// @addr{0x80681450}
     virtual void setMovingObjVel(const EGG::Vector3f &v) {
         m_objColMgr->setMovingObjVel(v);
     }
 
+    /// @brief Computes the collision transformation matrix for the current frame. The return value
+    /// is assigned to the object collision manager.
     /// @addr{0x807FEAC0}
     [[nodiscard]] virtual const EGG::Matrix34f &getUpdatedMatrix(u32 /*timeOffset*/) {
         calcTransform();
         return transform();
     }
 
+    /// @brief Updates the collision manager's scale for the current frame
     /// @addr{0x80687DB0}
     [[nodiscard]] virtual f32 getScaleY(u32 /* timeOffset */) const {
         return scale().y;
     }
 
+    /// @brief Optional additional length to add when computing the collision radius
     /// @addr{0x8068143C}
     [[nodiscard]] virtual f32 colRadiusAdditionalLength() const {
         return 0.0f;
-    }
-
-    /// @addr{0x0x806808EC}
-    [[nodiscard]] virtual bool shouldCheckColNoPush() const {
-        return true;
-    }
-
-    /// @addr{0x806809F8}
-    [[nodiscard]] virtual bool shouldCheckColPush() const {
-        return true;
     }
 
     [[nodiscard]] virtual bool checkCollision(f32 radius, const EGG::Vector3f &pos,
@@ -112,10 +110,16 @@ public:
             KCLTypeMask *maskOut, u32 timeOffset);
 
 protected:
-    ObjColMgr *m_objColMgr;
-    EGG::Vector3f m_kclMidpoint;
-    f32 m_bboxHalfSideLength;
+    ObjColMgr *m_objColMgr;      ///< Collision manager for the object's KCL data
+    EGG::Vector3f m_kclMidpoint; ///< The midpoint of the KCL's bounding box
+    f32 m_bboxHalfSideLength;    ///< Half of the KCL's bounding box width
+
+    /// @brief Frame of most recent collision transform update.
+    /// @details Used to avoid redundant matrix calculations within the same frame.
     s32 m_lastMtxUpdateFrame;
+
+    /// @brief Frame of most recent scale update.
+    /// @details Used to keep the scale frame in sync with the matrix update frame.
     s32 m_lastScaleUpdateFrame;
 };
 

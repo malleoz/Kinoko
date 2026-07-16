@@ -6,6 +6,9 @@
 namespace Kinoko::Field {
 
 /// @brief The ship on GBA Shy Guy Beach that shoots cannonballs.
+/// @details The ship moves along a rail and bobs up and down, occassionally shooting cannonballs.
+/// The synchronization between the ship and the cannonballs is managed by @ref
+/// ObjectHeyhoShipManager.
 class ObjectHeyhoShip final : public ObjectProjectileLauncher {
 public:
     ObjectHeyhoShip(const System::MapdataGeoObj &params);
@@ -25,6 +28,7 @@ public:
     }
 
     /// @addr{0x806D1CC4}
+    /// @brief Initializes the rail interpolator to the given point index and returns the tangent
     const EGG::Vector3f &initRailDir(u16 idx) {
         m_railInterpolator->init(0.0f, static_cast<u32>(idx));
         return m_railInterpolator->curTangentDir();
@@ -32,9 +36,10 @@ public:
 
     void calcPos();
 
-    const f32 m_yAmplitude; ///< How much the ship bobs up and down
-    u32 m_frame;
-    u32 m_framesSinceLastLaunch;
+private:
+    const f32 m_yAmplitude;      ///< How much the ship bobs up and down
+    u32 m_frame;                 ///< Number of frames since the ship was initialized
+    u32 m_framesSinceLastLaunch; ///< Number of frames since the last cannonball was launched
 };
 
 } // namespace Kinoko::Field

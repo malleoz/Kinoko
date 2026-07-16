@@ -28,6 +28,10 @@ HanachanChainManager::HanachanChainManager(const std::span<const f32> &linkDista
 HanachanChainManager::~HanachanChainManager() = default;
 
 /// @addr{0x806F49BC}
+/// @brief Applies spring force and updates positions for all links in the chain, enforcing
+/// constraints when the chain is taut. Also checks for floor collision.
+/// @details Runs two iterations of the spring force and position calculations to reduce oscillation
+/// and prevent links from stretching past their maximum length.
 void HanachanChainManager::calc() {
     for (u32 i = 0; i < 2; ++i) {
         for (auto &link : m_links) {
@@ -63,6 +67,8 @@ ObjectHanachanHead::ObjectHanachanHead(const char *name, const EGG::Vector3f &po
 ObjectHanachanHead::~ObjectHanachanHead() = default;
 
 /// @addr{0x806C8450}
+/// @details Applies a forward and upwards offset so that the collision sphere sits above and in
+/// front of the head's origin.
 void ObjectHanachanHead::calcCollisionTransform() {
     calcTransform();
 
@@ -89,6 +95,8 @@ ObjectHanachanBody::ObjectHanachanBody(const char *name, const EGG::Vector3f &po
 ObjectHanachanBody::~ObjectHanachanBody() = default;
 
 /// @addr{0x806C8908}
+/// @details Uses base class implementation for all segments except the last. For the last segment,
+/// applies a forward offset so that the collision sphere sits in front of the body part's origin.
 void ObjectHanachanBody::calcCollisionTransform() {
     if (!m_lastSegment) {
         ObjectCollidable::calcCollisionTransform();
@@ -106,7 +114,7 @@ void ObjectHanachanBody::calcCollisionTransform() {
 /// @addr{0x806C8A5C}
 ObjectHanachan::ObjectHanachan(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), StateManager(this, STATE_ENTRIES), m_chain(BODY_PART_DISTANCES),
-      m_movingVel(static_cast<f32>(static_cast<s16>(params.setting(0)))) {
+      m_walkSpeed(static_cast<f32>(static_cast<s16>(params.setting(0)))) {
     constexpr f32 SCALE = 3.0f;
     constexpr EGG::Vector3f SCALE_VEC = EGG::Vector3f(SCALE, SCALE, SCALE);
 
@@ -148,14 +156,14 @@ ObjectHanachan::~ObjectHanachan() = default;
 /// @addr{0x806C9630}
 void ObjectHanachan::init() {
     m_railInterpolator->init(0.0f, 0);
-    m_railInterpolator->setCurrVel(m_movingVel);
+    m_railInterpolator->setCurrVel(m_walkSpeed);
 
     initBody();
 
     m_still = false;
-    m_stillAngVel = 15.0f;
+    m_swayAmplitude = INIT_SWAY_AMPLITUDE;
     m_leftMisalignFrame = 0;
-    m_right = EGG::Vector3f::ez;
+    m_prevRailTangent = EGG::Vector3f::ez;
     m_railAlignment = RailAlignment::Unknown;
     m_prevRailAlignment = RailAlignment::Unknown;
 
@@ -165,14 +173,16 @@ void ObjectHanachan::init() {
 }
 
 /// @addr{0x806C9BC0}
-void ObjectHanachan::initWalk() {
-    setMovingVel();
-    m_stillAngVel = 15.0f;
+/// @brief Runs once when the Wiggler begins walking
+void ObjectHanachan::enterWalk() {
+    setRailVel();
+    m_swayAmplitude = INIT_SWAY_AMPLITUDE;
     m_still = false;
     m_leftMisalignFrame = 0;
 }
 
 /// @addr{0x806C9D38}
+/// @brief Runs every frame when the Wiggler is walking along its rail
 void ObjectHanachan::calcWalk() {
     if (m_still) {
         m_railInterpolator->setCurrVel(0.0f);
@@ -186,10 +196,11 @@ void ObjectHanachan::calcWalk() {
     calcRailAlignmentMotion();
     m_chain.calc();
 
-    m_stillAngVel = 15.0f;
+    m_swayAmplitude = INIT_SWAY_AMPLITUDE;
 }
 
 /// @addr{0x806C9F98}
+/// @brief Runs every frame when the Wiggler is standing still
 void ObjectHanachan::calcWait() {
     if (shouldStartMoving()) {
         m_nextStateId = 0;
@@ -197,22 +208,25 @@ void ObjectHanachan::calcWait() {
 
     clearChain();
 
-    if (m_stillAngVel >= 0.0f) {
-        m_stillAngVel -= 0.25f;
+    if (m_swayAmplitude >= 0.0f) {
+        m_swayAmplitude -= 0.25f;
     } else {
-        m_stillAngVel += 0.25f;
+        m_swayAmplitude += 0.25f;
     }
 
-    if (EGG::Mathf::abs(m_stillAngVel) <= 1.0f) {
-        m_stillAngVel = 0.0f;
+    if (EGG::Mathf::abs(m_swayAmplitude) <= 1.0f) {
+        m_swayAmplitude = 0.0f;
     }
 
-    calcSlowMotion();
+    calcDefaultLateralMotion();
 
     m_chain.calc();
 }
 
 /// @addr{0x806CA24C}
+/// @brief Called when the Wiggler reaches the end of a rail segment
+/// @details If the rail point's first setting is non-zero, then the Wiggler will wait at that point
+/// for that number of frames
 void ObjectHanachan::onSegmentEnd() {
     u16 setting = m_railInterpolator->curPoint().setting[0];
     if (setting != 0) {
@@ -222,8 +236,9 @@ void ObjectHanachan::onSegmentEnd() {
 }
 
 /// @addr{0x806CA27C}
+/// @brief Caches the last frame's rail tangent and updates the rail interpolator
 void ObjectHanachan::calcRail() {
-    m_right = m_railInterpolator->curTangentDir();
+    m_prevRailTangent = m_railInterpolator->curTangentDir();
 
     if (m_railInterpolator->calc() == RailInterpolator::Status::SegmentEnd) {
         onSegmentEnd();
@@ -231,6 +246,7 @@ void ObjectHanachan::calcRail() {
 }
 
 /// @addr{0x806CA2F0}
+/// @brief Updates the transforms of the Wiggler's body parts based on the chain link positions
 void ObjectHanachan::calcBody() {
     auto *&head = headPart();
     head->calcTransform();
@@ -248,6 +264,7 @@ void ObjectHanachan::calcBody() {
 }
 
 /// @addr{0x806CA72C}
+/// @brief Initializes the positions of the Wiggler's body parts based on the initial rail position
 void ObjectHanachan::initBody() {
     headPart()->setPos(m_railInterpolator->curPos());
 
@@ -259,6 +276,7 @@ void ObjectHanachan::initBody() {
 }
 
 /// @addr{0x806CA9AC}
+/// @brief Initializes the positions of the chain link objects based on the initial parts' positions
 void ObjectHanachan::initChain() {
     m_chain.init();
 
@@ -268,10 +286,11 @@ void ObjectHanachan::initChain() {
 }
 
 /// @addr{0x806CAAD0}
+/// @brief Resets the chain link positions and clears their velocity and spring force
 void ObjectHanachan::clearChain() {
     m_chain.setPos(0, m_railInterpolator->curPos());
     m_chain.setVel(0, EGG::Vector3f::zero);
-    m_chain.addSpringForce(0, EGG::Vector3f::ey * SphereLink::Gravity());
+    m_chain.addSpringForce(0, EGG::Vector3f::ey * SphereLink::GRAVITY);
 }
 
 /// @addr{0x806CAB5C}
@@ -290,13 +309,14 @@ void ObjectHanachan::calcRailAlignmentMotion() {
     if (m_leftMisalignFrame != 0 && m_currentFrame >= m_leftMisalignFrame &&
             m_currentFrame <
                     static_cast<u32>(m_leftMisalignFrame + MISALIGNMENT_CORRECTION_DURATION)) {
-        calcFastMotion(m_currentFrame - m_leftMisalignFrame);
+        calcFastLateralMotion(m_currentFrame - m_leftMisalignFrame);
     } else {
-        calcSlowMotion();
+        calcDefaultLateralMotion();
     }
 }
 
 /// @addr{0x806CACD0}
+/// @brief Calculates sinusoidal lateral sway motion for the Wiggler's body parts
 void ObjectHanachan::calcLateralMotion(f32 amplitude, f32 period, f32 wavelength, s16 frame) {
     f32 velAmplitude = F_TAU * amplitude / period;
 
@@ -314,21 +334,22 @@ void ObjectHanachan::calcLateralMotion(f32 amplitude, f32 period, f32 wavelength
 }
 
 /// @addr{0x806CAFB8}
+/// @brief Calculates whether the Wiggle is misaligned with the rail
 ObjectHanachan::RailAlignment ObjectHanachan::calcRailAlignment() const {
     constexpr f32 EPSILON = 0.9995f;
 
     EGG::Vector3f curTanDir = m_railInterpolator->curTangentDir();
     EGG::Vector2f railTan = EGG::Vector2f(curTanDir.x, curTanDir.z);
-    EGG::Vector2f right = EGG::Vector2f(m_right.x, m_right.z);
+    EGG::Vector2f prevTan = EGG::Vector2f(m_prevRailTangent.x, m_prevRailTangent.z);
     railTan.normalise2();
-    right.normalise2();
+    prevTan.normalise2();
 
-    if (railTan.dot(right) >= EPSILON) {
+    if (railTan.dot(prevTan) >= EPSILON) {
         return RailAlignment::Aligned;
     }
 
-    return right.cross(railTan) < 0.0f ? RailAlignment::MisalignedLeft :
-                                         RailAlignment::MisalignedRight;
+    return prevTan.cross(railTan) < 0.0f ? RailAlignment::MisalignedLeft :
+                                           RailAlignment::MisalignedRight;
 }
 
 } // namespace Kinoko::Field

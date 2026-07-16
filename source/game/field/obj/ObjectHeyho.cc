@@ -7,7 +7,8 @@ namespace Kinoko::Field {
 
 /// @addr{0x806CE828}
 ObjectHeyho::ObjectHeyho(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), StateManager(this, STATE_ENTRIES), m_color(params.setting(1)) {
+    : ObjectCollidable(params), StateManager(this, STATE_ENTRIES),
+      m_color(static_cast<Color>(params.setting(1))) {
     const auto *rail = RailManager::Instance()->rail(params.pathId());
     ASSERT(rail);
     const auto &railPts = rail->points();
@@ -37,7 +38,7 @@ void ObjectHeyho::init() {
     m_currentVel = EGG::Mathf::sqrt(
             m_maxVelSq - m_accel * (m_railInterpolator->curPos().y - m_midpoint.y));
 
-    m_transformOffset = m_railInterpolator->curTangentDir() * m_currentVel;
+    m_initVel = m_railInterpolator->curTangentDir() * m_currentVel;
     m_floorCollision = false;
     m_up = EGG::Vector3f::ey;
     m_forward = EGG::Vector3f::ez;
@@ -85,10 +86,11 @@ void ObjectHeyho::calcCollisionTransform() {
     tm.makeT(EGG::Vector3f(0.0f, 100.0f, 0.0f));
     calcTransform();
     EGG::Matrix34f m = transform().multiplyTo(tm);
-    objCol->transform(m, scale(), m_transformOffset);
+    objCol->transform(m, scale(), m_initVel);
 }
 
 /// @addr{0x806CF4D0}
+/// @brief Runs every frame the Shy Guy is "grounded" (when the rail point's first setting is 0)
 void ObjectHeyho::calcMove() {
     m_forward = m_railInterpolator->nextPoint().pos - m_railInterpolator->curPoint().pos;
     m_floorCollision = false;
@@ -114,6 +116,8 @@ void ObjectHeyho::calcMove() {
 }
 
 /// @addr{0x806CF72C}
+/// @brief Runs every frame the Shy Guy is "jumping" (when the rail point's first setting is 1)
+/// @details Also calculates the spin transformation for red Shy Guys.
 void ObjectHeyho::calcJump() {
     constexpr s16 SPIN_DELAY_FRAMES = 5;
     constexpr s16 SPIN_RATE = 12; // degrees per frame
@@ -152,7 +156,7 @@ void ObjectHeyho::calcJump() {
 
             // Red shy guys do a spin. Yes, this is based on color, and no, it's not an animation
             // We couldn't possibly use even one of the six unused settings for this
-            if (m_color == 0) {
+            if (m_color == Color::Red) {
                 s16 frame = m_spinFrame - SPIN_DELAY_FRAMES;
                 if (frame >= 0 && frame <= SPIN_DEGREES / SPIN_RATE) {
                     EGG::Matrix34f m;
@@ -174,6 +178,7 @@ void ObjectHeyho::calcJump() {
 }
 
 /// @addr{0x806CFD48}
+/// @brief Updates the @ref StateManager based off the current and next rail point settings
 void ObjectHeyho::calcStateTransition() {
     if (m_railInterpolator->curPoint().setting[1] == 0 ||
             m_railInterpolator->nextPoint().setting[1] == 0) {
@@ -188,6 +193,7 @@ void ObjectHeyho::calcStateTransition() {
 }
 
 /// @addr{0x806CFDB0}
+/// @brief Updates the position of the Shy Guy along the rail and locks X/Z position when airborne
 void ObjectHeyho::calcMotion() {
     if (!m_freeFall) {
         f32 sqVel = m_maxVelSq - m_accel * (pos().y - m_midpoint.y);
@@ -228,6 +234,8 @@ void ObjectHeyho::calcMotion() {
 }
 
 /// @addr{0x806CFFB0}
+/// @brief Updates the smoothed up vector, normalises the forward direction vector, and updates the
+/// transform matrix accordingly
 void ObjectHeyho::calcInterp() {
     m_up = Interpolate(0.2f, m_up, m_floorNrm);
     m_up.normalise2();

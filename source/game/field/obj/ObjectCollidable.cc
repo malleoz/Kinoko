@@ -38,6 +38,7 @@ void ObjectCollidable::load() {
     ObjectDirector::Instance()->addObject(this);
 }
 
+/// @brief Updates the GJK collision transform
 /// @addr{0x8081F7C8}
 void ObjectCollidable::calcCollisionTransform() {
     calcTransform();

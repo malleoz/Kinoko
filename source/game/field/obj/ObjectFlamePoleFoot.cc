@@ -12,12 +12,12 @@ namespace Kinoko::Field {
 ObjectFlamePoleFoot::ObjectFlamePoleFoot(const System::MapdataGeoObj &params)
     : ObjectKCL(params), StateManager(this, STATE_ENTRIES), m_extraCycleFrames(params.setting(0)),
       m_initDelay(params.setting(1)) {
-    m_poleScale = static_cast<f32>(params.setting(2));
+    m_maxScale = static_cast<f32>(params.setting(2));
 
     ++s_flamePoleCount;
 
-    if (m_poleScale == 0.0f) {
-        m_poleScale = 3.0f + static_cast<f32>(s_flamePoleCount % 3);
+    if (m_maxScale == 0.0f) {
+        m_maxScale = 3.0f + static_cast<f32>(s_flamePoleCount % 3);
     }
 
     m_pole = EGG::egg_new<ObjectFlamePole>(params, pos(), rot(), scale());
@@ -45,14 +45,14 @@ void ObjectFlamePoleFoot::init() {
     s32 state5 = state4 + static_cast<s32>(0.4f * NORMALIZATION / 7.0f);
     m_stateStart = {{0, state1, state2, state3, state4, state5}};
 
-    m_eruptDownVel = (m_poleScale - 1.0f) / static_cast<f32>(state1);
-    m_maxHeight = ObjectFlamePole::HEIGHT * m_poleScale;
+    m_eruptDownVel = (m_maxScale - 1.0f) / static_cast<f32>(state1);
+    m_maxHeight = ObjectFlamePole::HEIGHT * m_maxScale;
     m_scaleDelta = (300.0f + m_maxHeight) / static_cast<f32>(m_eruptDownDuration);
     m_pole->setActive(false);
     m_pole->disableCollision();
 
     EGG::Vector3f polePos = m_pole->pos();
-    polePos.y = pos().y - ObjectFlamePole::HEIGHT * m_poleScale;
+    polePos.y = pos().y - ObjectFlamePole::HEIGHT * m_maxScale;
     m_pole->setPos(polePos);
 }
 
@@ -71,47 +71,48 @@ void ObjectFlamePoleFoot::calc() {
 
     EGG::Vector3f polePos = m_pole->pos();
     m_pole->setPos(EGG::Vector3f(polePos.x, m_heightOffset + (pos().y - m_maxHeight), polePos.z));
-    m_pole->setScale(m_poleScale);
+    m_pole->setScale(m_maxScale);
 }
 
-/// @addr{0x8067F6B8}
-/// @brief Calculates the current state based off framecount within the cycle duration
-/// @details References the values in m_stateState as follows:
-/// Let \f$t\f$ be @ref m_cycleFrame and \f$s_i\f$ be @ref m_stateStart "m_stateStart[i]". Then
-/// \f[
-/// \text{stateId}(t) =
-/// \begin{cases}
-///     0 & 0 \le t < s_1 \\
-///     1 & s_1 \le t < s_2 \\
-///     2 & s_2 \le t < s_3 \\
-///     3 & s_3 \le t < s_4 \\
-///     4 & s_4 \le t < s_5 \\
-///     5 & t \ge s_5
-/// \end{cases}
-/// \f]
-/// where
-/// \f[
-/// \begin{aligned}
-/// N &= 6 \cdot \text{CYCLE_FRAMES} \\
-/// s_1 &= \left\lfloor \frac{0.3 N}{7} \right\rfloor \\
-/// s_2 &= s_1 + \left\lfloor \frac{0.1 N}{7} \right\rfloor \\
-/// s_3 &= s_2 + \left\lfloor \frac{\text{CYCLE_FRAMES}}{7} \right\rfloor \\
-/// s_4 &= s_3 + \left\lfloor \frac{0.2 N}{7} \right\rfloor \\
-/// s_5 &= s_4 + \left\lfloor \frac{0.4 N}{7} \right\rfloor
-/// \end{aligned}
-/// \f]
-/// Simplifying further, we have:
-/// \f[
-/// \text{stateId}(t) =
-/// \begin{cases}
-///     0 & 0 \le t < 138 \\
-///     1 & 138 \le t < 184 \\
-///     2 & 184 \le t < 261 \\
-///     3 & 261 \le t < 353 \\
-///     4 & 353 \le t < 538 \\
-///     5 & t \ge 538
-/// \end{cases}
-/// \f]
+/** @addr{0x8067F6B8}
+ * @brief Calculates the current state based off framecount within the cycle duration
+ * @details References the values in m_stateState as follows:
+ * Let \f$t\f$ be @ref m_cycleFrame and \f$s_i\f$ be @ref m_stateStart "m_stateStart[i]". Then
+ * \f[
+ * \text{stateId}(t) =
+ * \begin{cases}
+ *     0 & 0 \le t < s_1 \\
+ *     1 & s_1 \le t < s_2 \\
+ *     2 & s_2 \le t < s_3 \\
+ *     3 & s_3 \le t < s_4 \\
+ *     4 & s_4 \le t < s_5 \\
+ *     5 & t \ge s_5
+ * \end{cases}
+ * \f]
+ * where
+ * \f[
+ * \begin{aligned}
+ * N &= 6 \cdot \text{CYCLE_FRAMES} \\
+ * s_1 &= \left\lfloor \frac{0.3 N}{7} \right\rfloor \\
+ * s_2 &= s_1 + \left\lfloor \frac{0.1 N}{7} \right\rfloor \\
+ * s_3 &= s_2 + \left\lfloor \frac{\text{CYCLE_FRAMES}}{7} \right\rfloor \\
+ * s_4 &= s_3 + \left\lfloor \frac{0.2 N}{7} \right\rfloor \\
+ * s_5 &= s_4 + \left\lfloor \frac{0.4 N}{7} \right\rfloor
+ * \end{aligned}
+ * \f]
+ * Simplifying further, we have:
+ * \f[
+ * \text{stateId}(t) =
+ * \begin{cases}
+ *     0 & 0 \le t < 138 \\
+ *     1 & 138 \le t < 184 \\
+ *     2 & 184 \le t < 261 \\
+ *     3 & 261 \le t < 353 \\
+ *     4 & 353 \le t < 538 \\
+ *     5 & t \ge 538
+ * \end{cases}
+ * \f]
+ */
 void ObjectFlamePoleFoot::calcStates() {
     u32 frame = static_cast<s32>(System::RaceManager::Instance()->timer() - m_initDelay);
     m_cycleFrame = frame % (m_extraCycleFrames + CYCLE_DURATION);
@@ -148,7 +149,7 @@ f32 ObjectFlamePoleFoot::getScaleY(u32 timeOffset) const {
 
     if (cycleFrame >= m_stateStart[4]) {
         return std::max(1.0f,
-                m_poleScale - m_eruptDownVel * static_cast<f32>(m_eruptDownDuration / 2) -
+                m_maxScale - m_eruptDownVel * static_cast<f32>(m_eruptDownDuration / 2) -
                         m_eruptDownVel * static_cast<f32>(cycleFrame - m_stateStart[4]));
     }
 
@@ -156,24 +157,25 @@ f32 ObjectFlamePoleFoot::getScaleY(u32 timeOffset) const {
         s32 framesSince194 = cycleFrame - m_stateStart[3];
         s32 half17c = m_eruptDownDuration / 2;
         if (framesSince194 > half17c) {
-            return m_poleScale - m_eruptDownVel * static_cast<f32>(framesSince194 - half17c);
+            return m_maxScale - m_eruptDownVel * static_cast<f32>(framesSince194 - half17c);
         } else {
-            return m_poleScale;
+            return m_maxScale;
         }
     }
 
     if (cycleFrame >= m_stateStart[2] || cycleFrame >= m_stateStart[1]) {
-        return m_poleScale;
+        return m_maxScale;
     }
 
     if (cycleFrame >= 0) {
-        return std::min(m_poleScale, m_eruptDownVel * static_cast<f32>(cycleFrame) + 1.0f);
+        return std::min(m_maxScale, m_eruptDownVel * static_cast<f32>(cycleFrame) + 1.0f);
     }
 
     return 1.0f;
 }
 
 /// @addr{0x8067FE88}
+/// @copydoc ObjectKCL::checkCollision()
 /// @details Humps become trickable once the scale is 2 or greater
 bool ObjectFlamePoleFoot::checkCollision(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
@@ -194,6 +196,7 @@ bool ObjectFlamePoleFoot::checkCollision(f32 radius, const EGG::Vector3f &pos,
 }
 
 /// @addr{0x80680218}
+/// @copydoc ObjectKCL::checkCollisionCached()
 /// @details Humps become trickable once the scale is 2 or greater
 bool ObjectFlamePoleFoot::checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,

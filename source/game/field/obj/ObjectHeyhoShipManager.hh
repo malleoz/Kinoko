@@ -4,6 +4,7 @@
 
 namespace Kinoko::Field {
 
+/// @brief Managed the synchronization between the @ref ObjectHeyhoBall and the @ref ObjectHeyhoShip
 class ObjectHeyhoShipManager final : public ObjectSniper {
 public:
     ObjectHeyhoShipManager();

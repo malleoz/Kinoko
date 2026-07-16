@@ -39,7 +39,7 @@ void ObjectPillarC::calcCollisionTransform() {
 ObjectPillar::ObjectPillar(const System::MapdataGeoObj &params)
     : ObjectKCL(params), m_state(State::Upright), m_fallStart(static_cast<u32>(params.setting(0))),
       m_targetRotation(F_PI * static_cast<f32>(params.setting(1)) / 180.0f), m_initRot(rot().x),
-      m_setupRot(EGG::Vector3f::zero) {
+      m_currRot(EGG::Vector3f::zero) {
     m_base = EGG::egg_new<ObjectPillarBase>(params);
     m_collidable = EGG::egg_new<ObjectPillarC>(params);
 
@@ -57,11 +57,16 @@ void ObjectPillar::init() {
     ObjectBase::init();
 
     m_collidable->disableCollision();
-    m_setupRot = rot();
+    m_currRot = rot();
     disableCollision();
 }
 
 /// @addr{0x807FF17C}
+/// @details Checks the current time to update the pillar's fall state and rotation. If the pillar
+/// is upright, then the @ref ObjectPillarC collision is enabled. If the pillar is falling, then the
+/// rotation is updated and the collision transform is updated. If the pillar has finished falling,
+/// then the @ref ObjectPillarC collision is disabled and the @ref ObjectPillar collision is
+/// enabled.
 void ObjectPillar::calc() {
     u32 time = System::RaceManager::Instance()->timer();
 
@@ -76,7 +81,7 @@ void ObjectPillar::calc() {
             setTransform(getUpdatedMatrix(0));
             m_collidable->setTransform(transform());
 
-            setRot(EGG::Vector3f(rot, m_setupRot.y, m_setupRot.z));
+            setRot(EGG::Vector3f(rot, m_currRot.y, m_currRot.z));
         } else {
             // The pillar has finished falling.
             // We can now drive on top of the base and on the pillar itself.
@@ -95,7 +100,7 @@ void ObjectPillar::calc() {
 /// @addr{0x807FF83C}
 const EGG::Matrix34f &ObjectPillar::getUpdatedMatrix(u32 timeOffset) {
     f32 rot = calcRot(System::RaceManager::Instance()->timer() - timeOffset);
-    m_workMat.makeRT(EGG::Vector3f(rot, m_setupRot.y, m_setupRot.z), pos());
+    m_workMat.makeRT(EGG::Vector3f(rot, m_currRot.y, m_currRot.z), pos());
     return m_workMat;
 }
 

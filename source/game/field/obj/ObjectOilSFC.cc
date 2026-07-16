@@ -12,6 +12,8 @@ ObjectOilSFC::ObjectOilSFC(const System::MapdataGeoObj &params) : ObjectCollidab
 /// @addr{0x806DD998}
 ObjectOilSFC::~ObjectOilSFC() = default;
 
+/// @addr{0x806DD9D8}
+/// @details If the player is on the ground, they will lose traction and spin out.
 Kart::Reaction ObjectOilSFC::onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
         Kart::Reaction /*reactionOnObj*/, EGG::Vector3f &hitDepth) {
     hitDepth = EGG::Vector3f::zero;

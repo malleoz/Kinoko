@@ -33,10 +33,8 @@ public:
     }
 
     /// @addr{0x8067FBB8}
-    /// @todo Can we remove m_workMatrix?
     [[nodiscard]] const EGG::Matrix34f &getUpdatedMatrix(u32 /*timeOffset*/) override {
         calcTransform();
-        m_workMatrix = transform();
         return transform();
     }
 
@@ -92,7 +90,6 @@ private:
 
     void calcStates();
 
-    EGG::Matrix34f m_workMatrix;     ///< Cached matrix from last getUpdatedMatrix() call
     ObjectFlamePole *m_pole;         ///< Pointer to the associated flamepole
     const u32 m_extraCycleFrames;    ///< Additional dormancy frames
     const u32 m_initDelay;           //< Frame delay before the state lifecycle begins

@@ -22,6 +22,7 @@ ObjectPsea::ObjectPsea(const System::MapdataGeoObj &params)
 ObjectPsea::~ObjectPsea() = default;
 
 /// @addr{0x8082C634}
+/// @details Computes the position of the rising water using a sine wave.
 void ObjectPsea::calc() {
     constexpr f32 POS_OFFSET = 9590.399f;
     constexpr f32 AMPLITUDE = 140.0f;

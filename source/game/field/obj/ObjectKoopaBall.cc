@@ -16,6 +16,7 @@ ObjectKoopaBall::~ObjectKoopaBall() {
 }
 
 /// @addr{0x807703D0}
+/// @details Initializes the rail velocity, position, and collision scale
 void ObjectKoopaBall::init() {
     constexpr u32 START_COOLDOWN = 221;
 
@@ -58,6 +59,8 @@ void ObjectKoopaBall::init() {
 }
 
 /// @addr{0x80770ADC}
+/// @details Calculates collision state-specific behavior, decrements the cycle timer, and updates
+/// the velocity based on the rail interpolator.
 void ObjectKoopaBall::calc() {
     switch (m_state) {
     case State::Tangible:
@@ -81,6 +84,8 @@ void ObjectKoopaBall::calc() {
 }
 
 /// @addr{0x80771BF4}
+/// @details Throws the player upwards and removes items if the koopa ball is exploding, otherwise
+/// the player will flip over without losing their item.
 Kart::Reaction ObjectKoopaBall::onCollision(Kart::KartObject * /*kartObj*/,
         Kart::Reaction reactionOnKart, Kart::Reaction /*reactionOnObj*/,
         EGG::Vector3f & /*hitDepth*/) {
@@ -88,6 +93,9 @@ Kart::Reaction ObjectKoopaBall::onCollision(Kart::KartObject * /*kartObj*/,
 }
 
 /// @addr{0x80770F4C}
+/// @brief Runs every frame that the fireball can collide with karts
+/// @details Updates the position based off the rail interpolator. Checks if the explosion should
+/// start. Checks for floor collision, updates the rotation, then sets the transformation matrix.
 void ObjectKoopaBall::calcTangible() {
     constexpr f32 END_VELOCITY = 60.0f;
     constexpr f32 GRAVITY = 2.0f;
@@ -101,8 +109,8 @@ void ObjectKoopaBall::calcTangible() {
         break;
     case RailInterpolator::Status::ChangingDirection: {
         m_state = State::Exploding;
-        m_curScale = SCALE_INITIAL;
-        setScale(SCALE_INITIAL);
+        m_curScale = INITIAL_EXPLOSION_SCALE;
+        setScale(INITIAL_EXPLOSION_SCALE);
         m_explodeTimer = m_animFramecount;
     } break;
     default:
@@ -125,6 +133,11 @@ void ObjectKoopaBall::calcTangible() {
 }
 
 /// @addr{0x80771324}
+/// @brief Runs every frame that the fireball is exploding
+/// @details If the explosion still has EXPLOSION_EXPAND_FRAME frames remaining, the scale of the
+/// fireball will increase. Once there are only EXPLODE_COLLISION_DURATION frames remaining for the
+/// explosion, then collision is disabled. Once the explosion has finished, the scale, position, and
+/// collision are reset.
 void ObjectKoopaBall::calcExploding() {
     constexpr s32 EXPLODE_COLLISION_DURATION = 20;
     constexpr s32 EXPLOSION_EXPAND_FRAME = 30;
@@ -152,6 +165,9 @@ void ObjectKoopaBall::calcExploding() {
 }
 
 /// @addr{0x80771248}
+/// @brief Runs every frame that the fireball is intangible
+/// @details Once the cooldown timer has expired, the fireball will become tangible and reinitialize
+/// its velocity, angular speed, and cooldown timer.
 void ObjectKoopaBall::calcIntangible() {
     constexpr s32 COOLDOWN_FRAMES = 210;
 
@@ -167,6 +183,7 @@ void ObjectKoopaBall::calcIntangible() {
 }
 
 /// @addr{0x80771624}
+/// @brief Checks if the fireball is colliding with the floor and bounces it upwards if so
 void ObjectKoopaBall::checkSphereFull() {
     constexpr EGG::Vector3f POS_OFFSET = EGG::Vector3f(0.0f, -900.0f, 0.0f);
     constexpr f32 RADIUS = 100.0f;

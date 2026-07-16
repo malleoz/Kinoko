@@ -56,11 +56,9 @@ public:
     [[nodiscard]] const EGG::Vector3f &up() const {
         return m_up;
     }
-
-    [[nodiscard]] static constexpr const EGG::Vector3f &Gravity() {
-        return GRAVITY;
-    }
     /// @endGetters
+
+    static constexpr EGG::Vector3f GRAVITY = EGG::Vector3f(0.0f, 2.5f, 0.0f);
 
 private:
     void calcSpring();
@@ -73,8 +71,6 @@ private:
     EGG::Vector3f m_springForce; ///< Prevents links from stretching past their m_linkLen
     EGG::Vector3f m_up;
     bool m_touchingGround;
-
-    static constexpr EGG::Vector3f GRAVITY = EGG::Vector3f(0.0f, 2.5f, 0.0f);
 };
 
 } // namespace Kinoko::Field
