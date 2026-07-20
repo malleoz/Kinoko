@@ -159,7 +159,8 @@ Kart::Reaction ObjectPylon::onCollision(Kart::KartObject *kartObj,
 }
 
 /// @addr{0x8082E100}
-/// @warning This function can cause time trial desyncs. Higher in the callstack is
+/// @brief Checks collision against floors, walls, and other pylons to prevent clipping
+/// @desync This function can cause time trial desyncs. Higher in the callstack is
 /// ObjectDirector::checkKartObjectCollision, which iterates over each object in the spatial cache.
 /// For each object, it updates the AABB and checks for collision. If there was a collision, it
 /// calls OnCollision which will in turn call this function. This function will then update its
@@ -207,6 +208,7 @@ void ObjectPylon::checkIntraCollision(const EGG::Vector3f &hitDepth) {
 }
 
 /// @addr{0x8082E3F0}
+/// @brief Runs once when the pylon starting flying after collision from the player
 void ObjectPylon::startHit(f32 velFactor, EGG::Vector3f &hitDepth) {
     constexpr f32 ANG_VEL_SCALAR = 0.5f;
     constexpr f32 VEL_SCALAR = 100.0f;
@@ -220,6 +222,15 @@ void ObjectPylon::startHit(f32 velFactor, EGG::Vector3f &hitDepth) {
     hitDepth.normalise2();
 }
 
+/// @brief Runs every frame when the pylon is flying after being hit by the player
+/// @details Applies gravity to velocity and offsets position accordingly. For the first 5 frames of
+/// the Hit state, this function only performs collision checks against KCL_TYPE_OBJECT_WALL. On
+/// subsequent frames it checks both walls and floors. When a collision occurs, the cone is
+/// redirected away from direction of impact. If the collision was with the floor, then a velocity
+/// dampener is applied to reduce the pylon's flying speed by 25%. If 4 collisions have occured,
+/// then the pylon transitions to the Hiding state. If the square of the pylon's velocity is less
+/// than 0.5, the pylon's y-axis position is negative, or if 300 frames have elapsed while in the
+/// Hit state, then the pylon will transition to the Hiding state.
 void ObjectPylon::calcHit() {
     constexpr f32 GRAVITY = 3.0f;
     constexpr f32 SQ_VEL_MIN = 0.5f;
@@ -279,6 +290,7 @@ void ObjectPylon::calcHit() {
     }
 }
 
+/// @brief Runs every frame that the pylon is shrinking after flying and bouncing
 void ObjectPylon::calcHiding() {
     constexpr u32 HIDING_DURATION = 10;
 
@@ -298,6 +310,8 @@ void ObjectPylon::calcHiding() {
     disableCollision();
 }
 
+/// @brief Runs every frame that the pylon is intangible
+/// @details Once 900 frames have elapsed, the pylon will transition to the ComeBack state.
 void ObjectPylon::calcHide() {
     constexpr u32 HIDE_DURATION = 900;
 
@@ -309,6 +323,9 @@ void ObjectPylon::calcHide() {
     }
 }
 
+/// @brief Runs every frame that the pylon is respawning after being intangible
+/// @details The pylon falls for at least 10 frames. Once 10 frames have passed and the pylon has
+/// hit the ground, the pylon will transition to the Idle state.
 void ObjectPylon::calcComeBack() {
     constexpr u32 COME_BACK_DURATION = 10;
     constexpr f32 COME_BACK_VEL = 10.0f;

@@ -226,7 +226,7 @@ void ObjectKCL::calcScale(u32 timeOffset) {
 
 /// @addr{0x8081AFB4}
 /// @brief Checks collision between a sphere and the object, writing out full collision info
-/// @bug This function can result in physics desynchronizations when racing a ghost.
+/// @desync This function can result in physics desynchronizations when racing a ghost.
 /// Since this function is only called when the player/ghost's hitbox is close enough to the object
 /// (as per GJK collision checks), it is possible that the first player hitbox is just barely too
 /// far away from the object while the second player hitbox is just close enough to pass the GJK
@@ -247,7 +247,7 @@ bool ObjectKCL::checkCollision(f32 radius, const EGG::Vector3f &pos, const EGG::
 /// @addr{0x8081B16C}
 /// @brief Checks collision between a sphere and the object, using only cached KCL prisms, writing
 /// out full collision info
-/// @bug This function can result in physics desynchronizations when racing a ghost.
+/// @desync This function can result in physics desynchronizations when racing a ghost.
 /// Since this function is only called when the player/ghost's hitbox is close enough to the object
 /// (as per GJK collision checks), it is possible that the first player hitbox is just barely too
 /// far away from the object while the second player hitbox is just close enough to pass the GJK

@@ -28,9 +28,10 @@ public:
             EGG::Vector3f &hitDepth) override;
 
 private:
+    /// @brief Distinguishes whether the rock is collidable/visible
     enum class State {
-        Tangible = 0,
-        Intangible = 1,
+        Tangible = 0,   ///< The rock is rolling
+        Intangible = 1, ///< The rock is despawned
     };
 
     void calcTangible();
@@ -40,11 +41,11 @@ private:
     void checkSphereFull();
     void breakRock();
 
-    State m_state;
-    f32 m_startYPos;
-    EGG::Vector3f m_colTranslate;
-    f32 m_angSpd;
-    int m_cooldownTimer;
+    State m_state;                ///< Current tangibility of the rock
+    f32 m_startYPos;              ///< Starting y-axis position
+    EGG::Vector3f m_colTranslate; ///< Current collision translation
+    f32 m_angSpd;                 ///< Angular velocity
+    s32 m_cooldownTimer;
     f32 m_angRad;
 
     static constexpr f32 INITIAL_ANGULAR_SPEED = 3.0f;

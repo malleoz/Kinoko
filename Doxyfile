@@ -67,6 +67,7 @@ STRIP_FROM_PATH        = source/
 # a double escape (\\{ and \\})
 
 ALIASES                += stage="\par Stage: "
+ALIASES                += desync="\xrefitem desync \"Desync\" \"Desync List\" "
 ALIASES                += unused="\xrefitem unused \"\" \"Unused Elements\" \brief [Unused]"
 ALIASES                += rename="\xrefitem rename \"\" \"Objects to Rename\" \note This object is labeled as having a poor name. It should be renamed to better represent its purpose."
 ALIASES                += addr{1}="\qualifier \"\1\""
