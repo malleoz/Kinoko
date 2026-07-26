@@ -216,7 +216,7 @@ void ObjectWanwan::calcWait() {
     calcSpeed();
     calcBounce();
 
-    calcWanderTimer();
+    calcWander();
 }
 
 /// @addr{0x806E6F6C}
@@ -277,12 +277,7 @@ void ObjectWanwan::calcBack() {
     m_vel.x = m_backDir.x * m_speed * 1.5f;
     m_vel.z = m_backDir.z * m_speed * 1.5f;
 
-    if (m_touchingFloor) {
-        m_vel.y = 0.0f;
-        m_accel += EGG::Vector3f::ey * 12.0f;
-    } else {
-        m_accel.y = 0.0f;
-    }
+    calcBounce();
 
     if (m_currentFrame > 90) {
         m_nextStateId = 0;

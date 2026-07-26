@@ -114,19 +114,6 @@ void ObjectHwanwanManager::init() {
     m_railInterpolator->setCurrVel(static_cast<f32>(m_mapObj->setting(0)));
 }
 
-/// @addr{0x806C5AC4}
-/// @details Snaps the Chain Chomp's X and Z position to the rail and sets the target Y position to
-/// the rail's height. Also updates the Chain Chomp's tangent direction.
-void ObjectHwanwanManager::calc() {
-    calcState();
-
-    const auto &curPos = m_railInterpolator->curPos();
-    m_hwanwan->m_workPos.x = curPos.x;
-    m_hwanwan->m_workPos.z = curPos.z;
-    m_hwanwan->m_targetY = curPos.y;
-    m_hwanwan->m_tangent = m_railInterpolator->curTangentDir();
-}
-
 /// @addr{0x806C5DE0}
 /// @brief Updates the Chain Chomp's state based on the current rail segment
 /// @details In practice, for Nintendo tracks, this does nothing. Rail point setting 2, which
@@ -141,6 +128,18 @@ void ObjectHwanwanManager::calcState() {
     if (m_hwanwan->m_currentStateId == 1 && m_hwanwan->m_currentFrame >= 60) {
         m_hwanwan->m_nextStateId = 0;
     }
+}
+
+/// @addr{0x806C6148}
+/// @brief Updates the Chain Chomp's position and tangent
+/// @details Snaps the Chain Chomp's X and Z position to the rail and sets the target Y position
+/// to the rail's height. Also updates the Chain Chomp's tangent direction.
+void ObjectHwanwanManager::calcPosAndTangent() {
+    const auto &curPos = m_railInterpolator->curPos();
+    m_hwanwan->m_workPos.x = curPos.x;
+    m_hwanwan->m_workPos.z = curPos.z;
+    m_hwanwan->m_targetY = curPos.y;
+    m_hwanwan->m_tangent = m_railInterpolator->curTangentDir();
 }
 
 } // namespace Kinoko::Field

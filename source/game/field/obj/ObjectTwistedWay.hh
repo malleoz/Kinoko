@@ -4,9 +4,9 @@
 
 namespace Kinoko::Field {
 
-/// @brief The wavy road in Bowser's Castle.
+/// @brief The wavy road in Bowser's Castle
 /// @details Behaves as a sine wave with a period of 120 frames and an amplitude which varies
-/// depending on your distance from the center.
+/// depending on your distance from the x-axis center.
 class ObjectTwistedWay : public ObjectDrivable {
 public:
     ObjectTwistedWay(const System::MapdataGeoObj &params);
@@ -108,12 +108,12 @@ private:
     [[nodiscard]] bool checkPoleCollision(f32 radius, f32 angle, const EGG::Vector3f &relPos,
             EGG::Vector3f &v0, EGG::Vector3f &fnrm, f32 &dist);
 
-    [[nodiscard]] f32 calcWave(f32 zPercent, u32 t);
+    [[nodiscard]] f32 calcWavePhase(f32 zPercent, u32 t);
 
-    u32 m_introTimer;
+    u32 m_introTimer; ///< Tracks frames currently elapsed before race starts
 
-    static constexpr s32 PERIOD_LENGTH = 120; ///< Framecount of full oscillation
-    static constexpr f32 WIDTH = 2000.0f;
+    static constexpr s32 PERIOD_LENGTH = 120;  ///< Framecount of full oscillation
+    static constexpr f32 WIDTH = 2000.0f;      ///< Width of the wavy road
     static constexpr f32 HALF_DEPTH = 7500.0f; ///< Half the length of the wavy road
 };
 

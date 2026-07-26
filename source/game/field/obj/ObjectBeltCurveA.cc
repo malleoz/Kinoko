@@ -22,15 +22,7 @@ EGG::Vector3f ObjectBeltCurveA::calcRoadVelocity(u32 variant, const EGG::Vector3
     posDelta.y = 0.0f;
 
     EGG::Vector3f dir = m_rotMat.ps_multVector(posDelta);
-    bool forward;
-
-    if (timeOffset <= m_dirChange1Frame) {
-        forward = m_startForward;
-    } else if (timeOffset <= m_dirChange2Frame) {
-        forward = !m_startForward;
-    } else {
-        forward = m_startForward;
-    }
+    bool forward = isMovingForward(timeOffset);
 
     if (variant == 4) {
         f32 sign = forward ? 1.0f : -1.0f;
@@ -57,6 +49,20 @@ f32 ObjectBeltCurveA::calcDirSwitchVelocity(u32 t) const {
     } else {
         return 0.006f * static_cast<f32>(delta) / 60.0f;
     }
+}
+
+/// @addr{0x807FD66C}
+/// @brief Based on the provided time, returns whether the belt is moving forward or backward
+bool ObjectBeltCurveA::isMovingForward(u32 t) const {
+    if (t <= m_dirChange1Frame) {
+        return m_startForward;
+    }
+
+    if (t <= m_dirChange2Frame) {
+        return !m_startForward;
+    }
+
+    return m_startForward;
 }
 
 } // namespace Kinoko::Field

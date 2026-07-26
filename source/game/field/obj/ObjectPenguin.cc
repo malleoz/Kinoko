@@ -39,7 +39,7 @@ ObjectPenguinS::~ObjectPenguinS() = default;
 
 /// @addr{0x807760B0}
 void ObjectPenguinS::init() {
-    m_anmTimer = 0;
+    initAnmTimer();
     m_railInterpolator->init(0.0f, 0);
     m_basis = m_railInterpolator->curTangentDir();
     m_state = State::Walk;
@@ -93,7 +93,7 @@ void ObjectPenguinS::calcSlider() {
     calcRot();
 
     if (--m_anmTimer == 0) {
-        m_state = State::SliderSlow;
+        enterSliderSlow();
     }
 }
 
@@ -121,17 +121,11 @@ void ObjectPenguinS::calcRail() {
     u16 setting = curPoint.setting[0];
 
     if (setting == 0 && m_state == State::SliderSlow) {
-        auto *anmMgr = m_drawMdl->anmMgr();
-        anmMgr->playAnim(0.0f, 1.0f, 3);
-        m_state = State::StandUp;
-        m_anmTimer = anmMgr->activeAnim(Render::AnmType::Chr)->frameCount();
+        enterStandUp();
     } else if (setting == 1 && m_state == State::Walk) {
-        auto *anmMgr = m_drawMdl->anmMgr();
-        anmMgr->playAnim(0.0f, 1.0f, 1);
-        m_state = State::Slider;
-        m_anmTimer = anmMgr->activeAnim(Render::AnmType::Chr)->frameCount();
+        enterSlider();
     } else if (setting == 2 && m_state == State::Walk) {
-        m_state = State::Dive;
+        enterDive();
     }
 
     m_railInterpolator->setCurrVel(static_cast<f32>(curPoint.setting[1]));

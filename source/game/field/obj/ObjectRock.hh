@@ -35,9 +35,18 @@ private:
     };
 
     void calcTangible();
-    void calcIntangible();
-    void calcTangibleSub();
 
+    /// @addr{0x8076F868}
+    /// @brief Runs every frame that the rock is intangible
+    /// @details Waits for the cooldown timer to expire before making the rock tangible again.
+    void calcIntangible() {
+        if (m_cooldownTimer < 0) {
+            enterTangible();
+        }
+    }
+
+    void calcTangibleSub();
+    void enterTangible();
     void checkSphereFull();
     void breakRock();
 
@@ -45,8 +54,12 @@ private:
     f32 m_startYPos;              ///< Starting y-axis position
     EGG::Vector3f m_colTranslate; ///< Current collision translation
     f32 m_angSpd;                 ///< Angular velocity
-    s32 m_cooldownTimer;
-    f32 m_angRad;
+    s32 m_cooldownTimer;          ///< Cooldown timer before rock becomes tangible again
+    f32 m_angRad;                 ///< Rotation from accumulated angular velocity
+
+    const s32 m_cooldownDuration; ///< Duration of the cooldown before becoming tangible again
+    const f32 m_railSpeed;        ///< Speed at which the rock moves along the rail
+    const f32 m_bounceFactor; ///< Scales initial y position, gravity, and floor bounce dampening
 
     static constexpr f32 INITIAL_ANGULAR_SPEED = 3.0f;
 };

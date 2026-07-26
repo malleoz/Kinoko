@@ -85,7 +85,12 @@ public:
     ~ObjectHwanwanManager() override;
 
     void init() override;
-    void calc() override;
+
+    /// @addr{0x806C5AC4}
+    void calc() override {
+        calcState();
+        calcPosAndTangent();
+    }
 
     /// @addr{0x806C69B8}
     [[nodiscard]] u32 loadFlags() const override {
@@ -102,6 +107,7 @@ public:
 
 private:
     void calcState();
+    void calcPosAndTangent();
 
     ObjectHwanwan *m_hwanwan; ///< Pointer to the underlying Chain Chomp object
 };

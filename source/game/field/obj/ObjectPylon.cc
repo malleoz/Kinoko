@@ -17,6 +17,10 @@ ObjectPylon::ObjectPylon(const System::MapdataGeoObj &params)
 ObjectPylon::~ObjectPylon() = default;
 
 /// @addr{0x8082CD60}
+/// @details Checks for floor and wall collision to make sure the pylon is not clipping. Assigns
+/// neighbors based off adjacency in the managed object array.
+/// @warning The base game does not apply any ObjectId check when assigning neighbors. Therefore,
+/// all managed objects for the race MUST be pylons.
 void ObjectPylon::init() {
     constexpr f32 NEIGHBOR_SQUARE_RADIUS = 2400.0f;
 
@@ -166,7 +170,9 @@ Kart::Reaction ObjectPylon::onCollision(Kart::KartObject *kartObj,
 /// calls OnCollision which will in turn call this function. This function will then update its
 /// position if it finds itself to be colliding with any of its neighbors. However, it is not
 /// guaranteed that its neighbors have had their AABBs updated yet for this frame, as they may not
-/// be processed until a later iteration in checkKartObjectCollision.
+/// be processed until a later iteration in checkKartObjectCollision. This means that player
+/// collision checks with pylons may result in updating ghost pylon AABBs earlier than it would have
+/// by the ghost normally.
 void ObjectPylon::checkIntraCollision(const EGG::Vector3f &hitDepth) {
     constexpr f32 TRAVEL_RADIUS = 1200.0f;
 
@@ -291,6 +297,7 @@ void ObjectPylon::calcHit() {
 }
 
 /// @brief Runs every frame that the pylon is shrinking after flying and bouncing
+/// @details The pylon shrinks over a duration of 10 frames where the scale is one over the frame.
 void ObjectPylon::calcHiding() {
     constexpr u32 HIDING_DURATION = 10;
 

@@ -172,7 +172,7 @@ bool ObjectTwistedWay::checkSphereImpl(f32 radius, const EGG::Vector3f &v0,
     u32 frameCount = timeOffset + (isInRace ? raceMgr->timer() : m_introTimer);
     u32 t = (frameCount % PERIOD_LENGTH) * 2;
 
-    f32 angle = isInRace ? calcWave(-relPos.z / HALF_DEPTH, t) : 0.0f;
+    f32 angle = isInRace ? calcWavePhase(-relPos.z / HALF_DEPTH, t) : 0.0f;
 
     bool hasCol = false;
     if (flags & KCL_TYPE_BIT(COL_TYPE_WALL)) {
@@ -186,6 +186,7 @@ bool ObjectTwistedWay::checkSphereImpl(f32 radius, const EGG::Vector3f &v0,
     return hasCol;
 }
 
+/// @brief Helper function which contains frequently re-used code for checking wall collisions
 template <typename T>
     requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
 bool ObjectTwistedWay::checkWallCollision(f32 angle, f32 radius, u32 t, const EGG::Vector3f &relPos,
@@ -231,7 +232,7 @@ bool ObjectTwistedWay::checkWallCollision(f32 angle, f32 radius, u32 t, const EG
         return true;
     }
 
-    angle = calcWave(0.0f, t);
+    angle = calcWavePhase(0.0f, t);
 
     EGG::Vector3f wnrm;
 
@@ -260,6 +261,7 @@ bool ObjectTwistedWay::checkWallCollision(f32 angle, f32 radius, u32 t, const EG
     return true;
 }
 
+/// @brief Helper function which contains frequently re-used code for checking floor collisions
 template <typename T>
     requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
 bool ObjectTwistedWay::checkFloorCollision(f32 angle, f32 radius, const EGG::Vector3f &relPos,
@@ -304,6 +306,7 @@ bool ObjectTwistedWay::checkFloorCollision(f32 angle, f32 radius, const EGG::Vec
 }
 
 /// @addr{0x80814270}
+/// @brief Checks for collisions with the pole in the center of the wavy road
 bool ObjectTwistedWay::checkPoleCollision(f32 radius, f32 angle, const EGG::Vector3f &relPos,
         EGG::Vector3f &v0, EGG::Vector3f &wnrm, f32 &dist) {
     constexpr EGG::Vector3f HEIGHT = EGG::Vector3f(0.0f, 0.5f * WIDTH, 0.0f);
@@ -326,7 +329,9 @@ bool ObjectTwistedWay::checkPoleCollision(f32 radius, f32 angle, const EGG::Vect
     return true;
 }
 
-f32 ObjectTwistedWay::calcWave(f32 zPercent, u32 t) {
+/// @addr{0x80813F40}
+/// @brief Calculates the phase of the wave at the given time t and position along the z-axis
+f32 ObjectTwistedWay::calcWavePhase(f32 zPercent, u32 t) {
     constexpr f32 WAVINESS = 4.0f;
     constexpr f32 AMPLITUDE = 0.2f;
 

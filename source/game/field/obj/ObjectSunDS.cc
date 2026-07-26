@@ -14,27 +14,21 @@ ObjectSunDS::ObjectSunDS(const System::MapdataGeoObj &params)
 ObjectSunDS::~ObjectSunDS() = default;
 
 /// @addr{0x806DE03C}
+/// @details Updates the sun's position along its rail. If the sun reaches a stop point, it
+/// transitions to the still state.
 void ObjectSunDS::calc() {
     if (System::RaceManager::Instance()->timer() < static_cast<u32>(m_startFrame)) {
         return;
     }
 
-    if (m_railInterpolator->calc() == RailInterpolator::Status::SegmentEnd) {
-        m_railInterpolator->setT(0.0f);
-
-        u16 setting = m_railInterpolator->curPoint().setting[0];
-        if (setting != 0) {
-            m_stillDuration = setting;
-            m_nextStateId = 0;
-        }
-    }
-
+    calcRail();
     StateManager::calc();
-
-    setPos(m_railInterpolator->curPos());
+    calcPos();
 }
 
 /// @addr{0x806DE598}
+/// @brief If a projectile should be launched this frame, returns the corresponding rail point
+/// index. Otherwise, returns -1.
 s16 ObjectSunDS::launchPointIdx() {
     constexpr u16 THROW_DELAY = 30;
 
@@ -43,6 +37,15 @@ s16 ObjectSunDS::launchPointIdx() {
     }
 
     return m_railInterpolator->curPointIdx();
+}
+
+/// @addr{0x806DE458}
+/// @brief Updates the sun's position along its rail and handles stop points
+void ObjectSunDS::calcRail() {
+    if (m_railInterpolator->calc() == RailInterpolator::Status::SegmentEnd) {
+        m_railInterpolator->setT(0.0f);
+        checkStop();
+    }
 }
 
 } // namespace Kinoko::Field

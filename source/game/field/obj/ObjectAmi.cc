@@ -201,10 +201,8 @@ bool ObjectAmi::checkSphereImpl(f32 radius, const EGG::Vector3f &v0, const EGG::
 bool ObjectAmi::checkCollision(f32 radius, const EGG::Vector3f &posDelta, u32 time,
         EGG::Vector3f &bbox, EGG::Vector3f &fnrm, f32 &dist) {
     constexpr EGG::Vector3f FLOOR_NORMAL = EGG::Vector3f(0.0f, 1.5f, -0.5f);
-    constexpr f32 Z_SLOPE = 910.0f;
 
-    f32 zPhase = F_PI * (2.0f * posDelta.z) / DIMS.z;
-    f32 depth = radius - (posDelta.y - (SpatialSin(zPhase) * TemporalSin(time) - Z_SLOPE * zPhase));
+    f32 depth = radius - (posDelta.y - calcNetHeight(posDelta.z, time));
 
     // Not colliding if net is falling below the hitbox's radius or above by more than 600 units.
     if (depth <= 0.0f || depth >= 600.0f) {
@@ -221,20 +219,6 @@ bool ObjectAmi::checkCollision(f32 radius, const EGG::Vector3f &posDelta, u32 ti
     dist = depth;
 
     return true;
-}
-
-/// @addr{0x80808578}
-/// @brief Computes a spatial sine wave as a function of the z-axis phase.
-/// @details The behavior is such that the net bounce is the most extreme when in the middle of the
-/// net and dampened as you approach the beginning or end along the z-axis.
-f32 ObjectAmi::SpatialSin(f32 phase) {
-    return 550.0f * EGG::Mathf::SinFIdx(RAD2FIDX * (phase * 0.5f));
-}
-
-/// @brief Computes a sine wave as a function of time.
-/// @details This computes the up/down motion of the net, with a period of 70 frames.
-f32 ObjectAmi::TemporalSin(u32 t) {
-    return EGG::Mathf::SinFIdx(RAD2FIDX * (F_PI * static_cast<f32>(t) / 35.0f));
 }
 
 } // namespace Kinoko::Field

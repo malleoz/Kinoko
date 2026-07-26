@@ -64,6 +64,7 @@ private:
     void checkCollisionLowering();
     void calcLowered();
     void calcRaising();
+    void enterRaising();
 
     bool m_startingRise;    ///< Used to delay state change by 1 frame
     u32 m_raisedTimer;      ///< Number of frames remaining in raised state

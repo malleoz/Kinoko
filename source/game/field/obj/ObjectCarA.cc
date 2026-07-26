@@ -43,12 +43,7 @@ void ObjectCarA::init() {
 /// @addr{0x806B82CC}
 void ObjectCarA::calc() {
     StateManager::calc();
-
-    m_railInterpolator->setCurrVel(m_currVel);
-
-    auto status = m_railInterpolator->calc();
-    m_changingDir = (status == RailInterpolator::Status::ChangingDirection);
-
+    calcRail();
     calcPos();
 }
 
@@ -141,6 +136,15 @@ void ObjectCarA::calcCruising() {
         m_motionState = MotionState::Decelerating;
         m_nextStateId = 1;
     }
+}
+
+/// @addr{0x806B8CCC}
+/// @brief Updates the rail and checks if the car is changing direction
+void ObjectCarA::calcRail() {
+    m_railInterpolator->setCurrVel(m_currVel);
+
+    auto status = m_railInterpolator->calc();
+    m_changingDir = (status == RailInterpolator::Status::ChangingDirection);
 }
 
 /// @addr{0x806B8D3C}

@@ -21,6 +21,7 @@ public:
 
 private:
     [[nodiscard]] f32 calcDirSwitchVelocity(u32 t) const;
+    [[nodiscard]] bool isMovingForward(u32 t) const;
 
     bool m_startForward;   ///< Whether the belts start moving forward or backward
     u16 m_dirChange1Frame; ///< Frame of first direction change

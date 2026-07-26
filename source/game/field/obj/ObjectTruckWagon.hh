@@ -6,7 +6,11 @@
 
 namespace Kinoko::Field {
 
-/// @brief The individual minecarts that spawn from the @ref ObjectTruckWagon spawner.
+/// @brief The individual minecarts that spawn from the @ref ObjectTruckWagon spawner
+/// @details Carts are toggled active or inactive by the @ref ObjectTruckWagon spawner object. When
+/// they are active, they move along a rail. In the base game, they start by rolling along the
+/// ground. Once they reach the fork at the end of the mine, they get picked up and move along the
+/// rail while suspended mid-air.
 class ObjectTruckWagonCart final : public ObjectCollidable, public StateManager {
 public:
     ObjectTruckWagonCart(const System::MapdataGeoObj &params);
@@ -36,12 +40,8 @@ public:
     Kart::Reaction onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
             Kart::Reaction reactionOnObj, EGG::Vector3f &hitDepth) override;
 
-    /// @addr{0x806E2060}
-    void setActive(bool isSet) {
-        m_active = isSet;
-    }
-
     /// @addr{0x806E24FC}
+    /// @brief Runs when the cart is signaled by the spawner object to spawn
     void activate() {
         reset(0);
         setActive(true);
@@ -49,6 +49,7 @@ public:
     }
 
     /// @addr{0x806E1F20}
+    /// @brief Runs when the cart is signaled by the spawner object to despawn
     void deactivate() {
         reset(0);
         setActive(false);
@@ -62,48 +63,49 @@ public:
         return m_active;
     }
 
-private:
-    /// @addr{0x806E0D48}
-    void enterState0() {}
-
-    /// @addr{0x806E12D0}
-    void enterState1() {}
-
-    /// @addr{0x806E17F4}
-    void enterState2() {}
-
-    /// @addr{0x806E1898}
-    void enterState3() {}
-
-    void calcState0();
-    void calcState1();
-
-    /// @addr{0x806E1894}
-    void calcState2() {
-        calcState0();
+    /// @addr{0x806E2060}
+    /// @brief Interface used by @ref ObjectTruckWagon to enable or disable a cart
+    void setActive(bool isSet) {
+        m_active = isSet;
     }
 
-    /// @addr{0x806E1940}
-    void calcState3() {}
+private:
+    void enterStateStub() {}
 
-    bool m_active; ///< Whether or not the minecart is spawned and has collision
-    EGG::Vector3f m_vel;
-    f32 m_speed;
-    EGG::Vector3f m_lastVel;
-    EGG::Vector3f m_up;
-    EGG::Vector3f m_tangent;
-    f32 m_pitch;
-    f32 m_angVel;
+    void calcStateStub() {}
+
+    void calcRolling();
+    void calcSuspended();
+
+    /// @addr{0x806E1894}
+    /// @brief Runs every frame that the cart has m_currentStateId equal to 2
+    /// @todo It's not clear what the intended difference here is compared to rolling state
+    /// (m_currentStateId = 0)
+    void calcState2() {
+        calcRolling();
+    }
+
+    void checkRailPointState();
+    void calcRailAndVel();
+
+    bool m_active;           ///< Whether or not the minecart is spawned and has collision
+    EGG::Vector3f m_vel;     ///< Current velocity along the rail, with gravity applied
+    f32 m_speed;             ///< Speed of the current segment of the rail interpolator
+    EGG::Vector3f m_lastVel; ///< Last frame's velocity, used during the suspended state
+    EGG::Vector3f m_up;      ///< Up direction vector
+    EGG::Vector3f m_tangent; ///< Forward direction vector
+    f32 m_pitch;             ///< Current rocking angle of the suspended minecart
+    f32 m_angVel;            ///< Angular velocity of the swing of the suspended minecart
 
     static constexpr std::array<StateManagerEntry, 4> STATE_ENTRIES = {{
-            {StateEntry<ObjectTruckWagonCart, &ObjectTruckWagonCart::enterState0,
-                    &ObjectTruckWagonCart::calcState0>(0)},
-            {StateEntry<ObjectTruckWagonCart, &ObjectTruckWagonCart::enterState1,
-                    &ObjectTruckWagonCart::calcState1>(1)},
-            {StateEntry<ObjectTruckWagonCart, &ObjectTruckWagonCart::enterState2,
+            {StateEntry<ObjectTruckWagonCart, &ObjectTruckWagonCart::enterStateStub,
+                    &ObjectTruckWagonCart::calcRolling>(0)},
+            {StateEntry<ObjectTruckWagonCart, &ObjectTruckWagonCart::enterStateStub,
+                    &ObjectTruckWagonCart::calcSuspended>(1)},
+            {StateEntry<ObjectTruckWagonCart, &ObjectTruckWagonCart::enterStateStub,
                     &ObjectTruckWagonCart::calcState2>(2)},
-            {StateEntry<ObjectTruckWagonCart, &ObjectTruckWagonCart::enterState3,
-                    &ObjectTruckWagonCart::calcState3>(3)},
+            {StateEntry<ObjectTruckWagonCart, &ObjectTruckWagonCart::enterStateStub,
+                    &ObjectTruckWagonCart::calcStateStub>(3)},
     }};
 };
 
@@ -134,7 +136,7 @@ public:
     void loadRail() override {}
 
 private:
-    owning_span<ObjectTruckWagonCart *> m_carts;
+    owning_span<ObjectTruckWagonCart *> m_carts; ///< Pointers to each cart that spawns
     const s32 m_spawn2Frame;   ///< Frame that the second minecart in a cycle spawns
     const s32 m_cycleDuration; ///< Total duration of a cycle
     s32 m_cycleFrame;          ///< Current frame modulo cycle duration

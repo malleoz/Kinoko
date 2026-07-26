@@ -7,7 +7,7 @@ ObjectShip64::ObjectShip64(const System::MapdataGeoObj &params) : ObjectCollidab
 
 /// @addr{0x80765DB0}
 ObjectShip64::~ObjectShip64() {
-    EGG::egg_delete(m_auxCollision);
+    EGG::egg_delete(m_paddleWheelCollision);
 }
 
 /// @addr{0x80765E30}
@@ -22,27 +22,27 @@ void ObjectShip64::init() {
 }
 
 /// @addr{0x80766144}
+/// @details Interpolates the forward direction to create smooth movement along the rail.
 void ObjectShip64::calc() {
     m_railInterpolator->calc();
-
     setPos(m_railInterpolator->curPos());
-
-    m_tangent = Interpolate(0.2f, m_tangent, m_railInterpolator->curTangentDir());
-    m_tangent.normalise();
-
-    setMatrixFromOrthonormalBasisAndPos(m_tangent);
+    calcTangent();
 }
 
 /// @addr{0x80766864}
+/// @details Creates the primary and paddle wheel collision objects for the ship.
 void ObjectShip64::createCollision() {
     constexpr f32 RADIUS = 1500.0f;
     constexpr f32 HEIGHT = 3500.0f;
 
     ObjectCollidable::createCollision();
-    m_auxCollision = EGG::egg_new<ObjectCollisionCylinder>(RADIUS, HEIGHT, EGG::Vector3f::zero);
+    m_paddleWheelCollision =
+            EGG::egg_new<ObjectCollisionCylinder>(RADIUS, HEIGHT, EGG::Vector3f::zero);
 }
 
 /// @addr{0x807668D4}
+/// @details Calculates the transformation matrices for the primary and paddle wheel collision
+/// objects based on the ship's current orientation.
 void ObjectShip64::calcCollisionTransform() {
     ObjectCollidable::calcCollisionTransform();
     calcTransform();
@@ -54,15 +54,17 @@ void ObjectShip64::calcCollisionTransform() {
 
     mat.setAxisRotation(F_PI / 2.0f, v);
     mat.setBase(3, v);
-    m_auxCollision->transform(mat, scale());
+    m_paddleWheelCollision->transform(mat, scale());
 }
 
 /// @addr{0x80766BCC}
+/// @details Checks for collision against both the boat and the paddle wheel.
 bool ObjectShip64::checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &dist) {
     EGG::Vector3f colDist = EGG::Vector3f::zero;
     EGG::Vector3f auxDist = EGG::Vector3f::zero;
 
-    bool has_col = lhs->check(*m_collision, colDist) || lhs->check(*m_auxCollision, auxDist);
+    bool has_col =
+            lhs->check(*m_collision, colDist) || lhs->check(*m_paddleWheelCollision, auxDist);
     dist = colDist + auxDist;
 
     return has_col;

@@ -11,11 +11,21 @@ public:
     ObjectAurora(const System::MapdataGeoObj &params);
     ~ObjectAurora() override;
 
-    void init() override;
-    [[nodiscard]] u32 loadFlags() const override;
-    void createCollision() override;
-    void calcCollisionTransform() override;
-    f32 getCollisionRadius() const override;
+    /// @addr{0x807FB688}
+    [[nodiscard]] u32 loadFlags() const override {
+        return 1;
+    }
+
+    /// @addr{0x807FB684}
+    void createCollision() override {}
+
+    /// @addr{0x807FB680}
+    void calcCollisionTransform() override {}
+
+    /// @addr{0x807FB5DC}
+    [[nodiscard]] f32 getCollisionRadius() const override {
+        return COLLISION_SIZE.z + 100.0f;
+    }
 
     [[nodiscard]] bool checkPointPartial(const EGG::Vector3f &v0, const EGG::Vector3f &v1,
             KCLTypeMask flags, CollisionInfoPartial *pInfo, KCLTypeMask *pFlagsOut) override;
@@ -79,6 +89,9 @@ private:
     [[nodiscard]] bool checkSphereFullImpl(f32 radius, const EGG::Vector3f &v0,
             const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo,
             KCLTypeMask *pFlagsOut, u32 timeOffset, bool push);
+
+    [[nodiscard]] static f32 CalcRoadHeight(f32 phase, u32 t);
+    [[nodiscard]] static f32 TemporalSin(f32 t);
 
     [[nodiscard]] bool calcCollision(f32 radius, const EGG::Vector3f &vel, u32 time,
             EGG::Vector3f &v0, EGG::Vector3f &fnrm, f32 &dist);

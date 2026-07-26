@@ -13,6 +13,8 @@ ObjectSniper::ObjectSniper()
 ObjectSniper::~ObjectSniper() = default;
 
 /// @addr{0x806DDB34}
+/// @details Constructs the m_pointIdxs mapping between projectile indices and the corresponding
+/// rail point index to launch the projectile at.
 void ObjectSniper::init() {
     const auto *launcherRailInterp = m_launcher->railInterpolator();
 
@@ -30,6 +32,8 @@ void ObjectSniper::init() {
 }
 
 /// @addr{0x806DDC44}
+/// @details Checks if the launcher is ready to launch a projectile and triggers the corresponding
+/// projectile's launch.
 void ObjectSniper::calc() {
     s32 idx = m_launcher->launchPointIdx();
 

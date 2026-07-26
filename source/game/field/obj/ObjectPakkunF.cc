@@ -95,17 +95,6 @@ void ObjectPakkunF::calcCollisionTransform() {
     m_collision->transform(transformMat, scale());
 }
 
-/// @addr{0x80774A84}
-/// @brief Runs every frame while the piranha is attacking
-void ObjectPakkunF::calcAttack() {
-    ++m_currAttackFrame;
-
-    if (--m_attackFrames == 0) {
-        m_state = State::Wait;
-        m_waitFrames = m_waitDuration;
-    }
-}
-
 /// @addr{0x80774CB0}
 /// @brief Runs once when the piranha stops idling and is about to start attacking
 void ObjectPakkunF::enterAttack() {

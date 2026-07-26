@@ -45,6 +45,7 @@ private:
     void calcGround();
     void calcGroundObjs();
     [[nodiscard]] EGG::Matrix34f calcInterpolatedPose(f32 t) const;
+    [[nodiscard]] f32 calcJumpHeight() const;
 
     owning_span<ObjectChoropuGround *> m_groundObjs; ///< Dirt trail segments behind moles on MMM
     ObjectChoropuHoll *m_objHoll;                    ///< The hole the mole emerges from

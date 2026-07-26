@@ -5,6 +5,10 @@
 
 namespace Kinoko::Field {
 
+/// @brief Represents the sun on DS Desert Hills that launches @ref ObjectFireSnake projectiles
+/// @details Follows a rail, stopping for a duration specified by the rail point. @ref
+/// ObjectSunManager interfaces with this class via @ref launchPointIdx() to determine if a @ref
+/// ObjectFireSnake projectile should be launched.
 class ObjectSunDS : public ObjectProjectileLauncher, public StateManager {
 public:
     ObjectSunDS(const System::MapdataGeoObj &params);
@@ -26,16 +30,19 @@ public:
 
 private:
     /// @addr{0x806DE1C8}
+    /// @brief Runs once when the sun has reached a point along its rail designated as a stop point
     void enterStill() {
         m_railInterpolator->setCurrVel(0.0f);
     }
 
     /// @addr{0x806DE408}
+    /// @brief Runs once when the sun begins revolving around the course again
     void enterRevolving() {
         m_railInterpolator->setCurrVel(m_revolutionSpeed);
     }
 
     /// @addr{0x806DE1E4}
+    /// @brief Runs every frame that the sun is stationary
     void calcStill() {
         if (m_currentFrame >= m_stillDuration) {
             m_nextStateId = 1;
@@ -44,6 +51,24 @@ private:
 
     /// @addr{0x806DE454}
     void calcRevolving() {}
+
+    void calcRail();
+
+    /// @addr{0x806DE4E4}
+    /// @brief Updates the sun's position based on the current rail interpolation
+    void calcPos() {
+        setPos(m_railInterpolator->curPos());
+    }
+
+    /// @addr{0x806DE568}
+    /// @brief Checks if the current rail point is a stop point
+    void checkStop() {
+        u16 setting = m_railInterpolator->curPoint().setting[0];
+        if (setting != 0) {
+            m_stillDuration = setting;
+            m_nextStateId = 0;
+        }
+    }
 
     const f32 m_revolutionSpeed; ///< Speed of sun revolving around the course
     const s32 m_startFrame;      ///< The sun is inactive until this frame

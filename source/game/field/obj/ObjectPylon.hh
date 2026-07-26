@@ -5,12 +5,17 @@
 namespace Kinoko::Field {
 
 /// @brief The traffic cones on Daisy Circuit
-/// @desync Pylons are restricted to a 1200 unit radius around their initial position. If the
+/// @details Pylons are restricted to a 1200 unit radius around their initial position. If the
 /// player hits a pylon at 70% of the kart's max speed, then the pylon will fly off. Otherwise, the
 /// pylon will apply a slowing effect on the player if the player is colliding at a direct enough
 /// angle. Performs collision checks against floors, walls, and other pylons to prevent clipping.
 /// When a pylon starts flying off, it will bounce 4 times before shrinking and becoming intangible.
-/// After a cooldown, it will spawn mid-air and fall down to the ground.
+/// After a cooldown, it will spawn mid-air and fall down to the ground. Since pylons can be moved
+/// by the player, the game has to define distinct cones for both the player and the ghost (if
+/// racing one). Player cones are only tangible to the player, and ghost cones are only tangible to
+/// the ghost.
+/// @desync It is possible for ghost playbacks to desync due to the pylon's handling of collision
+/// checks against neighboring pylons.
 class ObjectPylon final : public ObjectCollidable {
 public:
     ObjectPylon(const System::MapdataGeoObj &params);

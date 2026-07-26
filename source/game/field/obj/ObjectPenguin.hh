@@ -88,6 +88,12 @@ public:
     }
 
 private:
+    /// @addr{0x80776188}
+    /// @brief Initializes the animation timer
+    void initAnmTimer() {
+        m_anmTimer = 0;
+    }
+
     /// @addr{0x807763D0}
     /// @brief Runs every frame the penguin is diving mid-air onto its belly
     void calcDive() {
@@ -97,6 +103,36 @@ private:
     void calcSlider();
     void calcStandUp();
     void calcRail();
+
+    /// @addr{0x80776B7C}
+    /// @brief Transitions the penguin into the dive state
+    void enterDive() {
+        m_state = State::Dive;
+    }
+
+    /// @addr{0x80776B94}
+    /// @brief Transitions the penguin into the slider state
+    void enterSlider() {
+        auto *anmMgr = m_drawMdl->anmMgr();
+        anmMgr->playAnim(0.0f, 1.0f, 1);
+        m_state = State::Slider;
+        m_anmTimer = anmMgr->activeAnim(Render::AnmType::Chr)->frameCount();
+    }
+
+    /// @addr{0x80776C58}
+    /// @brief Transitions the penguin into the slider slow state
+    void enterSliderSlow() {
+        m_state = State::SliderSlow;
+    }
+
+    /// @addr{0x80776CDC}
+    /// @brief Transitions the penguin into the stand up state
+    void enterStandUp() {
+        auto *anmMgr = m_drawMdl->anmMgr();
+        anmMgr->playAnim(0.0f, 1.0f, 3);
+        m_state = State::StandUp;
+        m_anmTimer = anmMgr->activeAnim(Render::AnmType::Chr)->frameCount();
+    }
 
     s32 m_anmTimer; ///< Frames remaining for the currently plating animation
 };

@@ -155,9 +155,7 @@ ObjectHanachan::~ObjectHanachan() = default;
 
 /// @addr{0x806C9630}
 void ObjectHanachan::init() {
-    m_railInterpolator->init(0.0f, 0);
-    m_railInterpolator->setCurrVel(m_walkSpeed);
-
+    initRail();
     initBody();
 
     m_still = false;
@@ -207,19 +205,7 @@ void ObjectHanachan::calcWait() {
     }
 
     clearChain();
-
-    if (m_swayAmplitude >= 0.0f) {
-        m_swayAmplitude -= 0.25f;
-    } else {
-        m_swayAmplitude += 0.25f;
-    }
-
-    if (EGG::Mathf::abs(m_swayAmplitude) <= 1.0f) {
-        m_swayAmplitude = 0.0f;
-    }
-
-    calcDefaultLateralMotion();
-
+    calcSway();
     m_chain.calc();
 }
 
@@ -313,6 +299,22 @@ void ObjectHanachan::calcRailAlignmentMotion() {
     } else {
         calcDefaultLateralMotion();
     }
+}
+
+/// @addr{0x806CB67C}
+/// @brief Updates the sway amplitude and calculates the lateral sway motion
+void ObjectHanachan::calcSway() {
+    if (m_swayAmplitude >= 0.0f) {
+        m_swayAmplitude -= 0.25f;
+    } else {
+        m_swayAmplitude += 0.25f;
+    }
+
+    if (EGG::Mathf::abs(m_swayAmplitude) <= 1.0f) {
+        m_swayAmplitude = 0.0f;
+    }
+
+    calcDefaultLateralMotion();
 }
 
 /// @addr{0x806CACD0}

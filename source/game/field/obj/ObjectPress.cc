@@ -176,12 +176,7 @@ void ObjectPress::calcLowered() {
     if (m_startingRise) {
         m_state = State::Raising;
     } else {
-        auto *anmMgr = m_drawMdl->anmMgr();
-        f32 frameCount = anmMgr->activeAnim(Render::AnmType::Chr)->frameCount();
-        anmMgr->playAnim(frameCount, -ANM_RATE, 0);
-
-        m_startingRise = true;
-        m_anmTimer = frameCount / ANM_RATE;
+        enterRaising();
     }
 }
 
@@ -200,6 +195,17 @@ void ObjectPress::calcRaising() {
         m_state = State::Raised;
         m_raisedTimer = m_raisedDuration;
     }
+}
+
+/// @addr{0x80778218}
+/// @brief Transitions the press into the raising state and calculates the animation timer
+void ObjectPress::enterRaising() {
+    auto *anmMgr = m_drawMdl->anmMgr();
+    f32 frameCount = anmMgr->activeAnim(Render::AnmType::Chr)->frameCount();
+    anmMgr->playAnim(frameCount, -ANM_RATE, 0);
+
+    m_startingRise = true;
+    m_anmTimer = frameCount / ANM_RATE;
 }
 
 /// @addr{0x80777D10}

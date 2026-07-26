@@ -15,7 +15,11 @@ public:
     ~ObjectPropeller() override;
 
     void init() override;
-    void calc() override;
+
+    /// @addr{0x80765068}
+    void calc() override {
+        calcAngleAndRot();
+    }
 
     /// @addr{0x80765BC0}
     [[nodiscard]] u32 loadFlags() const override {
@@ -28,6 +32,18 @@ public:
     bool checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &dist) override;
 
 private:
+    /// @addr{0x80765558}
+    /// @brief Initializes the propeller's angular velocity
+    void initAngVel() {
+        ASSERT(m_mapObj);
+        m_angVel = static_cast<f32>(static_cast<s16>(m_mapObj->setting(0)));
+        if (m_mapObj->setting(1) == 1) {
+            m_angVel = -m_angVel;
+        }
+    }
+
+    void calcAngleAndRot();
+
     f32 m_angVel;             ///< Angular speed of the propeller in degrees per frame
     f32 m_angle;              ///< Accumulated rotation angle of the propeller in degrees
     EGG::Vector3f m_axis;     ///< Forward direction, which is the axis of rotation for the blades

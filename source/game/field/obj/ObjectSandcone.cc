@@ -5,11 +5,10 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80686F84}
-ObjectSandcone::ObjectSandcone(const System::MapdataGeoObj &params) : ObjectKCL(params) {
-    m_flowRate = static_cast<f32>(params.setting(0)) / 100.0f;
-    m_finalHeightDelta = static_cast<f32>(params.setting(1));
-    m_startFrame = params.setting(2);
-    m_baseMtx.makeRT(rot(), pos());
+ObjectSandcone::ObjectSandcone(const System::MapdataGeoObj &params)
+    : ObjectKCL(params), m_flowRate(static_cast<f32>(params.setting(0)) / 100.0f),
+      m_finalHeightDelta(static_cast<f32>(params.setting(1))), m_startFrame(params.setting(2)) {
+    m_rtMat.makeRT(rot(), pos());
 }
 
 /// @addr{0x806871E0}
@@ -18,15 +17,17 @@ ObjectSandcone::~ObjectSandcone() = default;
 /// @addr{0x806872A0}
 void ObjectSandcone::init() {
     m_duration = m_finalHeightDelta / m_flowRate;
-    m_currentMtx = m_baseMtx;
+    m_currentMtx = m_rtMat;
 
     // Moved from getUpdatedMatrix to init b/c this only needs to be computed once per object.
     m_finalPos = pos() + EGG::Vector3f::ey * (static_cast<f32>(m_duration) * m_flowRate);
 }
 
 /// @addr{0x80687800}
+/// @details Based off the current race timer, raises the sandcone's height gradually until it
+/// reaches the final height.
 const EGG::Matrix34f &ObjectSandcone::getUpdatedMatrix(u32 timeOffset) {
-    m_currentMtx = m_baseMtx;
+    m_currentMtx = m_rtMat;
 
     u32 t = System::RaceManager::Instance()->timer() - timeOffset;
 
@@ -36,7 +37,7 @@ const EGG::Matrix34f &ObjectSandcone::getUpdatedMatrix(u32 timeOffset) {
         m_currentMtx.setBase(3, m_finalPos);
     } else if (t > m_startFrame) {
         EGG::Vector3f deltaPos = EGG::Vector3f::ey * ((t - m_startFrame) * m_flowRate);
-        m_currentMtx.setBase(3, m_baseMtx.base(3) + deltaPos);
+        m_currentMtx.setBase(3, m_rtMat.base(3) + deltaPos);
     }
 
     return m_currentMtx;

@@ -12,25 +12,6 @@ ObjectAurora::ObjectAurora(const System::MapdataGeoObj &params) : ObjectDrivable
 /// @addr{0x807FB690}
 ObjectAurora::~ObjectAurora() = default;
 
-/// @addr{0x807FABC4}
-void ObjectAurora::init() {}
-
-/// @addr{0x807FB688}
-u32 ObjectAurora::loadFlags() const {
-    return 1;
-}
-
-/// @addr{0x807FB684}
-void ObjectAurora::createCollision() {}
-
-/// @addr{0x807FB680}
-void ObjectAurora::calcCollisionTransform() {}
-
-/// @addr{0x807FB5DC}
-f32 ObjectAurora::getCollisionRadius() const {
-    return COLLISION_SIZE.z + 100.0f;
-}
-
 /// @addr{0x807FB59C}
 bool ObjectAurora::checkPointPartial(const EGG::Vector3f &v0, const EGG::Vector3f &v1,
         KCLTypeMask flags, CollisionInfoPartial *pInfo, KCLTypeMask *pFlagsOut) {
@@ -271,6 +252,29 @@ bool ObjectAurora::checkSphereFullImpl(f32 radius, const EGG::Vector3f &v0,
     return true;
 }
 
+/// @addr{0x807FAF10}
+/// @brief Based off the provided phase and time, calculates the wavy road's surface height for use
+/// in collision checks
+f32 ObjectAurora::CalcRoadHeight(f32 phase, u32 t) {
+    f32 velPeriod = (F_PI * (2.0f * phase)) / COLLISION_SIZE.z;
+
+    f32 result = EGG::Mathf::SinFIdx(
+            RAD2FIDX * (velPeriod * TemporalSin(t) + F_PI * static_cast<f32>(t) / 50.0f));
+
+    return velPeriod * 80.0f * result;
+}
+
+/// @addr{0x807FAFFC}
+/// @brief Computes a sine wave as a function of time
+f32 ObjectAurora::TemporalSin(f32 t) {
+    constexpr f32 PHASE_SHIFT_SECONDS = 30.0f;
+    constexpr f32 INITIAL_FREQUENCY = 1.0f;
+    constexpr f32 MAX_FREQUENCY = 4.0f;
+
+    f32 minsNormalized = (static_cast<f32>(t) / 60.0f - PHASE_SHIFT_SECONDS) / 60.0f;
+    return std::min(INITIAL_FREQUENCY + minsNormalized * minsNormalized, MAX_FREQUENCY);
+}
+
 /// @addr{0x807FB060}
 /// @brief Calculates the sin-like collision of the wavy road.
 /// @details It seems to be modeled as a quadratic chirp with a starting frequency of 1 and a max
@@ -279,20 +283,11 @@ bool ObjectAurora::checkSphereFullImpl(f32 radius, const EGG::Vector3f &v0,
 /// towards the wavy road as well.
 bool ObjectAurora::calcCollision(f32 radius, const EGG::Vector3f &vel, u32 time, EGG::Vector3f &v0,
         EGG::Vector3f &fnrm, f32 &dist) {
-    constexpr f32 INITIAL_FREQUENCY = 1.0f;
-    constexpr f32 MAX_FREQUENCY = 4.0f;
-    constexpr f32 PHASE_SHIFT_SECONDS = 30.0f;
     constexpr f32 COLLISION_DISTANCE_THRESHOLD = 600.0f;
     constexpr f32 UPWARP_THRESHOLD = 300.0f;
     constexpr f32 UPWARP_DIST_SCALAR = 0.2f;
 
-    f32 minsNormalized = (static_cast<f32>(time) / 60.0f - PHASE_SHIFT_SECONDS) / 60.0f;
-    f32 frequency = std::min(INITIAL_FREQUENCY + minsNormalized * minsNormalized, MAX_FREQUENCY);
-    f32 velPeriod = (F_PI * (2.0f * vel.z)) / COLLISION_SIZE.z;
-
-    f32 result = EGG::Mathf::SinFIdx(
-            RAD2FIDX * (velPeriod * frequency + (F_PI * static_cast<f32>(time) / 50.0f)));
-    result = radius - (vel.y - velPeriod * 80.0f * result);
+    f32 result = radius - (vel.y - CalcRoadHeight(vel.z, time));
 
     // We're not colliding if we're 600 units away or if the road is now behind us.
     if (result <= 0.0f || result >= COLLISION_DISTANCE_THRESHOLD) {

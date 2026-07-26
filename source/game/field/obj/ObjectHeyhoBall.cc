@@ -84,16 +84,15 @@ void ObjectHeyhoBall::calcFalling() {
 
 /// @addr{0x806D0F24}
 /// @brief Scales the explosion sphere over 46 frames using a capped downward parabola
-/// @todo Describe the parabola once we better understand the significance of the "40" term
+///
 void ObjectHeyhoBall::calcExploding() {
     constexpr u32 EXPLODE_FRAMES = 46;
-    constexpr EGG::Vector3f BALL_SCALE = EGG::Vector3f(1.001f, 1.001f, 1.001f);
 
     /// Colliding after this frame does not cause player to launch upwards and lose item
     constexpr u32 SPIN_FRAME = 32;
 
     if (m_currentFrame >= EXPLODE_FRAMES) {
-        setScale(BALL_SCALE);
+        calcFinishedExplodingScale();
 
         if (getUnit()) {
             unregisterCollision();
@@ -102,15 +101,21 @@ void ObjectHeyhoBall::calcExploding() {
         m_nextStateId = 0;
         m_intensity = ExplosionIntensity::ExplosionLoseItem;
     } else {
-        f32 shrinkFrames = static_cast<f32>(m_currentFrame) - 40.0f;
-        f32 scale = 1.2f * m_blastRadiusRatio + -m_scaleChangeRate * shrinkFrames * shrinkFrames;
-
-        scale = std::min(m_blastRadiusRatio, scale);
-        setScale(scale);
-
+        calcExplodingScale();
         m_intensity = m_currentFrame >= SPIN_FRAME ? ExplosionIntensity::SpinSomeSpeed :
                                                      ExplosionIntensity::ExplosionLoseItem;
     }
+}
+
+/// @addr{0x806D14D8}
+/// @brief Calculates the cannonball scale on the first 46 frames of the explosion
+/// @todo Describe the parabola once we better understand the significance of the "40" term
+void ObjectHeyhoBall::calcExplodingScale() {
+    f32 shrinkFrames = static_cast<f32>(m_currentFrame) - 40.0f;
+    f32 scale = 1.2f * m_blastRadiusRatio + -m_scaleChangeRate * shrinkFrames * shrinkFrames;
+
+    scale = std::min(m_blastRadiusRatio, scale);
+    setScale(scale);
 }
 
 } // namespace Kinoko::Field

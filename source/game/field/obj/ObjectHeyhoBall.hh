@@ -82,6 +82,16 @@ private:
 
     void calcExploding();
 
+    /// @addr{0x806D14D8}
+    /// @brief Runs after the explosion has finished to set the final scale of the cannonball
+    void calcFinishedExplodingScale() {
+        constexpr EGG::Vector3f BALL_SCALE = EGG::Vector3f(1.001f, 1.001f, 1.001f);
+
+        setScale(BALL_SCALE);
+    }
+
+    void calcExplodingScale();
+
     const f32 m_airtime;            ///< Number of frames between shooting and landing
     EGG::Vector3f m_shipPos;        ///< Position of the ship firing the ball
     const EGG::Vector3f m_initPos;  ///< Target landing position

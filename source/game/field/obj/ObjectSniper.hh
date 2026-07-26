@@ -7,11 +7,9 @@ namespace Kinoko::Field {
 
 /// @brief The base class for a manager object which is responsible for synchronizing a set of
 /// projectiles and a projectile launcher.
-/// @details In the base game, this is used for:
-/// - DS Desert Hills: The sun and FireSnakes
-/// - GBA Shy Guy Beach: The ship and the bombs
-/// Every frame, this class checks if the launcher is ready to spawn a projectile, and it maps
-/// between the launcher's current rail point and the corresponding projectile to launch.
+/// @details Every frame, this class checks if the launcher is ready to spawn a projectile, and it
+/// maps between the launcher's current rail point and the corresponding projectile to launch. It is
+/// expected that the derived class sets the member pointers and @ref m_pointIdxs.
 class ObjectSniper : public ObjectCollidable {
 public:
     ObjectSniper();
@@ -26,18 +24,23 @@ public:
     }
 
     /// @addr{0x806D28FC}
+    /// @details no-op because the manager object does not have any graphics to load.
     void loadGraphics() override {}
 
     /// @addr{0x806D28F4}
+    /// @details no-op because the manager object does not have any collision to load. The launcher
+    /// object independently loads its own collision.
     void createCollision() override {}
 
     /// @addr{0x806D28F8}
+    /// @details no-op because the manager object does not have any rail to load. The launcher
+    /// object independently manages its own position.
     void loadRail() override {}
 
 protected:
-    owning_span<ObjectProjectile *> m_projectiles;
-    ObjectProjectileLauncher *m_launcher; // The rDH sun or the RSGB ship
-    owning_span<s16> m_pointIdxs;
+    owning_span<ObjectProjectile *> m_projectiles; ///< Pointers to the managed projectiles
+    ObjectProjectileLauncher *m_launcher;          ///< The object launching the projectiles
+    owning_span<s16> m_pointIdxs; ///< Indices along the rail that each projectile should launch at
 };
 
 } // namespace Kinoko::Field

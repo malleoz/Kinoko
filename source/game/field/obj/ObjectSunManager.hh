@@ -9,9 +9,15 @@ namespace Kinoko::Field {
 
 /// @brief Handles the synchronization between the @ref ObjectSunDS and @ref ObjectFireSnake
 /// projectiles.
+/// @warning It is expected that all @ref ObjectFireSnake projectiles and @ObjectSunDS are already
+/// constructed and registered to the @ref ObjectDirector's array of managed objects. Otherwise,
+/// they will not be visible to this manager.
 class ObjectSunManager final : public ObjectSniper {
 public:
     /// @addr{0x806DE624}
+    /// @brief Creates pointers to all existing @ref ObjectFireSnake projectiles and the @ref
+    /// ObjectSunDS launcher.
+
     ObjectSunManager() {
         auto &managedObjs = ObjectDirector::Instance()->managedObjects();
 

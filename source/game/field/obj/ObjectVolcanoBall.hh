@@ -5,7 +5,11 @@
 
 namespace Kinoko::Field {
 
-/// @brief Represents a fireball that is launched from the volcanoes on Grumble Volcano.
+/// @brief Represents a fireball that is launched from the volcanoes on Grumble Volcano
+/// @details Lifecycle and management of these objects is performed by @ref
+/// ObjectVolcanoBallLauncher. The fireball is launched with a given initial velocity and has
+/// constant acceleration. Once the ball reaches the end of its rail, it will transition to the
+/// burning state. It will become intangible after the burning duration has elapsed.
 class ObjectVolcanoBall final : public ObjectCollidable, public StateManager {
     friend class ObjectVolcanoBallLauncher;
 
@@ -14,7 +18,11 @@ public:
             const EGG::Vector3f &vel);
     ~ObjectVolcanoBall() override;
 
-    void init() override;
+    /// @addr{0x806E2C4C}
+    void init() override {
+        m_railInterpolator->init(0.0f, 0);
+        setPos(m_railInterpolator->curPos());
+    }
 
     /// @addr{0x806E2E08}
     void calc() override {
@@ -26,28 +34,20 @@ public:
         return 1;
     }
 
-    /// @addr{0x806E2CF0}
-    Kart::Reaction onCollision(Kart::KartObject * /*kartObj*/, Kart::Reaction reactionOnKart,
-            Kart::Reaction /*reactionOnObj*/, EGG::Vector3f & /*hitDepth*/) override {
-        return reactionOnKart;
-    }
-
 private:
     /// @addr{0x806E2F24}
-    void enterState0() {
+    void enterDormant() {
         init();
     }
 
     /// @addr{0x806E2F38}
-    void enterState1() {
+    void enterFalling() {
         init();
     }
 
-    /// @addr{0x806E327C}
-    void enterState2() {}
+    void enterStateStub() {}
 
-    /// @addr{0x806E2F34}
-    void calcDormant() {}
+    void calcStateStub() {}
 
     void calcFalling();
 
@@ -60,16 +60,16 @@ private:
 
     const u16 m_burnDuration; ///< How long the ball burns for before disappearing
     const f32 m_accel;
-    const f32 m_finalVel; ///< Velocity of the ball at the moment of impact
-    const f32 m_endPosY;  ///< Height of the ball at the end of its rail
-    const f32 m_sqVelXZ;  ///< Squared X-Z plane velocity
+    const f32 m_finalVelSq; ///< Velocity of the ball at the moment of impact
+    const f32 m_endPosY;    ///< Height of the ball at the end of its rail
+    const f32 m_sqVelXZ;    ///< Squared X-Z plane velocity
 
     static constexpr std::array<StateManagerEntry, 3> STATE_ENTRIES = {{
-            {StateEntry<ObjectVolcanoBall, &ObjectVolcanoBall::enterState0,
-                    &ObjectVolcanoBall::calcDormant>(0)},
-            {StateEntry<ObjectVolcanoBall, &ObjectVolcanoBall::enterState1,
+            {StateEntry<ObjectVolcanoBall, &ObjectVolcanoBall::enterDormant,
+                    &ObjectVolcanoBall::calcStateStub>(0)},
+            {StateEntry<ObjectVolcanoBall, &ObjectVolcanoBall::enterFalling,
                     &ObjectVolcanoBall::calcFalling>(1)},
-            {StateEntry<ObjectVolcanoBall, &ObjectVolcanoBall::enterState2,
+            {StateEntry<ObjectVolcanoBall, &ObjectVolcanoBall::enterStateStub,
                     &ObjectVolcanoBall::calcBurning>(2)},
     }};
 };

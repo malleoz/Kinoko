@@ -5,6 +5,10 @@
 
 namespace Kinoko::Field {
 
+/// @brief Represents the ship on N64 DK's Jungle Parkway
+/// @details Follows a rail path, interpolating its forward position along the way to smoothen
+/// turns. This class also creates a cylindrical collision object to represent the red paddle
+/// wheel's collision shape.
 class ObjectShip64 final : public ObjectCollidable {
 public:
     ObjectShip64(const System::MapdataGeoObj &params);
@@ -33,8 +37,16 @@ public:
     bool checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &dist) override;
 
 private:
-    EGG::Vector3f m_tangent;
-    ObjectCollisionCylinder *m_auxCollision;
+    /// @addr{0x80766754}
+    /// @brief Calculates the smoothed forward direction of the ship along the rail path
+    void calcTangent() {
+        m_tangent = Interpolate(0.2f, m_tangent, m_railInterpolator->curTangentDir());
+        m_tangent.normalise();
+        setMatrixFromOrthonormalBasisAndPos(m_tangent);
+    }
+
+    EGG::Vector3f m_tangent;                         ///< Smoothed forward direction
+    ObjectCollisionCylinder *m_paddleWheelCollision; ///< Collision of the rotating red wheel
 };
 
 } // namespace Kinoko::Field

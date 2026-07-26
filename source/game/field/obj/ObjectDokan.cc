@@ -19,15 +19,11 @@ void ObjectDokan::init() {
 
 /// @addr{0x807788C8}
 void ObjectDokan::calc() {
-    constexpr f32 ACCEL = 2.0f;
-
     if (!m_isAirborne) {
         return;
     }
 
-    m_velocity.y -= ACCEL;
-    addPos(m_velocity);
-
+    calcPos();
     calcFloor();
 }
 
@@ -47,13 +43,8 @@ void ObjectDokan::calcCollisionTransform() {
 /// @addr{0x80778C0C}
 Kart::Reaction ObjectDokan::onCollision(Kart::KartObject * /*kartObj*/,
         Kart::Reaction reactionOnKart, Kart::Reaction reactionOnObj, EGG::Vector3f & /*hitDepth*/) {
-    constexpr f32 INITIAL_VELOCITY = 100.0f;
-
     if (reactionOnObj == Kart::Reaction::UNK_3 || reactionOnObj == Kart::Reaction::UNK_5) {
-        if (!m_isAirborne) {
-            m_isAirborne = true;
-            m_velocity = INITIAL_VELOCITY * EGG::Vector3f::ey;
-        }
+        tryStartAirborne();
     }
 
     return reactionOnKart;
@@ -83,6 +74,17 @@ void ObjectDokan::calcFloor() {
         if (m_velocity.length() < ACCELERATION * PIPE_SQRT_RADIUS) {
             m_isAirborne = false;
         }
+    }
+}
+
+/// @addr{0x80778BA0}
+/// @brief If the pipe is not already airborne, induces upwards velocity
+void ObjectDokan::tryStartAirborne() {
+    constexpr f32 INITIAL_VELOCITY = 100.0f;
+
+    if (!m_isAirborne) {
+        m_isAirborne = true;
+        m_velocity = INITIAL_VELOCITY * EGG::Vector3f::ey;
     }
 }
 

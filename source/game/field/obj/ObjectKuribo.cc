@@ -38,10 +38,8 @@ void ObjectKuribo::init() {
 /// StateManager to run state-specific logic depending on whether the Goomba is changing direction
 /// or walking along the rail.
 void ObjectKuribo::calc() {
-    m_animTimer = ::fmodf(static_cast<f32>(m_currFrame) * m_animRate, m_animDuration);
-
+    calcAnimTimer();
     StateManager::calc();
-
     ++m_currFrame;
 }
 
@@ -69,7 +67,7 @@ void ObjectKuribo::calcReroute() {
 
     checkSphereFull();
     calcRot();
-    setMatrixTangentTo(m_rot, m_forward);
+    calcMatFromRotAndForward();
 }
 
 /// @addr{0x806DCDDC}
@@ -99,7 +97,7 @@ void ObjectKuribo::calcAnim() {
 
     checkSphereFull();
     calcRot();
-    setMatrixTangentTo(m_rot, m_forward);
+    calcMatFromRotAndForward();
 }
 
 /// @addr{0x806DCC9C}

@@ -216,18 +216,12 @@ void ObjectChoropu::calcPeeking() {
 /// @addr{0x806BB5F0}
 /// @brief Runs once every frame while the mole is jumping out of its hole
 void ObjectChoropu::calcJumping() {
-    constexpr f32 JUMP_LINEAR_COEFFICIENT = 65.0f;
-    constexpr f32 JUMP_QUADRATIC_COEFFICIENT = 2.7f;
-
     if (!m_isStationary) {
         m_groundLength = std::max(0.0f, m_groundLength - m_railInterpolator->speed());
         calcGroundObjs();
     }
 
-    // y = -1.35t^2 + 65.0t
-    f32 posY = JUMP_LINEAR_COEFFICIENT * static_cast<f32>(m_currentFrame) -
-            static_cast<f32>(m_currentFrame) * 0.5f * JUMP_QUADRATIC_COEFFICIENT *
-                    static_cast<f32>(m_currentFrame);
+    f32 posY = calcJumpHeight();
 
     if (posY < 0.0f) {
         m_nextStateId = 0;
@@ -290,6 +284,20 @@ EGG::Matrix34f ObjectChoropu::calcInterpolatedPose(f32 t) const {
     EGG::Matrix34f mat = OrthonormalBasis(curTanDir);
     mat.setBase(3, curDir);
     return mat;
+}
+
+/// @addr{0x806BBB14}
+/// @brief Calculates the current height of the mole in its parabolic jump curve
+/// @details Follows a parabolic trajectory defined by
+/// \f$ y = -1.35t^2 + 65.0t \f$
+/// where \f$t\f$ is the current frame of the jump.
+f32 ObjectChoropu::calcJumpHeight() const {
+    constexpr f32 JUMP_LINEAR_COEFFICIENT = 65.0f;
+    constexpr f32 JUMP_QUADRATIC_COEFFICIENT = 2.7f;
+
+    return JUMP_LINEAR_COEFFICIENT * static_cast<f32>(m_currentFrame) -
+            static_cast<f32>(m_currentFrame) * 0.5f * JUMP_QUADRATIC_COEFFICIENT *
+            static_cast<f32>(m_currentFrame);
 }
 
 /// @addr{0x806B8F94}

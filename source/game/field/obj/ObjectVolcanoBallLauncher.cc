@@ -8,6 +8,9 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806E3458}
+/// @details Solves the kinematic equation to determine the time it takes a fireball to land, using
+/// the velocity specified by param setting 1 and the rail points. Constructs @ref ObjectVolcanoBall
+/// objects which this launcher instance will manage.
 ObjectVolcanoBallLauncher::ObjectVolcanoBallLauncher(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), m_initDelay(static_cast<f32>(static_cast<s16>(params.setting(1)))),
       m_cycleDuration(static_cast<f32>(static_cast<s16>(params.setting(2)))) {
@@ -55,6 +58,8 @@ ObjectVolcanoBallLauncher::ObjectVolcanoBallLauncher(const System::MapdataGeoObj
 ObjectVolcanoBallLauncher::~ObjectVolcanoBallLauncher() = default;
 
 /// @addr{0x806E388C}
+/// @details Initializes all managed fireballs and sets the index of the next fireball to be
+/// launched to 0.
 void ObjectVolcanoBallLauncher::init() {
     for (auto *&ball : m_balls) {
         ball->init();
@@ -65,6 +70,7 @@ void ObjectVolcanoBallLauncher::init() {
 }
 
 /// @addr{0x806E3920}
+/// @details Launches fireballs according to the current race timer.
 void ObjectVolcanoBallLauncher::calc() {
     u32 t = System::RaceManager::Instance()->timer();
 

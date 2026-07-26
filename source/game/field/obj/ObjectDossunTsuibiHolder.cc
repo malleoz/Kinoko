@@ -74,6 +74,15 @@ void ObjectDossunTsuibiHolder::calc() {
     }
 }
 
+/// @addr{0x807638F8}
+/// @brief Runs once when transitioning to the StartStomp state
+void ObjectDossunTsuibiHolder::enterStartStomp() {
+    m_state = State::StartStomp;
+    m_forwardTimer = 0;
+    m_movingForward = false;
+    m_lastStompZ = pos().z;
+}
+
 /// @addr{0x807624F0}
 /// @brief Runs every frame while the Thwomps are moving forward down the hallway
 void ObjectDossunTsuibiHolder::calcForward() {
@@ -178,10 +187,7 @@ void ObjectDossunTsuibiHolder::calcForwardRail() {
     m_railInterpolator->setCurrVel(m_forwardVel);
 
     if (m_railInterpolator->calc() == RailInterpolator::Status::ChangingDirection) {
-        m_state = State::StartStomp;
-        m_forwardTimer = 0;
-        m_movingForward = false;
-        m_lastStompZ = pos().z;
+        enterStartStomp();
     }
 
     updatePos(m_railInterpolator->curPos());
@@ -204,10 +210,7 @@ void ObjectDossunTsuibiHolder::calcForwardOscillation() {
             m_railInterpolator->reverseDirection();
         }
 
-        m_state = State::StartStomp;
-        m_forwardTimer = 0;
-        m_movingForward = false;
-        m_lastStompZ = pos().z;
+        enterStartStomp();
     }
 }
 

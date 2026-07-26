@@ -7,13 +7,13 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80809448}
-ObjectTownBridge::ObjectTownBridge(const System::MapdataGeoObj &params) : ObjectKCL(params) {
-    m_rotateUpwards = rot().y < 0.0f;
-    m_angVel = static_cast<float>(params.setting(0));
-    m_pivotFrames = static_cast<u32>(params.setting(1));
-    m_raisedFrames = static_cast<u32>(params.setting(2));
-    m_loweredFrames = static_cast<u32>(params.setting(3));
-    m_fullAnimFrames = m_pivotFrames * 2 + (m_loweredFrames + m_raisedFrames);
+ObjectTownBridge::ObjectTownBridge(const System::MapdataGeoObj &params)
+    : ObjectKCL(params), m_rotateUpwards(rot().y < 0.0f),
+      m_angVel(static_cast<float>(params.setting(0))),
+      m_pivotFrames(static_cast<u32>(params.setting(1))),
+      m_raisedFrames(static_cast<u32>(params.setting(2))),
+      m_loweredFrames(static_cast<u32>(params.setting(3))),
+      m_fullAnimFrames(m_pivotFrames * 2 + (m_loweredFrames + m_raisedFrames)) {
     m_state = State::Raising;
 }
 
@@ -35,6 +35,7 @@ ObjectTownBridge::~ObjectTownBridge() {
 }
 
 /// @addr{0x80809774}
+/// @details Calculates rotation and updates the collision manager based on the current angle.
 void ObjectTownBridge::calc() {
     u32 t = System::RaceManager::Instance()->timer();
     f32 angle = calcBridgeAngle(t);
@@ -57,6 +58,7 @@ void ObjectTownBridge::calc() {
 }
 
 /// @addr{0x808095B8}
+/// @details Creates the collision managers for the bridge's different states.
 void ObjectTownBridge::createCollision() {
     ObjectKCL::createCollision();
 
@@ -75,10 +77,11 @@ void ObjectTownBridge::createCollision() {
     m_raisedColMgr = m_objColMgr;
 }
 
+/// @brief Calculates the current angle of the bridge based on the current frame and state
 /// @addr{0x80809CDC}
 f32 ObjectTownBridge::calcBridgeAngle(u32 t) const {
+    State state = calcState(t);
     u32 animFrame = t % m_fullAnimFrames;
-    State state = calcState(animFrame);
 
     switch (state) {
     case State::Raised: {
@@ -104,8 +107,11 @@ f32 ObjectTownBridge::calcBridgeAngle(u32 t) const {
     }
 }
 
+/// @addr{0x80809FC4}
 /// @brief Helper function which determines the current state of the bridge based on t.
 ObjectTownBridge::State ObjectTownBridge::calcState(u32 t) const {
+    t %= m_fullAnimFrames;
+
     if (t < m_pivotFrames) {
         return State::Raising;
     }

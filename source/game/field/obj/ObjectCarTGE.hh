@@ -75,10 +75,11 @@ private:
 
     void enterStateStub() {}
     void calcStateStub() {}
-    void calcState1();
-    void calcState2();
+    void calcSpeedup();
+    void calcSlowdown();
 
     void calcPos();
+    void calcStateFromRailPointSetting();
 
     const ObjectHighwayManager *m_highwayMgr; ///< Manager that handles squish cooldowns
     ObjectCollisionBase *m_auxCollision; ///< Secondary collision cylinder for more accurate shape
@@ -99,8 +100,10 @@ private:
     static constexpr std::array<StateManagerEntry, 3> STATE_ENTRIES = {{
             {StateEntry<ObjectCarTGE, &ObjectCarTGE::enterStateStub, &ObjectCarTGE::calcStateStub>(
                     0)},
-            {StateEntry<ObjectCarTGE, &ObjectCarTGE::enterStateStub, &ObjectCarTGE::calcState1>(1)},
-            {StateEntry<ObjectCarTGE, &ObjectCarTGE::enterStateStub, &ObjectCarTGE::calcState2>(2)},
+            {StateEntry<ObjectCarTGE, &ObjectCarTGE::enterStateStub, &ObjectCarTGE::calcSpeedup>(
+                    1)},
+            {StateEntry<ObjectCarTGE, &ObjectCarTGE::enterStateStub, &ObjectCarTGE::calcSlowdown>(
+                    2)},
     }};
 };
 

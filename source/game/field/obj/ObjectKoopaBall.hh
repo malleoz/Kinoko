@@ -38,9 +38,32 @@ private:
         Exploding = 2,  ///< The fireball is exploding and will throw the player upwards
     };
 
+    void initCooldownTimer() {
+        constexpr u32 START_COOLDOWN = 221;
+        m_cooldownTimer = START_COOLDOWN;
+    }
+
     void calcTangible();
     void calcExploding();
     void calcIntangible();
+    void calcRot();
+    void calcSlowdown();
+
+    /// @addr{0x80771B68}
+    /// @brief Runs once when the fireball starts exploding
+    void setExplosionScale() {
+        m_curScale = INITIAL_EXPLOSION_SCALE;
+        setScale(INITIAL_EXPLOSION_SCALE);
+    }
+
+    /// @addr{0x80771BCC}
+    /// @brief Resets the scale of the fireball to its initial value
+    void resetScale() {
+        constexpr f32 INIT_FACTOR = 1.01f;
+
+        m_curScale = INIT_FACTOR;
+        setScale(INIT_FACTOR);
+    }
 
     void checkSphereFull();
 

@@ -7,6 +7,7 @@
 namespace Kinoko::Field {
 
 /// @brief The oscillating platforms before and after the indoor section on Grumble Volcano.
+/// @details Uses a cosine wave to induce oscillatory motion along the z and y axes.
 class ObjectVolcanoRock final : public ObjectKCL {
 public:
     ObjectVolcanoRock(const System::MapdataGeoObj &params);
@@ -39,17 +40,17 @@ public:
 private:
     EGG::Vector3f calcPos(u32 frame);
 
-    const EGG::Vector3f m_initialPos;
-    const EGG::Vector3f m_initialRot;
-    const s16 m_phaseShift; ///< Additional framecount applied when calculating z-axis position
-    const s16 m_zPeriod;    ///< Framecount of the platform's movement period along z-axis
-    const s16 m_yPeriod;    ///< Framecount of the platform's movement period along y-axis
-    const f32 m_zAmplitude; ///< Scalar applied to computed z-axis position
-    const f32 m_yAmplitude; ///< Scalar applied to computed y-axis position
-    const f32 m_zAngVel;    ///< 2pi / m_zPeriod
-    const f32 m_yAngVel;    ///< 2pi / m_yPeriod
-    const bool m_variant;   ///< Differentiates which KCL is used
-    EGG::Matrix34f m_rtMat; ///< Rotation and translation matrix
+    const EGG::Vector3f m_initialPos; ///< Initial position of the volcano rock
+    const EGG::Vector3f m_initialRot; ///< Initial rotation of the volcano rock
+    const s16 m_phaseShift;           ///< Framecount offset for Z-axis oscillation
+    const s16 m_zPeriod;              ///< Framecount of the platform's movement period along z-axis
+    const s16 m_yPeriod;              ///< Framecount of the platform's movement period along y-axis
+    const f32 m_zAmplitude;           ///< Scalar applied to computed z-axis position
+    const f32 m_yAmplitude;           ///< Scalar applied to computed y-axis position
+    const f32 m_zAngVel;              ///< 2pi / m_zPeriod
+    const f32 m_yAngVel;              ///< 2pi / m_yPeriod
+    const bool m_variant;             ///< Differentiates which KCL model is used
+    EGG::Matrix34f m_rtMat;           ///< Current frame's rotation and translation matrix
 };
 
 } // namespace Kinoko::Field

@@ -97,8 +97,29 @@ private:
     [[nodiscard]] bool checkCollision(f32 radius, const EGG::Vector3f &vel, u32 time,
             EGG::Vector3f &bbox, EGG::Vector3f &fnrm, f32 &dist);
 
-    [[nodiscard]] static f32 SpatialSin(f32 phase);
-    [[nodiscard]] static f32 TemporalSin(u32 t);
+    /// @addr{0x80808220}
+    /// @brief Based off the provided phase and time, calculates the net surface height for use in
+    /// collision checks
+    [[nodiscard]] static f32 calcNetHeight(f32 phase, u32 t) {
+        constexpr f32 Z_SLOPE = 910.0f;
+
+        f32 zPhase = F_PI * (2.0f * phase) / DIMS.z;
+        return SpatialSin(zPhase) * TemporalSin(t) - Z_SLOPE * zPhase;
+    }
+
+    /// @addr{0x80808578}
+    /// @brief Computes a spatial sine wave as a function of the z-axis phase.
+    /// @details The behavior is such that the net bounce is the most extreme when in the middle of
+    /// the net and dampened as you approach the beginning or end along the z-axis.
+    [[nodiscard]] static f32 SpatialSin(f32 phase) {
+        return 550.0f * EGG::Mathf::SinFIdx(RAD2FIDX * (phase * 0.5f));
+    }
+
+    /// @brief Computes a sine wave as a function of time.
+    /// @details This computes the up/down motion of the net, with a period of 70 frames.
+    [[nodiscard]] static f32 TemporalSin(u32 t) {
+        return EGG::Mathf::SinFIdx(RAD2FIDX * (F_PI * static_cast<f32>(t) / 35.0f));
+    }
 
     /// @brief The size of the net's bounding box
     static constexpr EGG::Vector3f DIMS = EGG::Vector3f(2600.0f, 2000.0f, 13800.0f);

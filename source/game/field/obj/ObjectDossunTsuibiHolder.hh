@@ -49,6 +49,8 @@ private:
         }
     }
 
+    void enterStartStomp();
+
     void calcForward();
     void calcStartStomp();
     void calcStomp();

@@ -6,8 +6,11 @@
 
 namespace Kinoko::Field {
 
-/// @addr {0x8076F2E0}
-ObjectRock::ObjectRock(const System::MapdataGeoObj &params) : ObjectCollidable(params) {}
+/// @addr{0x8076F2E0}
+ObjectRock::ObjectRock(const System::MapdataGeoObj &params)
+    : ObjectCollidable(params), m_cooldownDuration(m_mapObj->setting(1)),
+      m_railSpeed(static_cast<f32>(m_mapObj->setting(2))),
+      m_bounceFactor(static_cast<f32>(m_mapObj->setting(3))) {}
 
 /// @addr{0x8076F344}
 ObjectRock::~ObjectRock() = default;
@@ -15,7 +18,7 @@ ObjectRock::~ObjectRock() = default;
 /// @addr{0x8076F384}
 void ObjectRock::init() {
     m_railInterpolator->init(0.0f, 0);
-    m_railInterpolator->setCurrVel(static_cast<f32>(m_mapObj->setting(2)));
+    m_railInterpolator->setCurrVel(m_railSpeed);
     m_railInterpolator->calc();
 
     m_state = State::Tangible;
@@ -30,7 +33,7 @@ void ObjectRock::init() {
     m_angSpd = INITIAL_ANGULAR_SPEED;
     m_cooldownTimer = m_mapObj->setting(0);
     m_colTranslate.x = 0.0f;
-    m_colTranslate.y = static_cast<f32>(m_mapObj->setting(3));
+    m_colTranslate.y = m_bounceFactor;
     m_colTranslate.z = 0.0f;
     calcTransform();
 }
@@ -54,6 +57,9 @@ void ObjectRock::calc() {
 }
 
 // @addr{0x8076F768}
+/// @brief Runs every frame that the rock is collidable
+/// @details Updates the rock's position along the rail, also applying a bounce effect based on
+/// collisions with the floor.
 void ObjectRock::calcTangible() {
     auto railStatus = m_railInterpolator->calc();
     if (railStatus == RailInterpolator::Status::ChangingDirection) {
@@ -70,18 +76,8 @@ void ObjectRock::calcTangible() {
     calcTangibleSub();
 }
 
-/// @addr{0x8076F868}
-void ObjectRock::calcIntangible() {
-    if (m_cooldownTimer < 0) {
-        m_state = State::Tangible;
-        m_angSpd = INITIAL_ANGULAR_SPEED;
-        m_colTranslate.y = static_cast<f32>(m_mapObj->setting(3));
-        m_cooldownTimer = m_mapObj->setting(1);
-        enableCollision();
-    }
-}
-
 /// @addr{0x8076F91C}
+/// @brief Updates the rock's rotation based on its angular velocity
 void ObjectRock::calcTangibleSub() {
     EGG::Vector3f tangDir = m_railInterpolator->curTangentDir();
     tangDir.y = 0.0f;
@@ -97,7 +93,18 @@ void ObjectRock::calcTangibleSub() {
     setTransform(mat);
 }
 
-// @addr {0x8076FA60}
+/// @addr{0x8076FFC0}
+/// @brief Makes the rock tangible again after being intangible
+void ObjectRock::enterTangible() {
+    m_state = State::Tangible;
+    m_angSpd = INITIAL_ANGULAR_SPEED;
+    m_colTranslate.y = m_bounceFactor;
+    m_cooldownTimer = m_cooldownDuration;
+    enableCollision();
+}
+
+// @addr{0x8076FA60}
+/// @brief Checks for collisions with the floor and applies a bounce effect if a collision occurs
 void ObjectRock::checkSphereFull() {
     CollisionInfo info;
 
@@ -115,16 +122,18 @@ void ObjectRock::checkSphereFull() {
 }
 
 /// @addr{0x8076FD90}
+/// @brief Runs when a collision occurs or when the rock reaches the end of its rail path
 void ObjectRock::breakRock() {
     m_state = State::Intangible;
     m_railInterpolator->init(0.0f, 0);
-    m_railInterpolator->setCurrVel(static_cast<f32>(m_mapObj->setting(2)));
+    m_railInterpolator->setCurrVel(m_railSpeed);
 
     setPos(EGG::Vector3f(pos().x, m_startYPos, pos().z));
     disableCollision();
 }
 
 // @addr{0x80770068}
+/// @details Collision with small rocks breaks the rock without affecting the player.
 Kart::Reaction ObjectRock::onCollision(Kart::KartObject * /*kartObj*/,
         Kart::Reaction reactionOnKart, Kart::Reaction /*reactionOnObj*/,
         EGG::Vector3f & /*hitDepth*/) {

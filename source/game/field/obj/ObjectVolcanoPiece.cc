@@ -34,6 +34,8 @@ void ObjectVolcanoPiece::calc() {
 }
 
 /// @addr{0x80817F6C}
+/// @details Also constructs the secondary and tertiary collision managers for the volcano piece, if
+/// the corresponding KCL files exist.
 void ObjectVolcanoPiece::createCollision() {
     ObjectKCL::createCollision();
 
@@ -76,6 +78,7 @@ void ObjectVolcanoPiece::createCollision() {
     }
 }
 
+/// @brief Helper function for frequently re-used portion of point collision checks
 template <typename T, typename U>
     requires(std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>) &&
         (std::is_same_v<U, ObjectVolcanoPiece::CheckPointPartialFunc> ||
@@ -95,6 +98,7 @@ bool ObjectVolcanoPiece::checkPointImpl(const EGG::Vector3f &v0, const EGG::Vect
     return hasCol;
 }
 
+/// @brief Helper function for frequently re-used portion of sphere collision checks
 template <typename T, typename U>
     requires(std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>) &&
         (std::is_same_v<U, ObjectVolcanoPiece::CheckSpherePartialFunc> ||
@@ -117,6 +121,7 @@ bool ObjectVolcanoPiece::checkSphereImpl(f32 radius, const EGG::Vector3f &v0,
     return hasCol;
 }
 
+/// @brief Helper function for frequently re-used portion of KCL collision checks
 bool ObjectVolcanoPiece::checkCollisionImpl(f32 radius, const EGG::Vector3f &v0,
         const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut,
         u32 timeOffset, CheckSphereFullFunc checkFunc) {
@@ -209,6 +214,7 @@ void ObjectVolcanoPiece::setMovingObjVel(const EGG::Vector3f &v) {
 }
 
 /// @addr{0x808187B4}
+/// @brief Updates position to reflect the fall duration or the current step in its shake cycle
 const EGG::Matrix34f &ObjectVolcanoPiece::calcShakeAndFall(EGG::Vector3f *vel, u32 timeOffset) {
     constexpr f32 FALL_SPEED = 10.0f;
     constexpr s32 SHAKE_STEPS = 8;
@@ -270,6 +276,7 @@ const EGG::Matrix34f &ObjectVolcanoPiece::calcShakeAndFall(EGG::Vector3f *vel, u
 }
 
 /// @addr{0x80818FCC}
+/// @brief Calculates the current state of the volcano piece based on the framecount
 ObjectVolcanoPiece::State ObjectVolcanoPiece::calcState(u32 frame) const {
     if (frame < m_restDuration) {
         return State::Rest;
@@ -291,6 +298,7 @@ ObjectVolcanoPiece::State ObjectVolcanoPiece::calcState(u32 frame) const {
 }
 
 /// @addr{0x80819028}
+/// @brief Calculates elapsed time within the current state based on the framecount
 f32 ObjectVolcanoPiece::calcT(u32 frame) const {
     if (frame < m_restDuration) {
         return static_cast<f32>(frame);

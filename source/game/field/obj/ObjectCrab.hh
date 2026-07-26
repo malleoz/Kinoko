@@ -40,6 +40,13 @@ private:
         BeginWalking = 2,
     };
 
+    /// @addr{0x80886438}
+    /// @brief Sets the provided state and resets the phase
+    void setState(State state) {
+        m_state = state;
+        m_statePhase = StatePhase::Start;
+    }
+
     bool calcRail();
     StateResult calcState();
 

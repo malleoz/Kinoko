@@ -35,6 +35,7 @@ private:
         Decelerating = 2,
     };
 
+    void calcRail();
     void calcPos();
 
     void enterStop();

@@ -5,7 +5,7 @@
 
 namespace Kinoko::Field {
 
-/// @brief The wooden stake that the chain chomp is chained to.
+/// @brief The wooden stake that the chain chomp is chained to
 class ObjectWanwanPile final : public ObjectCollidable {
 public:
     /// @addr{Inlined in 0x806E4224}
@@ -31,7 +31,12 @@ public:
     }
 };
 
-/// @brief Represents Chain Chomps chained to a stake that attack in a limited arc.
+/// @brief Represents Chain Chomps chained to a stake that attacks in a limited arc
+/// @details Cycles between three different states:
+/// - In the wait state, the Chain Chomp randomly wanders within a bounded region, periodically
+/// changing targets
+/// - In the attack state, the Chain Chomp lunges towards its target until its chain is taut
+/// - In the back state, the Chain Chomp retreats back towards its anchor (the wooden stake)
 class ObjectWanwan final : public ObjectCollidable, public StateManager {
 public:
     ObjectWanwan(const System::MapdataGeoObj &params);
@@ -65,18 +70,21 @@ private:
     void calcBounce();
 
     /// @addr{0x806E79E4}
-    void calcWanderTimer() {
-        calcWanderEnd();
+    /// @brief Calculates the wandering behavior of the Chain Chomp
+    void calcWander() {
+        calcWanderTimeTrial();
     }
 
     /// @addr{0x806E7B7C}
-    void calcWanderEnd() {
+    /// @brief Calculates the wandering behavior of the Chain Chomp specifically for time trial mode
+    void calcWanderTimeTrial() {
         if (m_wanderTimer++ >= m_idleDuration) {
             m_nextStateId = 1;
         }
     }
 
     /// @addr{0x806E7BA4}
+    /// @brief Calculates the world position of the chain attachment point on the Chain Chomp
     void calcChain() {
         if (m_chainAttachMat.base(3).squaredLength() > std::numeric_limits<f32>::epsilon()) {
             calcChainAttachPos(m_chainAttachMat);
@@ -91,6 +99,7 @@ private:
     void calcChainAttachPos(EGG::Matrix34f mat);
 
     /// @addr{0x806B38A8}
+    /// @brief Calculates the cross product of the XZ components of three vectors
     [[nodiscard]] static f32 CrossXZ(const EGG::Vector3f &v0, const EGG::Vector3f &v1,
             const EGG::Vector3f &v2) {
         return (v2.x - v1.x) * (v0.z - v1.z) - (v0.x - v1.x) * (v2.z - v1.z);
@@ -99,7 +108,7 @@ private:
     static void SampleHermiteInterp(f32 start, f32 end, f32 startTangent, f32 endTangent,
             std::span<f32> dst);
 
-    EGG::Vector3f m_vel;
+    EGG::Vector3f m_vel; ///< The current velocity of the Chain Chomp
     EGG::Vector3f m_accel;
     f32 m_speed;
     f32 m_pitch;

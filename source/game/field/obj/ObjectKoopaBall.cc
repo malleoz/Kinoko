@@ -18,10 +18,8 @@ ObjectKoopaBall::~ObjectKoopaBall() {
 /// @addr{0x807703D0}
 /// @details Initializes the rail velocity, position, and collision scale
 void ObjectKoopaBall::init() {
-    constexpr u32 START_COOLDOWN = 221;
-
     m_state = State::Intangible;
-    m_cooldownTimer = START_COOLDOWN;
+    initCooldownTimer();
 
     m_railInterpolator->init(0.0f, 0);
     m_railInterpolator->setCurrVel(INITIAL_VELOCITY);
@@ -97,20 +95,17 @@ Kart::Reaction ObjectKoopaBall::onCollision(Kart::KartObject * /*kartObj*/,
 /// @details Updates the position based off the rail interpolator. Checks if the explosion should
 /// start. Checks for floor collision, updates the rotation, then sets the transformation matrix.
 void ObjectKoopaBall::calcTangible() {
-    constexpr f32 END_VELOCITY = 60.0f;
     constexpr f32 GRAVITY = 2.0f;
 
     auto railStatus = m_railInterpolator->calc();
 
     switch (railStatus) {
     case RailInterpolator::Status::SegmentEnd:
-        m_vel.y = END_VELOCITY;
-        m_railInterpolator->setCurrVel(INITIAL_VELOCITY / INITIAL_ANGULAR_SPEED);
+        calcSlowdown();
         break;
     case RailInterpolator::Status::ChangingDirection: {
         m_state = State::Exploding;
-        m_curScale = INITIAL_EXPLOSION_SCALE;
-        setScale(INITIAL_EXPLOSION_SCALE);
+        setExplosionScale();
         m_explodeTimer = m_animFramecount;
     } break;
     default:
@@ -122,14 +117,7 @@ void ObjectKoopaBall::calcTangible() {
     setPos(EGG::Vector3f(railPos.x, m_vel.y + pos().y, railPos.z));
 
     checkSphereFull();
-
-    m_angleRad += -m_angSpeed * DEG2RAD;
-
-    EGG::Matrix34f mat = EGG::Matrix34f::ident;
-    mat.makeR(EGG::Vector3f(m_angleRad, 0.0f, 0.0f));
-    mat = transform().multiplyTo(mat);
-    mat.setBase(3, pos());
-    setTransform(mat);
+    calcRot();
 }
 
 /// @addr{0x80771324}
@@ -154,8 +142,7 @@ void ObjectKoopaBall::calcExploding() {
     }
 
     if (--m_explodeTimer == 0) {
-        m_curScale = INIT_FACTOR;
-        setScale(INIT_SCALE);
+        resetScale();
         m_railInterpolator->init(0.0f, 0);
         const auto &railPos = m_railInterpolator->curPos();
         setPos(EGG::Vector3f(railPos.x, m_initPosY, railPos.z));
@@ -180,6 +167,28 @@ void ObjectKoopaBall::calcIntangible() {
     m_angSpeed = INITIAL_ANGULAR_SPEED;
     m_vel.y = INITIAL_Y_VEL;
     m_cooldownTimer = COOLDOWN_FRAMES;
+}
+
+/// @addr{0x8077151C}
+/// @brief Updates the ball's angular rotation and transformation matrix
+void ObjectKoopaBall::calcRot() {
+    m_angleRad += -m_angSpeed * DEG2RAD;
+
+    EGG::Matrix34f mat = EGG::Matrix34f::ident;
+    mat.makeR(EGG::Vector3f(m_angleRad, 0.0f, 0.0f));
+    mat = transform().multiplyTo(mat);
+    mat.setBase(3, pos());
+    setTransform(mat);
+}
+
+/// @addr{0x807719A0}
+/// @brief Slows down the fireball's rail speed once reaching the end of a rail segment
+/// @details This does not occur in the base game
+void ObjectKoopaBall::calcSlowdown() {
+    constexpr f32 VERTICAL_VELOCITY = 60.0f;
+
+    m_vel.y = VERTICAL_VELOCITY;
+    m_railInterpolator->setCurrVel(INITIAL_VELOCITY / INITIAL_ANGULAR_SPEED);
 }
 
 /// @addr{0x80771624}

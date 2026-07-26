@@ -24,7 +24,17 @@ public:
             Kart::Reaction reactionOnObj, EGG::Vector3f &hitDepth) override;
 
 private:
+    /// @addr{0x8077894C}
+    /// @brief Applies gravity to velocity and updates position accordingly
+    void calcPos() {
+        constexpr f32 ACCEL = 2.0f;
+
+        m_velocity.y -= ACCEL;
+        addPos(m_velocity);
+    }
+
     void calcFloor();
+    void tryStartAirborne();
 
     bool m_isAirborne;        ///< Whether the pipe is currently mid-air
     EGG::Vector3f m_velocity; ////< The current velocity of the pipe

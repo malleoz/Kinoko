@@ -5,6 +5,11 @@
 namespace Kinoko::Field {
 
 /// @brief Represents an object that eventually shakes and then falls, e.g. the ultra rock on GV.
+/// @details Supports up to three separate collision managers for different parts of the volcano
+/// piece. The piece initially is at rest. After @ref m_restDuration frames, it will start to shake.
+/// After an additional @ref m_shakeDuration elapse, the piece will enter the quake state, in which
+/// the piece remains at rest temporarily. Finally, the piece will begin falling for @ref
+/// FALL_DURATION frames.
 class ObjectVolcanoPiece final : public ObjectKCL {
 public:
     ObjectVolcanoPiece(const System::MapdataGeoObj &params);
@@ -196,6 +201,7 @@ public:
     }
 
 private:
+    /// @brief Represents the different motion states of the volcano piece
     enum class State {
         Rest = 0,
         Shake = 1,
@@ -208,16 +214,17 @@ private:
     State calcState(u32 frame) const;
     f32 calcT(u32 frame) const;
 
-    char m_modelName[16];
-    const EGG::Vector3f m_initialPos;
-    const EGG::Vector3f m_initialRot;
-    const u32 m_restDuration;
-    const u32 m_shakeDuration;
-    const u32 m_quakeDuration;
-    EGG::Matrix34f m_rtMat;
-    ObjColMgr *m_colMgrB;
-    ObjColMgr *m_colMgrC;
+    char m_modelName[16];             ///< Name of the KCL file for this volcano piece
+    const EGG::Vector3f m_initialPos; ///< Initial position of the volcano piece
+    const EGG::Vector3f m_initialRot; ///< Initial rotation of the volcano piece
+    const u32 m_restDuration;         ///< Duration of the rest state in frames
+    const u32 m_shakeDuration;        ///< Duration of the shake state in frames
+    const u32 m_quakeDuration;        ///< Duration of the quake state in frames
+    EGG::Matrix34f m_rtMat;           ///< Current frame's rotation/translation matrix
+    ObjColMgr *m_colMgrB;             ///< Collision manager for the "B" part of the volcano piece
+    ObjColMgr *m_colMgrC;             ///< Collision manager for the "C" part of the volcano piece
 
+    /// @brief How long the piece will fall for before transitioning to the Gone state
     static constexpr u32 FALL_DURATION = 900;
 };
 

@@ -122,14 +122,7 @@ void ObjectCarTGE::init() {
         m_railInterpolator->setCurrVel(m_localVel);
     }
 
-    u16 curPointSpeedSetting = m_railInterpolator->curPoint().setting[1];
-    u16 nextPointSpeedSetting = m_railInterpolator->nextPoint().setting[1];
-
-    if (curPointSpeedSetting == 0 && nextPointSpeedSetting == 1) {
-        m_nextStateId = 1;
-    } else if (curPointSpeedSetting == 1 && nextPointSpeedSetting == 0) {
-        m_nextStateId = 2;
-    }
+    calcStateFromRailPointSetting();
 
     m_squashed = false;
     setPos(m_railInterpolator->curPos());
@@ -143,14 +136,7 @@ void ObjectCarTGE::calc() {
     StateManager::calc();
 
     if (m_railInterpolator->calc() == RailInterpolator::Status::SegmentEnd) {
-        u16 curPointSpeedSetting = m_railInterpolator->curPoint().setting[1];
-        u16 nextPointSpeedSetting = m_railInterpolator->nextPoint().setting[1];
-
-        if (curPointSpeedSetting == 0 && nextPointSpeedSetting == 1) {
-            m_nextStateId = 1;
-        } else if (curPointSpeedSetting == 1 && nextPointSpeedSetting == 0) {
-            m_nextStateId = 2;
-        }
+        calcStateFromRailPointSetting();
     }
 
     calcPos();
@@ -283,7 +269,7 @@ const EGG::Vector3f &ObjectCarTGE::collisionCenter() const {
 /// @details On Moonview Highway, the speed cap (@ref m_highwayVel) is 70. Since this function
 /// increases speed by 200 units per frame, this means this state is only executed for 1 frame
 /// when cars get on the highway.
-void ObjectCarTGE::calcState1() {
+void ObjectCarTGE::calcSpeedup() {
     m_currSpeed += TOLL_BOOTH_ACCEL;
 
     if (m_currSpeed > m_highwayVel) {
@@ -299,7 +285,7 @@ void ObjectCarTGE::calcState1() {
 /// @brief The state when cars are slowing down.
 /// @details On Moonview Highway, the speed floor m_localVel is 40, which means this state is only
 /// executed for 1 frame when cars get off the highway.
-void ObjectCarTGE::calcState2() {
+void ObjectCarTGE::calcSlowdown() {
     m_currSpeed -= TOLL_BOOTH_ACCEL;
 
     if (m_currSpeed < m_localVel) {
@@ -340,6 +326,19 @@ void ObjectCarTGE::calcPos() {
 
     m_up = OrthonormalBasis(m_tangent).base(1);
     setMatrixTangentTo(m_up, m_tangent);
+}
+
+/// @addr{0x806D9504}
+/// @brief Checks if the car should speed up or slow down based off the rail point's settings
+void ObjectCarTGE::calcStateFromRailPointSetting() {
+    u16 curPointSpeedSetting = m_railInterpolator->curPoint().setting[1];
+    u16 nextPointSpeedSetting = m_railInterpolator->nextPoint().setting[1];
+
+    if (curPointSpeedSetting == 0 && nextPointSpeedSetting == 1) {
+        m_nextStateId = 1;
+    } else if (curPointSpeedSetting == 1 && nextPointSpeedSetting == 0) {
+        m_nextStateId = 2;
+    }
 }
 
 } // namespace Kinoko::Field

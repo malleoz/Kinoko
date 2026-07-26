@@ -21,25 +21,10 @@ ObjectPropeller::~ObjectPropeller() {
 /// @brief Initializes the propeller's angular velocity and rotation matrix
 /// @details The rotation direction is flipped if param setting 2 is set to 1.
 void ObjectPropeller::init() {
-    ASSERT(m_mapObj);
-    m_angVel = static_cast<f32>(static_cast<s16>(m_mapObj->setting(0)));
-    if (m_mapObj->setting(1) == 1) {
-        m_angVel = -m_angVel;
-    }
-
+    initAngVel();
     m_initMat.makeR(rot());
     m_initMat.setBase(3, pos());
     m_axis = m_initMat.base(2);
-}
-
-/// @addr{0x80765068}
-void ObjectPropeller::calc() {
-    m_angle += m_angVel * 0.5f;
-    m_curRot = EGG::Matrix34f::ident;
-    m_curRot.setAxisRotation(m_angle * DEG2RAD, m_axis);
-    EGG::Matrix34f transform = m_curRot.multiplyTo(m_initMat);
-    transform.setBase(3, pos());
-    setTransform(transform);
 }
 
 /// @addr{0x807655B4}
@@ -103,6 +88,17 @@ bool ObjectPropeller::checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &di
     dist = dist0 + dist1 + dist2;
 
     return hasCol;
+}
+
+/// @addr{0x80765068}
+/// @brief Calculates the propeller's rotation angle and updates its transformation matrix
+void ObjectPropeller::calcAngleAndRot() {
+    m_angle += m_angVel * 0.5f;
+    m_curRot = EGG::Matrix34f::ident;
+    m_curRot.setAxisRotation(m_angle * DEG2RAD, m_axis);
+    EGG::Matrix34f transform = m_curRot.multiplyTo(m_initMat);
+    transform.setBase(3, pos());
+    setTransform(transform);
 }
 
 } // namespace Kinoko::Field

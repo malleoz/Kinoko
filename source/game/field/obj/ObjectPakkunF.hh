@@ -49,8 +49,29 @@ private:
         }
     }
 
-    void calcAttack();
+    /// @addr{0x80774A84}
+    /// @brief Runs every frame while the piranha is attacking
+    void calcAttack() {
+        ++m_currAttackFrame;
+        calcAttackTimer();
+    }
+
     void enterAttack();
+
+    /// @addr{0x80774C1C}
+    /// @brief Updates the attack timer
+    void calcAttackTimer() {
+        if (--m_attackFrames == 0) {
+            enterWait();
+        }
+    }
+
+    /// @addr{0x80774C80}
+    /// @brief Transitions the piranha from the attack state back to the wait state
+    void enterWait() {
+        m_state = State::Wait;
+        m_waitFrames = m_waitDuration;
+    }
 
     State m_state;         ///< Tracks whether the piranha is idle or chomping
     s32 m_waitFrames;      ///< How long until the piranha starts chomping

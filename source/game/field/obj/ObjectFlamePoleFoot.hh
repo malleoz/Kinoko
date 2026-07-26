@@ -89,6 +89,7 @@ private:
     }
 
     void calcStates();
+    void calcHeightAndScale();
 
     ObjectFlamePole *m_pole;         ///< Pointer to the associated flamepole
     const u32 m_extraCycleFrames;    ///< Additional dormancy frames

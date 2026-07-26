@@ -24,17 +24,16 @@ void ObjectSanbo::init() {
     m_railInterpolator->init(0.0f, 0);
 }
 
-/// @addr{0x8077A36C}
-void ObjectSanbo::calc() {
-    calcMove();
-}
-
 /// @addr{0x8077A5F8}
+/// @brief Runs every frame to update the Pokey's position
+/// @details If the Pokey is at a stand-still, decrements the stand-still timer until it reaches
+/// zero, at which point the Pokey will start walking again. If the Pokey is moving, then it updates
+/// the rail position, applies gravity, and checks for floor collision.
 void ObjectSanbo::calcMove() {
     constexpr f32 GRAVITY = 2.0f;
 
     if (m_standstill) {
-        if (--m_stillDuration == 0) {
+        if (--m_stillTimer == 0) {
             m_standstill = false;
         }
 
@@ -44,7 +43,7 @@ void ObjectSanbo::calcMove() {
     auto railStatus = m_railInterpolator->calc();
     if (railStatus == RailInterpolator::Status::ChangingDirection) {
         m_standstill = true;
-        m_stillDuration = m_railInterpolator->curPoint().setting[0];
+        m_stillTimer = m_railInterpolator->curPoint().setting[0];
     }
 
     const EGG::Vector3f &railPos = m_railInterpolator->curPos();
@@ -55,7 +54,7 @@ void ObjectSanbo::calcMove() {
 }
 
 /// @addr{0x8077A8B8}
-/// @brief Handles collision between the pokie and the floor (including sandcones).
+/// @brief Handles collision between the pokie and the floor (including sandcones)
 void ObjectSanbo::checkSphere() {
     constexpr f32 RADIUS = 10.0f;
     constexpr EGG::Vector3f POS_OFFSET = EGG::Vector3f(0.0f, RADIUS, 0.0f);

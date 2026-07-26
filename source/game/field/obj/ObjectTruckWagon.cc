@@ -24,27 +24,8 @@ void ObjectTruckWagonCart::calc() {
         return;
     }
 
-    switch (m_railInterpolator->calc()) {
-    case RailInterpolator::Status::SegmentEnd:
-        if (m_currentStateId != 1) {
-            u16 setting = m_railInterpolator->curPoint().setting[1];
-            if (setting <= 2) {
-                m_nextStateId = setting;
-            }
-        }
-        break;
-    case RailInterpolator::Status::ChangingDirection:
-        deactivate();
-        break;
-    default:
-        break;
-    }
-
-    m_vel.x = m_railInterpolator->currVel() * m_railInterpolator->curTangentDir().x;
-    m_vel.z = m_railInterpolator->currVel() * m_railInterpolator->curTangentDir().z;
-
+    calcRailAndVel();
     StateManager::calc();
-
     calcTransform();
 }
 
@@ -71,7 +52,7 @@ Kart::Reaction ObjectTruckWagonCart::onCollision(Kart::KartObject *kartObj,
 }
 
 /// @addr{0x806E0DF0}
-void ObjectTruckWagonCart::calcState0() {
+void ObjectTruckWagonCart::calcRolling() {
     constexpr f32 RADIUS = 50.0f;
     constexpr f32 GRAVITY = 2.0f;
     constexpr f32 INITIAL_FALL_OFFSET = 15.0f;
@@ -125,7 +106,7 @@ void ObjectTruckWagonCart::calcState0() {
 }
 
 /// @addr{0x806E1370}
-void ObjectTruckWagonCart::calcState1() {
+void ObjectTruckWagonCart::calcSuspended() {
     constexpr EGG::Vector3f INITIAL_OFFSET = EGG::Vector3f(0.0f, 710.0f, 0.0f);
 
     // Controls how strongly the cart tries to restore to neutral (damped harmonic oscillator)
@@ -169,6 +150,35 @@ void ObjectTruckWagonCart::calcState1() {
 
     setPos(m_railInterpolator->curPos() + INITIAL_OFFSET - mat.ps_multVector(INITIAL_OFFSET));
     m_lastVel = m_vel;
+}
+
+/// @addr{0x806E1DD0}
+void ObjectTruckWagonCart::checkRailPointState() {
+    if (m_currentStateId == 1) {
+        return;
+    }
+
+    u16 setting = m_railInterpolator->curPoint().setting[1];
+    if (setting <= 2) {
+        m_nextStateId = setting;
+    }
+}
+
+/// @addr{0x806E1E34}
+void ObjectTruckWagonCart::calcRailAndVel() {
+    switch (m_railInterpolator->calc()) {
+    case RailInterpolator::Status::SegmentEnd:
+        checkRailPointState();
+        break;
+    case RailInterpolator::Status::ChangingDirection:
+        deactivate();
+        break;
+    default:
+        break;
+    }
+
+    m_vel.x = m_railInterpolator->currVel() * m_railInterpolator->curTangentDir().x;
+    m_vel.z = m_railInterpolator->currVel() * m_railInterpolator->curTangentDir().z;
 }
 
 /// @addr{0x806E01C0}

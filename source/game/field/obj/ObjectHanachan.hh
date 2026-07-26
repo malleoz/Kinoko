@@ -209,12 +209,21 @@ private:
     void calcWait();
 
     void onSegmentEnd();
+
+    /// @addr{0x806CA6CC}
+    /// @brief Initializes the rail and its velocity
+    void initRail() {
+        m_railInterpolator->init(0.0f, 0);
+        m_railInterpolator->setCurrVel(m_walkSpeed);
+    }
+
     void calcRail();
     void calcBody();
     void initBody();
     void initChain();
     void clearChain();
     void calcRailAlignmentMotion();
+    void calcSway();
 
     /// @addr{0x806CAC74}
     /// @brief Applies a lateral motion when walking and standing still

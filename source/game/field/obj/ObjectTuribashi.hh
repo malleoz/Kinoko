@@ -4,6 +4,12 @@
 
 namespace Kinoko::Field {
 
+/// @brief The swaying wooden bridge at the end of GCN DK Mountain
+/// @details The bridge sway is calculated using a sine and cosine wave. The sine wave is used to
+/// calculate the vertical displacement depending on your X and Z position. The sway is
+/// amplified as you move towards the X-axis edges of the bridge, and is further maximized as you
+/// approach the Z-axis center of the bridge. The cosine wave is used to create "bumps" which make
+/// the bridge's planks feel more realistic as you drive along the bridge.
 class ObjectTuribashi final : public ObjectDrivable {
 public:
     ObjectTuribashi(const System::MapdataGeoObj &params);

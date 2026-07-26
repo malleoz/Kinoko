@@ -63,15 +63,8 @@ void ObjectFlamePoleFoot::calc() {
     }
 
     calcStates();
-
     StateManager::calc();
-
-    f32 scale = getScaleY(0);
-    setScale(scale);
-
-    EGG::Vector3f polePos = m_pole->pos();
-    m_pole->setPos(EGG::Vector3f(polePos.x, m_heightOffset + (pos().y - m_maxHeight), polePos.z));
-    m_pole->setScale(m_maxScale);
+    calcHeightAndScale();
 }
 
 /** @addr{0x8067F6B8}
@@ -132,8 +125,18 @@ void ObjectFlamePoleFoot::calcStates() {
     }
 }
 
-/// @brief Updates the scale of the geyser hump based off framecount in the cycle
-/// @todo THIS IS MISSING AN ADDRESS
+/// @addr{0x8067F7C8}
+/// @brief Calculates the height and scale of the flame pole based on the current cycle frame
+void ObjectFlamePoleFoot::calcHeightAndScale() {
+    setScale(getScaleY(0));
+
+    EGG::Vector3f polePos = m_pole->pos();
+    m_pole->setPos(EGG::Vector3f(polePos.x, m_heightOffset + (pos().y - m_maxHeight), polePos.z));
+    m_pole->setScale(m_maxScale);
+}
+
+/// @addr{0x8067FC50}
+/// @details Updates the scale of the geyser hump based off framecount in the cycle
 f32 ObjectFlamePoleFoot::getScaleY(u32 timeOffset) const {
     u32 frame = System::RaceManager::Instance()->timer() - timeOffset;
     if (frame < m_initDelay) {

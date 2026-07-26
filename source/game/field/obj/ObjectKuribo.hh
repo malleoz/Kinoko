@@ -38,6 +38,18 @@ private:
     void calcRot();
     void checkSphereFull();
 
+    /// @addr{0x806DCDD0}
+    /// @brief Calculates the transformation matrix based on rotation and forward direction
+    void calcMatFromRotAndForward() {
+        setMatrixTangentTo(m_rot, m_forward);
+    }
+
+    /// @addr{0x806DD038}
+    /// @brief Updates the animation timer based on the current frame and animation rate
+    void calcAnimTimer() {
+        m_animTimer = ::fmodf(static_cast<f32>(m_currFrame) * m_animRate, m_animDuration);
+    }
+
     const f32 m_accel;        ///< Acceleration applied when the Goomba is moving
     const f32 m_animRate;     ///< Animation playback rate
     EGG::Vector3f m_forward;  ///< Initial forward direction

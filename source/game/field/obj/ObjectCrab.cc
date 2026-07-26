@@ -28,8 +28,7 @@ void ObjectCrab::init() {
     m_stillDuration = 0;
     m_stillFrame = 0;
     m_still = false;
-    m_state = State::Walking;
-    m_statePhase = StatePhase::Start;
+    setState(State::Walking);
 }
 
 /// @addr{0x80883B98}
@@ -65,9 +64,7 @@ void ObjectCrab::calc() {
 
         return;
     } else {
-        m_state = State::Still;
-        m_statePhase = StatePhase::Start;
-
+        setState(State::Still);
         calcState();
     }
 }
@@ -124,8 +121,7 @@ ObjectCrab::StateResult ObjectCrab::calcState() {
 
         return StateResult::Middle;
     } else {
-        m_state = State::Walking;
-        m_statePhase = StatePhase::Start;
+        setState(State::Walking);
     }
 
     return StateResult::BeginWalking;
