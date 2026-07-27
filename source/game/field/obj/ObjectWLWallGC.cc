@@ -5,9 +5,9 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8086BC1C}
-ObjectWLWallGC::ObjectWLWallGC(const System::MapdataGeoObj &params) : ObjectKCL(params) {
-    m_extendedDuration = params.setting(1);
-    m_startFrame = params.setting(4);
+ObjectWLWallGC::ObjectWLWallGC(const System::MapdataGeoObj &params)
+    : ObjectKCL(params), m_extendedDuration(static_cast<s32>(params.setting(1))),
+      m_startFrame(static_cast<s32>(params.setting(4))), m_initialPos(pos()) {
     u32 rate = params.setting(2);
     u16 distance = params.setting(3);
 
@@ -25,34 +25,20 @@ ObjectWLWallGC::ObjectWLWallGC(const System::MapdataGeoObj &params) : ObjectKCL(
         m_cycleDuration = m_retractingFrame + m_moveDuration;
     }
 
-    m_initialPos = pos();
-
     calcTransform();
 
-    m_targetPos = m_initialPos - transform().base(2) * static_cast<f32>(distance);
+    m_extendedPos = m_initialPos - transform().base(2) * static_cast<f32>(distance);
 
     calcTransform();
-    m_currTransform = transform();
+    m_rtMat = transform();
 }
 
 /// @addr{0x8086BDE4}
 ObjectWLWallGC::~ObjectWLWallGC() = default;
 
-/// @addr{0x8086BE34}
-void ObjectWLWallGC::init() {
-    setPos(m_initialPos);
-    calcTransform();
-    m_currTransform = transform();
-}
-
-/// @addr{0x8086C108}
-void ObjectWLWallGC::calc() {
-    EGG::Vector3f prevPos = pos();
-    setTransform(getUpdatedMatrix(0));
-    setMovingObjVel(pos() - prevPos);
-}
-
 /// @addr{0x8086BF30}
+/// @details Linearly interpolates between the piranha's initial position and its extended position
+/// based on the current frame within the movement cycle.
 const EGG::Matrix34f &ObjectWLWallGC::getUpdatedMatrix(u32 timeOffset) {
     s32 time = cycleFrame(System::RaceManager::Instance()->timer() - timeOffset);
 
@@ -67,9 +53,9 @@ const EGG::Matrix34f &ObjectWLWallGC::getUpdatedMatrix(u32 timeOffset) {
         t = 1.0f - static_cast<f32>(time - m_retractingFrame) / static_cast<f32>(m_moveDuration);
     }
 
-    m_currTransform.setBase(3, Interpolate(t, m_initialPos, m_targetPos));
+    m_rtMat.setBase(3, Interpolate(t, m_initialPos, m_extendedPos));
 
-    return m_currTransform;
+    return m_rtMat;
 }
 
 /// @addr{0x8086C328}

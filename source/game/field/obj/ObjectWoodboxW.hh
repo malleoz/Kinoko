@@ -6,6 +6,8 @@ namespace Kinoko::Field {
 
 class ObjectWoodboxWSub;
 
+/// @brief Represents a wooden box spawner for @ref ObjectWoodboxWSub boxes which follow a rail,
+/// like on Toad's Factory
 class ObjectWoodboxW final : public ObjectCollidable {
 public:
     ObjectWoodboxW(const System::MapdataGeoObj &params);
@@ -20,12 +22,14 @@ public:
     }
 
     /// @addr{0x8077ECD0}
+    /// @details no-op because the spawner itself does not have any collision
     void createCollision() override {}
 
 private:
-    owning_span<ObjectWoodboxWSub *> m_boxes;
-    s32 m_framesUntilSpawn;
-    u32 m_nextBoxIdx;
+    owning_span<ObjectWoodboxWSub *> m_boxes; ///< Pointers to the wooden boxes that spawn
+    s32 m_spawnTimer;                         ///< Framecount until the next box spawns
+    u32 m_nextBoxIdx;                         ///< Index of the next box to spawn
+    const s32 m_spawnInterval;                ///< The fixed interval between spawns
 };
 
 } // namespace Kinoko::Field

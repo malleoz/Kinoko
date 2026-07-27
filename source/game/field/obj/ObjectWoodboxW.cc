@@ -5,7 +5,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8077DF24}
-ObjectWoodboxW::ObjectWoodboxW(const System::MapdataGeoObj &params) : ObjectCollidable(params) {
+ObjectWoodboxW::ObjectWoodboxW(const System::MapdataGeoObj &params)
+    : ObjectCollidable(params), m_spawnInterval(params.setting(5)) {
     constexpr u16 DEFAULT_BOX_COUNT = 5;
 
     ObjectCollidable::init();
@@ -30,23 +31,22 @@ ObjectWoodboxW::~ObjectWoodboxW() = default;
 /// @addr{0x8077E1A0}
 void ObjectWoodboxW::init() {
     ASSERT(m_mapObj);
-    u32 frames = m_mapObj->setting(4);
-    if (frames == 0) {
-        frames = m_mapObj->setting(5);
+    u32 startDelay = m_mapObj->setting(4);
+    if (startDelay == 0) {
+        startDelay = m_spawnInterval;
     }
 
-    m_framesUntilSpawn = frames;
+    m_spawnTimer = startDelay;
     m_nextBoxIdx = 0;
 }
 
 /// @addr{0x8077E1E4}
 void ObjectWoodboxW::calc() {
-    if (--m_framesUntilSpawn >= 1) {
+    if (--m_spawnTimer >= 1) {
         return;
     }
 
-    ASSERT(m_mapObj);
-    m_framesUntilSpawn = m_mapObj->setting(5);
+    m_spawnTimer = m_spawnInterval;
     m_boxes[m_nextBoxIdx]->enableCollision();
     m_nextBoxIdx = (m_nextBoxIdx + 1) % m_boxes.size();
 }

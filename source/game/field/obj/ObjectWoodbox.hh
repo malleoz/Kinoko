@@ -4,6 +4,9 @@
 
 namespace Kinoko::Field {
 
+/// @brief Represents a wooden box, like on DS Delfino Square
+/// @details Normally these boxes are breakable via items or collisions, but in time trial mode,
+/// these boxes become unbreakable "ironboxes".
 class ObjectWoodbox : public ObjectBreakable {
 public:
     ObjectWoodbox(const System::MapdataGeoObj &params);

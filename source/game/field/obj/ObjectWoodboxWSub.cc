@@ -18,6 +18,7 @@ void ObjectWoodboxWSub::calc() {
 }
 
 /// @addr{0x8077E56C}
+/// @brief Updates the rail interpolator and the box's position along the rail
 void ObjectWoodboxWSub::calcPosition() {
     auto status = m_railInterpolator->calc();
 

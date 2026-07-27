@@ -4,6 +4,9 @@
 
 namespace Kinoko::Field {
 
+/// @brief Represents a single wooden box spawned by an @ref ObjectWoodboxW
+/// @details The @ref ObjectWoodboxW spawner is responsible for using @ref enableCollision() to make
+/// the box tangible again and reset its rail position.
 class ObjectWoodboxWSub final : public ObjectWoodbox {
 public:
     ObjectWoodboxWSub(const System::MapdataGeoObj &params);

@@ -12,22 +12,25 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806E4224}
+/// @details Constructs the wooden stake object to which the Chain Chomp is attached. Computes the
+/// number of chains based off the chain length defined by param setting 1. Sets a course-specific
+/// wander constraint point.
 ObjectWanwan::ObjectWanwan(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), StateManager(this, STATE_ENTRIES), m_pitch(0.0f),
       m_chainLength(static_cast<f32>(params.setting(0))),
       m_attackDistance(4800.0f + static_cast<f32>(params.setting(2))),
-      m_attackArcTargetX(10.0f * static_cast<f32>(static_cast<s16>(params.setting(3)))),
-      m_attackArcTargetZ(10.0f * static_cast<f32>(static_cast<s16>(params.setting(4)))),
+      m_attackDirectionX(10.0f * static_cast<f32>(static_cast<s16>(params.setting(3)))),
+      m_attackDirectionZ(10.0f * static_cast<f32>(static_cast<s16>(params.setting(4)))),
       m_chainAttachMat(EGG::Matrix34f::ident) {
     constexpr EGG::Vector3f ANCHOR_OFFSET = EGG::Vector3f(0.0f, 20.0f, 0.0f);
     constexpr EGG::Vector3f POS_OFFSET_MCWII = EGG::Vector3f(14500.0f, 1300.0f, 44850.0f);
     constexpr EGG::Vector3f POS_OFFSET_RMC = EGG::Vector3f(8012.0f, 1668.0f, -30150.0f);
 
-    m_idleDuration = static_cast<u32>(params.setting(5));
+    m_wanderDuration = static_cast<u32>(params.setting(5));
     m_attackArc = static_cast<f32>(params.setting(6));
 
-    if (m_idleDuration == 0) {
-        m_idleDuration = 300;
+    if (m_wanderDuration == 0) {
+        m_wanderDuration = 300;
     }
 
     if (m_attackArc == 0.0f) {
@@ -54,17 +57,17 @@ ObjectWanwan::ObjectWanwan(const System::MapdataGeoObj &params)
         EGG::Vector3f pos = POS_OFFSET_MCWII - m_anchor;
         pos.y = 0.0f;
         pos.normalise2();
-        m_attackArcCenter = pos * m_chainLength + m_anchor;
-        m_attackArcCenter.y = POS_OFFSET_MCWII.y;
+        m_wanderConstraintPoint = pos * m_chainLength + m_anchor;
+        m_wanderConstraintPoint.y = POS_OFFSET_MCWII.y;
     } else if (course == Course::GCN_Mario_Circuit) {
         EGG::Vector3f pos = POS_OFFSET_RMC - m_anchor;
         pos.y = 0.0f;
         pos.normalise2();
-        m_attackArcCenter = pos * m_chainLength + m_anchor;
-        m_attackArcCenter.y = POS_OFFSET_RMC.y;
+        m_wanderConstraintPoint = pos * m_chainLength + m_anchor;
+        m_wanderConstraintPoint.y = POS_OFFSET_RMC.y;
     } else {
-        m_attackArcCenter = m_anchor;
-        m_attackArcCenter.z += m_chainLength;
+        m_wanderConstraintPoint = m_anchor;
+        m_wanderConstraintPoint.z += m_chainLength;
     }
 
     initTransformKeyframes();
@@ -200,7 +203,7 @@ void ObjectWanwan::calcWait() {
         EGG::Vector3f relTarget = m_target - m_anchor;
         auto &rand = System::RaceManager::Instance()->random();
         f32 angle = rand.getF32(ANGLE_RANGE) + ANGLE_NORMALIZATION;
-        if (CrossXZ(m_target, m_attackArcCenter, m_anchor) >= 0.0f) {
+        if (CrossXZ(m_target, m_wanderConstraintPoint, m_anchor) >= 0.0f) {
             angle *= -1.0f;
         }
 
@@ -401,7 +404,7 @@ void ObjectWanwan::calcUp(f32 t) {
 /// @addr{0x806E87C8}
 void ObjectWanwan::calcRandomTarget() {
     f32 angle = System::RaceManager::Instance()->random().getF32(m_attackArc * 2.0f);
-    EGG::Vector3f attackArcTarget = EGG::Vector3f(m_attackArcTargetX, 0.0f, m_attackArcTargetZ);
+    EGG::Vector3f attackArcTarget = EGG::Vector3f(m_attackDirectionX, 0.0f, m_attackDirectionZ);
     EGG::Vector3f attackArcDir = attackArcTarget - m_anchor;
     attackArcDir.y = 0.0f;
     attackArcDir.normalise2();
