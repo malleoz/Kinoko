@@ -5,7 +5,6 @@
 namespace Kinoko::Kart {
 
 /// @brief Doesn't do much besides hold a pointer to KartSuspensionPhysics.
-/// @nosubgrouping
 class KartSuspension : protected KartObjectProxy {
 public:
     KartSuspension();

@@ -59,7 +59,6 @@ struct CollisionInfo {
 };
 
 /// @brief Performs lookups for KCL triangles
-/// @nosubgrouping
 class KColData {
 public:
     enum class CollisionCheckType {

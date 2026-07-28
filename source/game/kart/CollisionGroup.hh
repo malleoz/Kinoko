@@ -53,7 +53,6 @@ struct CollisionData {
 
 /// @brief Represents a hitbox for the kart body or a wheel.
 /// @details A hitbox's position information is directly used in the KCL collision check functions.
-/// @nosubgrouping
 class Hitbox {
 public:
     Hitbox();
@@ -118,7 +117,6 @@ private:
 };
 
 /// @brief Houses hitbox and collision info for an object (body or wheel).
-/// @nosubgrouping
 class CollisionGroup {
 public:
     CollisionGroup();

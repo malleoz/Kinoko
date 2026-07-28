@@ -45,7 +45,6 @@ enum class Reaction {
 };
 
 /// @brief Manages body+wheel collision and its influence on position/velocity/etc.
-/// @nosubgrouping
 class KartCollide : KartObjectProxy {
 public:
     enum class eSurfaceFlags {

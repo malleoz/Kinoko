@@ -4,7 +4,6 @@
 
 namespace Kinoko::Item {
 
-/// @nosubgrouping
 class ItemInventory {
 public:
     ItemInventory();

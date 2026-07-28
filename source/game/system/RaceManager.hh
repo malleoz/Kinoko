@@ -23,7 +23,6 @@ namespace System {
 /// @details The physics engine leverages the RaceManager in order to determine what stage of the
 /// race we're in, as that affects several things like acceleration. This class also retrieves the
 /// player start position from CourseMap and communicates it to the physics engine.
-/// @nosubgrouping
 class RaceManager : EGG::Disposer {
     friend class Host::Context;
 

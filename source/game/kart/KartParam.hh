@@ -47,7 +47,6 @@ struct BSP {
 STATIC_ASSERT(sizeof(BSP) == 0x25c);
 
 /// @brief Houses stats regarding a given character/vehicle combo.
-/// @nosubgrouping
 class KartParam {
 public:
     struct BikeDisp {

@@ -26,7 +26,6 @@ enum class TrickType {
 };
 
 /// @brief Manages trick inputs and state.
-/// @nosubgrouping
 class KartJump : protected KartObjectProxy {
 public:
     struct TrickProperties {

@@ -9,7 +9,6 @@
 namespace Kinoko::Kart {
 
 /// @brief Manages the lifecycle of KartDynamics, handles moving floors and trick rotation.
-/// @nosubgrouping
 class KartPhysics {
 public:
     KartPhysics(bool isBike);

@@ -5,7 +5,6 @@
 
 namespace Kinoko::Kart {
 
-/// @nosubgrouping
 class KartBody : protected KartObjectProxy {
 public:
     KartBody(KartPhysics *physics);

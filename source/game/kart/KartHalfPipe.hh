@@ -7,7 +7,6 @@
 namespace Kinoko::Kart {
 
 /// @brief Handles the physics and boosts associated with zippers.
-/// @nosubgrouping
 class KartHalfPipe : public KartObjectProxy {
 public:
     KartHalfPipe();

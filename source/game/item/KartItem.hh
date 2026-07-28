@@ -9,7 +9,6 @@
 namespace Kinoko::Item {
 
 /// @brief State management for item usage
-/// @nosubgrouping
 class KartItem : Kart::KartObjectProxy {
 public:
     KartItem();

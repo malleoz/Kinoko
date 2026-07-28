@@ -5,7 +5,6 @@
 namespace Kinoko::Field {
 
 /// @brief Manager for an object's KCL interactions.
-/// @nosubgrouping
 class ObjColMgr {
 public:
     ObjColMgr(const void *file);

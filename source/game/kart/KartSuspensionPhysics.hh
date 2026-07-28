@@ -9,7 +9,6 @@
 namespace Kinoko::Kart {
 
 /// @brief Manages wheel physics and collision checks.
-/// @nosubgrouping
 class WheelPhysics : KartObjectProxy {
 public:
     WheelPhysics(u16 wheelIdx, u16 bspWheelIdx);

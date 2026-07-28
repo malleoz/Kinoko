@@ -22,7 +22,6 @@ typedef bool (
 
 /// @brief Manager for course KCL interactions.
 /// @addr{0x809C3C10}
-/// @nosubgrouping
 class CourseColMgr : EGG::Disposer {
     friend class Host::Context;
 

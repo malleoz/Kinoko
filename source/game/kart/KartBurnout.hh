@@ -6,7 +6,6 @@ namespace Kinoko::Kart {
 
 /// @brief Calculates the duration of burnout and rotation induced
 /// when holding acceleration too long during the race countdown.
-/// @nosubgrouping
 class KartBurnout : KartObjectProxy {
 public:
     KartBurnout();

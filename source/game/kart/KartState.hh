@@ -9,7 +9,6 @@ namespace Kinoko::Kart {
 /// @details Most notably, this class is the direct observer of the input state,
 /// and sets the appropriate flags for KartMove to act upon the input state.
 /// This class also is responsible for managing calculations of the start boost duration.
-/// @nosubgrouping
 class KartState : KartObjectProxy {
 public:
     KartState();

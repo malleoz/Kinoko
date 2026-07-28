@@ -8,7 +8,6 @@ namespace Kinoko::Kart {
 /// @details Whenever another kart class is done with their calculations, they call to this class to
 /// set the relevant variables. For example, KartMove::calcAcceleration() calculates acceleration
 /// and subsequently sets the internal velocity in this class.
-/// @nosubgrouping
 class KartDynamics {
 public:
     KartDynamics();

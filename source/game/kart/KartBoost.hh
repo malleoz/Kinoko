@@ -5,7 +5,6 @@
 namespace Kinoko::Kart {
 
 /// @brief State management for boosts (start boost, mushrooms, mini-turbos)
-/// @nosubgrouping
 class KartBoost {
 public:
     enum class Type {

@@ -31,7 +31,6 @@ concept MapdataDerived = is_derived_from_template_v<MapdataAccessorBase, T>;
 
 /// @brief Contains course metadata, notably the starting position.
 /// @addr{0x809BD6E8}
-/// @nosubgrouping
 class CourseMap : EGG::Disposer {
     friend class Host::Context;
 

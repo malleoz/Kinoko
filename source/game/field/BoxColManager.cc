@@ -16,6 +16,7 @@ BoxColUnit::BoxColUnit() : m_pos(nullptr), m_radius(0.0f), m_range(0.0f), m_user
 BoxColUnit::~BoxColUnit() = default;
 
 /// @addr{0x80786F34}
+/// @brief Initializes the collision unit with the given parameters
 void BoxColUnit::init(f32 radius, f32 maxSpeed, const EGG::Vector3f *pos, const BoxColFlag &flag,
         void *userData) {
     m_pos = pos;
@@ -26,11 +27,6 @@ void BoxColUnit::init(f32 radius, f32 maxSpeed, const EGG::Vector3f *pos, const 
     m_userData = userData;
     m_xMax = pos->x + m_range;
     m_xMin = pos->x - m_range;
-}
-
-/// @addr{0x80786F6C}
-void BoxColUnit::makeInactive() {
-    m_flag.resetBit(eBoxColFlag::Active);
 }
 
 /// @addr{0x80786F7C}
@@ -46,17 +42,19 @@ void BoxColUnit::resize(f32 radius, f32 maxSpeed) {
 }
 
 /// @addr{0x80786F98}
+/// @brief Removes and re-inserts the collision unit into the @ref BoxColManager's spatial index
 void BoxColUnit::reinsert() {
     BoxColManager::Instance()->reinsertUnit(this);
 }
 
 /// @addr{0x80786FA8}
+/// @brief Searches for collisions involving this unit with the specified flags
 void BoxColUnit::search(const BoxColFlag &flag) {
     BoxColManager::Instance()->search(this, flag);
 }
 
-/// @brief Creates two intangible units to represent the spatial bounds.
 /// @addr{0x807856E0}
+/// @brief Creates two intangible units to represent the hard boundaries of the spatial index
 BoxColManager::BoxColManager() {
     constexpr f32 SPATIAL_BOUND = 999999.9f;
 
@@ -84,18 +82,19 @@ BoxColManager::~BoxColManager() {
 }
 
 /// @addr{0x8078597C}
+/// @brief Clears the result cache and resets the iterator indices
 void BoxColManager::clear() {
     m_nextObjectID = MAX_UNIT_COUNT;
     m_nextDrivableID = MAX_UNIT_COUNT;
     m_maxID = 0;
-    m_cacheQueryUnit = nullptr;
+    m_cacheUnit = nullptr;
     m_cacheRadius = -1.0f;
     m_cacheFlag.makeAllZero();
 }
 
-/// @brief Recalculate the bounds of all active units having @ref PermRecalcAABB or @ref
-/// TempRecalcAABB flag, and then update the low and high points accordingly.
 /// @addr{0x807859B0}
+/// @brief Recalculates the bounds of all active units having @ref PermRecalcAABB or @ref
+/// TempRecalcAABB flag, and then updates the low and high points accordingly.
 void BoxColManager::calc() {
     clear();
 
@@ -187,16 +186,22 @@ void BoxColManager::calc() {
 }
 
 /// @addr{0x80785E5C}
+/// @brief Retrieves the next collidable object in the iteration sequence
+/// @return A pointer to the next @ref ObjectCollidable, or nullptr if there are no more objects
 ObjectCollidable *BoxColManager::getNextObject() {
     return reinterpret_cast<ObjectCollidable *>(getNextImpl(m_nextObjectID, eBoxColFlag::Object));
 }
 
 /// @addr{0x80785EC4}
+/// @brief Retrieves the next drivable object in the iteration sequence
+/// @return A pointer to the next @ref ObjectDrivable, or nullptr if there are no more objects
 ObjectDrivable *BoxColManager::getNextDrivable() {
     return reinterpret_cast<ObjectDrivable *>(getNextImpl(m_nextDrivableID, eBoxColFlag::Drivable));
 }
 
 /// @addr{0x80785F2C}
+/// @brief Resets the iteration sequence for both collidable and drivable objects, setting the
+/// iterators to the first object in each sequence
 void BoxColManager::resetIterators() {
     m_nextObjectID = -1;
     iterate(m_nextObjectID, eBoxColFlag::Object);
@@ -206,6 +211,13 @@ void BoxColManager::resetIterators() {
 }
 
 /// @addr{0x80786050}
+/// @brief Inserts a new driver unit into the spatial index with the specified parameters
+/// @param radius The radius of the driver unit
+/// @param maxSpeed The maximum speed of the driver unit
+/// @param pos Pointer to the driver unit's position
+/// @param alwaysRecalc Whether the unit should always recalculate its AABB
+/// @param kartObject The associated Kart object for the driver unit
+/// @return A pointer to the newly inserted @ref BoxColUnit
 BoxColUnit *BoxColManager::insertDriver(f32 radius, f32 maxSpeed, const EGG::Vector3f *pos,
         bool alwaysRecalc, Kart::KartObject *kartObject) {
     BoxColFlag flag = BoxColFlag(eBoxColFlag::Driver);
@@ -218,6 +230,13 @@ BoxColUnit *BoxColManager::insertDriver(f32 radius, f32 maxSpeed, const EGG::Vec
 }
 
 /// @addr{0x80786078}
+/// @brief Inserts a new collidable object unit into the spatial index with the specified parameters
+/// @param radius The radius of the object unit
+/// @param maxSpeed The maximum speed of the object unit
+/// @param pos Pointer to the object unit's position
+/// @param alwaysRecalc Whether the unit should always recalculate its AABB
+/// @param userData The ObjectCollidable pointer associated with this BoxColUnit
+/// @return A pointer to the newly inserted @ref BoxColUnit
 BoxColUnit *BoxColManager::insertObject(f32 radius, f32 maxSpeed, const EGG::Vector3f *pos,
         bool alwaysRecalc, void *userData) {
     BoxColFlag flag = BoxColFlag(eBoxColFlag::Object);
@@ -230,6 +249,13 @@ BoxColUnit *BoxColManager::insertObject(f32 radius, f32 maxSpeed, const EGG::Vec
 }
 
 /// @addr{0x80786120}
+/// @brief Inserts a new drivable object unit into the spatial index with the specified parameters
+/// @param radius The radius of the drivable unit
+/// @param maxSpeed The maximum speed of the drivable unit
+/// @param pos Pointer to the drivable unit's position
+/// @param alwaysRecalc Whether the unit should always recalculate its AABB
+/// @param userData The ObjectDrivable pointer associated with this BoxColUnit
+/// @return A pointer to the newly inserted @ref BoxColUnit
 BoxColUnit *BoxColManager::insertDrivable(f32 radius, f32 maxSpeed, const EGG::Vector3f *pos,
         bool alwaysRecalc, void *userData) {
     BoxColFlag flag = BoxColFlag(eBoxColFlag::Drivable);
@@ -242,6 +268,9 @@ BoxColUnit *BoxColManager::insertDrivable(f32 radius, f32 maxSpeed, const EGG::V
 }
 
 /// @addr{0x80786DBC}
+/// @brief Reinserts an existing collision unit into the spatial index, updating its position and
+/// other properties as necessary
+/// @unused
 void BoxColManager::reinsertUnit(BoxColUnit *unit) {
     f32 radius = unit->m_radius;
     f32 maxSpeed = unit->m_range - radius;
@@ -254,6 +283,7 @@ void BoxColManager::reinsertUnit(BoxColUnit *unit) {
 }
 
 /// @addr{0x80786578}
+/// @brief Removes a collision unit from the spatial index and updates the relevant data structures
 void BoxColManager::remove(BoxColUnit *&unit) {
     if (!unit || unit->m_flag.offBit(eBoxColFlag::Active)) {
         return;
@@ -309,19 +339,9 @@ void BoxColManager::remove(BoxColUnit *&unit) {
     unit = nullptr;
 }
 
-/// @addr{0x80786774}
-void BoxColManager::search(BoxColUnit *unit, const BoxColFlag &flag) {
-    searchImpl(unit, flag);
-    resetIterators();
-}
-
-/// @addr{0x80786B14}
-void BoxColManager::search(f32 radius, const EGG::Vector3f &pos, const BoxColFlag &flag) {
-    searchImpl(radius, pos, flag);
-    resetIterators();
-}
-
 /// @addr{0x80786E60}
+/// @brief Checks if a sphere is within the spatial cache based on its radius and position, only if
+/// all bits in the provided flag mask were set in the cached query
 bool BoxColManager::isSphereInSpatialCache(f32 radius, const EGG::Vector3f &pos,
         const BoxColFlag &flag) const {
     if (m_cacheRadius == -1.0f) {
@@ -357,7 +377,7 @@ BoxColManager *BoxColManager::Instance() {
     return s_instance;
 }
 
-/// @brief Helper function since the getters share all code except the flag.
+/// @brief Helper function since the getters share all code except the flag
 void *BoxColManager::getNextImpl(s32 &id, const BoxColFlag &flag) {
     if (id == MAX_UNIT_COUNT) {
         return nullptr;
@@ -370,6 +390,7 @@ void *BoxColManager::getNextImpl(s32 &id, const BoxColFlag &flag) {
 }
 
 /// @addr{Inlined}
+/// @brief Finds the next collision unit in the spatial index that matches the specified flag
 void BoxColManager::iterate(s32 &iter, const BoxColFlag &flag) {
     while (++iter < m_maxID) {
         if (m_units[iter]->m_flag.on(flag)) {
@@ -381,6 +402,14 @@ void BoxColManager::iterate(s32 &iter, const BoxColFlag &flag) {
 }
 
 /// @addr{0x80786134}
+/// @brief Creates a new collision unit with the specified parameters and inserts it into the
+/// spatial index
+/// @param radius The radius of the sphere
+/// @param maxSpeed The maximum speed of the sphere
+/// @param pos Pointer to the collision unit's position
+/// @param flag The collision flag to assign to the unit
+/// @param userData Pointer to the object to be associated with the newly created BoxColUnit
+/// @return A pointer to the newly inserted @ref BoxColUnit
 BoxColUnit *BoxColManager::insert(f32 radius, f32 maxSpeed, const EGG::Vector3f *pos,
         const BoxColFlag &flag, void *userData) {
     if (m_unitCount >= static_cast<s32>(MAX_UNIT_COUNT)) {
@@ -483,6 +512,14 @@ BoxColUnit *BoxColManager::insert(f32 radius, f32 maxSpeed, const EGG::Vector3f 
 }
 
 /// @addr{0x807868C0}
+/// @brief Searches for collision units that intersect with the specified unit and match the given
+/// flag
+/// @details First, if the collision unit is not active, the search is aborted. This function then
+/// computes the X and Z-axis bounds of the provided BoxColUnit. It then calculates the range of
+/// m_lowPoints in the spatial index to consider for potential collisions. Iterating across the
+/// m_lowPoints, it checks for intersections with the specified unit and filters them based on the
+/// provided collision flag. Colliding units are stored in m_units and the count of colliding units
+/// is tracked via m_maxID.
 void BoxColManager::searchImpl(BoxColUnit *unit, const BoxColFlag &flag) {
     if (unit->m_flag.offBit(eBoxColFlag::Active)) {
         return;
@@ -509,7 +546,7 @@ void BoxColManager::searchImpl(BoxColUnit *unit, const BoxColFlag &flag) {
     int maxIdx = m_unitCount - 1;
 
     m_maxID = 0;
-    m_cacheQueryUnit = unit;
+    m_cacheUnit = unit;
     m_cacheRadius = -1.0f;
     m_cacheFlag = flag;
 
@@ -568,6 +605,12 @@ void BoxColManager::searchImpl(BoxColUnit *unit, const BoxColFlag &flag) {
 }
 
 /// @addr{0x80786C60}
+/// @brief Searches for collision units intersecting with a sphere having a given center and radius
+/// @details Computes the X and Z-axis bounds of the provided sphere. It then calculates the range
+/// of m_lowPoints in the spatial index to consider for potential collisions. Iterating across the
+/// m_lowPoints, it checks for intersections with the sphere and filters them based on the provided
+/// collision flag. Colliding units are stored in m_units and the count of colliding units is
+/// tracked via m_maxID.
 void BoxColManager::searchImpl(f32 radius, const EGG::Vector3f &pos, const BoxColFlag &flag) {
     // Binary search
     int highPointIdx = 0;
@@ -578,7 +621,7 @@ void BoxColManager::searchImpl(f32 radius, const EGG::Vector3f &pos, const BoxCo
     f32 xLow = pos.x - radius;
 
     m_maxID = 0;
-    m_cacheQueryUnit = nullptr;
+    m_cacheUnit = nullptr;
     m_cachePoint = pos;
     m_cacheRadius = radius;
     m_cacheFlag = flag;

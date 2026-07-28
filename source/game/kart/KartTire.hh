@@ -5,7 +5,6 @@
 namespace Kinoko::Kart {
 
 /// @brief A holder for a wheel's physics data.
-/// @nosubgrouping
 class KartTire {
 public:
     KartTire(KartSuspensionPhysics::TireType tireType, u16 bspWheelIdx);

@@ -4,8 +4,6 @@
 
 #include <egg/math/Vector.hh>
 
-#define COLLISION_ARR_LENGTH 0x40
-
 namespace Kinoko {
 
 namespace Host {
@@ -17,19 +15,28 @@ class Context;
 /// @brief Pertains to collision.
 namespace Field {
 
-/// @brief Manages the caching of colliding KCL triangles and exposes queries for collision checks.
-/// @addr{0x809C2F44}
-/// @nosubgrouping
+/// @brief Manages the caching of colliding KCL triangles and exposes queries for collision checks
+/// @details Stores up to 64 cached collision entries which can be used by classes like @ref
+/// Kart::KartCollide to fetch tris without having to perform another collision query. Exposes
+/// public interfaces for collision checks, including full vs. partial checks (whether resulting
+/// collisions return just a subset of collision information), cached vs. uncached checks (whether
+/// we can leverage the cache), and push variants (whether we want to add collision entries to the
+/// cache). Also exposes functionality to find the closest colliding entry that matches a provided
+/// @ref KCLTypeMask.
 class CollisionDirector : EGG::Disposer {
     friend class Host::Context;
 
 public:
-    /// @brief Collision Entry Attribute fields.
-    /// @details |  0 - 4   |  5 - 7  | 8 | 9 | 10 |  11 - 12  |     13    |   14    |  15  |
-    ///          | BaseType | Variant |   |   |    | Intensity | Trickable | Offroad | Soft |
+    /// @brief Collision Entry Attribute fields
+    /// @details Each KCL triangle is associated with a 16-bit attribute field which determines the
+    /// effect of that triangle on the player that is colliding with it.\n\n 
+    /// Bit layout:
+    /// | Bits 0-4 | Bits 5-7 | Bits 8-10 | Bits 11-12 | Bit 13    | Bit 14      | Bit 15        |
+    /// |----------|----------|-----------|------------|-----------|-------------|---------------|
+    /// | BaseType | Variant  | (unused)  | Intensity  | Trickable | Reject road | Soft surface  |
     enum class eCollisionAttribute {
-        Trickable = 13,
-        RejectRoad = 14,
+        Trickable = 13,  ///< Whether the player can perform a trick on this surface
+        RejectRoad = 14, ///< A surface that tries to push you back towards the road
         Soft = 15,
     };
     typedef EGG::TBitFlag<u16, eCollisionAttribute> CollisionAttribute;
@@ -116,6 +123,8 @@ private:
 
     CollisionDirector();
     ~CollisionDirector() override;
+
+    static constexpr size_t COLLISION_ARR_LENGTH = 0x40;
 
     const CollisionEntry *m_closestCollisionEntry;
     std::array<CollisionEntry, COLLISION_ARR_LENGTH> m_entries;

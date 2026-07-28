@@ -73,7 +73,6 @@ private:
 STATIC_ASSERT(sizeof(RawGhostFile) == 0x2800);
 
 /// @brief Parsed representation of a binary ghost file.
-/// @nosubgrouping
 class GhostFile {
 public:
     GhostFile(const RawGhostFile &raw);

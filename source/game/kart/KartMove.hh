@@ -15,7 +15,6 @@
 namespace Kinoko::Kart {
 
 /// @brief Responsible for reacting to player inputs and moving the kart.
-/// @nosubgrouping
 class KartMove : protected KartObjectProxy {
 public:
     enum class ePadType {
@@ -477,7 +476,6 @@ protected:
 /// @brief Responsible for reacting to player inputs and moving the bike.
 /// @details This derived class has specialized behavior for bikes, such as wheelies and leaning.
 /// There are also additional member variables to track the bike's unique state.
-/// @nosubgrouping
 class KartMoveBike : public KartMove {
 public:
     /// @brief Represents turning information which differs only between inside/outside drift.

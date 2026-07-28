@@ -68,7 +68,6 @@ struct KartAccessor {
 };
 
 /// @brief Base class for most kart-related objects.
-/// @nosubgrouping
 class KartObjectProxy {
     friend class KartObject;
 

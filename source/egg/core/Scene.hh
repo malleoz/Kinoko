@@ -12,7 +12,6 @@ class SceneManager;
 /// This allows for easy cleanup when transitioning to a different scene,
 /// as scenes destroy instances of classes used only during the scene lifetime.
 /// While this is not an abstract class, you'll never see an instance of this base class.
-/// @nosubgrouping
 class Scene : Disposer {
 public:
     /*------------*

@@ -7,7 +7,6 @@ namespace Kinoko::Kart {
 class KartObject;
 
 /// @brief Hosts a few classes and the high level per-frame calc functions.
-/// @nosubgrouping
 class KartSub : KartObjectProxy {
 public:
     KartSub();
