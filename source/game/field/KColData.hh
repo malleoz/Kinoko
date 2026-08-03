@@ -10,27 +10,37 @@
 
 namespace Kinoko::Field {
 
+/// @brief Stores partial information pertaining to a collision
 struct CollisionInfoPartial {
-    EGG::BoundBox3f bbox;
-    EGG::Vector3f tangentOff;
+    EGG::BoundBox3f bbox;     ///< Bounding box of "push out" vectors
+    EGG::Vector3f tangentOff; ///< The net "push out" vector
 
+    /// @brief Expands the bounding box to include the provided position vector
     void update(const EGG::Vector3f &offset) {
         bbox.min = bbox.min.minimize(offset);
         bbox.max = bbox.max.maximize(offset);
     }
 };
 
+/// @brief Stores information pertaining to a collision
+/// @details Tracks the distance for the closest floor, wall, and moving floor collision during a
+/// collision query so that it can update its internal state to reflect the closest collision for
+/// each category.
 struct CollisionInfo {
-    EGG::BoundBox3f bbox;
-    EGG::Vector3f tangentOff;
-    EGG::Vector3f floorNrm;
-    EGG::Vector3f wallNrm;
-    EGG::Vector3f roadVelocity;
-    f32 floorDist;
-    f32 wallDist;
-    f32 movingFloorDist;
-    f32 perpendicularity;
+    EGG::BoundBox3f bbox;       ///< Bounding box of "push out" vectors
+    EGG::Vector3f tangentOff;   ///< The net "push out" vector
+    EGG::Vector3f floorNrm;     ///< Colliding floor's up vector
+    EGG::Vector3f wallNrm;      ///< Colliding wall face's normal vector
+    EGG::Vector3f roadVelocity; ///< Optional velocity induced by the colliding object
+    f32 floorDist;              ///< Distance from the colliding floor tri
+    f32 wallDist;               ///< Distance from the colliding wall tri
+    f32 movingFloorDist;        ///< Distance from the colliding moving floor tri
+    f32 perpendicularity;       ///< Measures how much two colliding wall normals diverge
 
+    /// @brief Updates the floor collision info if the provided distance is closer than the
+    /// currently tracked floor collision
+    /// @param dist Distance from the colliding floor
+    /// @param fnrm Colliding floor's up vector
     void updateFloor(f32 dist, const EGG::Vector3f &fnrm) {
         if (dist > floorDist) {
             floorDist = dist;
@@ -38,6 +48,10 @@ struct CollisionInfo {
         }
     }
 
+    /// @brief Updates the wall collision info if the provided distance is closer than the
+    /// currently tracked wall collision
+    /// @param dist Distance from the colliding wall
+    /// @param fnrm Colliding wall's up vector
     void updateWall(f32 dist, const EGG::Vector3f &fnrm) {
         if (dist > wallDist) {
             wallDist = dist;
@@ -45,6 +59,7 @@ struct CollisionInfo {
         }
     }
 
+    /// @brief Initializes members to clear all collision info
     void reset() {
         bbox.setZero();
         movingFloorDist = -std::numeric_limits<f32>::min();

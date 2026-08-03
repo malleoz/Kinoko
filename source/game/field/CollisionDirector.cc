@@ -5,6 +5,9 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8078E4F0}
+/// @brief Narrows the spatial cache of the @ref CourseColMgr and @ref ObjectDrivableDirector to
+/// only include KCL tris defined by the provided mask within a certain radius of the given
+/// position.
 void CollisionDirector::checkCourseColNarrScLocal(f32 radius, const EGG::Vector3f &pos,
         KCLTypeMask mask, u32 timeOffset) {
     CourseColMgr::Instance()->scaledNarrowScopeLocal(1.0f, radius, nullptr, pos, mask);
@@ -12,6 +15,16 @@ void CollisionDirector::checkCourseColNarrScLocal(f32 radius, const EGG::Vector3
 }
 
 /// @addr{0x8078F320}
+/// @brief Checks collision between a sphere and course KCL and object collision, writing partial
+/// collision info. Additionally pushes the collision entry into the CollisionDirector's cache.
+/// @param radius The radius of the sphere to check
+/// @param pos The position of the sphere to check
+/// @param prevPos The previous position of the sphere, used for calculating collision depth
+/// @param mask The KCL flags to check collision against (other types are ignored)
+/// @param info Out parameter for retrieving collision information (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
+/// @param timeOffset Optional time delta
+/// @return Whether a collision was detected
 bool CollisionDirector::checkSpherePartialPush(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask flags, CollisionInfoPartial *info,
         KCLTypeMask *typeMaskOut, u32 timeOffset) {
@@ -53,6 +66,16 @@ bool CollisionDirector::checkSpherePartialPush(f32 radius, const EGG::Vector3f &
 }
 
 /// @addr{0x8078F500}
+/// @brief Checks collision between a sphere and course KCL and object collision, writing out full
+/// collision info
+/// @param radius The radius of the sphere to check
+/// @param pos The position of the sphere to check
+/// @param prevPos The previous position of the sphere, used for calculating collision depth
+/// @param mask The KCL flags to check collision against (other types are ignored)
+/// @param info Out parameter for retrieving collision information (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
+/// @param timeOffset Optional time delta
+/// @return Whether a collision was detected
 bool CollisionDirector::checkSphereFull(f32 radius, const EGG::Vector3f &v0,
         const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut,
         u32 timeOffset) {
@@ -93,6 +116,16 @@ bool CollisionDirector::checkSphereFull(f32 radius, const EGG::Vector3f &v0,
 }
 
 /// @addr{0x8078F784}
+/// @brief Checks collision between a sphere and course KCL and object collision, writing out full
+/// collision info. Additionally pushes the collision entry into the CollisionDirector's cache.
+/// @param radius The radius of the sphere to check
+/// @param pos The position of the sphere to check
+/// @param prevPos The previous position of the sphere, used for calculating collision depth
+/// @param mask The KCL flags to check collision against (other types are ignored)
+/// @param info Out parameter for retrieving collision information (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
+/// @param timeOffset Optional time delta
+/// @return Whether a collision was detected
 bool CollisionDirector::checkSphereFullPush(f32 radius, const EGG::Vector3f &v0,
         const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut,
         u32 timeOffset) {
@@ -134,6 +167,16 @@ bool CollisionDirector::checkSphereFullPush(f32 radius, const EGG::Vector3f &v0,
 }
 
 /// @addr{0x807901F0}
+/// @brief Checks collision between a sphere and course KCL and object collision by using the
+/// collision director's local spatial cache, writing only partial collision info
+/// @param radius The radius of the sphere to check
+/// @param pos The position of the sphere to check
+/// @param prevPos The previous position of the sphere, used for calculating collision depth
+/// @param mask The KCL flags to check collision against (other types are ignored)
+/// @param info Out parameter for retrieving collision information (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
+/// @param timeOffset Optional time delta
+/// @return Whether a collision was detected
 bool CollisionDirector::checkSphereCachedPartial(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask typeMask, CollisionInfoPartial *info,
         KCLTypeMask *typeMaskOut, u32 timeOffset) {
@@ -174,6 +217,17 @@ bool CollisionDirector::checkSphereCachedPartial(f32 radius, const EGG::Vector3f
 }
 
 /// @addr{0x807903BC}
+/// @brief Checks collision between a sphere and course KCL and object collision by using the
+/// collision director's local spatial cache, writing partial collision info. Additionally pushes
+/// the collision entry into the CollisionDirector's cache.
+/// @param radius The radius of the sphere to check
+/// @param pos The position of the sphere to check
+/// @param prevPos The previous position of the sphere, used for calculating collision depth
+/// @param mask The KCL flags to check collision against (other types are ignored)
+/// @param info Out parameter for retrieving collision information (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
+/// @param timeOffset Optional time delta
+/// @return Whether a collision was detected
 bool CollisionDirector::checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask typeMask, CollisionInfoPartial *info,
         KCLTypeMask *typeMaskOut, u32 timeOffset) {
@@ -204,6 +258,17 @@ bool CollisionDirector::checkSphereCachedPartialPush(f32 radius, const EGG::Vect
 }
 
 /// @addr{0x807907F8}
+/// @brief Checks collision between a sphere and course KCL and object collision by using the
+/// collision director's local spatial cache, writing out full collision info. Additionally pushes
+/// the collision entry into the CollisionDirector's cache.
+/// @param radius The radius of the sphere to check
+/// @param pos The position of the sphere to check
+/// @param prevPos The previous position of the sphere, used for calculating collision depth
+/// @param mask The KCL flags to check collision against (other types are ignored)
+/// @param info Out parameter for retrieving collision information (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
+/// @param timeOffset Optional time delta
+/// @return Whether a collision was detected
 bool CollisionDirector::checkSphereCachedFullPush(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask typeMask, CollisionInfo *colInfo,
         KCLTypeMask *typeMaskOut, u32 timeOffset) {
@@ -243,19 +308,12 @@ bool CollisionDirector::checkSphereCachedFullPush(f32 radius, const EGG::Vector3
     return colliding;
 }
 
-/// @addr{0x807BDA7C}
-void CollisionDirector::resetCollisionEntries(KCLTypeMask *ptr) {
-    *ptr = 0;
-    m_collisionEntryCount = 0;
-    m_closestCollisionEntry = nullptr;
-}
-
 /// @brief Called when we find a piece of collision we are touching and want to save it temporarily.
 /// @addr{0x807BDA9C}
 /// @param dist Distance from player to the KCL triangle center
 /// @param typeMask Updated to include kclTypeBit
-/// @param kclTypeBit The attribute and additional info about the tri we are colliding with
-/// @param attribute The base type of the tri we are colliding with
+/// @param kclTypeBit The base type of the tri we are colliding with
+/// @param attribute The attribute and additional info about the tri we are colliding with
 void CollisionDirector::pushCollisionEntry(f32 dist, KCLTypeMask *typeMask, KCLTypeMask kclTypeBit,
         CollisionAttribute attribute) {
     *typeMask = *typeMask | kclTypeBit;

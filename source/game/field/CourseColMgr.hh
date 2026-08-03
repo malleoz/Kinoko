@@ -17,20 +17,33 @@ class Context;
 
 namespace Field {
 
+/// @brief Function type that represents a particular KColData collision query
+/// @details In practice, this is one of @ref KColData::checkPointCollision or @ref
+/// KColData::checkSphereCollision.
 typedef bool (
         KColData::*CollisionCheckFunc)(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *attributeOut);
 
-/// @brief Manager for course KCL interactions.
-/// @addr{0x809C3C10}
+/// @brief Manager for course KCL interactions
+/// @details Exposes multiple interfaces to query for collision checks. Parses tris from course.kcl
+/// so that collision queries can be performed against the course KCL tris. Queries can be performed
+/// for both a point and a sphere. Some queries will cache the result in the @ref
+/// CollisionDirector's collision entry cache. This class also stores a KCL scale factor that is
+/// passed into queries so that object collision queries that are forwarded to @ref CourseColMgr can
+/// compensate for dynamically sized objects (such as the Bowser's Castle geysers, represented by
+/// @ref ObjectFlamePoleFoot).
 class CourseColMgr : EGG::Disposer {
     friend class Host::Context;
 
 public:
+    /// @brief Collision info pertaining to soft walls
+    /// @details Stored as a pointer member of @ref CourseColMgr so that `KartCollide` can query
+    /// collision and fetch soft wall information to push the player out of the soft wall geometry
+    /// while still letting @ref CourseColMgr separately track normal wall hits.
     struct NoBounceWallColInfo {
-        EGG::BoundBox3f bbox;
-        EGG::Vector3f tangentOff;
-        f32 dist;
-        EGG::Vector3f fnrm;
+        EGG::BoundBox3f bbox;     ///< Bounding box of "push out" vectors
+        EGG::Vector3f tangentOff; ///< The net "push out" vector
+        f32 dist;                 ///< Depth of collision into the tri
+        EGG::Vector3f fnrm;       ///< Face normal of the colliding tri
     };
     STATIC_ASSERT(sizeof(NoBounceWallColInfo) == 0x34);
 
@@ -92,14 +105,23 @@ public:
             CollisionInfo *colInfo, KCLTypeMask *maskOut);
 
     /// @beginSetters
+    /// @brief Points to the @ref NoBounceWallColInfo struct that should be used to accumulate soft
+    /// wall collision info on subsequent queries
     void setNoBounceWallInfo(NoBounceWallColInfo *info) {
         m_noBounceWallInfo = info;
     }
 
+    /// @brief Removes the @ref NoBounceWallColInfo pointer so collision queries do not bother
+    /// accumulating soft wall info
     void clearNoBounceWallInfo() {
         m_noBounceWallInfo = nullptr;
     }
 
+    /// @brief Sets the local-to-world transformation matrix that is used to map object collisions
+    /// from local space to world space before accumulating soft wall collision data into @ref
+    /// NoBounceWallColInfo
+    /// @details Main course KCL collisions are already based in world space, whereas collisions
+    /// queried via @ref ObjColMgr exist within the object's local space.
     void setLocalMtx(EGG::Matrix34f *mtx) {
         m_localMtx = mtx;
     }
@@ -144,10 +166,10 @@ private:
     [[nodiscard]] bool doCheckMaskOnlyPush(KColData *data, CollisionCheckFunc collisionCheckFunc,
             KCLTypeMask *maskOut);
 
-    KColData *m_data;
-    f32 m_kclScale;
-    NoBounceWallColInfo *m_noBounceWallInfo;
-    EGG::Matrix34f *m_localMtx;
+    KColData *m_data;                        ///< Pointer to he parsed tri data from course.kcl
+    f32 m_kclScale;                          ///< Scale factor for collision queries
+    NoBounceWallColInfo *m_noBounceWallInfo; ///< Accumulates soft wall collision info
+    EGG::Matrix34f *m_localMtx; ///< Local-to-world transformation matrix for object tris
 
     static CourseColMgr *s_instance; ///< @addr{0x809C3C10}
 };

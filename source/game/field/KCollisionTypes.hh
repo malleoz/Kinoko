@@ -21,22 +21,25 @@
 
 // Credit: em-eight/mkw
 
-/// Computes the "Base Type" portion of the KCL flags. It's the lower 5 bits of the flag.
-#define KCL_ATTRIBUTE_TYPE(x) ((x)&0x1f)
-/// Converts an attribute to the type mask bitfield for that attribute. The game uses this method in
-/// order to create a mask that represents multiple KCL attributes.
+/// @brief Computes the "Base Type" portion of the KCL flags. It's the lower 5 bits of the flag.
+#define KCL_ATTRIBUTE_TYPE(x) ((x) & 0x1f)
+
+/// @brief Converts an attribute to the type mask bitfield for that attribute. The game uses this
+/// method in order to create a mask that represents multiple KCL attributes.
 #define KCL_TYPE_BIT(x) (1 << (x))
-/// Given the full 2 byte KCL flag for a triangle, extracts the "Base Type" portion of the flag.
+
+/// @brief Given the full 2 byte KCL flag for a triangle, extracts the "Base Type" portion of the
+/// flag.
 #define KCL_ATTRIBUTE_TYPE_BIT(x) KCL_TYPE_BIT(KCL_ATTRIBUTE_TYPE(x))
 
-// KCL attribute types
+/// @brief KCL attribute types
 typedef enum {
     COL_TYPE_ROAD = 0,                       ///< Default road.
     COL_TYPE_SLIPPERY_ROAD = 1,              ///< Like Dry Dry Ruins.
     COL_TYPE_WEAK_OFF_ROAD = 2,              ///< Slight off-road slowdown.
     COL_TYPE_OFF_ROAD = 3,                   ///< Moderate off-road slowdown.
     COL_TYPE_HEAVY_OFF_ROAD = 4,             ///< Heavy off-road slowdown.
-    COL_TYPE_SLIPPERY_ROAD_2 = 5,            ///< N64 Sherbet Land.
+    COL_TYPE_SLIPPERY_ROAD_2 = 5,            ///< N64 Sherbet Land ice.
     COL_TYPE_BOOST_PAD = 6,                  ///< Boost panel.
     COL_TYPE_BOOST_RAMP = 7,                 ///< Trickable. Variant affects boost duration.
     COL_TYPE_JUMP_PAD = 8,                   ///< Like GBA Shy Guy Beach.
@@ -144,6 +147,7 @@ STATIC_ASSERT(KCL_TYPE_OBJECT_WALL == 0x4000D000);
             ~KCL_TYPE_BIT(COL_TYPE_CANNON_TRIGGER) & \
             ~KCL_TYPE_BIT(COL_TYPE_FORCE_RECALCULATE_ROUTE))
 
+/// 0x62F8BDFF
 #define KCL_TYPE_CAMERA_COLLIDABLE \
     (KCL_TYPE_VEHICLE_COLLIDEABLE & ~KCL_TYPE_BIT(COL_TYPE_INVISIBLE_WALL2) & \
             ~KCL_TYPE_BIT(COL_TYPE_ITEM_STATE_MODIFIER))
@@ -163,19 +167,23 @@ STATIC_ASSERT(KCL_TYPE_OBJECT_WALL == 0x4000D000);
             KCL_TYPE_BIT(COL_TYPE_INVISIBLE_WALL) | \
             KCL_TYPE_BIT(COL_TYPE_INVISIBLE_WALL2) & ~KCL_TYPE_BIT(COL_TYPE_ITEM_ROAD))
 
+/// 0x60E8DFFF
 #define KCL_TYPE_60E8DFFF \
     (KCL_TYPE_FLOOR | KCL_TYPE_BIT(COL_TYPE_WALL) | KCL_TYPE_BIT(COL_TYPE_ITEM_WALL) | \
             KCL_TYPE_BIT(COL_TYPE_WALL_2) | KCL_TYPE_BIT(COL_TYPE_SPECIAL_WALL))
 STATIC_ASSERT(KCL_TYPE_60E8DFFF == 0x60E8DFFF);
 
+/// 0x64EBDFFF
 #define KCL_TYPE_64EBDFFF \
     (KCL_TYPE_60E8DFFF | KCL_TYPE_BIT(COL_TYPE_EFFECT_TRIGGER) | \
             KCL_TYPE_BIT(COL_TYPE_CANNON_TRIGGER) | KCL_TYPE_BIT(COL_TYPE_FALL_BOUNDARY))
 STATIC_ASSERT(KCL_TYPE_64EBDFFF == 0x64EBDFFF);
 
+/// 0x64EBFFFF
 #define KCL_TYPE_64EBFFFF (KCL_TYPE_64EBDFFF | KCL_TYPE_BIT(COL_TYPE_INVISIBLE_WALL))
 STATIC_ASSERT(KCL_TYPE_64EBFFFF == 0x64EBFFFF);
 
+/// 0x6CEBDFFF
 #define KCL_TYPE_6CEBDFFF (KCL_TYPE_64EBDFFF | KCL_TYPE_BIT(COL_TYPE_ITEM_STATE_MODIFIER))
 STATIC_ASSERT(KCL_TYPE_6CEBDFFF == 0x6CEBDFFF);
 
@@ -188,6 +196,7 @@ STATIC_ASSERT(KCL_TYPE_6CEBDFFF == 0x6CEBDFFF);
     (KCL_TYPE_INVISIBLE_WALL | KCL_TYPE_BIT(COL_TYPE_HALFPIPE_INVISIBLE_WALL))
 
 namespace Kinoko::Field {
+
 /// @brief The header of the KCL file format. It is 0x3C bytes long (for Mario %Kart Wii).
 struct KColHeader {
     u32 pos_data_offset;        ///< 0-indexed offset to array of position vectors.

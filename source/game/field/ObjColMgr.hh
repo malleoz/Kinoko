@@ -5,6 +5,13 @@
 namespace Kinoko::Field {
 
 /// @brief Manager for an object's KCL interactions.
+/// @details Exposes collision queries which operate in local space rather than world space, in
+/// order to allow for dynamically sized objects. Parses tris from an object's KCL file so that
+/// collision queries can be performed against the object's KCL tris. Queries can be performed for
+/// both a point and a sphere. Some queries will cache the result in the @ref CollisionDirector's
+/// collision entry cache. This class also stores a KCL scale factor so that object collision
+/// queries can map local space collision info to world space in order to compensate for dynamically
+/// sized objects (such as the Bowser's Castle geysers, represented by @ref ObjectFlamePoleFoot).
 class ObjColMgr {
 public:
     ObjColMgr(const void *file);
@@ -12,8 +19,19 @@ public:
 
     void narrScLocal(f32 radius, const EGG::Vector3f &pos, KCLTypeMask flags);
 
-    [[nodiscard]] EGG::Vector3f kclLowWorld() const;
-    [[nodiscard]] EGG::Vector3f kclHighWorld() const;
+    /// @addr{0x807C4E4C}
+    /// @brief Computes the lower bound of the object collision bounding box in world space
+    [[nodiscard]] EGG::Vector3f kclLowWorld() const {
+        EGG::Vector3f posLocal = m_data->bbox().min * m_kclScale;
+        return m_mtx.ps_multVector(posLocal);
+    }
+
+    /// @addr{0x807C4E7C}
+    /// @brief Computes the upper bound of the object collision bounding box in world space
+    [[nodiscard]] EGG::Vector3f kclHighWorld() const {
+        EGG::Vector3f posLocal = m_data->bbox().max * m_kclScale;
+        return m_mtx.ps_multVector(posLocal);
+    }
 
     [[nodiscard]] bool checkPointPartial(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
             KCLTypeMask flags, CollisionInfoPartial *infoOut, KCLTypeMask *typeMaskOut);
@@ -63,10 +81,12 @@ public:
             KCLTypeMask *typeMaskOut);
 
     /// @beginSetters
+    /// @brief Sets the local-to-world transformation matrix
     void setMtx(const EGG::Matrix34f &mtx) {
         m_mtx = mtx;
     }
 
+    /// @brief Sets the world-to-local transformation matrix
     void setInvMtx(const EGG::Matrix34f &mtx) {
         m_mtxInv = mtx;
     }
@@ -81,11 +101,11 @@ public:
     /// @endSetters
 
 private:
-    KColData *m_data;
-    EGG::Matrix34f m_mtx;
-    EGG::Matrix34f m_mtxInv;
-    f32 m_kclScale;
-    EGG::Vector3f m_movingObjVel;
+    KColData *m_data;             ///< Pointer to parsed KCL tri data
+    EGG::Matrix34f m_mtx;         ///< The local-to-world transformation matrix
+    EGG::Matrix34f m_mtxInv;      ///< The world-to-local transformation matrix
+    f32 m_kclScale;               ///< Scale factor for collision queries
+    EGG::Vector3f m_movingObjVel; ///< The object's velocity
 };
 
 } // namespace Kinoko::Field

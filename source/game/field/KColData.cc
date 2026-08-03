@@ -675,6 +675,11 @@ KColData::KCollisionPrism::KCollisionPrism(f32 height, u16 posIndex, u16 faceNor
     : height(height), pos_i(posIndex), fnrm_i(faceNormIndex), enrm1_i(edge1NormIndex),
       enrm2_i(edge2NormIndex), enrm3_i(edge3NormIndex), attribute(attribute) {}
 
+/// @brief Updates the internal state to reflect a new collision
+/// @param now_dist Distance from the colliding tri
+/// @param offset Position offset from the colliding tri
+/// @param fnrm Colliding tri face's up vector
+/// @param kclAttributeTypeBit KCL base type of the colliding tri
 void CollisionInfo::update(f32 now_dist, const EGG::Vector3f &offset, const EGG::Vector3f &fnrm,
         u32 kclAttributeTypeBit) {
     bbox.min = bbox.min.minimize(offset);
@@ -695,6 +700,11 @@ void CollisionInfo::update(f32 now_dist, const EGG::Vector3f &offset, const EGG:
 }
 
 /// @addr{0x807C26AC}
+/// @brief Maps the provided collision info from local to world space
+/// @details Also updates the provided collision info's bbox to world space.
+/// @param rhs The collision info accumulated from local space
+/// @param mtx The local-to-world transformation matrix
+/// @param v Moving road velocity of the colliding tri
 void CollisionInfo::transformInfo(CollisionInfo &rhs, const EGG::Matrix34f &mtx,
         const EGG::Vector3f &v) {
     rhs.bbox.min = mtx.ps_multVector33(rhs.bbox.min);
