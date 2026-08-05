@@ -11,7 +11,9 @@ ObjectCollisionBase::ObjectCollisionBase() = default;
 ObjectCollisionBase::~ObjectCollisionBase() = default;
 
 /// @addr{0x80834348}
-bool ObjectCollisionBase::check(ObjectCollisionBase &rhs, EGG::Vector3f &distance) {
+/// @brief Checks for a collision between the provided object
+/// @param distance Out parameter for the distance vector between the two objects
+bool ObjectCollisionBase::check(const ObjectCollisionBase &rhs, EGG::Vector3f &distance) const {
     // std::sqrt(std::numeric_limits<f32>::max());
     constexpr f32 INITIAL_MAX_VALUE = std::bit_cast<f32>(0x5f7fffff);
 
@@ -51,14 +53,11 @@ bool ObjectCollisionBase::check(ObjectCollisionBase &rhs, EGG::Vector3f &distanc
 
             distance = v1 - v0;
 
-            m_00 = v0;
-            rhs.m_00 = v1;
-
             return true;
         }
 
-        state.m_s[state.m_idx] = A;
-        state.m_00c = state.m_flags | state.m_mask;
+        state.m_minDiffPts[state.m_idx] = A;
+        state.m_candidateMask = state.m_flags | state.m_mask;
 
         if (!getNearestSimplex(state, D)) {
             getNearestPoint(state, state.m_flags, v0, v1);
@@ -68,25 +67,19 @@ bool ObjectCollisionBase::check(ObjectCollisionBase &rhs, EGG::Vector3f &distanc
 
             distance = v1 - v0;
 
-            m_00 = v0;
-            rhs.m_00 = v1;
-
             return true;
         }
 
         max = D.length();
 
         if (max2 - max * max <= std::numeric_limits<f32>::epsilon() * max2) {
-            FUN_808350e4(state, D);
+            findNearestEnclosingSimplex(state, D);
             getNearestPoint(state, state.m_flags, v0, v1);
             f32 len = D.length();
             v0 -= D * (getBoundingRadius() / len);
             v1 += D * (rhs.getBoundingRadius() / len);
 
             distance = v1 - v0;
-
-            m_00 = v1;
-            rhs.m_00 = v1;
 
             return true;
         }
@@ -97,6 +90,9 @@ bool ObjectCollisionBase::check(ObjectCollisionBase &rhs, EGG::Vector3f &distanc
 }
 
 /// @addr{0x8083504C}
+/// @brief Checks whether the origin's projection onto the affine hull of simplex `idx` lies
+/// within that simplex, i.e. all of its barycentric weights (@ref GJKState::m_scales) are
+/// positive.
 bool ObjectCollisionBase::enclosesOrigin(const GJKState &state, u32 idx) const {
     u32 mask = 1;
     for (u8 i = 0; i < 4; ++i, mask *= 2) {
@@ -109,11 +105,14 @@ bool ObjectCollisionBase::enclosesOrigin(const GJKState &state, u32 idx) const {
 }
 
 /// @addr{0x808350E4}
-void ObjectCollisionBase::FUN_808350e4(GJKState &state, EGG::Vector3f &v) const {
+/// @brief Fallback used near convergence to exhaustively find the subset of the candidate simplex
+/// whose closest point to the origin (among subsets where that point actually lies within the
+/// subset) has the smallest squared length.
+void ObjectCollisionBase::findNearestEnclosingSimplex(GJKState &state, EGG::Vector3f &v) const {
     f32 min = std::numeric_limits<f32>::max();
 
-    for (u32 mask = state.m_00c; mask != 0; --mask) {
-        if (mask != (mask & state.m_00c) || !enclosesOrigin(state, mask)) {
+    for (u32 mask = state.m_candidateMask; mask != 0; --mask) {
+        if (mask != (mask & state.m_candidateMask) || !enclosesOrigin(state, mask)) {
             continue;
         }
 
@@ -131,11 +130,15 @@ void ObjectCollisionBase::FUN_808350e4(GJKState &state, EGG::Vector3f &v) const 
 }
 
 /// @addr{0x80835304}
+/// @brief Selects which subset of the simplex (including the newly added vertex from @ref
+/// calcSimplex) is nearest the origin, updating `state.m_flags` accordingly and saving the
+/// nearest point to the provided `v`.
+/// @return false if no valid subset was found, meaning the current simplex encloses the origin.
 bool ObjectCollisionBase::getNearestSimplex(GJKState &state, EGG::Vector3f &v) const {
     calcSimplex(state);
 
     for (u32 i = state.m_flags; i != 0; --i) {
-        if (i != (i & state.m_flags) || !FUN_808357e4(state, i | state.m_mask)) {
+        if (i != (i & state.m_flags) || !isValidSimplex(state, i | state.m_mask)) {
             continue;
         }
 
@@ -144,9 +147,9 @@ bool ObjectCollisionBase::getNearestSimplex(GJKState &state, EGG::Vector3f &v) c
         return true;
     }
 
-    if (FUN_808357e4(state, state.m_mask)) {
+    if (isValidSimplex(state, state.m_mask)) {
         state.m_flags = state.m_mask;
-        v = state.m_s[state.m_idx];
+        v = state.m_minDiffPts[state.m_idx];
 
         return true;
     }
@@ -155,6 +158,9 @@ bool ObjectCollisionBase::getNearestSimplex(GJKState &state, EGG::Vector3f &v) c
 }
 
 /// @addr{0x80835650}
+/// @brief Computes the points on each of the two shapes (via barycentric interpolation of
+/// @ref GJKState::m_support1 / @ref GJKState::m_support2 using the weights for simplex subset
+/// `idx`) corresponding to the simplex point nearest the origin.
 void ObjectCollisionBase::getNearestPoint(GJKState &state, u32 idx, EGG::Vector3f &v0,
         EGG::Vector3f &v1) const {
     v0.setZero();
@@ -176,9 +182,13 @@ void ObjectCollisionBase::getNearestPoint(GJKState &state, u32 idx, EGG::Vector3
 }
 
 /// @addr{0x808357E4} @addr{0x808359A4}
-bool ObjectCollisionBase::FUN_808357e4(const GJKState &state, u32 idx) const {
+/// @brief Tests whether simplex subset \p idx is a valid nearest simplex
+/// @details Every vertex it includes must have a positive barycentric weight (@ref
+/// GJKState::m_scales), and every vertex excluded from it (but present in @ref
+/// GJKState::m_candidateMask) must not gain a positive weight if it were added back in.
+bool ObjectCollisionBase::isValidSimplex(const GJKState &state, u32 idx) const {
     for (u32 i = 0, mask = 1; i < 4; ++i, mask *= 2) {
-        if ((state.m_00c & mask) == 0) {
+        if ((state.m_candidateMask & mask) == 0) {
             continue;
         }
 
@@ -195,9 +205,11 @@ bool ObjectCollisionBase::FUN_808357e4(const GJKState &state, u32 idx) const {
 }
 
 /// @addr{0x808358CC}
+/// @brief Catches scenarios where the newly computed support point `v` is identical to a point
+/// already in the simplex, which would cause the algorithm to loop infinitely.
 bool ObjectCollisionBase::inSimplex(const GJKState &state, const EGG::Vector3f &v) const {
     for (u32 i = 0, mask = 1; i < 4; ++i, mask *= 2) {
-        if ((state.m_00c & mask) && state.m_s[i] == v) {
+        if ((state.m_candidateMask & mask) && state.m_minDiffPts[i] == v) {
             return true;
         }
     }
@@ -206,6 +218,8 @@ bool ObjectCollisionBase::inSimplex(const GJKState &state, const EGG::Vector3f &
 }
 
 /// @addr{0x80835F34}
+/// @brief Computes the point on the simplex itself (via barycentric interpolation of
+/// @ref GJKState::m_minDiffPts using the weights for simplex subset `idx`) nearest the origin.
 void ObjectCollisionBase::getNearestPoint(const GJKState &state, u32 idx, EGG::Vector3f &v) const {
     v.setZero();
 
@@ -217,13 +231,15 @@ void ObjectCollisionBase::getNearestPoint(const GJKState &state, u32 idx, EGG::V
         }
 
         sum += state.m_scales[idx][i];
-        v += state.m_s[i] * state.m_scales[idx][i];
+        v += state.m_minDiffPts[i] * state.m_scales[idx][i];
     }
 
     v *= 1.0f / sum;
 }
 
 /// @addr{0x80835A8C}
+/// @brief Computes the barycentric weights for every subset of the simplex (including the newly
+/// added vertex) and caches them in @ref GJKState::m_scales.
 void ObjectCollisionBase::calcSimplex(GJKState &state) const {
     const u32 idx = state.m_idx;
 
@@ -232,13 +248,13 @@ void ObjectCollisionBase::calcSimplex(GJKState &state) const {
             continue;
         }
 
-        f32 result = state.m_s[i].dot(state.m_s[idx]);
+        f32 result = state.m_minDiffPts[i].dot(state.m_minDiffPts[idx]);
         s_dotProductCache[idx][i] = result;
         s_dotProductCache[i][idx] = result;
     }
 
     state.m_scales[state.m_mask][idx] = 1.0f;
-    s_dotProductCache[idx][idx] = state.m_s[idx].squaredLength();
+    s_dotProductCache[idx][idx] = state.m_minDiffPts[idx].squaredLength();
 
     for (u32 i = 0, iMask = 1; i < 4; ++i, iMask *= 2) {
         if ((state.m_flags & iMask) == 0) {
@@ -270,7 +286,7 @@ void ObjectCollisionBase::calcSimplex(GJKState &state) const {
         }
     }
 
-    if (state.m_00c != 0xf) {
+    if (state.m_candidateMask != 0xf) {
         return;
     }
 

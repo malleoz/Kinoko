@@ -7,6 +7,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8082C10C}
+/// @brief Obtains a pointer to the provided filename (ObjFlow.bin), parses the count, and obtains
+/// pointers to the two data sections
 ObjectFlowTable::ObjectFlowTable(const char *filename) {
     SFile *file = reinterpret_cast<SFile *>(System::ResourceManager::Instance()->getFile(filename,
             nullptr, System::ArchiveId::Core));
@@ -20,6 +22,8 @@ ObjectFlowTable::ObjectFlowTable(const char *filename) {
 ObjectFlowTable::~ObjectFlowTable() = default;
 
 /// @addr{0x8082C178}
+/// @brief Iterates the @ref SObjectCollisionSet entries and returns the @ref ObjectId of the entry
+/// with a matching name
 ObjectId ObjectFlowTable::getIdFromName(const char *name) const {
     for (s16 i = 0; i < m_count; ++i) {
         const auto *curSet = set(i);

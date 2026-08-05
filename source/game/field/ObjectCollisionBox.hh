@@ -4,7 +4,9 @@
 
 namespace Kinoko::Field {
 
-/// @details Inherits ObjectCollisionConvexHull, as a box is a convex hull of its vertices.
+/// @brief Defines the convex hull of a box-shaped collision object
+/// @details The box is defined by its dimensions and center point, and the convex hull is
+/// constructed from the eight vertices of the box.
 class ObjectCollisionBox : public ObjectCollisionConvexHull {
 public:
     ObjectCollisionBox(f32 x, f32 y, f32 z, const EGG::Vector3f &center);
@@ -15,9 +17,9 @@ public:
             const EGG::Vector3f &speed) override;
 
 private:
-    EGG::Vector3f m_dimensions;
-    EGG::Vector3f m_center;
-    EGG::Vector3f m_scale;
+    EGG::Vector3f m_dimensions; ///< Length, width, and height of the box
+    EGG::Vector3f m_center;     ///< Center point of the box in local space
+    EGG::Vector3f m_scale;      ///< Scale factor applied to the box dimensions
 };
 
 } // namespace Kinoko::Field

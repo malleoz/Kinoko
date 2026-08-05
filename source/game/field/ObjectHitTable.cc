@@ -7,6 +7,9 @@
 namespace Kinoko::Field {
 
 /// @addr{0x807F9278}
+/// @brief Obtains a pointer to the provided filename (either GeoHitTableKart.bin or
+/// GeoHitTableKartObj.bin), parses the count, parses the reactions, and obtains a pointer to the
+/// second data section
 ObjectHitTable::ObjectHitTable(const char *filename) {
     size_t size;
     void *file =
@@ -29,18 +32,5 @@ ObjectHitTable::ObjectHitTable(const char *filename) {
 
 /// @addr{0x807F9348}
 ObjectHitTable::~ObjectHitTable() = default;
-
-Kart::Reaction ObjectHitTable::reaction(s16 i) const {
-    ASSERT(i != -1);
-    ASSERT(i < m_count);
-    return static_cast<Kart::Reaction>(m_reactions[i]);
-}
-
-s16 ObjectHitTable::slot(ObjectId id) const {
-    constexpr size_t SLOT_COUNT = 0x2f4;
-
-    size_t i = static_cast<std::underlying_type_t<ObjectId>>(id);
-    return i < SLOT_COUNT ? parse<s16>(m_slots[i]) : -1;
-}
 
 } // namespace Kinoko::Field

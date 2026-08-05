@@ -12,6 +12,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8082A2B4}
+/// @brief Initializes all objects, including those in @ref ObjectDrivableDirector
 void ObjectDirector::init() {
     for (auto *&obj : m_objects) {
         obj->init();
@@ -22,6 +23,8 @@ void ObjectDirector::init() {
 }
 
 /// @addr{0x8082A8F4}
+/// @brief Runs per-frame calculations for all objects, including those in @ref
+/// ObjectDrivableDirector
 void ObjectDirector::calc() {
     for (auto *&obj : m_calcObjects) {
         obj->calc();
@@ -35,6 +38,8 @@ void ObjectDirector::calc() {
 }
 
 /// @addr{0x8082B0E8}
+/// @brief Registers an object to the director, and adds it to the appropriate lists based on its
+/// load flags and collision mode
 void ObjectDirector::addObject(ObjectCollidable *obj) {
     u32 loadFlags = obj->loadFlags();
 
@@ -55,16 +60,12 @@ void ObjectDirector::addObject(ObjectCollidable *obj) {
     m_objects.push_back(obj);
 }
 
-void ObjectDirector::addObjectNoImpl(ObjectBase *obj) {
-    m_objects.push_back(obj);
-}
-
-/// @addr{0x806C4ED4}
-void ObjectDirector::addManagedObject(ObjectCollidable *obj) {
-    m_managedObjects.push_back(obj);
-}
-
 /// @addr{0x8082AB04}
+/// @brief Checks for collisions between a kart and all objects in the director
+/// @details When a collision occurs, fetches the reaction to apply on the kart and processes it.
+/// Depending on the behavior of the colliding object, the reaction may be modified. Caches the
+/// modified reaction so it can be fetched later.
+/// @return The number of collisions detected
 size_t ObjectDirector::checkKartObjectCollision(Kart::KartObject *kartObj,
         ObjectCollisionConvexHull *convexHull) {
     size_t count = 0;
@@ -111,18 +112,22 @@ size_t ObjectDirector::checkKartObjectCollision(Kart::KartObject *kartObj,
 }
 
 /// @addr{0x8082B3EC}
+/// @brief Returns the vertical distance between the kart and the rising water object, if present
 f32 ObjectDirector::distAboveRisingWater(f32 offset) const {
     ASSERT(m_psea);
     return offset - m_psea->pos().y;
 }
 
 /// @addr{0x8082B400}
+/// @brief Returns the height of the kill plane for the rising water object, if present
 f32 ObjectDirector::risingWaterKillPlaneHeight() const {
     ASSERT(m_psea);
     return m_psea->pos().y - 260.0f;
 }
 
 /// @addr{0x8082A784}
+/// @brief Creates the singleton instances of @ref ObjectDirector and @ref ObjectDrivableDirector.
+/// Also creates all objects in the course.
 ObjectDirector *ObjectDirector::CreateInstance() {
     ASSERT(!s_instance);
     s_instance = EGG::egg_new<ObjectDirector>();
@@ -135,6 +140,7 @@ ObjectDirector *ObjectDirector::CreateInstance() {
 }
 
 /// @addr{0x8082A824}
+/// @brief Destroys the singleton instances of @ref ObjectDirector and @ref ObjectDrivableDirector
 void ObjectDirector::DestroyInstance() {
     ASSERT(s_instance);
     auto *instance = s_instance;
@@ -164,6 +170,10 @@ ObjectDirector::~ObjectDirector() {
 }
 
 /// @addr{0x80826E8C}
+/// @brief Constructs all objects defined in course.kmp
+/// @details After construction, calls load() on each object, which will load resources, create
+/// collision, and register the object to the appropriate director. Also constructs special manager
+/// classes depending on what course and objects are present.
 void ObjectDirector::createObjects() {
     const auto *courseMap = System::CourseMap::Instance();
     size_t objectCount = courseMap->getGeoObjCount();
@@ -235,6 +245,9 @@ void ObjectDirector::createObjects() {
 }
 
 /// @addr{0x80821E14}
+/// @brief Factory function that constructs an object based on its ID
+/// @details Some objects are primitive types that do not require a subclass, and some are not
+/// implemented as they do not affect time trial physics.
 ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
     ObjectId id = static_cast<ObjectId>(params.id());
     switch (id) {
@@ -401,7 +414,14 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
     }
 }
 
-f32 ObjectDirector::s_wanwanMaxPitch; ///< @addr{0x808C70E8}
+/// @desync @ref ObjectDirector::s_wanwanMaxPitch is used to describe the maximum pitch of the Chain
+/// Chomp. In the base game, this value is statically initialized to -30.0f and is only overwritten
+/// if you load GCN Mario Circuit, at which point it is changed to -20.0f. If you then load into
+/// Mario Circuit Wii, it will continue to be set to the overwritten value of -20.0f. This means
+/// that the Chain Chomp's behavior will desync if GCN Mario Circuit is loaded before playing Mario
+/// Circuit Wii. To compensate for this, we always set the max pitch in @ref
+/// ObjectDirector::createObjects().
+f32 ObjectDirector::s_wanwanMaxPitch;
 
 ObjectDirector *ObjectDirector::s_instance = nullptr; ///< @addr{0x809C4330}
 

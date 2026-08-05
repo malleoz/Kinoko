@@ -35,7 +35,7 @@ public:
 
     /// @brief Called when a collision occurs between a kart and this object
     /// @addr{0x8068179C}
-    /// @returns The reaction that should be applied to the kart
+    /// @return The reaction that should be applied to the kart
     virtual Kart::Reaction onCollision(Kart::KartObject * /*kartObj*/,
             Kart::Reaction reactionOnKart, Kart::Reaction /*reactionOnObj*/,
             EGG::Vector3f & /*hitDepth*/) {

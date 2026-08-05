@@ -43,7 +43,7 @@ public:
     /// @param maskOut The KCL flags that were hit during the collision check (if any)
     /// @return Whether a collision was detected
     [[nodiscard]] virtual bool checkPointPartialPush(const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask flags, CollisionInfoPartial *info,
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
             KCLTypeMask *maskOut) = 0;
 
     /// @brief Checks collision between a point and the object, writing out full collision info

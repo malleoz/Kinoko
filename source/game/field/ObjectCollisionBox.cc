@@ -3,6 +3,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80833840}
+/// @brief Derives the 8 vertices of the box from its dimensions and center point, and constructs
+/// the convex hull from those
 ObjectCollisionBox::ObjectCollisionBox(f32 x, f32 y, f32 z, const EGG::Vector3f &center)
     : ObjectCollisionConvexHull(8), m_dimensions(x, y, z), m_center(center),
       m_scale(EGG::Vector3f::unit) {

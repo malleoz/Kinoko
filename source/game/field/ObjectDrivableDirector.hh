@@ -18,6 +18,12 @@ class Context;
 
 namespace Field {
 
+/// @brief Singleton that manages all @ref ObjectDrivable instances and their collision interactions
+/// @details Distinguishes between objects that require per-frame calculations and those that do
+/// not. Exposes multiple interfaces to perform collision queries similar to that of @ref
+/// CourseColMgr, which call into each object's respective virtual collision check method.
+/// Separately owns the @ref ObjectObakeManager, which handles SNES Ghost Valley 2 block
+/// management and spatial indexing for drivable objects.
 class ObjectDrivableDirector : EGG::Disposer {
     friend class Host::Context;
 
@@ -67,13 +73,23 @@ private:
     ObjectDrivableDirector();
     ~ObjectDrivableDirector() override;
 
+<<<<<<< HEAD
     fixed_vector<ObjectDrivable *> m_objects;     ///< All objects live here
     fixed_vector<ObjectDrivable *> m_calcObjects; ///< Objects needing calc() live here too.
     ObjectObakeManager *m_obakeManager;           ///< Manages rGV2 blocks and spatial indexing.
 
     static constexpr size_t MAX_OBJECTS = 400; ///< Maximum number of objects in the vectors
+=======
+    /// @brief All drivable objects live here
+    std::vector<ObjectDrivable *, EGG::Allocator<ObjectDrivable *>> m_objects;
+>>>>>>> 56fdcff1 (WIP 2026-08-05)
 
-    static ObjectDrivableDirector *s_instance;
+    /// @brief Objects needing calc() live here too
+    std::vector<ObjectDrivable *, EGG::Allocator<ObjectDrivable *>> m_calcObjects;
+
+    ObjectObakeManager *m_obakeManager; ///< Manages rGV2 blocks and spatial indexing
+
+    static ObjectDrivableDirector *s_instance; ///< @addr{0x809C4310}
 };
 
 } // namespace Field

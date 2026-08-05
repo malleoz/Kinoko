@@ -161,7 +161,7 @@ void ObjectBase::setMatrixFromOrthonormalBasisAndPos(const EGG::Vector3f &v) {
 
 /// @addr{0x806B38A8}
 /// @brief Calculates on what side of line segment ab point lies.
-/// @returns a positive value if point is on the left side of the line segment, negative if on the
+/// @return a positive value if point is on the left side of the line segment, negative if on the
 /// right side, and 0 if on the line segment.
 f32 ObjectBase::CheckPointAgainstLineSegment(const EGG::Vector3f &point, const EGG::Vector3f &a,
         const EGG::Vector3f &b) {

@@ -12,7 +12,11 @@ class KartObject;
 
 namespace Field {
 
-/// @brief Relates a KartObject with its convex hull representation.
+/// @brief Relates a KartObject with its convex hull representation
+/// @details Exposes a function to initialize the convex hull based on the KartObject's vehicle.
+/// Each vehicle type has a unique set of vertices that define its convex hull. Once initialized,
+/// `checkCollision` can be called to check for collisions between the @ref Kart::KartObject and
+/// other objects via @ref ObjectDirector.
 class ObjectCollisionKart {
 public:
     ObjectCollisionKart();
@@ -28,9 +32,9 @@ public:
     [[nodiscard]] static const EGG::Vector3f &translation(size_t idx);
 
 private:
-    ObjectCollisionConvexHull *m_hull;
-    Kart::KartObject *m_kartObject;
-    u32 m_playerIdx;
+    ObjectCollisionConvexHull *m_hull; ///< Pointer to the convex hull for the KartObject's vehicle
+    Kart::KartObject *m_kartObject;    ///< Pointer to the associated @ref Kart::KartObject
+    u32 m_playerIdx;                   ///< Player index in the @ref Kart::KartObjectManager
 };
 
 } // namespace Field

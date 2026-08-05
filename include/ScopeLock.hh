@@ -9,11 +9,11 @@ namespace Kinoko {
 template <typename T>
 class ScopeLock;
 
+/// @brief Temporarily changes the group ID of a given heap to better track memory allocation.
+/// @details Typical pattern is `ScopeLock<GroupID> lock(groupID);` to initialize a lock.
 template <>
 class ScopeLock<GroupID> {
 public:
-    /// @brief Temporarily changes the group ID of a given heap to better track memory allocation.
-    /// @details Typical pattern is "ScopeLock<GroupID> lock(groupID);" to initialize a lock.
     ScopeLock(GroupID newID) {
         EGG::ExpHeap *heap = EGG::Heap::dynamicCastToExp(EGG::Heap::getCurrentHeap());
         ASSERT(heap);

@@ -13,6 +13,7 @@
 
 namespace Kinoko {
 
+/// @brief Maps between a course and its internal ID
 enum class Course {
     Mario_Circuit = 0,
     Moo_Moo_Meadows = 1,
@@ -63,6 +64,7 @@ enum class Course {
     Ending_Demo = 58,
 };
 
+/// @brief Maps between a vehicle and its internal ID
 enum class Vehicle {
     Standard_Kart_S = 0,
     Standard_Kart_M = 1,
@@ -103,6 +105,7 @@ enum class Vehicle {
     Max = 36,
 };
 
+/// @brief Maps between a character and its internal ID
 enum class Character {
     Mario = 0,
     Baby_Peach = 1,
@@ -155,6 +158,7 @@ enum class Character {
     Max = 48,
 };
 
+/// @brief Represents the weight class of a character or vehicle
 enum class WeightClass {
     Invalid = -1,
     Light = 0,
@@ -162,6 +166,7 @@ enum class WeightClass {
     Heavy = 2,
 };
 
+/// @brief Unique identifier to better categorize regions of the game's heap allocation
 enum class GroupID : u16 {
     None = 0,
     Race = 1,
@@ -178,6 +183,8 @@ enum class GroupID : u16 {
     Net = 13,
 };
 
+/// @brief Maps between a character and its corresponding weight class
+/// @return The weight class of the specified character
 static constexpr WeightClass CharacterToWeight(Character character) {
     switch (character) {
     case Character::Baby_Peach:
@@ -212,6 +219,8 @@ static constexpr WeightClass CharacterToWeight(Character character) {
     }
 }
 
+/// @brief Maps between a vehicle and its corresponding weight class
+/// @return The weight class of the specified vehicle
 static constexpr WeightClass VehicleToWeight(Vehicle vehicle) {
     switch (vehicle) {
     case Vehicle::Standard_Kart_S:
@@ -258,6 +267,7 @@ static constexpr WeightClass VehicleToWeight(Vehicle vehicle) {
     }
 }
 
+/// @brief Maps between a course ID and its internal SZS filename
 static constexpr const char *COURSE_NAMES[59] = {
         "castle_course",
         "farm_course",
@@ -320,6 +330,7 @@ static constexpr const char *COURSE_NAMES[59] = {
         "ending_demo",
 };
 
+/// @brief Maps between a vehicle ID and its internal BSP filename
 static constexpr const char *VEHICLE_NAMES[36] = {
         "sdf_kart",
         "mdf_kart",
@@ -378,12 +389,18 @@ public:
     static constexpr bool value = decltype(test(std::declval<Derived *>()))::value;
 };
 
+/// @brief Represents whether a class is derived from a templated base class
+/// @tparam Derived The class to check if it is derived from the templated base class
 template <template <typename...> class Base, typename Derived>
 inline constexpr bool is_derived_from_template_v = is_derived_from_template<Base, Derived>::value;
 
 template <typename T>
 concept IntegralType = std::is_integral_v<T>;
 
+/// @brief Concept that checks if a type is parseable (integral or floating-point)
+/// @tparam T The type to check if it is parseable
+/// @details When we say "parseable", we mean that the type can be passed into @ref parse() to
+/// handle potential endianness differences between the Kinoko user's OS and the game files.
 template <typename T>
 concept ParseableType = std::is_integral_v<T> ||
         (std::is_floating_point_v<T> && (sizeof(T) == 4 || sizeof(T) == 8));
@@ -398,7 +415,7 @@ static inline T form(const u8 *data) {
     return result;
 }
 
-// Consistent file parsing with byte-swappable values
+/// @brief Consistent file parsing with byte-swappable values
 template <ParseableType T>
 static inline constexpr T parse(T val, std::endian endian = std::endian::big) {
     if constexpr (std::is_integral_v<T>) {
@@ -412,12 +429,12 @@ static inline constexpr T parse(T val, std::endian endian = std::endian::big) {
     }
 }
 
-// Helper function to allow hex representation of f32
+/// @brief Helper function to allow hex representation of f32 by bitcasting to u32
 static inline constexpr u32 f2u(f32 val) {
     return std::bit_cast<u32>(val);
 }
 
-// The size of memory blocks that are allocated for game heap space.
+/// @brief The size of memory blocks that are allocated for game heap space.
 static constexpr size_t MEMORY_SPACE_SIZE = 0x1000000;
 
 #ifdef BUILD_DEBUG

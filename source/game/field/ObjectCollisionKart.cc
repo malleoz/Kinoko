@@ -17,6 +17,7 @@ ObjectCollisionKart::~ObjectCollisionKart() {
 }
 
 /// @addr{0x8081D090}
+/// @brief Initializes the convex hull based on the provided player index's vehicle
 void ObjectCollisionKart::init(u32 idx) {
     if (m_kartObject) {
         return;
@@ -30,6 +31,9 @@ void ObjectCollisionKart::init(u32 idx) {
 }
 
 /// @addr{0x8081E170}
+/// @brief Checks for collisions between the KartObject and other objects based off the provided
+/// transformation matrix and velocity vector
+/// @return The number of object collisions detected
 size_t ObjectCollisionKart::checkCollision(const EGG::Matrix34f &mat, const EGG::Vector3f &v) {
     if (!m_hull) {
         return 0;
@@ -43,13 +47,14 @@ size_t ObjectCollisionKart::checkCollision(const EGG::Matrix34f &mat, const EGG:
 }
 
 /// @addr{0x80572544}
+/// @brief Returns the normalized hit depth vector for a given object collision
 EGG::Vector3f ObjectCollisionKart::GetHitDirection(u16 objKartHit) {
     EGG::Vector3f hitDepth = ObjectDirector::Instance()->hitDepth(objKartHit);
     hitDepth.normalise();
     return hitDepth;
 }
 
-/// @brief Helper function to map between a vehicle and its set of convex hull vertices.
+/// @brief Helper function to map between a vehicle and its set of convex hull vertices
 constexpr std::span<const EGG::Vector3f> ObjectCollisionKart::GetVehicleVertices(Vehicle vehicle) {
     static constexpr std::array<EGG::Vector3f, 2> VERT_STANDARD_KART_S = {{
             {0.0f, 35.0f, -40.0f},
@@ -382,6 +387,7 @@ constexpr std::span<const EGG::Vector3f> ObjectCollisionKart::GetVehicleVertices
 }
 
 /// @addr{0x80573464}
+/// @brief Returns the translation vector of the object collision at the given index, if it exists
 const EGG::Vector3f &ObjectCollisionKart::translation(size_t idx) {
     const auto *objCol = ObjectDirector::Instance()->collidingObject(idx)->collision();
     return objCol ? objCol->translation() : EGG::Vector3f::zero;
