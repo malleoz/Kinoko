@@ -37,38 +37,18 @@ RailManager::~RailManager() {
 }
 
 /// @addr{0x806F0AD8}
+/// @brief Parses all rails from the @ref CourseMap, distinguishing between linear and curved rails
+/// @details In the base game, this function differentiates between object routes and camera routes.
+/// Since we do not implement camera rail functionality in Kinoko, we can simplify the logic in this
+/// function a bit by not checking object rail ids.
 void RailManager::createPaths() {
     auto *courseMap = System::CourseMap::Instance();
-    m_pointCount = courseMap->getPointInfoCount();
-    m_extraInterplatorCount = 8;
-    u16 geoCount = courseMap->getGeoObjCount();
-    m_rails.reserve(m_pointCount + m_extraInterplatorCount);
+    u16 railCount = courseMap->getPointInfoCount();
+    m_rails.reserve(railCount);
 
-    for (u16 i = 0; i < m_pointCount; ++i) {
-        bool isObjectRoute = false;
+    for (u16 i = 0; i < railCount; ++i) {
         auto *pointInfo = courseMap->getPointInfo(i);
         bool isSpline = pointInfo->setting(0);
-
-        for (u16 j = 0; j < geoCount; ++j) {
-            auto *geoObj = courseMap->getGeoObj(j);
-
-            if (geoObj->pathId() != i) {
-                continue;
-            }
-
-            if (isSpline) {
-                m_rails.push_back(EGG::egg_new<RailSpline>(i, pointInfo));
-            } else {
-                m_rails.push_back(EGG::egg_new<RailLine>(i, pointInfo));
-            }
-
-            isObjectRoute = true;
-            break;
-        }
-
-        if (isObjectRoute) {
-            continue;
-        }
 
         if (isSpline) {
             m_rails.push_back(EGG::egg_new<RailSpline>(i, pointInfo));

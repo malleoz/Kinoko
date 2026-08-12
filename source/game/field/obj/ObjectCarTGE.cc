@@ -299,7 +299,8 @@ void ObjectCarTGE::calcSlowdown() {
 
 /// @addr{0x806D9000}
 /// @brief Calculates the position and orientation of the car along the rail
-/// @details Computes position and orientation by computing a cubic bezier along the rail.
+/// @details Computes position and orientation by computing a cubic bezier along the rail to find
+/// the position of the rear of the car.
 void ObjectCarTGE::calcPos() {
     constexpr f32 NORMAL_SPEED = 1500.0f;
     constexpr f32 TRUCK_SPEED = 1600.0f;
@@ -307,12 +308,12 @@ void ObjectCarTGE::calcPos() {
     f32 speed = (m_carType == CarType::Truck) ? TRUCK_SPEED : NORMAL_SPEED;
     f32 t = speed * scale().z * 0.5f;
 
-    EGG::Vector3f curDir;
-    EGG::Vector3f curTangentDir;
-    m_railInterpolator->evalCubicBezierOnPath(t, curDir, curTangentDir);
+    EGG::Vector3f rearPos;
+    EGG::Vector3f rearTangentDir;
+    m_railInterpolator->evalPositionAndTangentBehind(t, rearPos, rearTangentDir);
 
     const EGG::Vector3f curPos = m_railInterpolator->curPos();
-    EGG::Vector3f posDelta = curPos - curDir;
+    EGG::Vector3f posDelta = curPos - rearPos;
     posDelta.normalise2();
     m_tangent += 0.1f * (posDelta - m_tangent);
     m_tangent.y = posDelta.y;

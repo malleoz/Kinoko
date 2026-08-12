@@ -4,7 +4,9 @@
 
 namespace Kinoko::Field {
 
-/// @brief One link in a chain where each link's position is limited by the other links.
+/// @brief One link in a chain where each link's position is limited by the other links
+/// @details Used by @ref HanachanChainManager to ensure that each body segment stays connected to
+/// neighboring segments.
 class SphereLink {
 public:
     SphereLink();
@@ -54,7 +56,7 @@ public:
     }
 
     [[nodiscard]] const EGG::Vector3f &up() const {
-        return m_up;
+        return m_smoothedUp;
     }
     /// @endGetters
 
@@ -63,14 +65,14 @@ public:
 private:
     void calcSpring();
 
-    SphereLink *m_prev;
-    SphereLink *m_next;
-    f32 m_linkLen; ///< The maximum distance between this link and the previous (forward) link
-    EGG::Vector3f m_pos;
-    EGG::Vector3f m_vel;
+    SphereLink *m_prev;  ///< The previous link in the chain, or nullptr if this is the first link
+    SphereLink *m_next;  ///< The next link in the chain, or nullptr if this is the last link
+    f32 m_linkLen;       ///< The maximum distance between this link and the previous (forward) link
+    EGG::Vector3f m_pos; ///< The current position of the link in world space
+    EGG::Vector3f m_vel; ///< The current velocity of the link
     EGG::Vector3f m_springForce; ///< Prevents links from stretching past their m_linkLen
-    EGG::Vector3f m_up;
-    bool m_touchingGround;
+    EGG::Vector3f m_smoothedUp;  ///< Smoothed up vector for the link
+    bool m_touchingGround;       ///< Whether the link is currently touching the ground
 };
 
 } // namespace Kinoko::Field

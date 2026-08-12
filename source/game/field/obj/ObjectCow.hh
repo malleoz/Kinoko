@@ -24,12 +24,6 @@ protected:
     void calcPos();
     f32 setTarget(const EGG::Vector3f &v);
 
-    /// @addr{0x806BCF4C}
-    [[nodiscard]] static EGG::Vector3f Interpolate(f32 t, const EGG::Vector3f &v0,
-            const EGG::Vector3f &v1) {
-        return v0 + (v1 - v0) * t;
-    }
-
     u32 m_startFrame;            ///< The frame the cow will start moving
     EGG::Vector3f m_tangent;     ///< Smoothed forward direction, interpolated toward m_targetDir
     EGG::Vector3f m_prevTangent; ///< The previous frame's @ref m_tangent, used to smooth rotation

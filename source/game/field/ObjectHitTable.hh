@@ -32,7 +32,7 @@ public:
         return static_cast<Kart::Reaction>(m_reactions[i]);
     }
 
-    [[nodiscard]] s16 ObjectHitTable::slot(ObjectId id) const {
+    [[nodiscard]] s16 slot(ObjectId id) const {
         constexpr size_t SLOT_COUNT = 0x2f4;
 
         size_t i = static_cast<std::underlying_type_t<ObjectId>>(id);

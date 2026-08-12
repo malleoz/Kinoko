@@ -5,28 +5,18 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806EC9A4}
-Rail::Rail(u16 idx, System::MapdataPointInfo *info) {
-    m_idx = idx;
-    m_pointCapacity = info->pointCount();
-    m_pointCount = info->pointCount();
-    m_isOscillating = info->setting(1) == 1;
+Rail::Rail(u16 idx, System::MapdataPointInfo *info)
+    : m_pointCount(info->pointCount()), m_isOscillating(info->setting(1) == 1), m_idx(idx) {
     m_points = info->points();
     m_hasCheckedCol = false;
-    m_someScale = 0.1f;
 }
 
 /// @addr{0x806ECC40}
-/// TODO: If we make m_points allocate on the heap, then we need to free here
 Rail::~Rail() = default;
 
-/// @addr{0x806ED110}
-void Rail::addPoint(f32 scale, const EGG::Vector3f &point) {
-    m_points.back().pos = point;
-    m_someScale = scale;
-    onPointAdded();
-}
-
 /// @addr{0x806ECCC0}
+/// @brief Checks for collision with the course geometry at each point in the rail and stores the
+/// up vector of the colliding floor triangle, or @ref EGG::Vector3f::ey if no collision was found
 void Rail::checkSphereFull() {
     if (m_hasCheckedCol) {
         return;
@@ -54,9 +44,10 @@ void Rail::checkSphereFull() {
 }
 
 /// @addr{0x806EF9B4}
+/// @brief Calculates each edge/transition's direction and length and computes the total rail length
 RailLine::RailLine(u16 idx, System::MapdataPointInfo *info) : Rail(idx, info) {
-    m_dirCount = m_isOscillating ? m_pointCount - 1 : m_pointCount;
-    m_transitions = owning_span<RailLineTransition>(m_dirCount);
+    u16 transCount = m_isOscillating ? m_pointCount - 1 : m_pointCount;
+    m_transitions = owning_span<RailLineTransition>(transCount);
     m_pathLength = 0.0f;
 
     for (u16 i = 0; i < m_pointCount - 1; ++i) {
@@ -80,22 +71,15 @@ RailLine::RailLine(u16 idx, System::MapdataPointInfo *info) : Rail(idx, info) {
 RailLine::~RailLine() = default;
 
 /// @addr{0x806ED57C}
+/// @brief Calculates each spline's control points and length and computes the total rail length
 RailSpline::RailSpline(u16 idx, System::MapdataPointInfo *info) : Rail(idx, info) {
-    m_transitionCount = m_isOscillating ? m_pointCount - 1 : m_pointCount;
-    m_transitions = owning_span<RailSplineTransition>(m_transitionCount);
-    m_estimatorSampleCount = 10;
-    m_estimatorStep = 1.0f / static_cast<f32>(m_estimatorSampleCount);
-
-    // This is normally not set until AFTER the call to invalidateTransitions,
-    // but the expected behavior requires that this is set to false.
-    // This misordering was probably never noticed since EGG::Heap zeroes memory.
-    m_doNotAllocatePathPercentages = false;
-
+    u16 transitionCount = m_isOscillating ? m_pointCount - 1 : m_pointCount;
+    m_transitions = owning_span<RailSplineTransition>(transitionCount);
     invalidateTransitions(false);
 
     m_pathLength = 0.0f;
 
-    for (size_t i = 0; i < m_transitionCount; ++i) {
+    for (size_t i = 0; i < m_transitions.size(); ++i) {
         m_pathLength += m_transitions[i].m_length;
     }
 }
@@ -103,42 +87,13 @@ RailSpline::RailSpline(u16 idx, System::MapdataPointInfo *info) : Rail(idx, info
 /// @addr{0x806ED828}
 RailSpline::~RailSpline() = default;
 
-/// @addr{0x806ED8BC}
-void RailSpline::onPointsChanged() {
-    m_doNotAllocatePathPercentages = true;
-    m_transitionCount = m_isOscillating ? m_pointCount - 1 : m_pointCount;
-
-    invalidateTransitions(false);
-
-    m_pathLength = 0.0f;
-
-    for (const auto &transition : m_transitions) {
-        m_pathLength += transition.m_length;
-    }
-}
-
-/// @addr{0x806ED960}
-void RailSpline::onPointAdded() {
-    m_doNotAllocatePathPercentages = true;
-    m_transitionCount = m_isOscillating ? m_pointCount - 1 : m_pointCount;
-
-    invalidateTransitions(true);
-
-    m_pathLength = 0.0f;
-
-    for (const auto &transition : m_transitions) {
-        m_pathLength += transition.m_length;
-    }
-}
-
 /// @addr{0x806EDA04}
+/// @brief Computes the control points and lengths of each spline in the rail
 void RailSpline::invalidateTransitions(bool lastOnly) {
-    if (!m_doNotAllocatePathPercentages) {
-        size_t count = m_estimatorSampleCount * m_transitionCount + 1;
-        m_pathPercentages = owning_span<f32>(count);
-    }
-
-    m_segmentCount = 0;
+    size_t count = ESTIMATOR_SAMPLE_COUNT * m_transitions.size() + 1;
+    m_pathPercentages = owning_span<f32>(count);
+    m_pathPercentageCount = 0;
+    size_t transitionCount = m_transitions.size();
 
     if (m_isOscillating) {
         if (!lastOnly) {
@@ -149,65 +104,65 @@ void RailSpline::invalidateTransitions(bool lastOnly) {
             firstTransition.m_p2 =
                     calcCubicBezierP2(m_points[0].pos, m_points[1].pos, m_points[2].pos);
             firstTransition.m_p3 = m_points[1].pos;
-            firstTransition.m_length = estimateLength(firstTransition, m_estimatorSampleCount);
+            firstTransition.m_length = estimateLength(firstTransition, ESTIMATOR_SAMPLE_COUNT);
             firstTransition.m_lengthInv = 1.0f / firstTransition.m_length;
 
-            for (u16 i = 1; i < m_transitionCount - 1; ++i) {
+            for (size_t i = 1; i < transitionCount - 1; ++i) {
                 calcCubicBezierControlPoints(m_points[i - 1].pos, m_points[i].pos,
-                        m_points[i + 1].pos, m_points[i + 2].pos, m_estimatorSampleCount,
+                        m_points[i + 1].pos, m_points[i + 2].pos, ESTIMATOR_SAMPLE_COUNT,
                         m_transitions[i]);
             }
         }
 
         auto &lastTransition = m_transitions.back();
-        lastTransition.m_p0 = m_points[m_transitionCount - 1].pos;
-        lastTransition.m_p1 = calcCubicBezierP1(m_points[m_transitionCount - 2].pos,
-                m_points[m_transitionCount - 1].pos, m_points[m_transitionCount].pos);
+        lastTransition.m_p0 = m_points[transitionCount - 1].pos;
+        lastTransition.m_p1 = calcCubicBezierP1(m_points[transitionCount - 2].pos,
+                m_points[transitionCount - 1].pos, m_points[transitionCount].pos);
         lastTransition.m_p2 =
-                (m_points[m_transitionCount - 1].pos - m_points[m_transitionCount].pos)
-                        .multInv(4.0f) +
-                m_points[m_transitionCount].pos;
-        lastTransition.m_p3 = m_points[m_transitionCount].pos;
-        lastTransition.m_length = estimateLength(lastTransition, m_estimatorSampleCount);
+                (m_points[transitionCount - 1].pos - m_points[transitionCount].pos).multInv(4.0f) +
+                m_points[transitionCount].pos;
+        lastTransition.m_p3 = m_points[transitionCount].pos;
+        lastTransition.m_length = estimateLength(lastTransition, ESTIMATOR_SAMPLE_COUNT);
         lastTransition.m_lengthInv = 1.0f / lastTransition.m_length;
     } else {
         if (!lastOnly) {
             auto &firstTransition = m_transitions[0];
             firstTransition.m_p0 = m_points[0].pos;
-            firstTransition.m_p1 = calcCubicBezierP1(m_points[m_transitionCount - 1].pos,
+            firstTransition.m_p1 = calcCubicBezierP1(m_points[transitionCount - 1].pos,
                     m_points[0].pos, m_points[1].pos);
             firstTransition.m_p2 =
                     calcCubicBezierP2(m_points[0].pos, m_points[1].pos, m_points[2].pos);
             firstTransition.m_p3 = m_points[1].pos;
-            firstTransition.m_length = estimateLength(firstTransition, m_estimatorSampleCount);
+            firstTransition.m_length = estimateLength(firstTransition, ESTIMATOR_SAMPLE_COUNT);
             firstTransition.m_lengthInv = 1.0f / firstTransition.m_length;
 
-            for (u16 i = 1; i < m_transitionCount - 1; ++i) {
-                if (i + 2 != m_transitionCount) {
+            for (size_t i = 1; i < transitionCount - 1; ++i) {
+                if (i + 2 != transitionCount) {
                     calcCubicBezierControlPoints(m_points[i - 1].pos, m_points[i].pos,
-                            m_points[i + 1].pos, m_points[i + 2].pos, m_estimatorSampleCount,
+                            m_points[i + 1].pos, m_points[i + 2].pos, ESTIMATOR_SAMPLE_COUNT,
                             m_transitions[i]);
                 } else {
                     calcCubicBezierControlPoints(m_points[i - 1].pos, m_points[i].pos,
-                            m_points[i + 1].pos, m_points[0].pos, m_estimatorSampleCount,
+                            m_points[i + 1].pos, m_points[0].pos, ESTIMATOR_SAMPLE_COUNT,
                             m_transitions[i]);
                 }
             }
         }
 
         auto &lastTransition = m_transitions.back();
-        lastTransition.m_p0 = m_points[m_transitionCount - 1].pos;
-        lastTransition.m_p1 = calcCubicBezierP1(m_points[m_transitionCount - 2].pos,
-                m_points[m_transitionCount - 1].pos, m_points[0].pos);
-        lastTransition.m_p2 = calcCubicBezierP2(m_points[m_transitionCount - 1].pos,
-                m_points[0].pos, m_points[1].pos);
+        lastTransition.m_p0 = m_points[transitionCount - 1].pos;
+        lastTransition.m_p1 = calcCubicBezierP1(m_points[transitionCount - 2].pos,
+                m_points[transitionCount - 1].pos, m_points[0].pos);
+        lastTransition.m_p2 = calcCubicBezierP2(m_points[transitionCount - 1].pos, m_points[0].pos,
+                m_points[1].pos);
         lastTransition.m_p3 = m_points[0].pos;
-        lastTransition.m_length = estimateLength(lastTransition, m_estimatorSampleCount);
+        lastTransition.m_length = estimateLength(lastTransition, ESTIMATOR_SAMPLE_COUNT);
         lastTransition.m_lengthInv = 1.0f / lastTransition.m_length;
     }
 }
 
 /// @addr{0x806EE27C}
+/// @brief Calculates the control points of a cubic bezier curve passing through the provided points
 void RailSpline::calcCubicBezierControlPoints(const EGG::Vector3f &p0, const EGG::Vector3f &p1,
         const EGG::Vector3f &p2, const EGG::Vector3f &p3, s32 count,
         RailSplineTransition &transition) {
@@ -220,22 +175,24 @@ void RailSpline::calcCubicBezierControlPoints(const EGG::Vector3f &p0, const EGG
 }
 
 /// @addr{0x806EE56C}
+/// @brief Approximates the length of a cubic bezier curve by sampling points along the curve
+/// @param count The number of samples to take along the curve (always @ref ESTIMATOR_SAMPLE_COUNT)
 f32 RailSpline::estimateLength(const RailSplineTransition &transition, s32 count) {
-    std::array<EGG::Vector3f, 11> waypoints;
+    std::array<EGG::Vector3f, ESTIMATOR_SAMPLE_COUNT + 1> waypoints;
 
     for (s32 i = 0; i < count + 1; ++i) {
-        waypoints[i] = cubicBezier(m_estimatorStep * static_cast<f32>(i), transition);
+        waypoints[i] = cubicBezier(ESTIMATOR_STEP * static_cast<f32>(i), transition);
     }
     f32 length = 0.0f;
 
     // Numerator loop
     for (s32 i = 0; i < count; ++i) {
-        m_pathPercentages[m_segmentCount++] = length;
+        m_pathPercentages[m_pathPercentageCount++] = length;
         length += (waypoints[i] - waypoints[i + 1]).length();
     }
 
     // Denominator loop
-    for (s32 i = m_segmentCount - 1; i > m_segmentCount - count - 1; --i) {
+    for (s32 i = m_pathPercentageCount - 1; i > m_pathPercentageCount - count - 1; --i) {
         m_pathPercentages[i] /= length;
     }
 
@@ -243,24 +200,29 @@ f32 RailSpline::estimateLength(const RailSplineTransition &transition, s32 count
 }
 
 /// @addr{0x806EE408}
+/// @brief Computes the outgoing bezier control point after p1
 EGG::Vector3f RailSpline::calcCubicBezierP1(const EGG::Vector3f &p0, const EGG::Vector3f &p1,
         const EGG::Vector3f &p2) const {
     EGG::Vector3f res = p2 - p0;
     f32 len = res.length();
     res.normalise2();
-    return p1 + res * (len * m_someScale);
+    return p1 + res * (len * CUBIC_BEZIER_TENSION_FACTOR);
 }
 
 /// @addr{0x806EE4B8}
+/// @brief Computes the incoming bezier control point before p2
 EGG::Vector3f RailSpline::calcCubicBezierP2(const EGG::Vector3f &p0, const EGG::Vector3f &p1,
         const EGG::Vector3f &p2) const {
     EGG::Vector3f res = p0 - p2;
     f32 len = res.length();
     res.normalise2();
-    return p1 + res * (len * m_someScale);
+    return p1 + res * (len * CUBIC_BEZIER_TENSION_FACTOR);
 }
 
 /// @addr{0x806EE72C}
+/// @brief Evaluates a cubic bezier curve at the given parameter t
+/// @param t The parameter along the curve to evaluate, in the range [0, 1]
+/// @param transition The bezier curve to evaluate
 EGG::Vector3f RailSpline::cubicBezier(f32 t, const RailSplineTransition &transition) const {
     f32 dt = 1.0f - t;
 

@@ -9,20 +9,25 @@ SphereLink::SphereLink() : m_prev(nullptr), m_next(nullptr) {}
 SphereLink::~SphereLink() = default;
 
 /// @addr{0x806F1194}
+/// @brief Initializes the link's length and resets its internal state
 void SphereLink::initLinkLen(f32 length) {
     m_linkLen = length;
     init();
 }
 
+/// @brief Resets the link's internal state
 void SphereLink::init() {
     m_pos.setZero();
     m_vel.setZero();
     m_springForce.setZero();
-    m_up = EGG::Vector3f::ey;
+    m_smoothedUp = EGG::Vector3f::ey;
     m_touchingGround = true;
 }
 
 /// @addr{0x806F2074}
+/// @brief Calculates the spring force between this link and its neighbors
+/// @details Applies a spring damper force which will pull this link back towards its previous link
+/// when it is stretched too far away.
 void SphereLink::calcStiffness() {
     constexpr f32 STIFFNESS = 0.15f;
 
@@ -48,6 +53,7 @@ void SphereLink::calcStiffness() {
 }
 
 /// @addr{0x806F1A54}
+/// @brief Calculates the spring force between this link and its neighbors
 void SphereLink::calc() {
     if (isLeader()) {
         return;
@@ -69,6 +75,9 @@ void SphereLink::calc() {
 }
 
 /// @addr{0x806F2490}
+/// @brief Enforces positional constraints to keep this link within a certain distance of its
+/// previous link
+/// @param scale A multiplier for the link length (always 1.0f)
 void SphereLink::calcConstraints(f32 scale) {
     constexpr f32 MIN_PITCH_ANGLE = DEG2FIDX * -75.0f;
     STATIC_ASSERT(MIN_PITCH_ANGLE == -53.333336f);
@@ -113,6 +122,7 @@ void SphereLink::calcConstraints(f32 scale) {
 }
 
 /// @addr{0x806F2A38}
+/// @brief Checks for floor collisions, updates position accordingly, and updates the up vector
 void SphereLink::checkCollision() {
     constexpr f32 RADIUS = 55.0f;
 
@@ -120,7 +130,7 @@ void SphereLink::checkCollision() {
 
     CollisionInfo info;
     KCLTypeMask mask;
-    EGG::Vector3f pos = m_pos + m_up * RADIUS;
+    EGG::Vector3f pos = m_pos + m_smoothedUp * RADIUS;
 
     auto *colDir = CollisionDirector::Instance();
     m_touchingGround = colDir->checkSphereFullPush(RADIUS, pos, EGG::Vector3f::inf, KCL_TYPE_FLOOR,
@@ -143,13 +153,15 @@ void SphereLink::checkCollision() {
             floorNrm = info.floorNrm;
         }
 
-        m_vel = m_up * m_vel.dot(m_up) * 0.5f;
+        m_vel = m_smoothedUp * m_vel.dot(m_smoothedUp) * 0.5f;
         m_springForce = GRAVITY;
     }
 
-    m_up += (floorNrm - m_up) * 0.1f;
+    m_smoothedUp += (floorNrm - m_smoothedUp) * 0.1f;
 }
 
+/// @brief Calculates the new position of the link based on its velocity and spring force, and
+/// resets the spring force
 void SphereLink::calcPos() {
     m_vel += m_springForce - GRAVITY;
     m_vel *= 0.9f;
@@ -158,6 +170,7 @@ void SphereLink::calcPos() {
 }
 
 /// @addr{0x806F1C58}
+/// @brief Calculates the spring force between this link and its neighbors
 void SphereLink::calcSpring() {
     ASSERT(m_prev && m_next);
 

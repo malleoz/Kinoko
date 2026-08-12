@@ -280,7 +280,7 @@ void ObjectChoropu::calcGroundObjs() {
 EGG::Matrix34f ObjectChoropu::calcInterpolatedPose(f32 t) const {
     EGG::Vector3f curDir;
     EGG::Vector3f curTanDir;
-    m_railInterpolator->evalCubicBezierOnPath(t, curDir, curTanDir);
+    m_railInterpolator->evalPositionAndTangentBehind(t, curDir, curTanDir);
     EGG::Matrix34f mat = OrthonormalBasis(curTanDir);
     mat.setBase(3, curDir);
     return mat;

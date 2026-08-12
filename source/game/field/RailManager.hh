@@ -16,17 +16,25 @@ class Context;
 
 namespace Field {
 
-// TODO: Inherit EGG::Disposer
+/// @brief Creates and exposes access to the rails from @ref CourseMap
+/// @details For each rail, determines whether it represents a linear rail (@ref RailLine) or a
+/// curved rail (@ref RailSpline).
 class RailManager {
     friend class Host::Context;
 
 public:
     /// @beginGetters
+    /// @brief Fetches the rail at the given index
+    /// @param idx The index of the rail to fetch
+    /// @return A pointer to the rail at the given index
     [[nodiscard]] Rail *rail(size_t idx) {
         ASSERT(idx < m_rails.size());
         return m_rails[idx];
     }
 
+    /// @brief  Fetches the rail at the given index
+    /// @param idx The index of the rail to fetch
+    /// @return A const pointer to the rail at the given index
     [[nodiscard]] const Rail *rail(size_t idx) const {
         ASSERT(idx < m_rails.size());
         return m_rails[idx];
@@ -48,10 +56,8 @@ private:
 
     void createPaths();
 
+    /// @brief The rails parsed from @ref CourseMap
     fixed_vector<Rail *> m_rails;
-    u16 m_totalRails;
-    u16 m_extraInterplatorCount;
-    u16 m_pointCount;
 
     static RailManager *s_instance; ///< @addr{0x809C22B0}
 };
