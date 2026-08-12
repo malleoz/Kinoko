@@ -4,6 +4,9 @@
 
 namespace Kinoko::Item {
 
+/// @brief Represents the item slot for a particular player
+/// @details Tracks the current item id in the slot. For items such as triple mushrooms, it also
+/// tracks the number of uses remaining.
 class ItemInventory {
 public:
     ItemInventory();

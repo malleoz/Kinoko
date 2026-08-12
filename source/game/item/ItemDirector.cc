@@ -5,6 +5,9 @@
 namespace Kinoko::Item {
 
 /// @addr{0x80799794}
+/// @brief Initializes the item state for all players in the race
+/// @details For the purposes of Kinoko, we simplify the logic here and just give everyone a triple
+/// mushroom at the start of the race to match time trial behavior.
 void ItemDirector::init() {
     for (auto &kart : m_karts) {
         kart.inventory().setItem(ItemId::TRIPLE_MUSHROOM);
@@ -12,6 +15,7 @@ void ItemDirector::init() {
 }
 
 /// @addr{0x80799850}
+/// @brief Checks for item usage and updates the item state for all players in the race
 void ItemDirector::calc() {
     for (auto &kart : m_karts) {
         kart.calc();
@@ -34,6 +38,8 @@ void ItemDirector::DestroyInstance() {
 }
 
 /// @addr{0x807992D8}
+/// @brief Constructs and initializes the array of @ref KartItem objects based on the number of
+/// players in the race
 ItemDirector::ItemDirector() {
     size_t playerCount = System::RaceConfig::Instance()->raceScenario().playerCount;
     m_karts = owning_span<KartItem>(playerCount);

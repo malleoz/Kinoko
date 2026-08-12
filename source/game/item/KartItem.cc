@@ -16,12 +16,13 @@ KartItem::KartItem() {
 KartItem::~KartItem() = default;
 
 /// @addr{0x807976E0}
+/// @brief Initializes the @ref Kart::KartObjectProxy accessor pointer
 void KartItem::init(size_t playerIdx) {
     apply(playerIdx);
 }
 
-/// @brief Calculates item activation based on the controller input state
 /// @addr{0x80797928}
+/// @brief Calculates item activation based on the controller input state
 void KartItem::calc() {
     bool prevButton = m_flags.onBit(eFlags::ItemButtonHold);
     m_flags.resetBit(eFlags::ItemButtonHold, eFlags::ItemButtonActivation);
@@ -57,24 +58,6 @@ void KartItem::calc() {
             }
         }
     }
-}
-
-/// @addr{0x80798848}
-void KartItem::clear() {
-    if (m_inventory.id() != ItemId::NONE) {
-        m_inventory.clear();
-    }
-}
-
-/// @addr{0x8079864C}
-void KartItem::activateMushroom() {
-    move()->activateMushroom();
-}
-
-/// @addr{0x807A9D3C}
-void KartItem::useMushroom() {
-    activateMushroom();
-    m_inventory.useItem(1);
 }
 
 } // namespace Kinoko::Item
