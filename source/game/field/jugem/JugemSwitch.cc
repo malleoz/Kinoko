@@ -6,6 +6,9 @@
 
 namespace Kinoko::Field {
 
+/// @addr{0x80725C98}
+/// @details Checks if the player is driving the wrong way and updates the internal state of the
+/// switch accordingly. If the player is driving the wrong way for 60 frames, Lakitu will toggle on.
 void JugemSwitchReverse::calc() {
     constexpr f32 ACTIVATION_FRAME_STEP = 1.0f / 60.0f;
 

@@ -33,7 +33,7 @@ JugemDirector::~JugemDirector() {
 }
 
 /// @addr{0x8071E480}
-/// @brief Constructs a @ref JugemUnit for the player
+/// @brief Constructs a @ref JugemUnit for the player and its associated @ref JugemSwitches
 void JugemDirector::createUnits() {
     // Assumes one unit
     const auto *kartObj = Kart::KartObjectManager::Instance()->object(0);

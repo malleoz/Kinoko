@@ -39,7 +39,7 @@ void JugemMove::init() {
 /// @addr{0x8071F404}
 /// @brief Calculates Lakitu's position, orientation, and oscillation based on the kart's position
 void JugemMove::calc() {
-    constexpr EGG::Vector3f VEC_809C28FC = EGG::Vector3f(0.0f, 40.0f, 0.0f);
+    constexpr EGG::Vector3f POS_OFFSET = EGG::Vector3f(0.0f, 40.0f, 0.0f);
 
     const EGG::Vector3f &pos = m_kartObj->pos();
     f32 heightGapT = (EGG::Mathf::abs(m_anchorPos.y - m_pos.y) - 200.0f) / 100.0f;
@@ -107,7 +107,7 @@ void JugemMove::calc() {
 
     m_leanMat = calcLeanBasis();
 
-    m_rtMat.setBase(3, VEC_809C28FC);
+    m_rtMat.setBase(3, POS_OFFSET);
     m_leanMat.setBase(3, m_pos + oscPosOffset);
 
     EGG::Matrix34f combinedMat = EGG::Matrix34f::ident;
@@ -121,6 +121,10 @@ void JugemMove::calc() {
 }
 
 /// @addr{0x8071F0CC}
+/// @brief Updates the Lakitu's forward direction based on the kart's position delta
+/// @details Recalculates Lakitu's target facing direction and interpolation rate based on the
+/// kart's position delta and optionally snaps the Lakitu's current facing direction to the target.
+/// @param setCurr If true, snaps the current facing direction to the target facing direction
 void JugemMove::setForwardFromKartObjPosDelta(bool setCurr) {
     constexpr f32 FAST_INTERP_DIST = 250.0f;
     constexpr f32 SLOW_INTERP_RATE = 0.03f;
@@ -143,6 +147,10 @@ void JugemMove::setForwardFromKartObjPosDelta(bool setCurr) {
 }
 
 /// @addr{0x8071F204}
+/// @brief Updates the Lakitu's forward direction based on the kart's main rotation
+/// @details Recalculates Lakitu's target facing direction based on the kart's main rotation and
+/// optionally snaps the Lakitu's current facing direction to the target.
+/// @param setCurr If true snaps the current facing direction to the target facing direction
 void JugemMove::setForwardFromKartObjMainRot(bool setCurr) {
     EGG::Vector3f forward = m_kartObj->mainRot().rotateVector(EGG::Vector3f::ez);
     forward.y = 0.0f;
@@ -161,6 +169,9 @@ void JugemMove::setForwardFromKartObjMainRot(bool setCurr) {
 }
 
 /// @addr{0x80720024}
+/// @brief Calculates an orthonormal basis matrix based on the Lakitu's current facing direction
+/// @details Also interpolates the Lakitu's current facing direction towards the target facing
+/// direction.
 EGG::Matrix34f JugemMove::calcOrthonormalBasis() {
     m_currForward = Interpolate(m_forwardInterpRate, m_currForward, m_targetForward);
     m_currForward.normalise();
@@ -187,6 +198,8 @@ EGG::Matrix34f JugemMove::calcOrthonormalBasis() {
 }
 
 /// @addr{0x807201B0}
+/// @brief Advances a step in the oscillation cycle and returns the resulting position offset
+/// @param mat The orthonormal basis matrix to apply to the oscillation offset
 EGG::Vector3f JugemMove::calcOscillation(const EGG::Matrix34f &mat) {
     constexpr f32 PHASE_X_STEP = 0.04f;
     constexpr f32 PHASE_Y_STEP = 0.08f;
@@ -212,23 +225,21 @@ EGG::Vector3f JugemMove::calcOscillation(const EGG::Matrix34f &mat) {
 }
 
 /// @addr{0x807202BC}
+/// @brief Calculates a rotation basis matrix to tilt the Lakitu when the player accelerates or
+/// turns sharply
 EGG::Matrix34f JugemMove::calcLeanBasis() {
-    constexpr EGG::Vector3f VEC_809C28E4 = EGG::Vector3f(0.0f, 100.0f, 0.0f);
+    constexpr EGG::Vector3f LEAN_UP_BASE = EGG::Vector3f(0.0f, 100.0f, 0.0f);
 
     m_dir = Interpolate(0.1f, m_dir, m_vel);
-    f32 fVar2 = m_dir.normalise();
-    fVar2 = std::min(20.0f, fVar2);
+    f32 length = m_dir.normalise();
+    length = std::min(20.0f, length);
+    m_dir *= length;
 
-    m_dir *= fVar2;
-    EGG::Vector3f avStack_38 = m_dir * 1.5f;
-    EGG::Vector3f up = VEC_809C28E4 - avStack_38;
-    fVar2 = VEC_809C28E4.length();
-    f32 dVar1 = fVar2;
-    fVar2 = up.length();
-    dVar1 = fVar2 / dVar1;
+    EGG::Vector3f up = LEAN_UP_BASE - m_dir * 1.5f;
+    f32 lengthRatio = up.length() / LEAN_UP_BASE.length();
     up.normalise();
 
-    up *= dVar1;
+    up *= lengthRatio;
     if (up.squaredLength() <= std::numeric_limits<f32>::epsilon()) {
         up = EGG::Vector3f::ey;
     }

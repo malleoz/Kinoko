@@ -10,6 +10,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80721514}
+/// @brief Constructs the movement and interpolation controllers for the Lakitu unit
 JugemUnit::JugemUnit(const Kart::KartObject *kartObj)
     : StateManager(this, STATE_ENTRIES), m_kartObj(kartObj), m_switchReverse(nullptr) {
     m_move = EGG::egg_new<JugemMove>(kartObj);
@@ -24,6 +25,7 @@ JugemUnit::~JugemUnit() {
 }
 
 /// @addr{0x807221C4}
+/// @brief Updates switches, runs the state machine, and updates Lakitu's position if not idle
 void JugemUnit::calc() {
     calcSwitches();
 
@@ -37,6 +39,8 @@ void JugemUnit::calc() {
 }
 
 /// @addr{0x80724794}
+/// @brief Runs once when the reverse switch is toggled and the Lakitu begins descending
+/// @details Initializes the interpolation sequence, movement controller, and position.
 void JugemUnit::enterReverse() {
     constexpr EGG::Vector3f INIT_POS_OFFSET = EGG::Vector3f(0.0f, 2000.0f, 0.0f);
 
@@ -50,6 +54,13 @@ void JugemUnit::enterReverse() {
 }
 
 /// @addr{0x80724880}
+/// @brief Runs every frame when the reverse switch is toggled
+/// @details If the Lakitu is away, then the interpolation controller runs for 3 frames anchoring
+/// the Lakitu to 2000 units above the player. For the next 40 frames, the Lakitu descends to 500
+/// units above the player and then transitions to the Stay state. While in the stay state, the
+/// Lakitu is anchored to 250 units above and 350 units in front of the player. If the reverse
+/// switch is toggled off or the player moves more than 2000 units away from the Lakitu, then the
+/// Lakitu will transition to the Ascending state, rising upwards and disappearing from view.
 void JugemUnit::calcReverse() {
     constexpr EGG::Vector3f AWAY_LOCAL_POS = EGG::Vector3f(0.0f, 2000.0f, 0.0f);
     constexpr EGG::Vector3f DESCEND_LOCAL_POS = EGG::Vector3f(0.0f, 500.0f, 0.0f);
@@ -119,6 +130,7 @@ void JugemUnit::calcReverse() {
 }
 
 /// @addr{0x807230D4}
+/// @brief Transforms a vector from Lakitu's local space to world space, keeping the y-axis upright
 EGG::Vector3f JugemUnit::transformLocalToWorldUpright(const EGG::Vector3f &v) const {
     const EGG::Vector3f &vel1Dir = m_kartObj->move()->vel1Dir();
     const EGG::Quatf &mainRot = m_kartObj->mainRot();
@@ -148,6 +160,10 @@ EGG::Vector3f JugemUnit::transformLocalToWorldUpright(const EGG::Vector3f &v) co
 }
 
 /// @addr{0x807232E4}
+/// @brief Checks for collisions between the Lakitu and the floor
+/// @note This function is the entire reason we have to implement Lakitu physics for Kinoko - This
+/// collision check can induce an update to the @ref ObjectTownBridge's transformation matrix. See
+/// @ref JugemDirector for more information.
 void JugemUnit::calcCollision() {
     constexpr f32 RADIUS = 150.0f;
 
