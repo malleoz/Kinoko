@@ -32,7 +32,7 @@ void ObjectCollisionCylinder::transform(const EGG::Matrix34f &mat, const EGG::Ve
 /// @addr{0x80836334}
 void ObjectCollisionCylinder::transform(const EGG::Matrix34f &mat, const EGG::Vector3f &scale,
         const EGG::Vector3f &speed) {
-    m_translation = speed;
+    m_velocity = speed;
     ObjectCollisionCylinder::transform(mat, scale);
 }
 

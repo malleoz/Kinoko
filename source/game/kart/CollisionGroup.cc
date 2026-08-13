@@ -3,6 +3,7 @@
 namespace Kinoko::Kart {
 
 /// @addr{0x805B821C}
+/// @brief Resets the collision data to default values to prep for a new collision check
 void CollisionData::reset() {
     tangentOff.setZero();
     floorNrm.setZero();
@@ -34,43 +35,38 @@ void CollisionData::reset() {
     bHasRoadVel = false;
     bWallAtLeftCloser = false;
     bWallAtRightCloser = false;
-    bMovingWaterVertical = false;
 }
 
 /// @addr{0x805B7F48}
 Hitbox::Hitbox() : m_bspHitbox(nullptr), m_ownsBSP(false) {}
 
 /// @addr{0x805B8480}
+/// @brief Frees the @ref BSP::Hitbox pointer if this instance owns it
 Hitbox::~Hitbox() {
     if (m_ownsBSP) {
         EGG::egg_delete(m_bspHitbox);
     }
 }
 
-/// @brief Calculates the position of a given hitbox, both relative to the player and world
 /// @addr{0x805B7FBC}
+/// @brief Calculates the position of a given hitbox, both relative to the player and world
 void Hitbox::calc(f32 totalScale, f32 sinkDepth, const EGG::Vector3f &scale, const EGG::Quatf &rot,
         const EGG::Vector3f &pos) {
-    f32 fVar1 = 0.0f;
+    f32 scaledHeightOffset = 0.0f;
     if (scale.y < totalScale) {
-        fVar1 = (totalScale - scale.y) * m_bspHitbox->radius;
+        scaledHeightOffset = (totalScale - scale.y) * m_bspHitbox->radius;
     }
 
     EGG::Vector3f scaledPos = m_bspHitbox->position * scale;
-    scaledPos.y = (m_bspHitbox->position.y + sinkDepth) * scale.y + fVar1;
+    scaledPos.y = (m_bspHitbox->position.y + sinkDepth) * scale.y + scaledHeightOffset;
 
     m_relPos = rot.rotateVector(scaledPos);
     m_worldPos = m_relPos + pos;
 }
 
-/// @addr{0x805B7F84}
-void Hitbox::reset() {
-    m_worldPos.setZero();
-    m_lastPos.setZero();
-    m_relPos.setZero();
-}
-
 /// @addr{0x805B80A8}
+/// @brief Saves the current position of the hitbox so it can be referenced after updating the
+/// Hitbox's next position
 void Hitbox::setLastPos(const EGG::Vector3f &scale, const EGG::Matrix34f &pose) {
     f32 yScaleFactor = scale.y;
     EGG::Vector3f scaledPos = m_bspHitbox->position;
@@ -93,13 +89,14 @@ CollisionGroup::CollisionGroup() : m_hitboxScale(1.0f) {
 
 CollisionGroup::~CollisionGroup() = default;
 
-/// @brief Initializes the hitbox array based on the KartParam's BSP hitboxes
 /// @addr{0x805B84C0}
+/// @brief Initializes the hitbox array based on the provided @ref BSP::Hitbox array
 /// @details The BSP always contains 16 hitboxes, but only some of them are valid/enabled.
-/// The game iterates the BSP::Hitbox array to see how many are enabled, allocates a Hitbox array of
-/// that size, and then sets all the enabled BSP hitboxes.
-/// @param hitboxes The hitboxes from KartParam.bin
-/// @return The furthest point out of the hitboxes' spheres
+/// The game iterates the @ref BSP::Hitbox array to see how many are enabled, allocates a Hitbox
+/// array of that size, sets all the enabled BSP hitboxes, and computes the bounding radius of the
+/// kart based on the enabled hitboxes.
+/// @param hitboxes The hitboxes from @p KartParam.bin
+/// @return Half of the largest Z-axis extent among the enabled hitboxes
 f32 CollisionGroup::initHitboxes(const std::array<BSP::Hitbox, 16> &hitboxes) {
     u16 bspHitboxCount = 0;
 
@@ -121,9 +118,9 @@ f32 CollisionGroup::initHitboxes(const std::array<BSP::Hitbox, 16> &hitboxes) {
     return computeCollisionLimits();
 }
 
-/// @brief Sets the bounding radius
 /// @addr{0x805B883C}
-/// @return The furthest point of all the hitboxes' spheres
+/// @brief Sets the bounding radius
+/// @return Half of the largest Z-axis extent among the enabled hitboxes
 f32 CollisionGroup::computeCollisionLimits() {
     EGG::Vector3f max = EGG::Vector3f::zero;
 
@@ -153,14 +150,13 @@ f32 CollisionGroup::computeCollisionLimits() {
     return max.z * 0.5f;
 }
 
-/// @brief Creates a hitbox to represent a tire
 /// @addr{0x805B875C}
+/// @brief Creates a hitbox to represent a tire
 /// @param radius The radius of the tire
+/// @param relPos The position of the tire relative to the kart's position
 void CollisionGroup::createSingleHitbox(f32 radius, const EGG::Vector3f &relPos) {
     m_hitboxes = owning_span<Hitbox>(1);
 
-    // TODO: Do we need for loop if this is just one?
-    // And how exactly will we identify to free the BSP::Hitbox on destruction?
     for (auto &hitbox : m_hitboxes) {
         hitbox.reset();
         BSP::Hitbox *bspHitbox = EGG::egg_new<BSP::Hitbox>();
@@ -170,29 +166,6 @@ void CollisionGroup::createSingleHitbox(f32 radius, const EGG::Vector3f &relPos)
         hitbox.setRadius(radius);
     }
     m_boundingRadius = radius;
-}
-
-/// @addr{0x805B8330}
-void CollisionGroup::reset() {
-    m_collisionData.reset();
-
-    for (auto &hitbox : m_hitboxes) {
-        hitbox.reset();
-        hitbox.setRadius(hitbox.bspHitbox()->radius * m_hitboxScale);
-    }
-}
-
-void CollisionGroup::resetCollision() {
-    m_collisionData.reset();
-}
-
-/// @addr{0x805B83D8}
-void CollisionGroup::setHitboxScale(f32 scale) {
-    m_hitboxScale = scale;
-
-    for (auto &hitbox : m_hitboxes) {
-        hitbox.setRadius(hitbox.bspHitbox()->radius * m_hitboxScale);
-    }
 }
 
 } // namespace Kinoko::Kart

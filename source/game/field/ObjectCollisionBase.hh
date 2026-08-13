@@ -77,12 +77,12 @@ public:
     [[nodiscard]] bool check(const ObjectCollisionBase &rhs, EGG::Vector3f &distance) const;
 
     /// @addr{0x80573520}
-    [[nodiscard]] const EGG::Vector3f &translation() const {
-        return m_translation;
+    [[nodiscard]] const EGG::Vector3f &velocity() const {
+        return m_velocity;
     }
 
 protected:
-    EGG::Vector3f m_translation; ///< Velocity of the associated object
+    EGG::Vector3f m_velocity; ///< Velocity of the associated object
 
 private:
     [[nodiscard]] bool enclosesOrigin(const GJKState &state, u32 idx) const;

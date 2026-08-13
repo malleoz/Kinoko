@@ -13,18 +13,12 @@ namespace Kinoko::Kart {
 
 /// @addr{0x805672CC}
 KartAction::KartAction()
-    : m_currentAction(Action::None), m_hitDepth(EGG::Vector3f::zero),
-      m_translation(EGG::Vector3f::ez), m_onStart(nullptr), m_onCalc(nullptr), m_onEnd(nullptr),
-      m_actionParams(nullptr), m_rotationParams(nullptr), m_priority(0) {}
+    : m_currentAction(Action::None), m_hitDepth(EGG::Vector3f::zero), m_velocity(EGG::Vector3f::ez),
+      m_onStart(nullptr), m_onCalc(nullptr), m_onEnd(nullptr), m_actionParams(nullptr),
+      m_rotationParams(nullptr), m_priority(0) {}
 
 /// @addr{0x8056A1A8}
 KartAction::~KartAction() = default;
-
-/// @addr{0x8056739C}
-void KartAction::init() {
-    m_currentAction = Action::None;
-    m_flags.makeAllZero();
-}
 
 /// @addr{0x805673B0}
 void KartAction::calc() {
@@ -58,12 +52,12 @@ bool KartAction::start(Action action) {
 
     if (status.onBit(eStatus::ZipperStick)) {
         switch (action) {
-        case Action::UNK_2:
-        case Action::UNK_3:
-        case Action::UNK_4:
-        case Action::UNK_5:
-        case Action::UNK_6:
-            action = Action::UNK_1;
+        case Action::ForwardLaunch:
+        case Action::AwayFlipOnce:
+        case Action::AwayFlipTwice:
+        case Action::SidewaysFlipTwice:
+        case Action::LaunchSpinLoseItem:
+            action = Action::SpinTwice;
             break;
         default:
             break;
@@ -72,17 +66,17 @@ bool KartAction::start(Action action) {
 
     size_t actionIdx = static_cast<size_t>(action);
 
-    if (m_currentAction != Action::None && s_actionParams[actionIdx].priority <= m_priority) {
+    if (m_currentAction != Action::None && ACTION_PARAMS[actionIdx].priority <= m_priority) {
         return false;
     }
 
     calcEndAction(true);
     m_currentAction = action;
-    m_actionParams = &s_actionParams[actionIdx];
+    m_actionParams = &ACTION_PARAMS[actionIdx];
     m_priority = m_actionParams->priority;
-    m_onStart = s_onStart[actionIdx];
-    m_onCalc = s_onCalc[actionIdx];
-    m_onEnd = s_onEnd[actionIdx];
+    m_onStart = ON_START[actionIdx];
+    m_onCalc = ON_CALC[actionIdx];
+    m_onEnd = ON_END[actionIdx];
     status.setBit(eStatus::InAction);
     m_frame = 0;
     m_flags.makeAllZero();
@@ -107,7 +101,7 @@ void KartAction::startRotation(size_t idx) {
         dir = -dir;
     }
 
-    m_rotationDirection = dir.cross(bodyFront()).dot(bodyUp()) > 0.0f ? 1.0f : -1.0f;
+    m_rotationSide = dir.cross(bodyFront()).dot(bodyUp()) > 0.0f ? 1.0f : -1.0f;
     setRotation(idx);
     m_flags.setBit(eFlags::Rotating);
 }
@@ -115,10 +109,10 @@ void KartAction::startRotation(size_t idx) {
 /// @addr{0x80569AE8}
 void KartAction::calcSideFromHitDepth() {
     m_hitDepth.normalise();
-    m_side = m_hitDepth.perpInPlane(move()->smoothedUp(), true);
+    m_launchDir = m_hitDepth.perpInPlane(move()->smoothedUp(), true);
 
-    if (m_side.squaredLength() <= std::numeric_limits<f32>::epsilon()) {
-        m_side = EGG::Vector3f::ey;
+    if (m_launchDir.squaredLength() <= std::numeric_limits<f32>::epsilon()) {
+        m_launchDir = EGG::Vector3f::ey;
     }
 }
 
@@ -126,18 +120,18 @@ void KartAction::calcSideFromHitDepth() {
 void KartAction::calcSideFromHitDepthAndTranslation() {
     calcSideFromHitDepth();
 
-    EGG::Vector3f cross = m_translation.cross(m_side);
+    EGG::Vector3f cross = m_velocity.cross(m_launchDir);
     f32 sign = (cross.y > 0.0f) ? 1.0f : -1.0f;
 
-    EGG::Vector3f worldSide = EGG::Vector3f::ey.cross(m_translation);
+    EGG::Vector3f worldSide = EGG::Vector3f::ey.cross(m_velocity);
     worldSide.normalise();
 
-    m_side = worldSide.perpInPlane(move()->smoothedUp(), true);
+    m_launchDir = worldSide.perpInPlane(move()->smoothedUp(), true);
 
-    if (m_side.squaredLength() > std::numeric_limits<f32>::epsilon()) {
-        m_side *= sign;
+    if (m_launchDir.squaredLength() > std::numeric_limits<f32>::epsilon()) {
+        m_launchDir *= sign;
     } else {
-        m_side = EGG::Vector3f::ey;
+        m_launchDir = EGG::Vector3f::ey;
     }
 }
 
@@ -149,14 +143,6 @@ void KartAction::end() {
     m_currentAction = Action::None;
     m_priority = 0;
     m_flags.makeAllZero();
-}
-
-/// @addr{0x80567A54}
-/// @brief Executes a frame of the current action.
-/// @return Whether or not the action should end.
-bool KartAction::calcCurrentAction() {
-    ++m_frame;
-    return (this->*m_onCalc)();
 }
 
 /// @addr{0x80567A88}
@@ -180,13 +166,13 @@ bool KartAction::calcRotation() {
     // Slow the rotation down as we approach the end of the spinout
     if (m_currentAngle > m_finalAngle * m_rotationParams->slowdownThreshold) {
         m_angleIncrement *= m_multiplier;
-        if (m_rotationParams->minAngleIncrement > m_angleIncrement) {
-            m_angleIncrement = m_rotationParams->minAngleIncrement;
+        if (m_rotationParams->minRotSpeed > m_angleIncrement) {
+            m_angleIncrement = m_rotationParams->minRotSpeed;
         }
 
         m_multiplier -= m_multiplierDecrement;
-        if (m_rotationParams->minMultiplier > m_multiplier) {
-            m_multiplier = m_rotationParams->minMultiplier;
+        if (m_rotationParams->minDecayRate > m_multiplier) {
+            m_multiplier = m_rotationParams->minDecayRate;
         }
     }
 
@@ -232,15 +218,15 @@ void KartAction::startLaunch(f32 extVelScalar, f32 extVelKart, f32 extVelBike, f
         calcSideFromHitDepth();
     } else if (param6 == 1) {
         calcSideFromHitDepth();
-        extVel += extVelScalar * m_side;
+        extVel += extVelScalar * m_launchDir;
     } else if (param6 == 2) {
         calcSideFromHitDepthAndTranslation();
-        extVel += extVelScalar * m_side;
+        extVel += extVelScalar * m_launchDir;
     }
 
     setRotation(static_cast<size_t>(numRotations + 3.0f));
     m_groundStartLaunchTimer = 0;
-    m_rotAxis = move()->smoothedUp().cross(m_side);
+    m_rotAxis = move()->smoothedUp().cross(m_launchDir);
 
     dynamics()->setExtVel(dynamics()->extVel() + extVel);
 }
@@ -261,12 +247,12 @@ void KartAction::applyStartSpeed() {
 
 /// @addr{0x80569DB4}
 void KartAction::setRotation(size_t idx) {
-    ASSERT(idx - 1 < s_rotationParams.size());
-    m_rotationParams = &s_rotationParams[--idx];
+    ASSERT(idx - 1 < ROTATION_PARAMS.size());
+    m_rotationParams = &ROTATION_PARAMS[--idx];
 
     m_finalAngle = m_rotationParams->finalAngle;
-    m_angleIncrement = m_rotationParams->initialAngleIncrement;
-    m_multiplierDecrement = m_rotationParams->initialMultiplierDecrement;
+    m_angleIncrement = m_rotationParams->initRotSpeed;
+    m_multiplierDecrement = m_rotationParams->initDecayRate;
     m_currentAngle = 0.0f;
     m_multiplier = 1.0f;
 }
@@ -275,15 +261,8 @@ void KartAction::setRotation(size_t idx) {
  *     START FUNCTIONS
  * ================================ */
 
-void KartAction::startStub() {}
-
-/// @addr{0x80567FB4}
-void KartAction::startAction1() {
-    startRotation(2);
-}
-
 /// @addr{0x8056865C}
-void KartAction::startAction2() {
+void KartAction::startSmallLaunch() {
     constexpr f32 EXT_VEL_SCALAR = 0.0f;
     constexpr f32 EXT_VEL_KART = 30.0f;
     constexpr f32 EXT_VEL_BIKE = 30.0f;
@@ -293,7 +272,7 @@ void KartAction::startAction2() {
 }
 
 /// @addr{0x80568718}
-void KartAction::startAction3() {
+void KartAction::startActionAwayFlipOnce() {
     constexpr f32 EXT_VEL_SCALAR = 25.0f;
     constexpr f32 EXT_VEL_KART = 30.0f;
     constexpr f32 EXT_VEL_BIKE = 30.0f;
@@ -304,7 +283,7 @@ void KartAction::startAction3() {
 }
 
 /// @addr{0x80568CB8}
-void KartAction::startAction4() {
+void KartAction::startActionAwayFlipTwice() {
     constexpr f32 EXT_VEL_SCALAR = 25.0f;
     constexpr f32 EXT_VEL_KART = 30.0f;
     constexpr f32 EXT_VEL_BIKE = 30.0f;
@@ -315,7 +294,7 @@ void KartAction::startAction4() {
 }
 
 /// @addr{0x80568FA4}
-void KartAction::startAction5() {
+void KartAction::startActionSidewaysFlipTwice() {
     constexpr f32 EXT_VEL_SCALAR = 13.0f;
     constexpr f32 EXT_VEL_KART = 40.0f;
     constexpr f32 EXT_VEL_BIKE = 45.0f;
@@ -327,29 +306,25 @@ void KartAction::startAction5() {
 /// @addr{0x805690A0}
 void KartAction::startLargeFlipAction() {
     constexpr EGG::Vector3f INIT_VEL = EGG::Vector3f(0.0f, 60.0f, 0.0f);
+    constexpr f32 INIT_PITCH_VEL = 22.0f;
 
     dynamics()->setExtVel(INIT_VEL);
     dynamics()->setAngVel0(EGG::Vector3f::zero);
 
-    if (m_currentAction == Action::UNK_8) {
+    if (m_currentAction == Action::HighLaunchLoseItem) {
         calcSideFromHitDepth();
-        dynamics()->setExtVel(dynamics()->extVel() + m_side * -20.0f);
+        dynamics()->setExtVel(dynamics()->extVel() + m_launchDir * -20.0f);
     }
 
     Item::ItemDirector::Instance()->kartItem(0).clear();
 
     m_deltaPitch = 0.0f;
     m_pitch = 0.0f;
-    m_velPitch = 22.0f;
+    m_pitchRotVel = INIT_PITCH_VEL;
     m_flipPhase = 0.0f;
     m_framesFlipping = 0;
 
     status().setBit(eStatus::LargeFlipHit);
-}
-
-/// @addr{0x80568000}
-void KartAction::startAction9() {
-    startRotation(2);
 }
 
 /// @addr{0x80569774}
@@ -370,25 +345,16 @@ void KartAction::startShortPressAction() {
     activateCrush(CRUSH_DURATION);
 }
 
-/// @addr{0x80568058}
-void KartAction::startSpinShrinkAction() {
-    startRotation(1);
-}
-
 /* ================================ *
  *     CALC FUNCTIONS
  * ================================ */
 
-bool KartAction::calcStub() {
-    return false;
-}
-
 /// @addr{0x80568204}
-bool KartAction::calcAction1() {
+bool KartAction::calcSpin() {
     calcUp();
     bool finished = calcRotation();
 
-    m_rotation.setAxisRotation(DEG2RAD * (m_currentAngle * m_rotationDirection), m_up);
+    m_rotation.setAxisRotation(DEG2RAD * (m_currentAngle * m_rotationSide), m_up);
     physics()->composeExtraRot(m_rotation);
     return finished;
 }
@@ -417,7 +383,7 @@ bool KartAction::calcLaunchAction() {
 }
 
 /// @addr{0x80568D34}
-bool KartAction::calcAction4() {
+bool KartAction::calcActionAwayFlipTwice() {
     constexpr u32 ACTION_DURATION = 140;
 
     auto &status = state()->status();
@@ -459,7 +425,7 @@ bool KartAction::calcLargeFlipAction() {
     bool decayingRot = false;
     bool stuntRot = false;
 
-    if (m_flags.onBit(eFlags::LargeFlip)) {
+    if (m_flags.onBit(eFlags::FlipBounce)) {
         ++m_framesFlipping;
     } else {
         if (m_deltaPitch < TOTAL_DELTA_PITCH) {
@@ -496,7 +462,7 @@ bool KartAction::calcLargeFlipAction() {
         dynamics()->setExtVel(move()->up().proj(EGG::Vector3f::ey) * BOUNCE_FACTOR);
     }
 
-    if ((m_currentAction != Action::UNK_8 && m_frame < 10) || !touchingGround) {
+    if ((m_currentAction != Action::HighLaunchLoseItem && m_frame < 10) || !touchingGround) {
         dynamics()->setExtVel(EGG::Vector3f(0.0f, dynamics()->extVel().y, 0.0f));
     }
 
@@ -506,14 +472,14 @@ bool KartAction::calcLargeFlipAction() {
         }
 
         if (m_frame <= 120) {
-            if (m_flags.onBit(eFlags::LargeFlip)) {
+            if (m_flags.onBit(eFlags::FlipBounce)) {
                 if (m_framesFlipping > 30) {
                     actionEnded = true;
                 }
             } else {
                 if (m_frame >= 40 && m_frame <= 80) {
                     decayingRot = true;
-                    m_flags.setBit(eFlags::LargeFlip);
+                    m_flags.setBit(eFlags::FlipBounce);
                     status.resetBit(eStatus::LargeFlipHit);
                 }
             }
@@ -544,10 +510,8 @@ bool KartAction::calcPressAction() {
  *     END FUNCTIONS
  * ================================ */
 
-void KartAction::endStub(bool /*arg*/) {}
-
 /// @addr{0x8056837C}
-void KartAction::endAction1(bool arg) {
+void KartAction::endSpin(bool arg) {
     if (arg) {
         physics()->composeDecayingExtraRot(m_rotation);
     }
@@ -559,101 +523,5 @@ void KartAction::endLaunchAction(bool arg) {
         physics()->composeDecayingExtraRot(m_rotation);
     }
 }
-
-/* ================================ *
- *     ACTION TABLES
- * ================================ */
-
-const std::array<KartAction::ActionParams, KartAction::MAX_ACTION> KartAction::s_actionParams = {{
-        {0.98f, 0.98f, 1},
-        {0.98f, 0.98f, 2},
-        {0.96f, 0.96f, 4},
-        {0.0f, 0.96f, 4},
-        {0.0f, 0.98f, 4},
-        {0.0f, 0.96f, 4},
-        {0.0f, 0.96f, 4},
-        {0.0f, 0.0f, 6},
-        {0.0f, 0.99f, 6},
-        {0.98f, 0.98f, 3},
-        {0.98f, 0.98f, 3},
-        {1.0f, 1.0f, 5},
-        {0.0f, 0.0f, 3},
-        {0.0f, 0.0f, 3},
-        {0.0f, 0.0f, 3},
-        {0.98f, 0.98f, 3},
-        {0.0f, 0.0f, 3},
-        {0.98f, 0.98f, 3},
-}};
-
-const std::array<KartAction::RotationParams, 5> KartAction::s_rotationParams = {{
-        {10.0f, 1.5f, 0.9f, 0.005f, 0.6f, 360.0f},
-        {11.0f, 1.5f, 0.9f, 0.0028f, 0.7f, 720.0f},
-        {11.0f, 1.5f, 0.9f, 0.0028f, 0.8f, 1080.0f},
-        {7.0f, 1.5f, 0.9f, 0.005f, 0.6f, 450.0f},
-        {9.0f, 1.5f, 0.9f, 0.0028f, 0.7f, 810.0f},
-}};
-
-const std::array<KartAction::StartActionFunc, KartAction::MAX_ACTION> KartAction::s_onStart = {{
-        &KartAction::startStub,
-        &KartAction::startAction1,
-        &KartAction::startAction2,
-        &KartAction::startAction3,
-        &KartAction::startAction4,
-        &KartAction::startAction5,
-        &KartAction::startStub,
-        &KartAction::startLargeFlipAction,
-        &KartAction::startLargeFlipAction,
-        &KartAction::startAction9,
-        &KartAction::startStub,
-        &KartAction::startStub,
-        &KartAction::startLongPressAction,
-        &KartAction::startStub,
-        &KartAction::startShortPressAction,
-        &KartAction::startSpinShrinkAction,
-        &KartAction::startStub,
-        &KartAction::startStub,
-}};
-
-const std::array<KartAction::CalcActionFunc, KartAction::MAX_ACTION> KartAction::s_onCalc = {{
-        &KartAction::calcStub,
-        &KartAction::calcAction1,
-        &KartAction::calcLaunchAction,
-        &KartAction::calcLaunchAction,
-        &KartAction::calcAction4,
-        &KartAction::calcLaunchAction,
-        &KartAction::calcStub,
-        &KartAction::calcLargeFlipAction,
-        &KartAction::calcLargeFlipAction,
-        &KartAction::calcAction1,
-        &KartAction::calcStub,
-        &KartAction::calcStub,
-        &KartAction::calcPressAction,
-        &KartAction::calcStub,
-        &KartAction::calcPressAction,
-        &KartAction::calcAction1,
-        &KartAction::calcStub,
-        &KartAction::calcStub,
-}};
-
-const std::array<KartAction::EndActionFunc, KartAction::MAX_ACTION> KartAction::s_onEnd = {{
-        &KartAction::endStub,
-        &KartAction::endAction1,
-        &KartAction::endLaunchAction,
-        &KartAction::endLaunchAction,
-        &KartAction::endLaunchAction,
-        &KartAction::endLaunchAction,
-        &KartAction::endStub,
-        &KartAction::endStub,
-        &KartAction::endStub,
-        &KartAction::endAction1,
-        &KartAction::endStub,
-        &KartAction::endStub,
-        &KartAction::endStub,
-        &KartAction::endStub,
-        &KartAction::endStub,
-        &KartAction::endAction1,
-        &KartAction::endStub,
-        &KartAction::endStub,
-}};
 
 } // namespace Kinoko::Kart

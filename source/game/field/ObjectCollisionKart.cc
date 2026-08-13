@@ -390,7 +390,7 @@ constexpr std::span<const EGG::Vector3f> ObjectCollisionKart::GetVehicleVertices
 /// @brief Returns the translation vector of the object collision at the given index, if it exists
 const EGG::Vector3f &ObjectCollisionKart::translation(size_t idx) {
     const auto *objCol = ObjectDirector::Instance()->collidingObject(idx)->collision();
-    return objCol ? objCol->translation() : EGG::Vector3f::zero;
+    return objCol ? objCol->velocity() : EGG::Vector3f::zero;
 }
 
 } // namespace Kinoko::Field

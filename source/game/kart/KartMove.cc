@@ -2298,7 +2298,7 @@ void KartMove::applyShrink(u16 timer) {
         return;
     }
 
-    action()->start(Action::UNK_15);
+    action()->start(Action::SpinShrink);
     Item::ItemDirector::Instance()->kartItem(0).clear();
     status.setBit(eStatus::Shocked);
 

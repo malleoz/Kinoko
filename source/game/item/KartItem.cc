@@ -60,4 +60,10 @@ void KartItem::calc() {
     }
 }
 
+/// @addr{0x8079864C}
+/// @brief Applies a mushroom boost to the kart's movement
+void KartItem::activateMushroom() {
+    move()->activateMushroom();
+}
+
 } // namespace Kinoko::Item

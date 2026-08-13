@@ -241,7 +241,7 @@ void KartState::calcCollisions() {
                 if (m_status.offBit(eStatus::TriggerRespawn, eStatus::InRespawn,
                             eStatus::AfterRespawn, eStatus::BeforeRespawn, eStatus::InAction,
                             eStatus::CannonStart, eStatus::InCannon)) {
-                    action()->start(Kart::Action::UNK_1);
+                    action()->start(Kart::Action::SpinTwice);
                 }
             }
         }

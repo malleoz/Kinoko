@@ -119,7 +119,7 @@ Kart::Reaction ObjectPress::onCollision(Kart::KartObject *kartObj, Kart::Reactio
             EGG::Mathf::abs(diff.x) < CRUSH_THRESHOLD && EGG::Mathf::abs(diff.z) < CRUSH_THRESHOLD;
 
     // ObjectId::Press corresponds to a WallAllSpeed reaction, so when the stomper is coming down,
-    // the base game instead uses ObjectId::PressSoko to induce LongCrushLoseItem.
+    // the base game instead uses @ref ObjectId::PressSoko to induce LongCrushLoseItem.
     if (close && (m_state == State::Lowering || m_startedLowered)) {
         const auto &hitTable = ObjectDirector::Instance()->hitTableKart();
         return hitTable.reaction(hitTable.slot(ObjectId::PressSoko));

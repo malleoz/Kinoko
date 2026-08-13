@@ -35,7 +35,7 @@ void ObjectCollisionConvexHull::transform(const EGG::Matrix34f &mat, const EGG::
 /// @addr{0x808367C4}
 void ObjectCollisionConvexHull::transform(const EGG::Matrix34f &mat, const EGG::Vector3f &scale,
         const EGG::Vector3f &speed) {
-    m_translation = speed;
+    m_velocity = speed;
 
     if (scale.x == 0.0f) {
         for (size_t i = 0; i < m_points.size(); ++i) {

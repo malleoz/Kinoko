@@ -26,7 +26,7 @@ void ObjectCollisionSphere::transform(const EGG::Matrix34f &mat, const EGG::Vect
 void ObjectCollisionSphere::transform(const EGG::Matrix34f &mat, const EGG::Vector3f &scale,
         const EGG::Vector3f &speed) {
     m_hasTranslation = true;
-    m_translation = speed;
+    m_velocity = speed;
 
     if (scale.x != 1.0f) {
         m_scaledPos = m_pos * scale.x;

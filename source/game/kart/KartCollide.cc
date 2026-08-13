@@ -670,7 +670,6 @@ void KartCollide::processMovingWater(CollisionData &collisionData, Field::KCLTyp
     case 3:
         collisionData.bMovingWaterDecaySpeed = true;
         collisionData.bMovingWaterDisableAccel = true;
-        collisionData.bMovingWaterVertical = true;
         break;
     default:
         collisionData.bMovingWaterMomentum = true;
@@ -1032,42 +1031,42 @@ Action KartCollide::handleReactWallAllSpeed(size_t idx) {
 
 /// @addr{0x805733CC}
 Action KartCollide::handleReactSpinAllSpeed(size_t /*idx*/) {
-    return Action::UNK_0;
+    return Action::SpinOnce;
 }
 
 /// @addr{0x805733D4}
 Action KartCollide::handleReactSpinSomeSpeed(size_t /*idx*/) {
-    return Action::UNK_1;
+    return Action::SpinTwice;
 }
 
 /// @addr{0x805735AC}
 Action KartCollide::handleReactFireSpin(size_t /*idx*/) {
-    return Action::UNK_9;
+    return Action::FireSpin;
 }
 
 /// @addr{0x805733C4}
 Action KartCollide::handleReactSmallLaunch(size_t /*idx*/) {
-    return Action::UNK_2;
+    return Action::ForwardLaunch;
 }
 
 /// @addr{0x805733DC}
 Action KartCollide::handleReactKnockbackSomeSpeedLoseItem(size_t /*idx*/) {
-    return Action::UNK_3;
+    return Action::AwayFlipOnce;
 }
 
 /// @addr{0x8057353C}
 Action KartCollide::handleReactLaunchSpinLoseItem(size_t /*idx*/) {
-    return Action::UNK_6;
+    return Action::LaunchSpinLoseItem;
 }
 
 /// @addr{0x805733EC}
 Action KartCollide::handleReactKnockbackBumpLoseItem(size_t /*idx*/) {
-    return Action::UNK_4;
+    return Action::AwayFlipTwice;
 }
 
 /// @addr{0x805735B4}
 Action KartCollide::handleReactLongCrushLoseItem(size_t /*idx*/) {
-    return Action::UNK_12;
+    return Action::LongCrushLoseItem;
 }
 
 /// @addr{0x805737B8}
@@ -1078,12 +1077,12 @@ Action KartCollide::handleReactSmallBump(size_t idx) {
 
 /// @addr{0x805735BC}
 Action KartCollide::handleReactSpinShrink(size_t /*idx*/) {
-    return m_shrinkTimer <= 0 ? Action::UNK_15 : Action::None;
+    return m_shrinkTimer <= 0 ? Action::SpinShrink : Action::None;
 }
 
 /// @addr{0x805733E4}
 Action KartCollide::handleReactHighLaunchLoseItem(size_t /*idx*/) {
-    return Action::UNK_8;
+    return Action::HighLaunchLoseItem;
 }
 
 /// @addr{0x80573754}
@@ -1101,8 +1100,8 @@ Action KartCollide::handleReactOffroad(size_t /*idx*/) {
 
 /// @addr{0x805733F4}
 Action KartCollide::handleReactLaunchSpin(size_t idx) {
-    action()->setTranslation(objectCollisionKart()->translation(idx));
-    return Action::UNK_5;
+    action()->setVelocity(objectCollisionKart()->translation(idx));
+    return Action::SidewaysFlipTwice;
 }
 
 /// @addr{0x805736C8}
@@ -1138,17 +1137,17 @@ Action KartCollide::handleReactUntrickableJumpPad(size_t /*idx*/) {
 
 /// @addr{0x805735D4}
 Action KartCollide::handleReactShortCrushLoseItem(size_t /*idx*/) {
-    return Action::UNK_14;
+    return Action::ShortCrushLoseItem;
 }
 
 /// @addr{0x805735DC}
 Action KartCollide::handleReactCrushRespawn(size_t /*idx*/) {
-    return Action::UNK_16;
+    return Action::CrushRespawn;
 }
 
 /// @addr{0x805735E4}
 Action KartCollide::handleReactExplosionLoseItem(size_t /*idx*/) {
-    return Action::UNK_7;
+    return Action::ExplosionLoseItem;
 }
 
 std::array<KartCollide::ObjectCollisionHandler, 33> KartCollide::s_objectCollisionHandlers = {{

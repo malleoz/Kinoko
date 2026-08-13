@@ -364,7 +364,6 @@ void KartSub::addFloor(const CollisionData &colData, bool) {
 
         status.changeBit(colData.bMovingWaterDecaySpeed, eStatus::MovingWaterDecaySpeed);
         status.changeBit(colData.bMovingWaterDisableAccel, eStatus::DisableAcceleration);
-        status.changeBit(colData.bMovingWaterVertical, eStatus::MovingWaterVertical);
     } else {
         status.resetBit(eStatus::MovingWaterDecaySpeed, eStatus::DisableAcceleration,
                 eStatus::MovingWaterVertical);

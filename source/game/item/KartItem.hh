@@ -27,11 +27,7 @@ public:
         }
     }
 
-    /// @addr{0x8079864C}
-    /// @brief Applies a mushroom boost to the kart's movement
-    void activateMushroom() {
-        move()->activateMushroom();
-    }
+    void activateMushroom();
 
     /// @addr{0x807A9D3C}
     /// @brief Actives a mushroom boost and decrements the item count in the inventory slot
