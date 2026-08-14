@@ -73,21 +73,11 @@ private:
     ObjectDrivableDirector();
     ~ObjectDrivableDirector() override;
 
-<<<<<<< HEAD
-    fixed_vector<ObjectDrivable *> m_objects;     ///< All objects live here
-    fixed_vector<ObjectDrivable *> m_calcObjects; ///< Objects needing calc() live here too.
-    ObjectObakeManager *m_obakeManager;           ///< Manages rGV2 blocks and spatial indexing.
+    fixed_vector<ObjectDrivable *> m_objects;     ///< All drivable objects live here
+    fixed_vector<ObjectDrivable *> m_calcObjects; ///< Objects needing calc() live here too
+    ObjectObakeManager *m_obakeManager;           ///< Manages rGV2 blocks and spatial indexing
 
     static constexpr size_t MAX_OBJECTS = 400; ///< Maximum number of objects in the vectors
-=======
-    /// @brief All drivable objects live here
-    std::vector<ObjectDrivable *, EGG::Allocator<ObjectDrivable *>> m_objects;
->>>>>>> 56fdcff1 (WIP 2026-08-05)
-
-    /// @brief Objects needing calc() live here too
-    std::vector<ObjectDrivable *, EGG::Allocator<ObjectDrivable *>> m_calcObjects;
-
-    ObjectObakeManager *m_obakeManager; ///< Manages rGV2 blocks and spatial indexing
 
     static ObjectDrivableDirector *s_instance; ///< @addr{0x809C4310}
 };

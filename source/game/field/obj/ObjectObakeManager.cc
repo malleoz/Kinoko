@@ -8,7 +8,7 @@ namespace Kinoko::Field {
 
 /// @addr{0x8080B0D8}
 ObjectObakeManager::ObjectObakeManager(const System::MapdataGeoObj &params)
-    : ObjectDrivable(params), m_blockCache({}), m_blocks(MAX_BLOCKS), m_calcBlocks(MAX_BLOCKS) {
+    : ObjectDrivable(params), m_blockCache({}), m_blocks(MAX_BLOCKS), m_fallingBlocks(MAX_BLOCKS) {
     static constexpr f32 BLOCK_WIDTH = 195.00002f;
     static constexpr f32 BLOCK_HEIGHT = 130.0f;
 

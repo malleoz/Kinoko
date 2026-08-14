@@ -187,6 +187,8 @@ private:
 
     fixed_vector<ObjectObakeBlock *> m_blocks;        ///< Owning vector of all blocks
     fixed_vector<ObjectObakeBlock *> m_fallingBlocks; ///< Pointers to all actively falling blocks
+
+    static constexpr size_t MAX_BLOCKS = 656; ///< Allocated size of m_blocks and m_calcBlocks
 };
 
 } // namespace Kinoko::Field

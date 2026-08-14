@@ -149,6 +149,8 @@ private:
     /// @brief The maximum pitch angle of the Chain Chomp's head when it is moving
     static f32 s_wanwanMaxPitch;
 
+    static constexpr size_t MAX_MANAGED_OBJECTS = 400; ///< Maximum number of managed objects
+
     static ObjectDirector *s_instance; ///< @addr{0x809C4330}
 };
 
