@@ -21,6 +21,7 @@ KartAction::KartAction()
 KartAction::~KartAction() = default;
 
 /// @addr{0x805673B0}
+/// @brief Every frame, evaluates the current action (if any) and checks if it has ended
 void KartAction::calc() {
     if (m_currentAction == Action::None || !m_onCalc) {
         return;
@@ -32,14 +33,19 @@ void KartAction::calc() {
 }
 
 /// @addr{0x80567CE4}
+/// @brief Decays the kart's speed based off of the current action's speed multiplier
 void KartAction::calcVehicleSpeed() {
     move()->setSpeed(m_actionParams->calcSpeedMult * move()->speed());
 }
 
 /// @addr{0x805675DC}
-/// @brief Starts an action.
-/// @param action The action to start.
-/// @return Whether or not the action was started.
+/// @brief Starts an action
+/// @details Skips all actions if the player is in a cannon or is respawning. Modifies the action if
+/// the player is on a zipper. Checks the priority of the current action and the new action to
+/// determine if the new action can be started. If so, ends the current action. Then, sets the
+/// current action's params and function pointers, and calls the start function for the new action.
+/// @param action The action to start
+/// @return Whether or not the action was started
 bool KartAction::start(Action action) {
     ASSERT(action != Action::None);
 
@@ -89,7 +95,7 @@ bool KartAction::start(Action action) {
 }
 
 /// @addr{0x80567D3C}
-/// @brief Initializes rotation parameters.
+/// @brief Initializes rotation parameters when a spinout action begins
 /// @warning The parameter is supposed to be an enum, but we discard it.
 /// This results in the arguments being off-by-one. Beware of zero!
 /// @param idx The index for the rotation parameters.
@@ -107,6 +113,8 @@ void KartAction::startRotation(size_t idx) {
 }
 
 /// @addr{0x80569AE8}
+/// @brief Computes @ref m_launchDir from @ref m_hitDepth, projected onto the plane perpendicular
+/// to the kart's smoothed up vector
 void KartAction::calcSideFromHitDepth() {
     m_hitDepth.normalise();
     m_launchDir = m_hitDepth.perpInPlane(move()->smoothedUp(), true);
@@ -117,6 +125,8 @@ void KartAction::calcSideFromHitDepth() {
 }
 
 /// @addr{0x80569B94}
+/// @brief Computes @ref m_launchDir like @ref calcSideFromHitDepth, but biased by the colliding
+/// object's @ref m_velocity to pick which side of the kart it hit
 void KartAction::calcSideFromHitDepthAndTranslation() {
     calcSideFromHitDepth();
 
@@ -136,6 +146,7 @@ void KartAction::calcSideFromHitDepthAndTranslation() {
 }
 
 /// @addr{0x80567B98}
+/// @brief Runs when an action ends, resetting the current action and clearing all flags
 void KartAction::end() {
     status().resetBit(eStatus::InAction, eStatus::LargeFlipHit);
     dynamics()->setForceUpright(true);
@@ -146,6 +157,7 @@ void KartAction::end() {
 }
 
 /// @addr{0x80567A88}
+/// @brief Runs the end function for the current action, if any, and resets the current action
 void KartAction::calcEndAction(bool endArg) {
     if (m_currentAction == Action::None) {
         return;
@@ -158,27 +170,30 @@ void KartAction::calcEndAction(bool endArg) {
 }
 
 /// @addr{0x80569DFC}
+/// @brief Runs every frame while a spinout action is active
+/// @details Updates the kart's current yaw to reflect the current yaw rotational velocity from the
+/// spinout. Decays rotation speed after reaching the action's slowdown threshold.
 bool KartAction::calcRotation() {
     if (!m_rotationParams) {
         return false;
     }
 
     // Slow the rotation down as we approach the end of the spinout
-    if (m_currentAngle > m_finalAngle * m_rotationParams->slowdownThreshold) {
-        m_angleIncrement *= m_multiplier;
-        if (m_rotationParams->minRotSpeed > m_angleIncrement) {
-            m_angleIncrement = m_rotationParams->minRotSpeed;
+    if (m_yawAngle > m_targetYaw * m_rotationParams->slowdownThreshold) {
+        m_yawRotVel *= m_decayRate;
+        if (m_rotationParams->minRotSpeed > m_yawRotVel) {
+            m_yawRotVel = m_rotationParams->minRotSpeed;
         }
 
-        m_multiplier -= m_multiplierDecrement;
-        if (m_rotationParams->minDecayRate > m_multiplier) {
-            m_multiplier = m_rotationParams->minDecayRate;
+        m_decayRate -= m_decayRateDelta;
+        if (m_rotationParams->minDecayRate > m_decayRate) {
+            m_decayRate = m_rotationParams->minDecayRate;
         }
     }
 
-    m_currentAngle += m_angleIncrement;
-    if (m_finalAngle < m_currentAngle) {
-        m_currentAngle = m_finalAngle;
+    m_yawAngle += m_yawRotVel;
+    if (m_targetYaw < m_yawAngle) {
+        m_yawAngle = m_targetYaw;
         return true;
     }
 
@@ -186,13 +201,17 @@ bool KartAction::calcRotation() {
 }
 
 /// @addr{0x80569E9C}
+/// @brief Interpolates the smoothed up vector based off the kart's current up vector
 void KartAction::calcUp() {
-    m_up += (move()->up() - m_up) * 0.3f;
+    constexpr f32 UP_INTERP_RATE = 0.3f;
+
+    m_up += (move()->up() - m_up) * UP_INTERP_RATE;
     m_up.normalise();
 }
 
+/// @brief Checks if the kart is landing from a launch and decays the kart's rotation if so
 void KartAction::calcLanding() {
-    if (m_currentAngle < m_targetRot || status().offBit(eStatus::TouchingGround)) {
+    if (m_yawAngle < m_targetRot || status().offBit(eStatus::TouchingGround)) {
         return;
     }
 
@@ -233,7 +252,7 @@ void KartAction::startLaunch(f32 extVelScalar, f32 extVelKart, f32 extVelBike, f
 
 /// @addr{0x805696CC}
 void KartAction::activateCrush(u16 timer) {
-    move()->activateCrush(m_crushTimer + timer);
+    move()->activateCrush(m_crushActionDuration + timer);
     Item::ItemDirector::Instance()->kartItem(0).clear();
 }
 
@@ -250,11 +269,11 @@ void KartAction::setRotation(size_t idx) {
     ASSERT(idx - 1 < ROTATION_PARAMS.size());
     m_rotationParams = &ROTATION_PARAMS[--idx];
 
-    m_finalAngle = m_rotationParams->finalAngle;
-    m_angleIncrement = m_rotationParams->initRotSpeed;
-    m_multiplierDecrement = m_rotationParams->initDecayRate;
-    m_currentAngle = 0.0f;
-    m_multiplier = 1.0f;
+    m_targetYaw = m_rotationParams->finalAngle;
+    m_yawRotVel = m_rotationParams->initRotSpeed;
+    m_decayRateDelta = m_rotationParams->initDecayRate;
+    m_yawAngle = 0.0f;
+    m_decayRate = 1.0f;
 }
 
 /* ================================ *
@@ -318,11 +337,11 @@ void KartAction::startLargeFlipAction() {
 
     Item::ItemDirector::Instance()->kartItem(0).clear();
 
-    m_deltaPitch = 0.0f;
+    m_pitchTraveled = 0.0f;
     m_pitch = 0.0f;
     m_pitchRotVel = INIT_PITCH_VEL;
-    m_flipPhase = 0.0f;
-    m_framesFlipping = 0;
+    m_wobblePhase = 0.0f;
+    m_flipBounceFrames = 0;
 
     status().setBit(eStatus::LargeFlipHit);
 }
@@ -332,7 +351,7 @@ void KartAction::startLongPressAction() {
     constexpr u32 ACTION_DURATION = 90;
     constexpr u16 CRUSH_DURATION = 480;
 
-    m_crushTimer = ACTION_DURATION;
+    m_crushActionDuration = ACTION_DURATION;
     activateCrush(CRUSH_DURATION);
 }
 
@@ -341,7 +360,7 @@ void KartAction::startShortPressAction() {
     constexpr u32 ACTION_DURATION = 30;
     constexpr u16 CRUSH_DURATION = 240;
 
-    m_crushTimer = ACTION_DURATION;
+    m_crushActionDuration = ACTION_DURATION;
     activateCrush(CRUSH_DURATION);
 }
 
@@ -354,7 +373,7 @@ bool KartAction::calcSpin() {
     calcUp();
     bool finished = calcRotation();
 
-    m_rotation.setAxisRotation(DEG2RAD * (m_currentAngle * m_rotationSide), m_up);
+    m_rotation.setAxisRotation(DEG2RAD * (m_yawAngle * m_rotationSide), m_up);
     physics()->composeExtraRot(m_rotation);
     return finished;
 }
@@ -375,7 +394,7 @@ bool KartAction::calcLaunchAction() {
             physics()->composeDecayingExtraRot(m_rotation);
         }
     } else if (m_flags.offBit(eFlags::Landing)) {
-        m_rotation.setAxisRotation(DEG2RAD * m_currentAngle, m_rotAxis);
+        m_rotation.setAxisRotation(DEG2RAD * m_yawAngle, m_rotAxis);
         physics()->composeExtraRot(m_rotation);
     }
 
@@ -407,7 +426,7 @@ bool KartAction::calcActionAwayFlipTwice() {
             physics()->composeDecayingExtraRot(m_rotation);
         }
     } else if (m_flags.offBit(eFlags::Landing)) {
-        m_rotation.setAxisRotation(DEG2RAD * m_currentAngle, m_rotAxis);
+        m_rotation.setAxisRotation(DEG2RAD * m_yawAngle, m_rotAxis);
         physics()->composeExtraRot(m_rotation);
     }
 
@@ -426,21 +445,21 @@ bool KartAction::calcLargeFlipAction() {
     bool stuntRot = false;
 
     if (m_flags.onBit(eFlags::FlipBounce)) {
-        ++m_framesFlipping;
+        ++m_flipBounceFrames;
     } else {
-        if (m_deltaPitch < TOTAL_DELTA_PITCH) {
-            m_deltaPitch += m_velPitch;
-            m_pitch -= m_velPitch;
-            m_velPitch *= (m_velPitch > 1.0f) ? PITCH_DECAY : 1.0f;
+        if (m_pitchTraveled < TOTAL_DELTA_PITCH) {
+            m_pitchTraveled += m_pitchRotVel;
+            m_pitch -= m_pitchRotVel;
+            m_pitchRotVel *= (m_pitchRotVel > 1.0f) ? PITCH_DECAY : 1.0f;
         } else {
             m_pitch = 0.0f;
         }
 
         f32 sin;
 
-        if (EGG::Mathf::abs(m_flipPhase) < 360.0f) {
-            m_flipPhase += PHASE_DELTA;
-            sin = EGG::Mathf::SinFIdx(DEG2FIDX * m_flipPhase);
+        if (EGG::Mathf::abs(m_wobblePhase) < 360.0f) {
+            m_wobblePhase += PHASE_DELTA;
+            sin = EGG::Mathf::SinFIdx(DEG2FIDX * m_wobblePhase);
         } else {
             sin = 0.0f;
         }
@@ -473,7 +492,7 @@ bool KartAction::calcLargeFlipAction() {
 
         if (m_frame <= 120) {
             if (m_flags.onBit(eFlags::FlipBounce)) {
-                if (m_framesFlipping > 30) {
+                if (m_flipBounceFrames > 30) {
                     actionEnded = true;
                 }
             } else {
@@ -503,7 +522,7 @@ bool KartAction::calcPressAction() {
     extVel.y = std::min(0.0f, extVel.y);
     dynamics()->setExtVel(extVel);
 
-    return m_frame > m_crushTimer;
+    return m_frame > m_crushActionDuration;
 }
 
 /* ================================ *

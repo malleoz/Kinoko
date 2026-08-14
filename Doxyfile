@@ -416,3 +416,9 @@ GENERATE_LEGEND        = NO
 # This tag requires that the tag GENERATE_HTML is set to YES. 
 
 HTML_DYNAMIC_SECTIONS = YES
+
+# If the CLANG_ASSISTED_PARSING tag is set to YES then Doxygen will use the
+# clang parser for more accurate parsing at the cost of reduced performance.
+# The default value is: NO.
+
+CLANG_ASSISTED_PARSING = YES
