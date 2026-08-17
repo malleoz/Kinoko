@@ -225,6 +225,16 @@ void KartAction::calcLanding() {
 }
 
 /// @addr{0x80568794}
+/// @brief Called when the kart is launched into the air
+/// @details Calculates the target rotation, axis of rotation, launch direction, and external
+/// velocity to apply to the kart.
+/// @param extVelScalar Scalar applied to the launch direction to calculate the external velocity
+/// @param extVelKart The upwards external velocity to apply to the kart if it is a kart
+/// @param extVelBike The upwards external velocity to apply to the kart if it is a bike
+/// @param numRotations The number of rotations to perform while in the air
+/// @param param6 Determines how to calculate the launch direction and external velocity (0 =
+/// Forward, 1 = Away from the hit depth, 2 = Away from the hit depth and biased by the colliding
+/// object's velocity)
 void KartAction::startLaunch(f32 extVelScalar, f32 extVelKart, f32 extVelBike, f32 numRotations,
         u32 param6) {
     m_targetRot = 360.0f * numRotations;
@@ -251,12 +261,15 @@ void KartAction::startLaunch(f32 extVelScalar, f32 extVelKart, f32 extVelBike, f
 }
 
 /// @addr{0x805696CC}
+/// @brief Activates the kart's crush state for a given duration and clears the player's items
+/// @param timer How long the kart remains crushed after the action ends
 void KartAction::activateCrush(u16 timer) {
     move()->activateCrush(m_crushActionDuration + timer);
     Item::ItemDirector::Instance()->kartItem(0).clear();
 }
 
 /// @addr{0x80567C68}
+/// @brief Applies the initial start speed multiplier to the kart for the action that just started
 void KartAction::applyStartSpeed() {
     move()->setSpeed(m_actionParams->startSpeedMult * move()->speed());
     if (m_actionParams->startSpeedMult == 0.0f) {
@@ -265,6 +278,10 @@ void KartAction::applyStartSpeed() {
 }
 
 /// @addr{0x80569DB4}
+/// @brief Sets the rotation parameters for the current action
+/// @details Indices 0 and 1 correspond to a spinout whereas indices 2, 3, and 4 correspond to a
+/// launch.
+/// @param idx The index of the rotation parameters to use
 void KartAction::setRotation(size_t idx) {
     ASSERT(idx - 1 < ROTATION_PARAMS.size());
     m_rotationParams = &ROTATION_PARAMS[--idx];
@@ -281,6 +298,8 @@ void KartAction::setRotation(size_t idx) {
  * ================================ */
 
 /// @addr{0x8056865C}
+/// @brief Starts a small launch action
+/// @details The kart launches in the air and flips forward once.
 void KartAction::startSmallLaunch() {
     constexpr f32 EXT_VEL_SCALAR = 0.0f;
     constexpr f32 EXT_VEL_KART = 30.0f;
@@ -291,6 +310,9 @@ void KartAction::startSmallLaunch() {
 }
 
 /// @addr{0x80568718}
+/// @brief Starts a small launch action with one flip away from the object
+/// @details The kart launches in the air away from the colliding object and flips once. The kart
+/// also loses its items.
 void KartAction::startActionAwayFlipOnce() {
     constexpr f32 EXT_VEL_SCALAR = 25.0f;
     constexpr f32 EXT_VEL_KART = 30.0f;
@@ -302,6 +324,9 @@ void KartAction::startActionAwayFlipOnce() {
 }
 
 /// @addr{0x80568CB8}
+/// @brief Starts a small launch action with two flips away from the object
+/// @details The kart launches in the air away from the colliding object and flips twice. The kart
+/// also loses its items.
 void KartAction::startActionAwayFlipTwice() {
     constexpr f32 EXT_VEL_SCALAR = 25.0f;
     constexpr f32 EXT_VEL_KART = 30.0f;
@@ -313,6 +338,9 @@ void KartAction::startActionAwayFlipTwice() {
 }
 
 /// @addr{0x80568FA4}
+/// @brief Starts a small launch action with one flip sideways
+/// @details The kart launches in the air to the side and flips twice. The side the kart flips
+/// towards depends on which side of the kart was hit by the colliding object.
 void KartAction::startActionSidewaysFlipTwice() {
     constexpr f32 EXT_VEL_SCALAR = 13.0f;
     constexpr f32 EXT_VEL_KART = 40.0f;
@@ -323,6 +351,9 @@ void KartAction::startActionSidewaysFlipTwice() {
 }
 
 /// @addr{0x805690A0}
+/// @brief Start a large launch action
+/// @details The kart launches high into the air and flips twice. The kart always launches away from
+/// the colliding object. The kart also loses its items.
 void KartAction::startLargeFlipAction() {
     constexpr EGG::Vector3f INIT_VEL = EGG::Vector3f(0.0f, 60.0f, 0.0f);
     constexpr f32 INIT_PITCH_VEL = 22.0f;
@@ -347,6 +378,9 @@ void KartAction::startLargeFlipAction() {
 }
 
 /// @addr{0x80569774}
+/// @brief Start a long crush action
+/// @details The crush animation lasts 90 frames and the kart remains crushed for 480 frames
+/// afterwards.
 void KartAction::startLongPressAction() {
     constexpr u32 ACTION_DURATION = 90;
     constexpr u16 CRUSH_DURATION = 480;
@@ -356,6 +390,9 @@ void KartAction::startLongPressAction() {
 }
 
 /// @addr{0x80569978}
+/// @brief Starts a short crush action
+/// @details The crush animation lasts 30 frames and the kart remains crushed for 240 frames
+/// afterwards.
 void KartAction::startShortPressAction() {
     constexpr u32 ACTION_DURATION = 30;
     constexpr u16 CRUSH_DURATION = 240;
@@ -369,6 +406,9 @@ void KartAction::startShortPressAction() {
  * ================================ */
 
 /// @addr{0x80568204}
+/// @brief Runs every frame while a spinout action is active
+/// @details Calculates the current rotation of the kart based off the current yaw rotational
+/// velocity from the action.
 bool KartAction::calcSpin() {
     calcUp();
     bool finished = calcRotation();
@@ -379,6 +419,10 @@ bool KartAction::calcSpin() {
 }
 
 /// @addr{0x80568AA8}
+/// @brief Runs every frame while a launch action is active
+/// @details Calculates the current rotation of the kart based off the current yaw rotational
+/// velocity from the action. If the kart is landing, decays the rotation. Once the action has
+/// ended, decays the rotation as well.
 bool KartAction::calcLaunchAction() {
     constexpr u32 ACTION_DURATION = 100;
 
@@ -402,6 +446,11 @@ bool KartAction::calcLaunchAction() {
 }
 
 /// @addr{0x80568D34}
+/// @brief Runs every frame while a launch action with two flips away from the object is active
+/// @details Calculates the current rotation of the kart based off the current yaw rotational
+/// velocity from the action. If the kart has bounced off the ground mid-action, then applies an
+/// instantaneous upwards velocity. If the kart is landing after the bounce, decays the rotation.
+/// Once the action has ended, decays the rotation as well.
 bool KartAction::calcActionAwayFlipTwice() {
     constexpr u32 ACTION_DURATION = 140;
 
@@ -434,6 +483,13 @@ bool KartAction::calcActionAwayFlipTwice() {
 }
 
 /// @addr{0x805692B4}
+/// @brief Runs every frame while a large launch action is active
+/// @details Calculates the current pitch of the kart based off of the current pitch rotational
+/// velocity from the action. Also applies a wobble effect throughout the action. If the kart is not
+/// touching the ground, sets the x and z external velocity of the vehicle to 0. If the kart has
+/// bounced off the ground mid-action, then applies a small instantaneous upwards velocity. If the
+/// kart is landing after the bounce, decays the rotation. Once the action has ended, decays the
+/// rotation as well.
 bool KartAction::calcLargeFlipAction() {
     constexpr f32 PITCH_DECAY = 0.971f;
     constexpr f32 TOTAL_DELTA_PITCH = 720.0f;
@@ -517,6 +573,9 @@ bool KartAction::calcLargeFlipAction() {
 }
 
 /// @addr{0x80569A1C}
+/// @brief Runs every frame while a crush action is active
+/// @details Sets the external velocity of the kart to be zero or downwards, and checks if the crush
+/// duration has ended.
 bool KartAction::calcPressAction() {
     EGG::Vector3f extVel = KartObjectProxy::extVel();
     extVel.y = std::min(0.0f, extVel.y);
@@ -530,15 +589,21 @@ bool KartAction::calcPressAction() {
  * ================================ */
 
 /// @addr{0x8056837C}
-void KartAction::endSpin(bool arg) {
-    if (arg) {
+/// @brief Runs when a spinout action ends
+/// @details If another action is starting in the middle of this action, decays the rotation of the
+/// kart.
+/// @param newActionStarting True if this action ended because a higher priority action is starting
+void KartAction::endSpin(bool newActionStarting) {
+    if (newActionStarting) {
         physics()->composeDecayingExtraRot(m_rotation);
     }
 }
 
 /// @addr{0x80568C7C} @addr{0x805686DC} @addr{0x80568F68}
-void KartAction::endLaunchAction(bool arg) {
-    if (arg) {
+/// @brief Runs when a launch action ends
+/// @param newActionStarting True if this action ended because a higher priority action is starting
+void KartAction::endLaunchAction(bool newActionStarting) {
+    if (newActionStarting) {
         physics()->composeDecayingExtraRot(m_rotation);
     }
 }

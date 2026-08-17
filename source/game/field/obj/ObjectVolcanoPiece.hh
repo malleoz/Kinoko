@@ -27,17 +27,21 @@ public:
         return m_modelName;
     }
 
+    /// @brief Function pointer type for a function that represents a partial point collision check
     typedef bool (ObjColMgr::*CheckPointPartialFunc)(const EGG::Vector3f &v0,
             const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfoPartial *pInfo,
             KCLTypeMask *pFlagsOut);
 
+    /// @brief Function pointer type for a function that represents a full point collision check
     typedef bool (ObjColMgr::*CheckPointFullFunc)(const EGG::Vector3f &v0, const EGG::Vector3f &v1,
             KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut);
 
+    /// @brief Function pointer type for a function that represents a partial sphere collision check
     typedef bool (ObjColMgr::*CheckSpherePartialFunc)(f32 radius, const EGG::Vector3f &v0,
             const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfoPartial *pInfo,
             KCLTypeMask *pFlagsOut);
 
+    /// @brief Function pointer type for a function that represents a full sphere collision check
     typedef bool (ObjColMgr::*CheckSphereFullFunc)(f32 radius, const EGG::Vector3f &v0,
             const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo,
             KCLTypeMask *pFlagsOut);

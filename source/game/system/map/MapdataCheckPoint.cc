@@ -27,7 +27,8 @@ void MapdataCheckPoint::read(EGG::Stream &stream) {
 }
 
 /// @addr{0x80515624}
-/// @brief Calculates @ref m_nextPoints and @ref m_prevPoints from @ref m_nextPt and @ref m_prevPt.
+/// @brief Calculates @ref MapdataCheckPoint::m_nextPoints and @ref MapdataCheckPoint::m_prevPoints
+/// from @ref MapdataCheckPoint::m_nextPt and @ref MapdataCheckPoint::m_prevPt.
 /// @details Also calculates the quadrilaterals for the next checkpoints, filling the fields of @ref
 /// LinkedCheckpoint for each.
 void MapdataCheckPoint::initCheckpointLinks(MapdataCheckPointAccessor &accessor, int id) {

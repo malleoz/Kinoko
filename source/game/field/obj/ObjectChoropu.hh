@@ -138,7 +138,7 @@ public:
     Kart::Reaction onCollision(Kart::KartObject * /*kartObj*/, Kart::Reaction /*reactionOnKart*/,
             Kart::Reaction /*reactionOnObj*/, EGG::Vector3f &hitDepth) override {
         hitDepth.setZero();
-        return Kart::Reaction::Wall;
+        return Kart::Reaction::Offroad;
     }
 
 private:

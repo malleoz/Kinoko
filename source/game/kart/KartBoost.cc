@@ -12,12 +12,11 @@ KartBoost::KartBoost() : m_timers{0}, m_active{false} {
 /// @addr{0x8057811C}
 KartBoost::~KartBoost() = default;
 
-/// @stage 2
-/// @brief Starts/restarts a boost of the given type
 /// @addr{0x80588DB0}
+/// @brief Starts/restarts a boost of the given type
 /// @param type The type of boost (e.g. mini-turbo)
 /// @param frames The duration of the boost
-/// @return whether the boost was activated
+/// @return Whether the boost was activated
 bool KartBoost::activate(Type type, s16 frames) {
     bool activated = false;
 
@@ -31,9 +30,8 @@ bool KartBoost::activate(Type type, s16 frames) {
     return activated;
 }
 
-/// @stage 2
-/// @brief Computes the current frame's boost multiplier, acceleration, and speed limit.
 /// @addr{0x80588E24}
+/// @brief Computes the current frame's boost multiplier, acceleration, and speed limit.
 /// @return whether a boost is active
 bool KartBoost::calc() {
     static constexpr std::array<f32, BOOST_TYPE_COUNT> MULTIPLIERS = {{
@@ -73,14 +71,6 @@ bool KartBoost::calc() {
     }
 
     return m_multiplier > 1.0f || m_speedLimit > 0.0f;
-}
-
-/// @addr{0x80588D74}
-void KartBoost::reset() {
-    m_timers.fill(0);
-    m_multiplier = 1.0f;
-    m_acceleration = 1.0f;
-    m_speedLimit = -1.0f;
 }
 
 } // namespace Kinoko::Kart

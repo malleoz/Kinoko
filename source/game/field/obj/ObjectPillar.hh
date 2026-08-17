@@ -46,7 +46,7 @@ public:
     Kart::Reaction onCollision(Kart::KartObject * /*kartObj*/, Kart::Reaction reactionOnKart,
             Kart::Reaction /*reactionOnObj*/, EGG::Vector3f & /*hitDepth*/) override {
         auto *raceMgr = System::RaceManager::Instance();
-        return raceMgr->timer() < m_fallStart ? Kart::Reaction::WallAllSpeed : reactionOnKart;
+        return raceMgr->timer() < m_fallStart ? Kart::Reaction::Wall : reactionOnKart;
     }
 
 private:

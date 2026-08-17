@@ -80,14 +80,14 @@ void ObjectCollidable::processKartReactions(Kart::KartObject *kartObj,
         Kart::Reaction &reactionOnKart, Kart::Reaction &reactionOnObj) {
     // Process the reaction on kart
     if (kartObj->speedRatioCapped() < 0.5f) {
-        if (reactionOnKart == Kart::Reaction::SpinSomeSpeed) {
-            reactionOnKart = Kart::Reaction::WallAllSpeed;
+        if (reactionOnKart == Kart::Reaction::SpinTwice) {
+            reactionOnKart = Kart::Reaction::Wall;
         } else if (reactionOnKart == Kart::Reaction::SpinHitSomeSpeed) {
             reactionOnKart = Kart::Reaction::None;
         }
     } else {
         if (reactionOnKart == Kart::Reaction::SpinHitSomeSpeed) {
-            reactionOnKart = Kart::Reaction::SpinSomeSpeed;
+            reactionOnKart = Kart::Reaction::SpinTwice;
         }
     }
 

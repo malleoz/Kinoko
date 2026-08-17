@@ -82,7 +82,7 @@ public:
         return m_managedObjects;
     }
 
-    /// @brief Exposes the rising water object, so that @ref Kart::KartMove::calcRisingWater() can
+    /// @brief Exposes the rising water object, so that @ref Kart::KartMove::calcRisingWater can
     /// know if it should run or not
     [[nodiscard]] ObjectPsea *psea() const {
         return m_psea;
@@ -128,7 +128,7 @@ private:
     fixed_vector<ObjectBase *> m_collisionObjects; ///< Objects having collision live here too
 
     /// @brief The maximum number of objects that can be colliding with a kart at once
-    static constexpr size_t MAX_UNIT_COUNT = 0x100;
+    static constexpr size_t MAX_UNIT_COUNT = 200;
 
     /// @brief Objects we are currently colliding with
     std::array<ObjectCollidable *, MAX_UNIT_COUNT> m_collidingObjects;

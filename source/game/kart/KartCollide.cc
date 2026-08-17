@@ -1,16 +1,9 @@
 #include "KartCollide.hh"
 
 #include "game/kart/KartBody.hh"
-#include "game/kart/KartMove.hh"
-#include "game/kart/KartPhysics.hh"
-#include "game/kart/KartState.hh"
 
 #include "game/field/CollisionDirector.hh"
-#include "game/field/ObjectCollisionKart.hh"
 #include "game/field/ObjectDirector.hh"
-
-#include <egg/math/BoundBox.hh>
-#include <egg/math/Math.hh>
 
 namespace Kinoko::Kart {
 
@@ -24,17 +17,18 @@ KartCollide::KartCollide() {
 KartCollide::~KartCollide() = default;
 
 /// @addr{0x8056E624}
+/// @brief Initializes the collision state for the kart
 void KartCollide::init() {
     m_pullPath.init();
     calcBoundingRadius();
-    m_floorMomentRate = 0.8f;
+    m_floorMomentScalar = 0.8f;
     m_surfaceFlags.makeAllZero();
     m_respawnTimer = 0;
     m_solidOobTimer = 0;
     m_shrinkTimer = 0;
     m_smoothedBack = 0.0f;
-    m_sumHitboxBottomHeightFloorOnly = 0.0f;
-    m_sumHitboxBottomHeightSoftWall = 0.0f;
+    m_sumFloorBottomHeight = 0.0f;
+    m_sumSoftwallBottomHeight = 0.0f;
     m_numFloorOnlyCollisions = 0;
     m_numSoftWallCollisions = 0;
     m_poleAngVelTimer = 0;
@@ -43,16 +37,16 @@ void KartCollide::init() {
 }
 
 /// @addr{0x805730D4}
-void KartCollide::resetHitboxes() {
+/// @brief Updates the last position for each hitbox in the kart's collision group
+void KartCollide::setHitboxLastPos() {
     CollisionGroup *hitboxGroup = physics()->hitboxGroup();
     for (u16 idx = 0; idx < hitboxGroup->hitboxCount(); ++idx) {
         hitboxGroup->hitbox(idx).setLastPos(scale(), pose());
     }
 }
 
-/// @stage All
-/// @brief On each frame, calculates the positions for each hitbox
 /// @addr{0x8056EE24}
+/// @brief On each frame, calculates the positions for each hitbox
 void KartCollide::calcHitboxes() {
     CollisionGroup *hitboxGroup = physics()->hitboxGroup();
     for (u16 idx = 0; idx < hitboxGroup->hitboxCount(); ++idx) {
@@ -61,8 +55,11 @@ void KartCollide::calcHitboxes() {
     }
 }
 
-/// @stage All
 /// @addr{0x80572C20}
+/// @brief Handles collisions for the kart's body and responds accordingly
+/// @details Evaluates kart body collisions and updates the kart's @ref CollisionData state
+/// accordingly. Applies the necessary external velocity and rotation due to floor and wall
+/// collisions.
 void KartCollide::findCollision() {
     bool wasHalfPipe = status().onBit(eStatus::EndHalfPipe, eStatus::ActionMidZipper);
     const EGG::Quatf &rot = wasHalfPipe ? mainRot() : fullRot();
@@ -92,13 +89,16 @@ void KartCollide::findCollision() {
         colData.wallNrm.normalise();
     }
 
-    FUN_80572F4C();
+    calcRebound();
 }
 
-/// @stage 2
 /// @addr{0x80572F4C}
-/// @rename
-void KartCollide::FUN_80572F4C() {
+/// @brief Calculates the rebound effect for collisions with floors and walls
+/// @details While on a zipper or half-pipe or boosting, the kart will not rebound. Otherwise,
+/// applies an additional rebound effect when colliding with walls. If the kart has been in the air
+/// for more than 20 frames and is falling fast, then the relative X and Z position of the collision
+/// will be reset to 0.
+void KartCollide::calcRebound() {
     f32 fVar1;
 
     auto &status = KartObjectProxy::status();
@@ -114,38 +114,37 @@ void KartCollide::FUN_80572F4C() {
     bool resetXZ = fVar1 > 0.0f && status.onBit(eStatus::AirtimeOver20) &&
             dynamics()->velocity().y < -50.0f;
 
-    FUN_805B72B8(status.onBit(eStatus::InAction) ? 0.3f : 0.01f, fVar1, resetXZ,
+    applyRebound(status.onBit(eStatus::InAction) ? 0.3f : 0.01f, fVar1, resetXZ,
             status.offBit(eStatus::JumpPadDisableYsusForce));
 }
 
-/// @stage All
-/// @brief Affects velocity when landing from airtime.
 /// @addr{0x805B72B8}
-/// @details Every frame, this function checks the player's velocity relative to the floor collision
-/// and applies external velocity and angular velocity.
-/// This is mostly relevant when you were midair and just landed.
-/// @rename
-void KartCollide::FUN_805B72B8(f32 param_1, f32 param_2, bool lockXZ, bool addExtVelY) {
+/// @brief Affects velocity and rotation when colliding with floors and walls
+/// @details Every frame, this function checks the player's position relative to the floor and wall
+/// collision and applies external velocity and angular velocity.
+/// @param reboundScalar The scalar to apply to the rebound effect
+/// @param reboundVelAmt The velocity to add to the velocity from the kart's @ref CollisionData
+/// @param lockXZ If true, the relative X and Z position of the collision will be set to 0
+/// @param addExtVelY Gates whether the vertical component of rebound actually gets applied to the
+/// kart's external velocity
+void KartCollide::applyRebound(f32 reboundScalar, f32 reboundVelAmt, bool lockXZ, bool addExtVelY) {
     const auto &colData = collisionData();
 
     if (!colData.bFloor && !colData.bWall && !colData.bWall3) {
         return;
     }
 
-    EGG::Vector3f collisionDir = colData.floorNrm + colData.wallNrm;
-    collisionDir.normalise();
+    EGG::Vector3f colDir = colData.floorNrm + colData.wallNrm;
+    colDir.normalise();
 
-    f32 directionalVelocity = colData.vel.dot(collisionDir);
-    if (directionalVelocity >= 0.0f) {
+    f32 normalVel = colData.vel.dot(colDir);
+    if (normalVel >= 0.0f) {
         return;
     }
 
-    EGG::Matrix34f rotMat;
-    EGG::Matrix34f rotMatTrans;
-
-    rotMat.makeQ(dynamics()->mainRot());
-    rotMatTrans = rotMat.transpose();
-    rotMat = rotMat.multiplyTo(dynamics()->invInertiaTensor()).multiplyTo(rotMatTrans);
+    EGG::Matrix34f rtMat;
+    rtMat.makeQ(dynamics()->mainRot());
+    rtMat = rtMat.multiplyTo(dynamics()->invInertiaTensor()).multiplyTo(rtMat.transpose());
 
     EGG::Vector3f relPos = colData.relPos;
     if (lockXZ) {
@@ -153,30 +152,29 @@ void KartCollide::FUN_805B72B8(f32 param_1, f32 param_2, bool lockXZ, bool addEx
         relPos.z = 0.0f;
     }
 
-    EGG::Vector3f step1 = relPos.cross(collisionDir);
-    EGG::Vector3f step2 = rotMat.multVector33(step1);
-    EGG::Vector3f step3 = step2.cross(relPos);
-    f32 val = (-directionalVelocity * (1.0f + param_2)) / (1.0f + collisionDir.dot(step3));
-    EGG::Vector3f step4 = collisionDir.cross(-colData.vel);
-    EGG::Vector3f step5 = step4.cross(collisionDir);
-    step5.normalise();
+    EGG::Vector3f torque = rtMat.multVector33(relPos.cross(colDir));
+    f32 normalImpulse =
+            (-normalVel * (1.0f + reboundVelAmt)) / (1.0f + colDir.dot(torque.cross(relPos)));
 
-    f32 fVar1 = param_1 * EGG::Mathf::abs(val);
-    f32 otherVal = (val * colData.vel.dot(step5)) / directionalVelocity;
+    EGG::Vector3f tanDir = colDir.cross(-colData.vel).cross(colDir);
+    tanDir.normalise();
 
-    f32 fVar3 = otherVal;
-    if (fVar1 < EGG::Mathf::abs(otherVal)) {
-        fVar3 = fVar1;
-        if (otherVal < 0.0f) {
-            fVar3 = -param_1 * EGG::Mathf::abs(val);
+    f32 maxTanImpulse = reboundScalar * EGG::Mathf::abs(normalImpulse);
+    f32 tanImpulse = (normalImpulse * colData.vel.dot(tanDir)) / normalVel;
+
+    f32 clampedTanImpulse = tanImpulse;
+    if (maxTanImpulse < EGG::Mathf::abs(tanImpulse)) {
+        clampedTanImpulse = maxTanImpulse;
+        if (tanImpulse < 0.0f) {
+            clampedTanImpulse = -reboundScalar * EGG::Mathf::abs(normalImpulse);
         }
     }
 
-    EGG::Vector3f step6 = val * collisionDir + fVar3 * step5;
+    EGG::Vector3f impulse = normalImpulse * colDir + clampedTanImpulse * tanDir;
 
-    f32 local_1d0 = step6.y;
+    f32 impulseY = impulse.y;
     if (!addExtVelY) {
-        local_1d0 = 0.0f;
+        impulseY = 0.0f;
     } else if (colData.bFloor) {
         f32 velY = intVel().y;
         if (velY > 0.0f) {
@@ -190,8 +188,8 @@ void KartCollide::FUN_805B72B8(f32 param_1, f32 param_2, bool lockXZ, bool addEx
     }
 
     f32 prevExtVelY = extVel().y;
-    EGG::Vector3f extVelAdd = step6;
-    extVelAdd.y = local_1d0;
+    EGG::Vector3f extVelAdd = impulse;
+    extVelAdd.y = impulseY;
     dynamics()->setExtVel(extVel() + extVelAdd);
 
     if (prevExtVelY < 0.0f && extVel().y > 0.0f && extVel().y < 10.0f) {
@@ -200,19 +198,18 @@ void KartCollide::FUN_805B72B8(f32 param_1, f32 param_2, bool lockXZ, bool addEx
         dynamics()->setExtVel(extVelNoY);
     }
 
-    EGG::Vector3f step7 = relPos.cross(step6);
-    EGG::Vector3f step8 = rotMat.multVector33(step7);
-    EGG::Vector3f step9 = mainRot().rotateVectorInv(step8);
-    step9.y = 0.0f;
-    dynamics()->setAngVel0(dynamics()->angVel0() + step9);
+    EGG::Vector3f worldAngVelDelta = rtMat.multVector33(relPos.cross(impulse));
+    EGG::Vector3f localAngVelDelta = mainRot().rotateVectorInv(worldAngVelDelta);
+    localAngVelDelta.y = 0.0f;
+    dynamics()->setAngVel0(dynamics()->angVel0() + localAngVelDelta);
 }
 
-/// @stage All
 /// @addr{0x805B6724}
-/// @brief Checks and acts on collision for each kart hitbox.
-/// @param totalScale
-/// @param rot
-/// @param scale
+/// @brief Checks and acts on collision for each kart hitbox
+/// @param totalScale Overall scale of the vehicle (only affected by shrinking)
+/// @param sinkDepth The depth of the kart's body into the ground
+/// @param rot The rotation of the kart's body
+/// @param scale Per-axis scale of the kart's body
 void KartCollide::calcBodyCollision(f32 totalScale, f32 sinkDepth, const EGG::Quatf &rot,
         const EGG::Vector3f &scale) {
     CollisionGroup *hitboxGroup = physics()->hitboxGroup();
@@ -247,7 +244,8 @@ void KartCollide::calcBodyCollision(f32 totalScale, f32 sinkDepth, const EGG::Qu
                         KCL_TYPE_VEHICLE_COLLIDEABLE);
             }
 
-            if (!FUN_805B6A9C(collisionData, hitbox, minMax, posRel, count, maskOut, colInfo)) {
+            if (!accumulateBodyCollision(collisionData, hitbox, minMax, posRel, count, maskOut,
+                        colInfo)) {
                 bVar1 = true;
 
                 if (colInfo.movingFloorDist > -std::numeric_limits<f32>::min()) {
@@ -270,21 +268,18 @@ void KartCollide::calcBodyCollision(f32 totalScale, f32 sinkDepth, const EGG::Qu
 }
 
 /// @addr{0x80571634}
+/// @brief Calculates the effect the colliding floor has on the kart
 void KartCollide::calcFloorEffect() {
-    if (status().onBit(eStatus::TouchingGround)) {
-        m_surfaceFlags.setBit(eSurfaceFlags::Offroad, eSurfaceFlags::GroundBoostPanelOrRamp);
-    }
-
-    m_sumHitboxBottomHeightFloorOnly = 0.0f;
+    m_sumFloorBottomHeight = 0.0f;
     m_surfaceFlags.resetBit(eSurfaceFlags::Wall, eSurfaceFlags::SolidOOB, eSurfaceFlags::BoostRamp,
             eSurfaceFlags::Offroad, eSurfaceFlags::Trickable, eSurfaceFlags::NotTrickable,
-            eSurfaceFlags::StopHalfPipeState);
-    m_sumHitboxBottomHeightSoftWall = 0.0f;
+            eSurfaceFlags::EndHalfPipe);
+    m_sumSoftwallBottomHeight = 0.0f;
     m_numFloorOnlyCollisions = 0;
     m_numSoftWallCollisions = 0;
 
     Field::KCLTypeMask mask = KCL_NONE;
-    calcTriggers(&mask, pos(), false);
+    calcLeanCollision(&mask, pos(), false);
 
     auto *colDir = Field::CollisionDirector::Instance();
 
@@ -298,7 +293,7 @@ void KartCollide::calcFloorEffect() {
     }
 
     mask = KCL_NONE;
-    calcTriggers(&mask, pos(), true);
+    calcLeanCollision(&mask, pos(), true);
 
     m_solidOobTimer =
             m_surfaceFlags.onBit(eSurfaceFlags::SolidOOB) ? std::min(3, m_solidOobTimer + 1) : 0;
@@ -314,10 +309,16 @@ void KartCollide::calcFloorEffect() {
 }
 
 /// @addr{0x805718D4}
-void KartCollide::calcTriggers(Field::KCLTypeMask *mask, const EGG::Vector3f &pos, bool twoPoint) {
-    EGG::Vector3f v1 = twoPoint ? physics()->pos() : EGG::Vector3f::inf;
-    Field::KCLTypeMask typeMask = twoPoint ? KCL_TYPE_DIRECTIONAL : KCL_TYPE_NON_DIRECTIONAL;
-    f32 radius = twoPoint ? 80.0f : 100.0f * move()->totalScale();
+/// @brief Checks for collisions using a position behind and below the kart.
+/// @param mask The collision type mask to store the result of the collision check
+/// @param pos The position of the kart to check for collisions
+/// @param checkDirection If true, the function will check for directional collisions including
+/// triggers (such as fall plane OOB and cannon entries)
+void KartCollide::calcLeanCollision(Field::KCLTypeMask *mask, const EGG::Vector3f &pos,
+        bool checkDirection) {
+    EGG::Vector3f v1 = checkDirection ? physics()->pos() : EGG::Vector3f::inf;
+    Field::KCLTypeMask typeMask = checkDirection ? KCL_TYPE_DIRECTIONAL : KCL_TYPE_NON_DIRECTIONAL;
+    f32 radius = checkDirection ? 80.0f : 100.0f * move()->totalScale();
     f32 scalar = -bsp().initialYPos * move()->totalScale() * 0.3f;
     EGG::Vector3f scaledPos = pos + scalar * componentYAxis();
     EGG::Vector3f back = dynamics()->mainRot().rotateVector(EGG::Vector3f::ez);
@@ -334,8 +335,8 @@ void KartCollide::calcTriggers(Field::KCLTypeMask *mask, const EGG::Vector3f &po
         return;
     }
 
-    if (twoPoint) {
-        handleTriggers(mask);
+    if (checkDirection) {
+        calcTriggers(mask);
     } else {
         if (*mask & KCL_TYPE_FLOOR) {
             Field::CollisionDirector::Instance()->findClosestCollisionEntry(mask, KCL_TYPE_FLOOR);
@@ -352,7 +353,11 @@ void KartCollide::calcTriggers(Field::KCLTypeMask *mask, const EGG::Vector3f &po
 }
 
 /// @addr{0x8056F510}
-void KartCollide::handleTriggers(Field::KCLTypeMask *mask) {
+/// @brief Checks for collisions with triggers and processes them accordingly
+/// @param mask The collision type mask to store the result of the collision check
+/// @details Checks for both fall boundary OOBs and cannon entries. If the kart is colliding with an
+/// effect trigger, ends the half-pipe state.
+void KartCollide::calcTriggers(Field::KCLTypeMask *mask) {
     calcFallBoundary(mask, false);
     processCannon(mask);
 
@@ -362,13 +367,16 @@ void KartCollide::handleTriggers(Field::KCLTypeMask *mask) {
             if (colDir->closestCollisionEntry()->variant() == 4) {
                 halfPipe()->end(true);
                 status().setBit(eStatus::EndHalfPipe);
-                m_surfaceFlags.setBit(eSurfaceFlags::StopHalfPipeState);
+                m_surfaceFlags.setBit(eSurfaceFlags::EndHalfPipe);
             }
         }
     }
 }
 
 /// @addr{0x80571D98}
+/// @brief Checks for collisions with fall boundaries and activates OOB if necessary
+/// @param mask The collision type mask to store the result of the collision check
+/// @param shortBoundary If true, the function will only check for short fall boundaries
 void KartCollide::calcFallBoundary(Field::KCLTypeMask *mask, bool shortBoundary) {
     if (!(*mask & KCL_TYPE_BIT(COL_TYPE_FALL_BOUNDARY))) {
         return;
@@ -379,22 +387,17 @@ void KartCollide::calcFallBoundary(Field::KCLTypeMask *mask, bool shortBoundary)
         return;
     }
 
-    bool safe = false;
-    const auto *entry = colDir->closestCollisionEntry();
-
-    if (shortBoundary) {
-        if (entry->variant() != 7) {
-            safe = true;
-        }
-    }
-
-    if (!safe) {
+    if (!shortBoundary || colDir->closestCollisionEntry()->variant() == 7) {
         activateOob(false, mask, false, false);
     }
 }
 
 /// @addr{0x80573ED4}
-void KartCollide::calcBeforeRespawn() {
+/// @brief Checks if the kart is out of bounds and handles respawn and shrinking
+/// @details If the kart's Y-position is negative, unconditionally triggers a respawn. If the kart
+/// is in the "BeforeRespawn" state, decrements the respawn timer and respawns the player when it
+/// reaches 0. Also decrements the shrink timer if it is greater than 0.
+void KartCollide::calcBeforeRespawnAndShrink() {
     if (pos().y < 0.0f) {
         activateOob(true, nullptr, false, false);
     }
@@ -415,6 +418,7 @@ void KartCollide::calcBeforeRespawn() {
 }
 
 /// @addr{0x80573B00}
+/// @brief Activates the out-of-bounds state for the kart and sets the respawn timer
 void KartCollide::activateOob(bool /*detachCamera*/, Field::KCLTypeMask * /*mask*/,
         bool /*somethingCPU*/, bool /*somethingBullet*/) {
     constexpr s16 RESPAWN_TIME = 130;
@@ -431,9 +435,8 @@ void KartCollide::activateOob(bool /*detachCamera*/, Field::KCLTypeMask * /*mask
     status.setBit(eStatus::BeforeRespawn);
 }
 
-/// @stage All
-/// @brief Checks wheel hitbox collision and stores position/velocity info.
 /// @addr{0x805B6F4C}
+/// @brief Checks wheel hitbox collision and stores position/velocity info.
 /// @param hitboxGroup The wheel's collision information
 /// @param colVel The wheel's velocity. In the base game, it is always \f$\vec{v} = \begin{bmatrix}
 /// 0 \\ -13 \\ 0 \end{bmatrix}\f$
@@ -496,8 +499,8 @@ void KartCollide::calcWheelCollision(u16 /*wheelIdx*/, CollisionGroup *hitboxGro
             KCL_TYPE_VEHICLE_COLLIDEABLE);
 }
 
-/// @stage 2
 /// @addr{0x8056F26C}
+/// @brief Checks for collisions on the left and right sides of the kart
 void KartCollide::calcSideCollision(CollisionData &collisionData, Hitbox &hitbox,
         Field::CollisionInfo *colInfo) {
     if (colInfo->perpendicularity <= 0.0f) {
@@ -550,16 +553,21 @@ void KartCollide::calcSideCollision(CollisionData &collisionData, Hitbox &hitbox
 }
 
 /// @addr{0x8056E70C}
+/// @brief Calculates the bounding radius for the kart based off the collision group's bounding
+/// radius and the kart's current hitbox scale.
 void KartCollide::calcBoundingRadius() {
     m_boundingRadius = collisionGroup()->boundingRadius() * move()->hitboxScale();
 }
 
 /// @addr{0x80571F10}
+/// @brief Checks for collisions with objects and applies the appropriate response
+/// @details For each object collision, runs the appropriate collision handler function. Based off
+/// the returned @ref Action type, either applies shrinking or induces movement away from the
+/// object.
 void KartCollide::calcObjectCollision() {
-    constexpr f32 COS_PI_OVER_4 = 0.707f;
-    constexpr s32 DUMMY_POLE_ANG_VEL_TIME = 3;
+    constexpr s32 DUMMY_POLE_ANG_VEL_FRAMES = 3;
     constexpr f32 DUMMY_POLE_ANG_VEL = 0.005f;
-    constexpr s32 SHRINK_TIME = 60;
+    constexpr s32 SHRINK_DURATION = 60;
 
     m_totalReactionWallNrm = EGG::Vector3f::zero;
     m_surfaceFlags.resetBit(eSurfaceFlags::ObjectWall, eSurfaceFlags::ObjectWall3);
@@ -576,7 +584,7 @@ void KartCollide::calcObjectCollision() {
             Action newAction = (this->*s_objectCollisionHandlers[handlerIdx])(i);
 
             if (reaction == Reaction::SpinShrink && (m_shrinkTimer == 0)) {
-                m_shrinkTimer = SHRINK_TIME;
+                m_shrinkTimer = SHRINK_DURATION;
                 move()->activateShrink();
                 move()->applyForce(30.0f, objColKart->GetHitDirection(i), false);
             } else if (reaction != Reaction::SmallBump && reaction != Reaction::BigBump) {
@@ -599,7 +607,7 @@ void KartCollide::calcObjectCollision() {
                 EGG::Vector3f angVel = hitDirection.cross(lastDir);
                 f32 sign = angVel.y > 0.0f ? -1.0f : 1.0f;
 
-                m_poleAngVelTimer = DUMMY_POLE_ANG_VEL_TIME;
+                m_poleAngVelTimer = DUMMY_POLE_ANG_VEL_FRAMES;
                 m_poleYaw = DUMMY_POLE_ANG_VEL * sign;
             }
         }
@@ -609,6 +617,7 @@ void KartCollide::calcObjectCollision() {
 }
 
 /// @addr{Inlined in 0x80571F10}
+/// @brief Applies a small angular velocity to the kart when colliding with a dummy pole
 void KartCollide::calcPoleTimer() {
     if (m_poleAngVelTimer > 0 && status().onBit(eStatus::Accelerate, eStatus::Brake)) {
         EGG::Vector3f angVel2 = dynamics()->angVel2();
@@ -619,16 +628,8 @@ void KartCollide::calcPoleTimer() {
     m_poleAngVelTimer = std::max(0, m_poleAngVelTimer - 1);
 }
 
-/// @stage All
-/// @brief Processes moving water and floor collision effects
-/// @addr{0x8056E8D4}
-void KartCollide::processWheel(CollisionData &collisionData, Hitbox &hitbox,
-        Field::CollisionInfo *colInfo, Field::KCLTypeMask *maskOut) {
-    processMovingWater(collisionData, maskOut);
-    processFloor(collisionData, hitbox, colInfo, maskOut, true);
-}
-
 /// @addr{0x8056E764}
+/// @brief Processes the collision for a single hitbox and updates the kart's collision data
 void KartCollide::processBody(CollisionData &collisionData, Hitbox &hitbox,
         Field::CollisionInfo *colInfo, Field::KCLTypeMask *maskOut) {
     processMovingWater(collisionData, maskOut);
@@ -645,6 +646,7 @@ void KartCollide::processBody(CollisionData &collisionData, Hitbox &hitbox,
 }
 
 /// @addr{0x8056E930}
+/// @brief Sets flags in the provided @ref CollisionData to reflect collisions with moving water KCL
 void KartCollide::processMovingWater(CollisionData &collisionData, Field::KCLTypeMask *maskOut) {
     if (!(*maskOut & KCL_TYPE_BIT(COL_TYPE_MOVING_WATER))) {
         return;
@@ -678,6 +680,7 @@ void KartCollide::processMovingWater(CollisionData &collisionData, Field::KCLTyp
 }
 
 /// @addr{0x8056F184}
+/// @brief Checks for wall collisions and updates the kart's @ref CollisionData accordingly
 bool KartCollide::processWall(CollisionData &collisionData, Field::KCLTypeMask *maskOut) {
     if (!(*maskOut & KCL_TYPE_DRIVER_WALL_NO_INVISIBLE_WALL2)) {
         return false;
@@ -704,19 +707,22 @@ bool KartCollide::processWall(CollisionData &collisionData, Field::KCLTypeMask *
     return true;
 }
 
-/// @stage All
 /// @addr{0x8056EA04}
 /// @brief Processes the floor triangles' attributes.
 /// @param collisionData Stores the resulting speed and handling info
 /// @param maskOut Stores the flags from the floor KCL
 /// @param wheel Differentiates between body and wheel floor collision (boost panels)
+/// @details Updates the number of soft wall collisions occurring and the sum of the bottom heights
+/// of the soft wall collisions. If the floor is trickable, sets the trickable flag in the collision
+/// data. Updates the speed and rotation factors based on the floor's attributes. Checks whether to
+/// set various floor-related status flags.
 void KartCollide::processFloor(CollisionData &collisionData, Hitbox &hitbox,
         Field::CollisionInfo * /*colInfo*/, Field::KCLTypeMask *maskOut, bool wheel) {
     constexpr Field::KCLTypeMask BOOST_RAMP_MASK = KCL_TYPE_BIT(COL_TYPE_BOOST_RAMP);
 
     if (collisionData.bSoftWall) {
         ++m_numSoftWallCollisions;
-        m_sumHitboxBottomHeightSoftWall += hitbox.worldPos().y - hitbox.radius();
+        m_sumSoftwallBottomHeight += hitbox.worldPos().y - hitbox.radius();
     }
 
     if (!(*maskOut & KCL_TYPE_FLOOR)) {
@@ -772,7 +778,7 @@ void KartCollide::processFloor(CollisionData &collisionData, Hitbox &hitbox,
 
     if (!collisionData.bSoftWall) {
         ++m_numFloorOnlyCollisions;
-        m_sumHitboxBottomHeightFloorOnly += hitbox.worldPos().y - hitbox.radius();
+        m_sumFloorBottomHeight += hitbox.worldPos().y - hitbox.radius();
     }
 
     if (*maskOut & KCL_TYPE_BIT(COL_TYPE_STICKY_ROAD)) {
@@ -811,7 +817,6 @@ void KartCollide::processCannon(Field::KCLTypeMask *maskOut) {
     }
 }
 
-/// @stage All
 /// @brief Applies external and angular velocity based on the collision with the floor
 /// @addr{0x805B7928}
 /// @param down Always 0.1f
@@ -914,15 +919,25 @@ void KartCollide::applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitbo
     }
 }
 
-/// @stage All
-/// @brief Called on collision of a new KCL type??? This only happens after airtime so far.
 /// @addr{0x805B6A9C}
-/// @rename
-bool KartCollide::FUN_805B6A9C(CollisionData &collisionData, const Hitbox &hitbox,
-        EGG::BoundBox3f &minMax, EGG::Vector3f &relPos, s32 &count,
-        const Field::KCLTypeMask &maskOut, const Field::CollisionInfo &colInfo) {
-    if (maskOut & KCL_TYPE_WALL) {
-        if (!(maskOut & KCL_TYPE_FLOOR) && status().onBit(eStatus::HWG) &&
+/// @brief Called when the body of the kart has a collision.
+/// @param collisionData The collision data to update with the results of the collision
+/// @param hitbox The hitbox of the kart's body that collided
+/// @param minMax The minimum and maximum points of the collision bounding box
+/// @param relPos The relative position of the collision to the kart's position
+/// @param count Counts the number of body hitbox collisions that have occurred this frame
+/// @param mask A mask representing the type of collision that occurred
+/// @param colInfo The collision information from the collision check
+/// @return Returns true if the collision should be skipped, false otherwise
+/// @details Updates the provided @ref CollisionData with the results of the collision. If not
+/// colliding with a wall, updates the relative position and bounding box of the collision so that
+/// subsequent collision checks for the body's hitboxes reflect this change in position. Finally
+/// increments the number of hitbox collisions that have occurred.
+bool KartCollide::accumulateBodyCollision(CollisionData &collisionData, const Hitbox &hitbox,
+        EGG::BoundBox3f &minMax, EGG::Vector3f &relPos, s32 &count, const Field::KCLTypeMask &mask,
+        const Field::CollisionInfo &colInfo) {
+    if (mask & KCL_TYPE_WALL) {
+        if (!(mask & KCL_TYPE_FLOOR) && status().onBit(eStatus::HWG) &&
                 state()->softWallSpeed().dot(colInfo.wallNrm) < 0.3f) {
             return true;
         }
@@ -931,20 +946,20 @@ bool KartCollide::FUN_805B6A9C(CollisionData &collisionData, const Hitbox &hitbo
 
         collisionData.wallNrm += colInfo.wallNrm;
 
-        if (maskOut & KCL_TYPE_ANY_INVISIBLE_WALL) {
+        if (mask & KCL_TYPE_ANY_INVISIBLE_WALL) {
             collisionData.bInvisibleWall = true;
 
-            if (!(maskOut & KCL_TYPE_4010D000)) {
+            if (!(mask & KCL_TYPE_4010D000)) {
                 collisionData.bInvisibleWallOnly = true;
 
-                if (maskOut & KCL_TYPE_BIT(COL_TYPE_HALFPIPE_INVISIBLE_WALL)) {
+                if (mask & KCL_TYPE_BIT(COL_TYPE_HALFPIPE_INVISIBLE_WALL)) {
                     skipWalls = true;
                 }
             }
         }
 
         if (!skipWalls) {
-            if (maskOut & KCL_TYPE_BIT(COL_TYPE_WALL_2)) {
+            if (mask & KCL_TYPE_BIT(COL_TYPE_WALL_2)) {
                 collisionData.bWall3 = true;
             } else {
                 collisionData.bWall = true;
@@ -952,7 +967,7 @@ bool KartCollide::FUN_805B6A9C(CollisionData &collisionData, const Hitbox &hitbo
         }
     }
 
-    if (maskOut & KCL_TYPE_FLOOR) {
+    if (mask & KCL_TYPE_FLOOR) {
         collisionData.floorNrm += colInfo.floorNrm;
         collisionData.bFloor = true;
     }
@@ -969,10 +984,16 @@ bool KartCollide::FUN_805B6A9C(CollisionData &collisionData, const Hitbox &hitbo
     return false;
 }
 
-/// @stage 2
-/// @brief Saves collision info when vehicle body collision occurs.
-/// @details Additionally may apply a change in position for certain KCL types.
 /// @addr{0x805B6D48}
+/// @brief Runs when the kart's body has a collision
+/// @param collisionData The collision data to update with the results of the collision
+/// @param movement The movement vector to apply to the kart's position
+/// @param posRel The relative position of the collision to the kart's position
+/// @param count The total number of body hitbox collisions that have occurred this frame
+/// @details Adds @p movement to the kart's position and also saves it to the provided @ref
+/// CollisionData if colliding with both a floor and a wall. Updates the @ref CollisionData's
+/// relative position and velocity based on the average of all collisions and the kart's angular
+/// velocity.
 void KartCollide::applyBodyCollision(CollisionData &collisionData, const EGG::Vector3f &movement,
         const EGG::Vector3f &posRel, s32 count) {
     setPos(pos() + movement);
@@ -981,18 +1002,18 @@ void KartCollide::applyBodyCollision(CollisionData &collisionData, const EGG::Ve
         collisionData.movement = movement;
     }
 
-    f32 rotFactor = 1.0f / static_cast<f32>(count);
-    EGG::Vector3f scaledRelPos = rotFactor * posRel;
-    collisionData.rotFactor *= rotFactor;
+    f32 avgFactor = 1.0f / static_cast<f32>(count);
+    EGG::Vector3f avgRelPos = avgFactor * posRel;
+    collisionData.rotFactor *= avgFactor;
 
     EGG::Vector3f scaledAngVel0 = dynamics()->angVel0Factor() * dynamics()->angVel0();
-    EGG::Vector3f local_48 = mainRot().rotateVectorInv(scaledRelPos);
-    EGG::Vector3f local_30 = scaledAngVel0.cross(local_48);
-    local_30 = mainRot().rotateVector(local_30);
-    local_30 += extVel();
+    EGG::Vector3f localRelPos = mainRot().rotateVectorInv(avgRelPos);
+    EGG::Vector3f rotVel = scaledAngVel0.cross(localRelPos);
+    rotVel = mainRot().rotateVector(rotVel);
+    rotVel += extVel();
 
-    collisionData.vel = local_30;
-    collisionData.relPos = scaledRelPos;
+    collisionData.vel = rotVel;
+    collisionData.relPos = avgRelPos;
 
     if (collisionData.bFloor) {
         f32 intVelY = dynamics()->intVel().y;
@@ -1003,116 +1024,19 @@ void KartCollide::applyBodyCollision(CollisionData &collisionData, const EGG::Ve
     }
 }
 
-/// @addr{0x805713D8}
-void KartCollide::startFloorMomentRate() {
-    m_floorMomentRate = 0.01f;
-}
-
 /// @addr{0x805713FC}
-void KartCollide::calcFloorMomentRate() {
-    m_floorMomentRate = status().onBit(eStatus::InAction) &&
+/// @brief Calculates the scalar used to affect the kart's floor alignment
+/// @details If in a rotating action, the scalar is set to its minimum value of 0.01f. Otherwise, it
+/// is incremented by 0.01f up to a maximum of 0.8f.
+void KartCollide::calcFloorMomentScalar() {
+    m_floorMomentScalar = status().onBit(eStatus::InAction) &&
                     action()->flags().onBit(KartAction::eFlags::Rotating) ?
             0.01f :
-            std::min(m_floorMomentRate + 0.01f, 0.8f);
-}
-
-/// @addr{0x8056E564}
-Action KartCollide::handleReactNone(size_t /*idx*/) {
-    return Action::None;
-}
-
-/// @addr{0x8057363C}
-Action KartCollide::handleReactWallAllSpeed(size_t idx) {
-    m_totalReactionWallNrm += Field::ObjectCollisionKart::GetHitDirection(idx);
-    m_surfaceFlags.setBit(eSurfaceFlags::ObjectWall);
-
-    return Action::None;
-}
-
-/// @addr{0x805733CC}
-Action KartCollide::handleReactSpinAllSpeed(size_t /*idx*/) {
-    return Action::SpinOnce;
-}
-
-/// @addr{0x805733D4}
-Action KartCollide::handleReactSpinSomeSpeed(size_t /*idx*/) {
-    return Action::SpinTwice;
-}
-
-/// @addr{0x805735AC}
-Action KartCollide::handleReactFireSpin(size_t /*idx*/) {
-    return Action::FireSpin;
-}
-
-/// @addr{0x805733C4}
-Action KartCollide::handleReactSmallLaunch(size_t /*idx*/) {
-    return Action::ForwardLaunch;
-}
-
-/// @addr{0x805733DC}
-Action KartCollide::handleReactKnockbackSomeSpeedLoseItem(size_t /*idx*/) {
-    return Action::AwayFlipOnce;
-}
-
-/// @addr{0x8057353C}
-Action KartCollide::handleReactLaunchSpinLoseItem(size_t /*idx*/) {
-    return Action::LaunchSpinLoseItem;
-}
-
-/// @addr{0x805733EC}
-Action KartCollide::handleReactKnockbackBumpLoseItem(size_t /*idx*/) {
-    return Action::AwayFlipTwice;
-}
-
-/// @addr{0x805735B4}
-Action KartCollide::handleReactLongCrushLoseItem(size_t /*idx*/) {
-    return Action::LongCrushLoseItem;
-}
-
-/// @addr{0x805737B8}
-Action KartCollide::handleReactSmallBump(size_t idx) {
-    move()->applyForce(30.0f, objectCollisionKart()->GetHitDirection(idx), false);
-    return Action::None;
-}
-
-/// @addr{0x805735BC}
-Action KartCollide::handleReactSpinShrink(size_t /*idx*/) {
-    return m_shrinkTimer <= 0 ? Action::SpinShrink : Action::None;
-}
-
-/// @addr{0x805733E4}
-Action KartCollide::handleReactHighLaunchLoseItem(size_t /*idx*/) {
-    return Action::HighLaunchLoseItem;
-}
-
-/// @addr{0x80573754}
-Action KartCollide::handleReactWeakWall(size_t /*idx*/) {
-    move()->setSpeed(move()->speed() * 0.82f);
-    return Action::None;
-}
-
-/// @addr{0x80573790}
-Action KartCollide::handleReactOffroad(size_t /*idx*/) {
-    status().setBit(eStatus::CollidingOffroad);
-    m_surfaceFlags.setBit(eSurfaceFlags::Offroad);
-    return Action::None;
-}
-
-/// @addr{0x805733F4}
-Action KartCollide::handleReactLaunchSpin(size_t idx) {
-    action()->setVelocity(objectCollisionKart()->translation(idx));
-    return Action::SidewaysFlipTwice;
-}
-
-/// @addr{0x805736C8}
-Action KartCollide::handleReactWallSpark(size_t idx) {
-    m_totalReactionWallNrm += Field::ObjectCollisionKart::GetHitDirection(idx);
-    m_surfaceFlags.setBit(eSurfaceFlags::ObjectWall3);
-
-    return Action::None;
+            std::min(m_floorMomentScalar + 0.01f, 0.8f);
 }
 
 /// @addr{0x80573A2C}
+/// @brief Models an elastic collision by applying force to the kart away from the colliding object
 Action KartCollide::handleReactRubberWall(size_t idx) {
     constexpr f32 BASE_DIR_FORCE_SCALAR = 0.95f;
     constexpr f32 DIR_FORCE_SCALAR = 0.050000012f;
@@ -1126,64 +1050,5 @@ Action KartCollide::handleReactRubberWall(size_t idx) {
 
     return Action::None;
 }
-
-/// @addr{0x805735EC}
-Action KartCollide::handleReactUntrickableJumpPad(size_t /*idx*/) {
-    move()->setPadType(KartMove::PadType(KartMove::ePadType::JumpPad));
-    state()->setJumpPadVariant(0);
-
-    return Action::None;
-}
-
-/// @addr{0x805735D4}
-Action KartCollide::handleReactShortCrushLoseItem(size_t /*idx*/) {
-    return Action::ShortCrushLoseItem;
-}
-
-/// @addr{0x805735DC}
-Action KartCollide::handleReactCrushRespawn(size_t /*idx*/) {
-    return Action::CrushRespawn;
-}
-
-/// @addr{0x805735E4}
-Action KartCollide::handleReactExplosionLoseItem(size_t /*idx*/) {
-    return Action::ExplosionLoseItem;
-}
-
-std::array<KartCollide::ObjectCollisionHandler, 33> KartCollide::s_objectCollisionHandlers = {{
-        &KartCollide::handleReactNone,
-        &KartCollide::handleReactNone,
-        &KartCollide::handleReactNone,
-        &KartCollide::handleReactNone,
-        &KartCollide::handleReactNone,
-        &KartCollide::handleReactNone,
-        &KartCollide::handleReactNone,
-        &KartCollide::handleReactNone,
-        &KartCollide::handleReactWallAllSpeed,
-        &KartCollide::handleReactSpinAllSpeed,
-        &KartCollide::handleReactSpinSomeSpeed,
-        &KartCollide::handleReactFireSpin,
-        &KartCollide::handleReactNone,
-        &KartCollide::handleReactSmallLaunch,
-        &KartCollide::handleReactKnockbackSomeSpeedLoseItem,
-        &KartCollide::handleReactLaunchSpinLoseItem,
-        &KartCollide::handleReactKnockbackBumpLoseItem,
-        &KartCollide::handleReactLongCrushLoseItem,
-        &KartCollide::handleReactSmallBump,
-        &KartCollide::handleReactNone,
-        &KartCollide::handleReactSpinShrink,
-        &KartCollide::handleReactHighLaunchLoseItem,
-        &KartCollide::handleReactNone,
-        &KartCollide::handleReactWeakWall,
-        &KartCollide::handleReactOffroad,
-        &KartCollide::handleReactLaunchSpin,
-        &KartCollide::handleReactWallSpark,
-        &KartCollide::handleReactRubberWall,
-        &KartCollide::handleReactNone,
-        &KartCollide::handleReactUntrickableJumpPad,
-        &KartCollide::handleReactShortCrushLoseItem,
-        &KartCollide::handleReactCrushRespawn,
-        &KartCollide::handleReactExplosionLoseItem,
-}};
 
 } // namespace Kinoko::Kart

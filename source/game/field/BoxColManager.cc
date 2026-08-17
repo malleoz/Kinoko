@@ -93,8 +93,8 @@ void BoxColManager::clear() {
 }
 
 /// @addr{0x807859B0}
-/// @brief Recalculates the bounds of all active units having @ref PermRecalcAABB or @ref
-/// TempRecalcAABB flag, and then updates the low and high points accordingly.
+/// @brief Recalculates the bounds of all active units having @enum eBoxColFlag::PermRecalcAABB or
+/// @enum eBoxColFlag::TempRecalcAABB flag, and then updates the low and high points accordingly.
 void BoxColManager::calc() {
     clear();
 

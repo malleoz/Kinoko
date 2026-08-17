@@ -16,7 +16,7 @@ Rail::~Rail() = default;
 
 /// @addr{0x806ECCC0}
 /// @brief Checks for collision with the course geometry at each point in the rail and stores the
-/// up vector of the colliding floor triangle, or @ref EGG::Vector3f::ey if no collision was found
+/// up vector of the colliding floor triangle, or EGG::Vector3f::ey if no collision was found
 void Rail::checkSphereFull() {
     if (m_hasCheckedCol) {
         return;

@@ -17,29 +17,29 @@ KartHalfPipe::KartHalfPipe() : m_prevPos(EGG::Vector3f::zero) {}
 /// @addr{0x80574170}
 KartHalfPipe::~KartHalfPipe() = default;
 
-/// @addr{0x805741B0}
-void KartHalfPipe::reset() {
-    m_stunt = StuntType::None;
-    m_touchingZipper = false;
-    m_timer = 0;
-}
-
 /// @addr{0x80574340}
+/// @brief Every frame, checks if the kart is on over went over a half-pipe zipper and updates the
+/// kart's rotation accordingly. When the player starts getting airtime off the zipper, derives the
+/// total duration the kart will be in the air based on the current velocity. Determines if the
+/// player is attempting a trick and references the derived duration to determine if a trick is
+/// allowed to occur. Alters the kart's rotation based on the trick being performed and applies a
+/// boost if the player lands.
 void KartHalfPipe::calc() {
     constexpr s16 LANDING_BOOST_DELAY = 3;
+    constexpr f32 GRAVITY = 1.3f;
 
     auto &status = KartObjectProxy::status();
 
     if (state()->airtime() > 15 && status.onBit(eStatus::OverZipper)) {
-        m_timer = LANDING_BOOST_DELAY;
+        m_landingBoostDelayTimer = LANDING_BOOST_DELAY;
     }
 
-    bool isLanding = status.onBit(eStatus::HalfPipeRamp) && m_timer <= 0;
+    bool isOnZipper = status.onBit(eStatus::HalfPipeRamp) && m_landingBoostDelayTimer <= 0;
 
     calcTrick();
 
     if (status.offBit(eStatus::InAction) &&
-            collide()->surfaceFlags().offBit(KartCollide::eSurfaceFlags::StopHalfPipeState)) {
+            collide()->surfaceFlags().offBit(KartCollide::eSurfaceFlags::EndHalfPipe)) {
         if (m_touchingZipper && status.onBit(eStatus::AirStart)) {
             dynamics()->setExtVel(EGG::Vector3f::zero);
             status.setBit(eStatus::OverZipper);
@@ -56,15 +56,15 @@ void KartHalfPipe::calc() {
             velNorm.normalise();
             EGG::Vector3f rot = dynamics()->mainRot().rotateVectorInv(velNorm);
 
-            m_rot.makeVectorRotation(rot, EGG::Vector3f::ez);
+            m_launchRot.makeVectorRotation(rot, EGG::Vector3f::ez);
             m_prevPos = prevPos();
 
-            calcLanding(false);
+            calcCollision(false);
 
             f32 scaledDir = std::min(65.0f, move()->dir().y * move()->speed());
-            m_attemptedTrickTimer = std::max<s32>(0, scaledDir * 2.0f / 1.3f - 1.0f);
+            m_attemptedTrickTimer = std::max<s32>(0, scaledDir * 2.0f / GRAVITY - 1.0f);
         } else if (status.onBit(eStatus::OverZipper)) {
-            dynamics()->setGravity(-1.3f);
+            dynamics()->setGravity(-GRAVITY);
 
             EGG::Vector3f side = mainRot().rotateVector(EGG::Vector3f::ez);
             EGG::Vector3f velNorm = velocity();
@@ -72,7 +72,7 @@ void KartHalfPipe::calc() {
 
             EGG::Quatf sideRot;
             sideRot.makeVectorRotation(side, velNorm);
-            sideRot = sideRot.multSwap(mainRot()).multSwap(m_rot);
+            sideRot = sideRot.multSwap(mainRot()).multSwap(m_launchRot);
 
             f32 t = move()->calcSlerpRate(DEG2RAD360, mainRot(), sideRot);
             EGG::Quatf slerp = mainRot().slerpTo(sideRot, t);
@@ -81,44 +81,52 @@ void KartHalfPipe::calc() {
 
             --m_attemptedTrickTimer;
 
-            calcRot();
-            calcLanding(false);
+            calcTrickRot();
+            calcCollision(false);
         } else if (status.onBit(eStatus::HalfPipeRamp)) {
-            calcLanding(true);
+            calcCollision(true);
         } else {
             status.resetBit(eStatus::HalfpipeMidair);
         }
     }
 
-    m_timer = std::max(0, m_timer - 1);
-    m_touchingZipper = isLanding;
+    m_landingBoostDelayTimer = std::max(0, m_landingBoostDelayTimer - 1);
+    m_touchingZipper = isOnZipper;
 }
 
 /// @addr{0x80574C90}
+/// @brief Evaluates whether the player is attempting a trick and whether the trick can be performed
+/// @details Caches the attempted trick input for 10 frames. If the player is over the zipper, there
+/// is a cached trick input, and the player has between 3 and 10 frames of airtime, activates the
+/// input trick. Finally, decrements the cache/leniency timer.
 void KartHalfPipe::calcTrick() {
     constexpr s16 TRICK_COOLDOWN = 10;
 
     auto &trick = inputs()->currentState().trick;
 
     if (trick != System::Trick::None) {
-        m_nextTimer = TRICK_COOLDOWN;
+        m_leniencyTimer = TRICK_COOLDOWN;
         m_trick = trick;
     }
 
     const auto &status = KartObjectProxy::status();
 
     if (status.onBit(eStatus::OverZipper)) {
-        if (status.offBit(eStatus::ZipperTrick) && m_nextTimer > 0 && state()->airtime() > 3 &&
+        if (status.offBit(eStatus::ZipperTrick) && m_leniencyTimer > 0 && state()->airtime() > 3 &&
                 state()->airtime() < 10) {
             activateTrick(m_attemptedTrickTimer, m_trick);
         }
     }
 
-    m_nextTimer = std::max(0, m_nextTimer - 1);
+    m_leniencyTimer = std::max(0, m_leniencyTimer - 1);
 }
 
 /// @addr{0x805750CC}
-void KartHalfPipe::calcRot() {
+/// @brief Influences the rotation of the kart based on the trick being performed
+/// @details Does nothing if there is no trick being performed. Computes the cumulative rotation
+/// angle based on the properties of the trick being performed. With that angle, evaluates the
+/// quaternion to represent the rotation of the kart based on the type of trick being performed.
+void KartHalfPipe::calcTrickRot() {
     if (m_stunt == StuntType::None) {
         return;
     }
@@ -158,16 +166,19 @@ void KartHalfPipe::calcRot() {
 }
 
 /// @addr{0x805752E8}
-void KartHalfPipe::calcLanding(bool notAirborne) {
+/// @brief Checks for collisions with the half-pipe walls and floor
+/// @param notAirborne True if the kart is not airborne, false otherwise
+/// @details If the kart is colliding with the half-pipe wall collision, then the kart's up vector
+/// is interpolated towards the wall normal and the kart's position is adjusted to be on the wall.
+void KartHalfPipe::calcCollision(bool notAirborne) {
     constexpr f32 LANDING_RADIUS = 150.0f;
     constexpr f32 PREVIOUS_RADIUS = 200.0f;
     constexpr f32 MIDAIR_RADIUS = 50.0f;
     constexpr f32 WALL_RADIUS = 100.0f;
+    constexpr f32 UP_INTERP_RATE = 0.2f;
 
-    constexpr f32 COS_PI_OVER_4 = 0.707f;
-
-    Field::CollisionInfo colInfo;
-    Field::CollisionInfo colInfo2;
+    Field::CollisionInfo colInfoFloor;
+    Field::CollisionInfo colInfoWall;
     Field::KCLTypeMask maskOut;
     EGG::Vector3f pos;
     EGG::Vector3f upLocal;
@@ -188,30 +199,30 @@ void KartHalfPipe::calcLanding(bool notAirborne) {
     EGG::Vector3f prevPos = m_prevPos + EGG::Vector3f::ey * PREVIOUS_RADIUS;
 
     bool hasDriverFloorCollision = move()->calcZipperCollision(LANDING_RADIUS, bsp().initialYPos,
-            pos, upLocal, prevPos, &colInfo, &maskOut, KCL_TYPE_DRIVER_FLOOR);
+            pos, upLocal, prevPos, &colInfoFloor, &maskOut, KCL_TYPE_DRIVER_FLOOR);
 
     prevPos = hasDriverFloorCollision ? EGG::Vector3f::inf : prevPos;
 
     if (overZipper) {
         if (!move()->calcZipperCollision(MIDAIR_RADIUS, bsp().initialYPos, pos, upLocal, prevPos,
-                    &colInfo2, &maskOut, mask)) {
+                    &colInfoWall, &maskOut, mask)) {
             mask |= KCL_TYPE_DRIVER_WALL;
         }
     }
 
     if (move()->calcZipperCollision(WALL_RADIUS, bsp().initialYPos, pos, upLocal, prevPos,
-                &colInfo2, &maskOut, mask)) {
+                &colInfoWall, &maskOut, mask)) {
         if ((maskOut & ~KCL_TYPE_BIT(COL_TYPE_HALFPIPE_INVISIBLE_WALL)) == 0) {
             status.setBit(eStatus::HalfpipeMidair);
         }
 
         EGG::Vector3f up = move()->up();
-        move()->setUp(up + (colInfo2.wallNrm - up) * 0.2f);
+        move()->setUp(up + (colInfoWall.wallNrm - up) * UP_INTERP_RATE);
         move()->setSmoothedUp(move()->up());
 
         f32 yScale = bsp().initialYPos * scale().y;
-        EGG::Vector3f newPos =
-                pos + colInfo2.tangentOff + -WALL_RADIUS * colInfo2.wallNrm + yScale * upLocal;
+        EGG::Vector3f newPos = pos + colInfoWall.tangentOff + -WALL_RADIUS * colInfoWall.wallNrm +
+                yScale * upLocal;
         newPos.y += move()->hopPosY();
 
         dynamics()->setPos(newPos);
@@ -234,7 +245,7 @@ void KartHalfPipe::calcLanding(bool notAirborne) {
         return;
     }
 
-    if (colInfo.floorNrm.dot(EGG::Vector3f::ey) <= COS_PI_OVER_4) {
+    if (colInfoFloor.floorNrm.dot(EGG::Vector3f::ey) <= COS_PI_OVER_4) {
         return;
     }
 
@@ -244,6 +255,13 @@ void KartHalfPipe::calcLanding(bool notAirborne) {
 }
 
 /// @addr{0x80574E60}
+/// @brief Activates a trick based on the provided duration and trick input
+/// @param duration The duration of the airtime, must be greater than 50 frames to activate a trick
+/// @param trick The trick type to activate
+/// @details Requires that the duration of the attempted trick is greater than 50 frames. Determines
+/// which trick type to activate based on the trick input and the duration of the airtime. Finally,
+/// initializes the properties of the trick in the @ref StuntManager and sets the @enum
+/// eStatus::ZipperTrick bit.
 void KartHalfPipe::activateTrick(s32 duration, System::Trick trick) {
     if (duration < 51 || trick == System::Trick::None) {
         m_stunt = StuntType::None;
@@ -276,6 +294,10 @@ void KartHalfPipe::activateTrick(s32 duration, System::Trick trick) {
 }
 
 /// @addr{0x805758E4}
+/// @brief Called when the kart should end the half-pipe state and applies any necessary boosts
+/// @param boost True if a boost should be applied, false otherwise
+/// @details If the kart was over the zipper and had more than 5 frames of airtime, applies a boost
+/// whose duration depends on whether a trick occurred.
 void KartHalfPipe::end(bool boost) {
     auto &status = KartObjectProxy::status();
     bool overZipper = status.onBit(eStatus::OverZipper);
@@ -299,16 +321,22 @@ void KartHalfPipe::end(bool boost) {
     m_stunt = StuntType::None;
 }
 
+/// @brief Calculates the cumulative angle of rotation for the current trick
+/// @details If the current angle is greater than the target rotation multiplied by the angle decay
+/// threshold, the rotation speed is decreased by multiplying it with the decay rate, and the decay
+/// rate is decreased by subtracting the decay rate delta from it. The angle is then updated by
+/// adding the rotation speed to it, capped at the target rotation.
 void KartHalfPipe::StuntManager::calcAngle() {
-    if (finalAngle * properties.finalAngleScalar < angle) {
-        angleDelta = std::max(properties.angleDeltaMin, angleDelta * angleDeltaFactor);
-        angleDeltaFactor = std::max(properties.angleDeltaFactorMin,
-                angleDeltaFactor - properties.angleDeltaFactorDecr);
+    if (properties.targetRot * properties.angleDecayThreshold < angle) {
+        rotSpeed = std::max(properties.minRotSpeed, rotSpeed * decayRate);
+        decayRate = std::max(properties.initDecayRate, decayRate - properties.decayRateDelta);
     }
 
-    angle = std::min(finalAngle, angle + angleDelta);
+    angle = std::min(properties.targetRot, angle + rotSpeed);
 }
 
+/// @brief Sets the properties of the current stunt based on the provided index
+/// @param idx The index of the stunt properties to set
 void KartHalfPipe::StuntManager::setProperties(size_t idx) {
     static constexpr std::array<StuntProperties, 6> STUNT_PROPERTIES = {{
             {6.0f, 2.5f, 0.955f, 0.01f, 0.7f, 360.0f},
@@ -322,11 +350,9 @@ void KartHalfPipe::StuntManager::setProperties(size_t idx) {
     ASSERT(idx < STUNT_PROPERTIES.size());
 
     properties = STUNT_PROPERTIES[idx];
-    finalAngle = properties.finalAngle;
-    angleDelta = properties.angleDelta;
-    angleDeltaFactorDecr = properties.angleDeltaFactorDecr;
+    rotSpeed = properties.initRotSpeed;
     angle = 0.0f;
-    angleDeltaFactor = 1.0f;
+    decayRate = 1.0f;
 }
 
 } // namespace Kinoko::Kart

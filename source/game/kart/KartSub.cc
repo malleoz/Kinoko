@@ -70,14 +70,14 @@ void KartSub::initAABB(KartAccessor &accessor, KartObject *object) {
 /// @addr{0x80597934}
 void KartSub::initPhysicsValues() {
     physics()->updatePose();
-    collide()->resetHitboxes();
+    collide()->setHitboxLastPos();
 }
 
 /// @addr{0x8059617C}
 void KartSub::resetPhysics() {
     physics()->reset();
     physics()->updatePose();
-    collide()->resetHitboxes();
+    collide()->setHitboxLastPos();
 
     for (u16 wheelIdx = 0; wheelIdx < suspCount(); ++wheelIdx) {
         suspensionPhysics(wheelIdx)->reset();
@@ -95,7 +95,6 @@ void KartSub::resetPhysics() {
     m_minSuspOvertravel.setZero();
 }
 
-/// @stage All
 /// @brief The first phase of physics computations on each frame.
 /// @addr{0x80596480}
 /// @details Handles the first-half of physics calculations. This includes input processing,
@@ -140,7 +139,7 @@ void KartSub::calcPass0() {
 
     tryEndHWG();
 
-    dynamics()->setTop(move()->up());
+    dynamics()->setUp(move()->up());
 
     // Pertains to startslides / leaning in stage 0 and 1
     const auto *raceManager = System::RaceManager::Instance();
@@ -169,7 +168,6 @@ void KartSub::calcPass0() {
     }
 }
 
-/// @stage All
 /// @brief The second phase of physics computations on each frame.
 /// @addr{0x80596CFC}
 /// Handles the second-half of physics calculations. This mainly includes
@@ -253,7 +251,7 @@ void KartSub::calcPass1() {
         }
 
         collide()->calcFloorEffect();
-        collide()->calcFloorMomentRate();
+        collide()->calcFloorMomentScalar();
 
         if (colData.bFloor) {
             // Update floor count
@@ -311,7 +309,7 @@ void KartSub::calcPass1() {
                 collide()->setFloorColInfo(collisionData(), relPos * scalar, vel * scalar,
                         floorNrm);
 
-                collide()->FUN_80572F4C();
+                collide()->calcRebound();
             }
         }
 
@@ -338,7 +336,7 @@ void KartSub::calcPass1() {
 
     physics()->updatePose();
 
-    collide()->resetHitboxes();
+    collide()->setHitboxLastPos();
 
     // calcRotation() is only ever used for gfx rendering, so skip
 }

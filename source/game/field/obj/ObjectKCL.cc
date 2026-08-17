@@ -225,17 +225,6 @@ void ObjectKCL::calcScale(u32 timeOffset) {
 }
 
 /// @addr{0x8081AFB4}
-/// @brief Checks collision between a sphere and the object, writing out full collision info
-/// @desync This function can result in physics desynchronizations when racing a ghost.
-/// Since this function is only called when the player/ghost's hitbox is close enough to the object
-/// (as per GJK collision checks), it is possible that the first player hitbox is just barely too
-/// far away from the object while the second player hitbox is just close enough to pass the GJK
-/// check and thus call this function and update the collision manager's transform. Subsequently,
-/// if the ghost's first hitbox normally would be too far away from the object to pass the GJK
-/// check, the transform update from the player's second hitbox check means that the ghost's first
-/// hitbox is now being checked against a different transform than the player, which can result in
-/// the GJK check passing when it originally would fail. This is the reason that the DS Delfino
-/// Square bridge can sometimes desync.
 bool ObjectKCL::checkCollision(f32 radius, const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
         KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut, u32 timeOffset) {
     update(timeOffset);
@@ -245,18 +234,6 @@ bool ObjectKCL::checkCollision(f32 radius, const EGG::Vector3f &pos, const EGG::
 }
 
 /// @addr{0x8081B16C}
-/// @brief Checks collision between a sphere and the object, using only cached KCL prisms, writing
-/// out full collision info
-/// @desync This function can result in physics desynchronizations when racing a ghost.
-/// Since this function is only called when the player/ghost's hitbox is close enough to the object
-/// (as per GJK collision checks), it is possible that the first player hitbox is just barely too
-/// far away from the object while the second player hitbox is just close enough to pass the GJK
-/// check and thus call this function and update the collision manager's transform. Subsequently,
-/// if the ghost's first hitbox normally would be too far away from the object to pass the GJK
-/// check, the transform update from the player's second hitbox check means that the ghost's first
-/// hitbox is now being checked against a different transform than the player, which can result in
-/// the GJK check passing when it originally would fail. This is the reason that the DS Delfino
-/// Square bridge can sometimes desync.
 bool ObjectKCL::checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
         u32 timeOffset) {

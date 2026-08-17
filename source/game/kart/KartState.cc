@@ -60,7 +60,6 @@ void KartState::reset() {
     m_trickableTimer = 0;
 }
 
-/// @stage 1+
 /// @brief Each frame, read input and save related bit flags. Also handles start boosts.
 /// @addr{0x8059487C}
 void KartState::calcInput() {
@@ -109,13 +108,12 @@ void KartState::calcInput() {
     }
 }
 
-/// @stage All
 /// @brief Every frame, resets the input state and saves collision-related bit flags.
 /// @addr{0x8059474C}
 void KartState::calc() {
     resetFlags();
 
-    collide()->calcBeforeRespawn();
+    collide()->calcBeforeRespawnAndShrink();
 
     calcCollisions();
     collide()->calcBoundingRadius();
@@ -133,7 +131,6 @@ void KartState::resetFlags() {
     m_stickX = 0.0f;
 }
 
-/// @stage All
 /// @brief Each frame, checks for collision and saves relevant bit flags.
 /// @addr{0x80594BD4}
 /// @details Iterates each tire to check for collision. If any tire is colliding with the floor,
@@ -271,7 +268,7 @@ void KartState::calcCollisions() {
     }
 
     if (colData.bInvisibleWall && m_status.onBit(eStatus::HalfPipeRamp) &&
-            collide()->surfaceFlags().offBit(KartCollide::eSurfaceFlags::StopHalfPipeState)) {
+            collide()->surfaceFlags().offBit(KartCollide::eSurfaceFlags::EndHalfPipe)) {
         m_status.setBit(eStatus::ZipperInvisibleWall);
     }
 
@@ -335,7 +332,7 @@ void KartState::calcCollisions() {
             m_status.setBit(eStatus::GroundStart);
         }
 
-        if (m_status.onBit(eStatus::InATrick) && jump()->cooldown() == 0) {
+        if (m_status.onBit(eStatus::InATrick) && jump()->trickDelay() == 0) {
             move()->landTrick();
             dynamics()->setForceUpright(true);
             jump()->end();
@@ -345,7 +342,7 @@ void KartState::calcCollisions() {
     }
 }
 
-/// @brief STAGE 1 - Each frame, calculates the start boost charge.
+/// @brief Each frame, calculates the start boost charge.
 /// @addr{0x80595918}
 /// @details If the player is holding accelerate, the start boost charge increases using exponential
 /// decay. If the player is not holding accelerate, the start boost charge decays by 4% each frame.
@@ -364,7 +361,6 @@ void KartState::calcStartBoost() {
     m_startBoostCharge = std::max(0.0f, std::min(1.0f, m_startBoostCharge));
 }
 
-/// @stage 1
 /// @brief On countdown end, calculates and applies our start boost charge.
 /// @addr{0x805959D4}
 void KartState::calcHandleStartBoost() {

@@ -33,7 +33,8 @@ public:
     /// Bit layout:
     /// | Bits 0-4 | Bits 5-7 | Bits 8-10 | Bits 11-12 | Bit 13    | Bit 14      | Bit 15        |
     /// |----------|----------|-----------|------------|-----------|-------------|---------------|
-    /// | @ref KColType | Variant  | (unused)  | Intensity  | Trickable | Reject road | Soft surface  |
+    /// | @ref KColType | Variant  | (unused)  | Intensity  | Trickable | Reject road | Soft surface
+    /// |
     /// - **@ref KColType**: (0-31) Represents the main category of effect (road, offroad, etc.)
     /// - **Variant**: (0-7) Represents variations in behavior that are specific to the base type
     /// - **Intensity**: (0-3) Defines how deep vehicle wheels "sink" into the road
@@ -45,6 +46,9 @@ public:
         RejectRoad = 14, ///< A surface that tries to push you back towards the road
         Soft = 15,       ///< Barrel roll walls
     };
+
+    /// @brief A bitfield of @ref eCollisionAttribute that represents the attributes field of a
+    /// colliding KCL triangle
     typedef EGG::TBitFlag<u16, eCollisionAttribute> CollisionAttribute;
 
     /// @brief Represnts traits of a colliding KCL triangle

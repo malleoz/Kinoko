@@ -198,6 +198,14 @@ bool ObjectAmi::checkSphereImpl(f32 radius, const EGG::Vector3f &v0, const EGG::
 }
 
 /// @addr{0x80808308}
+/// @brief Calculates the hit depth of the net and writes out collision information if a collision
+/// is detected
+/// @param radius The radius of the hitbox to check against the net
+/// @param posDelta The position of the hitbox relative to the net's position
+/// @param time The current race time
+/// @param bbox Out parameter for retrieving the bounding box of the collision (if any)
+/// @param fnrm Out parameter for retrieving the floor normal of the collision (if any)
+/// @param dist Out parameter for retrieving the depth of the collision (if any)
 bool ObjectAmi::checkCollision(f32 radius, const EGG::Vector3f &posDelta, u32 time,
         EGG::Vector3f &bbox, EGG::Vector3f &fnrm, f32 &dist) {
     constexpr EGG::Vector3f FLOOR_NORMAL = EGG::Vector3f(0.0f, 1.5f, -0.5f);

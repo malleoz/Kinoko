@@ -64,7 +64,6 @@ void KartMove::createSubsystems(const KartParam::Stats &stats) {
     m_kartScale = EGG::egg_new<KartScale>(stats);
 }
 
-/// @stage All
 /// @brief Each frame, looks at player input and kart stats. Saves turn-related info.
 /// @addr{0x8057A8B4}
 void KartMove::calcTurn() {
@@ -175,7 +174,7 @@ void KartMove::init(bool b1, bool b2) {
     m_smtCharge = 0;
     m_mtCharge = 0;
     m_outsideDriftBonus = 0.0f;
-    m_boost.reset();
+    m_boost.init();
     m_zipperBoostTimer = 0;
     m_zipperBoostMax = 0;
     m_reject.reset();
@@ -275,14 +274,13 @@ void KartMove::setInitialPhysicsValues(const EGG::Vector3f &position, const EGG:
     m_dir = bodyFront();
     m_smoothedForward = bodyFront();
     m_up = bodyUp();
-    dynamics()->setTop(m_up);
+    dynamics()->setUp(m_up);
 
     for (u16 tireIdx = 0; tireIdx < suspCount(); ++tireIdx) {
         suspension(tireIdx)->setInitialState();
     }
 }
 
-/// @stage All
 /// @brief Each frame, calculates the kart's movement.
 /// @addr{0x805788DC}
 /// @details Calls various functions to handle drifts, hops, boosts.
@@ -390,7 +388,7 @@ void KartMove::calcRespawnBoost() {
         if (status.onBit(eStatus::TouchingGround)) {
             if (m_respawnPreLandTimer > 0) {
                 if (status.offBit(eStatus::BeforeRespawn, eStatus::InAction)) {
-                    activateBoost(KartBoost::Type::AllMt, RESPAWN_BOOST_DURATION);
+                    activateBoost(KartBoost::Type::MiniTurbo, RESPAWN_BOOST_DURATION);
                     m_respawnTimer = RESPAWN_BOOST_DURATION;
                 }
             } else {
@@ -411,7 +409,7 @@ void KartMove::calcRespawnBoost() {
         if (m_respawnPostLandTimer > 0) {
             if (status.onBit(eStatus::AccelerateStart)) {
                 if (status.offBit(eStatus::BeforeRespawn, eStatus::InAction)) {
-                    activateBoost(KartBoost::Type::AllMt, RESPAWN_BOOST_DURATION);
+                    activateBoost(KartBoost::Type::MiniTurbo, RESPAWN_BOOST_DURATION);
                     m_respawnTimer = RESPAWN_BOOST_DURATION;
                 }
 
@@ -510,7 +508,6 @@ void KartMove::calcAirtimeTop() {
     }
 }
 
-/// @stage 2
 /// @brief Every frame, calculates any boost resulting from a boost panel.
 /// @addr{0x80587590}
 void KartMove::calcSpecialFloor() {
@@ -668,7 +665,6 @@ void KartMove::calcStickyRoad() {
     }
 }
 
-/// @stage 2
 /// @brief Each frame, computes rotation and speed scalars from the floor KCL.
 /// @addr{0x8057C3D4}
 void KartMove::calcOffroad() {
@@ -760,7 +756,6 @@ void KartMove::calcRampBoost() {
 }
 
 /// @addr{Inlined in 0x805828CC}
-/// @stage 2
 /// @brief Computes the current cooldown duration between braking and reversing.
 void KartMove::calcDisableBackwardsAccel() {
     auto &status = KartObjectProxy::status();
@@ -777,7 +772,6 @@ void KartMove::calcDisableBackwardsAccel() {
 }
 
 /// @addr{0x805828CC}
-/// @stage 2
 /// @brief Calculates standstill mini-turbo components, if applicable.
 void KartMove::calcSsmt() {
     constexpr s16 MAX_SSMT_CHARGE = 75;
@@ -813,14 +807,14 @@ void KartMove::calcSsmt() {
             status.setBit(eStatus::DisableBackwardsAccel);
         } else {
             if (status.offBit(eStatus::Accelerate, eStatus::Brake)) {
-                activateBoost(KartBoost::Type::AllMt, SSMT_BOOST_FRAMES);
+                activateBoost(KartBoost::Type::MiniTurbo, SSMT_BOOST_FRAMES);
                 m_ssmtLeewayTimer = 0;
                 m_flags.resetBit(eFlags::SsmtCharged, eFlags::SsmtLeeway);
             }
         }
     } else {
         if (status.onBit(eStatus::Accelerate) && status.offBit(eStatus::Brake)) {
-            activateBoost(KartBoost::Type::AllMt, SSMT_BOOST_FRAMES);
+            activateBoost(KartBoost::Type::MiniTurbo, SSMT_BOOST_FRAMES);
             m_ssmtLeewayTimer = 0;
             m_flags.resetBit(eFlags::SsmtCharged, eFlags::SsmtLeeway);
         } else {
@@ -832,7 +826,6 @@ void KartMove::calcSsmt() {
     }
 }
 
-/// @stage 2
 /// @addr{0x8057E804}
 /// @brief Each frame, checks for hop or slipdrift. Computes drift direction based on player input.
 /// @return Whether or not we are hopping or slipdrifting.
@@ -875,7 +868,6 @@ bool KartMove::calcPreDrift() {
     return status.onBit(eStatus::Hop, eStatus::SlipdriftCharge);
 }
 
-/// @stage All
 /// @brief Clears drift state. Called when touching ground and drift is canceled.
 /// @addr{0x8057EA50}
 void KartMove::resetDriftManual() {
@@ -887,7 +879,6 @@ void KartMove::resetDriftManual() {
     m_mtCharge = 0;
 }
 
-/// @stage 2
 /// @addr{0x8057E348}
 void KartMove::clearDrift() {
     m_flags.resetBit(eFlags::DriftReset);
@@ -947,7 +938,6 @@ void KartMove::clearRejectRoad() {
     status().resetBit(eStatus::RejectRoadTrigger, eStatus::NoSparkInvisibleWall);
 }
 
-/// @stage 2
 /// @brief Each frame, handles automatic transmission drifting.
 /// @addr{0x8057E0DC}
 void KartMove::calcAutoDrift() {
@@ -1002,7 +992,6 @@ void KartMove::calcAutoDrift() {
     physics()->composeExtraRot(angleAxis);
 }
 
-/// @stage 2
 /// @brief Each frame, handles hopping, drifting, and mini-turbos.
 /// @addr{0x8057DC44}
 void KartMove::calcManualDrift() {
@@ -1084,7 +1073,6 @@ void KartMove::calcManualDrift() {
     }
 }
 
-/// @stage 2
 /// @brief Called when the player lands from a drift hop, or to start a slipdrift.
 /// @addr{0x8057E3F4}
 void KartMove::startManualDrift() {
@@ -1126,7 +1114,6 @@ void KartMove::startManualDrift() {
     m_outsideDriftBonus = OUTSIDE_DRIFT_BONUS * (m_speedRatioCapped * stats.driftManualTightness);
 }
 
-/// @stage 2
 /// @brief Stops charging a mini-turbo, and applies boost if charged.
 /// @addr{0x80582F9C}
 void KartMove::releaseMt() {
@@ -1146,13 +1133,12 @@ void KartMove::releaseMt() {
     }
 
     if (status.offBit(eStatus::BeforeRespawn, eStatus::InAction)) {
-        activateBoost(KartBoost::Type::AllMt, mtLength);
+        activateBoost(KartBoost::Type::MiniTurbo, mtLength);
     }
 
     m_driftState = DriftState::NotDrifting;
 }
 
-/// @stage 2
 /// @brief Every frame, handles mini-turbo charging and outside drifting bike rotation.
 /// @addr{0x8057EAB8}
 void KartMove::controlOutsideDriftAngle() {
@@ -1185,7 +1171,6 @@ void KartMove::controlOutsideDriftAngle() {
     calcMtCharge();
 }
 
-/// @stage 1+
 /// @brief Every frame, calculates kart rotation based on player input.
 /// @addr{0x8057C69C}
 void KartMove::calcRotation() {
@@ -1282,7 +1267,6 @@ void KartMove::calcRotation() {
     calcVehicleRotation(turn);
 }
 
-/// @stage 2
 /// @brief Every frame, computes speed based on acceleration and any active boosts.
 /// @addr{0x8057AB68}
 void KartMove::calcVehicleSpeed() {
@@ -1290,7 +1274,7 @@ void KartMove::calcVehicleSpeed() {
     auto &status = KartObjectProxy::status();
 
     if (raceMgr->isStageReached(System::RaceManager::Stage::Race)) {
-        f32 speedFix = dynamics()->speedFix();
+        f32 speedFix = dynamics()->headingExtVel();
         if (status.onBit(eStatus::InAction) ||
                 ((status.onBit(eStatus::WallCollisionStart) || state()->wallBonkTimer() == 0 ||
                          EGG::Mathf::abs(speedFix) >= 3.0f) &&
@@ -1374,7 +1358,6 @@ void KartMove::calcVehicleSpeed() {
     }
 }
 
-/// @stage 2
 /// @addr{0x8057B028}
 void KartMove::calcDeceleration() {
     f32 vel = 0.0f;
@@ -1387,7 +1370,6 @@ void KartMove::calcDeceleration() {
     m_speed += vel;
 }
 
-/// @stage 2
 /// @brief Every frame, computes acceleration based off the character/vehicle stats.
 /// @addr{0x8057B868}
 f32 KartMove::calcVehicleAcceleration() const {
@@ -1421,7 +1403,6 @@ f32 KartMove::calcVehicleAcceleration() const {
     return i < ts.size() ? acceleration : as.back();
 }
 
-/// @stage 2
 /// @brief Every frame, applies acceleration to the kart's internal velocity.
 /// @addr{0x8057B9BC}
 void KartMove::calcAcceleration() {
@@ -1574,7 +1555,6 @@ void KartMove::calcAcceleration() {
 }
 
 /// @addr{0x8057B108}
-/// @stage 2
 /// @brief Every frame, computes a speed scalar if we are colliding with a wall.
 f32 KartMove::calcWallCollisionSpeedFactor(f32 &f1) {
     auto &status = KartObjectProxy::status();
@@ -1607,7 +1587,6 @@ f32 KartMove::calcWallCollisionSpeedFactor(f32 &f1) {
 }
 
 /// @addr{0x8057B2A0}
-/// @stage 2
 /// @brief If we started to collide with a wall this frame, applies rotation.
 void KartMove::calcWallCollisionStart(f32 param_2) {
     m_flags.resetBit(eFlags::WallBounce);
@@ -1663,18 +1642,17 @@ void KartMove::calcWallCollisionStart(f32 param_2) {
             dynamics()->applyWrenchScaled(newPos, projRejSum, bumpDeviation);
         } else if (wallKclType() == COL_TYPE_SPECIAL_WALL && wallKclVariant() == 2) {
             dynamics()->addForce(colData.wallNrm * 15.0f);
-            collide()->startFloorMomentRate();
+            collide()->applyWeakFloorMomentScalar();
         }
 
         if (wallKclType() == COL_TYPE_SPECIAL_WALL && wallKclVariant() == 0) {
             dynamics()->addForce(colData.wallNrm * 15.0f);
-            collide()->startFloorMomentRate();
+            collide()->applyWeakFloorMomentScalar();
         }
     }
 }
 
-/// @stage 1+
-/// @brief STAGE Computes the x-component of angular velocity based on the kart's speed.
+/// @brief Computes the x-component of angular velocity based on the kart's speed.
 /// @addr{0x8057D1D4}
 void KartMove::calcStandstillBoostRot() {
     f32 next = 0.0f;
@@ -1714,7 +1692,6 @@ void KartMove::calcStandstillBoostRot() {
     }
 }
 
-/// @stage 2
 /// @brief Responds to player input to handle up/down kart tilt mid-air.
 /// @addr{0x805869DC}
 void KartMove::calcDive() {
@@ -1776,7 +1753,6 @@ void KartMove::calcDive() {
 }
 
 /// @addr{Inlined in 0x805788DC}
-/// @stage 2
 /// @brief Calculates whether we are starting a standstill mini-turbo.
 void KartMove::calcSsmtStart() {
     auto &status = KartObjectProxy::status();
@@ -1833,7 +1809,7 @@ void KartMove::applyForce(f32 force, const EGG::Vector3f &hitDir, bool stop) {
     }
 
     dynamics()->addForce(force * hitDir.perpInPlane(m_up, true));
-    collide()->startFloorMomentRate();
+    collide()->applyWeakFloorMomentScalar();
 
     m_bumpTimer = BUMP_COOLDOWN;
 
@@ -1890,7 +1866,6 @@ void KartMove::calcVehicleRotation(f32 turn) {
     calcDive();
 }
 
-/// @stage 2
 /// @brief Every frame during a drift, calculates MT/SMT charge based on player input.
 /// @addr{0x8057EE50}
 void KartMove::calcMtCharge() {
@@ -1955,7 +1930,6 @@ void KartMove::initOob() {
     clearOffroadInvincibility();
 }
 
-/// @stage 2
 /// @brief Initializes hop information, resets upwards EV and clears upwards force.
 /// @addr{0x8057DA5C}
 void KartMove::hop() {
@@ -1995,7 +1969,6 @@ void KartMove::tryStartBoostPanel() {
     setOffroadInvincibility(BOOST_PANEL_DURATION);
 }
 
-/// @stage 2
 /// @brief Sets offroad invincibility and enables the ramp boost bitfield flag.
 /// @addr{Inlined at 0x80587590}
 void KartMove::tryStartBoostRamp() {
@@ -2012,7 +1985,6 @@ void KartMove::tryStartBoostRamp() {
     setOffroadInvincibility(BOOST_RAMP_DURATION);
 }
 
-/// @stage 2
 /// @brief Applies calculations to start interacting with a @ref COL_TYPE_JUMP_PAD "jump pad".
 /// @addr{0x8057FD18}
 /// @details If applicable, updates @ref KartDynamics::m_extVel "external velocity"
@@ -2121,7 +2093,7 @@ void KartMove::activateBoost(KartBoost::Type type, s16 frames) {
 
 /// @addr{0x8058212C}
 void KartMove::applyStartBoost(s16 frames) {
-    activateBoost(KartBoost::Type::AllMt, frames);
+    activateBoost(KartBoost::Type::MiniTurbo, frames);
 }
 
 /// @addr{0x8057F3D8}
@@ -2161,7 +2133,6 @@ void KartMove::activateZipperBoost() {
     status.setBit(eStatus::ZipperBoost);
 }
 
-/// @stage 2
 /// @brief Ignores offroad KCL collision for a set amount of time.
 /// @addr{0x805824C8}
 /// @param timer Framecount to ignore offroad
@@ -2173,7 +2144,6 @@ void KartMove::setOffroadInvincibility(s16 timer) {
     status().setBit(eStatus::BoostOffroadInvincibility);
 }
 
-/// @stage 2
 /// @brief Checks a timer to see if we are still ignoring offroad slowdown.
 /// @addr{0x805824F0}
 void KartMove::calcOffroadInvincibility() {
@@ -2190,7 +2160,6 @@ void KartMove::calcOffroadInvincibility() {
     status.resetBit(eStatus::BoostOffroadInvincibility);
 }
 
-/// @stage 2
 /// @brief Checks a timer to see if we are still boosting from a mushroom.
 void KartMove::calcMushroomBoost() {
     auto &status = KartObjectProxy::status();
@@ -2476,7 +2445,7 @@ KartMoveBike::KartMoveBike() : m_leanRot(0.0f) {}
 /// @addr{0x80589704}
 KartMoveBike::~KartMoveBike() = default;
 
-/// @brief STAGE 1+ - Sets the wheelie bit flag and some wheelie-related variables.
+/// @brief Sets the wheelie bit flag and some wheelie-related variables.
 /// @addr{0x80588350}
 void KartMoveBike::startWheelie() {
     constexpr f32 MAX_WHEELIE_ROTATION = 0.07f;
@@ -2491,7 +2460,6 @@ void KartMoveBike::startWheelie() {
 }
 
 /// @addr{0x805883C4}
-/// @stage 1+
 /// @brief Clears the wheelie bit flag and resets the rotation decrement.
 void KartMoveBike::cancelWheelie() {
     status().resetBit(eStatus::Wheelie);
@@ -2506,7 +2474,6 @@ void KartMoveBike::createSubsystems(const KartParam::Stats &stats) {
     m_kartScale = EGG::egg_new<KartScale>(stats);
 }
 
-/// @stage All
 /// @brief Every frame, calculates rotation, EV, and angular velocity for the bike.
 /// @addr{0x80587D68}
 void KartMoveBike::calcVehicleRotation(f32 turn) {
@@ -2612,7 +2579,7 @@ void KartMoveBike::calcVehicleRotation(f32 turn) {
         }
     }
 
-    dynamics()->setTop_(top);
+    dynamics()->setStabilizeUp(top);
 }
 
 /// @brief On init, sets the bike's lean rotation cap and increment.
@@ -2662,7 +2629,7 @@ void KartMoveBike::clear() {
     cancelWheelie();
 }
 
-/// @brief STAGE 1+ - Every frame, checks player input for wheelies and computes wheelie rotation.
+/// @brief Every frame, checks player input for wheelies and computes wheelie rotation.
 /// @addr{0x805883F4}
 void KartMoveBike::calcWheelie() {
     constexpr u32 FAILED_WHEELIE_FRAMES = 15;
@@ -2720,7 +2687,6 @@ void KartMoveBike::calcWheelie() {
     }
 }
 
-/// @stage 2
 /// @brief Virtual function that just cancels wheelies when you hop.
 /// @addr{0x80588B30}
 /// @todo This function may be called without actually hopping (slipdrift), in which case we should
@@ -2733,13 +2699,11 @@ void KartMoveBike::onHop() {
     cancelWheelie();
 }
 
-/// @stage 2
 /// @brief Called when you collide with a wall. All it does for bikes is cancel wheelies.
 void KartMoveBike::onWallCollision() {
     cancelWheelie();
 }
 
-/// @stage 2
 /// @brief Every frame during a drift, calculates MT charge based on player input.
 /// @addr{0x80588888}
 void KartMoveBike::calcMtCharge() {
@@ -2775,7 +2739,7 @@ void KartMoveBike::initOob() {
     cancelWheelie();
 }
 
-/// @brief STAGE 1+ - Every frame, checks player input to see if we should start or stop a wheelie.
+/// @brief Every frame, checks player input to see if we should start or stop a wheelie.
 /// @addr{0x80588798}
 void KartMoveBike::tryStartWheelie() {
     constexpr s16 COOLDOWN_FRAMES = 20;

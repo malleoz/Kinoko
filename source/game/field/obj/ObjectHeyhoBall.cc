@@ -40,10 +40,10 @@ Kart::Reaction ObjectHeyhoBall::onCollision(Kart::KartObject * /*kartObj*/,
         }
 
         hitDepth.setZero();
-        return Kart::Reaction::SpinSomeSpeed;
+        return Kart::Reaction::SpinTwice;
     }
 
-    return Kart::Reaction::WallAllSpeed;
+    return Kart::Reaction::Wall;
 }
 
 /// @addr{0x806D10A4}

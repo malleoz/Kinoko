@@ -48,7 +48,7 @@ void ObjectTruckWagonCart::calcCollisionTransform() {
 Kart::Reaction ObjectTruckWagonCart::onCollision(Kart::KartObject *kartObj,
         Kart::Reaction reactionOnKart, Kart::Reaction /*reactionOnObj*/,
         EGG::Vector3f & /*hitDepth*/) {
-    return kartObj->speedRatioCapped() < 0.5f ? Kart::Reaction::WallAllSpeed : reactionOnKart;
+    return kartObj->speedRatioCapped() < 0.5f ? Kart::Reaction::Wall : reactionOnKart;
 }
 
 /// @addr{0x806E0DF0}

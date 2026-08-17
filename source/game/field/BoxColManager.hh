@@ -34,6 +34,8 @@ enum class eBoxColFlag {
     Active = 10,         ///< Indicates the unit is active
     TempRecalcAABB = 11, ///< Only recalculate this unit's spatial indexing once
 };
+
+/// @brief A bitfield of @ref eBoxColFlag that represents the state and type of a given BoxColUnit
 typedef EGG::TBitFlag<u32, eBoxColFlag> BoxColFlag;
 
 /// @brief A representation of the boundaries of an entity that has dynamic collision

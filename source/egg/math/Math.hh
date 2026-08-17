@@ -15,6 +15,7 @@ static constexpr f32 DEG2FIDX = 256.0f / 360.0f; ///< Degrees to fixed index
 static constexpr f32 RAD2FIDX = 128.0f / F_PI;   ///< Radians to fixed index
 static constexpr f32 FIDX2RAD = F_PI / 128.0f;   ///< Fixed index to radians
 static constexpr f32 HALF_PI = F_PI / 2.0f;
+static constexpr f32 COS_PI_OVER_4 = 0.707f;
 
 /// @brief Math functions and constants used in the base game.
 namespace EGG::Mathf {

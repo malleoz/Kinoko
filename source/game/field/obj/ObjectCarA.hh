@@ -53,8 +53,8 @@ private:
     const f32 m_accel;           ///< Acceleration and deceleration rate
     const u32 m_stopTime;        ///< How long to spend at 0 velocity before accelerating.
     f32 m_cruiseTime;            ///< How long to spend at cruising speed before decelerating.
-    EGG::Vector3f m_currTangent; ///< It's @ref EGG::Vector3f::ey unless it flies up in the air.
-    EGG::Vector3f m_currUp;      ///< It's @ref EGG::Vector3f::ey unless it flies up in the air.
+    EGG::Vector3f m_currTangent; ///< It's EGG::Vector3f::ey unless it flies up in the air.
+    EGG::Vector3f m_currUp;      ///< It's EGG::Vector3f::ey unless it flies up in the air.
     f32 m_currVel;               ///< Current velocity of the car this frame
     MotionState m_motionState;   ///< The current motion state of the car
     bool m_changingDir;          ///< Triggers the deceleration-to-stop logic

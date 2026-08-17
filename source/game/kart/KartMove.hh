@@ -3,7 +3,6 @@
 #include "game/kart/KartBoost.hh"
 #include "game/kart/KartBurnout.hh"
 #include "game/kart/KartHalfPipe.hh"
-#include "game/kart/KartObjectProxy.hh"
 #include "game/kart/KartParam.hh"
 #include "game/kart/KartReject.hh"
 #include "game/kart/KartState.hh"
@@ -104,8 +103,7 @@ public:
     virtual void calcMtCharge();
     virtual void initOob();
 
-    /// @stage 2
-    /// @brief Returns the % speed boost from wheelies. For karts, this is always 0.
+        /// @brief Returns the % speed boost from wheelies. For karts, this is always 0.
     /// @addr{0x8057C3C8}
     [[nodiscard]] virtual f32 getWheelieSoftSpeedLimitBonus() const {
         return 0.0f;
@@ -511,8 +509,7 @@ public:
     void init(bool b1, bool b2) override;
     void clear() override;
 
-    /// @stage 2
-    /// @brief Returns what % to raise the speed cap when wheeling.
+        /// @brief Returns what % to raise the speed cap when wheeling.
     /// @addr{0x80588324}
     [[nodiscard]] f32 getWheelieSoftSpeedLimitBonus() const override {
         constexpr f32 WHEELIE_SPEED_BONUS = 0.15f;

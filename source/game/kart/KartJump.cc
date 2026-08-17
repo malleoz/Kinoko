@@ -1,36 +1,31 @@
 #include "KartJump.hh"
 
 #include "game/kart/KartCollide.hh"
-#include "game/kart/KartMove.hh"
-#include "game/kart/KartParam.hh"
 #include "game/kart/KartPhysics.hh"
-#include "game/kart/KartState.hh"
-
-#include "game/system/KPadController.hh"
-
-#include <egg/math/Math.hh>
 
 namespace Kinoko::Kart {
 
 /// @addr{0x80575A44}
 KartJump::KartJump(KartMove *move) : m_move(move) {
-    m_cooldown = 0;
+    m_trickDelay = 0;
 
     // The base game doesn't initialize this explicitly, since EGG::Heaps are memset to 0.
-    m_nextAllowTimer = 0;
+    m_leniencyTimer = 0;
 }
 
 /// @addr{0x80575AA8}
 KartJump::~KartJump() = default;
 
 /// @addr{0x805764FC}
+/// @details Decays the rotation speed towards a minimum value. Applies the rotation speed to the
+/// accumulated angle, and applies the accumulated rotation to the kart's physics.
 void KartJump::calcRot() {
-    m_angleDelta *= m_angleDeltaFactor;
-    m_angleDelta = std::max(m_angleDelta, m_properties.angleDeltaMin);
-    m_angleDeltaFactor -= m_angleDeltaFactorDec;
-    m_angleDeltaFactor = std::max(m_angleDeltaFactor, m_properties.angleDeltaFactorMin);
-    m_angle += m_angleDelta;
-    m_angle = std::min(m_angle, m_finalAngle);
+    m_rotSpeed *= m_decayRate;
+    m_rotSpeed = std::max(m_rotSpeed, m_properties.minRotSpeed);
+    m_decayRate -= m_decayRateDelta;
+    m_decayRate = std::max(m_decayRate, m_properties.minDecayRate);
+    m_angle += m_rotSpeed;
+    m_angle = std::min(m_angle, m_targetAngle);
 
     switch (m_type) {
     case TrickType::KartFlipTrickZ:
@@ -48,6 +43,7 @@ void KartJump::calcRot() {
 }
 
 /// @addr{0x80576460}
+/// @brief Assigns the trick properties and target angle based on the trick type and surface variant
 void KartJump::setupProperties() {
     static constexpr std::array<TrickProperties, 3> TRICK_PROPERTIES = {{
             {11.0f, 1.5f, 0.9f, 0.0018f},
@@ -63,28 +59,27 @@ void KartJump::setupProperties() {
 
     if (m_variant == SurfaceVariant::SingleFlipTrick) {
         m_properties = TRICK_PROPERTIES[0];
-        m_finalAngle = FINAL_ANGLES[0];
-    } else if (m_variant == SurfaceVariant::StuntTrick) {
+        m_targetAngle = FINAL_ANGLES[0];
+    } else if (m_variant == SurfaceVariant::DoubleFlipTrick) {
         m_properties = TRICK_PROPERTIES[1];
-        m_finalAngle = FINAL_ANGLES[1];
+        m_targetAngle = FINAL_ANGLES[1];
     } else if (m_type == TrickType::BikeSideStuntTrick) {
         m_properties = TRICK_PROPERTIES[2];
-        m_finalAngle = FINAL_ANGLES[2];
+        m_targetAngle = FINAL_ANGLES[2];
     }
 
-    m_angleDelta = m_properties.initialAngleDiff;
-    m_angleDeltaFactorDec = m_properties.angleDiffMulDec;
+    m_rotSpeed = m_properties.initRotSpeed;
+    m_decayRateDelta = m_properties.initDecayRateDelta;
     m_angle = 0.0f;
-    m_angleDeltaFactor = 1.0f;
+    m_decayRate = 1.0f;
     m_rot = EGG::Quatf::ident;
 }
 
-/// @addr{0x80575AE8}
-void KartJump::reset() {
-    m_cooldown = 0;
-}
-
 /// @addr{0x80575D7C}
+/// @brief Starts a trick if the player is moving fast enough and the trick start flag is set
+/// @param left The left vector of the kart at the start of the trick
+/// @details Maps the boost ramp type to a surface variant, and then calls @ref start to initialize
+/// the trick. Finally clears the @enum eStatus::TrickStart flag.
 void KartJump::tryStart(const EGG::Vector3f &left) {
     auto &status = KartObjectProxy::status();
 
@@ -96,11 +91,11 @@ void KartJump::tryStart(const EGG::Vector3f &left) {
         s32 boostRampType = state()->boostRampType();
 
         if (boostRampType == 0) {
-            m_variant = SurfaceVariant::StuntTrick;
+            m_variant = SurfaceVariant::DoubleFlipTrick;
         } else if (boostRampType == 1) {
             m_variant = SurfaceVariant::SingleFlipTrick;
         } else {
-            m_variant = SurfaceVariant::DoubleFlipTrick;
+            m_variant = SurfaceVariant::StuntTrick;
         }
 
         start(left);
@@ -110,8 +105,10 @@ void KartJump::tryStart(const EGG::Vector3f &left) {
 }
 
 /// @addr{0x805763E4}
+/// @brief Every frame, checks if we need to update the kart's rotation due to a trick, and checks
+/// if the player is attempting to start a trick
 void KartJump::calc() {
-    m_cooldown = std::max(0, m_cooldown - 1);
+    m_trickDelay = std::max(0, m_trickDelay - 1);
 
     if (status().onBit(eStatus::TrickRot)) {
         calcRot();
@@ -120,12 +117,10 @@ void KartJump::calc() {
     calcInput();
 }
 
-bool KartJump::someFlagCheck() {
-    return status().onBit(eStatus::InAction, eStatus::TrickStart, eStatus::InATrick,
-            eStatus::OverZipper);
-}
-
 /// @addr{0x80575B38}
+/// @brief Checks player controller input to try starting a trick'
+/// @details Checks if the player is attempting to start a trick, and buffers the trick input for a
+/// few frames if so. Once the player has 3 or more frames of airtime, the trick will be started.
 void KartJump::calcInput() {
     constexpr s16 TRICK_ALLOW_TIMER = 14;
 
@@ -133,31 +128,33 @@ void KartJump::calcInput() {
 
     if (!someFlagCheck() && trick != System::Trick::None) {
         m_nextTrick = trick;
-        m_nextAllowTimer = TRICK_ALLOW_TIMER;
+        m_leniencyTimer = TRICK_ALLOW_TIMER;
     }
 
     auto &status = KartObjectProxy::status();
 
     u32 airtime = state()->airtime();
-    if (airtime == 0 || m_nextAllowTimer < 1 || airtime > 10 ||
+    if (airtime == 0 || m_leniencyTimer < 1 || airtime > 10 ||
             (status.offBit(eStatus::Trickable) && state()->boostRampType() < 0) ||
             someFlagCheck()) {
-        m_nextAllowTimer = std::max(0, m_nextAllowTimer - 1);
+        m_leniencyTimer = std::max(0, m_leniencyTimer - 1);
     } else {
         if (airtime > 2) {
             status.setBit(eStatus::TrickStart);
         }
         if (status.onBit(eStatus::RampBoost)) {
-            m_boostRampEnabled = true;
+            m_boostRampTrick = true;
         }
     }
     if (status.onBit(eStatus::TouchingGround) &&
             collide()->surfaceFlags().offBit(KartCollide::eSurfaceFlags::BoostRamp)) {
-        m_boostRampEnabled = false;
+        m_boostRampTrick = false;
     }
 }
 
 /// @addr{0x805766B8}
+/// @brief Called when a trick has ended
+/// @details Resets trick-related flags and applies a decaying rotation to the kart.
 void KartJump::end() {
     auto &status = KartObjectProxy::status();
 
@@ -166,10 +163,14 @@ void KartJump::end() {
     }
 
     status.resetBit(eStatus::InATrick, eStatus::TrickRot);
-    m_boostRampEnabled = false;
+    m_boostRampTrick = false;
 }
 
 /// @addr{0x80576230}
+/// @brief Influences the kart's pitch and direction when starting a trick
+/// @details The max pitch angle from horizontal and the pitch correction applied are mapped based
+/// off the vehicle's weight class and the surface variant. If the kart is already pitched above the
+/// max angle, no pitch correction is applied.
 void KartJump::setAngle(const EGG::Vector3f &left) {
     static constexpr std::array<std::array<AngleProperties, 3>, 3> ANGLE_PROPERTIES = {{
             {{
@@ -195,7 +196,7 @@ void KartJump::setAngle(const EGG::Vector3f &left) {
     f32 pitch = EGG::Mathf::abs(EGG::Mathf::atan2(vel1YCrossMag, vel1YDot));
     f32 angle = 90.0f - (pitch * RAD2DEG);
     u32 weightClass = static_cast<u32>(param()->stats().weightClass);
-    f32 targetAngle = ANGLE_PROPERTIES[weightClass][static_cast<u32>(m_variant)].targetAngle;
+    f32 targetAngle = ANGLE_PROPERTIES[weightClass][static_cast<u32>(m_variant)].maxAngle;
 
     if (status().onBit(eStatus::JumpPad) || angle > targetAngle) {
         return;
@@ -214,16 +215,19 @@ void KartJump::setAngle(const EGG::Vector3f &left) {
 }
 
 /// @addr{0x80575EE8}
+/// @details Initializes the trick type, rotation direction, and trick properties based on the
+/// surface variant. Also enforces a 5 frame delay before another trick can occur.
 void KartJump::start(const EGG::Vector3f &left) {
     init();
     setAngle(left);
     status().setBit(eStatus::InATrick);
-    m_cooldown = 5;
+    m_trickDelay = 5;
 }
 
 /// @addr{0x8057616C}
+/// @details Does not apply any rotation for kart stunt tricks.
 void KartJump::init() {
-    if (m_variant == SurfaceVariant::DoubleFlipTrick) {
+    if (m_variant == SurfaceVariant::StuntTrick) {
         m_type = TrickType::StuntTrickBasic;
         return;
     }
@@ -252,12 +256,12 @@ void KartJumpBike::calcRot() {
     /// @brief Computed using double precision, so we hard-code it.
     constexpr f32 PI_OVER_3 = 1.0471976f;
 
-    m_angleDelta *= m_angleDeltaFactor;
-    m_angleDelta = std::max(m_angleDelta, m_properties.angleDeltaMin);
-    m_angleDeltaFactor -= m_angleDeltaFactorDec;
-    m_angleDeltaFactor = std::max(m_angleDeltaFactor, m_properties.angleDeltaFactorMin);
-    m_angle += m_angleDelta;
-    m_angle = std::min(m_angle, m_finalAngle);
+    m_rotSpeed *= m_decayRate;
+    m_rotSpeed = std::max(m_rotSpeed, m_properties.minRotSpeed);
+    m_decayRate -= m_decayRateDelta;
+    m_decayRate = std::max(m_decayRate, m_properties.minDecayRate);
+    m_angle += m_rotSpeed;
+    m_angle = std::min(m_angle, m_targetAngle);
 
     switch (m_type) {
     case TrickType::BikeFlipTrickNose:
@@ -281,6 +285,8 @@ void KartJumpBike::calcRot() {
 }
 
 /// @addr{0x80576758}
+/// @copydetails KartJump::start
+/// Also cancels wheelies.
 void KartJumpBike::start(const EGG::Vector3f &left) {
     KartJump::start(left);
 
@@ -289,10 +295,11 @@ void KartJumpBike::start(const EGG::Vector3f &left) {
 }
 
 /// @addr{0x8057689C}
+/// @details Unlike @ref KartJump::init(), also applies rotation for bike stunt tricks.
 void KartJumpBike::init() {
-    constexpr f32 DOUBLE_FLIP_TRICK_FINAL_ANGLE = 180.0f;
+    constexpr f32 STUNT_TRICK_TARGET_ANGLE = 180.0f;
 
-    if (m_variant == SurfaceVariant::DoubleFlipTrick) {
+    if (m_variant == SurfaceVariant::StuntTrick) {
         if (m_nextTrick < System::Trick::Left) {
             return;
         }
@@ -300,7 +307,7 @@ void KartJumpBike::init() {
         m_type = TrickType::BikeSideStuntTrick;
         m_rotSign = (m_nextTrick == System::Trick::Right) ? -1.0f : 1.0f;
         setupProperties();
-        m_finalAngle = DOUBLE_FLIP_TRICK_FINAL_ANGLE;
+        m_targetAngle = STUNT_TRICK_TARGET_ANGLE;
     } else {
         m_type = static_cast<TrickType>(m_nextTrick);
         m_rotSign =

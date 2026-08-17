@@ -124,7 +124,7 @@ Kart::Reaction ObjectWanwan::onCollision(Kart::KartObject *kartObj, Kart::Reacti
         return reactionOnKart;
     }
 
-    return kartObj->speedRatioCapped() < 0.5f ? Kart::Reaction::WallAllSpeed : reactionOnKart;
+    return kartObj->speedRatioCapped() < 0.5f ? Kart::Reaction::Wall : reactionOnKart;
 }
 
 /// @addr{0x806E6208}

@@ -178,7 +178,7 @@ f32 ObjectFlamePoleFoot::getScaleY(u32 timeOffset) const {
 }
 
 /// @addr{0x8067FE88}
-/// @copydoc ObjectKCL::checkCollision()
+/// @copybrief ObjectKCL::checkCollision()
 /// @details Humps become trickable once the scale is 2 or greater
 bool ObjectFlamePoleFoot::checkCollision(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,

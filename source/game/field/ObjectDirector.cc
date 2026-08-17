@@ -94,7 +94,7 @@ size_t ObjectDirector::checkKartObjectCollision(Kart::KartObject *kartObj,
                 obj->onCollision(kartObj, reactionOnKart, reactionOnObj, m_hitDepths[count]);
         m_reactions[count] = reaction;
 
-        if (reaction == Kart::Reaction::WallAllSpeed || reaction == Kart::Reaction::WallSpark) {
+        if (reaction == Kart::Reaction::Wall || reaction == Kart::Reaction::Wall3) {
             obj->onWallCollision(kartObj, m_hitDepths[count]);
         } else {
             obj->onObjectCollision(kartObj);

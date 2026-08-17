@@ -30,7 +30,7 @@ public:
     /// @addr{0x8077CCE8}
     void createCollision() override {}
 
-    /// @ADDR{0X8077CCE0}
+    /// @addr{0X8077CCE0}
     void loadRail() override {}
 
     [[nodiscard]] const ObjectBirdLeader *leader() const {

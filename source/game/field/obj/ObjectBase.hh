@@ -28,6 +28,8 @@ public:
         Matrix = 2,
         Scale = 3,
     };
+
+    /// @brief A bitfield of @ref eFlags that represents the state of the object
     typedef EGG::TBitFlag<u16, eFlags> Flags;
 
     ObjectBase(const System::MapdataGeoObj &params);

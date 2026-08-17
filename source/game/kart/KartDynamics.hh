@@ -6,25 +6,43 @@ namespace Kinoko::Kart {
 
 /// @brief State management for most components of a kart's physics
 /// @details Whenever another kart class is done with their calculations, they call to this class to
-/// set the relevant variables. For example, KartMove::calcAcceleration() calculates acceleration
-/// and subsequently sets the internal velocity in this class.
+/// set the relevant variables. For example, @ref KartMove::calcAcceleration() calculates
+/// the kart's acceleration and subsequently sets the internal velocity in this class.
 class KartDynamics {
 public:
     KartDynamics();
     virtual ~KartDynamics();
 
+    /// @brief Called when the kart should ignore pitch changes due to torque and become upright
+    /// @details This is a nop for karts and only influences bikes.
     virtual void forceUpright() {}
+
+    /// @brief Responsible for stabilizing the vehicle by rotating it upwards
     virtual void stabilize();
 
     void init();
 
+    /// @brief Resets the internal velocity to zero
     void resetInternalVelocity() {
         m_intVel.setZero();
     }
 
     void setInertia(const EGG::Vector3f &m, const EGG::Vector3f &n);
+
+    /// @addr{0x805B4DC4}
+    /// @brief Takes elements from the kart's BSP and computes the moment of inertia tensor
+    /// @param rotSpeed The rotational speed of the kart
+    /// @param m First cuboid dimensions
+    /// @param n Second cuboid dimensions
+    /// @param skipInertia Whether to skip the inertia tensor calculation
     void setBspParams(f32 rotSpeed, const EGG::Vector3f &m, const EGG::Vector3f &n,
-            bool skipInertia);
+            bool skipInertia) {
+        m_angVel0Factor = rotSpeed;
+
+        if (!skipInertia) {
+            setInertia(m, n);
+        }
+    }
 
     void calc(f32 dt, f32 maxSpeed, bool air);
     void reset();
@@ -34,8 +52,10 @@ public:
     void applyWrenchScaled(const EGG::Vector3f &p, const EGG::Vector3f &f, f32 scale);
 
     /// @addr{0x805B6388}
-    void addForce(const EGG::Vector3f &pos) {
-        m_totalForce += pos;
+    /// @brief Accumulates the provided force
+    /// @param force The force to accumulate
+    void addForce(const EGG::Vector3f &force) {
+        m_totalForce += force;
     }
 
     /// @beginSetters
@@ -67,8 +87,8 @@ public:
         m_intVel = v;
     }
 
-    void setTop(const EGG::Vector3f &v) {
-        m_top = v;
+    void setUp(const EGG::Vector3f &v) {
+        m_up = v;
     }
 
     void setStabilizationFactor(f32 val) {
@@ -107,8 +127,8 @@ public:
         m_scale = v;
     }
 
-    void setTop_(const EGG::Vector3f &v) {
-        m_top_ = v;
+    void setStabilizeUp(const EGG::Vector3f &v) {
+        m_stabilizeUp = v;
     }
 
     void setForceUpright(bool isSet) {
@@ -181,8 +201,8 @@ public:
         return m_angVel2;
     }
 
-    [[nodiscard]] f32 speedFix() const {
-        return m_speedFix;
+    [[nodiscard]] f32 headingExtVel() const {
+        return m_headingExtVel;
     }
     /// @endGetters
 
@@ -205,18 +225,17 @@ protected:
     EGG::Vector3f m_totalForce;        ///< Basically just gravity.
     EGG::Vector3f m_totalTorque;       ///< Torque from linear motion and rotation.
     EGG::Quatf m_specialRot;           ///< Rotation from trick animations. Copied from KartPhysics.
-    EGG::Quatf m_extraRot;             ///< @unused
+    EGG::Quatf m_extraRot;             ///< Rotation from automatic drifts and actions.
     f32 m_gravity;                     ///< Usually -1.3f, also affected by KartMove::calcDive.
     EGG::Vector3f m_intVel;            ///< What you typically consider to be the vehicle's speed.
-    EGG::Vector3f m_top;               ///< The unit vector pointing up from the vehicle.
+    EGG::Vector3f m_up;                ///< The unit vector pointing up from the vehicle.
     f32 m_stabilizationFactor;         ///< Scalar for damping the main rotation.
-    f32 m_speedFix;                    ///<
-    EGG::Vector3f m_top_;              ///< Basically @ref m_top biased towards absolute up. @rename
-
-    f32 m_angVel0YFactor; ///< Scalar for damping angular velocity.
-    EGG::Vector3f m_scale;
-    bool m_forceUpright; ///< Specifies if we should return the vehicle to upwards orientation.
-    bool m_noGravity;    ///< Disables gravity. Relevant when respawning.
+    f32 m_headingExtVel;               ///< The forward/backward component of @ref m_extVel
+    EGG::Vector3f m_stabilizeUp;       ///< Bike-only target up vector used for stabilization
+    f32 m_angVel0YFactor;              ///< Scalar for damping angular velocity.
+    EGG::Vector3f m_scale;             ///< The kart's current per-axis scale
+    bool m_forceUpright; ///< True if we should return the vehicle to upwards orientation.
+    bool m_noGravity;    ///< Disables gravity while respawning
     bool m_killExtVelY;  ///< Caps external velocity at 0.
 };
 
@@ -229,7 +248,12 @@ public:
     ~KartDynamicsBike();
 
 private:
-    void forceUpright() override;
+    /// @addr{0x805B6438}
+    /// @details Clears the z-component of the angular velocity to force the bike upright
+    void forceUpright() override {
+        m_angVel0.z = 0.0f;
+    }
+
     void stabilize() override;
 };
 

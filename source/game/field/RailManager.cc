@@ -37,7 +37,8 @@ RailManager::~RailManager() {
 }
 
 /// @addr{0x806F0AD8}
-/// @brief Parses all rails from the @ref CourseMap, distinguishing between linear and curved rails
+/// @brief Parses all rails from the @ref System::CourseMap, distinguishing between linear and
+/// curved rails
 /// @details In the base game, this function differentiates between object routes and camera routes.
 /// Since we do not implement camera rail functionality in Kinoko, we can simplify the logic in this
 /// function a bit by not checking object rail ids.

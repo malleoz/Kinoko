@@ -24,7 +24,7 @@ struct CollisionData {
     EGG::Vector3f vel;             ///< Velocity at the time of collision
     EGG::Vector3f relPos;   ///< Position of the colliding hitbox relative to the kart's position
     EGG::Vector3f movement; ///< Displacement from a wall collision applied to the kart's body
-    EGG::Vector3f roadVelocity; ///< The velocity of moving road KCL (e.g. from @ref ObjectBelt)
+    EGG::Vector3f roadVelocity; ///< Velocity of moving road KCL (e.g. from @ref Field::ObjectBelt)
     f32 speedFactor;            ///< Speed multiplier based on the floor KCL type (e.g. offroad)
     f32 rotFactor;              ///< Rotation multiplier based on the floor KCL type (e.g. offroad)
     Field::KCLTypeMask closestFloorFlags; ///< The colliding floor KCL flag's @ref KColType.
@@ -45,7 +45,7 @@ struct CollisionData {
     bool bSoftWall;                ///< Set if the colliding KCL is a soft wall
     bool bMovingWaterStickyRoad;   ///< KC pipe vertical water section
     bool bMovingWaterDisableAccel; ///< KC last turn prevents mini-turbo acceleration
-    bool bHasRoadVel;        ///< Set if colliding with moving road KCL (e.g. from @ref ObjectBelt)
+    bool bHasRoadVel; ///< Set if colliding with moving road KCL (e.g. from @ref Field::ObjectBelt)
     bool bWallAtLeftCloser;  ///< Set if the wall collision on the left side of the kart is closer
     bool bWallAtRightCloser; ///< Set if the wall collision on the right side of the kart is closer
 };

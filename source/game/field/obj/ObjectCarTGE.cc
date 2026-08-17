@@ -214,7 +214,7 @@ Kart::Reaction ObjectCarTGE::onCollision(Kart::KartObject *kartObj, Kart::Reacti
     }
 
     // In the base game, behavior branches on reactionOnObj, but for time trials it's always 0.
-    if (reactionOnKart != Kart::Reaction::None && reactionOnKart != Kart::Reaction::WallAllSpeed) {
+    if (reactionOnKart != Kart::Reaction::None && reactionOnKart != Kart::Reaction::Wall) {
         m_squashed = true;
         calcTransform();
         EGG::Vector3f v2 = transform().base(2);
@@ -225,7 +225,7 @@ Kart::Reaction ObjectCarTGE::onCollision(Kart::KartObject *kartObj, Kart::Reacti
         posDelta.normalise2();
 
         if (v2.dot(posDelta) < EGG::Mathf::CosFIdx(0.7111111f * m_hitAngle) && !m_hasAuxCollision) {
-            reactionOnKart = Kart::Reaction::LaunchSpin;
+            reactionOnKart = Kart::Reaction::idewaysFlipTwice;
         }
 
         hitDepth.setZero();

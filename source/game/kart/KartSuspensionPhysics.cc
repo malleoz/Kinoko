@@ -196,7 +196,6 @@ void KartSuspensionPhysics::calcCollision(f32 dt, const EGG::Vector3f &gravity,
     }
 }
 
-/// @stage All
 /// @brief Calculates linear force and rotation from the kart's suspension.
 /// @addr{0x8059A574}
 void KartSuspensionPhysics::calcSuspension(const EGG::Vector3f &forward,

@@ -17,13 +17,13 @@ enum class eStatus {
     BeforeRespawn = 4,              ///< Set on respawn collision, cleared on position snap.
     Wall3Collision = 5,             ///< Set when colliding with wall KCL #COL_TYPE_WALL_2
     WallCollision = 6,              ///< Set if we are colliding with a wall.
-    HopStart = 7,                   ///< Set if @ref m_bDriftInput was toggled on this frame.
-    AccelerateStart = 8,            ///< Set if @ref m_bAccelerate was toggled on this frame.
+    HopStart = 7,                   ///< Set if we started a drift hop this frame.
+    AccelerateStart = 8,            ///< Set if we started accelerating this frame.
     GroundStart = 9,                ///< Set first frame landing from airtime.
     VehicleBodyFloorCollision = 10, ///< Set if the vehicle body is colliding with the floor.
     AnyWheelCollision = 11,         ///< Set when any wheel is touching floor collision.
     AllWheelsCollision = 12,        ///< Set when all wheels are touching floor collision.
-    StickLeft = 13,          ///< Set on left stick input. Mutually exclusive to @ref m_bStickRight.
+    StickLeft = 13,          ///< Set on left stick input. Mutually exclusive to @enum StickRight.
     WallCollisionStart = 14, ///< Set if we have just started colliding with a wall.
     AirtimeOver20 = 15,      ///< Set after 20 frames of airtime, resets on landing.
     StickyRoad = 16,         ///< Like the rBC stairs
@@ -32,7 +32,7 @@ enum class eStatus {
     Boost = 20,              ///< Set while in a boost.
     DisableAcceleration = 22,
     AirStart = 23,
-    StickRight = 24,      ///< Set on right stick input. Mutually exclusive to @ref m_bStickLeft.
+    StickRight = 24,      ///< Set on right stick input. Mutually exclusive to @enum StickLeft.
     LargeFlipHit = 25,    ///< Set when hitting an exploding object.
     MushroomBoost = 26,   ///< Set while we are in a mushroom boost.
     SlipdriftCharge = 27, ///< Currently in a drift w/ automatic.
@@ -86,7 +86,7 @@ enum class eStatus {
     HWG = 101,                    ///< Set when "Horizontal Wall Glitch" is active.
     AfterCannon = 102,
     ActionMidZipper = 103,  ///< Set when we enter an action while mid-air from a zipper.
-    ChargeStartBoost = 104, ///< Like @ref m_bAccelerate but during countdown.
+    ChargeStartBoost = 104, ///< Set when we are charging the boost during race countdown
     MovingWaterVertical = 105,
     EndHalfPipe = 107,
 

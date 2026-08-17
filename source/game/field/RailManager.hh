@@ -16,7 +16,7 @@ class Context;
 
 namespace Field {
 
-/// @brief Creates and exposes access to the rails from @ref CourseMap
+/// @brief Creates and exposes access to the rails from @ref System::CourseMap
 /// @details For each rail, determines whether it represents a linear rail (@ref RailLine) or a
 /// curved rail (@ref RailSpline).
 class RailManager {
@@ -56,7 +56,7 @@ private:
 
     void createPaths();
 
-    /// @brief The rails parsed from @ref CourseMap
+    /// @brief The rails parsed from @ref System::CourseMap
     fixed_vector<Rail *> m_rails;
 
     static RailManager *s_instance; ///< @addr{0x809C22B0}

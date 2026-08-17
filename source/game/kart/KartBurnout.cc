@@ -13,15 +13,8 @@ KartBurnout::KartBurnout() = default;
 /// @addr{0x805781DC}
 KartBurnout::~KartBurnout() = default;
 
-/// @addr{0x805890B0}
-void KartBurnout::start() {
-    activate();
-    m_timer = 0;
-    m_phase = 0;
-    m_amplitude = 1.0f;
-}
-
 /// @addr{0x80589118}
+/// @brief Calculates the burnout rotation and checks if the burnout has ended
 void KartBurnout::calc() {
     constexpr u32 BURNOUT_DURATION = 120;
 
@@ -36,11 +29,10 @@ void KartBurnout::calc() {
     }
 }
 
-f32 KartBurnout::pitch() const {
-    return m_pitch;
-}
-
 /// @addr{0x80589308}
+/// @brief Calculates the rotation of the kart during a burnout
+/// @details After 30 frames, applies a dampening effect to the rotation, reducing the amplitude of
+/// the rotation over time.
 void KartBurnout::calcRotation() {
     constexpr u16 PHASE_INCREMENT = 800;
     constexpr f32 PHASE_TO_FIDX = 1.0f / 256.0f;
@@ -57,27 +49,25 @@ void KartBurnout::calcRotation() {
         m_amplitude *= DAMPENING_FACTOR;
     }
 
-    m_pitch = DEG2RAD * (AMPLITUDE_FACTOR * sin) * m_amplitude;
+    m_yaw = DEG2RAD * (AMPLITUDE_FACTOR * sin) * m_amplitude;
 
-    physics()->composeStuntRot(EGG::Quatf::FromRPY(0.0f, m_pitch, 0.0f));
-}
-
-/// @addr{0x8058920C}
-bool KartBurnout::calcEnd(u32 duration) {
-    return ++m_timer >= duration;
+    physics()->composeStuntRot(EGG::Quatf::FromRPY(0.0f, m_yaw, 0.0f));
 }
 
 /// @addr{0x80589844}
+/// @brief Sets the @enum eStatus::Burnout bit in the kart's status
 void KartBurnout::activate() {
     status().setBit(eStatus::Burnout);
 }
 
 /// @addr{0x80589818}
+/// @brief Resets the @enum eStatus::Burnout bit in the kart's status
 void KartBurnout::deactivate() {
     status().resetBit(eStatus::Burnout);
 }
 
 /// @addr{0x80589830}
+/// @brief Checks if the burnout is currently active
 bool KartBurnout::isActive() const {
     return status().onBit(eStatus::Burnout);
 }

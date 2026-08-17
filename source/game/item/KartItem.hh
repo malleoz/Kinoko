@@ -53,6 +53,8 @@ private:
         ItemButtonHold = 12,       ///< The item button is currently being held down
         ItemButtonActivation = 14, ///< The item button was pressed this frame
     };
+
+    /// @brief A bitfield of @ref eFlags that represents the state of item usage
     typedef EGG::TBitFlag<u16, eFlags> Flags;
 
     Flags m_flags;             ///< Bit flags for item usage state

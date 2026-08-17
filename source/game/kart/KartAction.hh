@@ -38,6 +38,8 @@ public:
         Rotating = 3,   ///< Set while the kart is rotating due to the current action
         LandingFromFlip = 5, ///< Touching the ground after a large flip action
     };
+
+    /// @brief A bitfield of @ref eFlags that represents the state of the current action
     typedef EGG::TBitFlag<u32, eFlags> Flags;
 
     KartAction();
@@ -257,69 +259,69 @@ private:
     /// @addr{0x808B4D40}
     /// @brief Function pointers for each action's start function, indexed by the Action enum
     static constexpr std::array<StartActionFunc, MAX_ACTION> ON_START = {{
-            &KartAction::startStub,                    ///< Action::SpinOnce
-            &KartAction::startSpinTwice,               ///< Action::SpinTwice
-            &KartAction::startSmallLaunch,             ///< Action::ForwardLaunch
-            &KartAction::startActionAwayFlipOnce,      ///< Action::AwayFlipOnce
-            &KartAction::startActionAwayFlipTwice,     ///< Action::AwayFlipTwice
-            &KartAction::startActionSidewaysFlipTwice, ///< Action::SidewaysFlipTwice
-            &KartAction::startStub,                    ///< Action::LaunchSpinLoseItem
-            &KartAction::startLargeFlipAction,         ///< Action::ExplosionLoseItem
-            &KartAction::startLargeFlipAction,         ///< Action::HighLaunchLoseItem
-            &KartAction::startFireSpin,                ///< Action::FireSpin
+            &KartAction::startStub,                    ///< @enum Action::SpinOnce
+            &KartAction::startSpinTwice,               ///< @enum Action::SpinTwice
+            &KartAction::startSmallLaunch,             ///< @enum Action::ForwardLaunch
+            &KartAction::startActionAwayFlipOnce,      ///< @enum Action::AwayFlipOnce
+            &KartAction::startActionAwayFlipTwice,     ///< @enum Action::AwayFlipTwice
+            &KartAction::startActionSidewaysFlipTwice, ///< @enum Action::SidewaysFlipTwice
+            &KartAction::startStub,                    ///< @enum Action::LaunchSpinLoseItem
+            &KartAction::startLargeFlipAction,         ///< @enum Action::ExplosionLoseItem
+            &KartAction::startLargeFlipAction,         ///< @enum Action::HighLaunchLoseItem
+            &KartAction::startFireSpin,                ///< @enum Action::FireSpin
             &KartAction::startStub,                    ///< Unused in Kinoko
             &KartAction::startStub,                    ///< Unused in Kinoko
-            &KartAction::startLongPressAction,         ///< Action::LongCrushLoseItem
+            &KartAction::startLongPressAction,         ///< @enum Action::LongCrushLoseItem
             &KartAction::startStub,                    ///< Unused in Kinoko
-            &KartAction::startShortPressAction,        ///< Action::ShortCrushLoseItem
-            &KartAction::startSpinShrinkAction,        ///< Action::SpinShrink
-            &KartAction::startStub,                    ///< Action::CrushRespawn
+            &KartAction::startShortPressAction,        ///< @enum Action::ShortCrushLoseItem
+            &KartAction::startSpinShrinkAction,        ///< @enum Action::SpinShrink
+            &KartAction::startStub,                    ///< @enum Action::CrushRespawn
             &KartAction::startStub,                    ///< Unused in Kinoko
     }};
 
     /// @addr{0x808B4E18}
     /// @brief Pointers for each action's per-frame calc function, indexed by the Action enum
     static constexpr std::array<CalcActionFunc, MAX_ACTION> ON_CALC = {{
-            &KartAction::calcStub,                ///< Action::SpinOnce
-            &KartAction::calcSpin,                ///< Action::SpinTwice
-            &KartAction::calcLaunchAction,        ///< Action::ForwardLaunch
-            &KartAction::calcLaunchAction,        ///< Action::AwayFlipOnce
-            &KartAction::calcActionAwayFlipTwice, ///< Action::AwayFlipTwice
-            &KartAction::calcLaunchAction,        ///< Action::SidewaysFlipTwice
-            &KartAction::calcStub,                ///< Action::LaunchSpinLoseItem
-            &KartAction::calcLargeFlipAction,     ///< Action::ExplosionLoseItem
-            &KartAction::calcLargeFlipAction,     ///< Action::HighLaunchLoseItem
-            &KartAction::calcSpin,                ///< Action::FireSpin
+            &KartAction::calcStub,                ///< @enum Action::SpinOnce
+            &KartAction::calcSpin,                ///< @enum Action::SpinTwice
+            &KartAction::calcLaunchAction,        ///< @enum Action::ForwardLaunch
+            &KartAction::calcLaunchAction,        ///< @enum Action::AwayFlipOnce
+            &KartAction::calcActionAwayFlipTwice, ///< @enum Action::AwayFlipTwice
+            &KartAction::calcLaunchAction,        ///< @enum Action::SidewaysFlipTwice
+            &KartAction::calcStub,                ///< @enum Action::LaunchSpinLoseItem
+            &KartAction::calcLargeFlipAction,     ///< @enum Action::ExplosionLoseItem
+            &KartAction::calcLargeFlipAction,     ///< @enum Action::HighLaunchLoseItem
+            &KartAction::calcSpin,                ///< @enum Action::FireSpin
             &KartAction::calcStub,                ///< Unused in Kinoko
             &KartAction::calcStub,                ///< Unused in Kinoko
-            &KartAction::calcPressAction,         ///< Action::LongCrushLoseItem
+            &KartAction::calcPressAction,         ///< @enum Action::LongCrushLoseItem
             &KartAction::calcStub,                ///< Unused in Kinoko
-            &KartAction::calcPressAction,         ///< Action::ShortCrushLoseItem
-            &KartAction::calcSpin,                ///< Action::SpinShrink
-            &KartAction::calcStub,                ///< Action::CrushRespawn
+            &KartAction::calcPressAction,         ///< @enum Action::ShortCrushLoseItem
+            &KartAction::calcSpin,                ///< @enum Action::SpinShrink
+            &KartAction::calcStub,                ///< @enum Action::CrushRespawn
             &KartAction::calcStub,                ///< Unused in Kinoko
     }};
 
     /// @addr{0x808B4EF0}
     /// @brief Function pointers for each action's end function, indexed by the Action enum
     static constexpr std::array<EndActionFunc, MAX_ACTION> ON_END = {{
-            &KartAction::endStub,         ///< Action::SpinOnce
-            &KartAction::endSpin,         ///< Action::SpinTwice
-            &KartAction::endLaunchAction, ///< Action::ForwardLaunch
-            &KartAction::endLaunchAction, ///< Action::AwayFlipOnce
-            &KartAction::endLaunchAction, ///< Action::AwayFlipTwice
-            &KartAction::endLaunchAction, ///< Action::SidewaysFlipTwice
-            &KartAction::endStub,         ///< Action::LaunchSpinLoseItem
-            &KartAction::endStub,         ///< Action::ExplosionLoseItem
-            &KartAction::endStub,         ///< Action::HighLaunchLoseItem
-            &KartAction::endSpin,         ///< Action::FireSpin
+            &KartAction::endStub,         ///< @enum Action::SpinOnce
+            &KartAction::endSpin,         ///< @enum Action::SpinTwice
+            &KartAction::endLaunchAction, ///< @enum Action::ForwardLaunch
+            &KartAction::endLaunchAction, ///< @enum Action::AwayFlipOnce
+            &KartAction::endLaunchAction, ///< @enum Action::AwayFlipTwice
+            &KartAction::endLaunchAction, ///< @enum Action::SidewaysFlipTwice
+            &KartAction::endStub,         ///< @enum Action::LaunchSpinLoseItem
+            &KartAction::endStub,         ///< @enum Action::ExplosionLoseItem
+            &KartAction::endStub,         ///< @enum Action::HighLaunchLoseItem
+            &KartAction::endSpin,         ///< @enum Action::FireSpin
             &KartAction::endStub,         ///< Unused in Kinoko
             &KartAction::endStub,         ///< Unused in Kinoko
-            &KartAction::endStub,         ///< Action::LongCrushLoseItem
+            &KartAction::endStub,         ///< @enum Action::LongCrushLoseItem
             &KartAction::endStub,         ///< Unused in Kinoko
-            &KartAction::endStub,         ///< Action::ShortCrushLoseItem
-            &KartAction::endSpin,         ///< Action::SpinShrink
-            &KartAction::endStub,         ///< Action::CrushRespawn
+            &KartAction::endStub,         ///< @enum Action::ShortCrushLoseItem
+            &KartAction::endSpin,         ///< @enum Action::SpinShrink
+            &KartAction::endStub,         ///< @enum Action::CrushRespawn
             &KartAction::endStub,         ///< Unused in Kinoko
     }};
 };

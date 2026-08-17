@@ -11,37 +11,6 @@ KartBody::KartBody(KartPhysics *physics) : m_physics(physics) {
     m_targetSinkDepth = 0.0f;
 }
 
-/// @addr{0x8056C604}
-/// @brief Computes a matrix to represent wheel rotation. For Karts, this is wheel-agnostic.
-EGG::Matrix34f KartBody::wheelMatrix(u16) {
-    EGG::Matrix34f mat;
-    mat.makeQT(fullRot(), pos());
-    return mat;
-}
-
-/// @addr{0x8056C4B4}
-void KartBody::reset() {
-    m_physics->reset();
-    m_anAngle = 0.0f;
-    m_sinkDepth = 0.0f;
-    m_targetSinkDepth = 0.0f;
-}
-
-/// @addr{0x8056C9C4}
-void KartBody::calcSinkDepth() {
-    m_sinkDepth += (m_targetSinkDepth - m_sinkDepth) * 0.1f;
-}
-
-/// @addr{0x8056C950}
-void KartBody::trySetTargetSinkDepth(f32 val) {
-    m_targetSinkDepth = std::max(val, m_targetSinkDepth);
-}
-
-/// @addr{0x8056C964}
-void KartBody::calcTargetSinkDepth() {
-    m_targetSinkDepth = 3.0f * static_cast<f32>(collisionData().intensity);
-}
-
 /// @addr{0x8056CCC0}
 KartBodyKart::KartBodyKart(KartPhysics *physics) : KartBody(physics) {}
 
@@ -83,16 +52,6 @@ EGG::Matrix34f KartBodyBike::wheelMatrix(u16 wheelIdx) {
     yRotMatrix.makeR(yRotation);
     mat = tmp.multiplyTo(yRotMatrix);
 
-    return mat;
-}
-
-KartBodyQuacker::KartBodyQuacker(KartPhysics *physics) : KartBodyBike(physics) {}
-
-KartBodyQuacker::~KartBodyQuacker() = default;
-
-EGG::Matrix34f KartBodyQuacker::wheelMatrix(u16 /* wheelIdx */) {
-    EGG::Matrix34f mat;
-    mat.makeQT(fullRot(), pos());
     return mat;
 }
 
