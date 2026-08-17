@@ -73,21 +73,6 @@ MapdataJugemPoint *RaceManager::jugemPoint() const {
     return System::CourseMap::Instance()->getJugemPoint(static_cast<u16>(jugemId));
 }
 
-/// @addr{0x80532084}
-RaceManager *RaceManager::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = EGG::egg_new<RaceManager>();
-    return s_instance;
-}
-
-/// @addr{0x805320D4}
-void RaceManager::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    EGG::egg_delete(instance);
-}
-
 /// @addr{0x805327A0}
 RaceManager::RaceManager()
     : m_random(RNG_SEED), m_stage(Stage::Intro), m_introTimer(0), m_timer(0) {}

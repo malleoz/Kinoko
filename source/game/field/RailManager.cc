@@ -5,22 +5,6 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x806F09C8}
-RailManager *RailManager::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = EGG::egg_new<RailManager>();
-    s_instance->createPaths();
-    return s_instance;
-}
-
-/// @addr{0x806F0A4C}
-void RailManager::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    EGG::egg_delete(instance);
-}
-
 /// @addr{0x806F0A3C}
 RailManager::RailManager() = default;
 

@@ -146,8 +146,20 @@ public:
     }
     /// @endGetters
 
-    static RaceManager *CreateInstance();
-    static void DestroyInstance();
+    /// @addr{0x80532084}
+    static RaceManager *CreateInstance() {
+        ASSERT(!s_instance);
+        s_instance = EGG::egg_new<RaceManager>();
+        return s_instance;
+    }
+
+    /// @addr{0x805320D4}
+    static void DestroyInstance() {
+        ASSERT(s_instance);
+        auto *instance = s_instance;
+        s_instance = nullptr;
+        EGG::egg_delete(instance);
+    }
 
     [[nodiscard]] static RaceManager *Instance() {
         return s_instance;

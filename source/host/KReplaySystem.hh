@@ -16,8 +16,18 @@ public:
     bool run() override;
     void parseOptions(int argc, char **argv) override;
 
-    static KReplaySystem *CreateInstance();
-    static void DestroyInstance();
+    static KReplaySystem *CreateInstance() {
+        ASSERT(!s_instance);
+        s_instance = EGG::egg_new<KReplaySystem>();
+        return static_cast<KReplaySystem *>(s_instance);
+    }
+
+    static void DestroyInstance() {
+        ASSERT(s_instance);
+        auto *instance = s_instance;
+        s_instance = nullptr;
+        EGG::egg_delete(instance);
+    }
 
     static KReplaySystem *Instance() {
         return static_cast<KReplaySystem *>(s_instance);

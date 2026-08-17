@@ -30,8 +30,18 @@ public:
     [[nodiscard]] EGG::RamStream getKartDispParamsStream(Vehicle vehicle) const;
     [[nodiscard]] EGG::RamStream getKartCameraStream(Character character) const;
 
-    static KartParamFileManager *CreateInstance();
-    static void DestroyInstance();
+    static KartParamFileManager *CreateInstance() {
+        ASSERT(!s_instance);
+        s_instance = EGG::egg_new<KartParamFileManager>();
+        return s_instance;
+    }
+
+    static void DestroyInstance() {
+        ASSERT(s_instance);
+        auto *instance = s_instance;
+        s_instance = nullptr;
+        EGG::egg_delete(instance);
+    }
 
     [[nodiscard]] static KartParamFileManager *Instance() {
         return s_instance;

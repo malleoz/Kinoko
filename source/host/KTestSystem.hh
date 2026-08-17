@@ -21,8 +21,18 @@ public:
     bool run() override;
     void parseOptions(int argc, char **argv) override;
 
-    static KTestSystem *CreateInstance();
-    static void DestroyInstance();
+    static KTestSystem *CreateInstance() {
+        ASSERT(!s_instance);
+        s_instance = EGG::egg_new<KTestSystem>();
+        return static_cast<KTestSystem *>(s_instance);
+    }
+
+    static void DestroyInstance() {
+        ASSERT(s_instance);
+        auto *instance = s_instance;
+        s_instance = nullptr;
+        EGG::egg_delete(instance);
+    }
 
     static KTestSystem *Instance() {
         return static_cast<KTestSystem *>(s_instance);

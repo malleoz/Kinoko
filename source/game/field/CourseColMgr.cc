@@ -541,21 +541,6 @@ void *CourseColMgr::LoadFile(const char *filename) {
     return resMgr->getFile(filename, nullptr, System::ArchiveId::Course);
 }
 
-/// @addr{0x807C2824}
-CourseColMgr *CourseColMgr::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = EGG::egg_new<CourseColMgr>();
-    return s_instance;
-}
-
-/// @addr{0x807C2884}
-void CourseColMgr::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    EGG::egg_delete(instance);
-}
-
 /// @addr{0x807C29E4}
 CourseColMgr::CourseColMgr()
     : m_data(nullptr), m_kclScale(1.0f), m_noBounceWallInfo(nullptr), m_localMtx(nullptr) {}

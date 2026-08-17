@@ -32,9 +32,6 @@ public:
         return m_karts[idx];
     }
 
-    static ItemDirector *CreateInstance();
-    static void DestroyInstance();
-
     /// @brief Fetches the @ref ItemInventory object for the given player index
     /// @param idx The index of the player to retrieve the @ref ItemInventory for
     /// @return A const reference to the @ref ItemInventory object for that player
@@ -42,6 +39,27 @@ public:
         return m_karts[idx].inventory();
     }
 
+    /// @addr{0x80799138}
+    /// @brief Creates the singleton instance of @ref ItemDirector
+    /// @return A pointer to the newly created singleton instance of @ref ItemDirector
+    static ItemDirector *CreateInstance() {
+        ASSERT(!s_instance);
+        s_instance = EGG::egg_new<ItemDirector>();
+        return s_instance;
+    }
+
+    /// @addr{0x80799188}
+    /// @brief Destroys the singleton instance of the @ref ItemDirector
+    static void DestroyInstance() {
+        ASSERT(s_instance);
+        auto *instance = s_instance;
+        s_instance = nullptr;
+        EGG::egg_delete(instance);
+    }
+
+    /// @addr{0x809C3618}
+    /// @brief Returns the singleton instance of the @ref ItemDirector
+    /// @return A pointer to the singleton instance of the @ref ItemDirector
     [[nodiscard]] static ItemDirector *Instance() {
         return s_instance;
     }

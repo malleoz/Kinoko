@@ -39,8 +39,19 @@ public:
     void setGhostPad(const u8 *inputs, bool driftIsAuto);
     void setHostPad(bool driftIsAuto);
 
-    static KPadDirector *CreateInstance();
-    static void DestroyInstance();
+    /// @addr{0x8052313C}
+    static KPadDirector *CreateInstance() {
+        ASSERT(!s_instance);
+        return s_instance = EGG::egg_new<KPadDirector>();
+    }
+
+    /// @addr{0x8052318C}
+    static void DestroyInstance() {
+        ASSERT(s_instance);
+        auto *instance = s_instance;
+        s_instance = nullptr;
+        EGG::egg_delete(instance);
+    }
 
     [[nodiscard]] static KPadDirector *Instance() {
         return s_instance;

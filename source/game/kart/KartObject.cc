@@ -1,6 +1,5 @@
 #include "KartObject.hh"
 
-#include "game/kart/KartParam.hh"
 #include "game/kart/KartSub.hh"
 #include "game/kart/KartSuspension.hh"
 #include "game/kart/KartTire.hh"
@@ -9,17 +8,18 @@
 
 #include "game/render/KartModel.hh"
 
-#include "game/system/RaceConfig.hh"
 #include "game/system/RaceManager.hh"
 
 namespace Kinoko::Kart {
 
 /// @addr{0x8058DDBC}
+/// @brief Constructs a KartObject with the provided KartParam pointer
 KartObject::KartObject(KartParam *param) {
     m_pointers.param = param;
 }
 
 /// @addr{0x8058DEF0}
+/// @brief Destroys the KartObject and all of its subsystems
 KartObject::~KartObject() {
     EGG::egg_delete(m_pointers.param);
     EGG::egg_delete(m_pointers.body);
@@ -37,6 +37,9 @@ KartObject::~KartObject() {
 }
 
 /// @addr{0x8058EA0C}
+/// @details Creates 4 tire objects, except for @enum Vehicle::Blue_Falcon which only has 3 tires.
+/// Adds the tire and suspension objects to the shared @ref KartAccessor. Finally, initializes the
+/// tire suspensions.
 void KartObject::createTires() {
     constexpr u16 BSP_WHEEL_INDICES[8] = {0, 0, 1, 1, 2, 2, 3, 3};
     constexpr KartSuspensionPhysics::TireType X_MIRRORED_TIRE[8] = {
@@ -76,12 +79,11 @@ void KartObject::createTires() {
     }
 }
 
-/// @addr{0x8058E5F8}
-KartBody *KartObject::createBody(KartPhysics *physics) {
-    return EGG::egg_new<KartBodyKart>(physics);
-}
-
 /// @addr{0x8058E22C}
+/// @brief Creates and initializes the kart's subsystems
+/// @details Creates the associated @ref KartSub, @ref KartPhysics, and @ref KartBody objects.
+/// Creates and initializes the tires and their suspensions. Finally, creates the associated @ref
+/// Field::ObjectCollisionKart.
 void KartObject::init() {
     prepareTiresAndSuspensions();
     createSub();
@@ -96,15 +98,16 @@ void KartObject::init() {
 }
 
 /// @addr{0x8058E188}
-void KartObject::initImpl() {
+/// @brief Initializes the kart's collision data and bounding box
+void KartObject::initCollision() {
     sub()->initAABB(m_pointers, this);
     sub()->init();
     objectCollisionKart()->init(param()->playerIdx());
 }
 
-/// @brief Sets the initial position and rotation of the kart based off the current track.
 /// @addr{0x8058EE48}
-void KartObject::prepare() {
+/// @brief Sets the initial position and rotation of the kart based off the current track.
+void KartObject::initPhysics() {
     EGG::Vector3f euler_angles_deg, position;
 
     System::RaceManager::Instance()->findKartStartPoint(position, euler_angles_deg);
@@ -112,6 +115,7 @@ void KartObject::prepare() {
 }
 
 /// @addr{0x8058E804}
+/// @brief Computes the number of wheels based off the BSP
 void KartObject::prepareTiresAndSuspensions() {
     constexpr u16 LOCAL_20[4] = {2, 1, 1, 1};
     constexpr u16 LOCAL_28[4] = {2, 1, 1, 2};
@@ -141,12 +145,17 @@ void KartObject::prepareTiresAndSuspensions() {
 }
 
 /// @addr{0x8058E724}
+/// @brief Creates the @ref KartSub object and initializes its subsystems
 void KartObject::createSub() {
     m_pointers.sub = EGG::egg_new<KartSub>();
     m_pointers.sub->createSubsystems(m_pointers.param->isBike(), m_pointers.param->stats());
 }
 
 /// @addr{0x8058F820}
+/// @brief Creates the @ref Render::KartModel object
+/// @details Since the static @ref KartObjectProxy pointer list is cleared before creating the
+/// model, we have to call @ref KartObjectProxy::ApplyAll to share this object's pointers with the
+/// model.
 void KartObject::createModel() {
     s_proxyList.clear();
 
@@ -162,21 +171,28 @@ void KartObject::createModel() {
 }
 
 /// @addr{0x8058EEB4}
+/// @brief Calls the first pass of the kart's subsystem calculations
 void KartObject::calcSub() {
     sub()->calcPass0();
 }
 
 /// @addr{0x8058EEBC}
+/// @brief Calls the second pass of the kart's subsystem calculations and the model's calculations
 void KartObject::calc() {
     sub()->calcPass1();
     model()->calc();
 }
 
-const KartAccessor *KartObject::accessor() const {
-    return &m_pointers;
-}
-
 /// @addr{0x8058F5B4}
+/// @brief Creates a @ref KartObject based on the provided character and vehicle enums
+/// @param character The character to create the kart for
+/// @param vehicle The vehicle to create the kart for
+/// @param playerIdx The player index to assign to the kart (always 0 in Kinoko)
+/// @return A pointer to the created @ref KartObject
+/// @details Creates a @ref KartParam object based on the provided character and vehicle enums. If
+/// the vehicle is a kart, creates a @ref KartObject. If the vehicle is a bike, creates a @ref
+/// KartObjectBike. Initializes the kart's subsystems and shares the subsystem pointers with all
+/// subsystems. Finally, initializes the suspensions and tires.
 KartObject *KartObject::Create(Character character, Vehicle vehicle, u8 playerIdx) {
     s_proxyList.clear();
 
@@ -211,15 +227,6 @@ KartObjectBike::KartObjectBike(KartParam *param) : KartObject(param) {}
 
 /// @addr{0x8058F8B0}
 KartObjectBike::~KartObjectBike() = default;
-
-/// @addr{0x8058F260}
-KartBody *KartObjectBike::createBody(KartPhysics *physics) {
-    if (m_pointers.param->isVehicleRelativeBike()) {
-        return EGG::egg_new<KartBodyQuacker>(physics);
-    } else {
-        return EGG::egg_new<KartBodyBike>(physics);
-    }
-}
 
 /// @addr{0x8058F2E8}
 void KartObjectBike::createTires() {

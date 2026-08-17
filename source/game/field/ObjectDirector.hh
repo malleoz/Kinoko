@@ -106,6 +106,8 @@ public:
     static ObjectDirector *CreateInstance();
     static void DestroyInstance();
 
+    /// @brief Returns the singleton instance of the @ref ObjectDirector
+    /// @return A pointer to the singleton instance of the @ref ObjectDirector
     [[nodiscard]] static ObjectDirector *Instance() {
         return s_instance;
     }

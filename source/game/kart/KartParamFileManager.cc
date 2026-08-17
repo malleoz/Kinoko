@@ -133,19 +133,6 @@ EGG::RamStream KartParamFileManager::getKartCameraStream(Character character) co
             sizeof(KartParam::KartCameraParam));
 }
 
-KartParamFileManager *KartParamFileManager::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = EGG::egg_new<KartParamFileManager>();
-    return s_instance;
-}
-
-void KartParamFileManager::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    EGG::egg_delete(instance);
-}
-
 KartParamFileManager::KartParamFileManager() {
     init();
 }

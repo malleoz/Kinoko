@@ -56,21 +56,6 @@ void ResourceManager::unmount(MultiDvdArchive *archive) {
     archive->unmount();
 }
 
-/// @addr{0x8053FC4C}
-ResourceManager *ResourceManager::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = EGG::egg_new<ResourceManager>();
-    return s_instance;
-}
-
-/// @addr{0x8053FC9C}
-void ResourceManager::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    EGG::egg_delete(instance);
-}
-
 /// @addr{0x8053FCEC}
 ResourceManager::ResourceManager() {
     m_archives = static_cast<MultiDvdArchive **>(

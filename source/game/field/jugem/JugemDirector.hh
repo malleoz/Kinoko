@@ -31,9 +31,30 @@ public:
         m_unit->calc();
     }
 
-    static JugemDirector *CreateInstance();
-    [[nodiscard]] static JugemDirector *Instance();
-    static void DestroyInstance();
+    /// @addr{0x8071E270}
+    /// @brief Creates the singleton instance of @ref JugemDirector
+    /// @return A pointer to the newly created singleton instance of @ref JugemDirector
+    static JugemDirector *CreateInstance() {
+        ASSERT(!s_instance);
+        s_instance = EGG::egg_new<JugemDirector>();
+        return s_instance;
+    }
+
+    /// @addr{0x8071E2FC}
+    /// @brief Destroys the singleton instance of @ref JugemDirector
+    static void DestroyInstance() {
+        ASSERT(s_instance);
+        auto *instance = s_instance;
+        s_instance = nullptr;
+        EGG::egg_delete(instance);
+    }
+
+    /// @addr{0x809C28B8}
+    /// @brief Returns the singleton instance of the @ref JugemDirector
+    /// @return A pointer to the singleton instance of the @ref JugemDirector
+    [[nodiscard]] static JugemDirector *Instance() {
+        return s_instance;
+    }
 
 private:
     EGG_NEW_DELETE_FRIEND

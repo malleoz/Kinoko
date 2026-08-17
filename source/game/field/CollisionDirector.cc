@@ -344,21 +344,6 @@ bool CollisionDirector::findClosestCollisionEntry(KCLTypeMask * /*typeMask*/, KC
     return !!m_closestCollisionEntry;
 }
 
-/// @addr{0x8078DFE8}
-CollisionDirector *CollisionDirector::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = EGG::egg_new<CollisionDirector>();
-    return s_instance;
-}
-
-/// @addr{0x8078E124}
-void CollisionDirector::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    EGG::egg_delete(instance);
-}
-
 /// @addr{0x8078E33C}
 CollisionDirector::CollisionDirector() {
     m_collisionEntryCount = 0;

@@ -76,8 +76,20 @@ public:
         s_onInitCallbackArg = arg;
     }
 
-    static RaceConfig *CreateInstance();
-    static void DestroyInstance();
+    /// @addr{0x8052FE58}
+    static RaceConfig *CreateInstance() {
+        ASSERT(!s_instance);
+        s_instance = EGG::egg_new<RaceConfig>();
+        return s_instance;
+    }
+
+    /// @addr{0x8052FFE8}
+    static void DestroyInstance() {
+        ASSERT(s_instance);
+        auto *instance = s_instance;
+        s_instance = nullptr;
+        EGG::egg_delete(instance);
+    }
 
     [[nodiscard]] static RaceConfig *Instance() {
         return s_instance;

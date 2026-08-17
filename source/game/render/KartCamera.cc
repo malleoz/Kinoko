@@ -29,19 +29,6 @@ void KartCamera::calc() {
     calcCollision(m_backwardCamera, true);
 }
 
-KartCamera *KartCamera::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = EGG::egg_new<KartCamera>();
-    return s_instance;
-}
-
-void KartCamera::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    EGG::egg_delete(instance);
-}
-
 /// @addr{0x805A1D10}
 KartCamera::KartCamera() : m_hopPosY(0), m_forward(EGG::Vector3f::zero), m_camParams(nullptr) {}
 

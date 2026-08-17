@@ -56,21 +56,6 @@ void RaceConfig::initGhost() {
     KPadDirector::Instance()->setGhostPad(ghost.inputs(), ghost.driftIsAuto());
 }
 
-/// @addr{0x8052FE58}
-RaceConfig *RaceConfig::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = EGG::egg_new<RaceConfig>();
-    return s_instance;
-}
-
-/// @addr{0x8052FFE8}
-void RaceConfig::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    EGG::egg_delete(instance);
-}
-
 /// @addr{0x8053015C}
 RaceConfig::RaceConfig() = default;
 

@@ -206,21 +206,6 @@ s16 CourseMap::getCurrentAreaID(s16 i, const EGG::Vector3f &pos, MapdataAreaBase
     return -1;
 }
 
-/// @addr{0x80512694}
-CourseMap *CourseMap::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = EGG::egg_new<CourseMap>();
-    return s_instance;
-}
-
-/// @addr{0x8051271C}
-void CourseMap::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    EGG::egg_delete(instance);
-}
-
 /// @addr{0x8051276C}
 CourseMap::CourseMap()
     : m_course(nullptr), m_startPoint(nullptr), m_stageInfo(nullptr), m_startTmpAngle(0.0f),

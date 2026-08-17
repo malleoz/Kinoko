@@ -11,8 +11,8 @@ namespace Kinoko::Kart {
 /// @addr{0x8058FEE0}
 void KartObjectManager::init() {
     for (size_t i = 0; i < m_count; ++i) {
-        m_objects[i]->initImpl();
-        m_objects[i]->prepare();
+        m_objects[i]->initCollision();
+        m_objects[i]->initPhysics();
     }
 }
 
@@ -29,21 +29,6 @@ void KartObjectManager::calc() {
         object->calcSub();
         object->calc();
     }
-}
-
-/// @addr{0x8058FAA8}
-KartObjectManager *KartObjectManager::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = EGG::egg_new<KartObjectManager>();
-    return s_instance;
-}
-
-/// @addr{0x8058FAF8}
-void KartObjectManager::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    EGG::egg_delete(instance);
 }
 
 /// @addr{0x8058FB2C}

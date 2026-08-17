@@ -36,8 +36,20 @@ public:
         return vehicle < Vehicle::Max ? VEHICLE_NAMES[static_cast<u8>(vehicle)] : nullptr;
     }
 
-    static ResourceManager *CreateInstance();
-    static void DestroyInstance();
+    /// @addr{0x8053FC4C}
+    static ResourceManager *CreateInstance() {
+        ASSERT(!s_instance);
+        s_instance = EGG::egg_new<ResourceManager>();
+        return s_instance;
+    }
+
+    /// @addr{0x8053FC9C}
+    static void DestroyInstance() {
+        ASSERT(s_instance);
+        auto *instance = s_instance;
+        s_instance = nullptr;
+        EGG::egg_delete(instance);
+    }
 
     [[nodiscard]] static ResourceManager *Instance() {
         return s_instance;

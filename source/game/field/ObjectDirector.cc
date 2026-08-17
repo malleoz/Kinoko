@@ -126,27 +126,25 @@ f32 ObjectDirector::risingWaterKillPlaneHeight() const {
 }
 
 /// @addr{0x8082A784}
-/// @brief Creates the singleton instances of @ref ObjectDirector and @ref ObjectDrivableDirector.
-/// Also creates all objects in the course.
+/// @brief Creates the singleton instances of @ref ObjectDirector and @ref
+/// ObjectDrivableDirector. Also creates all objects in the course.
+/// @return A pointer to the newly created singleton instance of @ref ObjectDirector
 ObjectDirector *ObjectDirector::CreateInstance() {
     ASSERT(!s_instance);
     s_instance = EGG::egg_new<ObjectDirector>();
-
     ObjectDrivableDirector::CreateInstance();
-
     s_instance->createObjects();
-
     return s_instance;
 }
 
 /// @addr{0x8082A824}
-/// @brief Destroys the singleton instances of @ref ObjectDirector and @ref ObjectDrivableDirector
+/// @brief Destroys the singleton instances of @ref ObjectDirector and @ref
+/// ObjectDrivableDirector
 void ObjectDirector::DestroyInstance() {
     ASSERT(s_instance);
     auto *instance = s_instance;
     s_instance = nullptr;
     EGG::egg_delete(instance);
-
     ObjectDrivableDirector::DestroyInstance();
 }
 

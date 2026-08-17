@@ -235,19 +235,6 @@ void KTestSystem::parseOptions(int argc, char **argv) {
     }
 }
 
-KTestSystem *KTestSystem::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = EGG::egg_new<KTestSystem>();
-    return static_cast<KTestSystem *>(s_instance);
-}
-
-void KTestSystem::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    EGG::egg_delete(instance);
-}
-
 KTestSystem::KTestSystem() : m_testMode(Host::EOption::Invalid) {}
 
 KTestSystem::~KTestSystem() {

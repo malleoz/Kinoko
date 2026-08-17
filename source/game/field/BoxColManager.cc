@@ -358,25 +358,6 @@ bool BoxColManager::isSphereInSpatialCache(f32 radius, const EGG::Vector3f &pos,
     return EGG::Mathf::abs(posDiff.x) <= radiusDiff && EGG::Mathf::abs(posDiff.z) <= radiusDiff;
 }
 
-/// @addr{0x807855DC}
-BoxColManager *BoxColManager::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = EGG::egg_new<BoxColManager>();
-    return s_instance;
-}
-
-/// @addr{0x8078562C}
-void BoxColManager::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    EGG::egg_delete(instance);
-}
-
-BoxColManager *BoxColManager::Instance() {
-    return s_instance;
-}
-
 /// @brief Helper function since the getters share all code except the flag
 void *BoxColManager::getNextImpl(s32 &id, const BoxColFlag &flag) {
     if (id == MAX_UNIT_COUNT) {

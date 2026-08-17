@@ -57,8 +57,18 @@ public:
     KartCamera();
     ~KartCamera();
 
-    static KartCamera *CreateInstance();
-    static void DestroyInstance();
+    static KartCamera *CreateInstance() {
+        ASSERT(!s_instance);
+        s_instance = EGG::egg_new<KartCamera>();
+        return s_instance;
+    }
+
+    static void DestroyInstance() {
+        ASSERT(s_instance);
+        auto *instance = s_instance;
+        s_instance = nullptr;
+        EGG::egg_delete(instance);
+    }
 
     [[nodiscard]] static KartCamera *Instance() {
         return s_instance;

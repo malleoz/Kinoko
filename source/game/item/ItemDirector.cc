@@ -22,21 +22,6 @@ void ItemDirector::calc() {
     }
 }
 
-/// @addr{0x80799138}
-ItemDirector *ItemDirector::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = EGG::egg_new<ItemDirector>();
-    return s_instance;
-}
-
-/// @addr{0x80799188}
-void ItemDirector::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    EGG::egg_delete(instance);
-}
-
 /// @addr{0x807992D8}
 /// @brief Constructs and initializes the array of @ref KartItem objects based on the number of
 /// players in the race

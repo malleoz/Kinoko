@@ -144,9 +144,29 @@ public:
     [[nodiscard]] bool isSphereInSpatialCache(f32 radius, const EGG::Vector3f &pos,
             const BoxColFlag &flag) const;
 
-    static BoxColManager *CreateInstance();
-    static void DestroyInstance();
-    [[nodiscard]] static BoxColManager *Instance();
+    /// @addr{0x807855DC}
+    /// @brief Creates the singleton instance of the @ref BoxColManager
+    /// @return A pointer to the newly created @ref BoxColManager instance
+    static BoxColManager *CreateInstance() {
+        ASSERT(!s_instance);
+        s_instance = EGG::egg_new<BoxColManager>();
+        return s_instance;
+    }
+
+    /// @addr{0x8078562C}
+    /// @brief Destroys the singleton instance of the @ref BoxColManager
+    static void DestroyInstance() {
+        ASSERT(s_instance);
+        auto *instance = s_instance;
+        s_instance = nullptr;
+        EGG::egg_delete(instance);
+    }
+
+    /// @brief Returns the singleton instance of the @ref BoxColManager
+    /// @return A pointer to the singleton instance of the @ref BoxColManager
+    [[nodiscard]] static BoxColManager *Instance() {
+        return s_instance;
+    }
 
 private:
     [[nodiscard]] void *getNextImpl(s32 &id, const BoxColFlag &flag);

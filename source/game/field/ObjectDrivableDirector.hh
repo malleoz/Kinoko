@@ -60,9 +60,26 @@ public:
         return m_obakeManager;
     }
 
-    static ObjectDrivableDirector *CreateInstance();
-    static void DestroyInstance();
+    /// @addr{0x8081B428}
+    /// @brief Creates the singleton instance of @ref ObjectDrivableDirector
+    /// @return A pointer to the newly created singleton instance of @ref ObjectDrivableDirector
+    static ObjectDrivableDirector *CreateInstance() {
+        ASSERT(!s_instance);
+        s_instance = EGG::egg_new<ObjectDrivableDirector>();
+        return s_instance;
+    }
 
+    /// @addr{0x8081B4B0}
+    /// @brief Destroys the singleton instance of the @ref ObjectDrivableDirector
+    static void DestroyInstance() {
+        ASSERT(s_instance);
+        auto *instance = s_instance;
+        s_instance = nullptr;
+        EGG::egg_delete(instance);
+    }
+
+    /// @brief Returns the singleton instance of the @ref ObjectDrivableDirector
+    /// @return A pointer to the singleton instance of the @ref ObjectDrivableDirector
     [[nodiscard]] static ObjectDrivableDirector *Instance() {
         return s_instance;
     }

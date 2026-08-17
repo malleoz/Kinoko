@@ -85,19 +85,6 @@ void KReplaySystem::parseOptions(int argc, char **argv) {
     }
 }
 
-KReplaySystem *KReplaySystem::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = EGG::egg_new<KReplaySystem>();
-    return static_cast<KReplaySystem *>(s_instance);
-}
-
-void KReplaySystem::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    EGG::egg_delete(instance);
-}
-
 KReplaySystem::KReplaySystem()
     : m_currentGhostFileName(nullptr), m_currentGhost(nullptr), m_currentRawGhost(nullptr),
       m_currentRawGhostSize(0) {}

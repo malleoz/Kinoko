@@ -286,21 +286,6 @@ void ObjectDrivableDirector::colNarScLocal(f32 radius, const EGG::Vector3f &pos,
     }
 }
 
-/// @addr{0x8081B428}
-ObjectDrivableDirector *ObjectDrivableDirector::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = EGG::egg_new<ObjectDrivableDirector>();
-    return s_instance;
-}
-
-/// @addr{0x8081B4B0}
-void ObjectDrivableDirector::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    EGG::egg_delete(instance);
-}
-
 /// @addr{0x8081B324}
 ObjectDrivableDirector::ObjectDrivableDirector()
     : m_objects(MAX_OBJECTS), m_calcObjects(MAX_OBJECTS), m_obakeManager(nullptr) {}

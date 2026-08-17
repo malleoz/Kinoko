@@ -176,8 +176,20 @@ public:
     }
     /// @endGetters
 
-    static CourseMap *CreateInstance();
-    static void DestroyInstance();
+    /// @addr{0x80512694}
+    static CourseMap *CreateInstance() {
+        ASSERT(!s_instance);
+        s_instance = EGG::egg_new<CourseMap>();
+        return s_instance;
+    }
+
+    /// @addr{0x8051271C}
+    static void DestroyInstance() {
+        ASSERT(s_instance);
+        auto *instance = s_instance;
+        s_instance = nullptr;
+        EGG::egg_delete(instance);
+    }
 
     [[nodiscard]] static CourseMap *Instance() {
         return s_instance;

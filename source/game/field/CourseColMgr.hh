@@ -139,9 +139,26 @@ public:
 
     static void *LoadFile(const char *filename);
 
-    static CourseColMgr *CreateInstance();
-    static void DestroyInstance();
+    /// @addr{0x807C2824}
+    /// @brief Creates a singleton instance of the @ref CourseColMgr
+    /// @return A pointer to the newly created @ref CourseColMgr instance
+    static CourseColMgr *CreateInstance() {
+        ASSERT(!s_instance);
+        s_instance = EGG::egg_new<CourseColMgr>();
+        return s_instance;
+    }
 
+    /// @addr{0x807C2884}
+    /// @brief Destroys the singleton instance of the @ref CourseColMgr
+    static void DestroyInstance() {
+        ASSERT(s_instance);
+        auto *instance = s_instance;
+        s_instance = nullptr;
+        EGG::egg_delete(instance);
+    }
+
+    /// @brief Returns the singleton instance of the @ref CourseColMgr
+    /// @return A pointer to the singleton instance of the @ref CourseColMgr
     [[nodiscard]] static CourseColMgr *Instance() {
         return s_instance;
     }

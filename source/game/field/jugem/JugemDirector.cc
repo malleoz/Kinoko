@@ -4,26 +4,6 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x8071E270}
-JugemDirector *JugemDirector::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = EGG::egg_new<JugemDirector>();
-    return s_instance;
-}
-
-/// @addr{0x809C28B8}
-JugemDirector *JugemDirector::Instance() {
-    return s_instance;
-}
-
-/// @addr{0x8071E2FC}
-void JugemDirector::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    EGG::egg_delete(instance);
-}
-
 /// @addr{0x8071E330}
 JugemDirector::JugemDirector() : m_unit(nullptr) {}
 
