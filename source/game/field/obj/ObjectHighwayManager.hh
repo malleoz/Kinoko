@@ -14,8 +14,15 @@ public:
     ObjectHighwayManager();
     ~ObjectHighwayManager() override;
 
-    void init() override;
-    void calc() override;
+    /// @addr{0x806D332C}
+    void init() override {
+        m_squashTimer = SQUASH_MAX;
+    }
+
+    /// @addr{0x806D345C}
+    void calc() override {
+        calcSquash();
+    }
 
     /// @addr{0x806D5C6C}
     [[nodiscard]] u32 loadFlags() const override {

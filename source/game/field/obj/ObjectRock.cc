@@ -93,16 +93,6 @@ void ObjectRock::calcTangibleSub() {
     setTransform(mat);
 }
 
-/// @addr{0x8076FFC0}
-/// @brief Makes the rock tangible again after being intangible
-void ObjectRock::enterTangible() {
-    m_state = State::Tangible;
-    m_angSpd = INITIAL_ANGULAR_SPEED;
-    m_colTranslate.y = m_bounceFactor;
-    m_cooldownTimer = m_cooldownDuration;
-    enableCollision();
-}
-
 // @addr{0x8076FA60}
 /// @brief Checks for collisions with the floor and applies a bounce effect if a collision occurs
 void ObjectRock::checkSphereFull() {
@@ -119,17 +109,6 @@ void ObjectRock::checkSphereFull() {
                 m_angSpd + 1.0f);
         addPos(info.tangentOff);
     }
-}
-
-/// @addr{0x8076FD90}
-/// @brief Runs when a collision occurs or when the rock reaches the end of its rail path
-void ObjectRock::breakRock() {
-    m_state = State::Intangible;
-    m_railInterpolator->init(0.0f, 0);
-    m_railInterpolator->setCurrVel(m_railSpeed);
-
-    setPos(EGG::Vector3f(pos().x, m_startYPos, pos().z));
-    disableCollision();
 }
 
 // @addr{0x80770068}

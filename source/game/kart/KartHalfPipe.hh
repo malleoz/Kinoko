@@ -2,8 +2,6 @@
 
 #include "game/kart/KartObjectProxy.hh"
 
-#include "game/system/KPadController.hh"
-
 namespace Kinoko::Kart {
 
 /// @brief Handles the physics and boosts associated with zippers.

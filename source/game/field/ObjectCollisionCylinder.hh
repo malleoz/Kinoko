@@ -10,12 +10,38 @@ namespace Kinoko::Field {
 /// calculations.
 class ObjectCollisionCylinder : public ObjectCollisionBase {
 public:
-    ObjectCollisionCylinder(f32 radius, f32 height, const EGG::Vector3f &center);
-    ~ObjectCollisionCylinder() override;
+    /// @addr{0x80836068}
+    ObjectCollisionCylinder(f32 radius, f32 height, const EGG::Vector3f &center)
+        : m_radius(radius), m_height(height), m_pos(center) {
+        m_scaledRadius = radius;
+        m_scaledHeight = height;
+        m_scaledPos = center;
 
-    void transform(const EGG::Matrix34f &mat, const EGG::Vector3f &scale) override;
+        m_center = center;
+        m_top = center + EGG::Vector3f::ey * height;
+        m_bottom = center - EGG::Vector3f::ey * height;
+    }
+
+    /// @addr{0x808364A0}
+    ~ObjectCollisionCylinder() override = default;
+
+    /// @addr{0x808361F0}
+    void transform(const EGG::Matrix34f &mat, const EGG::Vector3f &scale) override {
+        m_scaledPos = m_pos * scale.x;
+        m_scaledHeight = m_height * scale.y;
+        m_scaledRadius = m_radius * scale.x;
+
+        m_center = mat.ps_multVector(m_scaledPos);
+        m_top = mat.ps_multVector(m_scaledPos + EGG::Vector3f::ey * m_scaledHeight);
+        m_bottom = mat.ps_multVector(m_scaledPos - EGG::Vector3f::ey * m_scaledHeight);
+    }
+
+    /// @addr{0x80836334}
     void transform(const EGG::Matrix34f &mat, const EGG::Vector3f &scale,
-            const EGG::Vector3f &speed) override;
+            const EGG::Vector3f &speed) override {
+        m_velocity = speed;
+        transform(mat, scale);
+    }
 
     /// @addr{0x8083618C}
     /// @details Returns either the top or the bottom point of the cylinder, depending on which has

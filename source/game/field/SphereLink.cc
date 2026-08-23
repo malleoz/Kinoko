@@ -8,22 +8,6 @@ SphereLink::SphereLink() : m_prev(nullptr), m_next(nullptr) {}
 
 SphereLink::~SphereLink() = default;
 
-/// @addr{0x806F1194}
-/// @brief Initializes the link's length and resets its internal state
-void SphereLink::initLinkLen(f32 length) {
-    m_linkLen = length;
-    init();
-}
-
-/// @brief Resets the link's internal state
-void SphereLink::init() {
-    m_pos.setZero();
-    m_vel.setZero();
-    m_springForce.setZero();
-    m_smoothedUp = EGG::Vector3f::ey;
-    m_touchingGround = true;
-}
-
 /// @addr{0x806F2074}
 /// @brief Calculates the spring force between this link and its neighbors
 /// @details Applies a spring damper force which will pull this link back towards its previous link
@@ -158,15 +142,6 @@ void SphereLink::checkCollision() {
     }
 
     m_smoothedUp += (floorNrm - m_smoothedUp) * 0.1f;
-}
-
-/// @brief Calculates the new position of the link based on its velocity and spring force, and
-/// resets the spring force
-void SphereLink::calcPos() {
-    m_vel += m_springForce - GRAVITY;
-    m_vel *= 0.9f;
-    m_pos += m_vel;
-    m_springForce.setZero();
 }
 
 /// @addr{0x806F1C58}

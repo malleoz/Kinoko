@@ -12,7 +12,16 @@ public:
     ~ObjectKuribo() override;
 
     void init() override;
-    void calc() override;
+
+    /// @addr{0x806DB5B0}
+    /// @details Updates the animation timer mod the total animation duration, then calls the
+    /// StateManager to run state-specific logic depending on whether the Goomba is changing
+    /// direction or walking along the rail.
+    void calc() override {
+        calcAnimTimer();
+        StateManager::calc();
+        ++m_currFrame;
+    }
 
     /// @addr{0x806DD2C8}
     [[nodiscard]] u32 loadFlags() const override {

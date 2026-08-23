@@ -25,7 +25,19 @@ public:
         return 1;
     }
 
-    void loadAnims() override;
+    /// @addr{0x807786E4}
+    void loadAnims() override {
+        std::array<const char *, 1> names = {{
+                "Press",
+        }};
+
+        std::array<Render::AnmType, 1> types = {{
+                Render::AnmType::Chr,
+        }};
+
+        linkAnims(names, types);
+    }
+
     void createCollision() override;
 
     [[nodiscard]] f32 getCollisionRadius() const override {
@@ -35,7 +47,17 @@ public:
     Kart::Reaction onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
             Kart::Reaction reactionOnObj, EGG::Vector3f &hitDepth) override;
 
-    virtual void calcRaised();
+    /// @brief Runs every frame that the press is in the raised state
+    /// @addr{0x80777A90}
+    /// @details When the raised timer expires, the press will transition to the windup state.
+    virtual void calcRaised() {
+        constexpr u32 WINDUP_FRAMES = 10;
+
+        if (--m_raisedTimer == 0) {
+            m_state = State::WindUp;
+            m_windUpTimer = WINDUP_FRAMES;
+        }
+    }
 
 protected:
     /// @brief Descirbes the current phase of the press's animation cycle
@@ -59,12 +81,43 @@ private:
         m_windUpTimer = 0;
     }
 
-    void calcWindUp();
-    void calcLowering();
+    /// @addr{0x80777B54}
+    /// @brief Runs every frame that the press is winding up before stomping down
+    /// @details When the windup timer expires, the press will transition to the lowering state.
+    void calcWindUp() {
+        constexpr f32 SPEED = 10.0f;
+
+        addPos(EGG::Vector3f(0.0f, SPEED, 0.0f));
+
+        if (--m_windUpTimer == 0) {
+            m_state = State::Lowering;
+        }
+    }
+
+    /// @addr{0x80777B90}
+    /// @brief Runs every frame that the press is stomping down
+    /// @details The press accelerates downwards and checks to see if it has hit the floor.
+    void calcLowering() {
+        constexpr f32 ACCEL = 3.0f;
+
+        m_loweringVelocity -= ACCEL;
+        addPos(EGG::Vector3f(0.0f, m_loweringVelocity, 0.0f));
+        checkCollisionLowering();
+    }
+
     void checkCollisionLowering();
     void calcLowered();
     void calcRaising();
-    void enterRaising();
+
+    /// @addr{0x80778218}
+    /// @brief Transitions the press into the raising state and calculates the animation timer
+    void enterRaising() {
+        auto *anmMgr = m_drawMdl->anmMgr();
+        f32 frameCount = anmMgr->activeAnim(Render::AnmType::Chr)->frameCount();
+        anmMgr->playAnim(frameCount, -ANM_RATE, 0);
+        m_startingRise = true;
+        m_anmTimer = frameCount / ANM_RATE;
+    }
 
     bool m_startingRise;    ///< Used to delay state change by 1 frame
     u32 m_raisedTimer;      ///< Number of frames remaining in raised state
@@ -106,7 +159,13 @@ public:
         return "Press";
     }
 
-    void calcRaised() override;
+    /// @addr{0x8076E870}
+    void calcRaised() override {
+        if (m_startingWindup) {
+            startWindup();
+            m_startingWindup = false;
+        }
+    }
 
     /// @brief Interface for @ref ObjectItemboxPress to tell the stomper to begin stomping
     void beginStomp() {
@@ -114,7 +173,15 @@ public:
     }
 
 private:
-    void startWindup();
+    /// @addr{0x8077808C}
+    /// @brief Runs once when the press is in the raised state and has been told to begin stomping
+    /// down
+    void startWindup() {
+        constexpr u32 WINDUP_DURATION = 10;
+
+        m_state = State::WindUp;
+        m_windUpTimer = WINDUP_DURATION;
+    }
 
     bool m_startingWindup; ///< Signals that the press should begin stomping down on the next frame
 };

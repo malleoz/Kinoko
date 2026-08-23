@@ -181,7 +181,15 @@ public:
 
     void update(u32 timeOffset) override;
     void calcScale(u32 timeOffset) override;
-    void setMovingObjVel(const EGG::Vector3f &v) override;
+
+    /// @addr{0x80805924}
+    void setMovingObjVel(const EGG::Vector3f &v) override {
+        m_objColMgr->setMovingObjVel(v);
+
+        if (m_colMgrB) {
+            m_colMgrB->setMovingObjVel(v);
+        }
+    }
 
     /// @addr{0x8080595C}
     [[nodiscard]] const EGG::Matrix34f &getUpdatedMatrix(u32 timeOffset) override {

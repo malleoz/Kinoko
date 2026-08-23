@@ -3,6 +3,8 @@
 #include "game/field/StateManager.hh"
 #include "game/field/obj/ObjectProjectile.hh"
 
+#include "game/system/RaceManager.hh"
+
 namespace Kinoko::Field {
 
 class ObjectFireSnakeKid : public ObjectCollidable {
@@ -44,8 +46,26 @@ public:
 
     void enterStateStub() {}
     void enterDespawned();
-    void enterFalling();
-    void enterHighBounce();
+
+    /// @addr{0x806C19E8}
+    /// @brief Runs once when the fire snake respawns
+    void enterFalling() {
+        if (!getUnit()) {
+            loadAABB(0.0f);
+        }
+    }
+
+    /// @addr{0x806C1DCC}
+    /// @brief Runs once after landing from the sun (for the case of @ref ObjectFireSnake), or runs
+    /// once upon re-spawning (for the case of @ref ObjectFireSnakeV).
+    void enterHighBounce() {
+        m_trajectoryPos = m_initPos;
+        setPos(m_initPos);
+        f32 rand = System::RaceManager::Instance()->random().getF32();
+        m_bounceDir = rand >= 0.5f ? m_initRot : -m_initRot;
+        m_age = 0;
+    }
+
     void enterRest();
 
     void calcStateStub() {}

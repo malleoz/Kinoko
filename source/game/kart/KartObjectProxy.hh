@@ -3,14 +3,9 @@
 #include "game/kart/KartParam.hh"
 #include "game/kart/Status.hh"
 
-#include "game/field/KCollisionTypes.hh"
-
 #include "game/system/KPadController.hh"
 
-#include <egg/core/Allocator.hh>
 #include <egg/math/Matrix.hh>
-
-#include <list>
 
 namespace Kinoko {
 
@@ -49,25 +44,31 @@ class KartSuspensionPhysics;
 class KartTire;
 class WheelPhysics;
 
-/// @brief Shared between classes who inherit KartObjectProxy so they can access one another.
+/// @brief Collection of kart subsystem pointers associated with a particular @ref KartObject
+/// @details These pointers are housed in this struct so that they can be shared amongst each of the
+/// subsystems, which each derive from @ref KartObjectProxy. This allows each subsystem to access
+/// the other subsystems without needing to know about the other subsystems' existence.
 struct KartAccessor {
-    KartParam *param;
-    KartBody *body;
-    Render::KartModel *model;
-    KartSub *sub;
-    KartMove *move;
-    KartAction *action;
-    KartCollide *collide;
-    Field::ObjectCollisionKart *objectCollisionKart;
-    KartState *state;
-
-    fixed_vector<KartSuspension *> suspensions;
-    fixed_vector<KartTire *> tires;
-
-    Field::BoxColUnit *boxColUnit;
+    KartParam *param;         ///< Pointer to the parameter data (stats, hitboxes, etc.)
+    KartBody *body;           ///< Pointer to the body subsystem (sink depth, etc.)
+    Render::KartModel *model; ///< Pointer to the model subsystem (rendering, etc.)
+    KartSub *sub;             ///< Pointer to the sub subsystem (suspension, tires, etc.)
+    KartMove *move;           ///< Pointer to the movement subsystem (acceleration, drifting, etc.)
+    KartAction *action;       ///< Pointer to the action subsystem (object collision reactions)
+    KartCollide *collide;     ///< Pointer to the collision subsystem (course and object collisions)
+    Field::ObjectCollisionKart *objectCollisionKart; ///< Pointer to the object collision subsystem
+    KartState *state; ///< Pointer to the state subsystem (boosts, timers, etc.)
+    fixed_vector<KartSuspension *> suspensions; ///< Collection of pointers to the wheel suspensions
+    fixed_vector<KartTire *> tires;             ///< Collection of pointers to the tires
+    Field::BoxColUnit *boxColUnit;              ///< Pointer to the box collision unit subsystem
 };
 
-/// @brief Base class for most kart-related objects.
+/// @brief Base class for most kart-related objects
+/// @details Acts as a shared access hub for all subsystems, so that each subsystem can access the
+/// other subsystems without needing to know about the other subsystems' existence. This is done
+/// through a @ref KartAccessor struct, which contains pointers to each of the subsystems. The @ref
+/// KartObject::Create factory function will apply the @ref KartAccessor struct to @ref m_accessor
+/// for all of the subsystems, so that they can access each other.
 class KartObjectProxy {
     friend class KartObject;
 
@@ -94,8 +95,6 @@ public:
     [[nodiscard]] const KartMove *move() const;
     [[nodiscard]] KartHalfPipe *halfPipe();
     [[nodiscard]] const KartHalfPipe *halfPipe() const;
-    [[nodiscard]] KartScale *kartScale();
-    [[nodiscard]] const KartScale *kartScale() const;
     [[nodiscard]] KartJump *jump();
     [[nodiscard]] const KartJump *jump() const;
     [[nodiscard]] KartParam *param();
@@ -131,9 +130,9 @@ public:
 
     [[nodiscard]] const EGG::Vector3f &scale() const;
     [[nodiscard]] const EGG::Matrix34f &pose() const;
-    [[nodiscard]] EGG::Vector3f bodyFront() const;
-    [[nodiscard]] EGG::Vector3f bodyForward() const;
+    [[nodiscard]] EGG::Vector3f bodyRight() const;
     [[nodiscard]] EGG::Vector3f bodyUp() const;
+    [[nodiscard]] EGG::Vector3f bodyForward() const;
 
     [[nodiscard]] const EGG::Vector3f &componentXAxis() const;
     [[nodiscard]] const EGG::Vector3f &componentYAxis() const;
@@ -141,6 +140,7 @@ public:
 
     [[nodiscard]] const EGG::Vector3f &pos() const;
     [[nodiscard]] const EGG::Vector3f &prevPos() const;
+    [[nodiscard]] const EGG::Quatf &mainRot() const;
     [[nodiscard]] const EGG::Quatf &fullRot() const;
     [[nodiscard]] const EGG::Vector3f &extVel() const;
     [[nodiscard]] const EGG::Vector3f &intVel() const;
@@ -148,7 +148,6 @@ public:
     [[nodiscard]] f32 speed() const;
     [[nodiscard]] f32 acceleration() const;
     [[nodiscard]] f32 softSpeedLimit() const;
-    [[nodiscard]] const EGG::Quatf &mainRot() const;
     [[nodiscard]] const EGG::Vector3f &angVel2() const;
     [[nodiscard]] bool isBike() const;
     [[nodiscard]] u16 suspCount() const;
@@ -168,8 +167,9 @@ public:
     [[nodiscard]] s32 hopStickX() const;
     [[nodiscard]] KartParam::Stats::DriftType vehicleType() const;
 
-    [[nodiscard]] static std::list<KartObjectProxy *, EGG::Allocator<KartObjectProxy *>> &
-    proxyList() {
+    /// @brief Gets a reference to the static list of all KartObjectProxy children
+    /// @return A reference to the static list of all KartObjectProxy children
+    [[nodiscard]] static alloc_list<KartObjectProxy *> &proxyList() {
         return s_proxyList;
     }
     /// @endGetters
@@ -180,10 +180,11 @@ protected:
 private:
     static void ApplyAll(const KartAccessor *pointers);
 
+    /// @brief Pointer to the struct containing all subsystem pointers for this kart object
     const KartAccessor *m_accessor;
 
-    static std::list<KartObjectProxy *, EGG::Allocator<KartObjectProxy *>>
-            s_proxyList; ///< List of all KartObjectProxy children.
+    /// @brief List of all KartObjectProxy children
+    static alloc_list<KartObjectProxy *> s_proxyList;
 };
 
 } // namespace Kart

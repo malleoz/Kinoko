@@ -3,12 +3,6 @@
 #include "game/field/ObjectDirector.hh"
 
 #include "game/system/CourseMap.hh"
-#include "game/system/ResourceManager.hh"
-#include "game/system/map/MapdataPointInfo.hh"
-
-#include <egg/math/Math.hh>
-
-#include <cstring>
 
 namespace Kinoko::Field {
 

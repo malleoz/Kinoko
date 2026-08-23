@@ -12,21 +12,6 @@ ObjectDokan::ObjectDokan(const System::MapdataGeoObj &params) : ObjectCollidable
 /// @addr{0x80778FEC}
 ObjectDokan::~ObjectDokan() = default;
 
-/// @addr{0x80778830}
-void ObjectDokan::init() {
-    m_isAirborne = false;
-}
-
-/// @addr{0x807788C8}
-void ObjectDokan::calc() {
-    if (!m_isAirborne) {
-        return;
-    }
-
-    calcPos();
-    calcFloor();
-}
-
 /// @addr{0x80778D50}
 void ObjectDokan::calcCollisionTransform() {
     if (m_id == ObjectId::DokanSFC) {
@@ -74,17 +59,6 @@ void ObjectDokan::calcFloor() {
         if (m_velocity.length() < ACCELERATION * PIPE_SQRT_RADIUS) {
             m_isAirborne = false;
         }
-    }
-}
-
-/// @addr{0x80778BA0}
-/// @brief If the pipe is not already airborne, induces upwards velocity
-void ObjectDokan::tryStartAirborne() {
-    constexpr f32 INITIAL_VELOCITY = 100.0f;
-
-    if (!m_isAirborne) {
-        m_isAirborne = true;
-        m_velocity = INITIAL_VELOCITY * EGG::Vector3f::ey;
     }
 }
 

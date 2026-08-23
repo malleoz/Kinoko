@@ -1,8 +1,6 @@
 #pragma once
 
-#include "game/field/CourseColMgr.hh"
-
-#include <egg/math/Vector.hh>
+#include "game/field/ObjectDrivableDirector.hh"
 
 namespace Kinoko {
 
@@ -81,8 +79,15 @@ public:
         }
     };
 
+    /// @addr{0x8078E4F0}
+    /// @brief Narrows the spatial cache of the @ref CourseColMgr and @ref ObjectDrivableDirector to
+    /// only include KCL tris defined by the provided mask within a certain radius of the given
+    /// position.
     void checkCourseColNarrScLocal(f32 radius, const EGG::Vector3f &pos, KCLTypeMask mask,
-            u32 timeOffset);
+            u32 timeOffset) {
+        CourseColMgr::Instance()->scaledNarrowScopeLocal(1.0f, radius, nullptr, pos, mask);
+        ObjectDrivableDirector::Instance()->colNarScLocal(radius, pos, mask, timeOffset);
+    }
 
     [[nodiscard]] bool checkSpherePartialPush(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask flags, CollisionInfoPartial *info,

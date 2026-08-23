@@ -1,9 +1,6 @@
 #include "KartBurnout.hh"
 
 #include "game/kart/KartPhysics.hh"
-#include "game/kart/KartState.hh"
-
-#include <egg/math/Math.hh>
 
 namespace Kinoko::Kart {
 
@@ -52,24 +49,6 @@ void KartBurnout::calcRotation() {
     m_yaw = DEG2RAD * (AMPLITUDE_FACTOR * sin) * m_amplitude;
 
     physics()->composeStuntRot(EGG::Quatf::FromRPY(0.0f, m_yaw, 0.0f));
-}
-
-/// @addr{0x80589844}
-/// @brief Sets the @enum eStatus::Burnout bit in the kart's status
-void KartBurnout::activate() {
-    status().setBit(eStatus::Burnout);
-}
-
-/// @addr{0x80589818}
-/// @brief Resets the @enum eStatus::Burnout bit in the kart's status
-void KartBurnout::deactivate() {
-    status().resetBit(eStatus::Burnout);
-}
-
-/// @addr{0x80589830}
-/// @brief Checks if the burnout is currently active
-bool KartBurnout::isActive() const {
-    return status().onBit(eStatus::Burnout);
 }
 
 } // namespace Kinoko::Kart

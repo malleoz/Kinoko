@@ -10,14 +10,6 @@ ObjectPakkunF::ObjectPakkunF(const System::MapdataGeoObj &params)
 /// @addr{0x807754FC}
 ObjectPakkunF::~ObjectPakkunF() = default;
 
-/// @addr{0x807743E4}
-void ObjectPakkunF::init() {
-    m_state = State::Wait;
-    m_waitFrames = m_waitDuration;
-
-    calcTransform();
-}
-
 /// @addr{0x80774754}
 void ObjectPakkunF::calc() {
     switch (m_state) {

@@ -13,12 +13,31 @@ public:
 
     virtual void vf_1c();
 
-    void init();
-    void calc();
+    /// @addr{0x807C8758}
+    void init() {
+        FUN_807C7828(param()->playerIdx(), isBike());
+        _2e8 = 0.0f;
+    }
+
+    /// @addr{0x807CB360}
+    void calc() {
+        FUN_807CB530();
+    }
 
     void FUN_807CB198();
-    void FUN_807CB530();
-    void FUN_807C7828(u8 playerIdx, bool isBike);
+
+    /// @addr{0x807CB530}
+    /// @rename
+    void FUN_807CB530() {
+        FUN_807CB198();
+        vf_1c();
+    }
+
+    /// @addr{0x807C7828}
+    /// @rename
+    void FUN_807C7828(u8 /*playerIdx*/, bool /*isBike*/) {
+        m_isInsideDrift = vehicleType() == Kart::KartParam::Stats::DriftType::Inside_Drift_Bike;
+    }
 
 private:
     bool m_somethingLeft;
@@ -33,14 +52,20 @@ private:
 
 class KartModelKart : public KartModel {
 public:
-    KartModelKart();
-    ~KartModelKart();
+    /// @addr{0x807C7364}
+    KartModelKart() = default;
+
+    /// @addr{0x807CDD08}
+    ~KartModelKart() = default;
 };
 
 class KartModelBike : public KartModel {
 public:
-    KartModelBike();
-    ~KartModelBike();
+    /// @addr{0x807CDCCC}
+    KartModelBike() = default;
+
+    /// @addr{0x807D3F58}
+    ~KartModelBike() = default;
 };
 
 } // namespace Kinoko::Render

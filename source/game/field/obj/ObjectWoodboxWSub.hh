@@ -9,8 +9,11 @@ namespace Kinoko::Field {
 /// the box tangible again and reset its rail position.
 class ObjectWoodboxWSub final : public ObjectWoodbox {
 public:
-    ObjectWoodboxWSub(const System::MapdataGeoObj &params);
-    ~ObjectWoodboxWSub() override;
+    /// @addr{0x8077E34C}
+    ObjectWoodboxWSub(const System::MapdataGeoObj &params) : ObjectWoodbox(params) {}
+
+    /// @addr{0x8077E388}
+    ~ObjectWoodboxWSub() override = default;
 
     /// @addr{0x8077E3E4}
     void init() override {
@@ -18,7 +21,14 @@ public:
         m_state = 0;
     }
 
-    void calc() override;
+    /// @addr{0x8077E49C}
+    void calc() override {
+        if (m_state - 1 > 1) {
+            return;
+        }
+
+        calcPosition();
+    }
 
     /// @addr{0x8077EDA4}
     [[nodiscard]] u32 loadFlags() const override {
@@ -33,7 +43,17 @@ public:
     }
 
 private:
-    void calcPosition();
+    /// @addr{0x8077E56C}
+    /// @brief Updates the rail interpolator and the box's position along the rail
+    void calcPosition() {
+        auto status = m_railInterpolator->calc();
+
+        if (status == RailInterpolator::Status::ChangingDirection) {
+            m_state = 0;
+        }
+
+        setPos(m_railInterpolator->curPos());
+    }
 };
 
 } // namespace Kinoko::Field

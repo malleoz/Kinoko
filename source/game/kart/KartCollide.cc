@@ -1,6 +1,7 @@
 #include "KartCollide.hh"
 
 #include "game/kart/KartBody.hh"
+#include "game/kart/KartHalfPipe.hh"
 
 #include "game/field/CollisionDirector.hh"
 #include "game/field/ObjectDirector.hh"
@@ -143,7 +144,7 @@ void KartCollide::applyRebound(f32 reboundScalar, f32 reboundVelAmt, bool lockXZ
     }
 
     EGG::Matrix34f rtMat;
-    rtMat.makeQ(dynamics()->mainRot());
+    rtMat.makeQ(mainRot());
     rtMat = rtMat.multiplyTo(dynamics()->invInertiaTensor()).multiplyTo(rtMat.transpose());
 
     EGG::Vector3f relPos = colData.relPos;
@@ -316,16 +317,16 @@ void KartCollide::calcFloorEffect() {
 /// triggers (such as fall plane OOB and cannon entries)
 void KartCollide::calcLeanCollision(Field::KCLTypeMask *mask, const EGG::Vector3f &pos,
         bool checkDirection) {
-    EGG::Vector3f v1 = checkDirection ? physics()->pos() : EGG::Vector3f::inf;
+    const EGG::Vector3f &v1 = checkDirection ? prevPos() : EGG::Vector3f::inf;
     Field::KCLTypeMask typeMask = checkDirection ? KCL_TYPE_DIRECTIONAL : KCL_TYPE_NON_DIRECTIONAL;
     f32 radius = checkDirection ? 80.0f : 100.0f * move()->totalScale();
-    f32 scalar = -bsp().initialYPos * move()->totalScale() * 0.3f;
+    f32 scalar = -bsp().offsetY * move()->totalScale() * 0.3f;
     EGG::Vector3f scaledPos = pos + scalar * componentYAxis();
-    EGG::Vector3f back = dynamics()->mainRot().rotateVector(EGG::Vector3f::ez);
+    EGG::Vector3f back = mainRot().rotateVector(EGG::Vector3f::ez);
 
     m_smoothedBack += (back.dot(move()->smoothedUp()) - m_smoothedBack) * 0.3f;
 
-    scalar = m_smoothedBack * -physics()->fc() * 1.8f * move()->totalScale();
+    scalar = m_smoothedBack * -physics()->halfLength() * 1.8f * move()->totalScale();
     scaledPos += scalar * back;
 
     bool collide = Field::CollisionDirector::Instance()->checkSphereCachedPartialPush(radius,
@@ -526,7 +527,7 @@ void KartCollide::calcSideCollision(CollisionData &collisionData, Hitbox &hitbox
         return;
     }
 
-    EGG::Vector3f right = dynamics()->mainRot().rotateVector(EGG::Vector3f::ex);
+    EGG::Vector3f right = mainRot().rotateVector(EGG::Vector3f::ex);
     std::array<f32, 2> tangents = {0.0f, 0.0f};
 
     // The loop is just to do left/right wall
@@ -620,9 +621,9 @@ void KartCollide::calcObjectCollision() {
 /// @brief Applies a small angular velocity to the kart when colliding with a dummy pole
 void KartCollide::calcPoleTimer() {
     if (m_poleAngVelTimer > 0 && status().onBit(eStatus::Accelerate, eStatus::Brake)) {
-        EGG::Vector3f angVel2 = dynamics()->angVel2();
-        angVel2.y += m_poleYaw;
-        dynamics()->setAngVel2(angVel2);
+        EGG::Vector3f nextAngVel2 = angVel2();
+        nextAngVel2.y += m_poleYaw;
+        dynamics()->setAngVel2(nextAngVel2);
     }
 
     m_poleAngVelTimer = std::max(0, m_poleAngVelTimer - 1);
@@ -840,7 +841,7 @@ void KartCollide::applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitbo
     }
 
     EGG::Matrix34f rotMat;
-    rotMat.makeQ(dynamics()->mainRot());
+    rotMat.makeQ(mainRot());
     EGG::Matrix34f tmp = rotMat.multiplyTo(dynamics()->invInertiaTensor());
     EGG::Matrix34f rotMatTrans = rotMat.transpose();
     tmp = tmp.multiplyTo(rotMatTrans);
@@ -904,11 +905,11 @@ void KartCollide::applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitbo
 
     projRejSum = projRejSum.rej(nextDir);
 
-    dynamics()->setExtVel(dynamics()->extVel() + projRejSum);
+    dynamics()->setExtVel(extVel() + projRejSum);
 
     if (b3) {
         EGG::Vector3f rotation = colData.relPos.cross(projRejSumOrig);
-        EGG::Vector3f rotation2 = dynamics()->mainRot().rotateVectorInv(tmp.multVector(rotation));
+        EGG::Vector3f rotation2 = mainRot().rotateVectorInv(tmp.multVector(rotation));
 
         EGG::Vector3f angVel = rotation2;
         angVel.y = 0.0f;
@@ -1016,7 +1017,7 @@ void KartCollide::applyBodyCollision(CollisionData &collisionData, const EGG::Ve
     collisionData.relPos = avgRelPos;
 
     if (collisionData.bFloor) {
-        f32 intVelY = dynamics()->intVel().y;
+        f32 intVelY = intVel().y;
         if (intVelY > 0.0f) {
             collisionData.vel.y += intVelY;
         }

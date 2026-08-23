@@ -2,8 +2,6 @@
 
 #include "game/field/CollisionDirector.hh"
 
-#include <cmath>
-
 namespace Kinoko::Field {
 
 /// @addr{0x806DB184}
@@ -31,16 +29,6 @@ void ObjectKuribo::init() {
     anmMgr->playAnim(0.0f, m_animRate, 0);
     m_animDuration = anmMgr->activeAnim(Render::AnmType::Chr)->frameCount();
     m_nextStateId = 1;
-}
-
-/// @addr{0x806DB5B0}
-/// @details Updates the animation timer mod the total animation duration, then calls the
-/// StateManager to run state-specific logic depending on whether the Goomba is changing direction
-/// or walking along the rail.
-void ObjectKuribo::calc() {
-    calcAnimTimer();
-    StateManager::calc();
-    ++m_currFrame;
 }
 
 /// @addr{0x806dd278}

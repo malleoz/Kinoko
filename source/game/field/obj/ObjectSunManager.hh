@@ -3,8 +3,6 @@
 #include "game/field/ObjectDirector.hh"
 #include "game/field/obj/ObjectSniper.hh"
 
-#include <string>
-
 namespace Kinoko::Field {
 
 /// @brief Handles the synchronization between the @ref ObjectSunDS and @ref ObjectFireSnake

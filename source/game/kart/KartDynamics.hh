@@ -76,7 +76,7 @@ public:
     }
 
     void setSpecialRot(const EGG::Quatf &q) {
-        m_specialRot = q;
+        m_stuntRot = q;
     }
 
     void setExtraRot(const EGG::Quatf &q) {
@@ -224,7 +224,7 @@ protected:
     EGG::Quatf m_fullRot;              ///< The combination of the other rotations.
     EGG::Vector3f m_totalForce;        ///< Basically just gravity.
     EGG::Vector3f m_totalTorque;       ///< Torque from linear motion and rotation.
-    EGG::Quatf m_specialRot;           ///< Rotation from trick animations. Copied from KartPhysics.
+    EGG::Quatf m_stuntRot;             ///< Rotation from trick animations. Copied from KartPhysics.
     EGG::Quatf m_extraRot;             ///< Rotation from automatic drifts and actions.
     f32 m_gravity;                     ///< Usually -1.3f, also affected by KartMove::calcDive.
     EGG::Vector3f m_intVel;            ///< What you typically consider to be the vehicle's speed.

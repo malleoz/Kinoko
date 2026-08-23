@@ -1,8 +1,6 @@
 
 #include "ObjectPillar.hh"
 
-#include "game/field/ObjectDirector.hh"
-
 namespace Kinoko::Field {
 
 /// @addr{Inlined in 0x807FED80}
@@ -51,15 +49,6 @@ ObjectPillar::ObjectPillar(const System::MapdataGeoObj &params)
 
 /// @addr{0x807FFA34}
 ObjectPillar::~ObjectPillar() = default;
-
-/// @addr{0x807FEFD8}
-void ObjectPillar::init() {
-    ObjectBase::init();
-
-    m_collidable->disableCollision();
-    m_currRot = rot();
-    disableCollision();
-}
 
 /// @addr{0x807FF17C}
 /// @details Checks the current time to update the pillar's fall state and rotation. If the pillar

@@ -104,14 +104,43 @@ public:
     void narrowPolygon_EachBlock(const u16 *prismArray);
 
     void computeBBox();
-    [[nodiscard]] bool checkPointCollision(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsOut);
-    [[nodiscard]] bool checkSphereCollision(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsOut);
+    /// @addr{0x807C1F80}
+    [[nodiscard]] bool checkPointCollision(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsOut) {
+        return std::isfinite(m_prevPos.y) ? checkPointMovement(distOut, fnrmOut, flagsOut) :
+                                            checkPoint(distOut, fnrmOut, flagsOut);
+    }
+
+    /// @addr{0x807C2410}
+    [[nodiscard]] bool checkSphereCollision(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsOut) {
+        return std::isfinite(m_prevPos.y) ? checkSphereMovement(distOut, fnrmOut, flagsOut) :
+                                            checkSphere(distOut, fnrmOut, flagsOut);
+    }
+
     [[nodiscard]] bool checkSphere(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsOut);
     [[nodiscard]] bool checkSphereSingle(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsOut);
 
-    void lookupPoint(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask typeMask);
+    /// @addr{0x807C1B0C}
+    /// @brief Sets members in preparation of a subsequent point collision check call
+    void lookupPoint(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask typeMask) {
+        m_prismIter = searchBlock(pos);
+        m_pos = pos;
+        m_prevPos = prevPos;
+        m_movement = pos - prevPos;
+        m_typeMask = typeMask;
+    }
+
+    /// @addr{0x807C1BB4}
+    /// @brief Sets members in preparation of a subsequent sphere collision check call
     void lookupSphere(f32 radius, const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask typeMask);
+            KCLTypeMask typeMask) {
+        m_prismIter = searchBlock(pos);
+        m_pos = pos;
+        m_prevPos = prevPos;
+        m_movement = pos - prevPos;
+        m_radius = std::min(radius, m_sphereRadius);
+        m_typeMask = typeMask;
+    }
+
     void lookupSphereCached(const EGG::Vector3f &p1, const EGG::Vector3f &p2, u32 typeMask,
             f32 radius);
 
@@ -139,8 +168,25 @@ public:
     }
     /// @endGetters
 
-    [[nodiscard]] static EGG::Vector3f GetVertex(f32 height, const EGG::Vector3f &vertex1,
-            const EGG::Vector3f &fnrm, const EGG::Vector3f &enrm3, const EGG::Vector3f &enrm);
+    /// @brief Computes a prism vertex based off of the triangle's normal vectors
+    /// @addr{0x807BDF54}
+    /// @par Triangle Vertices Formula
+    /// Given a triangle with vertices \f$\vec{A}, \vec{B}, \vec{C}\f$, face normal \f$\hat{f}\f$,
+    /// and height \f$h\f$, label the edge normals by: \begin{aligned}\hat{en}_1 := e_{AB}, \,\,
+    /// \hat{en}_2:= e_{AC}, \,\,\hat{en}_3:=e_{BC} \end{aligned} We can recover \f$\vec{B},
+    /// \vec{C}\f$ via: \begin{aligned} \vec{B} = \vec{A} + \dfrac{h}{(\hat{en}_2 \times \hat{f})
+    /// \cdot
+    /// \hat{en}_3}\left(\hat{en}_2 \times \hat{f}\right), \, \, \vec{C} = \vec{A} +
+    /// \dfrac{h}{(\hat{en}_1 \times \hat{f}) \cdot \hat{en}_3}(\hat{en}_1 \times \hat{f}) \, .
+    /// \end{aligned}
+    [[nodiscard]] EGG::Vector3f GetVertex(f32 height, const EGG::Vector3f &vertex1,
+            const EGG::Vector3f &fnrm, const EGG::Vector3f &enrm3, const EGG::Vector3f &enrm) {
+        EGG::Vector3f cross = fnrm.cross(enrm);
+        f32 dp = cross.ps_dot(enrm3);
+        cross *= (height / dp);
+
+        return cross + vertex1;
+    }
 
 private:
     void preloadPrisms();

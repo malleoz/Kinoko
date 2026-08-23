@@ -1,9 +1,5 @@
 #include "JugemMove.hh"
 
-#include "game/field/BoxColManager.hh"
-#include "game/field/CollisionDirector.hh"
-#include "game/field/ObjectDirector.hh"
-
 namespace Kinoko::Field {
 
 /// @addr{0x8071E9B4}

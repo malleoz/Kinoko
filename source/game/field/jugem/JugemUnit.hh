@@ -5,8 +5,6 @@
 
 #include "game/field/StateManager.hh"
 
-#include "game/kart/KartObject.hh"
-
 namespace Kinoko::Field {
 
 /// @brief Manages interpolation keyframes for the Lakitu's position when ascending and descending
@@ -152,7 +150,19 @@ public:
         m_move->init();
     }
 
-    void calc();
+    /// @addr{0x807221C4}
+    /// @brief Updates switches, runs the state machine, and updates Lakitu's position if not idle
+    void calc() {
+        calcSwitches();
+
+        StateManager::calc();
+
+        // Perform a collision check if Lakitu is not idle
+        if (m_currentStateId != 0) {
+            setPosFromTransform(m_move->transform());
+            calcCollision();
+        }
+    }
 
 private:
     /// @brief Describes the current state of the Lakitu unit, which determines how it behaves and

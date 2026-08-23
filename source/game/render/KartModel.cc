@@ -1,13 +1,8 @@
 #include "KartModel.hh"
 
-#include "game/kart/KartBody.hh"
 #include "game/kart/KartMove.hh"
-#include "game/kart/KartParam.hh"
-#include "game/kart/KartState.hh"
 
 #include "game/system/RaceConfig.hh"
-
-#include <egg/math/Math.hh>
 
 namespace Kinoko::Render {
 
@@ -123,18 +118,6 @@ void KartModel::vf_1c() {
     body()->setAngle(_5c);
 }
 
-/// @addr{0x807C8758}
-void KartModel::init() {
-    FUN_807C7828(param()->playerIdx(), isBike());
-
-    _2e8 = 0.0f;
-}
-
-/// @addr{0x807CB360}
-void KartModel::calc() {
-    FUN_807CB530();
-}
-
 /// @addr{0x807CB198}
 /// @rename
 void KartModel::FUN_807CB198() {
@@ -144,10 +127,10 @@ void KartModel::FUN_807CB198() {
 
     bool turnInput = status.onBit(Kart::eStatus::StickLeft, Kart::eStatus::StickRight);
     if (state()->isDrifting() || (status.onBit(Kart::eStatus::ChargingSSMT) && turnInput)) {
-        if (move()->hopStickX() == 1) {
+        if (hopStickX() == 1) {
             m_somethingLeft = true;
         } else {
-            if (move()->hopStickX() == -1) {
+            if (hopStickX() == -1) {
                 m_somethingRight = true;
             } else if (status.offBit(Kart::eStatus::StickLeft)) {
                 m_somethingRight = true;
@@ -157,31 +140,5 @@ void KartModel::FUN_807CB198() {
         }
     }
 }
-
-/// @addr{0x807CB530}
-/// @rename
-void KartModel::FUN_807CB530() {
-    FUN_807CB198();
-    vf_1c();
-}
-
-/// @addr{0x807C7828}
-/// @rename
-void KartModel::FUN_807C7828(u8 /*playerIdx*/, bool /*isBike*/) {
-    m_isInsideDrift =
-            param()->stats().driftType == Kart::KartParam::Stats::DriftType::Inside_Drift_Bike;
-}
-
-/// @addr{0x807C7364}
-KartModelKart::KartModelKart() = default;
-
-/// @addr{0x807CDD08}
-KartModelKart::~KartModelKart() = default;
-
-/// @addr{0x807CDCCC}
-KartModelBike::KartModelBike() = default;
-
-/// @addr{0x807D3F58}
-KartModelBike::~KartModelBike() = default;
 
 } // namespace Kinoko::Render

@@ -38,9 +38,23 @@ private:
         return ++m_timer >= duration;
     }
 
-    void activate();
-    void deactivate();
-    [[nodiscard]] bool isActive() const;
+    /// @addr{0x80589844}
+    /// @brief Sets the @enum eStatus::Burnout bit in the kart's status
+    void activate() {
+        status().setBit(eStatus::Burnout);
+    }
+
+    /// @addr{0x80589818}
+    /// @brief Resets the @enum eStatus::Burnout bit in the kart's status
+    void deactivate() {
+        status().resetBit(eStatus::Burnout);
+    }
+
+    /// @addr{0x80589830}
+    /// @brief Checks if the burnout is currently active
+    [[nodiscard]] bool isActive() const {
+        return status().onBit(eStatus::Burnout);
+    }
 
     u32 m_timer;     ///< The number of frames that have passed since the burnout started
     u16 m_phase;     ///< The phase of the burnout rotation, used to calculate the yaw

@@ -2,10 +2,6 @@
 
 #include "game/field/RailInterpolator.hh"
 
-#include <egg/core/Allocator.hh>
-
-#include <vector>
-
 namespace Kinoko {
 
 namespace Host {

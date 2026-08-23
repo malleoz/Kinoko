@@ -10,25 +10,6 @@ ObjectShip64::~ObjectShip64() {
     EGG::egg_delete(m_paddleWheelCollision);
 }
 
-/// @addr{0x80765E30}
-void ObjectShip64::init() {
-    m_railInterpolator->init(0, 0);
-
-    m_tangent = m_railInterpolator->curTangentDir();
-    m_railInterpolator->setPerPointVelocities(true);
-
-    calc();
-    calcModel();
-}
-
-/// @addr{0x80766144}
-/// @details Interpolates the forward direction to create smooth movement along the rail.
-void ObjectShip64::calc() {
-    m_railInterpolator->calc();
-    setPos(m_railInterpolator->curPos());
-    calcTangent();
-}
-
 /// @addr{0x80766864}
 /// @details Creates the primary and paddle wheel collision objects for the ship.
 void ObjectShip64::createCollision() {

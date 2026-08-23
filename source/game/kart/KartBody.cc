@@ -1,7 +1,5 @@
 #include "KartBody.hh"
 
-#include <egg/math/Math.hh>
-
 namespace Kinoko::Kart {
 
 /// @addr{0x8056C394}

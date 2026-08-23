@@ -1,10 +1,5 @@
 #include "BoxColManager.hh"
 
-#include "game/field/obj/ObjectCollidable.hh"
-#include "game/field/obj/ObjectDrivable.hh"
-
-#include <egg/core/Heap.hh>
-
 #include <numeric>
 
 namespace Kinoko::Field {
@@ -27,18 +22,6 @@ void BoxColUnit::init(f32 radius, f32 maxSpeed, const EGG::Vector3f *pos, const 
     m_userData = userData;
     m_xMax = pos->x + m_range;
     m_xMin = pos->x - m_range;
-}
-
-/// @addr{0x80786F7C}
-/// @brief Updates the radius and range of the unit
-/// @details This effectively adjusts how close the player needs to be to the object before
-/// collision checks are performed.
-/// @param radius The new radius of the collision box
-/// @param maxSpeed The maximum speed for the collision box
-void BoxColUnit::resize(f32 radius, f32 maxSpeed) {
-    m_radius = radius;
-    m_range = radius + maxSpeed;
-    m_flag.setBit(eBoxColFlag::TempRecalcAABB);
 }
 
 /// @addr{0x80786F98}
@@ -185,88 +168,6 @@ void BoxColManager::calc() {
     }
 }
 
-/// @addr{0x80785E5C}
-/// @brief Retrieves the next collidable object in the iteration sequence
-/// @return A pointer to the next @ref ObjectCollidable, or nullptr if there are no more objects
-ObjectCollidable *BoxColManager::getNextObject() {
-    return reinterpret_cast<ObjectCollidable *>(getNextImpl(m_nextObjectID, eBoxColFlag::Object));
-}
-
-/// @addr{0x80785EC4}
-/// @brief Retrieves the next drivable object in the iteration sequence
-/// @return A pointer to the next @ref ObjectDrivable, or nullptr if there are no more objects
-ObjectDrivable *BoxColManager::getNextDrivable() {
-    return reinterpret_cast<ObjectDrivable *>(getNextImpl(m_nextDrivableID, eBoxColFlag::Drivable));
-}
-
-/// @addr{0x80785F2C}
-/// @brief Resets the iteration sequence for both collidable and drivable objects, setting the
-/// iterators to the first object in each sequence
-void BoxColManager::resetIterators() {
-    m_nextObjectID = -1;
-    iterate(m_nextObjectID, eBoxColFlag::Object);
-
-    m_nextDrivableID = -1;
-    iterate(m_nextDrivableID, eBoxColFlag::Drivable);
-}
-
-/// @addr{0x80786050}
-/// @brief Inserts a new driver unit into the spatial index with the specified parameters
-/// @param radius The radius of the driver unit
-/// @param maxSpeed The maximum speed of the driver unit
-/// @param pos Pointer to the driver unit's position
-/// @param alwaysRecalc Whether the unit should always recalculate its AABB
-/// @param kartObject The associated Kart object for the driver unit
-/// @return A pointer to the newly inserted @ref BoxColUnit
-BoxColUnit *BoxColManager::insertDriver(f32 radius, f32 maxSpeed, const EGG::Vector3f *pos,
-        bool alwaysRecalc, Kart::KartObject *kartObject) {
-    BoxColFlag flag = BoxColFlag(eBoxColFlag::Driver);
-
-    if (alwaysRecalc) {
-        flag.setBit(eBoxColFlag::PermRecalcAABB);
-    }
-
-    return insert(radius, maxSpeed, pos, flag, kartObject);
-}
-
-/// @addr{0x80786078}
-/// @brief Inserts a new collidable object unit into the spatial index with the specified parameters
-/// @param radius The radius of the object unit
-/// @param maxSpeed The maximum speed of the object unit
-/// @param pos Pointer to the object unit's position
-/// @param alwaysRecalc Whether the unit should always recalculate its AABB
-/// @param userData The ObjectCollidable pointer associated with this BoxColUnit
-/// @return A pointer to the newly inserted @ref BoxColUnit
-BoxColUnit *BoxColManager::insertObject(f32 radius, f32 maxSpeed, const EGG::Vector3f *pos,
-        bool alwaysRecalc, void *userData) {
-    BoxColFlag flag = BoxColFlag(eBoxColFlag::Object);
-
-    if (alwaysRecalc) {
-        flag.setBit(eBoxColFlag::PermRecalcAABB);
-    }
-
-    return insert(radius, maxSpeed, pos, flag, userData);
-}
-
-/// @addr{0x80786120}
-/// @brief Inserts a new drivable object unit into the spatial index with the specified parameters
-/// @param radius The radius of the drivable unit
-/// @param maxSpeed The maximum speed of the drivable unit
-/// @param pos Pointer to the drivable unit's position
-/// @param alwaysRecalc Whether the unit should always recalculate its AABB
-/// @param userData The ObjectDrivable pointer associated with this BoxColUnit
-/// @return A pointer to the newly inserted @ref BoxColUnit
-BoxColUnit *BoxColManager::insertDrivable(f32 radius, f32 maxSpeed, const EGG::Vector3f *pos,
-        bool alwaysRecalc, void *userData) {
-    BoxColFlag flag = BoxColFlag(eBoxColFlag::Drivable);
-
-    if (alwaysRecalc) {
-        flag.setBit(eBoxColFlag::PermRecalcAABB);
-    }
-
-    return insert(radius, maxSpeed, pos, flag, userData);
-}
-
 /// @addr{0x80786DBC}
 /// @brief Reinserts an existing collision unit into the spatial index, updating its position and
 /// other properties as necessary
@@ -356,30 +257,6 @@ bool BoxColManager::isSphereInSpatialCache(f32 radius, const EGG::Vector3f &pos,
     EGG::Vector3f posDiff = pos - m_cachePoint;
 
     return EGG::Mathf::abs(posDiff.x) <= radiusDiff && EGG::Mathf::abs(posDiff.z) <= radiusDiff;
-}
-
-/// @brief Helper function since the getters share all code except the flag
-void *BoxColManager::getNextImpl(s32 &id, const BoxColFlag &flag) {
-    if (id == MAX_UNIT_COUNT) {
-        return nullptr;
-    }
-
-    BoxColUnit *unit = m_units[id];
-    iterate(id, flag);
-
-    return unit->m_userData;
-}
-
-/// @addr{Inlined}
-/// @brief Finds the next collision unit in the spatial index that matches the specified flag
-void BoxColManager::iterate(s32 &iter, const BoxColFlag &flag) {
-    while (++iter < m_maxID) {
-        if (m_units[iter]->m_flag.on(flag)) {
-            return;
-        }
-    }
-
-    iter = MAX_UNIT_COUNT;
 }
 
 /// @addr{0x80786134}

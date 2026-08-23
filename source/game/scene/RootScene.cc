@@ -4,9 +4,6 @@
 #include "game/system/RaceConfig.hh"
 #include "game/system/ResourceManager.hh"
 
-#include <egg/core/SceneManager.hh>
-#include <host/SceneId.hh>
-
 #include <ScopeLock.hh>
 
 namespace Kinoko::Scene {
@@ -18,16 +15,6 @@ RootScene::RootScene() {
 
 /// @addr{0x805429A8}
 RootScene::~RootScene() = default;
-
-/// @addr{0x80543B84}
-void RootScene::enter() {
-    allocate();
-    init();
-#ifdef BUILD_DEBUG
-    checkMemory();
-#endif // BUILD_DEBUG
-    m_sceneMgr->createChildScene(static_cast<int>(Host::SceneId::Race), this);
-}
 
 /// @addr{0x80542D4C}
 void RootScene::allocate() {

@@ -15,7 +15,12 @@ public:
     void calcEngines() override;
     void destroyEngines() override;
     void configure() override;
-    void onReinit() override;
+
+    /// @brief This is called on race shutdown in order to prep for the next race.
+    /// @addr{0x80554A94}
+    void onReinit() override {
+        configure();
+    }
 };
 
 } // namespace Kinoko::Scene

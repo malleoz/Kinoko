@@ -10,8 +10,20 @@ public:
     ObjectDokan(const System::MapdataGeoObj &params);
     ~ObjectDokan() override;
 
-    void init() override;
-    void calc() override;
+    /// @addr{0x80778830}
+    void init() override {
+        m_isAirborne = false;
+    }
+
+    /// @addr{0x807788C8}
+    void calc() override {
+        if (!m_isAirborne) {
+            return;
+        }
+
+        calcPos();
+        calcFloor();
+    }
 
     /// @addr{0x80778FE4}
     [[nodiscard]] u32 loadFlags() const override {
@@ -34,7 +46,17 @@ private:
     }
 
     void calcFloor();
-    void tryStartAirborne();
+
+    /// @addr{0x80778BA0}
+    /// @brief If the pipe is not already airborne, induces upwards velocity
+    void tryStartAirborne() {
+        constexpr f32 INITIAL_VELOCITY = 100.0f;
+
+        if (!m_isAirborne) {
+            m_isAirborne = true;
+            m_velocity = INITIAL_VELOCITY * EGG::Vector3f::ey;
+        }
+    }
 
     bool m_isAirborne;        ///< Whether the pipe is currently mid-air
     EGG::Vector3f m_velocity; ////< The current velocity of the pipe

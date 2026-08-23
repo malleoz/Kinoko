@@ -1,7 +1,5 @@
 #include "ObjectFlamePoleV.hh"
 
-#include "game/system/RaceManager.hh"
-
 namespace Kinoko::Field {
 
 /// @addr{0x806C3AA4}
@@ -44,18 +42,6 @@ void ObjectFlamePoleV::init() {
 
     m_currOffsetY = 0.0f;
     m_fallSpeed = m_maxOffsetY / FALL_FRAMES;
-}
-
-/// @addr{0x806C3FCC}
-void ObjectFlamePoleV::calc() {
-    if (System::RaceManager::Instance()->timer() <= m_initDelay) {
-        return;
-    }
-
-    StateManager::calc();
-
-    f32 posY = m_currOffsetY + (m_initPosY - m_maxOffsetY);
-    setPos(EGG::Vector3f(pos().x, posY, pos().z));
 }
 
 /// @addr{0x806C42A0}

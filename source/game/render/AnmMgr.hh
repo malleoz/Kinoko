@@ -1,10 +1,6 @@
 #pragma once
 
-#include "game/system/ResourceManager.hh"
-
 #include <abstract/g3d/ResFile.hh>
-
-#include <egg/core/Allocator.hh>
 
 namespace Kinoko::Render {
 
@@ -46,9 +42,25 @@ public:
     /// @addr{0x80555750}
     AnmMgr(DrawMdl *drawMdl) : m_parent(drawMdl) {}
 
+    /// @addr{0x8055597C}
     void linkAnims(size_t idx, const Abstract::g3d::ResFile *resFile, const char *name,
-            AnmType anmType);
-    void playAnim(f32 frame, f32 rate, size_t idx);
+            AnmType anmType) {
+        // For now, we only care about Chr
+        switch (anmType) {
+        case AnmType::Chr:
+            m_anmList.emplace_back(resFile->resAnmChr(name), anmType, idx);
+            break;
+        default:
+            break;
+        }
+    }
+
+    /// @addr{0x805573CC}
+    void playAnim(f32 /*frame*/, f32 /*rate*/, size_t idx) {
+        ASSERT(idx < m_anmList.size());
+        AnmNodeChr *&activeChrAnim = m_activeAnims[static_cast<size_t>(AnmType::Chr)];
+        activeChrAnim = &(*std::next(m_anmList.begin(), idx));
+    }
 
     /// @addr{0x80557340}
     [[nodiscard]] const AnmNodeChr *activeAnim(AnmType anmType) const {
@@ -57,7 +69,7 @@ public:
 
 private:
     [[maybe_unused]] DrawMdl *m_parent;
-    std::list<AnmNodeChr, EGG::Allocator<AnmNodeChr>> m_anmList;
+    alloc_list<AnmNodeChr> m_anmList;
     std::array<AnmNodeChr *, static_cast<size_t>(AnmType::Max) - 1> m_activeAnims;
 };
 

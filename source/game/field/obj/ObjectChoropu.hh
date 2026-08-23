@@ -6,8 +6,6 @@
 
 #include "game/kart/KartCollide.hh"
 
-#include <vector>
-
 namespace Kinoko::Field {
 
 class ObjectChoropuGround;
@@ -29,14 +27,26 @@ public:
         return 1;
     }
 
-    Kart::Reaction onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
-            Kart::Reaction reactionOnObj, EGG::Vector3f &hitDepth) override;
+    /// @addr{0x806BA144}
+    Kart::Reaction onCollision(Kart::KartObject * /*kartObj*/, Kart::Reaction reactionOnKart,
+            Kart::Reaction /*reactionOnObj*/, EGG::Vector3f & /*hitDepth*/) override {
+        return m_currentStateId == 1 ? Kart::Reaction::SmallBump : reactionOnKart;
+    }
 
 private:
     void enterStateStub() {}
     void enterDigging();
     void enterPeeking();
-    void enterJumping();
+
+    /// @addr{0x806BB39C}
+    /// @brief Runs once when the mole jumps out of its hole
+    void enterJumping() {
+        enableCollision();
+
+        setPos(m_isStationary ? m_transMat.base(3) : m_railMat.base(3));
+        setRot(EGG::Vector3f(rot().x, rot().y, 0.0f));
+    }
+
     void calcStateStub() {}
     void calcDigging();
     void calcPeeking();
@@ -45,7 +55,20 @@ private:
     void calcGround();
     void calcGroundObjs();
     [[nodiscard]] EGG::Matrix34f calcInterpolatedPose(f32 t) const;
-    [[nodiscard]] f32 calcJumpHeight() const;
+
+    /// @addr{0x806BBB14}
+    /// @brief Calculates the current height of the mole in its parabolic jump curve
+    /// @details Follows a parabolic trajectory defined by
+    /// \f$ y = -1.35t^2 + 65.0t \f$
+    /// where \f$t\f$ is the current frame of the jump.
+    [[nodiscard]] f32 calcJumpHeight() const {
+        constexpr f32 JUMP_LINEAR_COEFFICIENT = 65.0f;
+        constexpr f32 JUMP_QUADRATIC_COEFFICIENT = 2.7f;
+
+        return JUMP_LINEAR_COEFFICIENT * static_cast<f32>(m_currentFrame) -
+                static_cast<f32>(m_currentFrame) * 0.5f * JUMP_QUADRATIC_COEFFICIENT *
+                static_cast<f32>(m_currentFrame);
+    }
 
     owning_span<ObjectChoropuGround *> m_groundObjs; ///< Dirt trail segments behind moles on MMM
     ObjectChoropuHoll *m_objHoll;                    ///< The hole the mole emerges from

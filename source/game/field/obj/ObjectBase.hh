@@ -8,9 +8,6 @@
 
 #include "game/system/map/MapdataGeoObj.hh"
 
-#include <egg/core/BitFlag.hh>
-#include <egg/math/Matrix.hh>
-
 namespace Kinoko::Field {
 
 /// @brief %Abstract base class for all objects in the game

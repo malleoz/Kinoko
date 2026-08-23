@@ -3,8 +3,6 @@
 #include "game/field/CollisionDirector.hh"
 #include "game/field/ObjectDirector.hh"
 
-#include "game/kart/KartObject.hh"
-
 namespace Kinoko::Field {
 
 /// @addr{0x80777564}
@@ -68,19 +66,6 @@ void ObjectPress::calc() {
     }
 }
 
-/// @addr{0x807786E4}
-void ObjectPress::loadAnims() {
-    std::array<const char *, 1> names = {{
-            "Press",
-    }};
-
-    std::array<Render::AnmType, 1> types = {{
-            Render::AnmType::Chr,
-    }};
-
-    linkAnims(names, types);
-}
-
 /// @addr{0x8077840C}
 /// @details Defines the convex hull geometry that represents the press's collision shape.
 void ObjectPress::createCollision() {
@@ -128,42 +113,6 @@ Kart::Reaction ObjectPress::onCollision(Kart::KartObject *kartObj, Kart::Reactio
     return reactionOnKart;
 }
 
-/// @brief Runs every frame that the press is in the raised state
-/// @addr{0x80777A90}
-/// @details When the raised timer expires, the press will transition to the windup state.
-void ObjectPress::calcRaised() {
-    constexpr u32 WINDUP_FRAMES = 10;
-
-    if (--m_raisedTimer == 0) {
-        m_state = State::WindUp;
-        m_windUpTimer = WINDUP_FRAMES;
-    }
-}
-
-/// @addr{0x80777B54}
-/// @brief Runs every frame that the press is winding up before stomping down
-/// @details When the windup timer expires, the press will transition to the lowering state.
-void ObjectPress::calcWindUp() {
-    constexpr f32 SPEED = 10.0f;
-
-    addPos(EGG::Vector3f(0.0f, SPEED, 0.0f));
-
-    if (--m_windUpTimer == 0) {
-        m_state = State::Lowering;
-    }
-}
-
-/// @addr{0x80777B90}
-/// @brief Runs every frame that the press is stomping down
-/// @details The press accelerates downwards and checks to see if it has hit the floor.
-void ObjectPress::calcLowering() {
-    constexpr f32 ACCEL = 3.0f;
-
-    m_loweringVelocity -= ACCEL;
-    addPos(EGG::Vector3f(0.0f, m_loweringVelocity, 0.0f));
-    checkCollisionLowering();
-}
-
 /// @addr{0x80777BC0}
 /// @brief Runs every frame that the press is in contact with the floor
 /// @details Plays a press and unpress animation. When the press animatiosn finish, the press will
@@ -197,17 +146,6 @@ void ObjectPress::calcRaising() {
     }
 }
 
-/// @addr{0x80778218}
-/// @brief Transitions the press into the raising state and calculates the animation timer
-void ObjectPress::enterRaising() {
-    auto *anmMgr = m_drawMdl->anmMgr();
-    f32 frameCount = anmMgr->activeAnim(Render::AnmType::Chr)->frameCount();
-    anmMgr->playAnim(frameCount, -ANM_RATE, 0);
-
-    m_startingRise = true;
-    m_anmTimer = frameCount / ANM_RATE;
-}
-
 /// @addr{0x80777D10}
 /// @brief Runs while the press is lowering to check if it has hit the floor
 void ObjectPress::checkCollisionLowering() {
@@ -239,22 +177,5 @@ ObjectPressSenko::ObjectPressSenko(const System::MapdataGeoObj &params)
 
 /// @addr{0x8076E818}
 ObjectPressSenko::~ObjectPressSenko() = default;
-
-/// @addr{0x8076E870}
-void ObjectPressSenko::calcRaised() {
-    if (m_startingWindup) {
-        startWindup();
-        m_startingWindup = false;
-    }
-}
-
-/// @addr{0x8077808C}
-/// @brief Runs once when the press is in the raised state and has been told to begin stomping down
-void ObjectPressSenko::startWindup() {
-    constexpr u32 WINDUP_DURATION = 10;
-
-    m_state = State::WindUp;
-    m_windUpTimer = WINDUP_DURATION;
-}
 
 } // namespace Kinoko::Field

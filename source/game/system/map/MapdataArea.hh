@@ -110,7 +110,7 @@ public:
 
     [[nodiscard]] MapdataAreaBase *getSorted(u16 i) const {
         ASSERT(!m_sortedEntries.empty());
-        return i < m_entryCount ? m_sortedEntries[i] : nullptr;
+        return i < m_sortedEntries.size() ? m_sortedEntries[i] : nullptr;
     }
 
 private:

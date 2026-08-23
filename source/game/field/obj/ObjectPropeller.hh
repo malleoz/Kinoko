@@ -14,7 +14,15 @@ public:
     ObjectPropeller(const System::MapdataGeoObj &params);
     ~ObjectPropeller() override;
 
-    void init() override;
+    /// @addr{0x80764EB4}
+    /// @brief Initializes the propeller's angular velocity and rotation matrix
+    /// @details The rotation direction is flipped if param setting 2 is set to 1.
+    void init() override {
+        initAngVel();
+        m_initMat.makeR(rot());
+        m_initMat.setBase(3, pos());
+        m_axis = m_initMat.base(2);
+    }
 
     /// @addr{0x80765068}
     void calc() override {

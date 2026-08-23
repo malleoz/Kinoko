@@ -55,16 +55,6 @@ void RailInterpolator::calcVelocities() {
     }
 }
 
-/// @addr{0x806F0814}
-/// @brief Checks whether the interpolator has reached the end of the rail
-bool RailInterpolator::shouldChangeDirection() const {
-    if (!m_isOscillating) {
-        return m_pointCount == m_nextPointIdx;
-    }
-
-    return m_forward ? m_nextPointIdx == m_pointCount : m_nextPointIdx == -1;
-}
-
 /// @addr{0x806F0880}
 /// @brief Updates the next point index to reflect the direction change and toggles the forward flag
 void RailInterpolator::calcDirectionChange() {
@@ -373,22 +363,6 @@ void RailSmoothInterpolator::getPathLocation(f32 t, s16 &idx, f32 &len) const {
             return;
         }
     }
-}
-
-/// @addr{0x806EF350}
-/// @brief Evaluates a cubic bezier curve at the given parameter t
-/// @param t The parameter along the curve to evaluate, in the range [0, 1]
-/// @param trans The bezier curve to evaluate
-EGG::Vector3f RailSmoothInterpolator::calcCubicBezierPos(f32 t,
-        const RailSplineTransition &trans) const {
-    f32 dt = 1.0f - t;
-
-    EGG::Vector3f res = trans.m_p0 * (dt * dt * dt);
-    res += trans.m_p1 * (3.0f * t * (dt * dt));
-    res += trans.m_p2 * (3.0f * (t * t) * dt);
-    res += trans.m_p3 * (t * t * t);
-
-    return res;
 }
 
 /// @addr{0x806EF454}

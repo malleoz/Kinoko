@@ -170,15 +170,6 @@ void ObjectHanachan::init() {
     initChain();
 }
 
-/// @addr{0x806C9BC0}
-/// @brief Runs once when the Wiggler begins walking
-void ObjectHanachan::enterWalk() {
-    setRailVel();
-    m_swayAmplitude = INIT_SWAY_AMPLITUDE;
-    m_still = false;
-    m_leftMisalignFrame = 0;
-}
-
 /// @addr{0x806C9D38}
 /// @brief Runs every frame when the Wiggler is walking along its rail
 void ObjectHanachan::calcWalk() {
@@ -209,28 +200,6 @@ void ObjectHanachan::calcWait() {
     m_chain.calc();
 }
 
-/// @addr{0x806CA24C}
-/// @brief Called when the Wiggler reaches the end of a rail segment
-/// @details If the rail point's first setting is non-zero, then the Wiggler will wait at that point
-/// for that number of frames
-void ObjectHanachan::onSegmentEnd() {
-    u16 setting = m_railInterpolator->curPoint().setting[0];
-    if (setting != 0) {
-        m_still = true;
-        m_stillDuration = setting;
-    }
-}
-
-/// @addr{0x806CA27C}
-/// @brief Caches the last frame's rail tangent and updates the rail interpolator
-void ObjectHanachan::calcRail() {
-    m_prevRailTangent = m_railInterpolator->curTangentDir();
-
-    if (m_railInterpolator->calc() == RailInterpolator::Status::SegmentEnd) {
-        onSegmentEnd();
-    }
-}
-
 /// @addr{0x806CA2F0}
 /// @brief Updates the transforms of the Wiggler's body parts based on the chain link positions
 void ObjectHanachan::calcBody() {
@@ -259,24 +228,6 @@ void ObjectHanachan::initBody() {
         m_parts[i]->setPos(m_parts[i - 1]->pos() - curTanDir * BODY_PART_DISTANCES[i - 1]);
         m_parts[i]->setMatrixTangentTo(EGG::Vector3f::ey, curTanDir);
     }
-}
-
-/// @addr{0x806CA9AC}
-/// @brief Initializes the positions of the chain link objects based on the initial parts' positions
-void ObjectHanachan::initChain() {
-    m_chain.init();
-
-    for (size_t i = 0; i < m_parts.size(); ++i) {
-        m_chain.setPos(i, m_parts[i]->pos());
-    }
-}
-
-/// @addr{0x806CAAD0}
-/// @brief Resets the chain link positions and clears their velocity and spring force
-void ObjectHanachan::clearChain() {
-    m_chain.setPos(0, m_railInterpolator->curPos());
-    m_chain.setVel(0, EGG::Vector3f::zero);
-    m_chain.addSpringForce(0, EGG::Vector3f::ey * SphereLink::GRAVITY);
 }
 
 /// @addr{0x806CAB5C}

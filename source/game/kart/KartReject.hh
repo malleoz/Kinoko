@@ -16,7 +16,10 @@ public:
     KartReject();
     ~KartReject();
 
-    void reset();
+    /// @addr{0x80585AE8}
+    void reset() {
+        m_rejectSign = 0.0f;
+    }
 
     void calcRejectRoad();
     bool calcRejection();

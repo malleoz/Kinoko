@@ -49,7 +49,14 @@ private:
         }
     }
 
-    void enterStartStomp();
+    /// @addr{0x807638F8}
+    /// @brief Runs once when transitioning to the StartStomp state
+    void enterStartStomp() {
+        m_state = State::StartStomp;
+        m_forwardTimer = 0;
+        m_movingForward = false;
+        m_lastStompZ = pos().z;
+    }
 
     void calcForward();
     void calcStartStomp();
@@ -63,7 +70,19 @@ private:
     }
 
     void calcRot();
-    void calcForwardRail();
+
+    /// @addr{0x8076321C}
+    /// @brief Updates position from the rail every frame while the Thwomps are moving forward
+    void calcForwardRail() {
+        m_railInterpolator->setCurrVel(m_forwardVel);
+
+        if (m_railInterpolator->calc() == RailInterpolator::Status::ChangingDirection) {
+            enterStartStomp();
+        }
+
+        updatePos(m_railInterpolator->curPos());
+    }
+
     void calcForwardOscillation();
 
     void updatePos(const EGG::Vector3f &pos);

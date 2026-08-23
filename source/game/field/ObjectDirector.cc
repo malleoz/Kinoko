@@ -1,10 +1,7 @@
 #include "ObjectDirector.hh"
 
-#include "game/field/BoxColManager.hh"
 #include "game/field/ObjectDrivableDirector.hh"
 #include "game/field/obj/ObjectRegistry.hh"
-
-#include "game/kart/KartObject.hh"
 
 #include "game/system/CourseMap.hh"
 #include "game/system/RaceConfig.hh"

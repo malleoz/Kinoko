@@ -59,15 +59,6 @@ void ObjectHeyhoBall::initProjectile(const EGG::Vector3f &pos) {
     m_initYSpeed = m_yDist / m_airtime + 0.5f * 4.0f * m_airtime;
 }
 
-/// @addr{0x806D0A3C}
-/// @brief Runs once when the cannonball is fired
-void ObjectHeyhoBall::enterFalling() {
-    if (!getUnit()) {
-        loadAABB(0.0f);
-        resize(INIT_BLAST_RADIUS, 0.0f);
-    }
-}
-
 /// @addr{0x806D0AD8}
 /// @brief Runs every frame that the cannonball is falling
 void ObjectHeyhoBall::calcFalling() {
@@ -105,17 +96,6 @@ void ObjectHeyhoBall::calcExploding() {
         m_intensity = m_currentFrame >= SPIN_FRAME ? ExplosionIntensity::SpinSomeSpeed :
                                                      ExplosionIntensity::ExplosionLoseItem;
     }
-}
-
-/// @addr{0x806D14D8}
-/// @brief Calculates the cannonball scale on the first 46 frames of the explosion
-/// @todo Describe the parabola once we better understand the significance of the "40" term
-void ObjectHeyhoBall::calcExplodingScale() {
-    f32 shrinkFrames = static_cast<f32>(m_currentFrame) - 40.0f;
-    f32 scale = 1.2f * m_blastRadiusRatio + -m_scaleChangeRate * shrinkFrames * shrinkFrames;
-
-    scale = std::min(m_blastRadiusRatio, scale);
-    setScale(scale);
 }
 
 } // namespace Kinoko::Field

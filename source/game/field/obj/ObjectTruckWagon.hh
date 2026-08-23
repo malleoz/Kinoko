@@ -1,8 +1,7 @@
 #pragma once
 
-#include "game/field/obj/ObjectCollidable.hh"
-
 #include "game/field/StateManager.hh"
+#include "game/field/obj/ObjectCollidable.hh"
 
 namespace Kinoko::Field {
 

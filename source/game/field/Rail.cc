@@ -161,19 +161,6 @@ void RailSpline::invalidateTransitions(bool lastOnly) {
     }
 }
 
-/// @addr{0x806EE27C}
-/// @brief Calculates the control points of a cubic bezier curve passing through the provided points
-void RailSpline::calcCubicBezierControlPoints(const EGG::Vector3f &p0, const EGG::Vector3f &p1,
-        const EGG::Vector3f &p2, const EGG::Vector3f &p3, s32 count,
-        RailSplineTransition &transition) {
-    transition.m_p0 = p1;
-    transition.m_p1 = calcCubicBezierP1(p0, p1, p2);
-    transition.m_p2 = calcCubicBezierP2(p1, p2, p3);
-    transition.m_p3 = p2;
-    transition.m_length = estimateLength(transition, count);
-    transition.m_lengthInv = 1.0f / transition.m_length;
-}
-
 /// @addr{0x806EE56C}
 /// @brief Approximates the length of a cubic bezier curve by sampling points along the curve
 /// @param count The number of samples to take along the curve (always @ref ESTIMATOR_SAMPLE_COUNT)
@@ -197,41 +184,6 @@ f32 RailSpline::estimateLength(const RailSplineTransition &transition, s32 count
     }
 
     return length;
-}
-
-/// @addr{0x806EE408}
-/// @brief Computes the outgoing bezier control point after p1
-EGG::Vector3f RailSpline::calcCubicBezierP1(const EGG::Vector3f &p0, const EGG::Vector3f &p1,
-        const EGG::Vector3f &p2) const {
-    EGG::Vector3f res = p2 - p0;
-    f32 len = res.length();
-    res.normalise2();
-    return p1 + res * (len * CUBIC_BEZIER_TENSION_FACTOR);
-}
-
-/// @addr{0x806EE4B8}
-/// @brief Computes the incoming bezier control point before p2
-EGG::Vector3f RailSpline::calcCubicBezierP2(const EGG::Vector3f &p0, const EGG::Vector3f &p1,
-        const EGG::Vector3f &p2) const {
-    EGG::Vector3f res = p0 - p2;
-    f32 len = res.length();
-    res.normalise2();
-    return p1 + res * (len * CUBIC_BEZIER_TENSION_FACTOR);
-}
-
-/// @addr{0x806EE72C}
-/// @brief Evaluates a cubic bezier curve at the given parameter t
-/// @param t The parameter along the curve to evaluate, in the range [0, 1]
-/// @param transition The bezier curve to evaluate
-EGG::Vector3f RailSpline::cubicBezier(f32 t, const RailSplineTransition &transition) const {
-    f32 dt = 1.0f - t;
-
-    EGG::Vector3f res = transition.m_p0 * (dt * dt * dt);
-    res += transition.m_p1 * (3.0f * t * (dt * dt));
-    res += transition.m_p2 * (3.0f * (t * t) * dt);
-    res += transition.m_p3 * (t * t * t);
-
-    return res;
 }
 
 } // namespace Kinoko::Field

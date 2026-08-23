@@ -2,8 +2,6 @@
 
 #include "game/system/RaceManager.hh"
 
-#include <algorithm>
-
 namespace Kinoko::Field {
 
 /// @addr{0x80809448}

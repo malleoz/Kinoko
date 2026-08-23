@@ -1,7 +1,6 @@
 #pragma once
 
 #include "game/kart/KartMove.hh"
-#include "game/kart/KartObjectManager.hh"
 
 namespace Kinoko::Render {
 

@@ -14,8 +14,22 @@ public:
     ObjectShip64(const System::MapdataGeoObj &params);
     ~ObjectShip64();
 
-    void init() override;
-    void calc() override;
+    /// @addr{0x80765E30}
+    void init() override {
+        m_railInterpolator->init(0, 0);
+        m_tangent = m_railInterpolator->curTangentDir();
+        m_railInterpolator->setPerPointVelocities(true);
+        calc();
+        calcModel();
+    }
+
+    /// @addr{0x80766144}
+    /// @details Interpolates the forward direction to create smooth movement along the rail.
+    void calc() override {
+        m_railInterpolator->calc();
+        setPos(m_railInterpolator->curPos());
+        calcTangent();
+    }
 
     /// @addr{0x80766CA4}
     [[nodiscard]] u32 loadFlags() const override {

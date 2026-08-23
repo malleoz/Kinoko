@@ -1,8 +1,6 @@
 #include "ObjectOilSFC.hh"
 
 #include "game/kart/KartCollide.hh"
-#include "game/kart/KartObject.hh"
-#include "game/kart/KartState.hh"
 
 namespace Kinoko::Field {
 

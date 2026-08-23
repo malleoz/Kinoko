@@ -12,8 +12,15 @@ public:
         EGG::egg_delete(m_anmMgr);
     }
 
+    /// @addr{0x8055DDEC}
     void linkAnims(size_t idx, const Abstract::g3d::ResFile *resFile, const char *name,
-            AnmType anmType);
+            AnmType anmType) {
+        if (!m_anmMgr) {
+            m_anmMgr = EGG::egg_new<AnmMgr>(this);
+        }
+
+        m_anmMgr->linkAnims(idx, resFile, name, anmType);
+    }
 
     [[nodiscard]] AnmMgr *anmMgr() {
         return m_anmMgr;

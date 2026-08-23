@@ -1,5 +1,3 @@
-/// TODO: Also need 806d2908
-
 #pragma once
 
 #include "game/field/StateManager.hh"
@@ -46,7 +44,16 @@ public:
 
     void createCollision() override;
     void calcCollisionTransform() override;
-    [[nodiscard]] f32 getCollisionRadius() const override;
+
+    /// @addr{0x806D69C0}
+    [[nodiscard]] f32 getCollisionRadius() const override {
+        constexpr f32 NORMAL_RADIUS = 600.0f;
+        constexpr f32 TRUCK_RADIUS = 1100.0f;
+
+        ASSERT(m_carType == CarType::Truck || m_carType == CarType::Normal);
+        return (m_carType == CarType::Truck) ? TRUCK_RADIUS : NORMAL_RADIUS;
+    }
+
     Kart::Reaction onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
             Kart::Reaction reactionOnObj, EGG::Vector3f &hitDepth) override;
     bool checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &dist) override;

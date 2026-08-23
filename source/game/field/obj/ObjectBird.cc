@@ -73,12 +73,6 @@ void ObjectBirdLeader::init() {
     m_railInterpolator->setCurrVel(static_cast<f32>(m_mapObj->setting(0)));
 }
 
-/// @addr{0x8077C504}
-void ObjectBirdLeader::calc() {
-    m_railInterpolator->calc();
-    setPos(m_railInterpolator->curPos());
-}
-
 /// @addr{0x8077CC78}
 void ObjectBirdLeader::loadAnims() {
     std::array<const char *, 1> names = {{

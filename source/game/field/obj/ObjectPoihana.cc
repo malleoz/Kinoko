@@ -181,17 +181,6 @@ void ObjectPoihana::calcStep() {
     m_vel = Interpolate(0.05f, m_vel, m_targetVel);
 }
 
-/// @addr{0x80749610}
-/// @brief Calculates the direction vector between the current position and the target position
-void ObjectPoihana::calcDir() {
-    EGG::Vector3f delta = m_targetPos - curPos();
-    delta.y = 0.0f;
-    if (delta.squaredLength() > std::numeric_limits<f32>::epsilon()) {
-        delta.normalise2();
-        m_dir = delta;
-    }
-}
-
 /// @addr{0x807496C4}
 /// @brief Calculates the smoothed forward vector based on @ref m_dir and the previous forward
 void ObjectPoihana::calcForward() {

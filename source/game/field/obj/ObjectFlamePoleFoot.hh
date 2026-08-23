@@ -4,6 +4,8 @@
 #include "game/field/obj/ObjectFlamePole.hh"
 #include "game/field/obj/ObjectKCL.hh"
 
+#include "game/system/RaceManager.hh"
+
 namespace Kinoko::Field {
 
 class ObjectFlamePole;
@@ -20,7 +22,17 @@ public:
     ~ObjectFlamePoleFoot() override;
 
     void init() override;
-    void calc() override;
+
+    /// @addr{0x8067EF70}
+    void calc() override {
+        if (System::RaceManager::Instance()->timer() < m_initDelay) {
+            return;
+        }
+
+        calcStates();
+        StateManager::calc();
+        calcHeightAndScale();
+    }
 
     /// @addr{0x80681590}
     [[nodiscard]] u32 loadFlags() const override {
@@ -78,8 +90,23 @@ private:
 
     void calcStateStub() {}
 
-    void calcEruptingUp();
-    void calcEruptingStay();
+    /// @addr{0x8067F484}
+    /// @brief Runs every frame when the flame pole is raising up
+    void calcEruptingUp() {
+        f32 frame = static_cast<f32>(m_cycleFrame - m_stateStart[1]);
+        m_heightOffset =
+                std::min(m_maxHeight, m_initEruptVel * frame - frame * 0.5f * m_eruptAccel * frame);
+    }
+
+    /// @addr{0x8067F544}
+    /// @brief Runs every frame after the flame pole reaches max height and before falling to
+    /// dormancy
+    void calcEruptingStay() {
+        constexpr f32 AMPLITUDE = 50.0f;
+
+        f32 angle = 360.0f * static_cast<f32>(m_cycleFrame - m_stateStart[2]) / 30.0f;
+        m_heightOffset = m_eruptedHeightOffset + AMPLITUDE * EGG::Mathf::SinFIdx(DEG2FIDX * angle);
+    }
 
     /// @addr{0x8067F604}
     /// @brief Runs every frame while the flame pole has finished erupting and is descending
@@ -89,7 +116,16 @@ private:
     }
 
     void calcStates();
-    void calcHeightAndScale();
+
+    /// @addr{0x8067F7C8}
+    /// @brief Calculates the height and scale of the flame pole based on the current cycle frame
+    void calcHeightAndScale() {
+        setScale(getScaleY(0));
+        EGG::Vector3f polePos = m_pole->pos();
+        m_pole->setPos(
+                EGG::Vector3f(polePos.x, m_heightOffset + (pos().y - m_maxHeight), polePos.z));
+        m_pole->setScale(m_maxScale);
+    }
 
     ObjectFlamePole *m_pole;         ///< Pointer to the associated flamepole
     const u32 m_extraCycleFrames;    ///< Additional dormancy frames
@@ -107,6 +143,7 @@ private:
     f32 m_eruptAccel;          ///< Deceleration applied to height offset as the pole erupts
     f32 m_initEruptVel;        ///< Initial velocity when the pole erupts
 
+    /// @addr{0x809C21E0}
     /// @brief Global variable that tracks the number of flamepole instances
     /// @details If the size factor (third param setting) for a flame pole is set to 0, then the
     /// flame pole's scale is computed as 3 + (s_flamePoleCount % 3)

@@ -2,8 +2,6 @@
 
 #include "game/field/obj/ObjectCollidable.hh"
 
-#include "game/system/RaceManager.hh"
-
 namespace Kinoko::Field {
 
 class ObjectBirdLeader;
@@ -53,7 +51,12 @@ public:
     ~ObjectBirdLeader() override;
 
     void init() override;
-    void calc() override;
+
+    /// @addr{0x8077C504}
+    void calc() override {
+        m_railInterpolator->calc();
+        setPos(m_railInterpolator->curPos());
+    }
 
     /// @addr{0x8077CCD4}
     [[nodiscard]] u32 loadFlags() const override {

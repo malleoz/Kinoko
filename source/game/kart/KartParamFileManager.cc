@@ -3,6 +3,7 @@
 namespace Kinoko::Kart {
 
 /// @addr{0x80591C9C}
+/// @brief Clears all loaded parameter files from the manager (but does not clear them from memory)
 void KartParamFileManager::clear() {
     m_kartParam.clear();
     m_driverParam.clear();
@@ -24,8 +25,13 @@ void KartParamFileManager::init() {
     }
 }
 
+/// @brief Gets a @ref EGG::RamStream for the provided character's parameters from `driverParam.bin`
+/// @param character The character to get the parameters for
+/// @return A @ref EGG::RamStream containing the character's parameters
+/// @details Panics if the character is invalid and asserts that the `driverParam.bin` file is
+/// loaded.
 EGG::RamStream KartParamFileManager::getDriverStream(Character character) const {
-    s32 idx = -1;
+    s32 idx;
     switch (character) {
     case Character::Small_Mii_Outfit_A_Male:
     case Character::Small_Mii_Outfit_A_Female:
@@ -56,7 +62,7 @@ EGG::RamStream KartParamFileManager::getDriverStream(Character character) const 
         break;
     default:
         if (character > Character::Rosalina) {
-            PANIC("Uh oh.");
+            PANIC("Invalid character.");
         }
 
         idx = static_cast<s32>(character);
@@ -68,9 +74,13 @@ EGG::RamStream KartParamFileManager::getDriverStream(Character character) const 
     return EGG::RamStream(&file->params[idx], sizeof(KartParam::Stats));
 }
 
+/// @brief Gets a @ref EGG::RamStream for the provided vehicle's parameters from `kartParam.bin`
+/// @param vehicle The vehicle to get the parameters for
+/// @return A @ref EGG::RamStream containing the vehicle's parameters
+/// @details Panics if the vehicle is invalid and asserts that the `kartParam.bin` file is loaded.
 EGG::RamStream KartParamFileManager::getVehicleStream(Vehicle vehicle) const {
     if (vehicle >= Vehicle::Max) {
-        PANIC("Uh oh.");
+        PANIC("Invalid vehicle.");
     }
 
     s32 idx = static_cast<s32>(vehicle);
@@ -79,9 +89,14 @@ EGG::RamStream KartParamFileManager::getVehicleStream(Vehicle vehicle) const {
     return EGG::RamStream(&file->params[idx], sizeof(KartParam::Stats));
 }
 
+/// @brief Gets a @ref EGG::RamStream for the vehicle's hitbox params from the kart's @ref BSP file
+/// @param vehicle The vehicle to get the hitbox params for
+/// @return A @ref EGG::RamStream containing the vehicle's hitbox params
+/// @details Panics if the vehicle is invalid and asserts that the vehicle's @ref BSP file is loaded
+/// and has the correct size.
 EGG::RamStream KartParamFileManager::getHitboxStream(Vehicle vehicle) const {
     if (vehicle >= Vehicle::Max) {
-        PANIC("Uh oh.");
+        PANIC("Invalid vehicle.");
     }
 
     auto *resourceManager = System::ResourceManager::Instance();
@@ -93,9 +108,15 @@ EGG::RamStream KartParamFileManager::getHitboxStream(Vehicle vehicle) const {
     return EGG::RamStream(file, size);
 }
 
+/// @brief Gets a @ref EGG::RamStream for the provided bike's display parameters from
+/// `bikePartsDispParam.bin`
+/// @param vehicle The bike to get the display parameters for
+/// @return A @ref EGG::RamStream containing the bike's display parameters
+/// @details Panics if the vehicle is invalid and asserts that the `bikePartsDispParam.bin` file is
+/// loaded.
 EGG::RamStream KartParamFileManager::getBikeDispParamsStream(Vehicle vehicle) const {
     if (vehicle < Vehicle::Standard_Bike_S || vehicle >= Vehicle::Max) {
-        PANIC("Uh oh.");
+        PANIC("Invalid vehicle.");
     }
 
     // We need to index at the correct offset
@@ -107,9 +128,15 @@ EGG::RamStream KartParamFileManager::getBikeDispParamsStream(Vehicle vehicle) co
     return EGG::RamStream(&file->params[idx], sizeof(KartParam::BikeDisp));
 }
 
+/// @brief Gets a @ref EGG::RamStream for the provided kart's display parameters from
+/// `kartPartsDispParam.bin`
+/// @param vehicle The kart to get the display parameters for
+/// @return A @ref EGG::RamStream containing the kart's display parameters
+/// @details Panics if the vehicle is invalid and asserts that the `kartPartsDispParam.bin` file is
+/// loaded.
 EGG::RamStream KartParamFileManager::getKartDispParamsStream(Vehicle vehicle) const {
     if (vehicle < Vehicle::Standard_Kart_S || vehicle > Vehicle::Honeycoupe) {
-        PANIC("Uh oh.");
+        PANIC("Invalid vehicle.");
     }
 
     s32 idx = static_cast<s32>(vehicle);
@@ -119,6 +146,27 @@ EGG::RamStream KartParamFileManager::getKartDispParamsStream(Vehicle vehicle) co
     return EGG::RamStream(&file->params[idx], sizeof(KartParam::KartDisp));
 }
 
+/// @brief Gets a @ref EGG::RamStream for the provided character's camera parameters from
+/// `kartCameraParam.bin`
+/// @param character The character to get the camera parameters for
+/// @return A @ref EGG::RamStream containing the character's camera parameters
+/// @details Panics if the character's weight class is invalid and asserts that the
+/// `kartCameraParam.bin file is loaded.
+/**
+ * @note For each weight class, there are 4 sets of camera parameters, as follows:\n
+ *
+ * Index | Players    | Aspect Ratio |
+ * ------|------------|--------------|
+ * 0x0   | 1, 3, or 4 | 4:3          |
+ * 0x1   | 1, 3, or 4 | 16:9         |
+ * 0x2   | 2          | 4:3          |
+ * 0x3   | 2          | 16:9         |
+ * \n Because Kinoko currently only supports single player replays, we can ignore indices `0x2` and
+ *`0x3`. In the base game, it is possible to create a ghost such that its playback only synchronizes
+ *when the console is set to either 4:3 or 16:9, such that it desyncs if you change the aspect ratio
+ *to 16:9 or 4:3 respectively. Because this is an incredibly niche scenario, we instead hard-code
+ * Kinoko to always use the 16:9 camera parameters at index `0x1`.
+ **/
 EGG::RamStream KartParamFileManager::getKartCameraStream(Character character) const {
     WeightClass weightClass = CharacterToWeight(character);
     if (weightClass == WeightClass::Invalid) {
@@ -133,10 +181,12 @@ EGG::RamStream KartParamFileManager::getKartCameraStream(Character character) co
             sizeof(KartParam::KartCameraParam));
 }
 
+/// @brief Loads and validates the kart parameter files
 KartParamFileManager::KartParamFileManager() {
     init();
 }
 
+/// @brief Private destructor
 KartParamFileManager::~KartParamFileManager() {
     if (s_instance) {
         s_instance = nullptr;
@@ -144,7 +194,11 @@ KartParamFileManager::~KartParamFileManager() {
     }
 }
 
-/// @brief Performs a few checks to make sure the files were loaded successfully.
+/// @brief Performs checks to make sure the files were loaded successfully
+/// @return True if all files were loaded and validated successfully, false otherwise
+/// @details Verifies that `kartParam.bin`, `driverParam.bin`, `bikePartsDispParam.bin`, and
+/// `kartPartsDispParam.bin` are all loaded and that their sizes match the expected sizes based on
+/// the number of entries in each file.
 bool KartParamFileManager::validate() const {
     // Validate kartParam.bin
     if (!m_kartParam.file || m_kartParam.size == 0) {
@@ -152,7 +206,9 @@ bool KartParamFileManager::validate() const {
     }
 
     auto *kartFile = reinterpret_cast<ParamFile<KartParam::Stats> *>(m_kartParam.file);
-    if (m_kartParam.size != parse<u32>(kartFile->count) * sizeof(KartParam::Stats) + 4) {
+    if (m_kartParam.size !=
+            parse<u32>(kartFile->count) * sizeof(KartParam::Stats) +
+                    sizeof(decltype(kartFile->count))) {
         return false;
     }
 
@@ -162,7 +218,9 @@ bool KartParamFileManager::validate() const {
     }
 
     auto *driverFile = reinterpret_cast<ParamFile<KartParam::Stats> *>(m_driverParam.file);
-    if (m_driverParam.size != parse<u32>(driverFile->count) * sizeof(KartParam::Stats) + 4) {
+    if (m_driverParam.size !=
+            parse<u32>(driverFile->count) * sizeof(KartParam::Stats) +
+                    sizeof(decltype(driverFile->count))) {
         return false;
     }
 
@@ -172,7 +230,9 @@ bool KartParamFileManager::validate() const {
     }
 
     auto *bikeDispFile = reinterpret_cast<ParamFile<KartParam::BikeDisp> *>(m_bikeDispParam.file);
-    if (m_bikeDispParam.size != parse<u32>(bikeDispFile->count) * sizeof(KartParam::BikeDisp) + 4) {
+    if (m_bikeDispParam.size !=
+            parse<u32>(bikeDispFile->count) * sizeof(KartParam::BikeDisp) +
+                    sizeof(decltype(bikeDispFile->count))) {
         return false;
     }
 
@@ -182,7 +242,9 @@ bool KartParamFileManager::validate() const {
     }
 
     auto *kartDispFile = reinterpret_cast<ParamFile<KartParam::KartDisp> *>(m_kartDispParam.file);
-    if (m_kartDispParam.size != parse<u32>(kartDispFile->count) * sizeof(KartParam::KartDisp) + 4) {
+    if (m_kartDispParam.size !=
+            parse<u32>(kartDispFile->count) * sizeof(KartParam::KartDisp) +
+                    sizeof(decltype(kartDispFile->count))) {
         return false;
     }
 

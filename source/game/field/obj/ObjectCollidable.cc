@@ -5,8 +5,6 @@
 #include "game/field/ObjectCollisionSphere.hh"
 #include "game/field/ObjectDirector.hh"
 
-#include "game/kart/KartObject.hh"
-
 namespace Kinoko::Field {
 
 /// @addr{0x8081EFEC}
@@ -38,13 +36,6 @@ void ObjectCollidable::load() {
     ObjectDirector::Instance()->addObject(this);
 }
 
-/// @brief Updates the GJK collision transform
-/// @addr{0x8081F7C8}
-void ObjectCollidable::calcCollisionTransform() {
-    calcTransform();
-    m_collision->transform(transform(), scale(), getCollisionTranslation());
-}
-
 /// @addr{0x806815A0}
 /// @brief Finds the radius that fits fully in a BoxColUnit.
 /// @details We refer to the collision parameters as a box due to its use of axes.
@@ -57,21 +48,6 @@ f32 ObjectCollidable::getCollisionRadius() const {
     f32 xRadius = scale().x * static_cast<f32>(parse<s16>(collisionSet->params.box.x));
 
     return std::max(xRadius, zRadius);
-}
-
-/// @brief Creates a BoxColUnit based off the collision radius and the provided maxSpeed
-/// @addr{0x806816D8}
-void ObjectCollidable::loadAABB(f32 maxSpeed) {
-    loadAABB(getCollisionRadius(), maxSpeed);
-}
-
-/// @brief Created a BoxColUnit based off the provided radius and maxSpeed
-/// @addr{0x8081F180}
-void ObjectCollidable::loadAABB(f32 radius, f32 maxSpeed) {
-    auto *boxColMgr = BoxColManager::Instance();
-    const EGG::Vector3f &pos = getPosition();
-    bool alwaysRecalc = loadFlags() & 0x5;
-    m_boxColUnit = boxColMgr->insertObject(radius, maxSpeed, &pos, alwaysRecalc, this);
 }
 
 /// @brief Runs on collision to conditionally modify the hit reaction applied on the player
@@ -95,15 +71,6 @@ void ObjectCollidable::processKartReactions(Kart::KartObject *kartObj,
     if (reactionOnObj == Kart::Reaction::UNK_3 || reactionOnObj == Kart::Reaction::UNK_4) {
         reactionOnObj = Kart::Reaction::None;
     }
-}
-
-/// @brief Performs a collision check between this object and another collision object
-/// @addr{0x80681748}
-/// @param lhs The object to check collision against (usually the player)
-/// @param dist If a collision occurs, set to the distance between the two objects
-/// @return Whether or not a collision occurred
-bool ObjectCollidable::checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &dist) {
-    return lhs->check(*collision(), dist);
 }
 
 /// @addr{0x8081F224}

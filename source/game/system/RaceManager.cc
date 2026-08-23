@@ -152,7 +152,7 @@ void RaceManager::Player::calc() {
             (m_checkpointStartLapCompletion + m_checkpointFactor * distanceRatio);
     m_raceCompletion = std::min(m_raceCompletion, static_cast<f32>(m_currentLap) + 0.99999f);
 
-    const EGG::Vector3f &bodyFront = kart->bodyFront();
+    const EGG::Vector3f &bodyFront = kart->bodyForward();
     if (bodyFront.x != 0.0f && bodyFront.z != 0.0f) {
         EGG::Vector2f frontXZ = EGG::Vector2f(bodyFront.x, bodyFront.z);
         frontXZ.normalise();

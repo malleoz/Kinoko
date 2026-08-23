@@ -11,22 +11,50 @@ namespace Kinoko::Field {
 /// ObjectFireSnake projectile should be launched.
 class ObjectSunDS : public ObjectProjectileLauncher, public StateManager {
 public:
-    ObjectSunDS(const System::MapdataGeoObj &params);
-    ~ObjectSunDS() override;
+    /// @addr{0x806DDDD8}
+    ObjectSunDS(const System::MapdataGeoObj &params)
+        : ObjectProjectileLauncher(params), StateManager(this, STATE_ENTRIES),
+          m_revolutionSpeed(static_cast<f32>(params.setting(0))),
+          m_startFrame(static_cast<s32>(params.setting(1))) {}
+
+    /// @addr{0x806DDF68}
+    ~ObjectSunDS() = default;
 
     /// @addr{0x806DDFD4}
     void init() override {
         m_stillDuration = 0;
     }
 
-    void calc() override;
+    /// @addr{0x806DE03C}
+    /// @details Updates the sun's position along its rail. If the sun reaches a stop point, it
+    /// transitions to the still state.
+    void calc() override {
+        if (System::RaceManager::Instance()->timer() < static_cast<u32>(m_startFrame)) {
+            return;
+        }
+
+        calcRail();
+        StateManager::calc();
+        calcPos();
+    }
 
     /// @addr{0x806DE614}
     [[nodiscard]] u32 loadFlags() const override {
         return 1;
     }
 
-    [[nodiscard]] s16 launchPointIdx() override;
+    /// @addr{0x806DE598}
+    /// @brief If a projectile should be launched this frame, returns the corresponding rail point
+    /// index. Otherwise, returns -1.
+    [[nodiscard]] s16 launchPointIdx() override {
+        constexpr u16 THROW_DELAY = 30;
+
+        if (m_currentStateId != 0 || THROW_DELAY != m_currentFrame) {
+            return -1;
+        }
+
+        return m_railInterpolator->curPointIdx();
+    }
 
 private:
     /// @addr{0x806DE1C8}
@@ -52,7 +80,14 @@ private:
     /// @addr{0x806DE454}
     void calcRevolving() {}
 
-    void calcRail();
+    /// @addr{0x806DE458}
+    /// @brief Updates the sun's position along its rail and handles stop points
+    void calcRail() {
+        if (m_railInterpolator->calc() == RailInterpolator::Status::SegmentEnd) {
+            m_railInterpolator->setT(0.0f);
+            checkStop();
+        }
+    }
 
     /// @addr{0x806DE4E4}
     /// @brief Updates the sun's position based on the current rail interpolation

@@ -1,9 +1,6 @@
 #include "ObjectKCL.hh"
 
 #include "game/system/RaceManager.hh"
-#include "game/system/ResourceManager.hh"
-
-#include <egg/math/Math.hh>
 
 namespace Kinoko::Field {
 
@@ -27,11 +24,6 @@ void ObjectKCL::createCollision() {
             EGG::egg_new<ObjColMgr>(resMgr->getFile(filepath, nullptr, System::ArchiveId::Course));
 }
 
-/// @addr{0x80681490}
-void ObjectKCL::calcCollisionTransform() {
-    update(0);
-}
-
 /// @addr{0x8081AB4C}
 /// @details Saves the initial transformation matrix to the @ref ObjColMgr and computes the KCL's
 /// bounding box midpoint and half-width.
@@ -53,133 +45,6 @@ void ObjectKCL::initCollision() {
     EGG::Vector3f highLowDiffAbs = (high - low).abs();
     f32 maxDiff = std::max(highLowDiffAbs.x, highLowDiffAbs.z);
     m_bboxHalfSideLength = maxDiff * 0.5f;
-}
-
-/// @addr{0x806810F8}
-bool ObjectKCL::checkPointPartial(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) {
-    return m_objColMgr->checkPointPartial(pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x806811B0}
-bool ObjectKCL::checkPointPartialPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) {
-    return m_objColMgr->checkPointPartialPush(pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x80681268}
-bool ObjectKCL::checkPointFull(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
-    return m_objColMgr->checkPointFull(pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x80681320}
-bool ObjectKCL::checkPointFullPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
-    return m_objColMgr->checkPointFullPush(pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x80680DF4}
-bool ObjectKCL::checkSpherePartial(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-        KCLTypeMask *maskOut, u32 timeOffset) {
-    calcScale(timeOffset);
-    update(timeOffset);
-
-    return m_objColMgr->checkSpherePartial(radius, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x80680EF0}
-bool ObjectKCL::checkSpherePartialPush(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-        KCLTypeMask *maskOut, u32 timeOffset) {
-    calcScale(timeOffset);
-    update(timeOffset);
-
-    return m_objColMgr->checkSpherePartialPush(radius, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x80680FEC}
-bool ObjectKCL::checkSphereFull(f32 radius, const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut, u32 timeOffset) {
-    calcScale(timeOffset);
-    update(timeOffset);
-
-    return m_objColMgr->checkSphereFull(radius, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x806810E8}
-bool ObjectKCL::checkSphereFullPush(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
-        u32 timeOffset) {
-    return checkCollision(radius, pos, prevPos, mask, info, maskOut, timeOffset);
-}
-
-/// @addr{0x806807E8}
-void ObjectKCL::narrScLocal(f32 radius, const EGG::Vector3f &pos, KCLTypeMask mask,
-        u32 /*timeOffset*/) {
-    m_objColMgr->narrScLocal(radius, pos, mask);
-}
-
-/// @addr{0x80680B14}
-bool ObjectKCL::checkPointCachedPartial(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) {
-    return m_objColMgr->checkPointCachedPartial(pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x80680BCC}
-bool ObjectKCL::checkPointCachedPartialPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) {
-    return m_objColMgr->checkPointCachedPartialPush(pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x80680C84}
-bool ObjectKCL::checkPointCachedFull(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
-    return m_objColMgr->checkPointCachedFull(pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x80680D3C}
-bool ObjectKCL::checkPointCachedFullPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
-    return m_objColMgr->checkPointCachedFullPush(pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x806807F0}
-bool ObjectKCL::checkSphereCachedPartial(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-        KCLTypeMask *maskOut, u32 timeOffset) {
-    update(timeOffset);
-    calcScale(timeOffset);
-
-    return m_objColMgr->checkSphereCachedPartial(radius, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x806808FC}
-bool ObjectKCL::checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-        KCLTypeMask *maskOut, u32 timeOffset) {
-    update(timeOffset);
-    calcScale(timeOffset);
-
-    return m_objColMgr->checkSphereCachedPartialPush(radius, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x80680A08}
-bool ObjectKCL::checkSphereCachedFull(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
-        u32 timeOffset) {
-    update(timeOffset);
-    calcScale(timeOffset);
-
-    return m_objColMgr->checkSphereCachedFull(radius, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x80680B04}
-bool ObjectKCL::checkSphereCachedFullPush(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
-        u32 timeOffset) {
-    return checkCollisionCached(radius, pos, prevPos, mask, info, maskOut, timeOffset);
 }
 
 /// @brief Advances the collision manager's transform to reflect the current frame
@@ -222,25 +87,6 @@ void ObjectKCL::calcScale(u32 timeOffset) {
     }
 
     m_lastScaleUpdateFrame = time;
-}
-
-/// @addr{0x8081AFB4}
-bool ObjectKCL::checkCollision(f32 radius, const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut, u32 timeOffset) {
-    update(timeOffset);
-    calcScale(timeOffset);
-
-    return m_objColMgr->checkSphereFullPush(radius, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x8081B16C}
-bool ObjectKCL::checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
-        u32 timeOffset) {
-    update(timeOffset);
-    calcScale(timeOffset);
-
-    return m_objColMgr->checkSphereCachedFullPush(radius, pos, prevPos, mask, info, maskOut);
 }
 
 } // namespace Kinoko::Field

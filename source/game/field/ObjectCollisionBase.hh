@@ -85,12 +85,39 @@ protected:
     EGG::Vector3f m_velocity; ///< Velocity of the associated object
 
 private:
-    [[nodiscard]] bool enclosesOrigin(const GJKState &state, u32 idx) const;
+    /// @addr{0x8083504C}
+    /// @brief Checks whether the origin's projection onto the affine hull of simplex `idx` lies
+    /// within that simplex, i.e. all of its barycentric weights (@ref GJKState::m_scales) are
+    /// positive.
+    [[nodiscard]] bool enclosesOrigin(const GJKState &state, u32 idx) const {
+        u32 mask = 1;
+        for (u8 i = 0; i < 4; ++i, mask *= 2) {
+            if ((idx & mask) && state.m_scales[idx][i] <= 0.0f) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     void findNearestEnclosingSimplex(GJKState &state, EGG::Vector3f &v) const;
     [[nodiscard]] bool getNearestSimplex(GJKState &state, EGG::Vector3f &v) const;
     void getNearestPoint(GJKState &state, u32 idx, EGG::Vector3f &v0, EGG::Vector3f &v1) const;
     [[nodiscard]] bool isValidSimplex(const GJKState &state, u32 idx) const;
-    [[nodiscard]] bool inSimplex(const GJKState &state, const EGG::Vector3f &v) const;
+
+    /// @addr{0x808358CC}
+    /// @brief Catches scenarios where the newly computed support point `v` is identical to a point
+    /// already in the simplex, which would cause the algorithm to loop infinitely.
+    [[nodiscard]] bool inSimplex(const GJKState &state, const EGG::Vector3f &v) const {
+        for (u32 i = 0, mask = 1; i < 4; ++i, mask *= 2) {
+            if ((state.m_candidateMask & mask) && state.m_minDiffPts[i] == v) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     void getNearestPoint(const GJKState &state, u32 idx, EGG::Vector3f &v) const;
     void calcSimplex(GJKState &state) const;
 

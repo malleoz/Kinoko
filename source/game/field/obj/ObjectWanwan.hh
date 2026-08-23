@@ -69,12 +69,29 @@ private:
     void calcAttack();
     void calcBack();
 
-    void calcPos();
+    /// @addr{0x806E59BC}
+    /// @brief Applies acceleration to velocity and adds velocity to the position
+    void calcPos() {
+        m_vel += m_accel - GRAVITY;
+        addPos(m_vel);
+        m_accel.setZero();
+    }
+
     void calcCollision();
     void calcMat();
     void calcChainAttachMat();
     void calcSpeed();
-    void calcBounce();
+
+    /// @addr{0x806E794C}
+    /// @brief Checks if the Chain Chomp is touching the floor and applies a bounce if it is
+    void calcBounce() {
+        if (m_touchingFloor) {
+            m_vel.y = 0.0f;
+            m_accel += EGG::Vector3f::ey * 12.0f;
+        } else {
+            m_accel.y = 0.0f;
+        }
+    }
 
     /// @addr{0x806E79E4}
     /// @brief Calculates the wandering behavior of the Chain Chomp
@@ -98,8 +115,26 @@ private:
         }
     }
 
-    void calcTangent(f32 t);
-    void calcUp(f32 t);
+    /// @addr{0x806E7E38}
+    void calcTangent(f32 t) {
+        m_tangent = Interpolate(t, m_tangent, m_targetDir);
+        if (m_tangent.squaredLength() > std::numeric_limits<f32>::epsilon()) {
+            m_tangent.normalise2();
+        } else {
+            m_tangent = m_targetDir;
+        }
+    }
+
+    /// @addr{0x806E7F64}
+    void calcUp(f32 t) {
+        m_up = Interpolate(t, m_up, m_targetUp);
+        if (m_up.squaredLength() > std::numeric_limits<f32>::epsilon()) {
+            m_up.normalise2();
+        } else {
+            m_up = EGG::Vector3f::ey;
+        }
+    }
+
     void calcRandomTarget();
     void initTransformKeyframes();
     void calcAttackPos();

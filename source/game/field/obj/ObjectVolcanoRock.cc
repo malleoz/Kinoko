@@ -18,13 +18,6 @@ ObjectVolcanoRock::ObjectVolcanoRock(const System::MapdataGeoObj &params)
 /// @addr{0x8081A690}
 ObjectVolcanoRock::~ObjectVolcanoRock() = default;
 
-/// @addr{0x8081A370}
-void ObjectVolcanoRock::calc() {
-    EGG::Vector3f prevPos = pos();
-    setPos(calcPos(System::RaceManager::Instance()->timer()));
-    setMovingObjVel(pos() - prevPos);
-}
-
 /// @addr{0x8081A414}
 /// @brief Calculates the position of the volcano rock at a given frame based on oscillatory motion
 /// along the z and y axes

@@ -50,7 +50,13 @@ private:
     bool calcRail();
     StateResult calcState();
 
-    void calcCurRot(const EGG::Vector3f &rot);
+    /// @brief Sets rotation, factoring in the crab's backwards setting and rail direction
+    void calcCurRot(const EGG::Vector3f &rot) {
+        m_curRot = rot;
+        m_curRot = m_backwards ? -m_curRot : m_curRot;
+        m_curRot.y = m_railInterpolator->isMovementDirectionForward() ? m_curRot.y : -m_curRot.y;
+    }
+
     void calcTransMat(const EGG::Vector3f &rot);
 
     const f32 m_vel;         ///< The speed at which the crab moves along the rail

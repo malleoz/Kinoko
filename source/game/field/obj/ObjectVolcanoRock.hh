@@ -13,7 +13,12 @@ public:
     ObjectVolcanoRock(const System::MapdataGeoObj &params);
     ~ObjectVolcanoRock() override;
 
-    void calc() override;
+    /// @addr{0x8081A370}
+    void calc() override {
+        EGG::Vector3f prevPos = pos();
+        setPos(calcPos(System::RaceManager::Instance()->timer()));
+        setMovingObjVel(pos() - prevPos);
+    }
 
     /// @addr{0x8081A688}
     [[nodiscard]] u32 loadFlags() const override {

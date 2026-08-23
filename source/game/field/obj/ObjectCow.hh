@@ -3,6 +3,8 @@
 #include "game/field/StateManager.hh"
 #include "game/field/obj/ObjectCollidable.hh"
 
+#include "game/system/RaceManager.hh"
+
 namespace Kinoko::Field {
 
 class RailInterpolator;
@@ -67,13 +69,37 @@ private:
         EatED = 2,
     };
 
-    void calcFloor() override;
+    /// @addr{0x806BDCD8}
+    void calcFloor() override {
+        m_velocity.y = 0.0f;
+        m_upForce = GRAVITY_FORCE;
+        m_floorNrm = m_railInterpolator->floorNrm(m_railInterpolator->nextPointIdx());
+    }
 
-    void enterWait();
-    void enterEat();
-    void enterRoam();
+    /// @addr{0x806BD6B0}
+    void enterWait() {
+        setTarget(m_railInterpolator->curPos() + m_railInterpolator->curTangentDir() * 10.0f);
+    }
 
-    void calcWait();
+    /// @addr{0x806BD7D8}
+    void enterEat() {
+        m_eatAnmType = EatAnmType::EatST;
+        u32 rand = System::RaceManager::Instance()->random().getU32(120);
+        m_eatFrames = rand + 120;
+    }
+
+    /// @addr{0x806BDA1C}
+    void enterRoam() {
+        m_endedRailSegment = false;
+    }
+
+    /// @addr{0x806BD738}
+    void calcWait() {
+        if (m_currentFrame > m_railInterpolator->curPoint().setting[0]) {
+            m_nextStateId = 2;
+        }
+    }
+
     void calcEat();
     void calcRoam();
 
@@ -111,9 +137,28 @@ public:
     void loadRail() override {}
 
 private:
-    void enterWait();
+    /// @addr{0x806BE4E8}
+    void enterWait() {
+        constexpr u32 BASE_WAIT_FRAMES = 100;
+        constexpr u32 WAIT_FRAMES_VARIANCE = 60;
+        constexpr f32 BASE_RAIL_THRESHOLD = 0.2f;
+        constexpr f32 RAIL_THRESHOLD_VARIANCE = 0.8f;
+
+        auto &rand = System::RaceManager::Instance()->random();
+        m_waitFrames = rand.getU32(WAIT_FRAMES_VARIANCE) + BASE_WAIT_FRAMES;
+        m_railSegThreshold = BASE_RAIL_THRESHOLD + rand.getF32(RAIL_THRESHOLD_VARIANCE);
+    }
+
     void enterFreeRoam();
-    void enterFollowLeader();
+
+    /// @addr{0x806BE930}
+    void enterFollowLeader() {
+        m_bStopping = false;
+        m_interpRate = 0.01f;
+
+        auto &rand = System::RaceManager::Instance()->random();
+        m_topSpeed = BASE_TOP_SPEED + rand.getF32(TOP_SPEED_VARIANCE);
+    }
 
     void calcWait();
     void calcFreeRoam();
@@ -151,7 +196,14 @@ public:
     ObjectCowHerd(const System::MapdataGeoObj &params);
     ~ObjectCowHerd() override;
 
-    void init() override;
+    /// @addr{0x806BF02C}
+    /// @brief Assigns the herd's rail to each child.
+    void init() override {
+        for (auto *&child : m_followers) {
+            child->m_rail = m_leader->m_railInterpolator;
+        }
+    }
+
     void calc() override;
 
     /// @addr{0x806BF42C}

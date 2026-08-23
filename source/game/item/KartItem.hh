@@ -4,8 +4,6 @@
 
 #include "game/kart/KartObjectProxy.hh"
 
-#include <egg/core/BitFlag.hh>
-
 namespace Kinoko::Item {
 
 /// @brief State management for a kart's item usage
@@ -16,7 +14,12 @@ public:
     KartItem();
     ~KartItem();
 
-    void init(size_t playerIdx);
+    /// @addr{0x807976E0}
+    /// @brief Initializes the @ref Kart::KartObjectProxy accessor pointer
+    void init(size_t playerIdx) {
+        apply(playerIdx);
+    }
+
     void calc();
 
     /// @addr{0x80798848}

@@ -61,17 +61,6 @@ void KartPullPathTracker::calcTrackerRegional() {
     }
 }
 
-/// @addr{0x80593310}
-/// @brief Gets the distance from the line formed by the point and direction.
-/// @param point A point on the line.
-/// @param dir The direction of the line.
-f32 KartPullPathTracker::getDistance(const EGG::Vector3f &point, const EGG::Vector3f &dir) const {
-    EGG::Vector3f diff = pos() - point;
-    f32 dist = diff.length();
-    f32 x = EGG::Mathf::abs(diff.dot(dir));
-    return EGG::Mathf::sqrt(dist * dist - x * x);
-}
-
 /// @addr{0x8059345C}
 bool KartPullPathTracker::search(SearchDirection searchDirection, s16 &idx, EGG::Vector3f &point,
         EGG::Vector3f &dir) const {
@@ -147,13 +136,6 @@ KartPullPath::KartPullPath()
 
 /// @addr{0x80594094}
 KartPullPath::~KartPullPath() = default;
-
-/// @addr{0x805940D4}
-void KartPullPath::init() {
-    reset();
-    m_areaId = -1;
-    m_roadSpeedDecay = 1.0f;
-}
 
 /// @addr{0x80593CB8}
 /// @details This was the init function in the base class, but it gets inlined in calcArea.
@@ -256,12 +238,6 @@ void KartPullPath::calcPointChange() {
     m_currentIdx = m_incomingIdx;
 }
 
-/// @addr{0x80593D54}
-void KartPullPath::calcTrackers() {
-    m_globalTracker.calc();
-    m_regionalTracker.calc();
-}
-
 /// @addr{0x805AEAD8}
 /// @details This isn't a part of KartPullPath, but is only called from this class.
 EGG::Vector3f KartPullPath::getPullUnitNormal() const {
@@ -274,12 +250,6 @@ EGG::Vector3f KartPullPath::getPullUnitNormal() const {
     EGG::Vector3f nrm = EGG::Vector3f::ey.cross(m_pullDirection);
     nrm.normalise();
     return nrm;
-}
-
-/// @addr{0x80593D1C}
-void KartPullPath::setTrackerPointInfo(System::MapdataPointInfo *info) {
-    m_globalTracker.setPointInfo(info);
-    m_regionalTracker.setPointInfo(info);
 }
 
 } // namespace Kinoko::Kart

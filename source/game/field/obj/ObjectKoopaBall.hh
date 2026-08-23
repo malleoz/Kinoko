@@ -2,8 +2,6 @@
 
 #include "game/field/obj/ObjectCollidable.hh"
 
-#include "game/render/DrawMdl.hh"
-
 namespace Kinoko::Field {
 
 /// @brief The fireball shot by the giant Bowser statue in the half-pipe section of Bowser's Castle
@@ -47,7 +45,16 @@ private:
     void calcExploding();
     void calcIntangible();
     void calcRot();
-    void calcSlowdown();
+
+    /// @addr{0x807719A0}
+    /// @brief Slows down the fireball's rail speed once reaching the end of a rail segment
+    /// @details This does not occur in the base game
+    void calcSlowdown() {
+        constexpr f32 VERTICAL_VELOCITY = 60.0f;
+
+        m_vel.y = VERTICAL_VELOCITY;
+        m_railInterpolator->setCurrVel(INITIAL_VELOCITY / INITIAL_ANGULAR_SPEED);
+    }
 
     /// @addr{0x80771B68}
     /// @brief Runs once when the fireball starts exploding

@@ -9,8 +9,21 @@ public:
     ObjectFireSnakeV(const System::MapdataGeoObj &params);
     ~ObjectFireSnakeV() override;
 
-    void init() override;
-    void calc() override;
+    /// @addr{0x806C2CBC}
+    void init() override {
+        m_nextStateId = 1;
+        ObjectFireSnake::enterDespawned();
+
+        m_trajectoryPos = m_spawnPos;
+        m_bounceDir = m_initRot;
+    }
+
+    /// @addr{0x806C2D54}
+    void calc() override {
+        if (System::RaceManager::Instance()->timer() >= m_delayFrame) {
+            calcSub();
+        }
+    }
 
 private:
     void calcSub();

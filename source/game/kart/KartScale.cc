@@ -1,7 +1,5 @@
 #include "KartScale.hh"
 
-#include "game/kart/KartObjectManager.hh"
-
 namespace Kinoko::Kart {
 
 /// @addr{0x8056AD44}
@@ -69,29 +67,13 @@ void KartScale::calc() {
     calcCrush();
 }
 
-/// @addr{0x8056B060}
-void KartScale::startCrush() {
-    m_crushState = CrushState::Crush;
-    m_pressScale = EGG::Vector3f(1.0f, 1.0f, 1.0f);
-    m_uncrushAnmFrame = 0.0f;
-    m_calcCrush = true;
-}
-
-/// @addr{0x8056B094}
-void KartScale::endCrush() {
-    m_crushState = CrushState::Uncrush;
-    m_pressScale = EGG::Vector3f(1.0f, CRUSH_SCALE, 1.0f);
-    m_uncrushAnmFrame = 0.0f;
-    m_calcCrush = true;
-}
-
 /// @addr{0x8056AFB4}
 void KartScale::startShrink(s32 unk) {
     m_type = unk > 0 ? 2 : 1;
     m_anmFrame = 0.0f;
     m_scaleAnmActive = true;
-    f32 tmp = m_scaleTarget[m_type];
-    m_scaleTransformSlope = (EGG::Vector3f(tmp, tmp, tmp) - m_sizeScale) /
+    f32 scale = m_scaleTarget[m_type];
+    m_scaleTransformSlope = (EGG::Vector3f(scale, scale, scale) - m_sizeScale) /
             (s_baseScaleTarget[m_type] - s_baseScaleStart[m_type]);
     m_scaleTransformOffset = m_sizeScale - m_scaleTransformSlope * s_baseScaleStart[m_type];
 }
@@ -131,13 +113,6 @@ void KartScale::calcCrush() {
             m_calcCrush = false;
         }
     }
-}
-
-/// @addr{0x8056ACF4}
-EGG::Vector3f KartScale::getAnmScale(f32 frame) const {
-    const auto *scaleAnm = KartObjectManager::PressScaleUpAnmChr();
-    ASSERT(scaleAnm);
-    return scaleAnm->getAnmResult(frame, 0).scale();
 }
 
 } // namespace Kinoko::Kart

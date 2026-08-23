@@ -1,11 +1,9 @@
 #include "ObjectTruckWagon.hh"
 
 #include "game/field/CollisionDirector.hh"
-#include "game/field/Rail.hh"
 #include "game/field/RailManager.hh"
 
 #include "game/kart/KartCollide.hh"
-#include "game/kart/KartObject.hh"
 
 namespace Kinoko::Field {
 

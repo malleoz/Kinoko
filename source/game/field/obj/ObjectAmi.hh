@@ -34,60 +34,138 @@ public:
         return 15000.0f;
     }
 
+    /// @addr{0x80808800}
     [[nodiscard]] bool checkPointPartial(const EGG::Vector3f &v0, const EGG::Vector3f &v1,
-            KCLTypeMask flags, CollisionInfoPartial *pInfo, KCLTypeMask *pFlagsOut) override;
+            KCLTypeMask flags, CollisionInfoPartial *pInfo, KCLTypeMask *pFlagsOut) override {
+        return checkSpherePartialImpl(0.0f, v0, v1, flags, pInfo, pFlagsOut, 0);
+    }
+
+    /// @addr{0x80808810}
     [[nodiscard]] bool checkPointPartialPush(const EGG::Vector3f &v0, const EGG::Vector3f &v1,
-            KCLTypeMask flags, CollisionInfoPartial *pInfo, KCLTypeMask *pFlagsOut) override;
+            KCLTypeMask flags, CollisionInfoPartial *pInfo, KCLTypeMask *pFlagsOut) override {
+        return checkSpherePartialPushImpl(0.0f, v0, v1, flags, pInfo, pFlagsOut, 0);
+    }
+
+    /// @addr{0x80808820}
     [[nodiscard]] bool checkPointFull(const EGG::Vector3f &v0, const EGG::Vector3f &v1,
-            KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut) override;
+            KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut) override {
+        return checkSphereFullImpl(0.0f, v0, v1, flags, pInfo, pFlagsOut, 0);
+    }
+
+    /// @addr{0x80808830}
     [[nodiscard]] bool checkPointFullPush(const EGG::Vector3f &v0, const EGG::Vector3f &v1,
-            KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut) override;
+            KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut) override {
+        return checkSphereFullPushImpl(0.0f, v0, v1, flags, pInfo, pFlagsOut, 0);
+    }
+
+    /// @addr{0x808087F0}
     [[nodiscard]] bool checkSpherePartial(f32 radius, const EGG::Vector3f &v0,
             const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfoPartial *pInfo,
-            KCLTypeMask *pFlagsOut, u32 timeOffset) override;
+            KCLTypeMask *pFlagsOut, u32 timeOffset) override {
+        return checkSpherePartialImpl(radius, v0, v1, flags, pInfo, pFlagsOut, timeOffset);
+    }
+
+    /// @addr{0x808087F4}
     [[nodiscard]] bool checkSpherePartialPush(f32 radius, const EGG::Vector3f &v0,
             const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfoPartial *pInfo,
-            KCLTypeMask *pFlagsOut, u32 timeOffset) override;
+            KCLTypeMask *pFlagsOut, u32 timeOffset) override {
+        return checkSpherePartialPushImpl(radius, v0, v1, flags, pInfo, pFlagsOut, timeOffset);
+    }
+
+    /// @addr{0x808087F8}
     [[nodiscard]] bool checkSphereFull(f32 radius, const EGG::Vector3f &v0, const EGG::Vector3f &v1,
             KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut,
-            u32 timeOffset) override;
+            u32 timeOffset) override {
+        return checkSphereFullImpl(radius, v0, v1, flags, pInfo, pFlagsOut, timeOffset);
+    }
+
+    /// @addr{0x808087FC}
     [[nodiscard]] bool checkSphereFullPush(f32 radius, const EGG::Vector3f &v0,
             const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo,
-            KCLTypeMask *pFlagsOut, u32 timeOffset) override;
+            KCLTypeMask *pFlagsOut, u32 timeOffset) override {
+        return checkSphereFullPushImpl(radius, v0, v1, flags, pInfo, pFlagsOut, timeOffset);
+    }
+
+    /// @addr{0x808087B0}
     [[nodiscard]] bool checkPointCachedPartial(const EGG::Vector3f &v0, const EGG::Vector3f &v1,
-            KCLTypeMask flags, CollisionInfoPartial *pInfo, KCLTypeMask *pFlagsOut) override;
+            KCLTypeMask flags, CollisionInfoPartial *pInfo, KCLTypeMask *pFlagsOut) override {
+        return checkSpherePartialImpl(0.0f, v0, v1, flags, pInfo, pFlagsOut, 0);
+    }
+
+    /// @addr{0x808087C0}
     [[nodiscard]] bool checkPointCachedPartialPush(const EGG::Vector3f &v0, const EGG::Vector3f &v1,
-            KCLTypeMask flags, CollisionInfoPartial *pInfo, KCLTypeMask *pFlagsOut) override;
+            KCLTypeMask flags, CollisionInfoPartial *pInfo, KCLTypeMask *pFlagsOut) override {
+        return checkSpherePartialPushImpl(0.0f, v0, v1, flags, pInfo, pFlagsOut, 0);
+    }
+
+    /// @addr{0x808087D0}
     [[nodiscard]] bool checkPointCachedFull(const EGG::Vector3f &v0, const EGG::Vector3f &v1,
-            KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut) override;
+            KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut) override {
+        return checkSphereFullImpl(0.0f, v0, v1, flags, pInfo, pFlagsOut, 0);
+    }
+
+    /// @addr{0x808087E0}
     [[nodiscard]] bool checkPointCachedFullPush(const EGG::Vector3f &v0, const EGG::Vector3f &v1,
-            KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut) override;
+            KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut) override {
+        return checkSphereFullPushImpl(0.0f, v0, v1, flags, pInfo, pFlagsOut, 0);
+    }
+
+    /// @addr{0x808087A0}
     [[nodiscard]] bool checkSphereCachedPartial(f32 radius, const EGG::Vector3f &v0,
             const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfoPartial *pInfo,
-            KCLTypeMask *pFlagsOut, u32 timeOffset) override;
+            KCLTypeMask *pFlagsOut, u32 timeOffset) override {
+        return checkSpherePartialImpl(radius, v0, v1, flags, pInfo, pFlagsOut, timeOffset);
+    }
+
+    /// @addr{0x808087A4}
     [[nodiscard]] bool checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &v0,
             const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfoPartial *pInfo,
-            KCLTypeMask *pFlagsOut, u32 timeOffset) override;
+            KCLTypeMask *pFlagsOut, u32 timeOffset) override {
+        return checkSpherePartialPushImpl(radius, v0, v1, flags, pInfo, pFlagsOut, timeOffset);
+    }
+
+    /// @addr{0x808087A8}
     [[nodiscard]] bool checkSphereCachedFull(f32 radius, const EGG::Vector3f &v0,
             const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo,
-            KCLTypeMask *pFlagsOut, u32 timeOffset) override;
+            KCLTypeMask *pFlagsOut, u32 timeOffset) override {
+        return checkSphereFullImpl(radius, v0, v1, flags, pInfo, pFlagsOut, timeOffset);
+    }
+
+    /// @addr{0x808087AC}
     [[nodiscard]] bool checkSphereCachedFullPush(f32 radius, const EGG::Vector3f &v0,
             const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo,
-            KCLTypeMask *pFlagsOut, u32 timeOffset) override;
+            KCLTypeMask *pFlagsOut, u32 timeOffset) override {
+        return checkSphereFullPushImpl(radius, v0, v1, flags, pInfo, pFlagsOut, timeOffset);
+    }
 
 private:
+    /// @addr{0x808088A0}
     [[nodiscard]] bool checkSpherePartialImpl(f32 radius, const EGG::Vector3f &v0,
             const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfoPartial *pInfo,
-            KCLTypeMask *pFlagsOut, u32 timeOffset);
+            KCLTypeMask *pFlagsOut, u32 timeOffset) {
+        return checkSphereImpl(radius, v0, v1, flags, pInfo, pFlagsOut, timeOffset, false);
+    }
+
+    /// @addr{0x80808A8C}
     [[nodiscard]] bool checkSpherePartialPushImpl(f32 radius, const EGG::Vector3f &v0,
             const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfoPartial *pInfo,
-            KCLTypeMask *pFlagsOut, u32 timeOffset);
+            KCLTypeMask *pFlagsOut, u32 timeOffset) {
+        return checkSphereImpl(radius, v0, v1, flags, pInfo, pFlagsOut, timeOffset, true);
+    }
+
+    /// @addr{0x80808CA8}
     [[nodiscard]] bool checkSphereFullImpl(f32 radius, const EGG::Vector3f &v0,
             const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo,
-            KCLTypeMask *pFlagsOut, u32 timeOffset);
+            KCLTypeMask *pFlagsOut, u32 timeOffset) {
+        return checkSphereImpl(radius, v0, v1, flags, pInfo, pFlagsOut, timeOffset, false);
+    }
+
+    /// @addr{0x80809060}
     [[nodiscard]] bool checkSphereFullPushImpl(f32 radius, const EGG::Vector3f &v0,
             const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo,
-            KCLTypeMask *pFlagsOut, u32 timeOffset);
+            KCLTypeMask *pFlagsOut, u32 timeOffset) {
+        return checkSphereImpl(radius, v0, v1, flags, pInfo, pFlagsOut, timeOffset, true);
+    }
 
     template <typename T>
         requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>

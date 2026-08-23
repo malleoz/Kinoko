@@ -1,6 +1,5 @@
 #pragma once
 
-#include "game/field/obj/ObjectCollidable.hh"
 #include "game/field/obj/ObjectFireball.hh"
 
 namespace Kinoko::Field {
@@ -13,7 +12,11 @@ public:
     ObjectFirebar(const System::MapdataGeoObj &params);
     ~ObjectFirebar() override;
 
-    void init() override;
+    /// @addr{0x80767DEC}
+    void init() override {
+        m_currAngle = 0.0f;
+    }
+
     void calc() override;
 
     /// @addr{0x807687D8}

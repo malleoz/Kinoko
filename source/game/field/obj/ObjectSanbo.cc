@@ -1,7 +1,6 @@
 #include "ObjectSanbo.hh"
 
 #include "game/field/CollisionDirector.hh"
-#include "game/field/KColData.hh"
 
 namespace Kinoko::Field {
 

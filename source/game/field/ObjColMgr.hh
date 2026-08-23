@@ -1,6 +1,6 @@
 #pragma once
 
-#include "game/field/KColData.hh"
+#include "game/field/CourseColMgr.hh"
 
 namespace Kinoko::Field {
 
@@ -17,7 +17,14 @@ public:
     ObjColMgr(const void *file);
     ~ObjColMgr();
 
-    void narrScLocal(f32 radius, const EGG::Vector3f &pos, KCLTypeMask flags);
+    /// @addr{0x807C4DC8}
+    /// @brief Narrows the spatial cache of the @ref CourseColMgr to only include KCL tris defined
+    /// by the provided mask within a certain radius of the given position.
+    void narrScLocal(f32 radius, const EGG::Vector3f &pos, KCLTypeMask flags) {
+        EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
+        CourseColMgr::Instance()->scaledNarrowScopeLocal(m_kclScale, radius, m_data, posWrtModel,
+                flags);
+    }
 
     /// @addr{0x807C4E4C}
     /// @brief Computes the lower bound of the object collision bounding box in world space

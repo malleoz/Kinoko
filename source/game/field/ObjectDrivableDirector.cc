@@ -2,45 +2,6 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x8081B500}
-/// @brief Initializes all objects and updates their transforms
-void ObjectDrivableDirector::init() {
-    for (auto *&obj : m_objects) {
-        obj->init();
-        obj->calcModel();
-    }
-}
-
-/// @addr{0x8081B618}
-/// @brief Runs per-frame calculations for all objects that require it, and updates their transforms
-void ObjectDrivableDirector::calc() {
-    for (auto *&obj : m_calcObjects) {
-        obj->calc();
-    }
-
-    for (auto *&obj : m_calcObjects) {
-        obj->calcModel();
-    }
-}
-
-/// @addr{0x8081B6C8}
-/// @brief Registers a new @ref ObjectDrivable with the director, and adds it to the list of objects
-/// that require per-frame calculations if applicable
-void ObjectDrivableDirector::addObject(ObjectDrivable *obj) {
-    if (obj->loadFlags() & 1) {
-        m_calcObjects.push_back(obj);
-    }
-
-    m_objects.push_back(obj);
-}
-
-/// @brief Creates the rGV2 block manager. Also implicitly adds the block represented by params.
-void ObjectDrivableDirector::createObakeManager(const System::MapdataGeoObj &params) {
-    ASSERT(!m_obakeManager);
-    m_obakeManager = EGG::egg_new<ObjectObakeManager>(params);
-    m_obakeManager->load();
-}
-
 /// @addr{0x8081BC98}
 /// @brief Checks collision between a sphere and objects, writing partial collision info
 /// @param radius The radius of the sphere to check

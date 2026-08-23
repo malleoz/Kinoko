@@ -2,8 +2,6 @@
 
 #include "game/field/CollisionDirector.hh"
 
-#include "game/system/RaceManager.hh"
-
 namespace Kinoko::Field {
 
 /// @addr{0x806C2B70}
@@ -22,22 +20,6 @@ ObjectFireSnakeV::ObjectFireSnakeV(const System::MapdataGeoObj &params)
 
 /// @addr{0x806C3548}
 ObjectFireSnakeV::~ObjectFireSnakeV() = default;
-
-/// @addr{0x806C2CBC}
-void ObjectFireSnakeV::init() {
-    m_nextStateId = 1;
-    ObjectFireSnake::enterDespawned();
-
-    m_trajectoryPos = m_spawnPos;
-    m_bounceDir = m_initRot;
-}
-
-/// @addr{0x806C2D54}
-void ObjectFireSnakeV::calc() {
-    if (System::RaceManager::Instance()->timer() >= m_delayFrame) {
-        calcSub();
-    }
-}
 
 /// @addr{0x806C2DA4}
 /// @brief Updates state lifecycle and children positions once the spawn delay has elapsed

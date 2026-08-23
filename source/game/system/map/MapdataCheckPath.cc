@@ -46,7 +46,7 @@ MapdataCheckPathAccessor::MapdataCheckPathAccessor(const MapSectionHeader *heade
     init(reinterpret_cast<const MapdataCheckPath::SData *>(m_sectionHeader + 1),
             parse<u16>(m_sectionHeader->count));
 
-    if (m_entryCount == 0) {
+    if (empty()) {
         return;
     }
 
@@ -73,10 +73,6 @@ MapdataCheckPath *MapdataCheckPathAccessor::findCheckpathForCheckpoint(u16 check
     }
 
     return nullptr;
-}
-
-f32 MapdataCheckPathAccessor::lapProportion() const {
-    return m_lapProportion;
 }
 
 } // namespace Kinoko::System

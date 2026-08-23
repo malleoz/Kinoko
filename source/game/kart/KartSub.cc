@@ -1,12 +1,6 @@
 #include "KartSub.hh"
 
-#include "game/kart/KartAction.hh"
-#include "game/kart/KartBody.hh"
 #include "game/kart/KartCollide.hh"
-#include "game/kart/KartMove.hh"
-#include "game/kart/KartObject.hh"
-#include "game/kart/KartPullPath.hh"
-#include "game/kart/KartState.hh"
 #include "game/kart/KartSuspensionPhysics.hh"
 
 #include "game/field/BoxColManager.hh"
@@ -14,8 +8,6 @@
 
 #include "game/system/RaceConfig.hh"
 #include "game/system/RaceManager.hh"
-
-#include <egg/math/Math.hh>
 
 namespace Kinoko::Kart {
 
@@ -146,7 +138,7 @@ void KartSub::calcPass0() {
     if (!raceManager->isStageReached(System::RaceManager::Stage::Race)) {
         dynamics()->setIntVel(EGG::Vector3f::zero);
 
-        EGG::Vector3f killExtVel = dynamics()->extVel();
+        EGG::Vector3f killExtVel = extVel();
         if (isBike()) {
             killExtVel = killExtVel.rej(move()->smoothedUp());
         } else {
@@ -217,7 +209,7 @@ void KartSub::calcPass1() {
 
     auto &colData = collisionData();
     if (colData.bWallAtLeftCloser || colData.bWallAtRightCloser || m_sideCollisionTimer > 0) {
-        EGG::Vector3f right = dynamics()->mainRot().rotateVector(EGG::Vector3f::ex);
+        EGG::Vector3f right = mainRot().rotateVector(EGG::Vector3f::ex);
 
         if (colData.bWallAtLeftCloser || colData.bWallAtRightCloser) {
             f32 sign = colData.bWallAtRightCloser ? 1.0f : -1.0f;
@@ -370,18 +362,12 @@ void KartSub::addFloor(const CollisionData &colData, bool) {
     status.changeBit(colData.bMovingWaterStickyRoad, eStatus::MovingWaterStickyRoad);
 }
 
-/// @addr{0x805979EC}
-void KartSub::updateSuspOvertravel(const EGG::Vector3f &suspOvertravel) {
-    m_maxSuspOvertravel = m_maxSuspOvertravel.minimize(suspOvertravel);
-    m_minSuspOvertravel = m_minSuspOvertravel.maximize(suspOvertravel);
-}
-
 /// @addr{0x80598744}
 void KartSub::tryEndHWG() {
     auto &status = KartObjectProxy::status();
 
     if (status.onBit(eStatus::SoftWallUnlockRotation)) {
-        if (EGG::Mathf::abs(move()->speed()) > 15.0f ||
+        if (EGG::Mathf::abs(speed()) > 15.0f ||
                 status.onBit(eStatus::AirtimeOver20, eStatus::AllWheelsCollision)) {
             status.resetBit(eStatus::SoftWallUnlockRotation);
         } else if (status.onBit(eStatus::TouchingGround)) {

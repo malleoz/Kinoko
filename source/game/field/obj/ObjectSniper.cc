@@ -31,15 +31,4 @@ void ObjectSniper::init() {
     }
 }
 
-/// @addr{0x806DDC44}
-/// @details Checks if the launcher is ready to launch a projectile and triggers the corresponding
-/// projectile's launch.
-void ObjectSniper::calc() {
-    s32 idx = m_launcher->launchPointIdx();
-
-    if (idx != -1) {
-        m_projectiles[m_pointIdxs[idx]]->onLaunch();
-    }
-}
-
 } // namespace Kinoko::Field

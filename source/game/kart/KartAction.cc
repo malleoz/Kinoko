@@ -2,12 +2,8 @@
 
 #include "game/kart/KartMove.hh"
 #include "game/kart/KartPhysics.hh"
-#include "game/kart/KartState.hh"
 
 #include "game/item/ItemDirector.hh"
-#include "game/item/KartItem.hh"
-
-#include <egg/math/Math.hh>
 
 namespace Kinoko::Kart {
 
@@ -35,7 +31,7 @@ void KartAction::calc() {
 /// @addr{0x80567CE4}
 /// @brief Decays the kart's speed based off of the current action's speed multiplier
 void KartAction::calcVehicleSpeed() {
-    move()->setSpeed(m_actionParams->calcSpeedMult * move()->speed());
+    move()->setSpeed(m_actionParams->calcSpeedMult * speed());
 }
 
 /// @addr{0x805675DC}
@@ -107,7 +103,7 @@ void KartAction::startRotation(size_t idx) {
         dir = -dir;
     }
 
-    m_rotationSide = dir.cross(bodyFront()).dot(bodyUp()) > 0.0f ? 1.0f : -1.0f;
+    m_rotationSide = dir.cross(bodyForward()).dot(bodyUp()) > 0.0f ? 1.0f : -1.0f;
     setRotation(idx);
     m_flags.setBit(eFlags::Rotating);
 }
@@ -239,25 +235,25 @@ void KartAction::startLaunch(f32 extVelScalar, f32 extVelKart, f32 extVelBike, f
         u32 param6) {
     m_targetRot = 360.0f * numRotations;
 
-    EGG::Vector3f extVel = EGG::Vector3f::zero;
-    extVel.y = isBike() ? extVelBike : extVelKart;
+    EGG::Vector3f newExtVel = EGG::Vector3f::zero;
+    newExtVel.y = isBike() ? extVelBike : extVelKart;
 
     if (param6 == 0) {
         m_hitDepth = move()->dir();
         calcSideFromHitDepth();
     } else if (param6 == 1) {
         calcSideFromHitDepth();
-        extVel += extVelScalar * m_launchDir;
+        newExtVel += extVelScalar * m_launchDir;
     } else if (param6 == 2) {
         calcSideFromHitDepthAndTranslation();
-        extVel += extVelScalar * m_launchDir;
+        newExtVel += extVelScalar * m_launchDir;
     }
 
     setRotation(static_cast<size_t>(numRotations + 3.0f));
     m_groundStartLaunchTimer = 0;
     m_rotAxis = move()->smoothedUp().cross(m_launchDir);
 
-    dynamics()->setExtVel(dynamics()->extVel() + extVel);
+    dynamics()->setExtVel(extVel() + newExtVel);
 }
 
 /// @addr{0x805696CC}
@@ -271,7 +267,7 @@ void KartAction::activateCrush(u16 timer) {
 /// @addr{0x80567C68}
 /// @brief Applies the initial start speed multiplier to the kart for the action that just started
 void KartAction::applyStartSpeed() {
-    move()->setSpeed(m_actionParams->startSpeedMult * move()->speed());
+    move()->setSpeed(m_actionParams->startSpeedMult * speed());
     if (m_actionParams->startSpeedMult == 0.0f) {
         move()->clearDrift();
     }
@@ -363,7 +359,7 @@ void KartAction::startLargeFlipAction() {
 
     if (m_currentAction == Action::HighLaunchLoseItem) {
         calcSideFromHitDepth();
-        dynamics()->setExtVel(dynamics()->extVel() + m_launchDir * -20.0f);
+        dynamics()->setExtVel(extVel() + m_launchDir * -20.0f);
     }
 
     Item::ItemDirector::Instance()->kartItem(0).clear();
@@ -457,9 +453,9 @@ bool KartAction::calcActionAwayFlipTwice() {
     auto &status = state()->status();
     if (status.onBit(eStatus::GroundStart)) {
         if (m_groundStartLaunchTimer++ == 0) {
-            EGG::Vector3f extVel = dynamics()->extVel();
-            extVel.y = 25.0f;
-            dynamics()->setExtVel(extVel);
+            EGG::Vector3f nextExtVel = extVel();
+            nextExtVel.y = 25.0f;
+            dynamics()->setExtVel(nextExtVel);
         }
     }
 
@@ -538,7 +534,7 @@ bool KartAction::calcLargeFlipAction() {
     }
 
     if ((m_currentAction != Action::HighLaunchLoseItem && m_frame < 10) || !touchingGround) {
-        dynamics()->setExtVel(EGG::Vector3f(0.0f, dynamics()->extVel().y, 0.0f));
+        dynamics()->setExtVel(EGG::Vector3f(0.0f, extVel().y, 0.0f));
     }
 
     if ((touchingGround && move()->up().dot(EGG::Vector3f::ey) > 0.0f) || m_frame >= 300) {

@@ -2,8 +2,6 @@
 
 #include "game/field/ObjectDirector.hh"
 
-#include "game/kart/KartObjectManager.hh"
-
 #include "game/system/RaceConfig.hh"
 
 namespace Kinoko::Field {

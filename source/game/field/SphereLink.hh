@@ -12,13 +12,35 @@ public:
     SphereLink();
     ~SphereLink();
 
-    void initLinkLen(f32 length);
-    void init();
+    /// @addr{0x806F1194}
+    /// @brief Initializes the link's length and resets its internal state
+    void initLinkLen(f32 length) {
+        m_linkLen = length;
+        init();
+    }
+
+    /// @brief Resets the link's internal state
+    void init() {
+        m_pos.setZero();
+        m_vel.setZero();
+        m_springForce.setZero();
+        m_smoothedUp = EGG::Vector3f::ey;
+        m_touchingGround = true;
+    }
+
     void calcStiffness();
     void calc();
     void calcConstraints(f32 scale);
     void checkCollision();
-    void calcPos();
+
+    /// @brief Calculates the new position of the link based on its velocity and spring force, and
+    /// resets the spring force
+    void calcPos() {
+        m_vel += m_springForce - GRAVITY;
+        m_vel *= 0.9f;
+        m_pos += m_vel;
+        m_springForce.setZero();
+    }
 
     [[nodiscard]] bool isLeader() const {
         return !m_prev;

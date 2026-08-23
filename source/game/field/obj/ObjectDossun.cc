@@ -3,8 +3,6 @@
 #include "game/field/CollisionDirector.hh"
 #include "game/field/ObjectDirector.hh"
 
-#include "game/kart/KartObject.hh"
-
 namespace Kinoko::Field {
 
 /// @addr{0x80764510}
@@ -146,17 +144,6 @@ void ObjectDossun::calcStomp() {
 
     if (m_stompDuration-- == 0) {
         startStill();
-    }
-}
-
-/// @addr{0x8075F3F4}
-void ObjectDossun::calcBeforeFall() {
-    constexpr f32 BEFORE_FALL_VEL = 50.0f;
-
-    setPos(EGG::Vector3f(pos().x, BEFORE_FALL_VEL + pos().y, pos().z));
-
-    if (--m_beforeFallTimer == 0) {
-        m_anmState = AnmState::Falling;
     }
 }
 

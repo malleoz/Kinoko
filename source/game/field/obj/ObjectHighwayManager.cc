@@ -37,16 +37,6 @@ ObjectHighwayManager::ObjectHighwayManager()
 /// @addr{0x806D2FE8}
 ObjectHighwayManager::~ObjectHighwayManager() = default;
 
-/// @addr{0x806D332C}
-void ObjectHighwayManager::init() {
-    m_squashTimer = SQUASH_MAX;
-}
-
-/// @addr{0x806D345C}
-void ObjectHighwayManager::calc() {
-    calcSquash();
-}
-
 /// @addr{0x806D50AC}
 /// @brief Iterates all vehicles and resets the suash timer if any vehicle has squashed the player
 void ObjectHighwayManager::calcSquash() {

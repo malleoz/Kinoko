@@ -27,12 +27,25 @@ public:
 
     [[nodiscard]] const EGG::Matrix34f &getUpdatedMatrix(u32 timeOffset) override;
 
+    /// @addr{0x807FE03C}
     [[nodiscard]] bool checkCollision(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override;
+            KCLTypeMask *maskOut, u32 timeOffset) override {
+        update(timeOffset);
+        calcScale(timeOffset);
+
+        return m_objColMgr->checkSphereFullPush(radius, pos, prevPos, mask, info, maskOut);
+    }
+
+    /// @addr{0x807FE2CC}
     [[nodiscard]] bool checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override;
+            KCLTypeMask *maskOut, u32 timeOffset) override {
+        update(timeOffset);
+        calcScale(timeOffset);
+
+        return m_objColMgr->checkSphereCachedFullPush(radius, pos, prevPos, mask, info, maskOut);
+    }
 
     [[nodiscard]] f32 calcPosOffset(u32 timeOffset) const;
 

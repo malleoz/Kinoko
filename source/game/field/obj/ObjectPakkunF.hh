@@ -15,7 +15,14 @@ public:
     ObjectPakkunF(const System::MapdataGeoObj &params);
     ~ObjectPakkunF() override;
 
-    void init() override;
+    /// @addr{0x807743E4}
+    void init() override {
+        m_state = State::Wait;
+        m_waitFrames = m_waitDuration;
+
+        calcTransform();
+    }
+
     void calc() override;
 
     /// @addr{0x807754F4}

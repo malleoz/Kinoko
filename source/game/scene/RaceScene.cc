@@ -1,18 +1,13 @@
 #include "RaceScene.hh"
 
-#include "game/field/BoxColManager.hh"
 #include "game/field/CollisionDirector.hh"
 #include "game/field/ObjectDirector.hh"
 #include "game/field/RailManager.hh"
 #include "game/field/jugem/JugemDirector.hh"
 #include "game/item/ItemDirector.hh"
-#include "game/kart/KartObjectManager.hh"
 #include "game/render/KartCamera.hh"
 #include "game/system/CourseMap.hh"
-#include "game/system/KPadDirector.hh"
-#include "game/system/RaceConfig.hh"
 #include "game/system/RaceManager.hh"
-#include "game/system/ResourceManager.hh"
 
 #include <ScopeLock.hh>
 
@@ -149,12 +144,6 @@ void RaceScene::configure() {
         auto *courseArc = resMgr->load(raceCfg->raceScenario().course);
         appendResource(courseArc, 1);
     }
-}
-
-/// @brief This is called on race shutdown in order to prep for the next race.
-/// @addr{0x80554A94}
-void RaceScene::onReinit() {
-    configure();
 }
 
 } // namespace Kinoko::Scene

@@ -2,7 +2,7 @@
 
 #include "game/item/KartItem.hh"
 
-#include <span>
+#include "game/system/RaceConfig.hh"
 
 namespace Kinoko {
 
@@ -21,8 +21,23 @@ class ItemDirector : EGG::Disposer {
     friend class Host::Context;
 
 public:
-    void init();
-    void calc();
+    /// @addr{0x80799794}
+    /// @brief Initializes the item state for all players in the race
+    /// @details For the purposes of Kinoko, we simplify the logic here and just give everyone a
+    /// triple mushroom at the start of the race to match time trial behavior.
+    void init() {
+        for (auto &kart : m_karts) {
+            kart.inventory().setItem(ItemId::TRIPLE_MUSHROOM);
+        }
+    }
+
+    /// @addr{0x80799850}
+    /// @brief Checks for item usage and updates the item state for all players in the race
+    void calc() {
+        for (auto &kart : m_karts) {
+            kart.calc();
+        }
+    }
 
     /// @brief Fetches the @ref KartItem object for the given player index
     /// @param idx The index of the player to retrieve the @ref KartItem for

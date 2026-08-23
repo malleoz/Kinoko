@@ -2,7 +2,7 @@
 
 #include "game/system/map/MapdataAccessorBase.hh"
 
-#include <egg/math/Vector.hh>
+#include <egg/util/Stream.hh>
 
 namespace Kinoko::System {
 
@@ -76,7 +76,9 @@ public:
 
     [[nodiscard]] MapdataCheckPath *findCheckpathForCheckpoint(u16 checkpointId) const;
 
-    [[nodiscard]] f32 lapProportion() const;
+    [[nodiscard]] f32 lapProportion() const {
+        return m_lapProportion;
+    }
 
 private:
     /// @brief Minimum proportion of a lap a checkpath can be. Calculated as

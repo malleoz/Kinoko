@@ -1,7 +1,6 @@
 #pragma once
 
 #include "game/kart/KartObjectProxy.hh"
-#include "game/system/KPadController.hh"
 
 namespace Kinoko::Kart {
 

@@ -1,8 +1,5 @@
 #include "ObjectCrab.hh"
 
-#include "game/field/CollisionDirector.hh"
-#include "game/field/ObjectDirector.hh"
-
 #include "game/system/RaceManager.hh"
 
 namespace Kinoko::Field {
@@ -125,13 +122,6 @@ ObjectCrab::StateResult ObjectCrab::calcState() {
     }
 
     return StateResult::BeginWalking;
-}
-
-/// @brief Sets rotation, factoring in the crab's backwards setting and rail direction
-void ObjectCrab::calcCurRot(const EGG::Vector3f &rot) {
-    m_curRot = rot;
-    m_curRot = m_backwards ? -m_curRot : m_curRot;
-    m_curRot.y = m_railInterpolator->isMovementDirectionForward() ? m_curRot.y : -m_curRot.y;
 }
 
 /// @brief Sets transformation matrix based on the provided rotation and the rail's tangent

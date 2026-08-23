@@ -14,7 +14,6 @@ public:
 
     void createSubsystems(bool isBike, const KartParam::Stats &stats);
     void copyPointers(KartAccessor &pointers);
-
     void init();
     void initAABB(KartAccessor &accessor, KartObject *object);
     void initPhysicsValues();
@@ -24,7 +23,13 @@ public:
     void calcPass1();
     void resizeAABB(f32 radiusScale);
     void addFloor(const CollisionData &, bool);
-    void updateSuspOvertravel(const EGG::Vector3f &suspOvertravel);
+
+    /// @addr{0x805979EC}
+    void updateSuspOvertravel(const EGG::Vector3f &suspOvertravel) {
+        m_maxSuspOvertravel = m_maxSuspOvertravel.minimize(suspOvertravel);
+        m_minSuspOvertravel = m_minSuspOvertravel.maximize(suspOvertravel);
+    }
+
     void tryEndHWG();
     void calcMovingObj();
     void calcMovingWater();

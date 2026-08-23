@@ -46,9 +46,28 @@ private:
     }
 
     void calcTangibleSub();
-    void enterTangible();
+
+    /// @addr{0x8076FFC0}
+    /// @brief Makes the rock tangible again after being intangible
+    void enterTangible() {
+        m_state = State::Tangible;
+        m_angSpd = INITIAL_ANGULAR_SPEED;
+        m_colTranslate.y = m_bounceFactor;
+        m_cooldownTimer = m_cooldownDuration;
+        enableCollision();
+    }
+
     void checkSphereFull();
-    void breakRock();
+
+    /// @addr{0x8076FD90}
+    /// @brief Runs when a collision occurs or when the rock reaches the end of its rail path
+    void breakRock() {
+        m_state = State::Intangible;
+        m_railInterpolator->init(0.0f, 0);
+        m_railInterpolator->setCurrVel(m_railSpeed);
+        setPos(EGG::Vector3f(pos().x, m_startYPos, pos().z));
+        disableCollision();
+    }
 
     State m_state;                ///< Current tangibility of the rock
     f32 m_startYPos;              ///< Starting y-axis position

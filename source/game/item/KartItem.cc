@@ -1,7 +1,6 @@
 #include "KartItem.hh"
 
 #include "game/kart/KartMove.hh"
-#include "game/kart/KartState.hh"
 
 #include "game/system/RaceManager.hh"
 
@@ -14,12 +13,6 @@ KartItem::KartItem() {
 
 /// @addr{0x8079951C}
 KartItem::~KartItem() = default;
-
-/// @addr{0x807976E0}
-/// @brief Initializes the @ref Kart::KartObjectProxy accessor pointer
-void KartItem::init(size_t playerIdx) {
-    apply(playerIdx);
-}
 
 /// @addr{0x80797928}
 /// @brief Calculates item activation based on the controller input state

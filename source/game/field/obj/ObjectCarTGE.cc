@@ -5,8 +5,6 @@
 #include "game/field/RailManager.hh"
 #include "game/field/obj/ObjectHighwayManager.hh"
 
-#include "game/kart/KartObject.hh"
-
 #include "game/system/RaceConfig.hh"
 
 namespace Kinoko::Field {
@@ -180,15 +178,6 @@ void ObjectCarTGE::calcCollisionTransform() {
     calcTransform();
     mat.setBase(3, transform().base(3));
     m_auxCollision->transform(mat, scale(), m_scaledTangentDir);
-}
-
-/// @addr{0x806D69C0}
-f32 ObjectCarTGE::getCollisionRadius() const {
-    constexpr f32 NORMAL_RADIUS = 600.0f;
-    constexpr f32 TRUCK_RADIUS = 1100.0f;
-
-    ASSERT(m_carType == CarType::Truck || m_carType == CarType::Normal);
-    return (m_carType == CarType::Truck) ? TRUCK_RADIUS : NORMAL_RADIUS;
 }
 
 /// @addr{0x806D7328}

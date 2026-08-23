@@ -2,6 +2,8 @@
 
 #include "game/field/obj/ObjectCollidable.hh"
 
+#include "game/system/RaceManager.hh"
+
 namespace Kinoko::Field {
 
 /// @brief The traffic cones on Daisy Circuit
@@ -49,7 +51,20 @@ private:
 
     void calcHit();
     void calcHiding();
-    void calcHide();
+
+    /// @brief Runs every frame that the pylon is intangible
+    /// @details Once 900 frames have elapsed, the pylon will transition to the ComeBack state.
+    void calcHide() {
+        constexpr u32 HIDE_DURATION = 900;
+
+        u32 t = System::RaceManager::Instance()->timer();
+        if (t - m_stateStartFrame > HIDE_DURATION) {
+            m_state = State::ComeBack;
+            m_stateStartFrame = t;
+            setRot(m_initRot);
+        }
+    }
+
     void calcComeBack();
 
     State m_state;                            ///< Current motion and tangibility state

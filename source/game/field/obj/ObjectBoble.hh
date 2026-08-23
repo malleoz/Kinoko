@@ -7,11 +7,26 @@ namespace Kinoko::Field {
 /// @brief Rising and falling fireballs on GBA Bowser Castle 3
 class ObjectBoble : public ObjectCollidable {
 public:
-    ObjectBoble(const System::MapdataGeoObj &params);
-    ~ObjectBoble() override;
+    /// @addr{0x8075DB3C}
+    ObjectBoble(const System::MapdataGeoObj &params) : ObjectCollidable(params) {}
 
-    void init() override;
-    void calc() override;
+    /// @addr{0x8075E74C}
+    ~ObjectBoble() override = default;
+
+    /// @addr{0x8075DBA0}
+    void init() override {
+        m_railInterpolator->init(0.0f, 0);
+        m_curTangentDir = m_railInterpolator->curTangentDir();
+        m_railInterpolator->setPerPointVelocities(true);
+        setScale(EGG::Vector3f::unit);
+    }
+
+    /// @addr{0x8075DCA0}
+    void calc() override {
+        m_railInterpolator->calc();
+        setPos(m_railInterpolator->curPos());
+        calcTangent();
+    }
 
     /// @addr{0x8075E744}
     [[nodiscard]] u32 loadFlags() const override {
@@ -25,7 +40,19 @@ public:
     }
 
 private:
-    void calcTangent();
+    /// @addr{0x8075E070}
+    void calcTangent() {
+        m_curTangentDir = Interpolate(0.2f, m_curTangentDir, m_railInterpolator->curTangentDir());
+        m_curTangentDir.normalise();
+
+        EGG::Vector3f axis = m_curTangentDir.cross(EGG::Vector3f::ex);
+        if (axis.normalise() == 0.0f) {
+            axis = m_curTangentDir.cross(EGG::Vector3f::ez);
+            axis.normalise();
+        }
+
+        setMatrixTangentTo(axis.cross(m_curTangentDir), m_curTangentDir);
+    }
 
     EGG::Vector3f m_curTangentDir; ///< Direction of the tangent to the rail at the current position
 };

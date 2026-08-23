@@ -2,8 +2,6 @@
 
 #include "game/field/CollisionDirector.hh"
 
-#include "game/system/RaceManager.hh"
-
 #include <algorithm>
 
 namespace Kinoko::Field {
@@ -56,17 +54,6 @@ void ObjectFlamePoleFoot::init() {
     m_pole->setPos(polePos);
 }
 
-/// @addr{0x8067EF70}
-void ObjectFlamePoleFoot::calc() {
-    if (System::RaceManager::Instance()->timer() < m_initDelay) {
-        return;
-    }
-
-    calcStates();
-    StateManager::calc();
-    calcHeightAndScale();
-}
-
 /** @addr{0x8067F6B8}
  * @brief Calculates the current state based off framecount within the cycle duration
  * @details References the values in m_stateState as follows:
@@ -105,7 +92,7 @@ void ObjectFlamePoleFoot::calc() {
  *     5 & t \ge 538
  * \end{cases}
  * \f]
- */
+ **/
 void ObjectFlamePoleFoot::calcStates() {
     u32 frame = static_cast<s32>(System::RaceManager::Instance()->timer() - m_initDelay);
     m_cycleFrame = frame % (m_extraCycleFrames + CYCLE_DURATION);
@@ -123,16 +110,6 @@ void ObjectFlamePoleFoot::calcStates() {
     if (m_currentStateId != stateId) {
         m_nextStateId = stateId;
     }
-}
-
-/// @addr{0x8067F7C8}
-/// @brief Calculates the height and scale of the flame pole based on the current cycle frame
-void ObjectFlamePoleFoot::calcHeightAndScale() {
-    setScale(getScaleY(0));
-
-    EGG::Vector3f polePos = m_pole->pos();
-    m_pole->setPos(EGG::Vector3f(polePos.x, m_heightOffset + (pos().y - m_maxHeight), polePos.z));
-    m_pole->setScale(m_maxScale);
 }
 
 /// @addr{0x8067FC50}
@@ -243,23 +220,6 @@ void ObjectFlamePoleFoot::enterEruptingUp() {
 
     m_initEruptVel = vel;
     m_eruptAccel = vel * vel / (2.0f * m_maxHeight);
-}
-
-/// @addr{0x8067F484}
-/// @brief Runs every frame when the flame pole is raising up
-void ObjectFlamePoleFoot::calcEruptingUp() {
-    f32 frame = static_cast<f32>(m_cycleFrame - m_stateStart[1]);
-    m_heightOffset =
-            std::min(m_maxHeight, m_initEruptVel * frame - frame * 0.5f * m_eruptAccel * frame);
-}
-
-/// @addr{0x8067F544}
-/// @brief Runs every frame after the flame pole reaches max height and before falling to dormancy
-void ObjectFlamePoleFoot::calcEruptingStay() {
-    constexpr f32 AMPLITUDE = 50.0f;
-
-    f32 angle = 360.0f * static_cast<f32>(m_cycleFrame - m_stateStart[2]) / 30.0f;
-    m_heightOffset = m_eruptedHeightOffset + AMPLITUDE * EGG::Mathf::SinFIdx(DEG2FIDX * angle);
 }
 
 u32 ObjectFlamePoleFoot::s_flamePoleCount = 0;

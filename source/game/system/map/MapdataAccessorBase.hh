@@ -14,46 +14,46 @@ struct MapSectionHeader {
 template <typename T, typename TData>
 class MapdataAccessorBase {
 public:
-    MapdataAccessorBase(const MapSectionHeader *header)
-        : m_entries(nullptr), m_entryCount(0), m_sectionHeader(header) {}
+    MapdataAccessorBase(const MapSectionHeader *header) : m_sectionHeader(header) {}
     MapdataAccessorBase(const MapdataAccessorBase &) = delete;
     MapdataAccessorBase(MapdataAccessorBase &&) = delete;
 
     virtual ~MapdataAccessorBase() {
-        if (m_entries) {
-            for (size_t i = 0; i < m_entryCount; ++i) {
-                EGG::egg_delete(m_entries[i]);
+        if (m_entries.initialized()) {
+            for (auto *&entry : m_entries) {
+                EGG::egg_delete(entry);
             }
-            EGG::egg_free(m_entries);
         }
     }
 
     [[nodiscard]] T *get(u16 i) const {
-        return i < m_entryCount ? m_entries[i] : nullptr;
+        return i < m_entries.size() ? m_entries[i] : nullptr;
     }
 
     [[nodiscard]] TData *getData(u16 i) const {
-        return i < m_entryCount ? m_entries[i]->data() : nullptr;
+        return i < m_entries.size() ? m_entries[i]->data() : nullptr;
     }
 
     [[nodiscard]] u16 size() const {
-        return m_entryCount;
+        return m_entries.size();
+    }
+
+    [[nodiscard]] bool empty() const {
+        return m_entries.empty();
     }
 
     void init(const TData *start, u16 count) {
         if (count != 0) {
-            m_entryCount = count;
-            m_entries = static_cast<T **>(EGG::egg_alloc(count * sizeof(T *)));
+            m_entries.reserve(count);
         }
 
         for (u16 i = 0; i < count; ++i) {
-            m_entries[i] = EGG::egg_new<T>(&start[i]);
+            m_entries.push_back(EGG::egg_new<T>(&start[i]));
         }
     }
 
 protected:
-    T **m_entries;
-    u16 m_entryCount;
+    fixed_vector<T *> m_entries;
     const MapSectionHeader *m_sectionHeader;
 };
 

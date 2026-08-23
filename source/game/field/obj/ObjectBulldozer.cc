@@ -2,8 +2,6 @@
 
 #include "game/system/RaceManager.hh"
 
-#include <cstring>
-
 namespace Kinoko::Field {
 
 /// @addr{0x807FD938}
@@ -60,26 +58,6 @@ const EGG::Matrix34f &ObjectBulldozer::getUpdatedMatrix(u32 timeOffset) {
     m_rtMat.makeRT(m_initialRot, pos);
 
     return m_rtMat;
-}
-
-/// @addr{0x807FE03C}
-bool ObjectBulldozer::checkCollision(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
-        u32 timeOffset) {
-    update(timeOffset);
-    calcScale(timeOffset);
-
-    return m_objColMgr->checkSphereFullPush(radius, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x807FE2CC}
-bool ObjectBulldozer::checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
-        u32 timeOffset) {
-    update(timeOffset);
-    calcScale(timeOffset);
-
-    return m_objColMgr->checkSphereCachedFullPush(radius, pos, prevPos, mask, info, maskOut);
 }
 
 /// @addr{0x807FDE5C}

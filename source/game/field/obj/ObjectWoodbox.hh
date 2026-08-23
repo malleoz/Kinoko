@@ -9,15 +9,31 @@ namespace Kinoko::Field {
 /// these boxes become unbreakable "ironboxes".
 class ObjectWoodbox : public ObjectBreakable {
 public:
-    ObjectWoodbox(const System::MapdataGeoObj &params);
-    ~ObjectWoodbox() override;
+    /// @addr{0x8077E5E4}
+    ObjectWoodbox(const System::MapdataGeoObj &params) : ObjectBreakable(params) {}
+
+    /// @addr{0x8077E620}
+    ~ObjectWoodbox() override = default;
 
     /// @addr{0x8077ED7C}
     [[nodiscard]] const char *getKclName() const override {
         return "ironbox"; // woodbox when not in TTs
     }
 
-    void calcCollisionTransform() override;
+    /// @addr{0x8077EBB8}
+    void calcCollisionTransform() override {
+        constexpr f32 HALF_SIZE = 100.0f;
+        constexpr EGG::Vector3f POS_OFFSET = EGG::Vector3f(0.0f, HALF_SIZE, 0.0f);
+
+        if (!m_collision) {
+            return;
+        }
+
+        calcTransform();
+        EGG::Matrix34f mat = transform();
+        mat.setBase(3, pos() + POS_OFFSET);
+        m_collision->transform(mat, scale(), getCollisionTranslation());
+    }
 };
 
 } // namespace Kinoko::Field

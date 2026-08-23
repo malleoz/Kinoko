@@ -1,13 +1,8 @@
 #include "KartSuspensionPhysics.hh"
 
-#include "game/kart/KartBody.hh"
 #include "game/kart/KartCollide.hh"
-#include "game/kart/KartDynamics.hh"
-#include "game/kart/KartState.hh"
 #include "game/kart/KartSub.hh"
 #include "game/kart/KartTire.hh"
-
-#include <egg/math/Math.hh>
 
 namespace Kinoko::Kart {
 
@@ -18,17 +13,6 @@ WheelPhysics::WheelPhysics(u16 wheelIdx, u16 bspWheelIdx)
 /// @addr{0x8059A9C4}
 WheelPhysics::~WheelPhysics() {
     EGG::egg_delete(m_hitboxGroup);
-}
-
-/// @addr{0x80599470}
-void WheelPhysics::init() {
-    m_hitboxGroup = EGG::egg_new<CollisionGroup>();
-    m_hitboxGroup->createSingleHitbox(10.0f, EGG::Vector3f::zero);
-}
-
-/// @addr{0x805994D4}
-void WheelPhysics::initBsp() {
-    m_bspWheel = &bsp().wheels[m_bspWheelIdx];
 }
 
 /// @addr{0x80599508}
@@ -59,7 +43,7 @@ void WheelPhysics::realign(const EGG::Vector3f &bottom, const EGG::Vector3f &veh
     m_suspTravel = std::max(0.0f, std::min(scaledMaxTravel, suspTravel));
     m_pos = topmostPos + m_suspTravel * bottom;
     m_speed = m_pos - m_lastPos;
-    m_speed -= dynamics()->intVel();
+    m_speed -= intVel();
     m_speed -= dynamics()->movingObjVel();
     m_speed -= dynamics()->movingRoadVel();
     m_speed -= collisionData().movement;
@@ -80,7 +64,7 @@ void WheelPhysics::updateCollision(const EGG::Vector3f &bottom, const EGG::Vecto
 
         EGG::Vector3f center = m_pos + scalar * bottom;
         scalar = 0.3f * (nextRadius * move()->leanRot()) * move()->totalScale();
-        center += scalar * bodyForward();
+        center += scalar * bodyRight();
 
         if (status.onBit(eStatus::HalfpipeMidair, eStatus::InCannon)) {
             m_hitboxGroup->collisionData().reset();
@@ -141,22 +125,15 @@ void KartSuspensionPhysics::init() {
     m_bspWheel = &bsp().wheels[m_bspWheelIdx];
 }
 
-/// @addr{0x80599F54}
-void KartSuspensionPhysics::reset() {
-    m_topmostPos.setZero();
-    m_maxTravelScaled = 0.0f;
-    m_bottomDir.setZero();
-}
-
 /// @addr{0x8059A02C}
 void KartSuspensionPhysics::setInitialState() {
-    EGG::Vector3f relPos = m_bspWheel->relPosition;
+    EGG::Vector3f relPos = m_bspWheel->springTop;
     if (m_tireType == TireType::KartReflected) {
         relPos.x = -relPos.x;
     }
 
-    const EGG::Vector3f rotatedRelPos = dynamics()->fullRot().rotateVector(relPos) + pos();
-    const EGG::Vector3f unitRotated = dynamics()->fullRot().rotateVector(-EGG::Vector3f::ey);
+    const EGG::Vector3f rotatedRelPos = fullRot().rotateVector(relPos) + pos();
+    const EGG::Vector3f unitRotated = fullRot().rotateVector(-EGG::Vector3f::ey);
 
     m_tirePhysics->setPos(rotatedRelPos + m_bspWheel->maxTravel * unitRotated);
     m_tirePhysics->setLastPos(rotatedRelPos + m_bspWheel->maxTravel * unitRotated);
@@ -173,7 +150,7 @@ void KartSuspensionPhysics::calcCollision(f32 dt, const EGG::Vector3f &gravity,
         const EGG::Matrix34f &mat) {
     m_maxTravelScaled = m_bspWheel->maxTravel * sub()->someScale();
 
-    EGG::Vector3f scaledRelPos = m_bspWheel->relPosition * scale();
+    EGG::Vector3f scaledRelPos = m_bspWheel->springTop * scale();
     if (m_tireType == TireType::KartReflected) {
         scaledRelPos.x = -scaledRelPos.x;
     }
@@ -230,11 +207,11 @@ void KartSuspensionPhysics::calcSuspension(const EGG::Vector3f &forward,
 
     rotProj = rotProj.proj(collisionData.floorNrm);
     fLinear.y += rotProj.y;
-    fLinear.y = std::min(fLinear.y, param()->stats().maxNormalAcceleration);
+    fLinear.y = std::min(fLinear.y, param()->stats().maxNormalForce);
 
     auto &status = KartObjectProxy::status();
 
-    if (dynamics()->extVel().y > 5.0f || status.onBit(eStatus::JumpPadDisableYsusForce)) {
+    if (extVel().y > 5.0f || status.onBit(eStatus::JumpPadDisableYsusForce)) {
         fLinear.y = 0.0f;
     }
 

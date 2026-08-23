@@ -5,8 +5,6 @@
 
 #include "game/kart/KartObject.hh"
 
-#include "game/system/RaceManager.hh"
-
 namespace Kinoko::Field {
 
 /// @addr{0x8082CAD8}
@@ -315,19 +313,6 @@ void ObjectPylon::calcHiding() {
     }
 
     disableCollision();
-}
-
-/// @brief Runs every frame that the pylon is intangible
-/// @details Once 900 frames have elapsed, the pylon will transition to the ComeBack state.
-void ObjectPylon::calcHide() {
-    constexpr u32 HIDE_DURATION = 900;
-
-    u32 t = System::RaceManager::Instance()->timer();
-    if (t - m_stateStartFrame > HIDE_DURATION) {
-        m_state = State::ComeBack;
-        m_stateStartFrame = t;
-        setRot(m_initRot);
-    }
 }
 
 /// @brief Runs every frame that the pylon is respawning after being intangible

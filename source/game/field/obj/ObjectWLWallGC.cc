@@ -58,24 +58,4 @@ const EGG::Matrix34f &ObjectWLWallGC::getUpdatedMatrix(u32 timeOffset) {
     return m_rtMat;
 }
 
-/// @addr{0x8086C328}
-bool ObjectWLWallGC::checkCollision(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
-        u32 timeOffset) {
-    update(timeOffset);
-    calcScale(timeOffset);
-
-    return m_objColMgr->checkSphereFullPush(radius, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x8086C5A8}
-bool ObjectWLWallGC::checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
-        u32 timeOffset) {
-    update(timeOffset);
-    calcScale(timeOffset);
-
-    return m_objColMgr->checkSphereCachedFullPush(radius, pos, prevPos, mask, info, maskOut);
-}
-
 } // namespace Kinoko::Field

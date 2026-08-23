@@ -7,8 +7,6 @@
 
 #include "game/field/ObjectCollisionKart.hh"
 
-#include <egg/core/BitFlag.hh>
-
 namespace Kinoko::Kart {
 
 /// @brief Represents the different reactions that can occur when a kart collides with an object.
@@ -221,7 +219,7 @@ public:
     Action handleReactWeakWall(size_t /*idx*/) {
         constexpr f32 WEAK_WALL_SPEED_SCALAR = 0.82f;
 
-        move()->setSpeed(move()->speed() * WEAK_WALL_SPEED_SCALAR);
+        move()->setSpeed(speed() * WEAK_WALL_SPEED_SCALAR);
         return Action::None;
     }
 

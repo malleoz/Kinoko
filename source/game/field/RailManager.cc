@@ -1,7 +1,6 @@
 #include "RailManager.hh"
 
 #include "game/system/CourseMap.hh"
-#include "game/system/map/MapdataGeoObj.hh"
 
 namespace Kinoko::Field {
 

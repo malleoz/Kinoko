@@ -1,9 +1,5 @@
 #include "ObjectCollisionBase.hh"
 
-#include <egg/math/Math.hh>
-
-#include <cmath>
-
 namespace Kinoko::Field {
 
 ObjectCollisionBase::ObjectCollisionBase() = default;
@@ -87,21 +83,6 @@ bool ObjectCollisionBase::check(const ObjectCollisionBase &rhs, EGG::Vector3f &d
     } while (state.m_flags < 0xf && (max > std::numeric_limits<f32>::epsilon()));
 
     return false;
-}
-
-/// @addr{0x8083504C}
-/// @brief Checks whether the origin's projection onto the affine hull of simplex `idx` lies
-/// within that simplex, i.e. all of its barycentric weights (@ref GJKState::m_scales) are
-/// positive.
-bool ObjectCollisionBase::enclosesOrigin(const GJKState &state, u32 idx) const {
-    u32 mask = 1;
-    for (u8 i = 0; i < 4; ++i, mask *= 2) {
-        if ((idx & mask) && state.m_scales[idx][i] <= 0.0f) {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 /// @addr{0x808350E4}
@@ -202,19 +183,6 @@ bool ObjectCollisionBase::isValidSimplex(const GJKState &state, u32 idx) const {
     }
 
     return true;
-}
-
-/// @addr{0x808358CC}
-/// @brief Catches scenarios where the newly computed support point `v` is identical to a point
-/// already in the simplex, which would cause the algorithm to loop infinitely.
-bool ObjectCollisionBase::inSimplex(const GJKState &state, const EGG::Vector3f &v) const {
-    for (u32 i = 0, mask = 1; i < 4; ++i, mask *= 2) {
-        if ((state.m_candidateMask & mask) && state.m_minDiffPts[i] == v) {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 /// @addr{0x80835F34}

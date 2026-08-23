@@ -2,38 +2,9 @@
 
 #include "game/field/CollisionDirector.hh"
 
-#include "game/system/ResourceManager.hh"
-
 // Credit: em-eight/mkw
 
 namespace Kinoko::Field {
-
-/// @addr{0x807C28D8}
-/// @brief Parses and caches tris stored in course.kcl
-void CourseColMgr::init() {
-    // In the base game, this file is loaded in CollisionDirector::CreateInstance and passed into
-    // this function. It's simpler to just keep it here.
-    void *file = LoadFile("course.kcl");
-    m_data = EGG::egg_new<KColData>(file);
-}
-
-/// @addr{0x807C293C}
-/// @brief Narrows the spatial cache in @ref KColData to only include course KCL tris defined by the
-// provided mask within a certain radius of the given position.
-/// @param scale Compensates for local-to-world transformation for dyanmically-sized objects
-/// @param radius The radius of the sphere to check within
-/// @param data Pointer to the parsed tri data to perform the lookup on
-/// @param pos The point of the sphere to check within
-/// @param mask The KCL flags to check collision against (other types are ignored)
-void CourseColMgr::scaledNarrowScopeLocal(f32 scale, f32 radius, KColData *data,
-        const EGG::Vector3f &pos, KCLTypeMask mask) {
-    if (!data) {
-        data = m_data;
-    }
-
-    f32 invScale = 1.0f / scale;
-    data->narrowScopeLocal(pos * invScale, radius * invScale, mask);
-}
 
 /// @addr{0x807C2A60}
 /// @brief Checks collision between a point and course KCL tris, writing only partial collision info
@@ -533,12 +504,6 @@ bool CourseColMgr::checkSphereCachedFullPush(f32 scale, f32 radius, KColData *da
     }
 
     return doCheckMaskOnlyPush(data, &KColData::checkSphereCollision, maskOut);
-}
-
-/// @brief Loads a particular section of a .szs file
-void *CourseColMgr::LoadFile(const char *filename) {
-    auto *resMgr = System::ResourceManager::Instance();
-    return resMgr->getFile(filename, nullptr, System::ArchiveId::Course);
 }
 
 /// @addr{0x807C29E4}

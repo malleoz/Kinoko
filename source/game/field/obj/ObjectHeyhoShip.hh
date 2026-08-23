@@ -1,6 +1,5 @@
 #pragma once
 
-#include "game/field/StateManager.hh"
 #include "game/field/obj/ObjectProjectileLauncher.hh"
 
 namespace Kinoko::Field {

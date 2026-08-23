@@ -107,7 +107,18 @@ public:
 
 private:
     void calcState();
-    void calcPosAndTangent();
+
+    /// @addr{0x806C6148}
+    /// @brief Updates the Chain Chomp's position and tangent
+    /// @details Snaps the Chain Chomp's X and Z position to the rail and sets the target Y position
+    /// to the rail's height. Also updates the Chain Chomp's tangent direction.
+    void calcPosAndTangent() {
+        const auto &curPos = m_railInterpolator->curPos();
+        m_hwanwan->m_workPos.x = curPos.x;
+        m_hwanwan->m_workPos.z = curPos.z;
+        m_hwanwan->m_targetY = curPos.y;
+        m_hwanwan->m_tangent = m_railInterpolator->curTangentDir();
+    }
 
     ObjectHwanwan *m_hwanwan; ///< Pointer to the underlying Chain Chomp object
 };

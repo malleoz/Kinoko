@@ -203,12 +203,30 @@ private:
     };
 
     void enterStateStub() {}
-    void enterWalk();
+
+    /// @addr{0x806C9BC0}
+    /// @brief Runs once when the Wiggler begins walking
+    void enterWalk() {
+        setRailVel();
+        m_swayAmplitude = INIT_SWAY_AMPLITUDE;
+        m_still = false;
+        m_leftMisalignFrame = 0;
+    }
 
     void calcWalk();
     void calcWait();
 
-    void onSegmentEnd();
+    /// @addr{0x806CA24C}
+    /// @brief Called when the Wiggler reaches the end of a rail segment
+    /// @details If the rail point's first setting is non-zero, then the Wiggler will wait at that
+    /// point for that number of frames
+    void onSegmentEnd() {
+        u16 setting = m_railInterpolator->curPoint().setting[0];
+        if (setting != 0) {
+            m_still = true;
+            m_stillDuration = setting;
+        }
+    }
 
     /// @addr{0x806CA6CC}
     /// @brief Initializes the rail and its velocity
@@ -217,11 +235,38 @@ private:
         m_railInterpolator->setCurrVel(m_walkSpeed);
     }
 
-    void calcRail();
+    /// @addr{0x806CA27C}
+    /// @brief Caches the last frame's rail tangent and updates the rail interpolator
+    void calcRail() {
+        m_prevRailTangent = m_railInterpolator->curTangentDir();
+
+        if (m_railInterpolator->calc() == RailInterpolator::Status::SegmentEnd) {
+            onSegmentEnd();
+        }
+    }
+
     void calcBody();
     void initBody();
-    void initChain();
-    void clearChain();
+
+    /// @addr{0x806CA9AC}
+    /// @brief Initializes the positions of the chain link objects based on the initial parts'
+    /// positions
+    void initChain() {
+        m_chain.init();
+
+        for (size_t i = 0; i < m_parts.size(); ++i) {
+            m_chain.setPos(i, m_parts[i]->pos());
+        }
+    }
+
+    /// @addr{0x806CAAD0}
+    /// @brief Resets the chain link positions and clears their velocity and spring force
+    void clearChain() {
+        m_chain.setPos(0, m_railInterpolator->curPos());
+        m_chain.setVel(0, EGG::Vector3f::zero);
+        m_chain.addSpringForce(0, EGG::Vector3f::ey * SphereLink::GRAVITY);
+    }
+
     void calcRailAlignmentMotion();
     void calcSway();
 

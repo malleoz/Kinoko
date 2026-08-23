@@ -1,13 +1,7 @@
 #include "KartHalfPipe.hh"
 
 #include "game/kart/KartCollide.hh"
-#include "game/kart/KartDynamics.hh"
-#include "game/kart/KartMove.hh"
-#include "game/kart/KartParam.hh"
 #include "game/kart/KartPhysics.hh"
-#include "game/kart/KartState.hh"
-
-#include <egg/math/Math.hh>
 
 namespace Kinoko::Kart {
 
@@ -54,14 +48,14 @@ void KartHalfPipe::calc() {
 
             EGG::Vector3f velNorm = velocity();
             velNorm.normalise();
-            EGG::Vector3f rot = dynamics()->mainRot().rotateVectorInv(velNorm);
+            EGG::Vector3f rot = mainRot().rotateVectorInv(velNorm);
 
             m_launchRot.makeVectorRotation(rot, EGG::Vector3f::ez);
             m_prevPos = prevPos();
 
             calcCollision(false);
 
-            f32 scaledDir = std::min(65.0f, move()->dir().y * move()->speed());
+            f32 scaledDir = std::min(65.0f, move()->dir().y * speed());
             m_attemptedTrickTimer = std::max<s32>(0, scaledDir * 2.0f / GRAVITY - 1.0f);
         } else if (status.onBit(eStatus::OverZipper)) {
             dynamics()->setGravity(-GRAVITY);
@@ -74,7 +68,7 @@ void KartHalfPipe::calc() {
             sideRot.makeVectorRotation(side, velNorm);
             sideRot = sideRot.multSwap(mainRot()).multSwap(m_launchRot);
 
-            f32 t = move()->calcSlerpRate(DEG2RAD360, mainRot(), sideRot);
+            f32 t = move()->CalcSlerpRate(DEG2RAD360, mainRot(), sideRot);
             EGG::Quatf slerp = mainRot().slerpTo(sideRot, t);
             dynamics()->setFullRot(slerp);
             dynamics()->setMainRot(slerp);
@@ -198,20 +192,20 @@ void KartHalfPipe::calcCollision(bool notAirborne) {
 
     EGG::Vector3f prevPos = m_prevPos + EGG::Vector3f::ey * PREVIOUS_RADIUS;
 
-    bool hasDriverFloorCollision = move()->calcZipperCollision(LANDING_RADIUS, bsp().initialYPos,
-            pos, upLocal, prevPos, &colInfoFloor, &maskOut, KCL_TYPE_DRIVER_FLOOR);
+    bool hasDriverFloorCollision = move()->calcZipperCollision(LANDING_RADIUS, bsp().offsetY, pos,
+            upLocal, prevPos, &colInfoFloor, &maskOut, KCL_TYPE_DRIVER_FLOOR);
 
     prevPos = hasDriverFloorCollision ? EGG::Vector3f::inf : prevPos;
 
     if (overZipper) {
-        if (!move()->calcZipperCollision(MIDAIR_RADIUS, bsp().initialYPos, pos, upLocal, prevPos,
+        if (!move()->calcZipperCollision(MIDAIR_RADIUS, bsp().offsetY, pos, upLocal, prevPos,
                     &colInfoWall, &maskOut, mask)) {
             mask |= KCL_TYPE_DRIVER_WALL;
         }
     }
 
-    if (move()->calcZipperCollision(WALL_RADIUS, bsp().initialYPos, pos, upLocal, prevPos,
-                &colInfoWall, &maskOut, mask)) {
+    if (move()->calcZipperCollision(WALL_RADIUS, bsp().offsetY, pos, upLocal, prevPos, &colInfoWall,
+                &maskOut, mask)) {
         if ((maskOut & ~KCL_TYPE_BIT(COL_TYPE_HALFPIPE_INVISIBLE_WALL)) == 0) {
             status.setBit(eStatus::HalfpipeMidair);
         }
@@ -220,7 +214,7 @@ void KartHalfPipe::calcCollision(bool notAirborne) {
         move()->setUp(up + (colInfoWall.wallNrm - up) * UP_INTERP_RATE);
         move()->setSmoothedUp(move()->up());
 
-        f32 yScale = bsp().initialYPos * scale().y;
+        f32 yScale = bsp().offsetY * scale().y;
         EGG::Vector3f newPos = pos + colInfoWall.tangentOff + -WALL_RADIUS * colInfoWall.wallNrm +
                 yScale * upLocal;
         newPos.y += move()->hopPosY();

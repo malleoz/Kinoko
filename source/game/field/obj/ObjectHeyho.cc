@@ -48,14 +48,6 @@ void ObjectHeyho::init() {
     changeAnimation(Animation::Move);
 }
 
-/// @addr{0x806CEDF8}
-void ObjectHeyho::calc() {
-    calcStateTransition();
-    calcMotion();
-    StateManager::calc();
-    calcInterp();
-}
-
 /// @addr{0x806D013C}
 void ObjectHeyho::loadAnims() {
     std::array<const char *, 4> names = {{
@@ -231,16 +223,6 @@ void ObjectHeyho::calcMotion() {
         m_currentVel = m_launchVel;
         m_freeFall = false;
     }
-}
-
-/// @addr{0x806CFFB0}
-/// @brief Updates the smoothed up vector, normalises the forward direction vector, and updates the
-/// transform matrix accordingly
-void ObjectHeyho::calcInterp() {
-    m_up = Interpolate(0.2f, m_up, m_floorNrm);
-    m_up.normalise2();
-    m_forward.normalise2();
-    setMatrixTangentTo(m_up, m_forward);
 }
 
 } // namespace Kinoko::Field

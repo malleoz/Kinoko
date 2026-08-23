@@ -2,9 +2,6 @@
 
 #include "game/kart/CollisionGroup.hh"
 #include "game/kart/KartObjectProxy.hh"
-#include "game/kart/KartParam.hh"
-
-#include <egg/math/Matrix.hh>
 
 namespace Kinoko::Kart {
 
@@ -14,8 +11,17 @@ public:
     WheelPhysics(u16 wheelIdx, u16 bspWheelIdx);
     ~WheelPhysics();
 
-    void init();
-    void initBsp();
+    /// @addr{0x80599470}
+    void init() {
+        m_hitboxGroup = EGG::egg_new<CollisionGroup>();
+        m_hitboxGroup->createSingleHitbox(10.0f, EGG::Vector3f::zero);
+    }
+
+    /// @addr{0x805994D4}
+    void initBsp() {
+        m_bspWheel = &bsp().wheels[m_bspWheelIdx];
+    }
+
     void reset();
 
     void realign(const EGG::Vector3f &bottom, const EGG::Vector3f &vehicleMovement);
@@ -123,7 +129,13 @@ public:
     ~KartSuspensionPhysics();
 
     void init();
-    void reset();
+
+    /// @addr{0x80599F54}
+    void reset() {
+        m_topmostPos.setZero();
+        m_maxTravelScaled = 0.0f;
+        m_bottomDir.setZero();
+    }
 
     void setInitialState();
 

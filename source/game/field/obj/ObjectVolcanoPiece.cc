@@ -204,15 +204,6 @@ void ObjectVolcanoPiece::calcScale(u32 timeOffset) {
     }
 }
 
-/// @addr{0x80805924}
-void ObjectVolcanoPiece::setMovingObjVel(const EGG::Vector3f &v) {
-    m_objColMgr->setMovingObjVel(v);
-
-    if (m_colMgrB) {
-        m_colMgrB->setMovingObjVel(v);
-    }
-}
-
 /// @addr{0x808187B4}
 /// @brief Updates position to reflect the fall duration or the current step in its shake cycle
 const EGG::Matrix34f &ObjectVolcanoPiece::calcShakeAndFall(EGG::Vector3f *vel, u32 timeOffset) {

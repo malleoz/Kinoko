@@ -1,7 +1,5 @@
 #include "KartDynamics.hh"
 
-#include <egg/math/Math.hh>
-
 namespace Kinoko::Kart {
 
 /// @addr{0x805B4AF8}
@@ -45,7 +43,7 @@ void KartDynamics::init() {
     m_fullRot = EGG::Quatf::ident;
     m_totalForce = EGG::Vector3f::zero;
     m_totalTorque = EGG::Vector3f::zero;
-    m_specialRot = EGG::Quatf::ident;
+    m_stuntRot = EGG::Quatf::ident;
     m_extraRot = EGG::Quatf::ident;
     m_gravity = -1.0f;
     m_intVel = EGG::Vector3f::zero;
@@ -172,7 +170,7 @@ void KartDynamics::calc(f32 dt, f32 maxSpeed, bool air) {
         m_mainRot = EGG::Quatf::ident;
     }
 
-    m_fullRot = m_extraRot.multSwap(m_mainRot).multSwap(m_specialRot);
+    m_fullRot = m_extraRot.multSwap(m_mainRot).multSwap(m_stuntRot);
     m_fullRot.normalise();
 
     m_totalForce.setZero();

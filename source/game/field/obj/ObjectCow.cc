@@ -1,13 +1,9 @@
 #include "ObjectCow.hh"
 
 #include "game/field/CollisionDirector.hh"
-#include "game/field/RailInterpolator.hh"
 #include "game/field/RailManager.hh"
 
 #include "game/kart/KartCollide.hh"
-#include "game/kart/KartObject.hh"
-
-#include "game/system/RaceManager.hh"
 
 namespace Kinoko::Field {
 
@@ -152,37 +148,6 @@ void ObjectCowLeader::calc() {
     setMatrixTangentTo(m_up, m_tangent);
 }
 
-/// @addr{0x806BDCD8}
-void ObjectCowLeader::calcFloor() {
-    m_velocity.y = 0.0f;
-    m_upForce = GRAVITY_FORCE;
-    m_floorNrm = m_railInterpolator->floorNrm(m_railInterpolator->nextPointIdx());
-}
-
-/// @addr{0x806BD6B0}
-void ObjectCowLeader::enterWait() {
-    setTarget(m_railInterpolator->curPos() + m_railInterpolator->curTangentDir() * 10.0f);
-}
-
-/// @addr{0x806BD7D8}
-void ObjectCowLeader::enterEat() {
-    m_eatAnmType = EatAnmType::EatST;
-    u32 rand = System::RaceManager::Instance()->random().getU32(120);
-    m_eatFrames = rand + 120;
-}
-
-/// @addr{0x806BDA1C}
-void ObjectCowLeader::enterRoam() {
-    m_endedRailSegment = false;
-}
-
-/// @addr{0x806BD738}
-void ObjectCowLeader::calcWait() {
-    if (m_currentFrame > m_railInterpolator->curPoint().setting[0]) {
-        m_nextStateId = 2;
-    }
-}
-
 /// @addr{0x806BD84C}
 void ObjectCowLeader::calcEat() {
     constexpr u16 EAT_ST_FRAMES = 40;
@@ -313,18 +278,6 @@ void ObjectCowFollower::calc() {
     setMatrixTangentTo(m_up, m_tangent);
 }
 
-/// @addr{0x806BE4E8}
-void ObjectCowFollower::enterWait() {
-    constexpr u32 BASE_WAIT_FRAMES = 100;
-    constexpr u32 WAIT_FRAMES_VARIANCE = 60;
-    constexpr f32 BASE_RAIL_THRESHOLD = 0.2f;
-    constexpr f32 RAIL_THRESHOLD_VARIANCE = 0.8f;
-
-    auto &rand = System::RaceManager::Instance()->random();
-    m_waitFrames = rand.getU32(WAIT_FRAMES_VARIANCE) + BASE_WAIT_FRAMES;
-    m_railSegThreshold = BASE_RAIL_THRESHOLD + rand.getF32(RAIL_THRESHOLD_VARIANCE);
-}
-
 /// @addr{0x806BE62C}
 void ObjectCowFollower::enterFreeRoam() {
     constexpr f32 BASE_WALK_DISTANCE = 400.0f;
@@ -350,15 +303,6 @@ void ObjectCowFollower::enterFreeRoam() {
 
     f32 distance = BASE_WALK_DISTANCE + rand.getF32(WALK_DISTANCE_VARIANCE);
     setTarget(pos() + dir * distance);
-}
-
-/// @addr{0x806BE930}
-void ObjectCowFollower::enterFollowLeader() {
-    m_bStopping = false;
-    m_interpRate = 0.01f;
-
-    auto &rand = System::RaceManager::Instance()->random();
-    m_topSpeed = BASE_TOP_SPEED + rand.getF32(TOP_SPEED_VARIANCE);
 }
 
 /// @addr{0x806BE580}
@@ -449,14 +393,6 @@ ObjectCowHerd::ObjectCowHerd(const System::MapdataGeoObj &params) : ObjectCollid
 
 /// @addr{0x806BEFEC}
 ObjectCowHerd::~ObjectCowHerd() = default;
-
-/// @addr{0x806BF02C}
-/// @brief Assigns the herd's rail to each child.
-void ObjectCowHerd::init() {
-    for (auto *&child : m_followers) {
-        child->m_rail = m_leader->m_railInterpolator;
-    }
-}
 
 /// @addr{0x806BF064}
 void ObjectCowHerd::calc() {

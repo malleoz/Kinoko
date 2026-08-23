@@ -16,7 +16,17 @@ public:
     ~ObjectSniper() override;
 
     void init() override;
-    void calc() override;
+
+    /// @addr{0x806DDC44}
+    /// @details Checks if the launcher is ready to launch a projectile and triggers the
+    /// corresponding projectile's launch.
+    void calc() override {
+        s32 idx = m_launcher->launchPointIdx();
+
+        if (idx != -1) {
+            m_projectiles[m_pointIdxs[idx]]->onLaunch();
+        }
+    }
 
     /// @addr{0x806D2900}
     [[nodiscard]] u32 loadFlags() const override {

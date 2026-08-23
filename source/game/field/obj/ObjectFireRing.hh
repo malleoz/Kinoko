@@ -1,6 +1,5 @@
 #pragma once
 
-#include "game/field/obj/ObjectCollidable.hh"
 #include "game/field/obj/ObjectFireball.hh"
 
 namespace Kinoko::Field {

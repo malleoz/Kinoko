@@ -3,9 +3,6 @@
 #include "game/field/CollisionDirector.hh"
 
 #include "game/kart/KartMove.hh"
-#include "game/kart/KartObjectManager.hh"
-
-#include "game/system/RaceManager.hh"
 
 namespace Kinoko::Field {
 
@@ -22,20 +19,6 @@ JugemUnit::~JugemUnit() {
     EGG::egg_delete(m_switchReverse);
     EGG::egg_delete(m_move);
     EGG::egg_delete(m_interp);
-}
-
-/// @addr{0x807221C4}
-/// @brief Updates switches, runs the state machine, and updates Lakitu's position if not idle
-void JugemUnit::calc() {
-    calcSwitches();
-
-    StateManager::calc();
-
-    // Perform a collision check if Lakitu is not idle
-    if (m_currentStateId != 0) {
-        setPosFromTransform(m_move->transform());
-        calcCollision();
-    }
 }
 
 /// @addr{0x80724794}

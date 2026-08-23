@@ -1,7 +1,5 @@
 #include "ObjColMgr.hh"
 
-#include "game/field/CourseColMgr.hh"
-
 namespace Kinoko::Field {
 
 /// @addr{0x807C4CE8}
@@ -15,15 +13,6 @@ ObjColMgr::ObjColMgr(const void *file)
 ObjColMgr::~ObjColMgr() {
     ASSERT(m_data);
     EGG::egg_delete(m_data);
-}
-
-/// @addr{0x807C4DC8}
-/// @brief Narrows the spatial cache of the @ref CourseColMgr to only include KCL tris defined by
-/// the provided mask within a certain radius of the given position.
-void ObjColMgr::narrScLocal(f32 radius, const EGG::Vector3f &pos, KCLTypeMask flags) {
-    EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
-    CourseColMgr::Instance()->scaledNarrowScopeLocal(m_kclScale, radius, m_data, posWrtModel,
-            flags);
 }
 
 /// @addr{0x807C4EAC}

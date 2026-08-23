@@ -3,10 +3,7 @@
 #include "game/field/CollisionDirector.hh"
 #include "game/field/ObjectDirector.hh"
 
-#include "game/kart/KartObject.hh"
-
 #include "game/system/RaceConfig.hh"
-
 #include "game/system/RaceManager.hh"
 
 namespace Kinoko::Field {
@@ -118,6 +115,8 @@ void ObjectWanwan::calc() {
 }
 
 /// @addr{0x806E526C}
+/// @details Chain Chomp collisions are treated as wall collisions if the kart is moving at 50%
+/// speed or less and if the Chain Chomp is not lurching forward.
 Kart::Reaction ObjectWanwan::onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
         Kart::Reaction /*reactionOnObj*/, EGG::Vector3f & /*hitDepth*/) {
     if (m_currentStateId == 1 && !m_attackStill) {
@@ -128,6 +127,9 @@ Kart::Reaction ObjectWanwan::onCollision(Kart::KartObject *kartObj, Kart::Reacti
 }
 
 /// @addr{0x806E6208}
+/// @brief Runs once when the Chain Chomp enters the wandering state.
+/// @details Resets the velocity and acceleration to zero. Determines a random angle within a range
+/// of 20 degrees to 40 degrees for the Chain Chomp to wander towards.
 void ObjectWanwan::enterWait() {
     constexpr f32 ANGLE_RANGE = 0.33f * 60.0f;
     constexpr f32 ANGLE_NORMALIZATION = 0.66f * 60.0f;
@@ -154,6 +156,9 @@ void ObjectWanwan::enterWait() {
 }
 
 /// @addr{0x806E6EB0}
+/// @brief Runs once when the Chain Chomp enters the attacking state.
+/// @details Resets the velocity and acceleration to zero. Calculates a random target position for
+/// the Chain Chomp to lunge towards.
 void ObjectWanwan::enterAttack() {
     m_vel.x = 0.0f;
     m_vel.z = 0.0f;
@@ -170,6 +175,7 @@ void ObjectWanwan::enterAttack() {
 }
 
 /// @addr{0x806E73C4}
+/// @brief Runs once when the Chain Chomp enters the retreating state.
 void ObjectWanwan::enterBack() {
     m_vel.x = 0.0f;
     m_vel.z = 0.0f;
@@ -186,6 +192,12 @@ void ObjectWanwan::enterBack() {
 }
 
 /// @addr{0x806E63A4}
+/// @brief Runs once per frame when the Chain Chomp is in the wandering state.
+/// @details Determines if the Chain Chomp needs to change its wandering target position if it has
+/// wandered close enough to the previous target position.
+/// @bug If the Chain Chomp's position is exactly equal to the target position, then the local
+/// variable `distFromTarget` will be uninitialized. To reflect base game behavior, we observe that
+/// `r31` contains `F_PI`, thus we mimic that behavior by initializing `distFromTarget` to `F_PI`.
 void ObjectWanwan::calcWait() {
     constexpr f32 ANGLE_RANGE = 0.33f * 0.5f * 60.0f;
     constexpr f32 ANGLE_NORMALIZATION = 0.66f * 0.5f * 60.0f;
@@ -223,9 +235,14 @@ void ObjectWanwan::calcWait() {
 }
 
 /// @addr{0x806E6F6C}
+/// @brief Runs once per frame when the Chain Chomp is in the attacking state.
+/// @details If the Chain Chomp has been attacking for 2 seconds, then it transitions to the
+/// retreating state. If the chain has become taut, then enforces the Chain Chomp's position is
+/// clamped to the chain length.
 void ObjectWanwan::calcAttack() {
     constexpr u32 ATTACK_DURATION = 120;
     constexpr f32 PITCH_STEP = 25.0f;
+    constexpr f32 ATTACK_SPEED = 120.0f;
 
     if (m_currentFrame > ATTACK_DURATION) {
         m_nextStateId = 2;
@@ -266,12 +283,15 @@ void ObjectWanwan::calcAttack() {
         m_vel.y = 0.0f;
         m_vel *= -0.85f;
     } else {
-        m_vel.x = m_tangent.x * 120.0f;
-        m_vel.z = m_tangent.z * 120.0f;
+        m_vel.x = m_tangent.x * ATTACK_SPEED;
+        m_vel.z = m_tangent.z * ATTACK_SPEED;
     }
 }
 
 /// @addr{0x806E7494}
+/// @brief Runs once per frame when the Chain Chomp is in the retreating state.
+/// @details If the Chain Chomp has been retreating for 90 frames, then it transitions to the
+/// wandering state.
 void ObjectWanwan::calcBack() {
     if (EGG::Mathf::abs(m_pitch) > 2.0f) {
         m_pitch += ObjectDirector::Instance()->WanwanMaxPitch() / 15.0f;
@@ -287,14 +307,10 @@ void ObjectWanwan::calcBack() {
     }
 }
 
-/// @addr{0x806E59BC}
-void ObjectWanwan::calcPos() {
-    m_vel += m_accel - GRAVITY;
-    addPos(m_vel);
-    m_accel.setZero();
-}
-
 /// @addr{0x806E5A8C}
+/// @brief Performs a collision check to see if the Chain Chomp is touching the floor
+/// @details If the Chain Chomp is touching the floor, then it applies a bounce to the Chain Chomp's
+/// acceleration.
 void ObjectWanwan::calcCollision() {
     constexpr EGG::Vector3f POS_OFFSET = EGG::Vector3f(0.0f, -570.0f, 0.0f);
 
@@ -312,8 +328,8 @@ void ObjectWanwan::calcCollision() {
     }
 
     m_touchingFloor = true;
-    EGG::Vector3f local_84 = info.tangentOff;
-    f32 scale = local_84.normalise();
+    EGG::Vector3f tangentOff = info.tangentOff;
+    f32 scale = tangentOff.normalise();
     addPos(EGG::Vector3f::ey * scale);
 
     if (info.floorDist > -std::numeric_limits<f32>::min()) {
@@ -324,6 +340,7 @@ void ObjectWanwan::calcCollision() {
 }
 
 /// @addr{0x806E5D70}
+/// @brief Sets the transform of the Chain Chomp based off its current position, pitch, and tangent
 void ObjectWanwan::calcMat() {
     EGG::Matrix34f mat;
     if (m_currentStateId == 1) {
@@ -342,6 +359,7 @@ void ObjectWanwan::calcMat() {
 }
 
 /// @addr{0x806E5EDC}
+/// @brief Calculates the world transform matrix of the chain attachment point on the Chain Chomp
 void ObjectWanwan::calcChainAttachMat() {
     u32 idx = m_currentStateId == 1 ? 0 : m_frame % 15;
 
@@ -357,51 +375,28 @@ void ObjectWanwan::calcChainAttachMat() {
 }
 
 /// @addr{0x806E78B0}
+/// @brief Calculates the next speed of the Chain Chomp based off its current speed and tangent
 void ObjectWanwan::calcSpeed() {
-    if (m_speed < 8.0f) {
-        m_speed += 0.5f;
-        m_accel.x = m_tangent.x * 0.5f;
-        m_accel.z = m_tangent.z * 0.5f;
+    constexpr f32 MAX_SPEED = 8.0f;
+    constexpr f32 ACCEL = 0.5f;
+
+    if (m_speed < MAX_SPEED) {
+        m_speed += ACCEL;
+        m_accel.x = m_tangent.x * ACCEL;
+        m_accel.z = m_tangent.z * ACCEL;
     } else {
-        m_speed = 8.0f;
+        m_speed = MAX_SPEED;
         m_accel.x = 0.0f;
         m_accel.z = 0.0f;
-        m_vel.x = m_tangent.x * 8.0f;
-        m_vel.z = m_tangent.z * 8.0f;
-    }
-}
-
-/// @addr{0x806E794C}
-void ObjectWanwan::calcBounce() {
-    if (m_touchingFloor) {
-        m_vel.y = 0.0f;
-        m_accel += EGG::Vector3f::ey * 12.0f;
-    } else {
-        m_accel.y = 0.0f;
-    }
-}
-
-/// @addr{0x806E7E38}
-void ObjectWanwan::calcTangent(f32 t) {
-    m_tangent = Interpolate(t, m_tangent, m_targetDir);
-    if (m_tangent.squaredLength() > std::numeric_limits<f32>::epsilon()) {
-        m_tangent.normalise2();
-    } else {
-        m_tangent = m_targetDir;
-    }
-}
-
-/// @addr{0x806E7F64}
-void ObjectWanwan::calcUp(f32 t) {
-    m_up = Interpolate(t, m_up, m_targetUp);
-    if (m_up.squaredLength() > std::numeric_limits<f32>::epsilon()) {
-        m_up.normalise2();
-    } else {
-        m_up = EGG::Vector3f::ey;
+        m_vel.x = m_tangent.x * MAX_SPEED;
+        m_vel.z = m_tangent.z * MAX_SPEED;
     }
 }
 
 /// @addr{0x806E87C8}
+/// @brief Calculates a random target position for the Chain Chomp to lunge towards
+/// @details The target position is calculated by rotating the attack direction vector by a random
+/// angle within the attack arc.
 void ObjectWanwan::calcRandomTarget() {
     f32 angle = System::RaceManager::Instance()->random().getF32(m_attackArc * 2.0f);
     EGG::Vector3f attackArcTarget = EGG::Vector3f(m_attackDirectionX, 0.0f, m_attackDirectionZ);
@@ -416,6 +411,8 @@ void ObjectWanwan::calcRandomTarget() {
 }
 
 /// @addr{0x806E8A60}
+/// @brief Pre-computes a 15 frame animation cycle that describes how the Chain Chomp's chain
+/// attachment point moves relative to its position
 void ObjectWanwan::initTransformKeyframes() {
     std::array<f32, 15> xRot;
     SampleHermiteInterp(0.0f, 10.0f, 2.0f, -1.111111f, std::span(xRot.begin(), 6));
@@ -443,6 +440,7 @@ void ObjectWanwan::initTransformKeyframes() {
 }
 
 /// @addr{0x806E9084}
+/// @brief Clamps the Chain Chomp's position to the chain's length while attacking
 void ObjectWanwan::calcAttackPos() {
     constexpr f32 SCALED_CHAIN_LENGTH = CHAIN_LENGTH * SCALE;
 
@@ -465,6 +463,8 @@ void ObjectWanwan::calcAttackPos() {
     }
 }
 
+/// @brief Calculates the world position of the chain attachment point on the Chain Chomp
+/// @param mat The world transform matrix of the Chain Chomp
 void ObjectWanwan::calcChainAttachPos(EGG::Matrix34f mat) {
     EGG::Vector3f pos = mat.base(3);
     pos -= mat.base(2) * 250.0f * scale().x;
@@ -476,6 +476,13 @@ void ObjectWanwan::calcChainAttachPos(EGG::Matrix34f mat) {
 }
 
 /// @addr{0x806E8F4C}
+/// @brief Samples a Hermite interpolation between two values with the number of samples specified
+/// by the size of the destination span
+/// @param start The starting value of the interpolation
+/// @param end The ending value of the interpolation
+/// @param startTangent The tangent at the starting value
+/// @param endTangent The tangent at the ending value
+/// @param dst The destination span to store the sampled values
 void ObjectWanwan::SampleHermiteInterp(f32 start, f32 end, f32 startTangent, f32 endTangent,
         std::span<f32> dst) {
     dst.front() = start;

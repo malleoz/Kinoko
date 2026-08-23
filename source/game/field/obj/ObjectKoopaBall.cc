@@ -181,16 +181,6 @@ void ObjectKoopaBall::calcRot() {
     setTransform(mat);
 }
 
-/// @addr{0x807719A0}
-/// @brief Slows down the fireball's rail speed once reaching the end of a rail segment
-/// @details This does not occur in the base game
-void ObjectKoopaBall::calcSlowdown() {
-    constexpr f32 VERTICAL_VELOCITY = 60.0f;
-
-    m_vel.y = VERTICAL_VELOCITY;
-    m_railInterpolator->setCurrVel(INITIAL_VELOCITY / INITIAL_ANGULAR_SPEED);
-}
-
 /// @addr{0x80771624}
 /// @brief Checks if the fireball is colliding with the floor and bounces it upwards if so
 void ObjectKoopaBall::checkSphereFull() {

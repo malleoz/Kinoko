@@ -43,12 +43,25 @@ public:
         return (m_initialPos - m_extendedPos).length();
     }
 
+    /// @addr{0x8086C328}
     [[nodiscard]] bool checkCollision(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override;
+            KCLTypeMask *maskOut, u32 timeOffset) override {
+        update(timeOffset);
+        calcScale(timeOffset);
+
+        return m_objColMgr->checkSphereFullPush(radius, pos, prevPos, mask, info, maskOut);
+    }
+
+    /// @addr{0x8086C5A8}
     [[nodiscard]] bool checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override;
+            KCLTypeMask *maskOut, u32 timeOffset) override {
+        update(timeOffset);
+        calcScale(timeOffset);
+
+        return m_objColMgr->checkSphereCachedFullPush(radius, pos, prevPos, mask, info, maskOut);
+    }
 
 private:
     /// @addr{0x8086BF08}

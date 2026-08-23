@@ -2,12 +2,7 @@
 
 #include "game/kart/KartParam.hh"
 
-#include "game/field/KCollisionTypes.hh"
-
 #include <egg/math/Matrix.hh>
-
-#include <array>
-#include <span>
 
 /// @brief Pertains to kart-related functionality.
 namespace Kinoko::Kart {

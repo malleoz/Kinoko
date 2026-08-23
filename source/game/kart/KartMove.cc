@@ -2,27 +2,16 @@
 
 #include "game/kart/KartCollide.hh"
 #include "game/kart/KartDynamics.hh"
-#include "game/kart/KartJump.hh"
-#include "game/kart/KartParam.hh"
-#include "game/kart/KartPhysics.hh"
-#include "game/kart/KartScale.hh"
 #include "game/kart/KartSub.hh"
 #include "game/kart/KartSuspension.hh"
 
 #include "game/field/CollisionDirector.hh"
-#include "game/field/KCollisionTypes.hh"
 #include "game/field/ObjectDirector.hh"
 
 #include "game/item/ItemDirector.hh"
-#include "game/item/KartItem.hh"
 
 #include "game/system/CourseMap.hh"
 #include "game/system/RaceManager.hh"
-#include "game/system/map/MapdataCannonPoint.hh"
-#include "game/system/map/MapdataJugemPoint.hh"
-
-#include <egg/math/Math.hh>
-#include <egg/math/Quat.hh>
 
 namespace Kinoko::Kart {
 
@@ -122,13 +111,13 @@ void KartMove::setTurnParams() {
     }};
 
     init(false, false);
-    m_dir = bodyFront();
+    m_dir = bodyForward();
     m_lastDir = m_dir;
     m_vel1Dir = m_dir;
     m_landingDir = m_dir;
     m_smoothedForward = m_dir;
     m_outsideDriftLastDir = m_dir;
-    m_driftingParams = &DRIFTING_PARAMS_ARRAY[static_cast<u32>(param()->stats().driftType)];
+    m_driftingParams = &DRIFTING_PARAMS_ARRAY[static_cast<u32>(vehicleType())];
     m_kartScale->reset();
 }
 
@@ -259,7 +248,7 @@ void KartMove::setInitialPhysicsValues(const EGG::Vector3f &position, const EGG:
 
     if (bColliding && (kcl_flags & KCL_TYPE_FLOOR)) {
         newPos = newPos + info.tangentOff + (info.floorNrm * -100.0f);
-        newPos += info.floorNrm * bsp().initialYPos;
+        newPos += info.floorNrm * bsp().offsetY;
     }
 
     setPos(newPos);
@@ -270,9 +259,9 @@ void KartMove::setInitialPhysicsValues(const EGG::Vector3f &position, const EGG:
     physics()->setPos(pos());
     physics()->setVelocity(dynamics()->velocity());
 
-    m_landingDir = bodyFront();
-    m_dir = bodyFront();
-    m_smoothedForward = bodyFront();
+    m_landingDir = bodyForward();
+    m_dir = bodyForward();
+    m_smoothedForward = bodyForward();
     m_up = bodyUp();
     dynamics()->setUp(m_up);
 
@@ -463,7 +452,7 @@ void KartMove::calcTop() {
             m_smoothedUp += (inputTop - m_smoothedUp) * scalar;
             m_smoothedUp.normalise();
 
-            f32 bodyDotFront = bodyFront().dot(m_smoothedUp);
+            f32 bodyDotFront = bodyForward().dot(m_smoothedUp);
 
             if (bodyDotFront < -0.1f) {
                 stabilizationFactor += std::min(0.2f, EGG::Mathf::abs(bodyDotFront) * 0.5f);
@@ -533,7 +522,7 @@ void KartMove::calcSpecialFloor() {
 
 /// @addr{0x8057A140}
 void KartMove::calcDirs() {
-    EGG::Vector3f right = dynamics()->mainRot().rotateVector(EGG::Vector3f::ex);
+    EGG::Vector3f right = mainRot().rotateVector(EGG::Vector3f::ex);
     EGG::Vector3f local_88 = right.cross(m_smoothedUp);
     local_88.normalise();
     m_flags.setBit(eFlags::LaunchBoost);
@@ -896,48 +885,6 @@ void KartMove::clearDrift() {
     m_autoDriftStartFrameCounter = 0;
 }
 
-/// @addr{0x80582DB4}
-void KartMove::clearJumpPad() {
-    m_jumpPadMinSpeed = 0.0f;
-    status().resetBit(eStatus::JumpPad);
-}
-
-/// @addr{0x80582DD8}
-void KartMove::clearRampBoost() {
-    m_rampBoost = 0;
-    status().resetBit(eStatus::RampBoost);
-}
-
-/// @addr{0x80582F38}
-void KartMove::clearZipperBoost() {
-    m_zipperBoostTimer = 0;
-    status().resetBit(eStatus::ZipperBoost);
-}
-
-/// @addr{0x80582D94}
-void KartMove::clearBoost() {
-    m_boost.resetActive();
-    status().resetBit(eStatus::Boost);
-}
-
-/// @addr{0x80582F58}
-void KartMove::clearSsmt() {
-    m_ssmtCharge = 0;
-    m_ssmtLeewayTimer = 0;
-    m_ssmtDisableAccelTimer = 0;
-    m_flags.resetBit(eFlags::SsmtCharged, eFlags::SsmtLeeway);
-}
-
-/// @addr{0x80582F7C}
-void KartMove::clearOffroadInvincibility() {
-    m_offroadInvincibility = 0;
-    status().resetBit(eStatus::BoostOffroadInvincibility);
-}
-
-void KartMove::clearRejectRoad() {
-    status().resetBit(eStatus::RejectRoadTrigger, eStatus::NoSparkInvisibleWall);
-}
-
 /// @brief Each frame, handles automatic transmission drifting.
 /// @addr{0x8057E0DC}
 void KartMove::calcAutoDrift() {
@@ -999,14 +946,14 @@ void KartMove::calcManualDrift() {
     auto &status = KartObjectProxy::status();
 
     if (status.offBit(eStatus::OverZipper)) {
-        const EGG::Vector3f rotZ = dynamics()->mainRot().rotateVector(EGG::Vector3f::ez);
+        const EGG::Vector3f rotZ = mainRot().rotateVector(EGG::Vector3f::ez);
 
         if (status.offBit(eStatus::TouchingGround) &&
-                param()->stats().driftType != KartParam::Stats::DriftType::Inside_Drift_Bike &&
+                vehicleType() != KartParam::Stats::DriftType::Inside_Drift_Bike &&
                 status.offBit(eStatus::JumpPadMushroomCollision) &&
                 status.onBit(eStatus::DriftManual, eStatus::SlipdriftCharge) &&
                 m_flags.onBit(eFlags::LaunchBoost)) {
-            const EGG::Vector3f up = dynamics()->mainRot().rotateVector(EGG::Vector3f::ey);
+            const EGG::Vector3f up = mainRot().rotateVector(EGG::Vector3f::ey);
             EGG::Vector3f driftRej = m_outsideDriftLastDir.rej(up);
 
             if (driftRej.normalise() != 0.0f) {
@@ -1085,7 +1032,7 @@ void KartMove::startManualDrift() {
         f32 driftAngle = 0.0f;
 
         if (status.onBit(eStatus::Hop)) {
-            const EGG::Vector3f rotZ = dynamics()->mainRot().rotateVector(EGG::Vector3f::ez);
+            const EGG::Vector3f rotZ = mainRot().rotateVector(EGG::Vector3f::ez);
             EGG::Vector3f rotRej = rotZ.rej(m_hopUp);
 
             if (rotRej.normalise() != 0.0f) {
@@ -1126,7 +1073,7 @@ void KartMove::releaseMt() {
         return;
     }
 
-    u16 mtLength = param()->stats().miniTurbo;
+    u16 mtLength = param()->stats().miniTurboDuration;
 
     if (m_driftState == DriftState::ChargedSmt) {
         mtLength *= SMT_LENGTH_FACTOR;
@@ -1146,7 +1093,7 @@ void KartMove::controlOutsideDriftAngle() {
         return;
     }
 
-    if (param()->stats().driftType != KartParam::Stats::DriftType::Inside_Drift_Bike) {
+    if (vehicleType() != KartParam::Stats::DriftType::Inside_Drift_Bike) {
         if (m_hopStickX == -1) {
             f32 angle = m_outsideDriftAngle;
             f32 targetAngle = param()->stats().driftOutsideTargetAngle;
@@ -1255,7 +1202,7 @@ void KartMove::calcRotation() {
             }
         }
 
-        const EGG::Vector3f forward = dynamics()->mainRot().rotateVector(EGG::Vector3f::ez);
+        const EGG::Vector3f forward = mainRot().rotateVector(EGG::Vector3f::ez);
         f32 angle = EGG::Mathf::atan2(forward.cross(m_dir).length(), forward.dot(m_dir));
         angle = EGG::Mathf::abs(angle) * RAD2DEG;
 
@@ -1365,7 +1312,7 @@ void KartMove::calcDeceleration() {
     if (EGG::Mathf::abs(m_speed) < 30.0f && m_smoothedUp.y > 0.0f && initialVel > 0.0f) {
         initialVel = std::min(initialVel * 2.0f, 2.0f);
         vel += initialVel;
-        vel *= std::min(0.5f, std::max(-0.5f, -bodyFront().y));
+        vel *= std::min(0.5f, std::max(-0.5f, -bodyForward().y));
     }
     m_speed += vel;
 }
@@ -1535,7 +1482,7 @@ void KartMove::calcAcceleration() {
                                                         TERMINAL_VELOCITY;
     nextSpeed.y = std::min(nextSpeed.y, maxSpeedY);
 
-    dynamics()->setIntVel(dynamics()->intVel() + nextSpeed);
+    dynamics()->setIntVel(intVel() + nextSpeed);
 
     if (status.onBit(eStatus::TouchingGround) &&
             status.offBit(eStatus::DriftManual, eStatus::Hop)) {
@@ -1599,7 +1546,7 @@ void KartMove::calcWallCollisionStart(f32 param_2) {
 
     m_outsideDriftAngle = 0.0f;
     if (status.offBit(eStatus::InAction)) {
-        m_dir = bodyFront();
+        m_dir = bodyForward();
         m_vel1Dir = m_dir;
         m_landingDir = m_dir;
         m_smoothedForward = m_dir;
@@ -1628,7 +1575,7 @@ void KartMove::calcWallCollisionStart(f32 param_2) {
                 rej = EGG::Vector3f::zero;
             }
 
-            if (bodyFront().dot(colData.wallNrm) > 0.0f) {
+            if (bodyForward().dot(colData.wallNrm) > 0.0f) {
                 proj = EGG::Vector3f::zero;
             }
             rej *= 0.9f;
@@ -1724,16 +1671,16 @@ void KartMove::calcDive() {
 
     m_divingRot = std::max(-DIVE_LIMIT, std::min(DIVE_LIMIT, m_divingRot + stickY * 0.005f));
 
-    EGG::Vector3f angVel2 = dynamics()->angVel2();
-    angVel2.x += m_divingRot;
-    dynamics()->setAngVel2(angVel2);
+    EGG::Vector3f nextAngVel2 = angVel2();
+    nextAngVel2.x += m_divingRot;
+    dynamics()->setAngVel2(nextAngVel2);
 
     if (state()->airtime() < 50) {
         return;
     }
 
-    EGG::Vector3f topRotated = dynamics()->mainRot().rotateVector(EGG::Vector3f::ey);
-    EGG::Vector3f forwardRotated = dynamics()->mainRot().rotateVector(EGG::Vector3f::ez);
+    EGG::Vector3f topRotated = mainRot().rotateVector(EGG::Vector3f::ey);
+    EGG::Vector3f forwardRotated = mainRot().rotateVector(EGG::Vector3f::ez);
     f32 upDotTop = m_up.dot(topRotated);
     EGG::Vector3f upCrossTop = m_up.cross(topRotated);
     f32 crossNorm = upCrossTop.length();
@@ -1777,11 +1724,6 @@ void KartMove::calcHopPhysics() {
     }
 }
 
-/// @addr{0x80579960}
-void KartMove::calcRejectRoad() {
-    m_reject.calcRejectRoad();
-}
-
 /// @addr{0x80583F2C}
 bool KartMove::calcZipperCollision(f32 radius, f32 scale, EGG::Vector3f &pos,
         EGG::Vector3f &upLocal, const EGG::Vector3f &prevPos, Field::CollisionInfo *colInfo,
@@ -1791,13 +1733,6 @@ bool KartMove::calcZipperCollision(f32 radius, f32 scale, EGG::Vector3f &pos,
 
     auto *colDir = Field::CollisionDirector::Instance();
     return colDir->checkSphereFullPush(radius, pos, prevPos, flags, colInfo, maskOut, 0);
-}
-
-/// @addr{0x805879A4}
-f32 KartMove::calcSlerpRate(f32 scale, const EGG::Quatf &from, const EGG::Quatf &to) const {
-    f32 dotNorm = std::max(-1.0f, std::min(1.0f, from.dot(to)));
-    f32 acos = EGG::Mathf::acos(dotNorm);
-    return acos > 0.0f ? std::min(0.1f, scale / acos) : 0.1f;
 }
 
 /// @addr{0x80586DB4}
@@ -1859,9 +1794,9 @@ void KartMove::calcVehicleRotation(f32 turn) {
     angVel0.z += lean;
     dynamics()->setAngVel0(angVel0);
 
-    EGG::Vector3f angVel2 = dynamics()->angVel2();
-    angVel2.y += turn;
-    dynamics()->setAngVel2(angVel2);
+    EGG::Vector3f nextAngVel2 = angVel2();
+    nextAngVel2.y += turn;
+    dynamics()->setAngVel2(nextAngVel2);
 
     calcDive();
 }
@@ -1936,8 +1871,8 @@ void KartMove::hop() {
     status().setBit(eStatus::Hop).resetBit(eStatus::DriftManual);
     onHop();
 
-    m_hopUp = dynamics()->mainRot().rotateVector(EGG::Vector3f::ey);
-    m_hopDir = dynamics()->mainRot().rotateVector(EGG::Vector3f::ez);
+    m_hopUp = mainRot().rotateVector(EGG::Vector3f::ey);
+    m_hopDir = mainRot().rotateVector(EGG::Vector3f::ez);
     m_driftState = DriftState::NotDrifting;
     m_smtCharge = 0;
     m_mtCharge = 0;
@@ -1948,9 +1883,9 @@ void KartMove::hop() {
     m_hopVelY = m_driftingParams->hopVelY;
     m_outsideDriftBonus = 0.0f;
 
-    EGG::Vector3f extVel = dynamics()->extVel();
-    extVel.y = 0.0f + m_hopVelY;
-    dynamics()->setExtVel(extVel);
+    EGG::Vector3f nextExtVel = extVel();
+    nextExtVel.y = 0.0f + m_hopVelY;
+    dynamics()->setExtVel(nextExtVel);
 
     EGG::Vector3f totalForce = dynamics()->totalForce();
     totalForce.y = 0.0f;
@@ -2028,13 +1963,13 @@ void KartMove::tryStartJumpPad() {
         status.setBit(eStatus::JumpPadMushroomTrigger, eStatus::JumpPadMushroomVelYInc,
                 eStatus::JumpPadMushroomCollision);
     } else {
-        EGG::Vector3f extVel = dynamics()->extVel();
+        EGG::Vector3f nextExtVel = extVel();
         EGG::Vector3f totalForce = dynamics()->totalForce();
 
-        extVel.y = m_jumpPadProperties->velY;
+        nextExtVel.y = m_jumpPadProperties->velY;
         totalForce.y = 0.0f;
 
-        dynamics()->setExtVel(extVel);
+        dynamics()->setExtVel(nextExtVel);
         dynamics()->setTotalForce(totalForce);
 
         if (jumpPadVariant != 3) {
@@ -2063,7 +1998,7 @@ void KartMove::tryEndJumpPad() {
         }
 
         if (status.onBit(eStatus::JumpPadMushroomVelYInc)) {
-            EGG::Vector3f newExtVel = dynamics()->extVel();
+            EGG::Vector3f newExtVel = extVel();
             newExtVel.y += 20.0f;
             if (m_jumpPadProperties->velY < newExtVel.y) {
                 newExtVel.y = m_jumpPadProperties->velY;
@@ -2076,24 +2011,6 @@ void KartMove::tryEndJumpPad() {
     if (status.onBit(eStatus::GroundStart) && status.offBit(eStatus::JumpPadMushroomTrigger)) {
         cancelJumpPad();
     }
-}
-
-/// @addr{0x80582DB4}
-void KartMove::cancelJumpPad() {
-    m_jumpPadMinSpeed = 0.0f;
-    status().resetBit(eStatus::JumpPad);
-}
-
-/// @addr{0x8057F090}
-void KartMove::activateBoost(KartBoost::Type type, s16 frames) {
-    if (m_boost.activate(type, frames)) {
-        status().setBit(eStatus::Boost);
-    }
-}
-
-/// @addr{0x8058212C}
-void KartMove::applyStartBoost(s16 frames) {
-    activateBoost(KartBoost::Type::MiniTurbo, frames);
 }
 
 /// @addr{0x8057F3D8}
@@ -2131,17 +2048,6 @@ void KartMove::activateZipperBoost() {
     m_zipperBoostTimer = 0;
     m_zipperBoostMax = boostDuration;
     status.setBit(eStatus::ZipperBoost);
-}
-
-/// @brief Ignores offroad KCL collision for a set amount of time.
-/// @addr{0x805824C8}
-/// @param timer Framecount to ignore offroad
-void KartMove::setOffroadInvincibility(s16 timer) {
-    if (timer > m_offroadInvincibility) {
-        m_offroadInvincibility = timer;
-    }
-
-    status().setBit(eStatus::BoostOffroadInvincibility);
 }
 
 /// @brief Checks a timer to see if we are still ignoring offroad slowdown.
@@ -2222,13 +2128,6 @@ void KartMove::landTrick() {
     }
 
     activateBoost(KartBoost::Type::TrickAndZipper, duration);
-}
-
-/// @addr{0x80580F28}
-void KartMove::activateCrush(u16 timer) {
-    status().setBit(eStatus::Crushed);
-    m_crushTimer = timer;
-    m_kartScale->startCrush();
 }
 
 /// @addr{0x80580F9C}
@@ -2405,14 +2304,14 @@ void KartMove::calcCannon() {
 void KartMove::calcRotCannon(const EGG::Vector3f &forward) {
     EGG::Vector3f local48 = forward;
     local48.normalise();
-    EGG::Vector3f local54 = bodyFront();
+    EGG::Vector3f local54 = bodyForward();
     EGG::Vector3f local60 = local54 + ((local48 - local54) * 0.3f);
     local54.normalise();
     local60.normalise();
     // also local70, localA8
     EGG::Quatf local80;
     local80.makeVectorRotation(local54, local60);
-    local80 *= dynamics()->fullRot();
+    local80 *= fullRot();
     local80.normalise();
     EGG::Quatf localB8;
     localB8.makeVectorRotation(local80.rotateVector(EGG::Vector3f::ey), smoothedUp());
@@ -2433,12 +2332,6 @@ void KartMove::exitCannon() {
     dynamics()->setIntVel(m_cannonEntryOfs * m_speed);
 }
 
-/// @addr{0x805799AC}
-void KartMove::triggerRespawn() {
-    m_timeInRespawn = 0;
-    status().setBit(eStatus::TriggerRespawn);
-}
-
 /// @addr{0x80587B30}
 KartMoveBike::KartMoveBike() : m_leanRot(0.0f) {}
 
@@ -2457,21 +2350,6 @@ void KartMoveBike::startWheelie() {
     m_wheelieCooldown = WHEELIE_COOLDOWN;
     m_wheelieRotDec = 0.0f;
     m_autoHardStickXFrames = 0;
-}
-
-/// @addr{0x805883C4}
-/// @brief Clears the wheelie bit flag and resets the rotation decrement.
-void KartMoveBike::cancelWheelie() {
-    status().resetBit(eStatus::Wheelie);
-    m_wheelieRotDec = 0.0f;
-    m_autoHardStickXFrames = 0;
-}
-
-/// @addr{0x80587BB8}
-void KartMoveBike::createSubsystems(const KartParam::Stats &stats) {
-    m_jump = EGG::egg_new<KartJumpBike>(this);
-    m_halfPipe = EGG::egg_new<KartHalfPipe>();
-    m_kartScale = EGG::egg_new<KartScale>(stats);
 }
 
 /// @brief Every frame, calculates rotation, EV, and angular velocity for the bike.
@@ -2554,14 +2432,14 @@ void KartMoveBike::calcVehicleRotation(f32 turn) {
     }
 
     if (!capped) {
-        dynamics()->setExtVel(dynamics()->extVel() + componentXAxis() * extVelXFactor);
+        dynamics()->setExtVel(extVel() + componentXAxis() * extVelXFactor);
     }
 
     f32 leanRotScalar = state()->isDrifting() ? 0.065f : 0.05f;
 
     calcStandstillBoostRot();
 
-    dynamics()->setAngVel2(dynamics()->angVel2() +
+    dynamics()->setAngVel2(angVel2() +
             EGG::Vector3f(m_standStillBoostRot, turn * wheelieRotFactor(),
                     m_leanRot * leanRotScalar));
 
@@ -2594,9 +2472,9 @@ void KartMoveBike::setTurnParams() {
 
     KartMove::setTurnParams();
 
-    if (param()->stats().driftType == KartParam::Stats::DriftType::Outside_Drift_Bike) {
+    if (vehicleType() == KartParam::Stats::DriftType::Outside_Drift_Bike) {
         m_turningParams = &TURNING_PARAMS_ARRAY[0];
-    } else if (param()->stats().driftType == KartParam::Stats::DriftType::Inside_Drift_Bike) {
+    } else if (vehicleType() == KartParam::Stats::DriftType::Inside_Drift_Bike) {
         m_turningParams = &TURNING_PARAMS_ARRAY[1];
     }
 
@@ -2621,12 +2499,6 @@ void KartMoveBike::init(bool b1, bool b2) {
     m_wheelieFrames = 0;
     m_wheelieCooldown = 0;
     m_autoHardStickXFrames = 0;
-}
-
-/// @addr{0x80588950}
-void KartMoveBike::clear() {
-    KartMove::clear();
-    cancelWheelie();
 }
 
 /// @brief Every frame, checks player input for wheelies and computes wheelie rotation.
@@ -2674,9 +2546,9 @@ void KartMoveBike::calcWheelie() {
 
     if (m_wheelieRot > 0.0f) {
         if (vel1DirUp <= 0.5f || m_wheelieFrames < FAILED_WHEELIE_FRAMES) {
-            EGG::Vector3f angVel2 = dynamics()->angVel2();
-            angVel2.x -= m_wheelieRot * (1.0f - EGG::Mathf::abs(vel1DirUp));
-            dynamics()->setAngVel2(angVel2);
+            EGG::Vector3f nextAngVel2 = angVel2();
+            nextAngVel2.x -= m_wheelieRot * (1.0f - EGG::Mathf::abs(vel1DirUp));
+            dynamics()->setAngVel2(nextAngVel2);
         } else {
             cancelWheelie();
         }
@@ -2685,23 +2557,6 @@ void KartMoveBike::calcWheelie() {
     } else {
         status.resetBit(eStatus::WheelieRot);
     }
-}
-
-/// @brief Virtual function that just cancels wheelies when you hop.
-/// @addr{0x80588B30}
-/// @todo This function may be called without actually hopping (slipdrift), in which case we should
-/// rename this function.
-void KartMoveBike::onHop() {
-    if (status().onBit(eStatus::AutoDrift)) {
-        return;
-    }
-
-    cancelWheelie();
-}
-
-/// @brief Called when you collide with a wall. All it does for bikes is cancel wheelies.
-void KartMoveBike::onWallCollision() {
-    cancelWheelie();
 }
 
 /// @brief Every frame during a drift, calculates MT charge based on player input.
@@ -2731,12 +2586,6 @@ void KartMoveBike::calcMtCharge() {
         m_mtCharge = MAX_MT_CHARGE;
         m_driftState = DriftState::ChargedMt;
     }
-}
-
-/// @addr{0x80588B58}
-void KartMoveBike::initOob() {
-    KartMove::initOob();
-    cancelWheelie();
 }
 
 /// @brief Every frame, checks player input to see if we should start or stop a wheelie.

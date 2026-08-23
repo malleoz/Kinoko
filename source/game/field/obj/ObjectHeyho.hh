@@ -16,7 +16,15 @@ public:
     ~ObjectHeyho() override;
 
     void init() override;
-    void calc() override;
+
+    /// @addr{0x806CEDF8}
+    void calc() override {
+        calcStateTransition();
+        calcMotion();
+        StateManager::calc();
+        calcInterp();
+    }
+
     void loadAnims() override;
     void calcCollisionTransform() override;
 
@@ -59,7 +67,16 @@ private:
 
     void calcStateTransition();
     void calcMotion();
-    void calcInterp();
+
+    /// @addr{0x806CFFB0}
+    /// @brief Updates the smoothed up vector, normalises the forward direction vector, and updates
+    /// the transform matrix accordingly
+    void calcInterp() {
+        m_up = Interpolate(0.2f, m_up, m_floorNrm);
+        m_up.normalise2();
+        m_forward.normalise2();
+        setMatrixTangentTo(m_up, m_forward);
+    }
 
     const Color m_color;      ///< Color of the Shy Guy, used to determine if it spins
     f32 m_apex;               ///< Highest Y position between the rail endpoints

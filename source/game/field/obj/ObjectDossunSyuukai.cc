@@ -9,15 +9,6 @@ ObjectDossunSyuukai::ObjectDossunSyuukai(const System::MapdataGeoObj &params)
 /// @addr{0x80764B88}
 ObjectDossunSyuukai::~ObjectDossunSyuukai() = default;
 
-/// @addr{0x80760BD4}
-void ObjectDossunSyuukai::init() {
-    ObjectDossun::init();
-
-    m_state = State::Moving;
-    m_initYaw = rot().y;
-    m_rotating = true;
-}
-
 /// @addr{0x80760C5C}
 void ObjectDossunSyuukai::calc() {
     m_touchingGround = false;
@@ -36,16 +27,6 @@ void ObjectDossunSyuukai::calc() {
     default:
         break;
     }
-}
-
-/// @addr{0x80760D18}
-/// @brief Runs once per frame while the Thwomp is moving
-void ObjectDossunSyuukai::calcMoving() {
-    if (m_railInterpolator->calc() == RailInterpolator::Status::SegmentEnd) {
-        m_state = State::RotatingBeforeStomp;
-    }
-
-    setPos(m_railInterpolator->curPos());
 }
 
 /// @addr{0x80760D8C}

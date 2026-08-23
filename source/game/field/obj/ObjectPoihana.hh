@@ -88,7 +88,18 @@ private:
     void calcOrthonormalBasis();
     void calcCollision();
     void calcStep();
-    void calcDir();
+
+    /// @addr{0x80749610}
+    /// @brief Calculates the direction vector between the current position and the target position
+    void calcDir() {
+        EGG::Vector3f delta = m_targetPos - curPos();
+        delta.y = 0.0f;
+        if (delta.squaredLength() > std::numeric_limits<f32>::epsilon()) {
+            delta.normalise2();
+            m_dir = delta;
+        }
+    }
+
     void calcForward();
 
     /// @addr{0x80747324}

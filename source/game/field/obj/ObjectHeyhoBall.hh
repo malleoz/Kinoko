@@ -48,7 +48,15 @@ private:
     };
 
     void enterStateStub() {}
-    void enterFalling();
+
+    /// @addr{0x806D0A3C}
+    /// @brief Runs once when the cannonball is fired
+    void enterFalling() {
+        if (!getUnit()) {
+            loadAABB(0.0f);
+            resize(INIT_BLAST_RADIUS, 0.0f);
+        }
+    }
 
     /// @addr{0x806D0C0C}
     /// @brief Runs once when the cannonball has landed and is blinking before exploding
@@ -90,7 +98,16 @@ private:
         setScale(BALL_SCALE);
     }
 
-    void calcExplodingScale();
+    /// @addr{0x806D14D8}
+    /// @brief Calculates the cannonball scale on the first 46 frames of the explosion
+    /// @todo Describe the parabola once we better understand the significance of the "40" term
+    void calcExplodingScale() {
+        f32 shrinkFrames = static_cast<f32>(m_currentFrame) - 40.0f;
+        f32 scale = 1.2f * m_blastRadiusRatio + -m_scaleChangeRate * shrinkFrames * shrinkFrames;
+
+        scale = std::min(m_blastRadiusRatio, scale);
+        setScale(scale);
+    }
 
     const f32 m_airtime;            ///< Number of frames between shooting and landing
     EGG::Vector3f m_shipPos;        ///< Position of the ship firing the ball

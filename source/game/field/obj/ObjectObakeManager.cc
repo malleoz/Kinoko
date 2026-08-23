@@ -51,15 +51,6 @@ void ObjectObakeManager::calc() {
     }
 }
 
-/// @addr{0x8080B244}
-/// @brief Public interface that adds a new block to the manager and caches it for collision checks
-void ObjectObakeManager::addBlock(const System::MapdataGeoObj &params) {
-    auto *block = EGG::egg_new<ObjectObakeBlock>(params);
-    m_blocks.push_back(block);
-    auto [spatialX, spatialZ] = SpatialIndex(block->pos());
-    m_blockCache[spatialZ][spatialX] = block;
-}
-
 /// @addr{0x8080BEE4}
 /// @brief Checks collision between a sphere and the cached blocks, writing partial collision info
 /// @param radius The radius of the sphere to check
@@ -449,19 +440,6 @@ bool ObjectObakeManager::checkSphereFullPushImpl(f32 radius, const EGG::Vector3f
     }
 
     return collision;
-}
-
-/// @brief Helper function to return the spatial index of a given block
-std::pair<s32, s32> ObjectObakeManager::SpatialIndex(const EGG::Vector3f &pos) {
-    constexpr f32 ORIGIN_OFFSET_X = -30647.498f;
-    constexpr f32 ORIGIN_OFFSET_Z = -21092.5f;
-    constexpr f32 GRID_WIDTH = 325.0f; // The "width" of each cell in the spatial grid
-    constexpr f32 GRID_HALF_WIDTH = 162.5f;
-
-    s32 x = (pos.x - ORIGIN_OFFSET_X + GRID_HALF_WIDTH) / GRID_WIDTH;
-    s32 z = (pos.z - ORIGIN_OFFSET_Z + GRID_HALF_WIDTH) / GRID_WIDTH;
-
-    return std::make_pair(x, z);
 }
 
 } // namespace Kinoko::Field

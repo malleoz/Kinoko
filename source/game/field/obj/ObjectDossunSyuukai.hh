@@ -10,7 +10,15 @@ public:
     ObjectDossunSyuukai(const System::MapdataGeoObj &params);
     ~ObjectDossunSyuukai() override;
 
-    void init() override;
+    /// @addr{0x80760BD4}
+    void init() override {
+        ObjectDossun::init();
+
+        m_state = State::Moving;
+        m_initYaw = rot().y;
+        m_rotating = true;
+    }
+
     void calc() override;
 
     /// @addr{0x8076139C}
@@ -28,7 +36,16 @@ private:
         RotatingAfterStomp = 3,  ///< Still and rotating to face rail direction
     };
 
-    void calcMoving();
+    /// @addr{0x80760D18}
+    /// @brief Runs once per frame while the Thwomp is moving
+    void calcMoving() {
+        if (m_railInterpolator->calc() == RailInterpolator::Status::SegmentEnd) {
+            m_state = State::RotatingBeforeStomp;
+        }
+
+        setPos(m_railInterpolator->curPos());
+    }
+
     void calcRotating();
 
     State m_state;   ///< Current motion of the Thwomp

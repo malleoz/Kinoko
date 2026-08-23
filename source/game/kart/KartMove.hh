@@ -3,8 +3,9 @@
 #include "game/kart/KartBoost.hh"
 #include "game/kart/KartBurnout.hh"
 #include "game/kart/KartHalfPipe.hh"
-#include "game/kart/KartParam.hh"
+#include "game/kart/KartJump.hh"
 #include "game/kart/KartReject.hh"
+#include "game/kart/KartScale.hh"
 #include "game/kart/KartState.hh"
 
 #include "game/field/CourseColMgr.hh"
@@ -70,13 +71,49 @@ public:
     void calcManualDrift();
     void startManualDrift();
     void clearDrift();
-    void clearJumpPad();
-    void clearRampBoost();
-    void clearZipperBoost();
-    void clearBoost();
-    void clearSsmt();
-    void clearOffroadInvincibility();
-    void clearRejectRoad();
+
+    /// @addr{0x80582DB4}
+    void clearJumpPad() {
+        m_jumpPadMinSpeed = 0.0f;
+        status().resetBit(eStatus::JumpPad);
+    }
+
+    /// @addr{0x80582DD8}
+    void clearRampBoost() {
+        m_rampBoost = 0;
+        status().resetBit(eStatus::RampBoost);
+    }
+
+    /// @addr{0x80582F38}
+    void clearZipperBoost() {
+        m_zipperBoostTimer = 0;
+        status().resetBit(eStatus::ZipperBoost);
+    }
+
+    /// @addr{0x80582D94}
+    void clearBoost() {
+        m_boost.resetActive();
+        status().resetBit(eStatus::Boost);
+    }
+
+    /// @addr{0x80582F58}
+    void clearSsmt() {
+        m_ssmtCharge = 0;
+        m_ssmtLeewayTimer = 0;
+        m_ssmtDisableAccelTimer = 0;
+        m_flags.resetBit(eFlags::SsmtCharged, eFlags::SsmtLeeway);
+    }
+
+    /// @addr{0x80582F7C}
+    void clearOffroadInvincibility() {
+        m_offroadInvincibility = 0;
+        status().resetBit(eStatus::BoostOffroadInvincibility);
+    }
+
+    void clearRejectRoad() {
+        status().resetBit(eStatus::RejectRoadTrigger, eStatus::NoSparkInvisibleWall);
+    }
+
     void releaseMt();
     void controlOutsideDriftAngle();
     void calcRotation();
@@ -90,11 +127,16 @@ public:
     void calcDive();
     void calcSsmtStart();
     void calcHopPhysics();
-    void calcRejectRoad();
+
+    /// @addr{0x80579960}
+    void calcRejectRoad() {
+        m_reject.calcRejectRoad();
+    }
+
     bool calcZipperCollision(f32 radius, f32 scale, EGG::Vector3f &pos, EGG::Vector3f &upLocal,
             const EGG::Vector3f &prevPos, Field::CollisionInfo *colInfo,
             Field::KCLTypeMask *maskOut, Field::KCLTypeMask flags) const;
-    f32 calcSlerpRate(f32 scale, const EGG::Quatf &from, const EGG::Quatf &to) const;
+
     void applyForce(f32 force, const EGG::Vector3f &hitDir, bool stop);
     virtual void calcVehicleRotation(f32 turn);
     virtual void hop();
@@ -103,7 +145,7 @@ public:
     virtual void calcMtCharge();
     virtual void initOob();
 
-        /// @brief Returns the % speed boost from wheelies. For karts, this is always 0.
+    /// @brief Returns the % speed boost from wheelies. For karts, this is always 0.
     /// @addr{0x8057C3C8}
     [[nodiscard]] virtual f32 getWheelieSoftSpeedLimitBonus() const {
         return 0.0f;
@@ -141,18 +183,51 @@ public:
     void tryStartBoostRamp();
     void tryStartJumpPad();
     void tryEndJumpPad();
-    void cancelJumpPad();
 
-    void activateBoost(KartBoost::Type type, s16 frames);
-    void applyStartBoost(s16 frames);
+    /// @addr{0x80582DB4}
+    void cancelJumpPad() {
+        m_jumpPadMinSpeed = 0.0f;
+        status().resetBit(eStatus::JumpPad);
+    }
+
+    /// @addr{0x8057F090}
+    void activateBoost(KartBoost::Type type, s16 frames) {
+        if (m_boost.activate(type, frames)) {
+            status().setBit(eStatus::Boost);
+        }
+    }
+
+    /// @addr{0x8058212C}
+    void applyStartBoost(s16 frames) {
+        activateBoost(KartBoost::Type::MiniTurbo, frames);
+    }
+
     void activateMushroom();
     void activateZipperBoost();
-    void setOffroadInvincibility(s16 timer);
+
+    /// @brief Ignores offroad KCL collision for a set amount of time.
+    /// @addr{0x805824C8}
+    /// @param timer Framecount to ignore offroad
+    void setOffroadInvincibility(s16 timer) {
+        if (timer > m_offroadInvincibility) {
+            m_offroadInvincibility = timer;
+        }
+
+        status().setBit(eStatus::BoostOffroadInvincibility);
+    }
+
     void calcOffroadInvincibility();
     void calcMushroomBoost();
     void calcZipperBoost();
     void landTrick();
-    void activateCrush(u16 timer);
+
+    /// @addr{0x80580F28}
+    void activateCrush(u16 timer) {
+        status().setBit(eStatus::Crushed);
+        m_crushTimer = timer;
+        m_kartScale->startCrush();
+    }
+
     void calcCrushed();
     void calcScale();
 
@@ -170,7 +245,11 @@ public:
     void calcRotCannon(const EGG::Vector3f &forward);
     void exitCannon();
 
-    void triggerRespawn();
+    /// @addr{0x805799AC}
+    void triggerRespawn() {
+        m_timeInRespawn = 0;
+        status().setBit(eStatus::TriggerRespawn);
+    }
 
     /// @beginSetters
     void setSpeed(f32 val) {
@@ -346,6 +425,14 @@ public:
     }
     /// @endGetters
 
+    /// @addr{0x805879A4}
+    [[nodiscard]] static f32 CalcSlerpRate(f32 scale, const EGG::Quatf &from,
+            const EGG::Quatf &to) {
+        f32 dotNorm = std::max(-1.0f, std::min(1.0f, from.dot(to)));
+        f32 acos = EGG::Mathf::acos(dotNorm);
+        return acos > 0.0f ? std::min(0.1f, scale / acos) : 0.1f;
+    }
+
 protected:
     enum class eFlags {
         Respawned = 0,   ///< Set when Lakitu lets go of the player, cleared when landing.
@@ -496,20 +583,60 @@ public:
     ~KartMoveBike();
 
     virtual void startWheelie();
-    virtual void cancelWheelie();
 
-    void createSubsystems(const KartParam::Stats &stats) override;
+    /// @addr{0x805883C4}
+    /// @brief Clears the wheelie bit flag and resets the rotation decrement.
+    virtual void cancelWheelie() {
+        status().resetBit(eStatus::Wheelie);
+        m_wheelieRotDec = 0.0f;
+        m_autoHardStickXFrames = 0;
+    }
+
+    /// @addr{0x80587BB8}
+    void createSubsystems(const KartParam::Stats &stats) override {
+        m_jump = EGG::egg_new<KartJumpBike>(this);
+        m_halfPipe = EGG::egg_new<KartHalfPipe>();
+        m_kartScale = EGG::egg_new<KartScale>(stats);
+    }
+
     void calcVehicleRotation(f32 /*turn*/) override;
     void calcWheelie() override;
-    void onHop() override;
-    void onWallCollision() override;
+
+    /// @addr{0x80588B30}
+    /// @brief Virtual function that just cancels wheelies when you hop.
+    /// @todo This function may be called without actually hopping (slipdrift), in which case we
+    /// should rename this function.
+    void onHop() override {
+        if (status().onBit(eStatus::AutoDrift)) {
+            return;
+        }
+
+        cancelWheelie();
+    }
+
+    /// @brief Called when you collide with a wall. All it does for bikes is cancel wheelies.
+    void onWallCollision() override {
+        cancelWheelie();
+    }
+
     void calcMtCharge() override;
-    void initOob() override;
+
+    /// @addr{0x80588B58}
+    void initOob() override {
+        KartMove::initOob();
+        cancelWheelie();
+    }
+
     void setTurnParams() override;
     void init(bool b1, bool b2) override;
-    void clear() override;
 
-        /// @brief Returns what % to raise the speed cap when wheeling.
+    /// @addr{0x80588950}
+    void clear() override {
+        KartMove::clear();
+        cancelWheelie();
+    }
+
+    /// @brief Returns what % to raise the speed cap when wheeling.
     /// @addr{0x80588324}
     [[nodiscard]] f32 getWheelieSoftSpeedLimitBonus() const override {
         constexpr f32 WHEELIE_SPEED_BONUS = 0.15f;

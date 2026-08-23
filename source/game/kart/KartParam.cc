@@ -4,6 +4,11 @@
 
 namespace Kinoko::Kart {
 
+/// @addr{Inlined in 0x0x8058F5B4}
+/// @brief Initializes all stats and hitboxes based on the provided character/vehicle combo
+/// @param character The character to initialize stats for
+/// @param vehicle The vehicle to initialize stats for
+/// @param playerIdx The player index of the given vehicle (always 0 in Kinoko)
 KartParam::KartParam(Character character, Vehicle vehicle, u8 playerIdx) {
     initStats(character, vehicle);
     initHitboxes(vehicle);
@@ -21,6 +26,9 @@ KartParam::KartParam(Character character, Vehicle vehicle, u8 playerIdx) {
 KartParam::~KartParam() = default;
 
 /// @addr{0x80591FA4}
+/// @brief Parses out the character/vehicle combo stats
+/// @param character The character to initialize stats for
+/// @param vehicle The vehicle to initialize stats for
 void KartParam::initStats(Character character, Vehicle vehicle) {
     auto *fileManager = KartParamFileManager::Instance();
 
@@ -31,6 +39,9 @@ void KartParam::initStats(Character character, Vehicle vehicle) {
     m_stats.applyCharacterBonus(driverStream);
 }
 
+/// @addr{0x80592594}
+/// @brief Initializes the display parameters for a given bike from bikePartsDispParam.bin
+/// @param vehicle The bike to initialize display parameters for
 void KartParam::initBikeDispParams(Vehicle vehicle) {
     auto *fileManager = KartParamFileManager::Instance();
 
@@ -38,6 +49,9 @@ void KartParam::initBikeDispParams(Vehicle vehicle) {
     m_bikeDisp = BikeDisp(dispParamsStream);
 }
 
+/// @addr{0x805924CC}
+/// @brief Initializes the display parameters for a given kart from kartPartsDispParam.bin
+/// @param vehicle The kart to initialize display parameters for
 void KartParam::initKartDispParams(Vehicle vehicle) {
     auto *fileManager = KartParamFileManager::Instance();
 
@@ -45,6 +59,9 @@ void KartParam::initKartDispParams(Vehicle vehicle) {
     m_kartDisp = KartDisp(dispParamsStream);
 }
 
+/// @addr{Inlined in 0x0x8058F5B4}
+/// @brief Initializes the hitboxes and wheels for a given vehicle from kartParam.bin
+/// @param vehicle The vehicle to initialize hitboxes for
 void KartParam::initHitboxes(Vehicle vehicle) {
     auto *fileManager = KartParamFileManager::Instance();
 
@@ -52,40 +69,14 @@ void KartParam::initHitboxes(Vehicle vehicle) {
     m_bsp = BSP(hitboxStream);
 }
 
+/// @addr{0x80592718}
+/// @brief Initializes the camera parameters for a given character from kartCameraParam.bin
+/// @param character The character to initialize camera parameters for
 void KartParam::initCameraParams(Character character) {
     auto *fileManager = KartParamFileManager::Instance();
 
     auto cameraStream = fileManager->getKartCameraStream(character);
     m_camera = KartCameraParam(cameraStream);
-}
-
-KartParam::BikeDisp::BikeDisp() = default;
-
-KartParam::BikeDisp::BikeDisp(EGG::RamStream &stream) {
-    read(stream);
-}
-
-void KartParam::BikeDisp::read(EGG::RamStream &stream) {
-    m_cameraDistY = stream.read_f32();
-    stream.skip(0x8);
-    m_handlePos.read(stream);
-    m_handleRot.read(stream);
-}
-
-KartParam::KartDisp::KartDisp() = default;
-
-KartParam::KartDisp::KartDisp(EGG::RamStream &stream) {
-    read(stream);
-}
-
-void KartParam::KartDisp::read(EGG::RamStream &stream) {
-    m_cameraDistY = stream.read_f32();
-}
-
-KartParam::Stats::Stats() = default;
-
-KartParam::Stats::Stats(EGG::RamStream &stream) {
-    read(stream);
 }
 
 /// @brief Parses out the stats for a given KartParam.bin stream
@@ -118,7 +109,7 @@ void KartParam::Stats::read(EGG::RamStream &stream) {
     driftReactivity = stream.read_f32();
     driftOutsideTargetAngle = stream.read_f32();
     driftOutsideDecrement = stream.read_f32();
-    miniTurbo = stream.read_u32();
+    miniTurboDuration = stream.read_u32();
 
     for (size_t i = 0; i < kclSpeed.size(); ++i) {
         kclSpeed[i] = stream.read_f32();
@@ -127,11 +118,12 @@ void KartParam::Stats::read(EGG::RamStream &stream) {
         kclRot[i] = stream.read_f32();
     }
 
-    itemUnk170 = stream.read_f32();
-    itemUnk174 = stream.read_f32();
-    itemUnk178 = stream.read_f32();
-    itemUnk17c = stream.read_f32();
-    maxNormalAcceleration = stream.read_f32();
+    _170 = stream.read_f32();
+    _174 = stream.read_f32();
+    _178 = stream.read_f32();
+    _17c = stream.read_f32();
+
+    maxNormalForce = stream.read_f32();
     megaScale = stream.read_f32();
     shrinkScale = stream.read_f32();
 }
@@ -165,7 +157,7 @@ void KartParam::Stats::applyCharacterBonus(EGG::RamStream &stream) {
     driftReactivity += stream.read_f32();
     driftOutsideTargetAngle += stream.read_f32();
     driftOutsideDecrement += stream.read_f32();
-    miniTurbo += stream.read_u32();
+    miniTurboDuration += stream.read_u32();
 
     for (size_t i = 0; i < kclSpeed.size(); ++i) {
         kclSpeed[i] += stream.read_f32();
@@ -176,14 +168,19 @@ void KartParam::Stats::applyCharacterBonus(EGG::RamStream &stream) {
     }
 }
 
+/// @brief Uninitialized default constructor
 BSP::BSP() = default;
 
+/// @brief Constructor which parses out the hitboxes and wheels for a given KartParam.bin stream
+/// @param stream A @ref EGG::RamStream of data from KartParam.bin
 BSP::BSP(EGG::RamStream &stream) {
     read(stream);
 }
 
+/// @brief Parses out the hitboxes and wheels for a given KartParam.bin stream
+/// @param stream A @ref EGG::RamStream of data from KartParam.bin
 void BSP::read(EGG::RamStream &stream) {
-    initialYPos = stream.read_f32();
+    offsetY = stream.read_f32();
 
     for (auto &hitbox : hitboxes) {
         hitbox.enable = stream.read_u16();
@@ -191,7 +188,7 @@ void BSP::read(EGG::RamStream &stream) {
         hitbox.position.read(stream);
         hitbox.radius = stream.read_f32();
         hitbox.wallsOnly = stream.read_u16();
-        hitbox.tireCollisionIdx = stream.read_u16();
+        hitbox.tireIdx = stream.read_u16();
     }
 
     cuboids[0].read(stream);
@@ -205,7 +202,7 @@ void BSP::read(EGG::RamStream &stream) {
         wheel.springStiffness = stream.read_f32();
         wheel.dampingFactor = stream.read_f32();
         wheel.maxTravel = stream.read_f32();
-        wheel.relPosition.read(stream);
+        wheel.springTop.read(stream);
         wheel.xRot = stream.read_f32();
         wheel.wheelRadius = stream.read_f32();
         wheel.sphereRadius = stream.read_f32();
@@ -214,19 +211,6 @@ void BSP::read(EGG::RamStream &stream) {
 
     rumbleHeight = stream.read_f32();
     rumbleSpeed = stream.read_f32();
-}
-
-KartParam::KartCameraParam::KartCameraParam() = default;
-
-KartParam::KartCameraParam::KartCameraParam(EGG::RamStream &stream) {
-    read(stream);
-}
-
-void KartParam::KartCameraParam::read(EGG::RamStream &stream) {
-    fov = stream.read_f32();
-    dist = stream.read_f32();
-    posY = stream.read_f32();
-    targetPosY = stream.read_f32();
 }
 
 } // namespace Kinoko::Kart

@@ -31,11 +31,6 @@ ObjectFirebar::ObjectFirebar(const System::MapdataGeoObj &params)
 /// @addr{0x807688AC}
 ObjectFirebar::~ObjectFirebar() = default;
 
-/// @addr{0x80767DEC}
-void ObjectFirebar::init() {
-    m_currAngle = 0.0f;
-}
-
 /// @addr{0x80767E04}
 void ObjectFirebar::calc() {
     m_currAngle += m_angSpeed / 60.0f;

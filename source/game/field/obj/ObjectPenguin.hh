@@ -16,7 +16,12 @@ public:
     ObjectPenguin(const System::MapdataGeoObj &params);
     ~ObjectPenguin() override;
 
-    void init() override;
+    /// @addr{0x807756B0}
+    void init() override {
+        m_railInterpolator->init(0.0f, 0);
+        m_state = State::Walk;
+        m_basis = EGG::Vector3f::ez;
+    }
 
     /// @addr{0x80775764}
     void calc() override {
@@ -38,7 +43,14 @@ public:
         calcRot();
     }
 
-    void calcRot();
+    /// @addr{0x80775B1C}
+    void calcRot() {
+        constexpr f32 INTERP_RATE = 0.2f;
+
+        m_basis = Interpolate(INTERP_RATE, m_basis, m_railInterpolator->curTangentDir());
+        m_basis.normalise();
+        setMatrixFromOrthonormalBasisAndPos(m_basis);
+    }
 
     /// @addr{0x80775C2C}
     /// @brief Sets the penguin's position to the rail interpolator's position
@@ -46,7 +58,12 @@ public:
         setPos(m_railInterpolator->curPos());
     }
 
-    virtual void enterWalk();
+    /// @addr{0x8077588C}
+    virtual void enterWalk() {
+        m_state = State::Walk;
+        calcTransform();
+        setRotNoFlag(transform().base(2));
+    }
 
 protected:
     /// @brief The state of motion of the penguin
@@ -70,7 +87,14 @@ public:
     ObjectPenguinS(const System::MapdataGeoObj &params);
     ~ObjectPenguinS() override;
 
-    void init() override;
+    /// @addr{0x807760B0}
+    void init() override {
+        initAnmTimer();
+        m_railInterpolator->init(0.0f, 0);
+        m_basis = m_railInterpolator->curTangentDir();
+        m_state = State::Walk;
+    }
+
     void calc() override;
 
     void loadAnims() override;

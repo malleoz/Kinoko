@@ -1,7 +1,6 @@
 #pragma once
 
 #include "game/kart/KartObjectProxy.hh"
-#include "game/kart/Status.hh"
 
 namespace Kinoko::Kart {
 
@@ -13,7 +12,11 @@ class KartState : KartObjectProxy {
 public:
     KartState();
 
-    void init();
+    /// @addr{0x8059455C}
+    void init() {
+        reset();
+    }
+
     void reset();
 
     void calcInput();
@@ -23,7 +26,13 @@ public:
     void calcStartBoost();
     void calcHandleStartBoost();
     void handleStartBoost(size_t idx);
-    void resetEjection();
+
+    /// @brief Resets certain bitfields pertaining to ejections (reject road, half pipe zippers,
+    /// etc.)
+    /// @addr{0x805958F0}
+    void resetEjection() {
+        m_status.resetBit(eStatus::HalfPipeRamp, eStatus::RejectRoad);
+    }
 
     /// @beginSetters
     void setCannonPointId(u16 val) {

@@ -2,6 +2,8 @@
 
 #include "game/field/obj/ObjectKCL.hh"
 
+#include "game/system/RaceManager.hh"
+
 namespace Kinoko::Field {
 
 /// @brief Represents an individual escalator on Coconut Mall.
@@ -19,7 +21,14 @@ public:
     ObjectEscalator(const System::MapdataGeoObj &params, bool reverse = false);
     ~ObjectEscalator() override;
 
-    void calc() override;
+    /// @addr{0x808008FC}
+    void calc() override {
+        s32 t = static_cast<s32>(System::RaceManager::Instance()->timer());
+        setMovingObjVel(m_stepDims * calcSpeed(t));
+
+        m_wrappedStepCount = calcWrappedStepCount(t);
+        setPos(m_initialPos + m_stepDims * m_wrappedStepCount);
+    }
 
     /// @addr{0x80803CF0}
     [[nodiscard]] ObjectId id() const override {
@@ -31,53 +40,134 @@ public:
         return 1;
     }
 
+    /// @addr{0x80803910}
     [[nodiscard]] bool checkPointPartial(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) override;
+            KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) override {
+        return checkPointImpl(&ObjColMgr::checkPointPartial, pos, prevPos, mask, info, maskOut);
+    }
+
+    /// @addr{0x80803A04}
     [[nodiscard]] bool checkPointPartialPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) override;
+            KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) override {
+        return checkPointImpl(&ObjColMgr::checkPointPartialPush, pos, prevPos, mask, info, maskOut);
+    }
+
+    /// @addr{0x80803AF8}
     [[nodiscard]] bool checkPointFull(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override;
+            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override {
+        return checkPointImpl(&ObjColMgr::checkPointFull, pos, prevPos, mask, info, maskOut);
+    }
+
+    /// @addr{0x80803BEC}
     [[nodiscard]] bool checkPointFullPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override;
+            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override {
+        return checkPointImpl(&ObjColMgr::checkPointFullPush, pos, prevPos, mask, info, maskOut);
+    }
+
+    /// @addr{0x80803540}
     [[nodiscard]] bool checkSpherePartial(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override;
+            KCLTypeMask *maskOut, u32 timeOffset) override {
+        return checkSphereImpl(&ObjColMgr::checkSpherePartial, radius, pos, prevPos, mask, info,
+                maskOut, timeOffset);
+    }
+
+    /// @addr{0x80803680}
     [[nodiscard]] bool checkSpherePartialPush(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override;
+            KCLTypeMask *maskOut, u32 timeOffset) override {
+        return checkSphereImpl(&ObjColMgr::checkSpherePartialPush, radius, pos, prevPos, mask, info,
+                maskOut, timeOffset);
+    }
+
+    /// @addr{0x808037C0}
     [[nodiscard]] bool checkSphereFull(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override;
+            KCLTypeMask *maskOut, u32 timeOffset) override {
+        return checkSphereImpl(&ObjColMgr::checkSphereFull, radius, pos, prevPos, mask, info,
+                maskOut, timeOffset);
+    }
+
+    /// @addr{0x80803900}
     [[nodiscard]] bool checkSphereFullPush(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override;
+            KCLTypeMask *maskOut, u32 timeOffset) override {
+        return checkCollision(radius, pos, prevPos, mask, info, maskOut, timeOffset);
+    }
+
+    /// @addr{0x80802D98}
     void narrScLocal(f32 radius, const EGG::Vector3f &pos, KCLTypeMask mask,
-            u32 timeOffset) override;
+            u32 /*timeOffset*/) override {
+        m_objColMgr->narrScLocal(radius, pos, mask);
+    }
+
+    /// @addr{0x80803170}
     [[nodiscard]] bool checkPointCachedPartial(const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut) override;
+            KCLTypeMask *maskOut) override {
+        return checkPointImpl(&ObjColMgr::checkPointCachedPartial, pos, prevPos, mask, info,
+                maskOut);
+    }
+
+    /// @addr{0x80803264}
     [[nodiscard]] bool checkPointCachedPartialPush(const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut) override;
+            KCLTypeMask *maskOut) override {
+        return checkPointImpl(&ObjColMgr::checkPointCachedPartialPush, pos, prevPos, mask, info,
+                maskOut);
+    }
+
+    /// @addr{0x80803358}
     [[nodiscard]] bool checkPointCachedFull(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override;
+            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override {
+        return checkPointImpl(&ObjColMgr::checkPointCachedFull, pos, prevPos, mask, info, maskOut);
+    }
+
+    /// @addr{0x8080344C}
     [[nodiscard]] bool checkPointCachedFullPush(const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut) override;
+            KCLTypeMask *maskOut) override {
+        return checkPointImpl(&ObjColMgr::checkPointCachedFullPush, pos, prevPos, mask, info,
+                maskOut);
+    }
+
+    /// @addr{0x80802DA0}
     [[nodiscard]] bool checkSphereCachedPartial(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override;
+            KCLTypeMask *maskOut, u32 timeOffset) override {
+        return checkSphereImpl(&ObjColMgr::checkSphereCachedPartial, radius, pos, prevPos, mask,
+                info, maskOut, timeOffset);
+    }
+
+    /// @addr{0x80802EE0}
     [[nodiscard]] bool checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override;
+            KCLTypeMask *maskOut, u32 timeOffset) override {
+        return checkSphereImpl(&ObjColMgr::checkSphereCachedPartialPush, radius, pos, prevPos, mask,
+                info, maskOut, timeOffset);
+    }
+
+    /// @addr{0x80803020}
     [[nodiscard]] bool checkSphereCachedFull(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override;
+            KCLTypeMask *maskOut, u32 timeOffset) override {
+        return checkSphereImpl(&ObjColMgr::checkSphereCachedFull, radius, pos, prevPos, mask, info,
+                maskOut, timeOffset);
+    }
+
+    /// @addr{0x80803160}
     [[nodiscard]] bool checkSphereCachedFullPush(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override;
+            KCLTypeMask *maskOut, u32 timeOffset) override {
+        return checkCollisionCached(radius, pos, prevPos, mask, info, maskOut, timeOffset);
+    }
 
-    [[nodiscard]] const EGG::Matrix34f &getUpdatedMatrix(u32 timeOffset) override;
+    /// @addr{0x80800A10}
+    [[nodiscard]] const EGG::Matrix34f &getUpdatedMatrix(u32 timeOffset) override {
+        u32 t = System::RaceManager::Instance()->timer() - timeOffset;
+        m_workMatrix.makeRT(rot(), m_initialPos + m_stepDims * calcWrappedStepCount(t));
+        return m_workMatrix;
+    }
 
     /// @addr{0x80803CE0}
     [[nodiscard]] f32 colRadiusAdditionalLength() const override {

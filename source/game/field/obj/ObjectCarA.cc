@@ -1,9 +1,6 @@
 #include "ObjectCarA.hh"
 
-#include "game/field/ObjectCollisionCylinder.hh"
-
 #include "game/kart/KartCollide.hh"
-#include "game/kart/KartObject.hh"
 
 namespace Kinoko::Field {
 
@@ -40,21 +37,6 @@ void ObjectCarA::init() {
     m_nextStateId = 0;
 }
 
-/// @addr{0x806B82CC}
-void ObjectCarA::calc() {
-    StateManager::calc();
-    calcRail();
-    calcPos();
-}
-
-/// @addr{0x806B7B44}
-void ObjectCarA::createCollision() {
-    constexpr f32 RADIUS = 210.0f;
-    constexpr f32 HEIGHT = 200.0f;
-
-    m_collision = EGG::egg_new<ObjectCollisionCylinder>(RADIUS, HEIGHT, collisionCenter());
-}
-
 /// @addr{0x806B7BC4}
 void ObjectCarA::calcCollisionTransform() {
     ObjectCollisionBase *objCol = collision();
@@ -76,27 +58,6 @@ void ObjectCarA::calcCollisionTransform() {
 Kart::Reaction ObjectCarA::onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
         Kart::Reaction /*reactionOnObj*/, EGG::Vector3f & /*hitDepth*/) {
     return kartObj->speedRatioCapped() < 0.5f ? Kart::Reaction::Wall : reactionOnKart;
-}
-
-/// @addr{0x806B84FC}
-/// @brief Runs once when the car has entered the stop state
-void ObjectCarA::enterStop() {
-    m_currVel = 0.0f;
-}
-
-/// @addr{0x806B8838}
-/// @brief Runs once when the car has entered the cruising state
-void ObjectCarA::enterCruising() {
-    m_currVel = m_finalVel;
-}
-
-/// @addr{0x806B8588}
-/// @brief Runs once per frame when the car is in the stop state
-void ObjectCarA::calcStop() {
-    if (m_currentFrame > m_stopTime) {
-        m_motionState = MotionState::Accelerating;
-        m_currentStateId = 1;
-    }
 }
 
 /// @addr{0x806B86F0}
@@ -126,35 +87,6 @@ void ObjectCarA::calcAccel() {
             m_nextStateId = 0;
         }
     }
-}
-
-/// @addr{0x806B8844}
-/// @brief Runs once per frame when the car is in the cruising state
-void ObjectCarA::calcCruising() {
-    // We might've had decimals, better to undershoot the cruising time and handle it in decel
-    if (static_cast<f32>(m_currentFrame) > m_cruiseTime - 1.0f) {
-        m_motionState = MotionState::Decelerating;
-        m_nextStateId = 1;
-    }
-}
-
-/// @addr{0x806B8CCC}
-/// @brief Updates the rail and checks if the car is changing direction
-void ObjectCarA::calcRail() {
-    m_railInterpolator->setCurrVel(m_currVel);
-
-    auto status = m_railInterpolator->calc();
-    m_changingDir = (status == RailInterpolator::Status::ChangingDirection);
-}
-
-/// @addr{0x806B8D3C}
-/// @brief Helper function that updates the car's position based on the rail interpolator
-void ObjectCarA::calcPos() {
-    m_currUp = Interpolate(0.1f, m_currUp, EGG::Vector3f::ey);
-    m_currUp.normalise2();
-
-    setMatrixTangentTo(m_currUp, m_currTangent);
-    setPos(m_railInterpolator->curPos());
 }
 
 } // namespace Kinoko::Field

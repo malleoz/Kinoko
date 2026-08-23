@@ -2,8 +2,6 @@
 
 #include "game/field/obj/ObjectBase.hh"
 
-#include <egg/math/BoundBox.hh>
-
 namespace Kinoko::Field {
 
 /// @brief Represents a falling block on SNES Ghost Valley 2.

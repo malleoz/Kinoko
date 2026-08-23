@@ -1,7 +1,6 @@
 #pragma once
 
-#include "game/kart/KartObjectProxy.hh"
-#include "game/kart/KartParam.hh"
+#include "game/kart/KartObjectManager.hh"
 
 namespace Kinoko::Kart {
 
@@ -14,8 +13,22 @@ public:
     void reset();
     void calc();
 
-    void startCrush();
-    void endCrush();
+    /// @addr{0x8056B060}
+    void startCrush() {
+        m_crushState = CrushState::Crush;
+        m_pressScale = EGG::Vector3f(1.0f, 1.0f, 1.0f);
+        m_uncrushAnmFrame = 0.0f;
+        m_calcCrush = true;
+    }
+
+    /// @addr{0x8056B094}
+    void endCrush() {
+        m_crushState = CrushState::Uncrush;
+        m_pressScale = EGG::Vector3f(1.0f, CRUSH_SCALE, 1.0f);
+        m_uncrushAnmFrame = 0.0f;
+        m_calcCrush = true;
+    }
+
     void startShrink(s32 unk);
     void endShrink(s32 unk);
 
@@ -36,7 +49,12 @@ private:
 
     void calcCrush();
 
-    [[nodiscard]] EGG::Vector3f getAnmScale(f32 frame) const;
+    /// @addr{0x8056ACF4}
+    [[nodiscard]] EGG::Vector3f getAnmScale(f32 frame) const {
+        const auto *scaleAnm = KartObjectManager::PressScaleUpAnmChr();
+        ASSERT(scaleAnm);
+        return scaleAnm->getAnmResult(frame, 0).scale();
+    }
 
     s32 m_type;
     EGG::Vector3f m_scaleTransformOffset;

@@ -1,18 +1,6 @@
 #include "CollisionDirector.hh"
 
-#include "game/field/ObjectDrivableDirector.hh"
-
 namespace Kinoko::Field {
-
-/// @addr{0x8078E4F0}
-/// @brief Narrows the spatial cache of the @ref CourseColMgr and @ref ObjectDrivableDirector to
-/// only include KCL tris defined by the provided mask within a certain radius of the given
-/// position.
-void CollisionDirector::checkCourseColNarrScLocal(f32 radius, const EGG::Vector3f &pos,
-        KCLTypeMask mask, u32 timeOffset) {
-    CourseColMgr::Instance()->scaledNarrowScopeLocal(1.0f, radius, nullptr, pos, mask);
-    ObjectDrivableDirector::Instance()->colNarScLocal(radius, pos, mask, timeOffset);
-}
 
 /// @addr{0x8078F320}
 /// @brief Checks collision between a sphere and course KCL and object collision, writing partial

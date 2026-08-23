@@ -14,15 +14,6 @@ ObjectSandcone::ObjectSandcone(const System::MapdataGeoObj &params)
 /// @addr{0x806871E0}
 ObjectSandcone::~ObjectSandcone() = default;
 
-/// @addr{0x806872A0}
-void ObjectSandcone::init() {
-    m_duration = m_finalHeightDelta / m_flowRate;
-    m_currentMtx = m_rtMat;
-
-    // Moved from getUpdatedMatrix to init b/c this only needs to be computed once per object.
-    m_finalPos = pos() + EGG::Vector3f::ey * (static_cast<f32>(m_duration) * m_flowRate);
-}
-
 /// @addr{0x80687800}
 /// @details Based off the current race timer, raises the sandcone's height gradually until it
 /// reaches the final height.
@@ -41,26 +32,6 @@ const EGG::Matrix34f &ObjectSandcone::getUpdatedMatrix(u32 timeOffset) {
     }
 
     return m_currentMtx;
-}
-
-/// @addr{0x80687A2C}
-bool ObjectSandcone::checkCollision(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
-        u32 timeOffset) {
-    update(timeOffset);
-    calcScale(timeOffset);
-
-    return m_objColMgr->checkSphereFullPush(radius, pos, prevPos, mask, info, maskOut);
-}
-
-/// @addr{0x80687CC0}
-bool ObjectSandcone::checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
-        u32 timeOffset) {
-    update(timeOffset);
-    calcScale(timeOffset);
-
-    return m_objColMgr->checkSphereCachedFullPush(radius, pos, prevPos, mask, info, maskOut);
 }
 
 } // namespace Kinoko::Field

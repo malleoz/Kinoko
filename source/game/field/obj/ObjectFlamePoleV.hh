@@ -3,6 +3,8 @@
 #include "game/field/StateManager.hh"
 #include "game/field/obj/ObjectCollidable.hh"
 
+#include "game/system/RaceManager.hh"
+
 namespace Kinoko::Field {
 
 /// @brief Lava geysers without any hump (@ref ObjectFlamePoleFoot)
@@ -12,7 +14,18 @@ public:
     ~ObjectFlamePoleV() override;
 
     void init() override;
-    void calc() override;
+
+    /// @addr{0x806C3FCC}
+    void calc() override {
+        if (System::RaceManager::Instance()->timer() <= m_initDelay) {
+            return;
+        }
+
+        StateManager::calc();
+
+        f32 posY = m_currOffsetY + (m_initPosY - m_maxOffsetY);
+        setPos(EGG::Vector3f(pos().x, posY, pos().z));
+    }
 
     /// @addr{0x806C4898}
     [[nodiscard]] u32 loadFlags() const override {

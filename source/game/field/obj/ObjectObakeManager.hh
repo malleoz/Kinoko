@@ -5,12 +5,6 @@
 #include "game/field/obj/ObjectDrivable.hh"
 #include "game/field/obj/ObjectObakeBlock.hh"
 
-#include "game/system/map/MapdataGeoObj.hh"
-
-#include <egg/core/Allocator.hh>
-
-#include <vector>
-
 namespace Kinoko::Field {
 
 /// @brief The manager class for SNES Ghost Valley 2 blocks
@@ -151,7 +145,15 @@ public:
         return checkSphereFullPushImpl(radius, pos, prevPos, mask, info, maskOut);
     }
 
-    void addBlock(const System::MapdataGeoObj &params);
+    /// @addr{0x8080B244}
+    /// @brief Public interface that adds a new block to the manager and caches it for collision
+    /// checks
+    void addBlock(const System::MapdataGeoObj &params) {
+        auto *block = EGG::egg_new<ObjectObakeBlock>(params);
+        m_blocks.push_back(block);
+        auto [spatialX, spatialZ] = SpatialIndex(block->pos());
+        m_blockCache[spatialZ][spatialX] = block;
+    }
 
 private:
     static constexpr size_t CACHE_SIZE_X = 122;        ///< Width of the spatial cache
@@ -177,7 +179,18 @@ private:
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
             KCLTypeMask *maskOut);
 
-    [[nodiscard]] static std::pair<s32, s32> SpatialIndex(const EGG::Vector3f &pos);
+    /// @brief Helper function to return the spatial index of a given block
+    [[nodiscard]] std::pair<s32, s32> static SpatialIndex(const EGG::Vector3f &pos) {
+        constexpr f32 ORIGIN_OFFSET_X = -30647.498f;
+        constexpr f32 ORIGIN_OFFSET_Z = -21092.5f;
+        constexpr f32 GRID_WIDTH = 325.0f; // The "width" of each cell in the spatial grid
+        constexpr f32 GRID_HALF_WIDTH = 162.5f;
+
+        s32 x = (pos.x - ORIGIN_OFFSET_X + GRID_HALF_WIDTH) / GRID_WIDTH;
+        s32 z = (pos.z - ORIGIN_OFFSET_Z + GRID_HALF_WIDTH) / GRID_WIDTH;
+
+        return std::make_pair(x, z);
+    }
 
     ObjectCollisionBox *m_colBox;       ///< The hitbox of the block to check collision against
     ObjectCollisionSphere *m_colSphere; ///< The kart hitbox to check collision against

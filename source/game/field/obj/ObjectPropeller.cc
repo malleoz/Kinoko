@@ -17,16 +17,6 @@ ObjectPropeller::~ObjectPropeller() {
     }
 }
 
-/// @addr{0x80764EB4}
-/// @brief Initializes the propeller's angular velocity and rotation matrix
-/// @details The rotation direction is flipped if param setting 2 is set to 1.
-void ObjectPropeller::init() {
-    initAngVel();
-    m_initMat.makeR(rot());
-    m_initMat.setBase(3, pos());
-    m_axis = m_initMat.base(2);
-}
-
 /// @addr{0x807655B4}
 /// @details Creates cylindrical collision for the shell and each of the 3 blades
 void ObjectPropeller::createCollision() {

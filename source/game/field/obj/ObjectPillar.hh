@@ -61,7 +61,15 @@ public:
     ObjectPillar(const System::MapdataGeoObj &params);
     ~ObjectPillar() override;
 
-    void init() override;
+    /// @addr{0x807FEFD8}
+    void init() override {
+        ObjectBase::init();
+
+        m_collidable->disableCollision();
+        m_currRot = rot();
+        disableCollision();
+    }
+
     void calc() override;
 
     /// @addr{0x807FFA2C}

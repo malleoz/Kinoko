@@ -80,7 +80,16 @@ protected:
     static constexpr u32 BEFORE_FALL_DURATION = 10;
 
 private:
-    void calcBeforeFall();
+    /// @addr{0x8075F3F4}
+    void calcBeforeFall() {
+        constexpr f32 BEFORE_FALL_VEL = 50.0f;
+
+        setPos(EGG::Vector3f(pos().x, BEFORE_FALL_VEL + pos().y, pos().z));
+
+        if (--m_beforeFallTimer == 0) {
+            m_anmState = AnmState::Falling;
+        }
+    }
 
     /// @addr{0x8075F430}
     /// @brief Runs every frame while the Thwomp is stomping downwards

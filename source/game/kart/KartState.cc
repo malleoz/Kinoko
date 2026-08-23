@@ -1,10 +1,6 @@
 #include "KartState.hh"
 
-#include "game/kart/CollisionGroup.hh"
 #include "game/kart/KartCollide.hh"
-#include "game/kart/KartDynamics.hh"
-#include "game/kart/KartJump.hh"
-#include "game/kart/KartMove.hh"
 
 #include "game/system/RaceManager.hh"
 
@@ -29,17 +25,11 @@ static constexpr std::array<StartBoostEntry, 6> START_BOOST_ENTRIES = {{
 /// @addr{0x805943B4}
 KartState::KartState() {
     m_status.makeAllZero();
-
     m_status.changeBit(inputs()->driftIsAuto(), eStatus::AutoDrift);
 
     m_airtime = 0;
     m_cannonPointId = 0;
     m_startBoostIdx = 0;
-}
-
-/// @addr{0x8059455C}
-void KartState::init() {
-    reset();
 }
 
 /// @addr{0x80594594}
@@ -400,12 +390,6 @@ void KartState::handleStartBoost(size_t idx) {
     } else {
         move()->applyStartBoost(START_BOOST_ENTRIES[idx].frames);
     }
-}
-
-/// @brief Resets certain bitfields pertaining to ejections (reject road, half pipe zippers, etc.)
-/// @addr{0x805958F0}
-void KartState::resetEjection() {
-    m_status.resetBit(eStatus::HalfPipeRamp, eStatus::RejectRoad);
 }
 
 } // namespace Kinoko::Kart

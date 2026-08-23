@@ -127,7 +127,7 @@ MapdataAreaAccessor::MapdataAreaAccessor(const MapSectionHeader *header)
     init(reinterpret_cast<const MapdataAreaBase::SData *>(m_sectionHeader + 1),
             parse<u16>(m_sectionHeader->count));
 
-    m_sortedEntries = owning_span<MapdataAreaBase *>(m_entryCount);
+    m_sortedEntries = owning_span<MapdataAreaBase *>(size());
 }
 
 /// @addr{0x80518BDC}
@@ -135,9 +135,7 @@ MapdataAreaAccessor::~MapdataAreaAccessor() = default;
 
 void MapdataAreaAccessor::init(const MapdataAreaBase::SData *start, u16 count) {
     if (count != 0) {
-        m_entryCount = count;
-        m_entries =
-                static_cast<MapdataAreaBase **>(EGG::egg_alloc(count * sizeof(MapdataAreaBase *)));
+        m_entries.reserve(count);
     }
 
     for (u16 i = 0; i < count; ++i) {
@@ -153,10 +151,10 @@ void MapdataAreaAccessor::init(const MapdataAreaBase::SData *start, u16 count) {
 
         switch (shape) {
         case MapdataAreaBase::Shape::Box:
-            m_entries[i] = EGG::egg_new<MapdataAreaBox>(data, i);
+            m_entries.push_back(EGG::egg_new<MapdataAreaBox>(data, i));
             break;
         case MapdataAreaBase::Shape::Cylinder:
-            m_entries[i] = EGG::egg_new<MapdataAreaCylinder>(data, i);
+            m_entries.push_back(EGG::egg_new<MapdataAreaCylinder>(data, i));
             break;
         default:
             PANIC("Invalid area shape!");
@@ -167,11 +165,11 @@ void MapdataAreaAccessor::init(const MapdataAreaBase::SData *start, u16 count) {
 
 /// @addr{0x80515F8C}
 void MapdataAreaAccessor::sort() {
-    for (size_t i = 0; i < m_entryCount; ++i) {
+    for (size_t i = 0; i < size(); ++i) {
         m_sortedEntries[i] = get(i);
     }
 
-    for (size_t i = 1; i < m_entryCount; ++i) {
+    for (size_t i = 1; i < size(); ++i) {
         size_t j = i;
         for (; j > 0 && m_sortedEntries[j - 1]->priority() < m_sortedEntries[i]->priority(); --j) {
             m_sortedEntries[j] = m_sortedEntries[j - 1];

@@ -2,6 +2,10 @@
 
 #include "game/field/obj/ObjectId.hh"
 
+#include "game/system/ResourceManager.hh"
+
+#include <cstring>
+
 namespace Kinoko::Field {
 
 /// @brief Maps to SObjectCollisionSet::mode. Determines what type of collision an object has.
@@ -59,14 +63,25 @@ STATIC_ASSERT(sizeof(SObjectCollisionSet) == 0x74);
 /// corresponding @ref SObjectCollisionSet in the first data section.
 class ObjectFlowTable {
 public:
-    ObjectFlowTable(const char *filename);
-    ~ObjectFlowTable();
+    /// @addr{0x8082C10C}
+    /// @brief Obtains a pointer to the provided filename (ObjFlow.bin), parses the count, and
+    /// obtains pointers to the two data sections
+    ObjectFlowTable(const char *filename) {
+        SFile *file = reinterpret_cast<SFile *>(System::ResourceManager::Instance()->getFile(
+                filename, nullptr, System::ArchiveId::Core));
+
+        m_count = parse<s16>(file->count);
+        m_sets = file->sets;
+        m_slots = reinterpret_cast<const s16 *>(m_sets + m_count);
+    }
+
+    /// @addr{0x8082C1F4}
+    ~ObjectFlowTable() = default;
 
     /// @brief Returns a pointer to the @ref SObjectCollisionSet at the provided index
     /// @param slot Index of the @ref SObjectCollisionSet to retrieve
     /// @return Pointer to the @ref SObjectCollisionSet, or nullptr if the index is invalid
-    [[nodiscard]]
-    const SObjectCollisionSet *set(s16 slot) const {
+    [[nodiscard]] const SObjectCollisionSet *set(s16 slot) const {
         return slot == -1 ? nullptr : slot < m_count ? &m_sets[slot] : nullptr;
     }
 
@@ -80,7 +95,21 @@ public:
         return i < SLOT_COUNT ? parse<s16>(m_slots[i]) : -1;
     }
 
-    [[nodiscard]] ObjectId getIdFromName(const char *name) const;
+    /// @addr{0x8082C178}
+    /// @brief Iterates the @ref SObjectCollisionSet entries and returns the @ref ObjectId of the
+    /// entry with a matching name
+    [[nodiscard]] ObjectId getIdFromName(const char *name) const {
+        for (s16 i = 0; i < m_count; ++i) {
+            const auto *curSet = set(i);
+            ASSERT(curSet);
+
+            if (strncmp(name, curSet->name, sizeof(curSet->name)) == 0) {
+                return static_cast<ObjectId>(parse<u16>(curSet->id));
+            }
+        }
+
+        return ObjectId::None;
+    }
 
 private:
     /// @brief Represents the header and beginning of the first data section of ObjFlow.bin

@@ -8,42 +8,11 @@ ObjectPenguin::ObjectPenguin(const System::MapdataGeoObj &params) : ObjectCollid
 /// @addr{0x80775670} @addr{0x807774A4}
 ObjectPenguin::~ObjectPenguin() = default;
 
-/// @addr{0x807756B0}
-void ObjectPenguin::init() {
-    m_railInterpolator->init(0.0f, 0);
-    m_state = State::Walk;
-    m_basis = EGG::Vector3f::ez;
-}
-
-/// @addr{0x80775B1C}
-void ObjectPenguin::calcRot() {
-    constexpr f32 INTERP_RATE = 0.2f;
-
-    m_basis = Interpolate(INTERP_RATE, m_basis, m_railInterpolator->curTangentDir());
-    m_basis.normalise();
-    setMatrixFromOrthonormalBasisAndPos(m_basis);
-}
-
-/// @addr{0x8077588C}
-void ObjectPenguin::enterWalk() {
-    m_state = State::Walk;
-    calcTransform();
-    setRotNoFlag(transform().base(2));
-}
-
 /// @addr{0x80775E60}
 ObjectPenguinS::ObjectPenguinS(const System::MapdataGeoObj &params) : ObjectPenguin(params) {}
 
 /// @addr{0x80776070}
 ObjectPenguinS::~ObjectPenguinS() = default;
-
-/// @addr{0x807760B0}
-void ObjectPenguinS::init() {
-    initAnmTimer();
-    m_railInterpolator->init(0.0f, 0);
-    m_basis = m_railInterpolator->curTangentDir();
-    m_state = State::Walk;
-}
 
 /// @addr{0x80776198}
 void ObjectPenguinS::calc() {

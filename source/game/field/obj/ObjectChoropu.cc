@@ -101,13 +101,6 @@ void ObjectChoropu::calc() {
     m_objHoll->setScale(EGG::Vector3f(1.0f, m_objHoll->scale().y, 1.0f));
 }
 
-/// @addr{0x806BA144}
-Kart::Reaction ObjectChoropu::onCollision(Kart::KartObject * /*kartObj*/,
-        Kart::Reaction reactionOnKart, Kart::Reaction /*reactionOnObj*/,
-        EGG::Vector3f & /*hitDepth*/) {
-    return m_currentStateId == 1 ? Kart::Reaction::SmallBump : reactionOnKart;
-}
-
 /// @addr{0x806BA6D8}
 /// @brief Runs once when the mole lands back in its hole after a jump
 void ObjectChoropu::enterDigging() {
@@ -146,15 +139,6 @@ void ObjectChoropu::enterPeeking() {
         m_objHoll->setTransform(mat);
         m_objHoll->enableCollision();
     }
-}
-
-/// @addr{0x806BB39C}
-/// @brief Runs once when the mole jumps out of its hole
-void ObjectChoropu::enterJumping() {
-    enableCollision();
-
-    setPos(m_isStationary ? m_transMat.base(3) : m_railMat.base(3));
-    setRot(EGG::Vector3f(rot().x, rot().y, 0.0f));
 }
 
 /// @addr{0x806BA7FC}
@@ -284,20 +268,6 @@ EGG::Matrix34f ObjectChoropu::calcInterpolatedPose(f32 t) const {
     EGG::Matrix34f mat = OrthonormalBasis(curTanDir);
     mat.setBase(3, curDir);
     return mat;
-}
-
-/// @addr{0x806BBB14}
-/// @brief Calculates the current height of the mole in its parabolic jump curve
-/// @details Follows a parabolic trajectory defined by
-/// \f$ y = -1.35t^2 + 65.0t \f$
-/// where \f$t\f$ is the current frame of the jump.
-f32 ObjectChoropu::calcJumpHeight() const {
-    constexpr f32 JUMP_LINEAR_COEFFICIENT = 65.0f;
-    constexpr f32 JUMP_QUADRATIC_COEFFICIENT = 2.7f;
-
-    return JUMP_LINEAR_COEFFICIENT * static_cast<f32>(m_currentFrame) -
-            static_cast<f32>(m_currentFrame) * 0.5f * JUMP_QUADRATIC_COEFFICIENT *
-            static_cast<f32>(m_currentFrame);
 }
 
 /// @addr{0x806B8F94}

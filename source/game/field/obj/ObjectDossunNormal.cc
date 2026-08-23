@@ -47,15 +47,6 @@ void ObjectDossunNormal::startStill() {
     m_stillTimer = static_cast<s32>(m_mapObj->setting(3));
 }
 
-/// @addr{0x80760964}
-/// @brief Runs once when the Thwomp begins rising before stomping down
-void ObjectDossunNormal::startBeforeFall() {
-    m_stompState = StompState::Active;
-    m_anmState = AnmState::BeforeFall;
-    m_beforeFallTimer = static_cast<s32>(BEFORE_FALL_DURATION);
-    m_stompDuration = static_cast<s32>(m_fullDuration);
-}
-
 /// @addr{0x80760490}
 /// @brief Runs once per frame when the Thwomp is not stomping down or resetting
 /// @details Causes the Thwomp to shake for 30 frames before stomping down.
