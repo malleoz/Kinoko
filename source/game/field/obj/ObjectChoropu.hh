@@ -14,7 +14,7 @@ class ObjectChoropuHoll;
 /// @brief Represents the MMM and rPG monty moles.
 /// @details Each mole has an associated "holl" [sic]. Moles which move around (MMM) also have an
 /// associated "ground" (the dirt trail).
-class ObjectChoropu : public ObjectCollidable, public StateManager {
+class ObjectChoropu final : public ObjectCollidable, private StateManager {
 public:
     ObjectChoropu(const System::MapdataGeoObj &params);
     ~ObjectChoropu() override;
@@ -95,7 +95,7 @@ private:
 };
 
 /// @brief A dirt trail segment left behind by the moving monty moles on Moo Moo Meadows
-class ObjectChoropuGround : public ObjectCollidable {
+class ObjectChoropuGround final : public ObjectCollidable {
 public:
     ObjectChoropuGround(const EGG::Vector3f &pos, const EGG::Vector3f &rot,
             const EGG::Vector3f &scale);
@@ -124,7 +124,7 @@ private:
 };
 
 /// @brief The hole that the monty mole pops out from
-class ObjectChoropuHoll : public ObjectCollidable {
+class ObjectChoropuHoll final : public ObjectCollidable {
 public:
     ObjectChoropuHoll(const System::MapdataGeoObj &params);
     ~ObjectChoropuHoll() override;

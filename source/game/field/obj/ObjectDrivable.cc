@@ -5,9 +5,12 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8081A6D0}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectDrivable::ObjectDrivable(const System::MapdataGeoObj &params) : ObjectBase(params) {}
 
 /// @addr{0x8067EB3C}
+/// @brief Default virtual destructor
 ObjectDrivable::~ObjectDrivable() = default;
 
 /// @brief Creates collision and BoxColUnit, and registers the object to the ObjectDrivableDirector

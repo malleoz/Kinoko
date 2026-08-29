@@ -9,6 +9,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806E4224}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 /// @details Constructs the wooden stake object to which the Chain Chomp is attached. Computes the
 /// number of chains based off the chain length defined by param setting 1. Sets a course-specific
 /// wander constraint point.
@@ -71,6 +73,7 @@ ObjectWanwan::ObjectWanwan(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x806E4AEC}
+/// @brief Default virtual destructor
 ObjectWanwan::~ObjectWanwan() = default;
 
 /// @addr{0x806E4B9C}

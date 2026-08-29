@@ -8,11 +8,14 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806BBEC0}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectCow::ObjectCow(const System::MapdataGeoObj &params) : ObjectCollidable(params) {
     m_startFrame = params.setting(2);
 }
 
 /// @addr{0x806BBF24}
+/// @brief Default virtual destructor
 ObjectCow::~ObjectCow() = default;
 
 /// @addr{0x806BC2AC}
@@ -93,10 +96,13 @@ f32 ObjectCow::setTarget(const EGG::Vector3f &v) {
 }
 
 /// @addr{0x806BD080}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectCowLeader::ObjectCowLeader(const System::MapdataGeoObj &params)
     : ObjectCow(params), StateManager(this, STATE_ENTRIES) {}
 
 /// @addr{0x806BD1F8}
+/// @brief Default virtual destructor
 ObjectCowLeader::~ObjectCowLeader() = default;
 
 /// @addr{0x806BD264}
@@ -211,6 +217,10 @@ void ObjectCowLeader::calcRoam() {
 }
 
 /// @addr{0x806BDD48}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
+/// @param pos The initial position offset for the follower cow
+/// @param initRot The initial rotation for the follower cow
 ObjectCowFollower::ObjectCowFollower(const System::MapdataGeoObj &params, const EGG::Vector3f &pos,
         f32 initRot)
     : ObjectCow(params), StateManager(this, STATE_ENTRIES), m_posOffset(pos), m_rail(nullptr) {
@@ -219,6 +229,7 @@ ObjectCowFollower::ObjectCowFollower(const System::MapdataGeoObj &params, const 
 }
 
 /// @addr{0x806BDFF4}
+/// @brief Default virtual destructor
 ObjectCowFollower::~ObjectCowFollower() = default;
 
 /// @addr{0x806BE060}
@@ -366,6 +377,8 @@ void ObjectCowFollower::calcFollowLeader() {
 }
 
 /// @addr{0x806BEB54}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectCowHerd::ObjectCowHerd(const System::MapdataGeoObj &params) : ObjectCollidable(params) {
     constexpr f32 FOLLOWER_SPACING = 600.0f;
 
@@ -392,6 +405,7 @@ ObjectCowHerd::ObjectCowHerd(const System::MapdataGeoObj &params) : ObjectCollid
 }
 
 /// @addr{0x806BEFEC}
+/// @brief Default virtual destructor
 ObjectCowHerd::~ObjectCowHerd() = default;
 
 /// @addr{0x806BF064}

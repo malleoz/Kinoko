@@ -6,7 +6,7 @@
 namespace Kinoko::Field {
 
 /// @brief Represents a single bat. It's owned and managed by @ref ObjectBasabasa.
-class ObjectBasabasaDummy final : public ObjectCollidable, public StateManager {
+class ObjectBasabasaDummy final : public ObjectCollidable, private StateManager {
 public:
     ObjectBasabasaDummy(const System::MapdataGeoObj &params);
     ~ObjectBasabasaDummy() override;

@@ -3,15 +3,21 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80775624} @addr{0x8077708C}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectPenguin::ObjectPenguin(const System::MapdataGeoObj &params) : ObjectCollidable(params) {}
 
 /// @addr{0x80775670} @addr{0x807774A4}
+/// @brief Default virtual destructor
 ObjectPenguin::~ObjectPenguin() = default;
 
 /// @addr{0x80775E60}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectPenguinS::ObjectPenguinS(const System::MapdataGeoObj &params) : ObjectPenguin(params) {}
 
 /// @addr{0x80776070}
+/// @brief Default virtual destructor
 ObjectPenguinS::~ObjectPenguinS() = default;
 
 /// @addr{0x80776198}

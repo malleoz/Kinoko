@@ -5,6 +5,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x807FD938}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectBulldozer::ObjectBulldozer(const System::MapdataGeoObj &params)
     : ObjectKCL(params), m_initialPos(pos()), m_initialRot(rot()) {
     m_timeOffset = params.setting(3) * 2;
@@ -18,6 +20,7 @@ ObjectBulldozer::ObjectBulldozer(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x807FE5F0}
+/// @brief Default virtual destructor
 ObjectBulldozer::~ObjectBulldozer() = default;
 
 /// @addr{0x807FDC50}

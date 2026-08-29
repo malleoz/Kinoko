@@ -9,10 +9,15 @@ namespace Kinoko::Field {
 class ObjectWanwanPile final : public ObjectCollidable {
 public:
     /// @addr{Inlined in 0x806E4224}
+    /// @brief Constructor
+    /// @param pos The initial position of the stake
+    /// @param rot The initial rotation of the stake
+    /// @param scale The initial scale of the stake
     ObjectWanwanPile(const EGG::Vector3f &pos, const EGG::Vector3f &rot, const EGG::Vector3f &scale)
         : ObjectCollidable("pile", pos, rot, scale) {}
 
     /// @addr{0x806E9568}
+    /// @brief Default virtual destructor
     ~ObjectWanwanPile() override = default;
 
     /// @addr{0x806E9560}
@@ -44,7 +49,7 @@ public:
 /// that the Chain Chomp's behavior will desync if GCN Mario Circuit is loaded before playing Mario
 /// Circuit Wii. To compensate for this, we always set the max pitch in @ref
 /// ObjectDirector::createObjects().
-class ObjectWanwan final : public ObjectCollidable, public StateManager {
+class ObjectWanwan final : public ObjectCollidable, private StateManager {
 public:
     ObjectWanwan(const System::MapdataGeoObj &params);
     ~ObjectWanwan() override;

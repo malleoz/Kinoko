@@ -1,6 +1,5 @@
 #pragma once
 
-#include "game/system/map/MapdataAccessorBase.hh"
 #include "game/system/map/MapdataArea.hh"
 #include "game/system/map/MapdataCannonPoint.hh"
 #include "game/system/map/MapdataCheckPath.hh"
@@ -11,8 +10,7 @@
 #include "game/system/map/MapdataPointInfo.hh"
 #include "game/system/map/MapdataStageInfo.hh"
 #include "game/system/map/MapdataStartPoint.hh"
-
-#include <egg/math/Vector.hh>
+#include "game/system/ResourceManager.hh"
 
 namespace Kinoko {
 
@@ -48,14 +46,31 @@ public:
             bool searchBackwardsFirst, MapdataCheckPoint *checkpoint, f32 &completion,
             bool playerIsForwards) const;
 
-    /// @beginGetters
+    /// @addr{0x80511E7C}
     [[nodiscard]] u16 getCheckPointEntryOffsetMs(u16 i, const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos) const;
+            const EGG::Vector3f &prevPos) const {
+        EGG::Vector2f prevPos_ = EGG::Vector2f(prevPos.x, prevPos.z);
+        EGG::Vector2f pos_ = EGG::Vector2f(pos.x, pos.z);
+
+        MapdataCheckPoint *checkPoint = getCheckPoint(i);
+        ASSERT(checkPoint);
+        return checkPoint->getEntryOffsetMs(prevPos_, pos_);
+    }
+
     [[nodiscard]] f32 getCheckPointEntryOffsetExact(u16 i, const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos) const;
+            const EGG::Vector3f &prevPos) const {
+        EGG::Vector2f prevPos_ = EGG::Vector2f(prevPos.x, prevPos.z);
+        EGG::Vector2f pos_ = EGG::Vector2f(pos.x, pos.z);
+
+        MapdataCheckPoint *checkPoint = getCheckPoint(i);
+        ASSERT(checkPoint);
+        return checkPoint->getEntryOffsetExact(prevPos_, pos_);
+    }
+
     [[nodiscard]] s16 getCurrentAreaID(s16 i, const EGG::Vector3f &pos,
             MapdataAreaBase::Type type) const;
 
+    /// @beginGetters
     /// @addr{0x80518AE0}
     [[nodiscard]] MapdataCannonPoint *getCannonPoint(u16 i) const {
         return i < getCannonPointCount() ? m_cannonPoint->get(i) : nullptr;
@@ -213,7 +228,13 @@ private:
     [[nodiscard]] s16 searchPrevCheckpoint(const EGG::Vector3f &pos, s16 depth,
             const MapdataCheckPoint *checkpoint, f32 &completion, bool playerIsForwards,
             bool useCache) const;
-    void clearSectorChecked();
+
+    /// @addr{0x80511E00}
+    void clearSectorChecked() {
+        for (size_t i = 0; i < m_checkPoint->size(); ++i) {
+            getCheckPoint(i)->clearSearched();
+        }
+    }
 
     MapdataFileAccessor *m_course;
     MapdataStartPointAccessor *m_startPoint;
@@ -233,9 +254,12 @@ private:
     f32 m_startTmp2;
     f32 m_startTmp3;
 
-    static void *LoadFile(const char *filename); ///< @addr{0x809BD6E8}
+    /// @addr{0x80512C10}
+    void *LoadFile(const char *filename) {
+        return ResourceManager::Instance()->getFile(filename, nullptr, ArchiveId::Course);
+    }
 
-    static CourseMap *s_instance;
+    static CourseMap *s_instance; ///< @addr{0x809BD6E8}
 };
 
 } // namespace System

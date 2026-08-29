@@ -1,13 +1,14 @@
 #pragma once
 
-#include "game/kart/KartMove.hh"
+#include "game/kart/KartObjectProxy.hh"
 
 namespace Kinoko::Kart {
 
 class KartObject;
 
-/// @brief Hosts a few classes and the high level per-frame calc functions.
-class KartSub : KartObjectProxy {
+/// @brief Manages the lifecycle of a few Kart subsystems and responsible for the high-level
+/// two-pass physics calculations.
+class KartSub : private KartObjectProxy {
 public:
     KartSub();
     ~KartSub();
@@ -25,37 +26,40 @@ public:
     void addFloor(const CollisionData &, bool);
 
     /// @addr{0x805979EC}
+    /// @brief Updates the maximum and minimum suspension overtravel values based on the provided
+    /// suepension overtravel
+    /// @param suspOvertravel The suspension overtravel vector to update the max and min values with
     void updateSuspOvertravel(const EGG::Vector3f &suspOvertravel) {
         m_maxSuspOvertravel = m_maxSuspOvertravel.minimize(suspOvertravel);
         m_minSuspOvertravel = m_minSuspOvertravel.maximize(suspOvertravel);
     }
 
-    void tryEndHWG();
+    void calcSoftWall();
     void calcMovingObj();
     void calcMovingWater();
 
     /// @beginGetters
-    [[nodiscard]] f32 someScale() {
-        return m_someScale;
+    [[nodiscard]] f32 suspScale() {
+        return m_suspScale;
     }
     /// @endGetters
 
 private:
-    KartMove *m_move;
-    KartAction *m_action;
-    KartCollide *m_collide;
-    KartState *m_state;
-    EGG::Vector3f m_maxSuspOvertravel;
-    EGG::Vector3f m_minSuspOvertravel;
-    u16 m_floorCollisionCount;
-    u16 m_movingObjCollisionCount;
-    u16 m_movingWaterCollisionCount;
-    EGG::Vector3f m_objVel;
-    s16 m_sideCollisionTimer;  ///< Number of frames to apply movement from wall collision.
-    f32 m_colPerpendicularity; ///< Dot product between floor and colliding wall normals.
-    f32 m_someScale;           /// @rename
+    KartMove *m_move;                  ///< Pointer to the @ref KartMove subsystem
+    KartAction *m_action;              ///< Pointer to the @ref KartAction subsystem
+    KartCollide *m_collide;            ///< Pointer to the @ref KartCollide subsystem
+    KartState *m_state;                ///< Pointer to the @ref KartState subsystem
+    EGG::Vector3f m_maxSuspOvertravel; ///< Max suspension overtravel across all wheels
+    EGG::Vector3f m_minSuspOvertravel; ///< Min suspension overtravel across all wheels
+    u16 m_floorCollisionCount;         ///< Num of floors collided this frame by the body or wheels
+    u16 m_movingObjCollisionCount;     ///< Number of moving objects collided this frame
+    u16 m_movingWaterCollisionCount;   ///< Number of moving water collisions this frame
+    EGG::Vector3f m_objVel;    ///< Accumulated road velocity from moving object floor collisions
+    s16 m_sideCollisionTimer;  ///< Number of frames to apply movement from wall collision
+    f32 m_colPerpendicularity; ///< Dot product between floor and colliding wall normals
+    f32 m_suspScale; ///< Vertical scale clamped to the vehicle's shrink scale; scales suspension
 
-    static constexpr f32 DT = 1.0f; ///< Delta time.
+    static constexpr f32 DT = 1.0f; ///< Delta time
 };
 
 } // namespace Kinoko::Kart

@@ -3,6 +3,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8080AD20}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectObakeBlock::ObjectObakeBlock(const System::MapdataGeoObj &params)
     : ObjectBase(params), m_initialPos(params.pos()), m_fallState(FallState::Rest),
       m_fallFrame(static_cast<s32>(
@@ -32,6 +34,7 @@ ObjectObakeBlock::ObjectObakeBlock(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x8080D8FC}
+/// @brief Default virtual destructor
 ObjectObakeBlock::~ObjectObakeBlock() = default;
 
 /// @addr{0x8080BC64}

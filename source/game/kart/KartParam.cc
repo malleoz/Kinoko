@@ -5,7 +5,8 @@
 namespace Kinoko::Kart {
 
 /// @addr{Inlined in 0x0x8058F5B4}
-/// @brief Initializes all stats and hitboxes based on the provided character/vehicle combo
+/// @brief Constructor which initializes all stats and hitboxes based on the provided
+/// character/vehicle combo
 /// @param character The character to initialize stats for
 /// @param vehicle The vehicle to initialize stats for
 /// @param playerIdx The player index of the given vehicle (always 0 in Kinoko)
@@ -23,6 +24,7 @@ KartParam::KartParam(Character character, Vehicle vehicle, u8 playerIdx) {
     initCameraParams(character);
 }
 
+/// @brief Default destructor
 KartParam::~KartParam() = default;
 
 /// @addr{0x80591FA4}

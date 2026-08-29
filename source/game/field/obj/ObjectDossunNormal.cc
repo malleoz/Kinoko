@@ -3,10 +3,13 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80760188}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectDossunNormal::ObjectDossunNormal(const System::MapdataGeoObj &params)
     : ObjectDossun(params) {}
 
 /// @addr{0x80760188}
+/// @brief Default virtual destructor
 ObjectDossunNormal::~ObjectDossunNormal() = default;
 
 /// @addr{0x8076023C}

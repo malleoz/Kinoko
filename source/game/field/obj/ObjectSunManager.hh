@@ -13,9 +13,8 @@ namespace Kinoko::Field {
 class ObjectSunManager final : public ObjectSniper {
 public:
     /// @addr{0x806DE624}
-    /// @brief Creates pointers to all existing @ref ObjectFireSnake projectiles and the @ref
-    /// ObjectSunDS launcher.
-
+    /// @brief Constructor that creates pointers to all existing @ref ObjectFireSnake projectiles
+    /// and the @ref ObjectSunDS launcher.
     ObjectSunManager() {
         auto &managedObjs = ObjectDirector::Instance()->managedObjects();
 
@@ -44,6 +43,7 @@ public:
     }
 
     /// @addr{0x806DE780}
+    /// @brief Default virtual destructor
     ~ObjectSunManager() override = default;
 };
 

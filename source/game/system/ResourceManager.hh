@@ -25,11 +25,37 @@ class ResourceManager : EGG::Disposer {
     friend class Host::Context;
 
 public:
-    void *getFile(const char *filename, size_t *size, ArchiveId id);
-    void *getBsp(Vehicle vehicle, size_t *size);
-    [[nodiscard]] MultiDvdArchive *load(Course courseId);
+    /// @addr{0x805411FC}
+    void *getFile(const char *filename, size_t *size, ArchiveId id) {
+        s32 idx = static_cast<s32>(id);
+        return m_archives[idx]->isLoaded() ? m_archives[idx]->getFile(filename, size) : nullptr;
+    }
+
+    /// @addr{0x805414A8}
+    [[nodiscard]] void *getBsp(Vehicle vehicle, size_t *size) {
+        char buffer[32];
+
+        const char *name = GetVehicleName(vehicle);
+        snprintf(buffer, sizeof(buffer), "/bsp/%s.bsp", name);
+
+        return m_archives[0]->isLoaded() ? m_archives[0]->getFile(buffer, size) : nullptr;
+    }
+
+    /// @addr{0x80540760}
+    [[nodiscard]] MultiDvdArchive *load(Course courseId) {
+        char buffer[256];
+        snprintf(buffer, sizeof(buffer), "Race/Course/%s",
+                COURSE_NAMES[static_cast<s32>(courseId)]);
+        m_archives[1]->load(buffer);
+        return m_archives[1];
+    }
+
     [[nodiscard]] MultiDvdArchive *load(s32 idx, const char *filename);
-    void unmount(MultiDvdArchive *archive);
+
+    /// @addr{0x805411E4}
+    void unmount(MultiDvdArchive *archive) {
+        archive->unmount();
+    }
 
     /// @addr{0x805419EC}
     [[nodiscard]] static const char *GetVehicleName(Vehicle vehicle) {
@@ -65,7 +91,14 @@ private:
     // 1: Course archive
     MultiDvdArchive **m_archives;
 
-    [[nodiscard]] static MultiDvdArchive *Create(u8 i);
+    /// @addr{Inlined in 0x8053FCEC}
+    [[nodiscard]] MultiDvdArchive *Create(u8 i) {
+        switch (i) {
+        default:
+            return EGG::egg_new<MultiDvdArchive>();
+        }
+    }
+
     static ResourceManager *s_instance; ///< @addr{0x809BD738}
 };
 

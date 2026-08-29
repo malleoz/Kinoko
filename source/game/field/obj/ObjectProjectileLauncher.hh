@@ -11,11 +11,14 @@ namespace Kinoko::Field {
 class ObjectProjectileLauncher : public ObjectCollidable {
 public:
     /// @addr{Inlined in 0x806DDDD8} @addr{Inlined in 0x806D18FC}
+    /// @brief Constructor
+    /// @param params The parameters used to initialize the object
     ObjectProjectileLauncher(const System::MapdataGeoObj &params) : ObjectCollidable(params) {
         registerManagedObject();
     }
 
     /// @addr{0x806D1998}
+    /// @brief Default virtual destructor
     ~ObjectProjectileLauncher() override = default;
 
     // Not overridden in the base game, but has collision mode 0

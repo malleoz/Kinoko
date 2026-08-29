@@ -11,11 +11,17 @@ namespace Kinoko::Field {
 class ObjectFlamePole final : public ObjectCollidable {
 public:
     /// @addr{0x8067E280}
+    /// @brief Constructor
+    /// @param params The parameters used to initialize the object
+    /// @param pos The initial position of the flame pole
+    /// @param rot The initial rotation of the flame pole
+    /// @param scale The initial scale of the flame pole
     ObjectFlamePole(const System::MapdataGeoObj &params, const EGG::Vector3f &pos,
             const EGG::Vector3f &rot, const EGG::Vector3f &scale)
         : ObjectCollidable("FlamePoleEff", pos, rot, scale) {}
 
     /// @addr{0x80681828}
+    /// @brief Default virtual destructor
     ~ObjectFlamePole() override = default;
 
     /// @addr{0x8067E410}

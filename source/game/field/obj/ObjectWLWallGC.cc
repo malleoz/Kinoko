@@ -5,6 +5,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8086BC1C}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectWLWallGC::ObjectWLWallGC(const System::MapdataGeoObj &params)
     : ObjectKCL(params), m_extendedDuration(static_cast<s32>(params.setting(1))),
       m_startFrame(static_cast<s32>(params.setting(4))), m_initialPos(pos()) {
@@ -34,6 +36,7 @@ ObjectWLWallGC::ObjectWLWallGC(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x8086BDE4}
+/// @brief Default virtual destructor
 ObjectWLWallGC::~ObjectWLWallGC() = default;
 
 /// @addr{0x8086BF30}

@@ -2,14 +2,7 @@
 
 #include "game/system/KPadDirector.hh"
 
-#include <abstract/File.hh>
-
 namespace Kinoko::System {
-
-/// @addr{0x8052DD40}
-void RaceConfig::init() {
-    m_raceScenario.init();
-}
 
 /// @addr{0x805302C4}
 /// @details Normally we copy the menu scenario into the race scenario.

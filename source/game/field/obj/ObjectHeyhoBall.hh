@@ -11,7 +11,7 @@ namespace Kinoko::Field {
 /// the player into the air and make them lose their items or just spin them out without losing
 /// items, depending on how much time has elapsed since the explosion. The synchronization between a
 /// cannonball and the ship is managed by @ref ObjectHeyhoShipManager.
-class ObjectHeyhoBall final : public ObjectProjectile, public StateManager {
+class ObjectHeyhoBall final : public ObjectProjectile, private StateManager {
 public:
     ObjectHeyhoBall(const System::MapdataGeoObj &params);
     ~ObjectHeyhoBall() override;

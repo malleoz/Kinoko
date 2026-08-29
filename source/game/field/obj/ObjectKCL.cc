@@ -5,10 +5,13 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8081A980}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectKCL::ObjectKCL(const System::MapdataGeoObj &params)
     : ObjectDrivable(params), m_lastMtxUpdateFrame(-2000), m_lastScaleUpdateFrame(-2000) {}
 
 /// @addr{0x8067EAFC}
+/// @brief Default virtual destructor that destroys the associated collision manager
 ObjectKCL::~ObjectKCL() {
     EGG::egg_delete(m_objColMgr);
 }

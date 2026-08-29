@@ -5,11 +5,13 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806DDA84}
+/// @brief Constructor
 ObjectSniper::ObjectSniper()
     : ObjectCollidable("MapObjSniper", EGG::Vector3f::zero, EGG::Vector3f::ez,
               EGG::Vector3f::unit) {}
 
 /// @addr{0x806DDAF4}
+/// @brief Default virtual destructor
 ObjectSniper::~ObjectSniper() = default;
 
 /// @addr{0x806DDB34}

@@ -333,6 +333,7 @@ bool CollisionDirector::findClosestCollisionEntry(KCLTypeMask * /*typeMask*/, KC
 }
 
 /// @addr{0x8078E33C}
+/// @brief Private constructor
 CollisionDirector::CollisionDirector() {
     m_collisionEntryCount = 0;
     m_closestCollisionEntry = nullptr;
@@ -340,6 +341,7 @@ CollisionDirector::CollisionDirector() {
 }
 
 /// @addr{0x8078E454}
+/// @brief Private destructor
 CollisionDirector::~CollisionDirector() {
     if (s_instance) {
         s_instance = nullptr;

@@ -6,6 +6,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8076D044}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectItemboxLine::ObjectItemboxLine(const System::MapdataGeoObj &params)
     : ObjectCollidable(params) {
     constexpr u32 DEFAULT_PRESS_COUNT = 5;
@@ -28,6 +30,7 @@ ObjectItemboxLine::ObjectItemboxLine(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x8076D558}
+/// @brief Default virtual destructor
 ObjectItemboxLine::~ObjectItemboxLine() = default;
 
 /// @addr{0x8076D604}

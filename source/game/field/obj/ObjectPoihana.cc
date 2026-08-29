@@ -5,11 +5,14 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80747198}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectPoihanaBase::ObjectPoihanaBase(const System::MapdataGeoObj &params)
     : StateManager(this, {}), ObjectCollidable(params), m_walkState(WalkState::NeedTarget),
       m_heightOffset(0.0f), m_radius(150.0f), m_targetPos(EGG::Vector3f::zero) {}
 
 /// @addr{0x80747208}
+/// @brief Default virtual destructor
 ObjectPoihanaBase::~ObjectPoihanaBase() = default;
 
 /// @addr{0x80747248}
@@ -26,10 +29,13 @@ void ObjectPoihanaBase::init() {
 }
 
 /// @addr{0x8074816C}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectPoihana::ObjectPoihana(const System::MapdataGeoObj &params)
     : StateManager(this, STATE_ENTRIES), ObjectPoihanaBase(params) {}
 
 /// @addr{0x807488BC}
+/// @brief Default virtual destructor
 ObjectPoihana::~ObjectPoihana() = default;
 
 /// @addr{0x80748958}

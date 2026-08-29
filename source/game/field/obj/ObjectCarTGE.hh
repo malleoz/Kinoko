@@ -12,7 +12,7 @@ class ObjectHighwayManager;
 /// player. Bomb cars are not present in Time Trial mode and are thus not implemented in Kinoko.
 /// Each vehicle has two GJK collision primitives in order for the collision detection to better
 /// reflect the shape of the vehicle.
-class ObjectCarTGE : public ObjectCollidable, public StateManager {
+class ObjectCarTGE final : public ObjectCollidable, private StateManager {
 public:
     /// @brief The type of vehicle represented by the object
     enum class CarType {

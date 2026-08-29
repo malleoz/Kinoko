@@ -8,9 +8,13 @@ namespace Kinoko::Field {
 /// @details The cylinder is defined by a radius and height, and is centered at a given position.
 /// The class caches the top and bottom points of the cylinder for efficient support point
 /// calculations.
-class ObjectCollisionCylinder : public ObjectCollisionBase {
+class ObjectCollisionCylinder final : public ObjectCollisionBase {
 public:
     /// @addr{0x80836068}
+    /// @brief Constructor
+    /// @param radius Radius of the cylinder
+    /// @param height Height of the cylinder
+    /// @param center Center position of the cylinder in local space
     ObjectCollisionCylinder(f32 radius, f32 height, const EGG::Vector3f &center)
         : m_radius(radius), m_height(height), m_pos(center) {
         m_scaledRadius = radius;
@@ -23,6 +27,7 @@ public:
     }
 
     /// @addr{0x808364A0}
+    /// @brief Default virtual destructor
     ~ObjectCollisionCylinder() override = default;
 
     /// @addr{0x808361F0}

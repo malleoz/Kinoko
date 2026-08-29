@@ -5,6 +5,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80686F84}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectSandcone::ObjectSandcone(const System::MapdataGeoObj &params)
     : ObjectKCL(params), m_flowRate(static_cast<f32>(params.setting(0)) / 100.0f),
       m_finalHeightDelta(static_cast<f32>(params.setting(1))), m_startFrame(params.setting(2)) {
@@ -12,6 +14,7 @@ ObjectSandcone::ObjectSandcone(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x806871E0}
+/// @brief Default virtual destructor
 ObjectSandcone::~ObjectSandcone() = default;
 
 /// @addr{0x80687800}

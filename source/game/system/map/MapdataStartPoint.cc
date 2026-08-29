@@ -1,10 +1,7 @@
 #include "MapdataStartPoint.hh"
 
 #include "game/system/CourseMap.hh"
-#include "game/system/map/MapdataStageInfo.hh"
 
-#include <egg/math/Math.hh>
-#include <egg/math/Quat.hh>
 
 namespace Kinoko::System {
 

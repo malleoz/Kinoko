@@ -8,15 +8,24 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8081EFEC}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &params)
     : ObjectBase(params), m_collision(nullptr) {}
 
 /// @addr{0x8081F064}
+/// @brief Constructor
+/// @param name The name of the object
+/// @param pos The initial position of the object
+/// @param rot The initial rotation of the object
+/// @param scale The initial scale of the object
+
 ObjectCollidable::ObjectCollidable(const char *name, const EGG::Vector3f &pos,
         const EGG::Vector3f &rot, const EGG::Vector3f &scale)
     : ObjectBase(name, pos, rot, scale), m_collision(nullptr) {}
 
 /// @addr{0x8067E384}
+/// @brief Default virtual destructor that destroys the associated collision object
 ObjectCollidable::~ObjectCollidable() {
     EGG::egg_delete(m_collision);
 }

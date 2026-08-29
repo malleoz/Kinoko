@@ -64,8 +64,9 @@ STATIC_ASSERT(sizeof(SObjectCollisionSet) == 0x74);
 class ObjectFlowTable {
 public:
     /// @addr{0x8082C10C}
-    /// @brief Obtains a pointer to the provided filename (ObjFlow.bin), parses the count, and
-    /// obtains pointers to the two data sections
+    /// @brief Constructor that obtains a pointer to the provided filename (`ObjFlow.bin`), parses
+    /// the count, and obtains pointers to the two data sections
+    /// @param filename The name of the file to parse (`ObjFlow.bin`)
     ObjectFlowTable(const char *filename) {
         SFile *file = reinterpret_cast<SFile *>(System::ResourceManager::Instance()->getFile(
                 filename, nullptr, System::ArchiveId::Core));
@@ -76,6 +77,7 @@ public:
     }
 
     /// @addr{0x8082C1F4}
+    /// @brief Default destructor
     ~ObjectFlowTable() = default;
 
     /// @brief Returns a pointer to the @ref SObjectCollisionSet at the provided index

@@ -7,23 +7,22 @@
 namespace Kinoko::Kart {
 
 /// @addr{0x8059308C}
+/// @brief Constructor
+/// @param handle Pointer to the owning @ref KartPullPath subsystem
+/// @param type The type of tracker to use for the pull path
 KartPullPathTracker::KartPullPathTracker(KartPullPath *handle, Type type)
     : m_type(type), m_currentIdx(0), m_pointInfo(nullptr), m_handle(handle) {}
 
 /// @addr{0x805930E4}
+/// @brief Default destructor
 KartPullPathTracker::~KartPullPathTracker() = default;
 
-void KartPullPathTracker::calc() {
-    ASSERT(m_pointInfo);
-
-    if (m_type == Type::Global) {
-        calcTrackerGlobal();
-    } else if (m_type == Type::Regional) {
-        calcTrackerRegional();
-    }
-}
-
 /// @addr{0x80593138}
+/// @brief Checks to see if the kart is within the global tracker's current segment
+/// @details The global tracker is an exhaustive round-robin scan of all points in the pull path.
+/// Every frame, its @ref m_currentIdx increments, so it will eventually check every point in the
+/// pull path. If the kart is within the current segment, it calls @ref KartPullPath::changePoint to
+/// update the current point and distance.
 void KartPullPathTracker::calcTrackerGlobal() {
     s16 idx;
     EGG::Vector3f point, dir;
@@ -37,6 +36,10 @@ void KartPullPathTracker::calcTrackerGlobal() {
 }
 
 /// @addr{0x80593814}
+/// @brief Checks if the kart is within the regional tracker's current, next, or previous segment
+/// @details The regional tracker checks the current segment, the next segment, and the previous
+/// segment, skipping the other checks once it succeeds. If the kart is within any of those
+/// segments, it calls @ref KartPullPath::changePoint to update the current point and distance.
 void KartPullPathTracker::calcTrackerRegional() {
     if (m_handle->incomingIdx() < 0) {
         return;
@@ -62,6 +65,11 @@ void KartPullPathTracker::calcTrackerRegional() {
 }
 
 /// @addr{0x8059345C}
+/// @brief Searches for the current point in the pull path based on the given search direction
+/// @param searchDirection The direction to search for the current point in the pull path
+/// @param idx The index of the current point in the pull path, if found
+/// @param point The position of the current point in the pull path, if found
+/// @return True if the kart lies within the searched segment, false otherwise
 bool KartPullPathTracker::search(SearchDirection searchDirection, s16 &idx, EGG::Vector3f &point,
         EGG::Vector3f &dir) const {
     ASSERT(m_pointInfo);
@@ -128,6 +136,8 @@ bool KartPullPathTracker::search(SearchDirection searchDirection, s16 &idx, EGG:
 }
 
 /// @addr{0x80593FA4}
+/// @brief Constructor which initializes the global and regional pull path trackers and initializes
+/// the pull path
 KartPullPath::KartPullPath()
     : m_globalTracker(this, KartPullPathTracker::Type::Global),
       m_regionalTracker(this, KartPullPathTracker::Type::Regional) {
@@ -135,9 +145,11 @@ KartPullPath::KartPullPath()
 }
 
 /// @addr{0x80594094}
+/// @brief Default destructor
 KartPullPath::~KartPullPath() = default;
 
 /// @addr{0x80593CB8}
+/// @brief Resets the pull path subsystem to its default state
 /// @details This was the init function in the base class, but it gets inlined in calcArea.
 void KartPullPath::reset() {
     m_distance = -1.0f;
@@ -150,6 +162,9 @@ void KartPullPath::reset() {
 }
 
 /// @addr{0x80594134}
+/// @brief Every frame, updates the @ref KartPullPathTracker objects to find the current segment of
+/// the pull path
+/// @details If there is no active pull path area, it bails out.
 void KartPullPath::calc() {
     if (!calcArea()) {
         return;
@@ -161,19 +176,11 @@ void KartPullPath::calc() {
     }
 }
 
-/// @addr{0x80593DBC}
-void KartPullPath::changePoint(s16 idx, f32 distance) {
-    if ((m_distance >= 0.0f || distance >= 3000.0f) && distance >= m_distance) {
-        return;
-    }
-
-    m_incomingIdx = idx;
-    m_distance = distance;
-    m_regionalTracker.setCurrentIdx(idx);
-    calcPointChange();
-}
-
 /// @addr{0x805941BC}
+/// @brief Checks to see if the kart is within a pull path area and updates the current point info
+/// @return True if the kart is within a pull path area, false otherwise
+/// @details Based off of @ref System::MapdataAreaBase params, also sets the speed decay factor and
+/// max pull speed.
 bool KartPullPath::calcArea() {
     auto *courseMap = System::CourseMap::Instance();
 
@@ -209,6 +216,11 @@ bool KartPullPath::calcArea() {
 }
 
 /// @addr{0x80593E18}
+/// @brief Updates the current point in the pull path to the incoming index and computes the pull
+/// direction
+/// @details The pull direction is first computed by simply finding the direction from the new
+/// current segment position to the next segment position. Based off the current point's settings,
+/// the pull direction may be forward, left, or right.
 void KartPullPath::calcPointChange() {
     if (m_currentIdx == m_incomingIdx) {
         return;
@@ -227,29 +239,15 @@ void KartPullPath::calcPointChange() {
     // If the pull influence is 0, the pull direction moves forward, so do nothing
     // If the pull influence is 1, the pull direction moves left
     if (pullInfluence == 1) {
-        m_pullDirection = getPullUnitNormal() * -1.0f;
+        m_pullDirection = getPullSideDirection() * -1.0f;
     }
 
     // If the pull influence is 2, the pull direction moves right
     else if (pullInfluence == 2) {
-        m_pullDirection = getPullUnitNormal();
+        m_pullDirection = getPullSideDirection();
     }
 
     m_currentIdx = m_incomingIdx;
-}
-
-/// @addr{0x805AEAD8}
-/// @details This isn't a part of KartPullPath, but is only called from this class.
-EGG::Vector3f KartPullPath::getPullUnitNormal() const {
-    // Dot product of two unit vectors being 1.0f => angle between them is 0
-    // They're the same vector, just return zero
-    if (EGG::Vector3f::ey.dot(m_pullDirection) == 1.0f) {
-        return EGG::Vector3f::zero;
-    }
-
-    EGG::Vector3f nrm = EGG::Vector3f::ey.cross(m_pullDirection);
-    nrm.normalise();
-    return nrm;
 }
 
 } // namespace Kinoko::Kart

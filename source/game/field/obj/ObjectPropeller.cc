@@ -5,12 +5,15 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80764CC8}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectPropeller::ObjectPropeller(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), m_angle(0.0f) {
     m_blades.fill(nullptr);
 }
 
 /// @addr{0x80764E34}
+/// @brief Virtual destructor that deletes each of the propeller's blades
 ObjectPropeller::~ObjectPropeller() {
     for (auto *&blade : m_blades) {
         EGG::egg_delete(blade);

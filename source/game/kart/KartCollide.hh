@@ -7,6 +7,8 @@
 
 #include "game/field/ObjectCollisionKart.hh"
 
+#include <egg/math/BoundBox.hh>
+
 namespace Kinoko::Kart {
 
 /// @brief Represents the different reactions that can occur when a kart collides with an object.
@@ -47,7 +49,7 @@ enum class Reaction {
 };
 
 /// @brief Manages body+wheel collision and its influence on position/velocity/etc.
-class KartCollide : KartObjectProxy {
+class KartCollide : private KartObjectProxy {
 public:
     /// @brief Represents the different surface types that a kart is currently colliding with
     enum class eSurfaceFlags {

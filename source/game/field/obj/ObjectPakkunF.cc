@@ -3,11 +3,14 @@
 namespace Kinoko::Field {
 
 /// @addr{0x807743A4}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectPakkunF::ObjectPakkunF(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), m_attackFrames(0), m_currAttackFrame(0),
       m_waitDuration(static_cast<s32>(m_mapObj->setting(0))) {}
 
 /// @addr{0x807754FC}
+/// @brief Default virtual destructor
 ObjectPakkunF::~ObjectPakkunF() = default;
 
 /// @addr{0x80774754}

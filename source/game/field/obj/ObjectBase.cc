@@ -7,6 +7,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8081F828}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectBase::ObjectBase(const System::MapdataGeoObj &params)
     : m_drawMdl(nullptr), m_resFile(nullptr), m_id(static_cast<ObjectId>(params.id())),
       m_railInterpolator(nullptr), m_mapObj(&params), m_pos(params.pos()), m_scale(params.scale()),
@@ -15,6 +17,11 @@ ObjectBase::ObjectBase(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x8081FB04}
+/// @brief Overloaded constructor
+/// @param name The name of the object
+/// @param pos The initial position of the object
+/// @param rot The initial rotation of the object
+/// @param scale The initial scale of the object
 ObjectBase::ObjectBase(const char *name, const EGG::Vector3f &pos, const EGG::Vector3f &rot,
         const EGG::Vector3f &scale)
     : m_drawMdl(nullptr), m_resFile(nullptr), m_railInterpolator(nullptr), m_mapObj(nullptr),
@@ -24,6 +31,8 @@ ObjectBase::ObjectBase(const char *name, const EGG::Vector3f &pos, const EGG::Ve
 }
 
 /// @addr{0x8067E3C4}
+/// @brief Virtual destructor that deletes the @ref Abstract::g3d::ResFile, @ref Render::DrawMdl,
+/// and @ref RailInterpolator instances associated with the object
 ObjectBase::~ObjectBase() {
     EGG::egg_delete(m_resFile);
     EGG::egg_delete(m_drawMdl);

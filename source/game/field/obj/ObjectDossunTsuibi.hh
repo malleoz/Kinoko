@@ -11,10 +11,13 @@ class ObjectDossunTsuibi final : public ObjectDossun {
 
 public:
     /// @addr{0x8076393C}
+    /// @brief Constructor
+    /// @param params The parameters used to initialize the object
     ObjectDossunTsuibi(const System::MapdataGeoObj &params, ObjectDossunTsuibiHolder *holder)
         : ObjectDossun(params), m_holder(holder) {}
 
     /// @addr{0x80764C48}
+    /// @brief Default virtual destructor
     ~ObjectDossunTsuibi() override = default;
 
     /// @addr{0x80763A04}

@@ -12,9 +12,12 @@ class ObjectPressSenko;
 class ObjectItemboxPress final : public ObjectCollidable {
 public:
     /// @addr{0x8076D9E4}
+    /// @brief Constructor
+    /// @param params The parameters used to initialize the object
     ObjectItemboxPress(const System::MapdataGeoObj &params) : ObjectCollidable(params) {}
 
     /// @addr{0x8076DA48}
+    /// @brief Default virtual destructor
     ~ObjectItemboxPress() override = default;
 
     /// @addr{0x8076DA88}

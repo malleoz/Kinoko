@@ -3,9 +3,12 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8071E9B4}
+/// @brief Constructor
+/// @param kartObj Pointer to the kart object associated with this instance
 JugemMove::JugemMove(const Kart::KartObject *kartObj) : m_kartObj(kartObj) {}
 
 /// @addr{0x8071EA80}
+/// @brief Default destructor
 JugemMove::~JugemMove() = default;
 
 /// @addr{0x8071EB6C}

@@ -1,16 +1,9 @@
 #include "KPadController.hh"
 
-#include <cstring>
-
 namespace Kinoko::System {
 
 /// @addr{0x8051EBA8}
 KPadController::KPadController() : m_connected(false) {}
-
-/// @addr{0x8051ED14}
-void KPadController::calc() {
-    calcImpl();
-}
 
 /// @addr{0x80520730}
 KPadGhostController::KPadGhostController() : m_acceptingInputs(false) {
@@ -44,13 +37,13 @@ void KPadGhostController::reset(bool driftIsAuto) {
 /// of that input state. This is used to minimize data consumption given that the user is not
 /// changing inputs every frame. We first read in the header of the RKG input data section as
 /// follows:
-/// Offset  | Size | Description
-///------------- | ------------- | -------------
-/// 0x00  | 2 bytes | Count of face button input tuples
-/// 0x02  | 2 bytes | Count of analog stick input tuples
-/// 0x04  | 2 bytes | Count of D-Pad input tuples
-/// 0x06  | 2 bytes | Unknown. Probably padding.
-/// 0x08  | | End of header, beginning of face button input data.
+/// Offset | Size    | Description                                         |
+///------- | ------- | --------------------------------------------------- |
+/// 0x00   | 2 bytes | Count of face button input tuples                   |
+/// 0x02   | 2 bytes | Count of analog stick input tuples                  |
+/// 0x04   | 2 bytes | Count of D-Pad input tuples                         |
+/// 0x06   | 2 bytes | Unknown. Probably padding.                          |
+/// 0x08   |         | End of header, beginning of face button input data. |
 void KPadGhostController::readGhostBuffer(const u8 *buffer, bool driftIsAuto) {
     constexpr u32 SEQUENCE_SIZE = 0x2;
 
@@ -193,100 +186,6 @@ u8 KPadGhostButtonsStream::readFrame() {
     }
 
     return readVal();
-}
-
-KPadGhostFaceButtonsStream::KPadGhostFaceButtonsStream() = default;
-
-KPadGhostFaceButtonsStream::~KPadGhostFaceButtonsStream() = default;
-
-KPadGhostDirectionButtonsStream::KPadGhostDirectionButtonsStream() = default;
-
-KPadGhostDirectionButtonsStream::~KPadGhostDirectionButtonsStream() = default;
-
-KPadGhostTrickButtonsStream::KPadGhostTrickButtonsStream() = default;
-
-KPadGhostTrickButtonsStream::~KPadGhostTrickButtonsStream() = default;
-
-/* ================================ *
- *     HOST CONTROLLER
- * ================================ */
-
-KPadHostController::KPadHostController() = default;
-
-KPadHostController::~KPadHostController() = default;
-
-void KPadHostController::reset(bool driftIsAuto) {
-    m_driftIsAuto = driftIsAuto;
-    m_raceInputState.reset();
-    m_connected = true;
-}
-
-/* ================================ *
- *     PADS
- * ================================ */
-
-/// @addr{0x80520F64}
-KPad::KPad() : m_controller(nullptr) {
-    reset();
-}
-
-/// @addr{0x805222B4}
-KPad::~KPad() = default;
-
-/// @addr{0x80521198}
-void KPad::calc() {
-    m_lastInputState = m_currentInputState;
-    m_currentInputState = m_controller->raceInputState();
-}
-
-/// @addr{0x80521110}
-void KPad::reset() {
-    if (m_controller) {
-        m_controller->reset(m_controller->driftIsAuto());
-    }
-}
-
-/// @addr{0x805220BC}
-KPadPlayer::KPadPlayer() = default;
-
-/// @addr{0x805222F4}
-KPadPlayer::~KPadPlayer() = default;
-
-/// @addr{0x80521844}
-void KPadPlayer::setGhostController(KPadGhostController *controller, const u8 *inputs,
-        bool driftIsAuto) {
-    m_controller = controller;
-
-    if (inputs) {
-        memcpy(m_ghostBuffer, inputs, RKG_UNCOMPRESSED_INPUT_DATA_SECTION_SIZE);
-    }
-
-    controller->readGhostBuffer(m_ghostBuffer, driftIsAuto);
-}
-
-void KPadPlayer::setHostController(KPadHostController *controller, bool driftIsAuto) {
-    m_controller = controller;
-    m_controller->setDriftIsAuto(driftIsAuto);
-}
-
-/// @addr{0x805215D4}
-void KPadPlayer::startGhostProxy() {
-    if (!m_controller || m_controller->controlSource() != ControlSource::Ghost) {
-        return;
-    }
-
-    KPadGhostController *ghostController = reinterpret_cast<KPadGhostController *>(m_controller);
-    ghostController->setAcceptingInputs(true);
-}
-
-/// @addr{0x80521688}
-void KPadPlayer::endGhostProxy() {
-    if (!m_controller || m_controller->controlSource() != ControlSource::Ghost) {
-        return;
-    }
-
-    KPadGhostController *ghostController = reinterpret_cast<KPadGhostController *>(m_controller);
-    ghostController->setAcceptingInputs(false);
 }
 
 } // namespace Kinoko::System

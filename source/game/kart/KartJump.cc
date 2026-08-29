@@ -6,6 +6,8 @@
 namespace Kinoko::Kart {
 
 /// @addr{0x80575A44}
+/// @brief Constructor
+/// @param move Pointer to the kart's movement state manager
 KartJump::KartJump(KartMove *move) : m_move(move) {
     m_trickDelay = 0;
 
@@ -14,6 +16,7 @@ KartJump::KartJump(KartMove *move) : m_move(move) {
 }
 
 /// @addr{0x80575AA8}
+/// @brief Default virtual destructor
 KartJump::~KartJump() = default;
 
 /// @addr{0x805764FC}
@@ -190,8 +193,8 @@ void KartJump::setAngle(const EGG::Vector3f &left) {
             }},
     }};
 
-    f32 vel1YDot = m_move->vel1Dir().dot(EGG::Vector3f::ey);
-    EGG::Vector3f vel1YCross = m_move->vel1Dir().cross(EGG::Vector3f::ey);
+    f32 vel1YDot = m_move->intVelDir().dot(EGG::Vector3f::ey);
+    EGG::Vector3f vel1YCross = m_move->intVelDir().cross(EGG::Vector3f::ey);
     f32 vel1YCrossMag = vel1YCross.length();
     f32 pitch = EGG::Mathf::abs(EGG::Mathf::atan2(vel1YCrossMag, vel1YDot));
     f32 angle = 90.0f - (pitch * RAD2DEG);
@@ -244,9 +247,12 @@ void KartJump::init() {
     status().setBit(eStatus::TrickRot);
 }
 
+/// @brief Constructor
+/// @param move Pointer to the kart's movement state manager
 KartJumpBike::KartJumpBike(KartMove *move) : KartJump(move) {}
 
 /// @addr{0x80576AFC}
+/// @brief Default virtual destructor
 KartJumpBike::~KartJumpBike() = default;
 
 /// @addr{0x80576994}

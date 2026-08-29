@@ -5,6 +5,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806F2FE8}
+/// @brief Constructor
+/// @param linkDistances The distances between consecutive links in the chain
 HanachanChainManager::HanachanChainManager(const std::span<const f32> &linkDistances) {
     size_t count = linkDistances.size() + 1;
 
@@ -25,6 +27,7 @@ HanachanChainManager::HanachanChainManager(const std::span<const f32> &linkDista
 }
 
 /// @addr{0x806F31F4}
+/// @brief Default destructor
 HanachanChainManager::~HanachanChainManager() = default;
 
 /// @addr{0x806F49BC}
@@ -59,11 +62,17 @@ void HanachanChainManager::calc() {
 }
 
 /// @addr{0x806C7D74}
+/// @brief Constructor
+/// @param name The name of the object
+/// @param pos The initial position of the object
+/// @param rot The initial rotation of the object
+/// @param scale The initial scale of the object
 ObjectHanachanHead::ObjectHanachanHead(const char *name, const EGG::Vector3f &pos,
         const EGG::Vector3f &rot, const EGG::Vector3f &scale)
     : ObjectHanachanPart(name, pos, rot, scale), m_lastPos(EGG::Vector3f::zero) {}
 
 /// @addr{0x806CCB94}
+/// @brief Default virtual destructor
 ObjectHanachanHead::~ObjectHanachanHead() = default;
 
 /// @addr{0x806C8450}
@@ -82,16 +91,26 @@ void ObjectHanachanHead::calcCollisionTransform() {
     m_lastPos = pos();
 }
 
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
+/// @param mdlName The name of the model corresponding to this body segment
 ObjectHanachanBody::ObjectHanachanBody(const System::MapdataGeoObj &params, const char *mdlName)
     : ObjectHanachanPart(params), m_mdlName(mdlName), m_lastSegment(false),
       m_lastPos(EGG::Vector3f::zero) {}
 
+/// @brief Constructor
+/// @param name The name of the object
+/// @param pos The initial position of the object
+/// @param rot The initial rotation of the object
+/// @param scale The initial scale of the object
+/// @param mdlName The name of the model corresponding to this body segment
 ObjectHanachanBody::ObjectHanachanBody(const char *name, const EGG::Vector3f &pos,
         const EGG::Vector3f &rot, const EGG::Vector3f &scale, const char *mdlName)
     : ObjectHanachanPart(name, pos, rot, scale), m_mdlName(mdlName), m_lastSegment(false),
       m_lastPos(EGG::Vector3f::zero) {}
 
 /// @addr{0x806CCAD8}
+/// @brief Default virtual destructor
 ObjectHanachanBody::~ObjectHanachanBody() = default;
 
 /// @addr{0x806C8908}
@@ -112,6 +131,8 @@ void ObjectHanachanBody::calcCollisionTransform() {
 }
 
 /// @addr{0x806C8A5C}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectHanachan::ObjectHanachan(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), StateManager(this, STATE_ENTRIES), m_chain(BODY_PART_DISTANCES),
       m_walkSpeed(static_cast<f32>(static_cast<s16>(params.setting(0)))) {
@@ -151,6 +172,7 @@ ObjectHanachan::ObjectHanachan(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x806C9598}
+/// @brief Default virtual destructor
 ObjectHanachan::~ObjectHanachan() = default;
 
 /// @addr{0x806C9630}

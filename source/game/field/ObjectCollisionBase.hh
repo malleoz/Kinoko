@@ -27,7 +27,11 @@ namespace Kinoko::Field {
 /// See more: https://en.wikipedia.org/wiki/Gilbert-Johnson-Keerthi_distance_algorithm
 /// @todo Give a more detailed explanation on the significance of flags, mask, and m_candidateMask
 struct GJKState {
+    /// @brief Default constructor
     GJKState() : m_flags(0), m_idx(0), m_mask(0), m_candidateMask(0), m_scales{{}} {}
+
+    /// @brief Default destructor
+    ~GJKState() = default;
 
     u32 m_flags; ///< Bitmask indicating which slots are part of the active simplex
     u32 m_idx;   ///< Which slot (0-3) is being filled with a new support point this iteration

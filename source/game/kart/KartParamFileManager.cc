@@ -181,12 +181,12 @@ EGG::RamStream KartParamFileManager::getKartCameraStream(Character character) co
             sizeof(KartParam::KartCameraParam));
 }
 
-/// @brief Loads and validates the kart parameter files
+/// @brief Private constructor that loads and validates the kart parameter files
 KartParamFileManager::KartParamFileManager() {
     init();
 }
 
-/// @brief Private destructor
+/// @brief Private virtual destructor
 KartParamFileManager::~KartParamFileManager() {
     if (s_instance) {
         s_instance = nullptr;

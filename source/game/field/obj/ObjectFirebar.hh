@@ -7,7 +7,7 @@ namespace Kinoko::Field {
 /// @brief A rotating group of fireballs split into spokes.
 /// @details The number of spokes is based on the fourth param setting. The first param setting
 /// defines how many fireballs per spoke.
-class ObjectFirebar : public ObjectCollidable {
+class ObjectFirebar final : public ObjectCollidable {
 public:
     ObjectFirebar(const System::MapdataGeoObj &params);
     ~ObjectFirebar() override;

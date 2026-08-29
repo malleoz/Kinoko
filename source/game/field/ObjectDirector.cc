@@ -146,6 +146,7 @@ void ObjectDirector::DestroyInstance() {
 }
 
 /// @addr{0x8082A38C}
+/// @brief Private constructor
 ObjectDirector::ObjectDirector()
     : m_flowTable("ObjFlow.bin"), m_hitTableKart("GeoHitTableKart.bin"),
       m_hitTableKartObject("GeoHitTableKartObj.bin"), m_objects(MAX_UNIT_COUNT),
@@ -153,6 +154,7 @@ ObjectDirector::ObjectDirector()
       m_managedObjects(MAX_MANAGED_OBJECTS) {}
 
 /// @addr{0x8082A694}
+/// @brief Private destructor
 ObjectDirector::~ObjectDirector() {
     if (s_instance) {
         s_instance = nullptr;

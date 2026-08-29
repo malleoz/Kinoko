@@ -2,12 +2,8 @@
 
 #include "host/SceneCreatorDynamic.hh"
 
-#include <egg/core/Heap.hh>
-
 #include <game/kart/KartObjectManager.hh>
 #include <game/system/RaceManager.hh>
-
-#include <abstract/File.hh>
 
 namespace Kinoko {
 
@@ -104,11 +100,6 @@ void KTestSystem::initSuite() {
 
         m_testCases.push(testCase);
     }
-}
-
-/// @brief Executes a frame.
-void KTestSystem::calc() {
-    m_sceneMgr->calc();
 }
 
 /// @brief Executes a run.
@@ -280,16 +271,6 @@ void KTestSystem::startNextTestCase() {
     }
 }
 
-/// @brief Pops the current test case and frees the KRKG buffer.
-/// @return Whether the queue still has elements remaining.
-bool KTestSystem::popTestCase() {
-    ASSERT(m_testCases.size() > 0);
-    m_testCases.pop();
-    EGG::egg_free(m_stream.data());
-
-    return !m_testCases.empty();
-}
-
 /// @brief Checks one frame in the test.
 /// @return Whether the test can continue.
 bool KTestSystem::calcTest() {
@@ -414,51 +395,6 @@ void KTestSystem::testFrame(const TestData &data) {
         checkDesync(data.pos, pos, "pos");
         checkDesync(data.fullRot, fullRot, "fullRot");
     }
-}
-
-/// @brief Runs a single test case, and ends when the test is finished or when a desync is found.
-/// @details This will also accumulate results in results.txt.
-/// @return Whether the run synchronized or desynchronized.
-bool KTestSystem::runTest() {
-    while (calcTest()) {
-        calc();
-    }
-
-    // TODO: Use a system heap! std::string relies on heap allocation
-    // The heap is destroyed after this and there is no further allocation, so it's not re-disabled
-    m_sceneMgr->currentScene()->heap()->enableAllocation();
-    writeTestOutput();
-    return m_sync;
-}
-
-/// @brief Writes details about the current test to file.
-/// @details This is designed to be cumulative across multiple tests.
-void KTestSystem::writeTestOutput() const {
-    std::string outStr(getCurrentTestCase().name.data());
-    outStr += "\n" + std::string(m_sync ? "1" : "0") + "\n";
-    outStr += std::to_string(getCurrentTestCase().targetFrame) + "\n";
-    outStr += std::to_string(m_frameCount) + "\n";
-    Abstract::File::Append("results.txt", outStr.c_str(), outStr.size());
-}
-
-/// @brief Gets the current test case.
-/// @details In the event that there is no active test case, this gets the next test case.
-/// @return The current test case.
-const KTestSystem::TestCase &KTestSystem::getCurrentTestCase() const {
-    ASSERT(!m_testCases.empty());
-    return m_testCases.front();
-}
-
-/// @brief Initializes the race configuration as needed for test cases.
-/// @param config The race configuration instance.
-/// @param arg Unused optional argument.
-void KTestSystem::OnInit(System::RaceConfig *config, void * /* arg */) {
-    size_t size;
-    u8 *rkg = Abstract::File::Load(Instance()->getCurrentTestCase().rkgPath.data(), size);
-    config->setGhost(rkg);
-    EGG::egg_free(rkg);
-
-    config->raceScenario().players[0].type = System::RaceConfig::Player::Type::Ghost;
 }
 
 } // namespace Kinoko

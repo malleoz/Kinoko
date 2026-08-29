@@ -1,10 +1,14 @@
 #pragma once
 
+/// @file Types.hh
+/// @brief Defines common types used throughout the Kinoko project
+
 #include <Logger.hh>
 
-#include <egg/core/Heap.hh>
+#include <egg/core/Allocator.hh>
 
 #include <cstdint>
+#include <list>
 #include <span>
 #include <type_traits>
 #include <utility>
@@ -23,6 +27,12 @@ typedef uint64_t u64;
 
 typedef float f32;
 typedef double f64;
+
+/// @brief Alias template for a std::list that uses the EGG allocator
+/// @tparam T The type of objects in the list
+template <typename T>
+using alloc_list = std::list<T, EGG::Allocator<T>>;
+
 
 /// @brief A contiguous storage container that manages the lifecycle of a buffer of a given size.
 /// @details Similar to std::unique_ptr in that we guarantee memory safety, however owning_span

@@ -115,13 +115,13 @@ void JugemUnit::calcReverse() {
 /// @addr{0x807230D4}
 /// @brief Transforms a vector from Lakitu's local space to world space, keeping the y-axis upright
 EGG::Vector3f JugemUnit::transformLocalToWorldUpright(const EGG::Vector3f &v) const {
-    const EGG::Vector3f &vel1Dir = m_kartObj->move()->vel1Dir();
+    const EGG::Vector3f &intVelDir = m_kartObj->move()->intVelDir();
     const EGG::Quatf &mainRot = m_kartObj->mainRot();
 
     EGG::Vector3f vStack88 = mainRot.rotateVector(EGG::Vector3f::ez);
     const EGG::Vector3f &pos = m_kartObj->pos();
     EGG::Vector3f up = EGG::Vector3f::ey;
-    EGG::Vector3f local_a0 = vel1Dir + vStack88;
+    EGG::Vector3f local_a0 = intVelDir + vStack88;
     local_a0.normalise2();
     EGG::Vector3f right = up.cross(local_a0);
     right.normalise2();

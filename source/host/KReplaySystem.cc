@@ -1,30 +1,13 @@
 #include "KReplaySystem.hh"
 
 #include "host/Option.hh"
-#include "host/SceneCreatorDynamic.hh"
 
-#include <abstract/File.hh>
-#include <egg/core/Heap.hh>
 
 #include <game/system/RaceManager.hh>
 
 #include <iomanip>
 
 namespace Kinoko {
-
-/// @brief Initializes the system.
-void KReplaySystem::init() {
-    auto *sceneCreator = EGG::egg_new<Host::SceneCreatorDynamic>();
-    m_sceneMgr = EGG::egg_new<EGG::SceneManager>(sceneCreator);
-
-    System::RaceConfig::RegisterInitCallback(OnInit, nullptr);
-    Abstract::File::Remove("results.txt");
-}
-
-/// @brief Executes a frame.
-void KReplaySystem::calc() {
-    m_sceneMgr->calc();
-}
 
 /// @brief Executes a run.
 /// @details A run consists of replaying a ghost.
@@ -136,14 +119,6 @@ bool KReplaySystem::calcEnd() const {
     }
 
     return false;
-}
-
-/// @brief Reports failure to file.
-/// @param msg The message to report.
-void KReplaySystem::reportFail(const std::string &msg) const {
-    std::string report(m_currentGhostPath.string());
-    report += "\n" + std::string(msg);
-    Abstract::File::Append("results.txt", report.c_str(), report.size());
 }
 
 bool KReplaySystem::runDirectory(const std::filesystem::path &dirPath) {
@@ -308,14 +283,6 @@ KReplaySystem::DesyncingTimerPair KReplaySystem::getDesyncingTimer(s32 i) const 
 
     // This is unreachable
     return DesyncingTimerPair(System::Timer(), System::Timer());
-}
-
-/// @brief Initializes the race configuration as needed for replays.
-/// @param config The race configuration instance.
-/// @param arg Unused optional argument.
-void KReplaySystem::OnInit(System::RaceConfig *config, void * /* arg */) {
-    config->setGhost(Instance()->m_currentRawGhost);
-    config->raceScenario().players[0].type = System::RaceConfig::Player::Type::Ghost;
 }
 
 } // namespace Kinoko

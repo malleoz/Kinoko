@@ -121,11 +121,14 @@ public:
         /// @brief Uninitialized default constructor
         BikeDisp() = default;
 
-        /// @brief Parses out the display parameters from the provided stream
+        /// @brief Constructor which parses out the display parameters from the provided stream
         /// @param stream A @ref EGG::RamStream of data from `bikePartsDispParam.bin`
         BikeDisp(EGG::RamStream &stream) {
             read(stream);
         }
+
+        /// @brief Default destructor
+        ~BikeDisp() = default;
 
         /// @brief Parses out the display parameters for a given bike from a bikePartsDispParam.bin
         /// stream
@@ -153,11 +156,14 @@ public:
         /// @brief Uninitialized default constructor
         KartDisp() = default;
 
-        /// @brief Parses out the display parameters from the provided stream
+        /// @brief Constructor which parses out the display parameters from the provided stream
         /// @param stream A @ref EGG::RamStream of data from `kartPartsDispParam.bin`
         KartDisp(EGG::RamStream &stream) {
             read(stream);
         }
+
+        /// @brief Default destructor
+        ~KartDisp() = default;
 
         /// @brief Parses out the display parameters for a given kart from a
         /// `kartPartsDispParam.bin` stream
@@ -197,6 +203,9 @@ public:
             read(stream);
         }
 
+        /// @brief Default destructor
+        ~Stats() = default;
+
         void read(EGG::RamStream &stream);
         void applyCharacterBonus(EGG::RamStream &stream);
 
@@ -209,7 +218,7 @@ public:
         f32 bumpDeviationLevel; ///< Scale applied to forces resulting from wall collision
         f32 speed;              ///< Base full speed of the character/vehicle combo.
         f32 turningSpeed;       ///< Speed decrement percentage of the vehicle when handling.
-        f32 tilt;               ///< Percentage of how much the kart can tilt
+        f32 tilt;               ///< Percentage of how much the kart can roll
         std::array<f32, 4> accelerationStandardA; ///< Boost accel values at each speed threshold
         std::array<f32, 3> accelerationStandardT; ///< Speed ratio threshold for acceleration values
         std::array<f32, 2> accelerationDriftA; ///< Mini-turbo accel values at each speed threshold
@@ -249,6 +258,9 @@ public:
         KartCameraParam(EGG::RamStream &stream) {
             read(stream);
         }
+
+        /// @brief Default destructor
+        ~KartCameraParam() = default;
 
         /// @brief Parses out the camera parameters for a given `kartCameraParam.bin` stream
         /// @param stream A @ref EGG::RamStream of data from `kartCameraParam.bin`

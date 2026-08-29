@@ -5,6 +5,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8082C234}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectPsea::ObjectPsea(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), m_period(F_TAU / static_cast<f32>(CYCLE_DURATION)) {
     constexpr EGG::Vector3f POS_OFFSET = EGG::Vector3f(0.0f, 6.75f, 0.0f) * 96.0f;
@@ -19,6 +21,7 @@ ObjectPsea::ObjectPsea(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x8082C890}
+/// @brief Default virtual destructor
 ObjectPsea::~ObjectPsea() = default;
 
 /// @addr{0x8082C634}

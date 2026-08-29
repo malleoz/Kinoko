@@ -8,9 +8,11 @@ namespace Kinoko::Field {
 class JugemSwitch {
 public:
     /// @addr{0x807259EC}
+    /// @brief Constructor
     JugemSwitch() : m_isOn(false) {}
 
     /// @addr{0x80725A0C}
+    /// @brief Default virtual destructor
     virtual ~JugemSwitch() = default;
 
     [[nodiscard]] bool isOn() const {
@@ -35,9 +37,11 @@ protected:
 class JugemSwitchReverse : public JugemSwitch {
 public:
     /// @addr{0x80725C1C}
+    /// @brief Default constructor
     JugemSwitchReverse() = default;
 
     /// @addr{0x80725C3C}
+    /// @brief Default virtual destructor
     ~JugemSwitchReverse() override = default;
 
     /// @addr{0x80725C7C}

@@ -3,7 +3,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x808364E0}
-/// @brief Creates a convex hull with the provided points.
+/// @brief Constructor that creates a convex hull with the provided points
+/// @param points Span of points defining the convex hull
 /// @details The base game has the possibility to only provide a count to allocate space.
 /// To account for this, we split the base game's constructor into two overloads.
 /// This overload enables conversion from std::array into a span, which initializes the points.
@@ -13,6 +14,7 @@ ObjectCollisionConvexHull::ObjectCollisionConvexHull(const std::span<const EGG::
 }
 
 /// @addr{0x808365A8}
+/// @brief Default virtual destructor
 ObjectCollisionConvexHull::~ObjectCollisionConvexHull() = default;
 
 /// @addr{0x808366D0}
@@ -71,8 +73,8 @@ const EGG::Vector3f &ObjectCollisionConvexHull::getSupport(const EGG::Vector3f &
 }
 
 /// @addr{0x808364E0}
-/// @brief Allocates space for a convex hull with the provided point count.
-/// This overload can only be called via inheritance or delegating constructors.
+/// @brief Protected destructor that allocates space for a convex hull with the provided point count
+/// @param count Number of points to allocate space for the convex hull
 /// @details The base game has the possibility to only provide a count to allocate space.
 /// To account for this, we split the base game's constructor into two overloads.
 /// This overload enables avoiding immediate point initialization, which is useful for inheritance.

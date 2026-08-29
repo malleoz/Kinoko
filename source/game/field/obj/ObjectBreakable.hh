@@ -10,10 +10,13 @@ namespace Kinoko::Field {
 class ObjectBreakable : public ObjectCollidable {
 public:
     /// @addr{0x8076EBE0}
+    /// @brief Constructor
+    /// @param params The parameters used to initialize the object
     ObjectBreakable(const System::MapdataGeoObj &params) : ObjectCollidable(params), m_state(0) {}
 
     /// @addr{0x8076EC28}
-    ~ObjectBreakable() = default;
+    /// @brief Default virtual destructor
+    ~ObjectBreakable() override = default;
 
     /// @addr{0x807677E4}
     [[nodiscard]] u32 loadFlags() const override {

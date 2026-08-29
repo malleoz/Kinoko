@@ -10,7 +10,7 @@ namespace Kinoko::Field {
 /// ObjectVolcanoBallLauncher. The fireball is launched with a given initial velocity and has
 /// constant acceleration. Once the ball reaches the end of its rail, it will transition to the
 /// burning state. It will become intangible after the burning duration has elapsed.
-class ObjectVolcanoBall final : public ObjectCollidable, public StateManager {
+class ObjectVolcanoBall final : public ObjectCollidable, private StateManager {
     friend class ObjectVolcanoBallLauncher;
 
 public:

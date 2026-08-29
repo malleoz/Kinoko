@@ -5,6 +5,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806B7710}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectCarA::ObjectCarA(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), StateManager(this, STATE_ENTRIES),
       m_finalVel(static_cast<f32>(params.setting(0))),
@@ -12,6 +14,7 @@ ObjectCarA::ObjectCarA(const System::MapdataGeoObj &params)
       m_stopTime(static_cast<u32>(params.setting(2))) {}
 
 /// @addr{0x806B78CC}
+/// @brief Default virtual destructor
 ObjectCarA::~ObjectCarA() = default;
 
 /// @addr{0x806B7CE0}

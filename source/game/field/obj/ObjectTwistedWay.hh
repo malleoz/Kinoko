@@ -7,7 +7,7 @@ namespace Kinoko::Field {
 /// @brief The wavy road in Bowser's Castle
 /// @details Behaves as a sine wave with a period of 120 frames and an amplitude which varies
 /// depending on your distance from the x-axis center.
-class ObjectTwistedWay : public ObjectDrivable {
+class ObjectTwistedWay final : public ObjectDrivable {
 public:
     ObjectTwistedWay(const System::MapdataGeoObj &params);
     ~ObjectTwistedWay() override;

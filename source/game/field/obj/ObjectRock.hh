@@ -5,7 +5,7 @@
 namespace Kinoko::Field {
 
 /// @brief The falling rocks on GCN DK Mountain
-class ObjectRock : public ObjectCollidable {
+class ObjectRock final : public ObjectCollidable {
 public:
     ObjectRock(const System::MapdataGeoObj &params);
     ~ObjectRock() override;

@@ -121,7 +121,7 @@ private:
 class KartJumpBike : public KartJump {
 public:
     KartJumpBike(KartMove *move);
-    ~KartJumpBike();
+    ~KartJumpBike() override;
 
     void calcRot() override;
 

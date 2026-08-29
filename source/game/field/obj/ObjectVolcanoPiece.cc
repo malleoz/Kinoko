@@ -5,6 +5,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80817DE8}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectVolcanoPiece::ObjectVolcanoPiece(const System::MapdataGeoObj &params)
     : ObjectKCL(params), m_initialPos(pos()), m_initialRot(rot()),
       m_restDuration(params.setting(1) * 60),
@@ -16,6 +18,8 @@ ObjectVolcanoPiece::ObjectVolcanoPiece(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x80803DA8}
+/// @brief Virtual destructor that deletes the secondary and tertiary collision managers for the
+/// volcano piece, if they exist
 ObjectVolcanoPiece::~ObjectVolcanoPiece() {
     EGG::egg_delete(m_colMgrB);
     EGG::egg_delete(m_colMgrC);

@@ -8,6 +8,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806B96A0}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectChoropu::ObjectChoropu(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), StateManager(this, STATE_ENTRIES) {
     constexpr f32 MAX_SPEED = 20.0f;
@@ -47,6 +49,7 @@ ObjectChoropu::ObjectChoropu(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x806B9B8C}
+/// @brief Default virtual destructor
 ObjectChoropu::~ObjectChoropu() = default;
 
 /// @addr{0x806B9BF8}
@@ -271,6 +274,10 @@ EGG::Matrix34f ObjectChoropu::calcInterpolatedPose(f32 t) const {
 }
 
 /// @addr{0x806B8F94}
+/// @brief Constructor
+/// @param pos The initial position of the object
+/// @param rot The initial rotation of the object
+/// @param scale The initial scale of the object
 ObjectChoropuGround::ObjectChoropuGround(const EGG::Vector3f &pos, const EGG::Vector3f &rot,
         const EGG::Vector3f &scale)
     : ObjectCollidable("choropu_ground", pos, rot, scale) {
@@ -284,6 +291,7 @@ ObjectChoropuGround::ObjectChoropuGround(const EGG::Vector3f &pos, const EGG::Ve
 }
 
 /// @addr{0x806BBE6C}
+/// @brief Default virtual destructor
 ObjectChoropuGround::~ObjectChoropuGround() = default;
 
 /// @addr{0x806B9274}
@@ -297,10 +305,13 @@ void ObjectChoropuGround::calcPosAndMat(f32 height, const EGG::Matrix34f &mat) {
 }
 
 /// @addr{0x806B93CC}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectChoropuHoll::ObjectChoropuHoll(const System::MapdataGeoObj &params)
     : ObjectCollidable(params) {}
 
 /// @addr{0x806BBE6C}
+/// @brief Default virtual destructor
 ObjectChoropuHoll::~ObjectChoropuHoll() = default;
 
 } // namespace Kinoko::Field

@@ -7,6 +7,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8067E6F4}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectFlamePoleFoot::ObjectFlamePoleFoot(const System::MapdataGeoObj &params)
     : ObjectKCL(params), StateManager(this, STATE_ENTRIES), m_extraCycleFrames(params.setting(0)),
       m_initDelay(params.setting(1)) {
@@ -23,6 +25,7 @@ ObjectFlamePoleFoot::ObjectFlamePoleFoot(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x8067EBE0}
+/// @brief Default virtual destructor
 ObjectFlamePoleFoot::~ObjectFlamePoleFoot() {
     s_flamePoleCount = 0;
 }

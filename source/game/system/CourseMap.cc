@@ -1,7 +1,5 @@
 #include "CourseMap.hh"
 
-#include "game/system/ResourceManager.hh"
-
 namespace Kinoko::System {
 
 /// @addr{0x805127EC}
@@ -162,27 +160,6 @@ s16 CourseMap::findRecursiveSector(const EGG::Vector3f &pos, s16 depth, bool sea
     // If that fails, search forwards, excluding checkpoints already searched
     return id == -1 ? searchNextCheckpoint(pos, depth, checkpoint, distanceRatio, forward, true) :
                       id;
-}
-
-/// @addr{0x80511E7C}
-u16 CourseMap::getCheckPointEntryOffsetMs(u16 i, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos) const {
-    EGG::Vector2f prevPos_ = EGG::Vector2f(prevPos.x, prevPos.z);
-    EGG::Vector2f pos_ = EGG::Vector2f(pos.x, pos.z);
-
-    MapdataCheckPoint *checkPoint = getCheckPoint(i);
-    ASSERT(checkPoint);
-    return checkPoint->getEntryOffsetMs(prevPos_, pos_);
-}
-
-f32 CourseMap::getCheckPointEntryOffsetExact(u16 i, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos) const {
-    EGG::Vector2f prevPos_ = EGG::Vector2f(prevPos.x, prevPos.z);
-    EGG::Vector2f pos_ = EGG::Vector2f(pos.x, pos.z);
-
-    MapdataCheckPoint *checkPoint = getCheckPoint(i);
-    ASSERT(checkPoint);
-    return checkPoint->getEntryOffsetExact(prevPos_, pos_);
 }
 
 /// @addr{0x80516808}
@@ -465,18 +442,6 @@ s16 CourseMap::searchPrevCheckpoint(const EGG::Vector3f &pos, s16 depth,
     }
 
     return id;
-}
-
-/// @addr{0x80511E00}
-void CourseMap::clearSectorChecked() {
-    for (size_t i = 0; i < m_checkPoint->size(); ++i) {
-        getCheckPoint(i)->clearSearched();
-    }
-}
-
-/// @addr{0x80512C10}
-void *CourseMap::LoadFile(const char *filename) {
-    return ResourceManager::Instance()->getFile(filename, nullptr, ArchiveId::Course);
 }
 
 CourseMap *CourseMap::s_instance = nullptr; ///< @addr{0x809BD6E8}

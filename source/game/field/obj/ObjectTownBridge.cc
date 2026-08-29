@@ -5,6 +5,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80809448}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectTownBridge::ObjectTownBridge(const System::MapdataGeoObj &params)
     : ObjectKCL(params), m_rotateUpwards(rot().y < 0.0f),
       m_angVel(static_cast<float>(params.setting(0))),
@@ -16,6 +18,7 @@ ObjectTownBridge::ObjectTownBridge(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x8080ACE0}
+/// @brief Default virtual destructor that deletes all underlying object collision managers
 ObjectTownBridge::~ObjectTownBridge() {
     // Whichever ObjColMgr is active will be destroyed naturally as part of ObjectKCL's destructor.
     // We need to destroy the other ones to avoid leaking. The base game does not bother doing this.

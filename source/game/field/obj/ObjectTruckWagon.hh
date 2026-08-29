@@ -10,7 +10,7 @@ namespace Kinoko::Field {
 /// they are active, they move along a rail. In the base game, they start by rolling along the
 /// ground. Once they reach the fork at the end of the mine, they get picked up and move along the
 /// rail while suspended mid-air.
-class ObjectTruckWagonCart final : public ObjectCollidable, public StateManager {
+class ObjectTruckWagonCart final : public ObjectCollidable, private StateManager {
 public:
     ObjectTruckWagonCart(const System::MapdataGeoObj &params);
     ~ObjectTruckWagonCart() override;

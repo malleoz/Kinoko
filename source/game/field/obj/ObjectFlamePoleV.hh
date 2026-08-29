@@ -8,7 +8,7 @@
 namespace Kinoko::Field {
 
 /// @brief Lava geysers without any hump (@ref ObjectFlamePoleFoot)
-class ObjectFlamePoleV final : public ObjectCollidable, public StateManager {
+class ObjectFlamePoleV final : public ObjectCollidable, private StateManager {
 public:
     ObjectFlamePoleV(const System::MapdataGeoObj &params);
     ~ObjectFlamePoleV() override;

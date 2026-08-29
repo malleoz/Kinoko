@@ -20,7 +20,7 @@ class KartPullPath;
 /// and wraps around to 0 if it exceeds the number of points in the pull path. This way, the global
 /// tracker acts as a fallback so that it can identify the current pull path segment if the kart
 /// enters the area at an unexpected location, such as the Koopa Cape turnskip before the red shell.
-class KartPullPathTracker : KartObjectProxy {
+class KartPullPathTracker : private KartObjectProxy {
 public:
     /// @brief The type of tracker to use for the pull path
     enum class Type {
@@ -31,16 +31,26 @@ public:
     KartPullPathTracker(KartPullPath *handle, Type type);
     ~KartPullPathTracker();
 
-    void calc();
+    /// @brief Calls into the appropriate tracker type's calc function to find the current segment
+    /// of the pull path
+    void calc() {
+        ASSERT(m_pointInfo);
+
+        if (m_type == Type::Global) {
+            calcTrackerGlobal();
+        } else if (m_type == Type::Regional) {
+            calcTrackerRegional();
+        }
+    }
 
     /// @beginSetters
     void setCurrentIdx(s16 idx) {
         m_currentIdx = idx;
     }
 
-    /// @brief Sets the current point info for the trackers to search through and resets the current
+    /// @brief Sets the current point info for the tracker to search through and resets the current
     /// index to 0
-    /// @param info The point info to set for the trackers
+    /// @param info The point info to set for the tracker
     void setPointInfo(const System::MapdataPointInfo *info) {
         m_pointInfo = info;
         m_currentIdx = 0;
@@ -48,6 +58,7 @@ public:
     /// @endSetters
 
 private:
+    /// @brief The direction to search for the current point in the pull path
     enum class SearchDirection {
         Current,
         Next,
@@ -71,10 +82,10 @@ private:
     [[nodiscard]] bool search(SearchDirection searchDirection, s16 &idx, EGG::Vector3f &point,
             EGG::Vector3f &dir) const;
 
-    Type m_type; ///< Distinguishes between regional and global trackers (to avoid inheritance)
-    s16 m_currentIdx;
-    const System::MapdataPointInfo *m_pointInfo;
-    KartPullPath *const m_handle;
+    Type m_type;      ///< Distinguishes between regional and global trackers (to avoid inheritance)
+    s16 m_currentIdx; ///< Current index into the pull path's point array
+    const System::MapdataPointInfo *m_pointInfo; ///< Pointer to the pull path's point info
+    KartPullPath *const m_handle; ///< Pointer to the owning @ref KartPullPath subsytem
 };
 
 /// @brief Manages areas pulling the kart along a given path.
@@ -85,6 +96,7 @@ public:
     ~KartPullPath();
 
     /// @addr{0x805940D4}
+    /// @brief Initializes the pull path subsystem
     void init() {
         reset();
         m_areaId = -1;
@@ -93,9 +105,28 @@ public:
 
     void reset();
     void calc();
-    void changePoint(s16 idx, f32 distance);
+
+    /// @addr{0x80593DBC}
+    /// @brief Changes the current point in the pull path to the given index and distance, if it's
+    /// closer than what's already been found this frame
+    /// @param idx The index of the point in the pull path to change to
+    /// @param distance The distance from the line formed by the point and direction
+    /// @details This is called whenever the trackers' search functions succeed. If the distance is
+    /// absurdly large or is further away than the current best found this frame, it bails out.
+    /// Otherwise, it updates the current index, distance, and calculates the pull direction.
+    void changePoint(s16 idx, f32 distance) {
+        if ((m_distance >= 0.0f || distance >= 3000.0f) && distance >= m_distance) {
+            return;
+        }
+
+        m_incomingIdx = idx;
+        m_distance = distance;
+        m_regionalTracker.setCurrentIdx(idx);
+        calcPointChange();
+    }
 
     /// @addr{0x80593E08}
+    /// @brief Clears the current distance, so that the next call to @ref changePoint will succeed
     void resetDistance() {
         m_distance = -1.0f;
     }
@@ -127,30 +158,48 @@ private:
     void calcPointChange();
 
     /// @addr{0x80593D54}
+    /// @brief Runs the global and regional trackers' per-frame calc functions
     void calcTrackers() {
         m_globalTracker.calc();
         m_regionalTracker.calc();
     }
 
-    [[nodiscard]] EGG::Vector3f getPullUnitNormal() const;
+    /// @addr{0x805AEAD8}
+    /// @brief Computes the unit vector perpendicular to the pull direction in the XZ plane
+    /// @details This is used to redirect the pull path sideways instead of forward. This isn't a
+    /// part of KartPullPath, but is only called from this class.
+    [[nodiscard]] EGG::Vector3f getPullSideDirection() const {
+        // Dot product of two unit vectors being 1.0f => angle between them is 0
+        // They're the same vector, just return zero
+        if (EGG::Vector3f::ey.dot(m_pullDirection) == 1.0f) {
+            return EGG::Vector3f::zero;
+        }
+
+        EGG::Vector3f nrm = EGG::Vector3f::ey.cross(m_pullDirection);
+        nrm.normalise();
+        return nrm;
+    }
 
     /// @addr{0x80593D1C}
+    /// @brief Sets the current point info for the trackers to search through and resets the current
+    /// index to 0
+    /// @param info The point info to set for the trackers
     void setTrackerPointInfo(const System::MapdataPointInfo *info) {
         m_globalTracker.setPointInfo(info);
         m_regionalTracker.setPointInfo(info);
     }
 
-    f32 m_distance;
-    const System::MapdataPointInfo *m_pointInfo;
-    s16 m_incomingIdx;
-    s16 m_currentIdx;
-    EGG::Vector3f m_pullDirection;
-    f32 m_pullSpeed;
-    f32 m_maxPullSpeed;
-    KartPullPathTracker m_globalTracker;
-    KartPullPathTracker m_regionalTracker;
-    f32 m_roadSpeedDecay;
-    s16 m_areaId;
+    f32 m_distance; ///< Best distance found this frame from a candidate segment's line
+    const System::MapdataPointInfo *m_pointInfo; ///< Pointer to the pull path's point info
+    s16 m_incomingIdx;             ///< Index of the closest candidate segment found this frame
+    s16 m_currentIdx;              ///< Index of the current segment in the pull path
+    EGG::Vector3f m_pullDirection; ///< Current direction the pull path pushes the kart
+    f32 m_pullSpeed;               ///< The speed at which the pull path pushes the kart
+    f32 m_maxPullSpeed;            ///< Maximum speed at which the pull path can push the kart
+    KartPullPathTracker m_globalTracker;   ///< The global round-robin tracker instance
+    KartPullPathTracker m_regionalTracker; ///< The regional tracker instance
+    f32 m_roadSpeedDecay; ///< Speed decay factor while the kart is inside the pull area
+    s16 m_areaId;         ///< The ID of the currently active @ref MapdataAreaBase
 };
 
 } // namespace Kinoko::Kart

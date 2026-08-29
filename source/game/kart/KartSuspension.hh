@@ -4,13 +4,15 @@
 
 namespace Kinoko::Kart {
 
-/// @brief Doesn't do much besides hold a pointer to KartSuspensionPhysics.
-class KartSuspension : protected KartObjectProxy {
+/// @brief For Kinoko, this is just a wrapper around @ref KartSuspensionPhysics
+class KartSuspension : private KartObjectProxy {
 public:
     /// @addr{0x80598B08}
+    /// @brief Default constructor
     KartSuspension() = default;
 
     /// @addr{0x8058F52C}
+    /// @brief Virtual destructor that destroys the underlying @ref KartSuspensionPhysics subsystem
     virtual ~KartSuspension() {
         EGG::egg_delete(m_physics);
     }
@@ -37,22 +39,28 @@ public:
     /// @endGetters
 
 private:
-    KartSuspensionPhysics *m_physics;
+    KartSuspensionPhysics *m_physics; ///< Pointer to the @ref KartSuspensionPhysics subsystem
 };
 
+/// @brief Front suspension for bikes, wrapping around @ref KartSuspensionPhysics
 class KartSuspensionFrontBike : public KartSuspension {
 public:
+    /// @brief Default constructor
     KartSuspensionFrontBike() = default;
 
     /// @addr{0x805993CC}
+    /// @brief Default virtual destructor
     ~KartSuspensionFrontBike() override = default;
 };
 
+/// @brief Rear suspension for bikes, wrapping around @ref KartSuspensionPhysics
 class KartSuspensionRearBike : public KartSuspension {
 public:
+    /// @brief Default constructor
     KartSuspensionRearBike() = default;
 
     /// @addr{0x8059938C}
+    /// @brief Default virtual destructor
     ~KartSuspensionRearBike() override = default;
 };
 

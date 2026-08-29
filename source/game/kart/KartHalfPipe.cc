@@ -3,12 +3,16 @@
 #include "game/kart/KartCollide.hh"
 #include "game/kart/KartPhysics.hh"
 
+#include "game/field/KColData.hh"
+
 namespace Kinoko::Kart {
 
 /// @addr{0x80574114}
+/// @brief Constructor
 KartHalfPipe::KartHalfPipe() : m_prevPos(EGG::Vector3f::zero) {}
 
 /// @addr{0x80574170}
+/// @brief Default destructor
 KartHalfPipe::~KartHalfPipe() = default;
 
 /// @addr{0x80574340}
@@ -80,7 +84,7 @@ void KartHalfPipe::calc() {
         } else if (status.onBit(eStatus::HalfPipeRamp)) {
             calcCollision(true);
         } else {
-            status.resetBit(eStatus::HalfpipeMidair);
+            status.resetBit(eStatus::ZipperBypassInvisWall);
         }
     }
 
@@ -188,26 +192,26 @@ void KartHalfPipe::calcCollision(bool notAirborne) {
         }
     }
 
-    status.resetBit(eStatus::HalfpipeMidair);
+    status.resetBit(eStatus::ZipperBypassInvisWall);
 
     EGG::Vector3f prevPos = m_prevPos + EGG::Vector3f::ey * PREVIOUS_RADIUS;
 
-    bool hasDriverFloorCollision = move()->calcZipperCollision(LANDING_RADIUS, bsp().offsetY, pos,
+    bool hasDriverFloorCollision = move()->calcCollisions(LANDING_RADIUS, bsp().offsetY, pos,
             upLocal, prevPos, &colInfoFloor, &maskOut, KCL_TYPE_DRIVER_FLOOR);
 
     prevPos = hasDriverFloorCollision ? EGG::Vector3f::inf : prevPos;
 
     if (overZipper) {
-        if (!move()->calcZipperCollision(MIDAIR_RADIUS, bsp().offsetY, pos, upLocal, prevPos,
+        if (!move()->calcCollisions(MIDAIR_RADIUS, bsp().offsetY, pos, upLocal, prevPos,
                     &colInfoWall, &maskOut, mask)) {
             mask |= KCL_TYPE_DRIVER_WALL;
         }
     }
 
-    if (move()->calcZipperCollision(WALL_RADIUS, bsp().offsetY, pos, upLocal, prevPos, &colInfoWall,
+    if (move()->calcCollisions(WALL_RADIUS, bsp().offsetY, pos, upLocal, prevPos, &colInfoWall,
                 &maskOut, mask)) {
         if ((maskOut & ~KCL_TYPE_BIT(COL_TYPE_HALFPIPE_INVISIBLE_WALL)) == 0) {
-            status.setBit(eStatus::HalfpipeMidair);
+            status.setBit(eStatus::ZipperBypassInvisWall);
         }
 
         EGG::Vector3f up = move()->up();
@@ -234,7 +238,7 @@ void KartHalfPipe::calcCollision(bool notAirborne) {
         }
     }
 
-    if (!hasDriverFloorCollision || status.onBit(eStatus::HalfpipeMidair) ||
+    if (!hasDriverFloorCollision || status.onBit(eStatus::ZipperBypassInvisWall) ||
             state()->airtime() <= 5) {
         return;
     }
@@ -310,7 +314,7 @@ void KartHalfPipe::end(bool boost) {
     }
 
     status.resetBit(eStatus::OverZipper, eStatus::ZipperTrick, eStatus::ZipperStick,
-            eStatus::HalfpipeMidair);
+            eStatus::ZipperBypassInvisWall);
 
     m_stunt = StuntType::None;
 }

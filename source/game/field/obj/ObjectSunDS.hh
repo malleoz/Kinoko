@@ -9,15 +9,18 @@ namespace Kinoko::Field {
 /// @details Follows a rail, stopping for a duration specified by the rail point. @ref
 /// ObjectSunManager interfaces with this class via @ref launchPointIdx() to determine if a @ref
 /// ObjectFireSnake projectile should be launched.
-class ObjectSunDS : public ObjectProjectileLauncher, public StateManager {
+class ObjectSunDS final : public ObjectProjectileLauncher, private StateManager {
 public:
     /// @addr{0x806DDDD8}
+    /// @brief Constructor
+    /// @param params The parameters used to initialize the object
     ObjectSunDS(const System::MapdataGeoObj &params)
         : ObjectProjectileLauncher(params), StateManager(this, STATE_ENTRIES),
           m_revolutionSpeed(static_cast<f32>(params.setting(0))),
           m_startFrame(static_cast<s32>(params.setting(1))) {}
 
     /// @addr{0x806DDF68}
+    /// @brief Default virtual destructor
     ~ObjectSunDS() = default;
 
     /// @addr{0x806DDFD4}

@@ -18,15 +18,44 @@ class KPadDirector : EGG::Disposer {
     friend class Host::Context;
 
 public:
-    void calc();
-    void calcPads();
+    /// @addr{0x805238F0}
+    void calc() {
+        calcPads();
+        m_playerInput.calc();
+    }
+
+    /// @addr{0x805237E8}
+    void calcPads() {
+        m_ghostController->calc();
+        m_hostController->calc();
+    }
 
     /// @addr{0x80523724}
     void clear() {}
 
-    void reset();
-    void startGhostProxies();
-    void endGhostProxies();
+    /// @addr{0x80523690}
+    void reset() {
+        m_playerInput.reset();
+    }
+
+    /// @addr{0x80524580}
+    void startGhostProxies() {
+        m_playerInput.startGhostProxy();
+    }
+
+    /// @addr{0x805245DC}
+    void endGhostProxies() {
+        m_playerInput.endGhostProxy();
+    }
+
+    /// @addr{0x8052453C}
+    void setGhostPad(const u8 *inputs, bool driftIsAuto) {
+        m_playerInput.setGhostController(m_ghostController, inputs, driftIsAuto);
+    }
+
+    void setHostPad(bool driftIsAuto) {
+        m_playerInput.setHostController(m_hostController, driftIsAuto);
+    }
 
     [[nodiscard]] const KPadPlayer &playerInput() const {
         return m_playerInput;
@@ -35,9 +64,6 @@ public:
     [[nodiscard]] KPadHostController *hostController() {
         return m_hostController;
     }
-
-    void setGhostPad(const u8 *inputs, bool driftIsAuto);
-    void setHostPad(bool driftIsAuto);
 
     /// @addr{0x8052313C}
     static KPadDirector *CreateInstance() {

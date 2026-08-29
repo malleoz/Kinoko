@@ -10,6 +10,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8075EAFC}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectDossunc::ObjectDossunc(const System::MapdataGeoObj &params) : ObjectCollidable(params) {
     switch (params.setting(1)) {
     case 0: {
@@ -34,6 +36,7 @@ ObjectDossunc::ObjectDossunc(const System::MapdataGeoObj &params) : ObjectCollid
 }
 
 /// @addr{0x80764B08}
+/// @brief Default virtual destructor
 ObjectDossunc::~ObjectDossunc() = default;
 
 /// @addr{0x80764A38}

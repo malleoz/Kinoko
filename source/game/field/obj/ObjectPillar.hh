@@ -11,7 +11,7 @@
 namespace Kinoko::Field {
 
 /// @brief The stationary portion of the Dry Dry Ruins pillars. It just acts as a wall.
-class ObjectPillarBase : public ObjectKCL {
+class ObjectPillarBase final : public ObjectKCL {
 public:
     ObjectPillarBase(const System::MapdataGeoObj &params);
     ~ObjectPillarBase() override;
@@ -25,7 +25,7 @@ public:
 /// @brief Represents the part of the Dry Dry Ruins pillar that falls
 /// @details Acts as a wall before the pillar starts to fall, acts as a hazard while falling, and
 /// disables once the pillar has fallen.
-class ObjectPillarC : public ObjectCollidable {
+class ObjectPillarC final : public ObjectCollidable {
 public:
     ObjectPillarC(const System::MapdataGeoObj &params);
     ~ObjectPillarC() override;
@@ -56,7 +56,7 @@ private:
 /// @brief Represents the entirety of a pillar that falls on Dry Dry Ruins
 /// @details There are really three parts that comprise a pillar: the upright pillar collision, the
 /// pilar base collision, and the trickable pillar KCL once it has fallen.
-class ObjectPillar : public ObjectKCL {
+class ObjectPillar final : public ObjectKCL {
 public:
     ObjectPillar(const System::MapdataGeoObj &params);
     ~ObjectPillar() override;

@@ -8,11 +8,14 @@ namespace Kinoko::Field {
 class ObjectBeltEasy final : public ObjectBelt {
 public:
     /// @addr{0x807FC578}
+    /// @brief Constructor
+    /// @param params The parameters used to initialize the object
     ObjectBeltEasy(const System::MapdataGeoObj &params) : ObjectBelt(params) {
         m_roadVel = 20.0f;
     }
 
     /// @addr{0x807FD8F0}
+    /// @brief Default virtual destructor
     ~ObjectBeltEasy() override = default;
 
 private:

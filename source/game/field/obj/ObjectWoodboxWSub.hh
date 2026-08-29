@@ -10,9 +10,12 @@ namespace Kinoko::Field {
 class ObjectWoodboxWSub final : public ObjectWoodbox {
 public:
     /// @addr{0x8077E34C}
+    /// @brief Constructor
+    /// @param params The parameters used to initialize the object
     ObjectWoodboxWSub(const System::MapdataGeoObj &params) : ObjectWoodbox(params) {}
 
     /// @addr{0x8077E388}
+    /// @brief Default virtual destructor
     ~ObjectWoodboxWSub() override = default;
 
     /// @addr{0x8077E3E4}

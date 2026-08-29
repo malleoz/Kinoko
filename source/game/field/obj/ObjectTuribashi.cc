@@ -7,9 +7,12 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80805A4C}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectTuribashi::ObjectTuribashi(const System::MapdataGeoObj &params) : ObjectDrivable(params) {}
 
 /// @addr{0x80806514}
+/// @brief Default virtual destructor
 ObjectTuribashi::~ObjectTuribashi() = default;
 
 /// @brief Helper function which contains frequently re-used code. Behavior branches depending on

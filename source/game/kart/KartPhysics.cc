@@ -3,8 +3,8 @@
 namespace Kinoko::Kart {
 
 /// @addr{0x8059F5BC}
-/// @brief Initializes the @ref KartDynamics or @ref KartDynamicsBike subsystem depending on
-/// `isBike` and constructs the kart's @ref CollisionGroup
+/// @brief Constructor which initializes the @ref KartDynamics or @ref KartDynamicsBike subsystem
+/// depending on `isBike` and constructs the kart's @ref CollisionGroup
 /// @param isBike Whether the kart is a bike
 KartPhysics::KartPhysics(bool isBike) {
     m_pose = EGG::Matrix34f::ident;
@@ -15,8 +15,8 @@ KartPhysics::KartPhysics(bool isBike) {
 }
 
 /// @addr{0x8059F6F8}
-/// @brief Destroys the @ref KartDynamics or @ref KartDynamicsBike subsystem and the kart's @ref
-/// CollisionGroup subsystem
+/// @brief Destructor that destroys the @ref KartDynamics or @ref KartDynamicsBike subsystem and the
+/// kart's @ref CollisionGroup subsystem
 KartPhysics::~KartPhysics() {
     EGG::egg_delete(m_dynamics);
     EGG::egg_delete(m_hitboxGroup);

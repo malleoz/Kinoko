@@ -29,7 +29,7 @@ enum class Action {
 /// is active, @ref calc() will update the kart's position, rotation, etc. based on action-specific
 /// logic. Once the action is complete, @ref calc() will call the associated end function and clear
 /// the action.
-class KartAction : KartObjectProxy {
+class KartAction : private KartObjectProxy {
 public:
     /// @brief Flags that represent the current state of the active action
     enum class eFlags {

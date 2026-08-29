@@ -5,6 +5,9 @@
 namespace Kinoko::Field {
 
 /// @addr{0x807FFB20}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
+/// @param reverse Whether the escalator should move in reverse
 ObjectEscalator::ObjectEscalator(const System::MapdataGeoObj &params, bool reverse /* = false */)
     : ObjectKCL(params), m_initialPos(pos()),
       m_stillFrames(
@@ -34,6 +37,7 @@ ObjectEscalator::ObjectEscalator(const System::MapdataGeoObj &params, bool rever
 }
 
 /// @addr{0x80803D00}
+/// @brief Default virtual destructor
 ObjectEscalator::~ObjectEscalator() = default;
 
 /// @addr{0x808011CC}

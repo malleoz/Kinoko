@@ -7,6 +7,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806D2368}
+/// @brief Constructor
 ObjectHeyhoShipManager::ObjectHeyhoShipManager() {
     auto &managedObjs = ObjectDirector::Instance()->managedObjects();
     size_t count = 0;
@@ -31,6 +32,7 @@ ObjectHeyhoShipManager::ObjectHeyhoShipManager() {
 }
 
 /// @addr{0x806D2514}
+/// @brief Default virtual destructor
 ObjectHeyhoShipManager::~ObjectHeyhoShipManager() = default;
 
 /// @addr{0x806D2590}

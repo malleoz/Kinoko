@@ -46,7 +46,7 @@ protected:
 /// @brief A cow who its own rail and whose position is not influenced by the path of the others.
 /// @details Walks from rail segmment waypoint to waypoint, stopping to eat grass along the way. The
 /// time it spends eating grass is a random number between 120 and 240 frames.
-class ObjectCowLeader final : public ObjectCow, public StateManager {
+class ObjectCowLeader final : public ObjectCow, private StateManager {
     friend class ObjectCowHerd;
 
 public:
@@ -118,7 +118,7 @@ private:
 };
 
 /// @brief A cow that follows a leader by sharing the same rail.
-class ObjectCowFollower final : public ObjectCow, public StateManager {
+class ObjectCowFollower final : public ObjectCow, private StateManager {
     friend class ObjectCowHerd;
 
 public:

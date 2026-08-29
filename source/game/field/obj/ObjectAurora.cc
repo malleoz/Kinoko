@@ -7,9 +7,12 @@
 namespace Kinoko::Field {
 
 /// @addr{0x807FAB58}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectAurora::ObjectAurora(const System::MapdataGeoObj &params) : ObjectDrivable(params) {}
 
 /// @addr{0x807FB690}
+/// @brief Default virtual destructor
 ObjectAurora::~ObjectAurora() = default;
 
 /// @addr{0x807FB59C}

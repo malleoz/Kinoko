@@ -9,7 +9,7 @@ class ObjectCarTGE;
 /// @brief Watcher class that checks if any car has squashed the player
 /// @details This squash cooldown is used by @ref ObjectCarTGE to determine if the player can be
 /// squashed again.
-class ObjectHighwayManager : public ObjectCollidable {
+class ObjectHighwayManager final : public ObjectCollidable {
 public:
     ObjectHighwayManager();
     ~ObjectHighwayManager() override;

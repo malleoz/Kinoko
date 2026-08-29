@@ -76,24 +76,29 @@ struct CollisionInfo {
 /// @brief Performs lookups for KCL triangles
 class KColData {
 public:
+    /// @brief Describes the type of collision check to perform
     enum class CollisionCheckType {
-        Edge,
-        Plane,
-        Movement,
+        Edge,     ///< Checks if a body is colliding with any edge of the prism
+        Plane,    ///< Checks if a body is colliding with a plane of the prism
+        Movement, ///< Plane collisions that occur when traveling towards the face of the prism
     };
 
+    /// @brief Represesnts a KCL collision prism
     struct KCollisionPrism {
         KCollisionPrism();
         KCollisionPrism(f32 height, u16 posIndex, u16 faceNormIndex, u16 edge1NormIndex,
                 u16 edge2NormIndex, u16 edge3NormIndex, u16 attribute);
 
-        f32 height;
-        u16 pos_i;
-        u16 fnrm_i;
-        u16 enrm1_i;
-        u16 enrm2_i;
-        u16 enrm3_i;
-        u16 attribute;
+        /// @brief Default destructor
+        ~KCollisionPrism() = default;
+
+        f32 height;    ///< The height of the tri
+        u16 pos_i;     ///< Index of the first vertex's index in @ref m_vertices
+        u16 fnrm_i;    ///< Index of the face normal in @ref m_nrms
+        u16 enrm1_i;   ///< Index of the first edge's normal in @ref m_nrms
+        u16 enrm2_i;   ///< Index of the second edge's normal in @ref m_nrms
+        u16 enrm3_i;   ///< Index of the third edge's normal in @ref m_nrms
+        u16 attribute; ///< KCL attribute of the tri
     };
     STATIC_ASSERT(sizeof(KCollisionPrism) == 0x10);
 
@@ -104,13 +109,26 @@ public:
     void narrowPolygon_EachBlock(const u16 *prismArray);
 
     void computeBBox();
+
     /// @addr{0x807C1F80}
+    /// @brief Checks for a collision at a specific point. If the previous position is valid, then
+    /// it filters only to prisms for which the kart is traveling in the direction of the prism's
+    /// face normal.
+    /// @param distOut Output parameter for the distance to the collision point
+    /// @param fnrmOut Output parameter for the face normal at the collision point
+    /// @param flagsOut Output parameter for the collision flags
     [[nodiscard]] bool checkPointCollision(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsOut) {
         return std::isfinite(m_prevPos.y) ? checkPointMovement(distOut, fnrmOut, flagsOut) :
                                             checkPoint(distOut, fnrmOut, flagsOut);
     }
 
     /// @addr{0x807C2410}
+    /// @brief Checks for a collision with a sphere. If the previous position is valid, then
+    /// it filters only to prisms for which the kart is traveling in the direction of the prism's
+    /// face normal.
+    /// @param distOut Output parameter for the distance to the collision point
+    /// @param fnrmOut Output parameter for the face normal at the collision point
+    /// @param flagsOut Output parameter for the collision flags
     [[nodiscard]] bool checkSphereCollision(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsOut) {
         return std::isfinite(m_prevPos.y) ? checkSphereMovement(distOut, fnrmOut, flagsOut) :
                                             checkSphere(distOut, fnrmOut, flagsOut);
@@ -121,6 +139,9 @@ public:
 
     /// @addr{0x807C1B0C}
     /// @brief Sets members in preparation of a subsequent point collision check call
+    /// @param pos The position of the point to search around
+    /// @param prevPos The previous position of the point
+    /// @param typeMask The type mask to filter which prisms to consider for collision
     void lookupPoint(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask typeMask) {
         m_prismIter = searchBlock(pos);
         m_pos = pos;
@@ -131,6 +152,10 @@ public:
 
     /// @addr{0x807C1BB4}
     /// @brief Sets members in preparation of a subsequent sphere collision check call
+    /// @param radius The radius of the sphere to check for collisions
+    /// @param pos The position of the sphere to search around
+    /// @param prevPos The previous position of the sphere
+    /// @param typeMask The type mask to filter which prisms to consider for collision
     void lookupSphere(f32 radius, const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
             KCLTypeMask typeMask) {
         m_prismIter = searchBlock(pos);
@@ -168,9 +193,14 @@ public:
     }
     /// @endGetters
 
-    /// @brief Computes a prism vertex based off of the triangle's normal vectors
     /// @addr{0x807BDF54}
-    /// @par Triangle Vertices Formula
+    /// @brief Computes a prism vertex based off of the triangle's normal vectors
+    /// @param height The height of the prism
+    /// @param vertex1 The first vertex of the triangle
+    /// @param fnrm The face normal of the triangle
+    /// @param enrm3 The edge normal opposite to the third vertex
+    /// @param enrm The edge normal opposite to the second vertex
+    /// @details @par Triangle Vertices Formula
     /// Given a triangle with vertices \f$\vec{A}, \vec{B}, \vec{C}\f$, face normal \f$\hat{f}\f$,
     /// and height \f$h\f$, label the edge normals by: \begin{aligned}\hat{en}_1 := e_{AB}, \,\,
     /// \hat{en}_2:= e_{AC}, \,\,\hat{en}_3:=e_{BC} \end{aligned} We can recover \f$\vec{B},
@@ -203,36 +233,44 @@ private:
     [[nodiscard]] bool checkPointMovement(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *attributeOut);
     [[nodiscard]] bool checkPoint(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *attributeOut);
 
-    const void *m_posData;
-    const void *m_nrmData;
-    const void *m_prismData;
-    const void *m_blockData;
-    f32 m_prismThickness;
-    EGG::Vector3f m_areaMinPos;
-    u32 m_areaXWidthMask;    ///< The x dimension of the octree's bounding box. @see searchBlock.
-    u32 m_areaYWidthMask;    ///< The y dimension of the octree's bounding box. @see searchBlock.
-    u32 m_areaZWidthMask;    ///< The z dimension of the octree's bounding box. @see searchBlock.
-    u32 m_blockWidthShift;   ///< Used to initialize octree navigation. @see searchBlock.
-    u32 m_areaXBlocksShift;  ///< Used to initialize octree navigation. @see searchBlock.
-    u32 m_areaXYBlocksShift; ///< Used to initialize octree navigation. @see searchBlock.
-    f32 m_sphereRadius;      ///< Clamps the sphere we check collision against. @see searchBlock.
-    EGG::Vector3f m_pos;
-    EGG::Vector3f m_prevPos;
-    EGG::Vector3f m_movement;
-    f32 m_radius;
-    KCLTypeMask m_typeMask;
-    const u16 *m_prismIter;
-    EGG::BoundBox3f m_bbox;
-    std::array<u16, 256> m_prismCache;
-    u16 *m_prismCacheTop;
-    u16 *m_cachedPrismArray;
-    EGG::Vector3f m_cachedPos;
-    f32 m_cachedRadius;
+    const void *m_posData;      ///< Pointer to the KCL file section containing vertex positions
+    const void *m_nrmData;      ///< Pointer to the KCL file section containing normal vectors
+    const void *m_prismData;    ///< Pointer to the KCL file section containing the prism data
+    const void *m_blockData;    ///< Pointer to the KCL file section containing the octree
+    f32 m_prismThickness;       ///< The depth of all prisms along their normal vector
+    EGG::Vector3f m_areaMinPos; ///< Smallest possible coordinate in the octree
+    u32 m_areaXWidthMask;       ///< The x dimension of the octree's bounding box. @see searchBlock.
+    u32 m_areaYWidthMask;       ///< The y dimension of the octree's bounding box. @see searchBlock.
+    u32 m_areaZWidthMask;       ///< The z dimension of the octree's bounding box. @see searchBlock.
+    u32 m_blockWidthShift;      ///< Used to initialize octree navigation. @see searchBlock.
+    u32 m_areaXBlocksShift;     ///< Used to initialize octree navigation. @see searchBlock.
+    u32 m_areaXYBlocksShift;    ///< Used to initialize octree navigation. @see searchBlock.
+    f32 m_sphereRadius;         ///< Clamps the sphere we check collision against. @see searchBlock.
+    EGG::Vector3f m_pos;        ///< The point's/sphere's position for collision queries
+    EGG::Vector3f m_prevPos;    ///< The point's/sphere's previous position for collision queries
+    EGG::Vector3f m_movement;   ///< The difference between @ref m_pos and @ref m_prevPos
+    f32 m_radius;               ///< The radius of the sphere to query collisions for
+    KCLTypeMask m_typeMask;     ///< The KCL types to filter the collision query to
+    const u16 *m_prismIter;     ///< Iterator pointing to the current prism in the octree traversal
+    EGG::BoundBox3f m_bbox;     ///< The 3-dimensional bounding box of all prisms in the KCL file
+    std::array<u16, 256> m_prismCache; ///< Cache of prism indices to avoid expensive octree lookups
+    u16 *m_prismCacheIter;     ///< Pointer to the current prism index in the cache traversal
+    EGG::Vector3f m_cachedPos; ///< Position of the point/sphere corresponding to the current cache
+    f32 m_cachedRadius;        ///< Radius of the sphere corresponding to the current cache
 
-    /// @brief Optimizes for time by avoiding unnecessary byteswapping.
-    /// The Wii doesn't have this problem because big endian is always assumed.
+    /// @brief Byte-swapped array of all @ref KCollisionPrism objects in the KCL file
+    /// @details Optimizes for time by avoiding unnecessary byteswapping. The Wii doesn't have this
+    /// problem because big endian is always assumed.
     owning_span<KCollisionPrism> m_prisms;
+
+    /// @brief Byte-swapped array of all vertex normals in the KCL file
+    /// @details Optimizes for time by avoiding unnecessary byteswapping. The Wii doesn't have this
+    /// problem because big endian is always assumed.
     owning_span<EGG::Vector3f> m_nrms;
+
+    /// @brief Byte-swapped array of all vertex positions in the KCL file
+    /// @details Optimizes for time by avoiding unnecessary byteswapping. The Wii doesn't have this
+    /// problem because big endian is always assumed.
     owning_span<EGG::Vector3f> m_vertices;
 };
 

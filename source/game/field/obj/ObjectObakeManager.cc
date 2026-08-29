@@ -7,6 +7,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8080B0D8}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectObakeManager::ObjectObakeManager(const System::MapdataGeoObj &params)
     : ObjectDrivable(params), m_blockCache({}), m_blocks(MAX_BLOCKS), m_fallingBlocks(MAX_BLOCKS) {
     static constexpr f32 BLOCK_WIDTH = 195.00002f;
@@ -20,6 +22,7 @@ ObjectObakeManager::ObjectObakeManager(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x8080BEA4}
+/// @brief Default virtual destructor that destroys the associated collision objects and blocks
 ObjectObakeManager::~ObjectObakeManager() {
     EGG::egg_delete(m_colBox);
     EGG::egg_delete(m_colSphere);

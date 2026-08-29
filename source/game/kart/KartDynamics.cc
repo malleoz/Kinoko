@@ -3,6 +3,8 @@
 namespace Kinoko::Kart {
 
 /// @addr{0x805B4AF8}
+/// @brief Constructor
+/// @details Initializes all member variables to their default values.
 KartDynamics::KartDynamics() {
     m_angVel0Factor = 1.0f;
     m_inertiaTensor = EGG::Matrix34f::ident;
@@ -11,6 +13,7 @@ KartDynamics::KartDynamics() {
 }
 
 /// @addr{0x8059F6B8}
+/// @brief Default virtual destructor
 KartDynamics::~KartDynamics() = default;
 
 /// @addr{0x805B5B68}

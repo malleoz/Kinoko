@@ -8,7 +8,7 @@ namespace Kinoko::Kart {
 /// @details Responsible for managing collision checks against half-pipe zippers, deriving the
 /// duration of airtime based off initial direction and speed, calculating the rotation of the kart
 /// while performing a trick, and applying variable length boosts after landing from the zipper.
-class KartHalfPipe : public KartObjectProxy {
+class KartHalfPipe : private KartObjectProxy {
 public:
     KartHalfPipe();
     ~KartHalfPipe();

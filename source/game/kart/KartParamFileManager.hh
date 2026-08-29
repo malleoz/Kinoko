@@ -14,7 +14,7 @@ class Context;
 
 namespace Kart {
 
-/// @brief Abstraction for the process of retrieving kart parameters from files.
+/// @brief Abstraction for the process of retrieving kart parameters from files
 /// @details This has been modified from the base game in order to perform validation and make the
 /// class accessible as a singleton.
 class KartParamFileManager : EGG::Disposer {

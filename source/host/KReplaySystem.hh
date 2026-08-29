@@ -1,6 +1,9 @@
 #pragma once
 
 #include "host/KSystem.hh"
+#include "host/SceneCreatorDynamic.hh"
+
+#include <abstract/File.hh>
 
 #include <egg/core/SceneManager.hh>
 
@@ -14,8 +17,20 @@ namespace Kinoko {
 /// @brief Kinoko system designed to execute replays.
 class KReplaySystem : public KSystem {
 public:
-    void init() override;
-    void calc() override;
+    /// @brief Initializes the system.
+    void init() override {
+        auto *sceneCreator = EGG::egg_new<Host::SceneCreatorDynamic>();
+        m_sceneMgr = EGG::egg_new<EGG::SceneManager>(sceneCreator);
+
+        System::RaceConfig::RegisterInitCallback(OnInit, nullptr);
+        Abstract::File::Remove("results.txt");
+    }
+
+    /// @brief Executes a frame.
+    void calc() override {
+        m_sceneMgr->calc();
+    }
+
     bool run() override;
     void parseOptions(int argc, char **argv) override;
 
@@ -46,7 +61,14 @@ private:
     KReplaySystem(KReplaySystem &&) = delete;
 
     bool calcEnd() const;
-    void reportFail(const std::string &msg) const;
+
+    /// @brief Reports failure to file.
+    /// @param msg The message to report.
+    void reportFail(const std::string &msg) const {
+        std::string report(m_currentGhostPath.string());
+        report += "\n" + std::string(msg);
+        Abstract::File::Append("results.txt", report.c_str(), report.size());
+    }
 
     bool runDirectory(const std::filesystem::path &dirPath);
     bool runGhost(const std::filesystem::path &ghostPath);
@@ -56,7 +78,13 @@ private:
     s32 getDesyncingTimerIdx() const;
     DesyncingTimerPair getDesyncingTimer(s32 i) const;
 
-    static void OnInit(System::RaceConfig *config, void *arg);
+    /// @brief Initializes the race configuration as needed for replays.
+    /// @param config The race configuration instance.
+    /// @param arg Unused optional argument.
+    static void OnInit(System::RaceConfig *config, void * /* arg */) {
+        config->setGhost(Instance()->m_currentRawGhost);
+        config->raceScenario().players[0].type = System::RaceConfig::Player::Type::Ghost;
+    }
 
     EGG::SceneManager *m_sceneMgr;
 

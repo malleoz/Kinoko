@@ -8,6 +8,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x807BDC5C}
+/// @brief Constructor that parses KCL data from the provided file pointer
+/// @param file Pointer to the .kcl file in memory
 KColData::KColData(const void *file) {
     auto addOffset = [](const void *file, u32 offset) -> const void * {
         return reinterpret_cast<const void *>(reinterpret_cast<const u8 *>(file) + offset);
@@ -39,7 +41,6 @@ KColData::KColData(const void *file) {
     m_movement.setZero();
     m_radius = 0.0f;
     m_prismIter = nullptr;
-    m_cachedPrismArray = m_prismCache.data() - 1;
 
     // NOTE: Collision is expensive on the CPU, so we preload all of the prism data to ensure we're
     // not constantly handling endianness.
@@ -50,11 +51,12 @@ KColData::KColData(const void *file) {
     computeBBox();
 }
 
+/// @brief Default destructor
 KColData::~KColData() = default;
 
 /// @addr{0x807C24C0}
 void KColData::narrowScopeLocal(const EGG::Vector3f &pos, f32 radius, KCLTypeMask mask) {
-    m_prismCacheTop = m_prismCache.data();
+    m_prismCacheIter = m_prismCache.data();
     m_pos = pos;
     m_radius = radius;
     m_typeMask = mask;
@@ -65,20 +67,21 @@ void KColData::narrowScopeLocal(const EGG::Vector3f &pos, f32 radius, KCLTypeMas
         narrowPolygon_EachBlock(searchBlock(pos));
     }
 
-    *m_prismCacheTop = 0;
+    *m_prismCacheIter = 0;
 }
 
 /// @addr{0x807C243C}
+/// @todo
 void KColData::narrowPolygon_EachBlock(const u16 *prismArray) {
     m_prismIter = prismArray;
 
     while (checkSphereSingle(nullptr, nullptr, nullptr)) {
         /// We assume the cache has same endianness as the archive file,
         /// so do not parse out the prism index and directly store it in the cache.
-        *(m_prismCacheTop++) = *m_prismIter;
+        *(m_prismCacheIter++) = *m_prismIter;
 
-        if (m_prismCacheTop == m_prismCache.end()) {
-            --m_prismCacheTop;
+        if (m_prismCacheIter == m_prismCache.end()) {
+            --m_prismCacheIter;
             return;
         }
     }
@@ -142,8 +145,8 @@ bool KColData::checkSphereSingle(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flag
     }
 
     while (*++m_prismIter != 0) {
-        if (m_prismCacheTop != m_prismCache.begin()) {
-            u16 *puVar10 = m_prismCacheTop - 1;
+        if (m_prismCacheIter != m_prismCache.begin()) {
+            u16 *puVar10 = m_prismCacheIter - 1;
             while (*m_prismIter != *puVar10) {
                 if (puVar10-- < m_prismCache.begin()) {
                     break;
@@ -176,7 +179,7 @@ void KColData::lookupSphereCached(const EGG::Vector3f &p1, const EGG::Vector3f &
         m_radius = std::min(m_sphereRadius, radius);
     } else {
         m_radius = radius;
-        m_prismIter = m_cachedPrismArray;
+        m_prismIter = m_prismCache.data() - 1;
     }
 
     m_pos = p1;
@@ -611,8 +614,17 @@ bool KColData::checkPointMovement(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *att
     return false;
 }
 
+/// @brief Non-initializing default constructor
 KColData::KCollisionPrism::KCollisionPrism() = default;
 
+/// @brief Initializing constructor
+/// @param height The height of the tri
+/// @param posIndex Index of the first vertex's index in @ref m_vertices
+/// @param faceNormIndex Index of the face normal in @ref m_nrms
+/// @param edge1NormIndex  Index of the first edge's normal in @ref m_nrms
+/// @param edge2NormIndex  Index of the second edge's normal in @ref m_nrms
+/// @param edge3NormIndex  Index of the third edge's normal in @ref m_nrms
+/// @param attribute  KCL attribute of the tri
 KColData::KCollisionPrism::KCollisionPrism(f32 height, u16 posIndex, u16 faceNormIndex,
         u16 edge1NormIndex, u16 edge2NormIndex, u16 edge3NormIndex, u16 attribute)
     : height(height), pos_i(posIndex), fnrm_i(faceNormIndex), enrm1_i(edge1NormIndex),

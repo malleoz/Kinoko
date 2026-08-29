@@ -2,8 +2,10 @@
 
 namespace Kinoko::Field {
 
+/// @brief Default constructor
 ObjectCollisionBase::ObjectCollisionBase() = default;
 
+/// @brief Default virtual destructor
 ObjectCollisionBase::~ObjectCollisionBase() = default;
 
 /// @addr{0x80834348}

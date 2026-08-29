@@ -7,6 +7,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8077BD80}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectBird::ObjectBird(const System::MapdataGeoObj &params) : ObjectCollidable(params) {
     m_leader = EGG::egg_new<ObjectBirdLeader>(params, this);
     m_leader->load();
@@ -26,6 +28,7 @@ ObjectBird::ObjectBird(const System::MapdataGeoObj &params) : ObjectCollidable(p
 }
 
 /// @addr{0x8077CDC8}
+/// @brief Default virtual destructor
 ObjectBird::~ObjectBird() = default;
 
 /// @addr{0x8077BFC8}

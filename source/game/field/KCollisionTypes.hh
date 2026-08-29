@@ -215,6 +215,7 @@ struct KColHeader {
 };
 STATIC_ASSERT(sizeof(KColHeader) == 0x3c);
 
+/// @brief A bitmask representing the @enum KColType of collision surfaces.
 typedef u32 KCLTypeMask;
 
 } // namespace Kinoko::Field

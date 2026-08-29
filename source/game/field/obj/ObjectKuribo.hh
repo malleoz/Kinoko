@@ -6,7 +6,7 @@
 namespace Kinoko::Field {
 
 /// @brief Represents a walking Goomba
-class ObjectKuribo : public ObjectCollidable, public StateManager {
+class ObjectKuribo final : public ObjectCollidable, private StateManager {
 public:
     ObjectKuribo(const System::MapdataGeoObj &params);
     ~ObjectKuribo() override;

@@ -3,6 +3,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x807FE658}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectCrane::ObjectCrane(const System::MapdataGeoObj &params)
     : ObjectKCL(params), m_startPos(pos()) {
     m_xt = params.setting(3);
@@ -17,6 +19,7 @@ ObjectCrane::ObjectCrane(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x807FEB28}
+/// @brief Default virtual destructor
 ObjectCrane::~ObjectCrane() = default;
 
 /// @addr{0x807FE7EC}

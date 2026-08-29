@@ -1,5 +1,7 @@
 #include "GameScene.hh"
 
+#include "game/system/ResourceManager.hh"
+
 #include "game/render/KartCamera.hh"
 namespace Kinoko::Scene {
 

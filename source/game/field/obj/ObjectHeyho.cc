@@ -6,6 +6,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806CE828}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectHeyho::ObjectHeyho(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), StateManager(this, STATE_ENTRIES),
       m_color(static_cast<Color>(params.setting(1))) {
@@ -28,6 +30,7 @@ ObjectHeyho::ObjectHeyho(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x806CEB24}
+/// @brief Default virtual destructor
 ObjectHeyho::~ObjectHeyho() = default;
 
 /// @addr{0x806CEB90}

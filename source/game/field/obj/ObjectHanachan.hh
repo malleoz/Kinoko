@@ -80,14 +80,22 @@ class ObjectHanachanPart : public ObjectCollidable {
     friend class ObjectHanachan;
 
 public:
+    /// @brief Constructor
+    /// @param params The parameters used to initialize the object
     ObjectHanachanPart(const System::MapdataGeoObj &params) : ObjectCollidable(params) {}
 
+    /// @brief Constructor
+    /// @param name The name of the object
+    /// @param pos The initial position of the object
+    /// @param rot The initial rotation of the object
+    /// @param scale The initial scale of the object
     ObjectHanachanPart(const char *name, const EGG::Vector3f &pos, const EGG::Vector3f &rot,
             const EGG::Vector3f &scale)
         : ObjectCollidable(name, pos, rot, scale) {}
 
     /// @addr{0x806C7E68}
-    ~ObjectHanachanPart() = default;
+    /// @brief Default virtual destructor
+    ~ObjectHanachanPart() override = default;
 
     /// @addr{0x806CCAD0}
     [[nodiscard]] u32 loadFlags() const override {
@@ -167,7 +175,7 @@ private:
 };
 
 /// @brief Represents a Wiggler, which is comprised of multiple @ref ObjectHanachanPart segments
-class ObjectHanachan final : public ObjectCollidable, public StateManager {
+class ObjectHanachan final : public ObjectCollidable, private StateManager {
 public:
     ObjectHanachan(const System::MapdataGeoObj &params);
     ~ObjectHanachan() override;

@@ -7,9 +7,12 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80807ED0}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectAmi::ObjectAmi(const System::MapdataGeoObj &params) : ObjectDrivable(params) {}
 
 /// @addr{0x80808860}
+/// @brief Default virtual destructor
 ObjectAmi::~ObjectAmi() = default;
 
 /// @brief Helper function which contains frequently re-used code. Behavior branches depending on

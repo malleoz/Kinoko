@@ -1,5 +1,6 @@
 #include "KartObject.hh"
 
+#include "game/kart/KartMove.hh"
 #include "game/kart/KartSub.hh"
 #include "game/kart/KartSuspension.hh"
 #include "game/kart/KartTire.hh"
@@ -14,12 +15,13 @@ namespace Kinoko::Kart {
 
 /// @addr{0x8058DDBC}
 /// @brief Constructs a KartObject with the provided KartParam pointer
+/// @param param Pointer to the kart's parameter structure containing its configuration and stats
 KartObject::KartObject(KartParam *param) {
     m_pointers.param = param;
 }
 
 /// @addr{0x8058DEF0}
-/// @brief Destroys the KartObject and all of its subsystems
+/// @brief Virtual destructor that destroys the KartObject and all of its subsystems
 KartObject::~KartObject() {
     EGG::egg_delete(m_pointers.param);
     EGG::egg_delete(m_pointers.body);
@@ -223,9 +225,12 @@ KartObject *KartObject::Create(Character character, Vehicle vehicle, u8 playerId
 }
 
 /// @addr{0x8058F20C}
+/// @brief Constructs a KartObjectBike with the provided KartParam pointer
+/// @param param Pointer to the kart's parameter structure containing its configuration and stats
 KartObjectBike::KartObjectBike(KartParam *param) : KartObject(param) {}
 
 /// @addr{0x8058F8B0}
+/// @brief Default virtual destructor
 KartObjectBike::~KartObjectBike() = default;
 
 /// @addr{0x8058F2E8}

@@ -3,6 +3,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x807C4CE8}
+/// @brief Constructor that parses the KCL data from the provided file pointer
+/// @param file Pointer to the .kcl file in memory
 ObjColMgr::ObjColMgr(const void *file)
     : m_mtx(EGG::Matrix34f::ident), m_mtxInv(EGG::Matrix34f::ident), m_kclScale(1.0f),
       m_movingObjVel(EGG::Vector3f::zero) {
@@ -10,6 +12,7 @@ ObjColMgr::ObjColMgr(const void *file)
 }
 
 /// @addr{0x807C4D6C}
+/// @brief Destructor that destroys the associated KCL data
 ObjColMgr::~ObjColMgr() {
     ASSERT(m_data);
     EGG::egg_delete(m_data);

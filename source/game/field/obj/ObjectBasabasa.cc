@@ -9,6 +9,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806B5C84}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectBasabasaDummy::ObjectBasabasaDummy(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), StateManager(this, STATE_ENTRIES),
       m_bigBump(params.setting(7) == 1) {
@@ -16,6 +18,7 @@ ObjectBasabasaDummy::ObjectBasabasaDummy(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x806B7630}
+/// @brief Default virtual destructor
 ObjectBasabasaDummy::~ObjectBasabasaDummy() = default;
 
 /// @addr{0x806B5E80}

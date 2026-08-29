@@ -5,6 +5,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8080178C}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectEscalatorGroup::ObjectEscalatorGroup(const System::MapdataGeoObj &params)
     : ObjectCollidable(params) {
     constexpr f32 X_OFFSET = 1465.0f;
@@ -30,6 +32,7 @@ ObjectEscalatorGroup::ObjectEscalatorGroup(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x80802D20}
+/// @brief Default virtual destructor
 ObjectEscalatorGroup::~ObjectEscalatorGroup() = default;
 
 } // namespace Kinoko::Field

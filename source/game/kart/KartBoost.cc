@@ -3,6 +3,7 @@
 namespace Kinoko::Kart {
 
 /// @addr{0x80588D28}
+/// @brief Constructor
 KartBoost::KartBoost() : m_timers{0}, m_active{false} {
     m_multiplier = 1.0f;
     m_acceleration = 1.0f;
@@ -10,6 +11,7 @@ KartBoost::KartBoost() : m_timers{0}, m_active{false} {
 }
 
 /// @addr{0x8057811C}
+/// @brief Default destructor
 KartBoost::~KartBoost() = default;
 
 /// @addr{0x80588DB0}

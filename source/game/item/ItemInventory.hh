@@ -9,8 +9,10 @@ namespace Kinoko::Item {
 /// tracks the number of uses remaining.
 class ItemInventory {
 public:
+    /// @brief Default constructor
     ItemInventory() = default;
 
+    /// @brief Default destructor
     ~ItemInventory() = default;
 
     /// @addr{0x807BC940}
@@ -56,8 +58,8 @@ public:
     /// @endGetters
 
 private:
-    ItemId m_currentId;
-    int m_currentCount;
+    ItemId m_currentId; ///< The @enum ItemId for the current item
+    int m_currentCount; ///< The number of uses remaining for the current item
 };
 
 } // namespace Kinoko::Item

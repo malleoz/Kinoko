@@ -7,13 +7,23 @@
 namespace Kinoko::Kart {
 
 /// @addr{Inlined in 0x80577FC4}
+/// @brief Default constructor
 KartReject::KartReject() = default;
 
 /// @addr{0x8057815C}
+/// @brief Default destructor
 KartReject::~KartReject() = default;
 
 /// @addr{0x80585AF8}
-void KartReject::calcRejectRoad() {
+/// @brief Runs every frame to handle reject road interactions
+/// @details This function has two different branches. The first branch involves checking if a
+/// rejection should actually be applied to the kart. This is done by comparing the kart's up vector
+/// against its last direction to see if it is traveling upwards along the reject road. If so, it
+/// sets the @enum eStatus::RejectRoadTrigger flag to indicate that a rejection should be applied.
+/// In doing so, it also computes in what direction (left or right) the rejection should be applied.
+/// Once @enum eStatus::RejectRoadTrigger is set, the second branch of this function updates the
+/// kart's rotation and calls @ref calcRejection to apply the rejection on the kart's position.
+void KartReject::calc() {
     auto &status = KartObjectProxy::status();
 
     if (status.onBit(eStatus::InAction)) {
@@ -81,24 +91,31 @@ void KartReject::calcRejectRoad() {
 }
 
 /// @addr{0x805860BC}
+/// @brief Performs a collision check and computes the resulting rejection if applicable
+/// @details Runs a maximum of two collision checks: one with a sphere laying below the kart and one
+/// with a sphere lying at the kart's position. If a collision occurs, calls @ref calcCollision to
+/// see if the collision warrants a rejection. If so, the kart's up vector is snapped to the
+/// collision's tangent vector. If the angle of rejection is very steep, or if the kart's external
+/// velocity is downwards, updates the kart's position along the tangent direction based off a
+/// speed-dependent scalar.
 bool KartReject::calcRejection() {
     Field::CollisionInfo colInfo;
     Field::KCLTypeMask mask = KCL_NONE;
     auto &status = KartObjectProxy::status();
     status.resetBit(eStatus::NoSparkInvisibleWall);
-    EGG::Vector3f worldUpPos = pos() + bodyUp() * 100.0f;
-    f32 posScalar = 100.0f;
-    f32 radius = posScalar;
+    EGG::Vector3f upperPos = pos() + bodyUp() * 100.0f;
+    f32 posOffset = 100.0f;
+    f32 radius = posOffset;
 
     for (size_t i = 0; i < 2; ++i) {
-        EGG::Vector3f local_d0 = mainRot().rotateVector(EGG::Vector3f::ey);
-        EGG::Vector3f worldPos = pos() + (-posScalar * scale().y) * local_d0;
+        EGG::Vector3f lowerPos =
+                pos() + (-posOffset * scale().y) * mainRot().rotateVector(EGG::Vector3f::ey);
 
         auto *colDir = Field::CollisionDirector::Instance();
-        if (!colDir->checkSphereFullPush(radius, worldPos, worldUpPos, KCL_TYPE_B0E82DFF, &colInfo,
+        if (!colDir->checkSphereFullPush(radius, lowerPos, upperPos, KCL_TYPE_B0E82DFF, &colInfo,
                     &mask, 0)) {
             if (i == 0) {
-                posScalar = 0.0f;
+                posOffset = 0.0f;
             }
 
             continue;
@@ -114,27 +131,26 @@ bool KartReject::calcRejection() {
         move()->setUp(move()->up() + tangentUp);
         move()->setSmoothedUp(move()->up());
 
-        bool bVar15 = tangentOff.dot(EGG::Vector3f::ey) < -0.17f;
-        if (bVar15 || extVel().y < 0.0f || status.onBit(eStatus::NoSparkInvisibleWall)) {
-            radius = -radius;
-            colInfo.tangentOff += worldPos;
+        bool isSteepTangent = tangentOff.dot(EGG::Vector3f::ey) < -0.17f;
+        if (isSteepTangent || extVel().y < 0.0f || status.onBit(eStatus::NoSparkInvisibleWall)) {
+            colInfo.tangentOff += lowerPos;
 
             f32 yOffset = bsp().offsetY * scale().y;
-            f32 speedScalar = bVar15 ?
+            f32 speedScalar = isSteepTangent ?
                     1.0f :
                     static_cast<f32>(static_cast<f64>(EGG::Mathf::abs(speed()) * 0.01f) - 0.3);
             speedScalar = std::min(1.0f, std::max(0.0f, speedScalar));
 
             EGG::Vector3f posOffset =
-                    colInfo.tangentOff + radius * tangentOff + yOffset * tangentOff;
+                    colInfo.tangentOff + -radius * tangentOff + yOffset * tangentOff;
             posOffset.y += move()->hopPosY();
             posOffset -= pos();
             setPos(pos() + posOffset * speedScalar);
         }
 
-        EGG::Vector3f local_13c = move()->lastDir().perpInPlane(move()->smoothedUp(), true);
-        move()->setDir(local_13c);
-        move()->setVel1Dir(local_13c);
+        EGG::Vector3f newDir = move()->lastDir().perpInPlane(move()->smoothedUp(), true);
+        move()->setDir(newDir);
+        move()->setVel1Dir(newDir);
 
         return true;
     }
@@ -142,6 +158,11 @@ bool KartReject::calcRejection() {
     return false;
 }
 
+/// @brief Checks if the collision should result in a rejection
+/// @param colInfo The collision data of the colliding object
+/// @param mask A mask representing the type of collision that occurred
+/// @param tangentOff Output of the tangent offset vector, if a rejection is applicable
+/// @return True if a rejection should be applied, false otherwise
 bool KartReject::calcCollision(Field::CollisionInfo &colInfo, Field::KCLTypeMask mask,
         EGG::Vector3f &tangentOff) {
     auto *colDir = Field::CollisionDirector::Instance();

@@ -24,7 +24,7 @@ void KartObjectManager::calc() {
 }
 
 /// @addr{0x8058FB2C}
-/// @brief Constructs the manager and kart objects for each player
+/// @brief Private constructor that constructs the manager and kart objects for each player
 /// @details Creates the @ref KartParamFileManager singleton instance and @ref KartObject instances
 /// for each player. Also parses crush and shrink animation data from @p driver.brres.
 KartObjectManager::KartObjectManager() {
@@ -44,8 +44,8 @@ KartObjectManager::KartObjectManager() {
 }
 
 /// @addr{0x8058FDD4}
-/// @brief Destroys all @ref KartObject objects, the @ref KartParamFileManager singleton instance,
-/// and the scale animation data
+/// @brief Private virtual destructor which destroys all @ref KartObject objects, the @ref
+/// KartParamFileManager singleton instance, and the scale animation data
 KartObjectManager::~KartObjectManager() {
     if (s_instance) {
         s_instance = nullptr;

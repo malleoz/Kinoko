@@ -14,7 +14,7 @@ class ObjectFlamePole;
 /// @details Each "foot" owns its own @ref ObjectFlamePole. The foot controls updates the pole's
 /// scale to effectively cause the pole to appear to erupt out of the ground. The pole erupts
 /// upwards, dips a bit, rises back up, and then descends back beneath the foot.
-class ObjectFlamePoleFoot final : public ObjectKCL, public StateManager {
+class ObjectFlamePoleFoot final : public ObjectKCL, private StateManager {
     friend class Host::Context;
 
 public:

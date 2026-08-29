@@ -6,7 +6,7 @@
 namespace Kinoko::Field {
 
 /// @brief Base class for the cataquacks on GCN Peach Beach
-class ObjectPoihanaBase : public ObjectCollidable, virtual public StateManager {
+class ObjectPoihanaBase : public ObjectCollidable, virtual protected StateManager {
 public:
     ObjectPoihanaBase(const System::MapdataGeoObj &params);
     ~ObjectPoihanaBase() override;

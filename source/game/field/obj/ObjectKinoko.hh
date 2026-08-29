@@ -47,7 +47,7 @@ protected:
 /// @brief Mushrooms which oscillate up and down. The stem does not move.
 /// @details This represents the first two mushrooms on Mushroom Gorge, even though they don't
 /// oscillate up or down.
-class ObjectKinokoUd : public ObjectKinoko {
+class ObjectKinokoUd final : public ObjectKinoko {
 public:
     ObjectKinokoUd(const System::MapdataGeoObj &params);
     ~ObjectKinokoUd() override;
@@ -75,7 +75,7 @@ private:
 
 /// @brief Mushrooms which bend in a certain direction
 /// @details This functionality didn't get used in the base game?
-class ObjectKinokoBend : public ObjectKinoko {
+class ObjectKinokoBend final : public ObjectKinoko {
 public:
     ObjectKinokoBend(const System::MapdataGeoObj &params);
     ~ObjectKinokoBend() override;
@@ -92,7 +92,7 @@ private:
 };
 
 /// @brief Green mushrooms with normal road properties, for the most part
-class ObjectKinokoNm : public ObjectKCL {
+class ObjectKinokoNm final : public ObjectKCL {
 public:
     ObjectKinokoNm(const System::MapdataGeoObj &params);
     ~ObjectKinokoNm() override;

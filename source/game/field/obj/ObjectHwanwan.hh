@@ -9,7 +9,7 @@
 namespace Kinoko::Field {
 
 /// @brief Represents the walking Chain Chomps on DS Peach Gardens
-class ObjectHwanwan : public ObjectCollidable, public StateManager {
+class ObjectHwanwan final : public ObjectCollidable, private StateManager {
     friend class ObjectHwanwanManager;
 
 public:
@@ -79,7 +79,7 @@ private:
     }};
 };
 
-class ObjectHwanwanManager : public ObjectCollidable {
+class ObjectHwanwanManager final : public ObjectCollidable {
 public:
     ObjectHwanwanManager(const System::MapdataGeoObj &params);
     ~ObjectHwanwanManager() override;

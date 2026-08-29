@@ -3,6 +3,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x807FC90C}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectBeltCurveA::ObjectBeltCurveA(const System::MapdataGeoObj &params) : ObjectBelt(params) {
     constexpr EGG::Vector3f INITIAL_ROT = EGG::Vector3f(0.0f, HALF_PI, 0.0f);
 
@@ -13,6 +15,7 @@ ObjectBeltCurveA::ObjectBeltCurveA(const System::MapdataGeoObj &params) : Object
 }
 
 /// @addr{0x807FD7BC}
+/// @brief Default virtual destructor
 ObjectBeltCurveA::~ObjectBeltCurveA() = default;
 
 /// @addr{0x807FC9D4}

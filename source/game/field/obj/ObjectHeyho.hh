@@ -10,7 +10,7 @@ namespace Kinoko::Field {
 /// color variants perform a 180, except for red Shy Guys which perform a 720. The gravitational
 /// acceleration is calculated based on the apex, the midpoint (lowest point), and the maximum
 /// velocity param setting.
-class ObjectHeyho : public ObjectCollidable, public StateManager {
+class ObjectHeyho final : public ObjectCollidable, private StateManager {
 public:
     ObjectHeyho(const System::MapdataGeoObj &params);
     ~ObjectHeyho() override;

@@ -7,7 +7,7 @@ namespace Kinoko::Field {
 /// @brief Defines the convex hull of a box-shaped collision object
 /// @details The box is defined by its dimensions and center point, and the convex hull is
 /// constructed from the eight vertices of the box.
-class ObjectCollisionBox : public ObjectCollisionConvexHull {
+class ObjectCollisionBox final : public ObjectCollisionConvexHull {
 public:
     ObjectCollisionBox(f32 x, f32 y, f32 z, const EGG::Vector3f &center);
     ~ObjectCollisionBox() override;

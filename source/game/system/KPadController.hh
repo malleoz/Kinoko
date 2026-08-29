@@ -102,7 +102,7 @@ struct RaceInputState {
 /// @brief Represents a stream of button inputs from a ghost file.
 struct KPadGhostButtonsStream {
     KPadGhostButtonsStream();
-    ~KPadGhostButtonsStream();
+    virtual ~KPadGhostButtonsStream();
 
     [[nodiscard]] virtual u8 readFrame();
 
@@ -135,8 +135,9 @@ struct KPadGhostButtonsStream {
 /// not the acceleration button is pressed. This can lead to "successful" synchronization of
 /// ghosts which could not have been created legitimately in the first place.
 struct KPadGhostFaceButtonsStream : public KPadGhostButtonsStream {
-    KPadGhostFaceButtonsStream();
-    ~KPadGhostFaceButtonsStream();
+    KPadGhostFaceButtonsStream() = default;
+
+    ~KPadGhostFaceButtonsStream() override = default;
 };
 
 /// @brief A specialized stream for the analog stick.
@@ -146,8 +147,9 @@ struct KPadGhostFaceButtonsStream : public KPadGhostButtonsStream {
 /// 0x0F  | Up/Down (0xE = Up, 0x0 = Down, 0x7 = Neutral)
 /// 0xF0  | Left/Right (0xE0 = Right, 0x00 = Left, 0x70 = Neutral)
 struct KPadGhostDirectionButtonsStream : public KPadGhostButtonsStream {
-    KPadGhostDirectionButtonsStream();
-    ~KPadGhostDirectionButtonsStream();
+    KPadGhostDirectionButtonsStream() = default;
+
+    ~KPadGhostDirectionButtonsStream() override = default;
 };
 
 /// @brief A specialized stream for D-Pad inputs for tricking and wheeling.
@@ -157,8 +159,9 @@ struct KPadGhostDirectionButtonsStream : public KPadGhostButtonsStream {
 /// 0x0F  | The upper four bits of the tuple's duration, forming a 12-bit integer.
 /// 0x70  | 0x00 = No trick, 0x10 = Up/Wheelie, 0x20 = Down, 0x30 = Left, 0x40 = Right
 struct KPadGhostTrickButtonsStream : public KPadGhostButtonsStream {
-    KPadGhostTrickButtonsStream();
-    ~KPadGhostTrickButtonsStream();
+    KPadGhostTrickButtonsStream() = default;
+
+    ~KPadGhostTrickButtonsStream() override = default;
 
     /// @addr{0x805250A8}
     [[nodiscard]] bool readIsNewSequence() const override {
@@ -187,7 +190,10 @@ public:
     virtual void reset(bool /*driftIsAuto*/) {}
     virtual void calcImpl() {}
 
-    void calc();
+    /// @addr{0x8051ED14}
+    void calc() {
+        calcImpl();
+    }
 
     [[nodiscard]] const RaceInputState &raceInputState() const {
         return m_raceInputState;
@@ -240,14 +246,19 @@ private:
 /// @details The input state is managed externally by programs interfacing with Kinoko.
 class KPadHostController : public KPadController {
 public:
-    KPadHostController();
-    ~KPadHostController() override;
+    KPadHostController() = default;
+
+    ~KPadHostController() override = default;
 
     [[nodiscard]] ControlSource controlSource() const override {
         return ControlSource::Host;
     }
 
-    void reset(bool driftIsAuto) override;
+    void reset(bool driftIsAuto) override {
+        m_driftIsAuto = driftIsAuto;
+        m_raceInputState.reset();
+        m_connected = true;
+    }
 
     /// @brief Sets the inputs of the controller.
     /// @param state The specified inputs packaged in the state. Only buttons, stick, and trick
@@ -310,11 +321,26 @@ public:
 
 class KPad {
 public:
-    KPad();
-    ~KPad();
+    /// @addr{0x80520F64}
+    KPad() : m_controller(nullptr) {
+        reset();
+    }
 
-    void calc();
-    void reset();
+    /// @addr{0x805222B4}
+    ~KPad() = default;
+
+    /// @addr{0x80521198}
+    void calc() {
+        m_lastInputState = m_currentInputState;
+        m_currentInputState = m_controller->raceInputState();
+    }
+
+    /// @addr{0x80521110}
+    void reset() {
+        if (m_controller) {
+            m_controller->reset(m_controller->driftIsAuto());
+        }
+    }
 
     [[nodiscard]] const RaceInputState &currentState() const {
         return m_currentInputState;
@@ -337,14 +363,49 @@ protected:
 /// @brief A specialized KPad for player input, as opposed to CPU players for example.
 class KPadPlayer : public KPad {
 public:
-    KPadPlayer();
-    ~KPadPlayer();
+    /// @addr{0x805220BC}
+    KPadPlayer() = default;
 
-    void setGhostController(KPadGhostController *controller, const u8 *inputs, bool driftIsAuto);
-    void setHostController(KPadHostController *controller, bool driftIsAuto);
+    /// @addr{0x805222F4}
+    ~KPadPlayer() = default;
 
-    void startGhostProxy(); ///< Signals to start reading ghost data after fade-in.
-    void endGhostProxy();   ///< Signals to stop reading ghost data after race completion.
+    /// @addr{0x80521844}
+    void setGhostController(KPadGhostController *controller, const u8 *inputs, bool driftIsAuto) {
+        m_controller = controller;
+
+        if (inputs) {
+            memcpy(m_ghostBuffer, inputs, RKG_UNCOMPRESSED_INPUT_DATA_SECTION_SIZE);
+        }
+
+        controller->readGhostBuffer(m_ghostBuffer, driftIsAuto);
+    }
+
+    void setHostController(KPadHostController *controller, bool driftIsAuto) {
+        m_controller = controller;
+        m_controller->setDriftIsAuto(driftIsAuto);
+    }
+
+    /// @addr{0x805215D4}
+    void startGhostProxy() {
+        if (!m_controller || m_controller->controlSource() != ControlSource::Ghost) {
+            return;
+        }
+
+        KPadGhostController *ghostController =
+                reinterpret_cast<KPadGhostController *>(m_controller);
+        ghostController->setAcceptingInputs(true);
+    }
+
+    /// @addr{0x80521688}
+    void endGhostProxy() {
+        if (!m_controller || m_controller->controlSource() != ControlSource::Ghost) {
+            return;
+        }
+
+        KPadGhostController *ghostController =
+                reinterpret_cast<KPadGhostController *>(m_controller);
+        ghostController->setAcceptingInputs(false);
+    }
 
 private:
     u8 m_ghostBuffer[RKG_UNCOMPRESSED_INPUT_DATA_SECTION_SIZE];

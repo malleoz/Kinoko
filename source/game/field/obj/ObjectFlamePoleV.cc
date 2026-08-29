@@ -3,6 +3,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806C3AA4}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectFlamePoleV::ObjectFlamePoleV(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), StateManager(this, STATE_ENTRIES),
       m_initDelay(static_cast<u32>(params.setting(1))),
@@ -21,6 +23,7 @@ ObjectFlamePoleV::ObjectFlamePoleV(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x806C47B4}
+/// @brief Default virtual destructor
 ObjectFlamePoleV::~ObjectFlamePoleV() = default;
 
 /// @addr{0x806C3E90}

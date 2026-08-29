@@ -80,13 +80,6 @@ void MultiDvdArchive::load(const char *filename) {
     }
 }
 
-/// @addr{0x8052AAE8}
-void MultiDvdArchive::load(const MultiDvdArchive *other) {
-    for (u16 i = 0; i < m_archiveCount; i++) {
-        m_archives[i].load(&other->m_archives[i]);
-    }
-}
-
 /// @addr{0x8052AB6C}
 void MultiDvdArchive::rip(const char *filename) {
     char buffer[256];
@@ -106,43 +99,6 @@ void MultiDvdArchive::rip(const char *filename) {
         }
         m_archives[i].rip(buffer);
     }
-}
-
-/// @addr{0x8052AC40}
-void MultiDvdArchive::clear() {
-    for (u16 i = 0; i < m_archiveCount; i++) {
-        m_archives[i].clear();
-    }
-}
-
-/// @addr{0x8052AA88}
-void MultiDvdArchive::unmount() {
-    for (u16 i = 0; i < m_archiveCount; i++) {
-        m_archives[i].unmount();
-    }
-}
-
-/// @addr{0x8052A800}
-bool MultiDvdArchive::isLoaded() const {
-    for (u16 i = 0; i < m_archiveCount; i++) {
-        if (m_archives[i].isLoaded()) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-/// @addr{0x8052AE08}
-u16 MultiDvdArchive::rippedArchiveCount() const {
-    u16 count = 0;
-    for (u16 i = 0; i < m_archiveCount; i++) {
-        if (m_archives[i].isRipped()) {
-            count++;
-        }
-    }
-
-    return count;
 }
 
 } // namespace Kinoko::System

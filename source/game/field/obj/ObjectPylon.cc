@@ -8,10 +8,13 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8082CAD8}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectPylon::ObjectPylon(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), m_initPos(pos()), m_initScale(scale()), m_initRot(rot()) {}
 
 /// @addr{0x8082E500}
+/// @brief Default virtual destructor
 ObjectPylon::~ObjectPylon() = default;
 
 /// @addr{0x8082CD60}

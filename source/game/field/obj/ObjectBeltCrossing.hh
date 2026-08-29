@@ -10,11 +10,14 @@ namespace Kinoko::Field {
 class ObjectBeltCrossing final : public ObjectBelt {
 public:
     /// @addr{0x807FC764}
+    /// @brief Constructor
+    /// @param params The parameters used to initialize the object
     ObjectBeltCrossing(const System::MapdataGeoObj &params) : ObjectBelt(params) {
         m_roadVel = 28.0f;
     }
 
     /// @addr{0x807FD8A8}
+    /// @brief Default virtual destructor
     ~ObjectBeltCrossing() override = default;
 
     /// @addr{0x807FC7D8}

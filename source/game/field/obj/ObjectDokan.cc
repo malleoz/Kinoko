@@ -7,9 +7,12 @@
 namespace Kinoko::Field {
 
 /// @addr{0x807787F0}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectDokan::ObjectDokan(const System::MapdataGeoObj &params) : ObjectCollidable(params) {}
 
 /// @addr{0x80778FEC}
+/// @brief Default virtual destructor
 ObjectDokan::~ObjectDokan() = default;
 
 /// @addr{0x80778D50}

@@ -10,9 +10,12 @@ namespace Kinoko::Field {
 class ObjectWoodbox : public ObjectBreakable {
 public:
     /// @addr{0x8077E5E4}
+    /// @brief Constructor
+    /// @param params The parameters used to initialize the object
     ObjectWoodbox(const System::MapdataGeoObj &params) : ObjectBreakable(params) {}
 
     /// @addr{0x8077E620}
+    /// @brief Default virtual destructor
     ~ObjectWoodbox() override = default;
 
     /// @addr{0x8077ED7C}

@@ -6,13 +6,18 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806C0D18}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectFireSnakeKid::ObjectFireSnakeKid(const System::MapdataGeoObj &params)
     : ObjectCollidable(params) {}
 
 /// @addr{0x806C2ACC}
+/// @brief Default virtual destructor
 ObjectFireSnakeKid::~ObjectFireSnakeKid() = default;
 
 /// @addr{0x806C0F30}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectFireSnake::ObjectFireSnake(const System::MapdataGeoObj &params)
     : StateManager(this, STATE_ENTRIES), ObjectProjectile(params), m_initPos(params.pos()),
       m_maxAge(static_cast<s16>(params.setting(1))) {
@@ -32,6 +37,7 @@ ObjectFireSnake::ObjectFireSnake(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x806C1284}
+/// @brief Default virtual destructor
 ObjectFireSnake::~ObjectFireSnake() = default;
 
 /// @addr{0x806C13B0}

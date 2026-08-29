@@ -8,7 +8,7 @@
 
 namespace Kinoko::Field {
 
-/// @brief Parses the ObjHitTableKart.bin and ObjHitTableKartObj.bin tables which map an @ref
+/// @brief Parses the `ObjHitTableKart.bin` and `ObjHitTableKartObj.bin` tables which map an @ref
 /// ObjectId to the associated reaction when hit by a kart and vice versa
 /// @details The file contains a header and two data sections. The header contains the number of
 /// objects stored in the table and the number of 2-byte fields in the first data section (excluding
@@ -24,9 +24,11 @@ namespace Kinoko::Field {
 class ObjectHitTable {
 public:
     /// @addr{0x807F9278}
-    /// @brief Obtains a pointer to the provided filename (either GeoHitTableKart.bin or
-    /// GeoHitTableKartObj.bin), parses the count, parses the reactions, and obtains a pointer to
-    /// the second data section
+    /// @brief Constructor that obtains a pointer to the provided filename (either
+    /// `GeoHitTableKart.bin` or `GeoHitTableKartObj.bin`), parses the count, parses the reactions,
+    /// and obtains a pointer to the second data section
+    /// @param filename The name of the file to parse (either `ObjHitTableKart.bin` or
+    /// `ObjHitTableKartObj.bin`)
     ObjectHitTable(const char *filename) {
         size_t size;
         void *file = System::ResourceManager::Instance()->getFile(filename, &size,
@@ -48,6 +50,7 @@ public:
     }
 
     /// @addr{0x807F9348}
+    /// @brief Default destructor
     ~ObjectHitTable() = default;
 
     [[nodiscard]] Kart::Reaction reaction(s16 i) const {

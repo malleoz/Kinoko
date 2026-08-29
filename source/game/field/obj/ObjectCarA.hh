@@ -9,7 +9,7 @@ namespace Kinoko::Field {
 /// @brief Oscillating cars on Coconut Mall
 /// @details These cars move along a rail and have a trapezoidal motion profile; they accelerate to
 /// a set velocity, drive at that velocity for a set amount of time, and then decelerate to a stop.
-class ObjectCarA : public ObjectCollidable, public StateManager {
+class ObjectCarA : public ObjectCollidable, private StateManager {
 public:
     ObjectCarA(const System::MapdataGeoObj &params);
     ~ObjectCarA() override;

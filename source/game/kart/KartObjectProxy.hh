@@ -156,7 +156,7 @@ public:
     [[nodiscard]] std::pair<EGG::Vector3f, EGG::Vector3f> getCannonPosRot();
     [[nodiscard]] f32 speedRatio() const;
     [[nodiscard]] f32 speedRatioCapped() const;
-    [[nodiscard]] bool isInRespawn() const;
+    [[nodiscard]] bool isPostRespawn() const;
     [[nodiscard]] Field::KCLTypeMask wallKclType() const;
     [[nodiscard]] u32 wallKclVariant() const;
     [[nodiscard]] Status &status();

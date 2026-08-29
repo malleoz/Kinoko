@@ -5,14 +5,18 @@
 namespace Kinoko::Field {
 
 /// @brief Defines the collision for a spherical object
-class ObjectCollisionSphere : public ObjectCollisionBase {
+class ObjectCollisionSphere final : public ObjectCollisionBase {
 public:
     /// @addr{0x808368D0}
+    /// @brief Constructor
+    /// @param radius Radius of the sphere
+    /// @param center Center position of the sphere in local space
     ObjectCollisionSphere(f32 radius, const EGG::Vector3f &center)
         : m_hasTranslation(false), m_radius(radius), m_pos(center), m_scaledRadius(radius),
           m_scaledPos(center), m_worldPos(center) {}
 
     /// @addr{0x80836B5C}
+    /// @brief Default virtual destructor
     ~ObjectCollisionSphere() override = default;
 
     /// @addr{0x80836998}

@@ -5,12 +5,15 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806DB184}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectKuribo::ObjectKuribo(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), StateManager(this, STATE_ENTRIES),
       m_accel(static_cast<f32>(params.setting(1)) / 100.0f),
       m_animRate(static_cast<f32>(params.setting(2)) / 100.0f) {}
 
 /// @addr{0x806DB3A0}
+/// @brief Default virtual destructor
 ObjectKuribo::~ObjectKuribo() = default;
 
 /// @addr{0x806DB40C}

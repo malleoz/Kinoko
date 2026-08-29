@@ -9,10 +9,12 @@
 namespace Kinoko::Kart {
 
 /// @addr{0x8059018C}
+/// @brief Constructor which adds `this` to the static proxy list so it can be shared later
 KartObjectProxy::KartObjectProxy() : m_accessor(nullptr) {
     s_proxyList.push_back(this);
 }
 
+/// @brief Default virtual destructor
 KartObjectProxy::~KartObjectProxy() = default;
 
 /// @addr{0x80590238}
@@ -542,10 +544,11 @@ f32 KartObjectProxy::speedRatioCapped() const {
 }
 
 /// @addr{0x805914F4}
-/// @brief Checks if the kart is currently in a respawn state based on its @ref KartMove subsystem
-/// @return True if the kart is in a respawn state, false otherwise
-bool KartObjectProxy::isInRespawn() const {
-    return move()->respawnTimer() > 0 || move()->respawnPostLandTimer() > 0;
+/// @brief Checks if the kart has landed from a respawn and is either in the boost grace period or
+/// is currently in a respawn boost
+/// @return True if the kart is in the "post respawn" state, false otherwise
+bool KartObjectProxy::isPostRespawn() const {
+    return move()->respawnBoostTimer() > 0 || move()->respawnPostLandTimer() > 0;
 }
 
 /// @addr{0x805911A8}

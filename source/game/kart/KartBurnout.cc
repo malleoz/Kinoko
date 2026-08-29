@@ -5,9 +5,11 @@
 namespace Kinoko::Kart {
 
 /// @addr{inlined in 0x80577FC4}
+/// @brief Default constructor
 KartBurnout::KartBurnout() = default;
 
 /// @addr{0x805781DC}
+/// @brief Default destructor
 KartBurnout::~KartBurnout() = default;
 
 /// @addr{0x80589118}

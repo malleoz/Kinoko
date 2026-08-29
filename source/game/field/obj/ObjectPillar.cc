@@ -4,16 +4,22 @@
 namespace Kinoko::Field {
 
 /// @addr{Inlined in 0x807FED80}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectPillarBase::ObjectPillarBase(const System::MapdataGeoObj &params) : ObjectKCL(params) {}
 
 /// @addr{0x807FFAA0}
+/// @brief Default virtual destructor
 ObjectPillarBase::~ObjectPillarBase() = default;
 
 /// @addr{0x807FEB68}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectPillarC::ObjectPillarC(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), m_fallStart(static_cast<u32>(params.setting(0))) {}
 
 /// @addr{0x807FFAE0}
+/// @brief Default virtual destructor
 ObjectPillarC::~ObjectPillarC() = default;
 
 /// @addr{0x807FEC30}
@@ -34,6 +40,8 @@ void ObjectPillarC::calcCollisionTransform() {
 }
 
 /// @addr{0x807FED80}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectPillar::ObjectPillar(const System::MapdataGeoObj &params)
     : ObjectKCL(params), m_state(State::Upright), m_fallStart(static_cast<u32>(params.setting(0))),
       m_targetRotation(F_PI * static_cast<f32>(params.setting(1)) / 180.0f), m_initRot(rot().x),
@@ -48,6 +56,7 @@ ObjectPillar::ObjectPillar(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x807FFA34}
+/// @brief Default virtual destructor
 ObjectPillar::~ObjectPillar() = default;
 
 /// @addr{0x807FF17C}

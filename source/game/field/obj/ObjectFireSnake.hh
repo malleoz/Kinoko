@@ -7,7 +7,7 @@
 
 namespace Kinoko::Field {
 
-class ObjectFireSnakeKid : public ObjectCollidable {
+class ObjectFireSnakeKid final : public ObjectCollidable {
 public:
     ObjectFireSnakeKid(const System::MapdataGeoObj &params);
     ~ObjectFireSnakeKid() override;
@@ -24,7 +24,7 @@ public:
 /// ObjectFireSnakeV manages its own state lifecycle, whereas @ref ObjectFireSnake instances rely on
 /// @ref ObjectSunDS to advance the state cycle by launching the fire snake and are registered as
 /// managed objects so that @ref ObjectSunManager can fetch the FireSnakes.
-class ObjectFireSnake : public ObjectProjectile, virtual public StateManager {
+class ObjectFireSnake : public ObjectProjectile, virtual protected StateManager {
 public:
     ObjectFireSnake(const System::MapdataGeoObj &params);
     ~ObjectFireSnake() override;

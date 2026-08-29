@@ -10,6 +10,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806D5EE4}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectCarTGE::ObjectCarTGE(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), StateManager(this, STATE_ENTRIES), m_auxCollision(nullptr),
       m_carName{}, m_mdlName{}, m_carType(CarType::Normal), m_dummyId(ObjectId::None),
@@ -95,6 +97,7 @@ ObjectCarTGE::ObjectCarTGE(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x806D691C}
+/// @brief Default virtual destructor that destroys the auxiliary collision object
 ObjectCarTGE::~ObjectCarTGE() {
     EGG::egg_delete(m_auxCollision);
 }

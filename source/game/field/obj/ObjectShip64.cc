@@ -3,9 +3,12 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80765C94}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectShip64::ObjectShip64(const System::MapdataGeoObj &params) : ObjectCollidable(params) {}
 
 /// @addr{0x80765DB0}
+/// @brief Virtual destructor that also deletes the paddle wheel collision object
 ObjectShip64::~ObjectShip64() {
     EGG::egg_delete(m_paddleWheelCollision);
 }

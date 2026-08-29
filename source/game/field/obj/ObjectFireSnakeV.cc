@@ -5,6 +5,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806C2B70}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectFireSnakeV::ObjectFireSnakeV(const System::MapdataGeoObj &params)
     : StateManager(this, STATE_ENTRIES), ObjectFireSnake(params),
       m_cycleDuration(params.setting(1)), m_distFromPipe(static_cast<f32>(params.setting(2))),
@@ -19,6 +21,7 @@ ObjectFireSnakeV::ObjectFireSnakeV(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x806C3548}
+/// @brief Default virtual destructor
 ObjectFireSnakeV::~ObjectFireSnakeV() = default;
 
 /// @addr{0x806C2DA4}

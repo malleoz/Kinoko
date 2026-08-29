@@ -8,6 +8,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806E3458}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 /// @details Solves the kinematic equation to determine the time it takes a fireball to land, using
 /// the velocity specified by param setting 1 and the rail points. Constructs @ref ObjectVolcanoBall
 /// objects which this launcher instance will manage.
@@ -55,6 +57,7 @@ ObjectVolcanoBallLauncher::ObjectVolcanoBallLauncher(const System::MapdataGeoObj
 }
 
 /// @addr{0x806E384C}
+/// @brief Default virtual destructor
 ObjectVolcanoBallLauncher::~ObjectVolcanoBallLauncher() = default;
 
 /// @addr{0x806E388C}

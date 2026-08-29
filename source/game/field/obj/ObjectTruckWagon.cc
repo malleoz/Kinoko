@@ -8,12 +8,15 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806DFE9C}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectTruckWagonCart::ObjectTruckWagonCart(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), StateManager(this, STATE_ENTRIES), m_active(true),
       m_vel(EGG::Vector3f::zero), m_lastVel(EGG::Vector3f::zero), m_up(EGG::Vector3f::zero),
       m_tangent(EGG::Vector3f::zero), m_pitch(0.0f) {}
 
 /// @addr{0x806E00F4}
+/// @brief Default virtual destructor
 ObjectTruckWagonCart::~ObjectTruckWagonCart() = default;
 
 /// @addr{0x806E03E8}
@@ -203,6 +206,8 @@ void ObjectTruckWagonCart::reset(u32 idx) {
 }
 
 /// @addr{0x806E206C}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectTruckWagon::ObjectTruckWagon(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), m_spawn2Frame(static_cast<s32>(params.setting(1))),
       m_cycleDuration(static_cast<s32>(params.setting(2))) {
@@ -229,6 +234,7 @@ ObjectTruckWagon::ObjectTruckWagon(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x806E21EC}
+/// @brief Default virtual destructor
 ObjectTruckWagon::~ObjectTruckWagon() = default;
 
 /// @addr{0x806E222C}

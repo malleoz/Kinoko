@@ -36,15 +36,47 @@ public:
     };
 
     MapdataCheckPoint(const SData *data);
-    void read(EGG::Stream &stream);
+
+    void read(EGG::Stream &stream) {
+        m_left.read(stream);
+        m_right.read(stream);
+        m_jugemIndex = stream.read_s8();
+        m_checkArea = stream.read_s8();
+        m_prevPt = stream.read_u8();
+        m_nextPt = stream.read_u8();
+    }
+
     void initCheckpointLinks(MapdataCheckPointAccessor &accessor, int id);
     [[nodiscard]] SectorOccupancy checkSectorAndDistanceRatio(const EGG::Vector3f &pos,
             f32 &distanceRatio) const;
 
     [[nodiscard]] u16 getEntryOffsetMs(const EGG::Vector2f &prevPos,
             const EGG::Vector2f &pos) const;
+
+    /// @brief Finds the offset between the two positions that enter the checkpoint.
+    /// @details This assumes the player is entering the checkpoint as intended, and not from the
+    /// side. This function isn't in the base game, but it can be used to determine improvements to
+    /// runs.
+    /// @param prevPos The previous position, likely not located in the checkpoint.
+    /// @param pos The current position, likely located in the checkpoint.
+    /// @return The exact offset that crosses into the checkpoint, in the range [0, 1000 / 59.94].
     [[nodiscard]] f32 getEntryOffsetExact(const EGG::Vector2f &prevPos,
-            const EGG::Vector2f &pos) const;
+            const EGG::Vector2f &pos) const {
+        constexpr f32 REFRESH_PERIOD = 1000.0f / 59.94f;
+
+        EGG::Vector2f velocity = pos - prevPos;
+        velocity *= 1.0f / REFRESH_PERIOD;
+
+        // d_k = p_0 - m + kv
+        // d_k dot r = 0 => k is the exact offset to the finish line
+        // Therefore, k = ((m - p_0) dot r) / (v dot r)
+
+        f32 x = (m_midpoint - prevPos).dot(m_dir);
+        f32 y = velocity.dot(m_dir);
+
+        // y = 0 => v is parallel to the checkpoint line
+        return y != 0.0f ? x / y : 0.0f;
+    }
 
     [[nodiscard]] bool isNormalCheckpoint() const {
         return static_cast<CheckArea>(m_checkArea) == CheckArea::NormalCheckpoint;
@@ -110,12 +142,32 @@ public:
     };
 
 private:
+    /// @addr{0x80510C74}
     [[nodiscard]] SectorOccupancy checkSectorAndDistanceRatio(const LinkedCheckpoint &next,
-            const EGG::Vector2f &p0, const EGG::Vector2f &p1, f32 &distanceRatio) const;
+            const EGG::Vector2f &p0, const EGG::Vector2f &p1, f32 &distanceRatio) const {
+        if (!checkSector(next, p0, p1)) {
+            return SectorOccupancy::OutsideSector;
+        }
+
+        return checkDistanceRatio(next, p0, p1, distanceRatio) ? SectorOccupancy::InsideSector :
+                                                                 SectorOccupancy::BetweenSides;
+    }
+
     [[nodiscard]] bool checkSector(const LinkedCheckpoint &next, const EGG::Vector2f &p0,
             const EGG::Vector2f &p1) const;
+
+    /// @addr{0x80510BF0}
+    /// @brief Sets the distance ratio, which is the progress of traversal through the checkpoint
+    /// quad.
+    /// @param distanceRatio The distance ratio reference to set.
+    /// @return Whether the distance ratio is in its valid range, [0, 1].
     [[nodiscard]] bool checkDistanceRatio(const LinkedCheckpoint &next, const EGG::Vector2f &p0,
-            const EGG::Vector2f &p1, f32 &distanceRatio) const;
+            const EGG::Vector2f &p1, f32 &distanceRatio) const {
+        f32 d1 = m_dir.dot(p1);
+        f32 d2 = -(next.checkpoint->m_dir.dot(p0));
+        distanceRatio = d1 / (d1 + d2);
+        return distanceRatio >= 0.0f && distanceRatio <= 1.0f;
+    }
 
     static constexpr size_t MAX_NEIGHBORS = 6;
 

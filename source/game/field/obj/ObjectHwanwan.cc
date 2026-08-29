@@ -5,10 +5,13 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806E95B0}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectHwanwan::ObjectHwanwan(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), StateManager(this, STATE_ENTRIES), m_initPos(pos()) {}
 
 /// @addr{0x806EC6E0}
+/// @brief Default virtual destructor
 ObjectHwanwan::~ObjectHwanwan() = default;
 
 /// @addr{0x806E9724}
@@ -88,6 +91,8 @@ void ObjectHwanwan::calcUp() {
 }
 
 /// @addr{0x806C5354}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectHwanwanManager::ObjectHwanwanManager(const System::MapdataGeoObj &params)
     : ObjectCollidable(params) {
     m_hwanwan = EGG::egg_new<ObjectHwanwan>(params);
@@ -96,6 +101,7 @@ ObjectHwanwanManager::ObjectHwanwanManager(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x806C56DC}
+/// @brief Default virtual destructor
 ObjectHwanwanManager::~ObjectHwanwanManager() = default;
 
 /// @addr{0x806C571C}

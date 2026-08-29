@@ -6,6 +6,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806D2908}
+/// @brief Constructor
 ObjectHighwayManager::ObjectHighwayManager()
     : ObjectCollidable("HighwayManager", EGG::Vector3f::zero, EGG::Vector3f::ez,
               EGG::Vector3f::unit) {
@@ -35,6 +36,7 @@ ObjectHighwayManager::ObjectHighwayManager()
 }
 
 /// @addr{0x806D2FE8}
+/// @brief Default virtual destructor
 ObjectHighwayManager::~ObjectHighwayManager() = default;
 
 /// @addr{0x806D50AC}

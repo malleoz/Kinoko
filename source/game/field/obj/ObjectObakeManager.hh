@@ -12,7 +12,7 @@ namespace Kinoko::Field {
 /// spatially-indexed cache, which reduces the number of collision checks the game would have to
 /// perform if blocks were managed like normal objects. When a collision check occurs, the manager
 /// uses the cache to find the blocks that require collision checks.
-class ObjectObakeManager : public ObjectDrivable {
+class ObjectObakeManager final : public ObjectDrivable {
 public:
     ObjectObakeManager(const System::MapdataGeoObj &params);
     ~ObjectObakeManager() override;

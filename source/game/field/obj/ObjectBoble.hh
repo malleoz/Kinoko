@@ -5,12 +5,15 @@
 namespace Kinoko::Field {
 
 /// @brief Rising and falling fireballs on GBA Bowser Castle 3
-class ObjectBoble : public ObjectCollidable {
+class ObjectBoble final : public ObjectCollidable {
 public:
     /// @addr{0x8075DB3C}
+    /// @brief Constructor
+    /// @param params The parameters used to initialize the object
     ObjectBoble(const System::MapdataGeoObj &params) : ObjectCollidable(params) {}
 
     /// @addr{0x8075E74C}
+    /// @brief Default virtual destructor
     ~ObjectBoble() override = default;
 
     /// @addr{0x8075DBA0}

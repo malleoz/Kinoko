@@ -3,6 +3,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8081A198}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectVolcanoRock::ObjectVolcanoRock(const System::MapdataGeoObj &params)
     : ObjectKCL(params), m_initialPos(pos()), m_initialRot(rot()),
       m_phaseShift(static_cast<s16>(params.setting(3))),
@@ -16,6 +18,7 @@ ObjectVolcanoRock::ObjectVolcanoRock(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x8081A690}
+/// @brief Default virtual destructor
 ObjectVolcanoRock::~ObjectVolcanoRock() = default;
 
 /// @addr{0x8081A414}

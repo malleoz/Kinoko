@@ -1,7 +1,6 @@
 #include "MapdataCheckPoint.hh"
 
 #include "game/system/CourseMap.hh"
-#include "game/system/map/MapdataCheckPath.hh"
 
 #include <ranges>
 
@@ -15,15 +14,6 @@ MapdataCheckPoint::MapdataCheckPoint(const SData *data)
     m_midpoint = 0.5f * (m_left + m_right);
     m_dir = EGG::Vector2f(m_right.y - m_left.y, m_left.x - m_right.x);
     m_dir.normalise();
-}
-
-void MapdataCheckPoint::read(EGG::Stream &stream) {
-    m_left.read(stream);
-    m_right.read(stream);
-    m_jugemIndex = stream.read_s8();
-    m_checkArea = stream.read_s8();
-    m_prevPt = stream.read_u8();
-    m_nextPt = stream.read_u8();
 }
 
 /// @addr{0x80515624}
@@ -147,42 +137,6 @@ u16 MapdataCheckPoint::getEntryOffsetMs(const EGG::Vector2f &prevPos,
     return k;
 }
 
-/// @brief Finds the offset between the two positions that enter the checkpoint.
-/// @details This assumes the player is entering the checkpoint as intended, and not from the side.
-/// This function isn't in the base game, but it can be used to determine improvements to runs.
-/// @param prevPos The previous position, likely not located in the checkpoint.
-/// @param pos The current position, likely located in the checkpoint.
-/// @return The exact offset that crosses into the checkpoint, in the range [0, 1000 / 59.94].
-f32 MapdataCheckPoint::getEntryOffsetExact(const EGG::Vector2f &prevPos,
-        const EGG::Vector2f &pos) const {
-    constexpr f32 REFRESH_PERIOD = 1000.0f / 59.94f;
-
-    EGG::Vector2f velocity = pos - prevPos;
-    velocity *= 1.0f / REFRESH_PERIOD;
-
-    // d_k = p_0 - m + kv
-    // d_k dot r = 0 => k is the exact offset to the finish line
-    // Therefore, k = ((m - p_0) dot r) / (v dot r)
-
-    f32 x = (m_midpoint - prevPos).dot(m_dir);
-    f32 y = velocity.dot(m_dir);
-
-    // y = 0 => v is parallel to the checkpoint line
-    return y != 0.0f ? x / y : 0.0f;
-}
-
-/// @addr{0x80510C74}
-MapdataCheckPoint::SectorOccupancy MapdataCheckPoint::checkSectorAndDistanceRatio(
-        const LinkedCheckpoint &next, const EGG::Vector2f &p0, const EGG::Vector2f &p1,
-        f32 &distanceRatio) const {
-    if (!checkSector(next, p0, p1)) {
-        return SectorOccupancy::OutsideSector;
-    }
-
-    return checkDistanceRatio(next, p0, p1, distanceRatio) ? SectorOccupancy::InsideSector :
-                                                             SectorOccupancy::BetweenSides;
-}
-
 /// @addr{0x0x80510B84}
 /// @return Whether the player is between the two sides of the checkpoint quad.
 bool MapdataCheckPoint::checkSector(const LinkedCheckpoint &next, const EGG::Vector2f &p0,
@@ -196,18 +150,6 @@ bool MapdataCheckPoint::checkSector(const LinkedCheckpoint &next, const EGG::Vec
     }
 
     return true;
-}
-
-/// @addr{0x80510BF0}
-/// @brief Sets the distance ratio, which is the progress of traversal through the checkpoint quad.
-/// @param distanceRatio The distance ratio reference to set.
-/// @return Whether the distance ratio is in its valid range, [0, 1].
-bool MapdataCheckPoint::checkDistanceRatio(const LinkedCheckpoint &next, const EGG::Vector2f &p0,
-        const EGG::Vector2f &p1, f32 &distanceRatio) const {
-    f32 d1 = m_dir.dot(p1);
-    f32 d2 = -(next.checkpoint->m_dir.dot(p0));
-    distanceRatio = d1 / (d1 + d2);
-    return distanceRatio >= 0.0f && distanceRatio <= 1.0f;
 }
 
 MapdataCheckPointAccessor::MapdataCheckPointAccessor(const MapSectionHeader *header)

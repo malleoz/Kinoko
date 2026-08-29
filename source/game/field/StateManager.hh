@@ -43,7 +43,8 @@ constexpr StateManagerEntry StateEntry(u16 id) {
 /// invoke the enter and calc functions.
 class StateManager {
 protected:
-    /// @brief Initializes the @ref StateManager with the object that owns it and the state entries
+    /// @brief Constructor that initializes the @ref StateManager with the object that owns it and
+    /// the state entries
     /// @param obj The object that owns this @ref StateManager instance
     /// @param entries A span of @ref StateManagerEntry structs that define the set of enter and
     /// calc functions for each state Id
@@ -58,6 +59,7 @@ protected:
         }
     }
 
+    /// @brief Default virtual destructor
     virtual ~StateManager() = default;
 
     /// @brief Evaluates the current state and invokes the appropriate enter and calc functions

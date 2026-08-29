@@ -6,12 +6,15 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80777564}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectPress::ObjectPress(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), m_loweringVelocity(0.0f),
       m_initialRaisedDuration(static_cast<u32>(m_mapObj->setting(1))),
       m_raisedDuration(static_cast<u32>(m_mapObj->setting(2))) {}
 
 /// @addr{0x807775FC}
+/// @brief Default virtual destructor
 ObjectPress::~ObjectPress() = default;
 
 /// @addr{0x8077763C}
@@ -172,10 +175,13 @@ void ObjectPress::checkCollisionLowering() {
 }
 
 /// @addr{0x8076E7AC}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectPressSenko::ObjectPressSenko(const System::MapdataGeoObj &params)
     : ObjectPress(params), m_startingWindup(false) {}
 
 /// @addr{0x8076E818}
+/// @brief Default virtual destructor
 ObjectPressSenko::~ObjectPressSenko() = default;
 
 } // namespace Kinoko::Field

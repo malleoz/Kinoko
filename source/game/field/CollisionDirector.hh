@@ -62,7 +62,7 @@ public:
             return attribute & 0x1F;
         }
 
-        /// @brief Returns the variant of the tri (bits )
+        /// @brief Returns the variant of the tri (bits 5-7)
         [[nodiscard]] u16 variant() const {
             return (attribute >> 5) & 7;
         }

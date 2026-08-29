@@ -3,6 +3,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80767FF4}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectFireRing::ObjectFireRing(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), m_angSpeed(static_cast<f32>(static_cast<s16>(params.setting(1)))),
       m_pulseAmplitude(0.1f * static_cast<f32>(params.setting(2))), m_phase(0.0f) {
@@ -26,6 +28,7 @@ ObjectFireRing::ObjectFireRing(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x8076892C}
+/// @brief Default virtual destructor
 ObjectFireRing::~ObjectFireRing() = default;
 
 /// @addr{0x80768408}

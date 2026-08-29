@@ -109,9 +109,6 @@ class BoxColManager : EGG::Disposer {
     friend class Host::Context;
 
 public:
-    BoxColManager();
-    ~BoxColManager() override;
-
     void clear();
     void calc();
 
@@ -253,6 +250,11 @@ public:
     }
 
 private:
+    EGG_NEW_DELETE_FRIEND
+
+    BoxColManager();
+    ~BoxColManager() override;
+
     /// @brief Helper function since the getters share all code except the flag
     [[nodiscard]] void *getNextImpl(s32 &id, const BoxColFlag &flag) {
         if (id == MAX_UNIT_COUNT) {

@@ -12,6 +12,10 @@ namespace Kinoko::Kart {
 class KartBody : protected KartObjectProxy {
 public:
     KartBody(KartPhysics *physics);
+
+    /// @addr{0x8056CD84}
+    /// @brief Default virtual destructor
+    /// @note The derived classes are responsible for properly deleting the @ref KartPhysics object
     virtual ~KartBody() = default;
 
     /// @addr{0x8056C604}
@@ -83,8 +87,15 @@ protected:
 /// separate class so the @p addr{} Doxygen annotations are accurate.
 class KartBodyKart : public KartBody {
 public:
-    KartBodyKart(KartPhysics *physics);
-    ~KartBodyKart() override;
+    /// @addr{0x8056CCC0}
+    /// @brief Constructor
+    KartBodyKart(KartPhysics *physics) : KartBody(physics) {}
+
+    /// @addr{0x8056E494}
+    /// @brief Destroys the underlying @ref KartPhysics subsystem
+    ~KartBodyKart() override {
+        EGG::egg_delete(m_physics);
+    }
 };
 
 /// @brief Represents the body of a bike
@@ -104,8 +115,11 @@ public:
 /// addr{} Doxygen annotations.
 class KartBodyQuacker : public KartBodyBike {
 public:
+    /// @brief Constructor
+    /// @param physics Pointer to the kart's physics state manager
     KartBodyQuacker(KartPhysics *physics) : KartBodyBike(physics) {}
 
+    /// @brief Default virtual destructor
     ~KartBodyQuacker() override = default;
 
     [[nodiscard]] EGG::Matrix34f wheelMatrix(u16 /* wheelIdx */) override {

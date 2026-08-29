@@ -3,6 +3,12 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806E2904}
+/// @brief Constructor
+/// @param accel The acceleration of the ball
+/// @param finalVel The final velocity of the ball at impact
+/// @param endPosY The end position along the Y-axis
+/// @param params The parameters used to initialize the object
+/// @param vel The initial velocity of the ball
 ObjectVolcanoBall::ObjectVolcanoBall(f32 accel, f32 finalVel, f32 endPosY,
         const System::MapdataGeoObj &params, const EGG::Vector3f &vel)
     : ObjectCollidable(params), StateManager(this, STATE_ENTRIES),
@@ -10,6 +16,7 @@ ObjectVolcanoBall::ObjectVolcanoBall(f32 accel, f32 finalVel, f32 endPosY,
       m_sqVelXZ(vel.x * vel.x + vel.z * vel.z) {}
 
 /// @addr{0x806E2BE0}
+/// @brief Default virtual destructor
 ObjectVolcanoBall::~ObjectVolcanoBall() = default;
 
 /// @addr{0x806E3034}

@@ -3,6 +3,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8080761C}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectKinoko::ObjectKinoko(const System::MapdataGeoObj &params)
     : ObjectKCL(params), m_initPos(pos()), m_initRot(rot()) {
     m_type = static_cast<KinokoType>(params.setting(0));
@@ -13,6 +15,7 @@ ObjectKinoko::ObjectKinoko(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x80807A54}
+/// @brief Default virtual destructor
 ObjectKinoko::~ObjectKinoko() = default;
 
 /// @addr{0x8080782C}
@@ -41,6 +44,8 @@ void ObjectKinoko::calc() {
 }
 
 /// @addr{0x80807950}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectKinokoUd::ObjectKinokoUd(const System::MapdataGeoObj &params)
     : ObjectKinoko(params), m_period(std::max<u16>(params.setting(2), 2)),
       m_waitDuration(params.setting(4)), m_amplitude(params.setting(1)),
@@ -50,6 +55,7 @@ ObjectKinokoUd::ObjectKinokoUd(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x80807E1C}
+/// @brief Default virtual destructor
 ObjectKinokoUd::~ObjectKinokoUd() = default;
 
 /// @addr{0x80807A54}
@@ -75,6 +81,8 @@ void ObjectKinokoUd::calcOscillation() {
 }
 
 /// @addr{0x80807B7C}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectKinokoBend::ObjectKinokoBend(const System::MapdataGeoObj &params)
     : ObjectKinoko(params), m_period(std::max<u16>(params.setting(2), 2)),
       m_amplitude(static_cast<f32>(params.setting(1)) * DEG2RAD),
@@ -83,6 +91,7 @@ ObjectKinokoBend::ObjectKinokoBend(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x80807DB4}
+/// @brief Default virtual destructor
 ObjectKinokoBend::~ObjectKinokoBend() = default;
 
 /// @addr{0x80807C98}
@@ -99,10 +108,14 @@ void ObjectKinokoBend::calcOscillation() {
     }
 }
 
+/// @addr{Inlined at 0x80821FE8}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectKinokoNm::ObjectKinokoNm(const System::MapdataGeoObj &params)
     : ObjectKCL(params), m_type(static_cast<KinokoType>(params.setting(0))) {}
 
 /// @addr{0x80827A9C}
+/// @brief Default virtual destructor
 ObjectKinokoNm::~ObjectKinokoNm() = default;
 
 } // namespace Kinoko::Field

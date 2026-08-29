@@ -71,12 +71,6 @@ RawGhostFile::RawGhostFile(const u8 *rkg) {
 
 RawGhostFile::~RawGhostFile() = default;
 
-RawGhostFile &RawGhostFile::operator=(const u8 *rkg) {
-    init(rkg);
-
-    return *this;
-}
-
 void RawGhostFile::init(const u8 *rkg) {
     if (!isValid(rkg)) {
         PANIC("Invalid RKG header");

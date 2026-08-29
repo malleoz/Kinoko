@@ -9,12 +9,14 @@
 namespace Kinoko::Kart {
 
 /// @addr{0x8056E56C}
+/// @brief Constructor
 KartCollide::KartCollide() {
     m_boundingRadius = 100.0f;
     m_surfaceFlags.makeAllZero();
 }
 
 /// @addr{0x80573FF0}
+/// @brief Default destructor
 KartCollide::~KartCollide() = default;
 
 /// @addr{0x8056E624}
@@ -104,7 +106,7 @@ void KartCollide::calcRebound() {
 
     auto &status = KartObjectProxy::status();
 
-    if (isInRespawn() ||
+    if (isPostRespawn() ||
             status.onBit(eStatus::Boost, eStatus::OverZipper, eStatus::ZipperInvisibleWall,
                     eStatus::NoSparkInvisibleWall, eStatus::HalfPipeRamp)) {
         fVar1 = 0.0f;
@@ -441,6 +443,7 @@ void KartCollide::activateOob(bool /*detachCamera*/, Field::KCLTypeMask * /*mask
 /// @param hitboxGroup The wheel's collision information
 /// @param colVel The wheel's velocity. In the base game, it is always \f$\vec{v} = \begin{bmatrix}
 /// 0 \\ -13 \\ 0 \end{bmatrix}\f$
+/// @param colVel The wheel's velocity
 /// @param center The wheel's position
 /// @param radius The wheel's size
 void KartCollide::calcWheelCollision(u16 /*wheelIdx*/, CollisionGroup *hitboxGroup,
@@ -826,9 +829,12 @@ void KartCollide::processCannon(Field::KCLTypeMask *maskOut) {
 /// @param forward Current world facing direction of the kart
 /// @param nextDir Updated facing direction of the kart
 /// @param speed Tire speed
+/// @param shouldApplyVelXZ Whether the floor moment affects the kart's XZ external velocity
+/// @param shouldApplyVelY Whether the floor moment affects the kart's Y external velocity
+/// @param shouldApplyAngVel Whether the floor moment affects the kart's angular velocity
 void KartCollide::applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitboxGroup,
         const EGG::Vector3f &forward, const EGG::Vector3f &nextDir, const EGG::Vector3f &speed,
-        bool b1, bool b2, bool b3) {
+        bool shouldApplyVelXZ, bool shouldApplyVelY, bool shouldApplyAngVel) {
     CollisionData &colData = hitboxGroup->collisionData();
     if (!colData.bFloor) {
         return;
@@ -895,11 +901,11 @@ void KartCollide::applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitbo
     EGG::Vector3f projRejSum = proj + rej;
     EGG::Vector3f projRejSumOrig = projRejSum;
 
-    if (!b1) {
+    if (!shouldApplyVelXZ) {
         projRejSum.x = 0.0f;
         projRejSum.z = 0.0f;
     }
-    if (!b2) {
+    if (!shouldApplyVelY) {
         projRejSum.y = 0.0f;
     }
 
@@ -907,13 +913,13 @@ void KartCollide::applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitbo
 
     dynamics()->setExtVel(extVel() + projRejSum);
 
-    if (b3) {
+    if (shouldApplyAngVel) {
         EGG::Vector3f rotation = colData.relPos.cross(projRejSumOrig);
         EGG::Vector3f rotation2 = mainRot().rotateVectorInv(tmp.multVector(rotation));
 
         EGG::Vector3f angVel = rotation2;
         angVel.y = 0.0f;
-        if (!b1) {
+        if (!shouldApplyVelXZ) {
             angVel.x = 0.0f;
         }
         dynamics()->setAngVel0(dynamics()->angVel0() + angVel);
@@ -939,7 +945,7 @@ bool KartCollide::accumulateBodyCollision(CollisionData &collisionData, const Hi
         const Field::CollisionInfo &colInfo) {
     if (mask & KCL_TYPE_WALL) {
         if (!(mask & KCL_TYPE_FLOOR) && status().onBit(eStatus::HWG) &&
-                state()->softWallSpeed().dot(colInfo.wallNrm) < 0.3f) {
+                state()->softWallNrm().dot(colInfo.wallNrm) < 0.3f) {
             return true;
         }
 

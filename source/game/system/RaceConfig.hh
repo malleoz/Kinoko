@@ -54,7 +54,11 @@ public:
 
     typedef std::function<void(RaceConfig *, void *)> InitCallback;
 
-    void init();
+    /// @addr{0x8052DD40}
+    void init() {
+        m_raceScenario.init();
+    }
+
     void initRace();
     void initControllers();
     void initGhost();

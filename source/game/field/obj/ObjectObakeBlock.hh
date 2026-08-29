@@ -9,7 +9,7 @@ namespace Kinoko::Field {
 /// ObjectObakeManager, which manages the lifecycle of these blocks in a spatially indexed cache. If
 /// a block's second setting is greater than 0, then it will fall after that many seconds have
 /// passed.
-class ObjectObakeBlock : public ObjectBase {
+class ObjectObakeBlock final : public ObjectBase {
 public:
     /// @brief Represents the current state of the block in its falling lifecycle
     enum class FallState {

@@ -507,10 +507,12 @@ bool CourseColMgr::checkSphereCachedFullPush(f32 scale, f32 radius, KColData *da
 }
 
 /// @addr{0x807C29E4}
+/// @brief Private constructor
 CourseColMgr::CourseColMgr()
     : m_data(nullptr), m_kclScale(1.0f), m_noBounceWallInfo(nullptr), m_localMtx(nullptr) {}
 
 /// @addr{0x807C2A04}
+/// @brief Private destructor
 CourseColMgr::~CourseColMgr() {
     if (s_instance) {
         s_instance = nullptr;

@@ -23,10 +23,34 @@ public:
     };
     STATIC_ASSERT(sizeof(SData) == 0x4);
 
-    MapdataPointInfo(const SData *data);
-    ~MapdataPointInfo();
+    MapdataPointInfo(const SData *data) : m_rawData(data) {
+        EGG::RamStream stream =
+                EGG::RamStream(data, sizeof(SData) + parse<u16>(data->pointCount) * sizeof(Point));
+        read(stream);
+    }
 
-    void read(EGG::RamStream &stream);
+    ~MapdataPointInfo() = default;
+
+    void read(EGG::RamStream &stream) {
+        u16 count = stream.read_u16();
+
+        m_points = owning_span<Point>(count);
+
+        for (auto &setting : m_settings) {
+            setting = stream.read_u8();
+        }
+
+        for (auto &point : m_points) {
+            EGG::Vector3f pos;
+            pos.read(stream);
+
+            u16 settings[2];
+            settings[0] = stream.read_u16();
+            settings[1] = stream.read_u16();
+
+            point = Point(pos, {settings[0], settings[1]});
+        }
+    }
 
     [[nodiscard]] size_t pointCount() const {
         return m_points.size();
@@ -50,10 +74,29 @@ private:
 class MapdataPointInfoAccessor
     : public MapdataAccessorBase<MapdataPointInfo, MapdataPointInfo::SData> {
 public:
-    MapdataPointInfoAccessor(const MapSectionHeader *header);
-    ~MapdataPointInfoAccessor() override;
+    /// @addr{0x80515D3C}
+    MapdataPointInfoAccessor(const MapSectionHeader *header)
+        : MapdataAccessorBase<MapdataPointInfo, MapdataPointInfo::SData>(header) {
+        init(reinterpret_cast<const MapdataPointInfo::SData *>(m_sectionHeader + 1),
+                parse<u16>(m_sectionHeader->count));
+    }
 
-    void init(const MapdataPointInfo::SData *start, u16 count);
+    ~MapdataPointInfoAccessor() override = default;
+
+    void init(const MapdataPointInfo::SData *start, u16 count) {
+        if (count != 0) {
+            m_entries.reserve(count);
+        }
+
+        uintptr_t data = reinterpret_cast<uintptr_t>(start);
+
+        for (u16 i = 0; i < count; ++i) {
+            m_entries.push_back(EGG::egg_new<MapdataPointInfo>(
+                    reinterpret_cast<MapdataPointInfo::SData *>(data)));
+            data += m_entries[i]->pointCount() * sizeof(MapdataPointInfo::Point) +
+                    offsetof(MapdataPointInfo::SData, points);
+        }
+    }
 };
 
 } // namespace Kinoko::System

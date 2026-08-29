@@ -4,8 +4,10 @@
 
 namespace Kinoko::Field {
 
+/// @brief Constructor
 SphereLink::SphereLink() : m_prev(nullptr), m_next(nullptr) {}
 
+/// @brief Default destructor
 SphereLink::~SphereLink() = default;
 
 /// @addr{0x806F2074}

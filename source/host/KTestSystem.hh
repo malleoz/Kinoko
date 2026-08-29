@@ -3,7 +3,8 @@
 #include "host/KSystem.hh"
 #include "host/Option.hh"
 
-#include <egg/core/Allocator.hh>
+#include <abstract/File.hh>
+
 #include <egg/core/SceneManager.hh>
 #include <egg/math/Quat.hh>
 
@@ -17,7 +18,12 @@ namespace Kinoko {
 class KTestSystem final : public KSystem {
 public:
     void init() override;
-    void calc() override;
+
+    /// @brief Executes a frame.
+    void calc() override {
+        m_sceneMgr->calc();
+    }
+
     bool run() override;
     void parseOptions(int argc, char **argv) override;
 
@@ -142,18 +148,67 @@ private:
     void initSuite();
 
     void startNextTestCase();
-    bool popTestCase();
+
+    /// @brief Pops the current test case and frees the KRKG buffer.
+    /// @return Whether the queue still has elements remaining.
+    bool popTestCase() {
+        ASSERT(m_testCases.size() > 0);
+        m_testCases.pop();
+        EGG::egg_free(m_stream.data());
+
+        return !m_testCases.empty();
+    }
 
     bool calcTest();
     TestData findCurrentFrameEntry();
     void testFrame(const TestData &data);
 
-    bool runTest();
-    void writeTestOutput() const;
+    /// @brief Runs a single test case, and ends when the test is finished or when a desync is
+    /// found.
+    /// @details This will also accumulate results in results.txt.
+    /// @return Whether the run synchronized or desynchronized.
+    bool runTest() {
+        while (calcTest()) {
+            calc();
+        }
 
-    const TestCase &getCurrentTestCase() const;
+        // TODO: Use a system heap! std::string relies on heap allocation
+        // The heap is destroyed after this and there is no further allocation, so it's not
+        // re-disabled
+        m_sceneMgr->currentScene()->heap()->enableAllocation();
+        writeTestOutput();
+        return m_sync;
+    }
 
-    static void OnInit(System::RaceConfig *config, void *arg);
+    /// @brief Writes details about the current test to file.
+    /// @details This is designed to be cumulative across multiple tests.
+    void writeTestOutput() const {
+        std::string outStr(getCurrentTestCase().name.data());
+        outStr += "\n" + std::string(m_sync ? "1" : "0") + "\n";
+        outStr += std::to_string(getCurrentTestCase().targetFrame) + "\n";
+        outStr += std::to_string(m_frameCount) + "\n";
+        Abstract::File::Append("results.txt", outStr.c_str(), outStr.size());
+    }
+
+    /// @brief Gets the current test case.
+    /// @details In the event that there is no active test case, this gets the next test case.
+    /// @return The current test case.
+    const TestCase &getCurrentTestCase() const {
+        ASSERT(!m_testCases.empty());
+        return m_testCases.front();
+    }
+
+    /// @brief Initializes the race configuration as needed for test cases.
+    /// @param config The race configuration instance.
+    /// @param arg Unused optional argument.
+    static void OnInit(System::RaceConfig *config, void * /* arg */) {
+        size_t size;
+        u8 *rkg = Abstract::File::Load(Instance()->getCurrentTestCase().rkgPath.data(), size);
+        config->setGhost(rkg);
+        EGG::egg_free(rkg);
+
+        config->raceScenario().players[0].type = System::RaceConfig::Player::Type::Ghost;
+    }
 
     EGG::SceneManager *m_sceneMgr;
     EGG::RamStream m_stream;

@@ -38,10 +38,11 @@ void CollisionData::reset() {
 }
 
 /// @addr{0x805B7F48}
+/// @brief Constructor
 Hitbox::Hitbox() : m_bspHitbox(nullptr), m_ownsBSP(false) {}
 
 /// @addr{0x805B8480}
-/// @brief Frees the @ref BSP::Hitbox pointer if this instance owns it
+/// @brief Destructor that frees the @ref BSP::Hitbox pointer if this instance owns it
 Hitbox::~Hitbox() {
     if (m_ownsBSP) {
         EGG::egg_delete(m_bspHitbox);
@@ -83,10 +84,12 @@ void Hitbox::setLastPos(const EGG::Vector3f &scale, const EGG::Matrix34f &pose) 
 }
 
 /// @addr{0x805B82BC}
+/// @brief Constructor
 CollisionGroup::CollisionGroup() : m_hitboxScale(1.0f) {
     m_collisionData.reset();
 }
 
+/// @brief Default destructor
 CollisionGroup::~CollisionGroup() = default;
 
 /// @addr{0x805B84C0}

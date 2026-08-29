@@ -11,7 +11,7 @@ namespace Kinoko::Field {
 /// outside of the pipe, and the distance it should travel when extending.
 /// @note If param setting 3 is zero, then the game implements a fail-safe where the piranha will
 /// always remain retracted.
-class ObjectWLWallGC : public ObjectKCL {
+class ObjectWLWallGC final : public ObjectKCL {
 public:
     ObjectWLWallGC(const System::MapdataGeoObj &params);
     ~ObjectWLWallGC() override;

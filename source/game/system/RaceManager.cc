@@ -2,19 +2,8 @@
 
 #include "game/system/CourseMap.hh"
 #include "game/system/KPadDirector.hh"
-#include "game/system/RaceConfig.hh"
-#include "game/system/map/MapdataCheckPath.hh"
-#include "game/system/map/MapdataStartPoint.hh"
-
-#include "game/kart/KartObjectManager.hh"
-#include "game/kart/KartState.hh"
 
 namespace Kinoko::System {
-
-/// @addr{0x80532F88}
-void RaceManager::init() {
-    m_player.init();
-}
 
 /// @addr{0x805362DC}
 /// @todo When expanding to other gamemodes, we will need to pass the player index
@@ -31,12 +20,6 @@ void RaceManager::findKartStartPoint(EGG::Vector3f &pos, EGG::Vector3f &angles) 
         pos.setZero();
         angles = EGG::Vector3f::ex;
     }
-}
-
-/// @addr{0x80533C6C}
-void RaceManager::endPlayerRace(u32 /*idx*/) {
-    // We only have one player, so most of the logic is much simpler
-    m_stage = Stage::FinishGlobal;
 }
 
 /// @addr{0x805331B4}
@@ -228,22 +211,9 @@ MapdataCheckPoint *RaceManager::Player::calcCheckpoint(u16 checkpointId, f32 dis
     return newCheckpoint;
 }
 
-/// @addr{Inlined in 0x80534DF8}
-bool RaceManager::Player::areCheckpointsSubsequent(const MapdataCheckPoint *checkpoint,
-        u16 nextCheckpointId) const {
-    for (size_t i = 0; i < checkpoint->nextCount(); ++i) {
-        if (nextCheckpointId == checkpoint->nextPoint(i)->id()) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 /// @addr{0x80534D6C}
 void RaceManager::Player::decrementLap() {
     auto *courseMap = CourseMap::Instance();
-
     if (courseMap->getCheckPointCount() > 0 && courseMap->getCheckPathCount() > 0) {
         m_maxKcp = courseMap->checkPoint()->lastKcpType();
     } else {

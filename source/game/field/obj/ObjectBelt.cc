@@ -7,10 +7,13 @@
 namespace Kinoko::Field {
 
 /// @addr{0x807FC248}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectBelt::ObjectBelt(const System::MapdataGeoObj &params)
     : ObjectDrivable(params), m_roadVel(32.0f) {}
 
 /// @addr{0x807FC5EC}
+/// @brief Default virtual destructor
 ObjectBelt::~ObjectBelt() = default;
 
 /// @addr{0x807FC294}

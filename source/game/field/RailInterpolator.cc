@@ -5,6 +5,9 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806ED160}
+/// @brief Constructor that initializes the rail interpolator with the provided speed and rail index
+/// @param speed The default speed of the interpolator
+/// @param idx The index of the rail to interpolate along
 RailInterpolator::RailInterpolator(f32 speed, u32 idx)
     : m_railIdx(idx), m_points(RailManager::Instance()->rail(idx)->points()), m_speed(speed),
       m_currSpeed(0.0f) {
@@ -14,6 +17,7 @@ RailInterpolator::RailInterpolator(f32 speed, u32 idx)
 }
 
 /// @addr{0x806ED53C}
+/// @brief Default virtual destructor
 RailInterpolator::~RailInterpolator() = default;
 
 /// @addr{0806ED24C}
@@ -93,12 +97,17 @@ void RailInterpolator::calcNextIndices() {
 }
 
 /// @addr{0x806EFDC4}
+/// @brief Constructor that initializes the linear rail interpolator with the provided speed and
+/// rail index
+/// @param speed The default speed of the interpolator
+/// @param idx The index of the rail to interpolate along
 RailLinearInterpolator::RailLinearInterpolator(f32 speed, u32 idx) : RailInterpolator(speed, idx) {
     m_transitions = RailManager::Instance()->rail(m_railIdx)->getLinearTransitions();
     init(0.0f, 0);
 }
 
 /// @addr{0x806F094C}
+/// @brief Default virtual destructor
 RailLinearInterpolator::~RailLinearInterpolator() = default;
 
 /// @addr{0x806EFEAC}
@@ -233,6 +242,10 @@ void RailLinearInterpolator::calcNextSegment() {
 }
 
 /// @addr{0x806EE830}
+/// @brief Constructor that initializes the smooth rail interpolator with the provided speed and
+/// rail index
+/// @param speed The default speed of the interpolator
+/// @param idx The index of the rail to interpolate along
 RailSmoothInterpolator::RailSmoothInterpolator(f32 speed, u32 idx) : RailInterpolator(speed, idx) {
     auto *rail = RailManager::Instance()->rail(m_railIdx);
     m_transitions = rail->getSplineTransitions();
@@ -244,6 +257,7 @@ RailSmoothInterpolator::RailSmoothInterpolator(f32 speed, u32 idx) : RailInterpo
 }
 
 /// @addr{0x806EF944}
+/// @brief Default virtual destructor
 RailSmoothInterpolator::~RailSmoothInterpolator() = default;
 
 /// @addr{0x806EE924}

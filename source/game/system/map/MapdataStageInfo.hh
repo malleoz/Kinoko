@@ -16,9 +16,12 @@ public:
     };
     STATIC_ASSERT(sizeof(SData) == 0xc);
 
-    MapdataStageInfo(const SData *data);
+    MapdataStageInfo(const SData *data) : m_rawData(data) {
+        EGG::RamStream stream = EGG::RamStream(data, sizeof(SData));
+        read(stream);
+    }
 
-    void read(EGG::Stream &stream);
+    void read(EGG::Stream & /*stream*/) {}
 
     [[nodiscard]] u8 polePosition() const {
         return m_rawData->polePosition;
@@ -35,8 +38,13 @@ private:
 class MapdataStageInfoAccessor
     : public MapdataAccessorBase<MapdataStageInfo, MapdataStageInfo::SData> {
 public:
-    MapdataStageInfoAccessor(const MapSectionHeader *header);
-    ~MapdataStageInfoAccessor() override;
+    MapdataStageInfoAccessor(const MapSectionHeader *header)
+        : MapdataAccessorBase<MapdataStageInfo, MapdataStageInfo::SData>(header) {
+        init(reinterpret_cast<const MapdataStageInfo::SData *>(m_sectionHeader + 1),
+                parse<u16>(m_sectionHeader->count));
+    }
+
+    ~MapdataStageInfoAccessor() override = default;
 };
 
 } // namespace Kinoko::System

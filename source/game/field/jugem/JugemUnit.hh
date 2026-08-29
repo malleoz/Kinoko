@@ -11,7 +11,7 @@ namespace Kinoko::Field {
 class JugemInterp {
 public:
     /// @addr{Inlined in 0x80721514}
-    /// @brief Initializes an array of keyframes
+    /// @brief Constructor which initializes an array of keyframes
     /// @param count The number of keyframes
     JugemInterp(u32 count) {
         m_keyframes = owning_span<InterpKeyframe>(count);
@@ -20,6 +20,7 @@ public:
     }
 
     /// @addr{0x80721E64}
+    /// @brief Default destructor
     ~JugemInterp() = default;
 
     /// @addr{0x8072370C}
@@ -132,7 +133,7 @@ private:
 /// Lakitu is idle and a switch is toggled, transitions to the appropriate state and evaluates
 /// state-specific logic. For Kinoko, we only need to implement the reverse switch, which toggles
 /// Lakitu on when the player is driving backwards for 60 frames.
-class JugemUnit : public StateManager {
+class JugemUnit : private StateManager {
 public:
     JugemUnit(const Kart::KartObject *kartObj);
     ~JugemUnit();

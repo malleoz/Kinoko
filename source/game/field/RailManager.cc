@@ -5,9 +5,11 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806F0A3C}
+/// @brief Private constructor
 RailManager::RailManager() = default;
 
 /// @addr{0x806F0A98}
+/// @brief Private destructor
 RailManager::~RailManager() {
     if (s_instance) {
         s_instance = nullptr;

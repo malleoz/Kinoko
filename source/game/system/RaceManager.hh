@@ -5,8 +5,6 @@
 #include "game/system/map/MapdataCheckPoint.hh"
 #include "game/system/map/MapdataJugemPoint.hh"
 
-#include <egg/math/Vector.hh>
-
 namespace Kinoko {
 
 namespace Host {
@@ -74,8 +72,18 @@ public:
 
     private:
         MapdataCheckPoint *calcCheckpoint(u16 checkpointId, f32 distanceRatio);
+
+        /// @addr{Inlined in 0x80534DF8}
         [[nodiscard]] bool areCheckpointsSubsequent(const MapdataCheckPoint *checkpoint,
-                u16 nextCheckpointId) const;
+                u16 nextCheckpointId) const {
+            for (size_t i = 0; i < checkpoint->nextCount(); ++i) {
+                if (nextCheckpointId == checkpoint->nextPoint(i)->id()) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         void decrementLap();
         void incrementLap();
@@ -104,10 +112,18 @@ public:
         FinishGlobal = 4,
     };
 
-    void init();
+    /// @addr{0x80532F88}
+    void init() {
+        m_player.init();
+    }
 
     void findKartStartPoint(EGG::Vector3f &pos, EGG::Vector3f &angles);
-    void endPlayerRace(u32 idx);
+
+    /// @addr{0x80533C6C}
+    void endPlayerRace(u32 /*idx*/) {
+        // We only have one player, so most of the logic is much simpler
+        m_stage = Stage::FinishGlobal;
+    }
 
     void calc();
 

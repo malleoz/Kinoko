@@ -7,11 +7,13 @@
 namespace Kinoko::Item {
 
 /// @addr{0x8079754C}
+/// @brief Constructor
 KartItem::KartItem() {
     m_flags.makeAllZero();
 }
 
 /// @addr{0x8079951C}
+/// @brief Default destructor
 KartItem::~KartItem() = default;
 
 /// @addr{0x80797928}

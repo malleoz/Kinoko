@@ -5,9 +5,11 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80786ED0}
+/// @brief Constructor
 BoxColUnit::BoxColUnit() : m_pos(nullptr), m_radius(0.0f), m_range(0.0f), m_userData(nullptr) {}
 
 /// @addr{0x80786EF4}
+/// @brief Default destructor
 BoxColUnit::~BoxColUnit() = default;
 
 /// @addr{0x80786F34}
@@ -34,34 +36,6 @@ void BoxColUnit::reinsert() {
 /// @brief Searches for collisions involving this unit with the specified flags
 void BoxColUnit::search(const BoxColFlag &flag) {
     BoxColManager::Instance()->search(this, flag);
-}
-
-/// @addr{0x807856E0}
-/// @brief Creates two intangible units to represent the hard boundaries of the spatial index
-BoxColManager::BoxColManager() {
-    constexpr f32 SPATIAL_BOUND = 999999.9f;
-
-    static const EGG::Vector3f upperBound(SPATIAL_BOUND, SPATIAL_BOUND, SPATIAL_BOUND);
-    static const EGG::Vector3f lowerBound(-SPATIAL_BOUND, -SPATIAL_BOUND, -SPATIAL_BOUND);
-
-    std::iota(m_unitIDs.begin(), m_unitIDs.end(), 1);
-
-    m_unitCount = 0;
-    m_nextUnitID = 0;
-
-    clear();
-
-    BoxColFlag flags;
-    insert(1.0f, 0.0f, &upperBound, flags, nullptr)->m_flag.setBit(eBoxColFlag::Intangible);
-    insert(1.0f, 0.0f, &lowerBound, flags, nullptr)->m_flag.setBit(eBoxColFlag::Intangible);
-}
-
-/// @addr{0x807854E4}
-BoxColManager::~BoxColManager() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("BoxColManager instance not explicitly handled!");
-    }
 }
 
 /// @addr{0x8078597C}
@@ -257,6 +231,36 @@ bool BoxColManager::isSphereInSpatialCache(f32 radius, const EGG::Vector3f &pos,
     EGG::Vector3f posDiff = pos - m_cachePoint;
 
     return EGG::Mathf::abs(posDiff.x) <= radiusDiff && EGG::Mathf::abs(posDiff.z) <= radiusDiff;
+}
+
+/// @addr{0x807856E0}
+/// @brief Private constructor that creates two intangible units to represent the hard boundaries of
+/// the spatial index
+BoxColManager::BoxColManager() {
+    constexpr f32 SPATIAL_BOUND = 999999.9f;
+
+    static const EGG::Vector3f upperBound(SPATIAL_BOUND, SPATIAL_BOUND, SPATIAL_BOUND);
+    static const EGG::Vector3f lowerBound(-SPATIAL_BOUND, -SPATIAL_BOUND, -SPATIAL_BOUND);
+
+    std::iota(m_unitIDs.begin(), m_unitIDs.end(), 1);
+
+    m_unitCount = 0;
+    m_nextUnitID = 0;
+
+    clear();
+
+    BoxColFlag flags;
+    insert(1.0f, 0.0f, &upperBound, flags, nullptr)->m_flag.setBit(eBoxColFlag::Intangible);
+    insert(1.0f, 0.0f, &lowerBound, flags, nullptr)->m_flag.setBit(eBoxColFlag::Intangible);
+}
+
+/// @addr{0x807854E4}
+/// @brief Private destructor
+BoxColManager::~BoxColManager() {
+    if (s_instance) {
+        s_instance = nullptr;
+        WARN("BoxColManager instance not explicitly handled!");
+    }
 }
 
 /// @addr{0x80786134}

@@ -7,12 +7,15 @@ namespace Kinoko::Field {
 /// @brief An individual fireball within an @ref ObjectFirebar or @ref ObjectFireRing
 /// @details The owning object sets the fireball's distance from the center of the owning object and
 /// sets the angle of the fireball around the owning object's axis of rotation
-class ObjectFireball : public ObjectCollidable {
+class ObjectFireball final : public ObjectCollidable {
 public:
     /// @addr{0x80768650}
+    /// @brief Constructor
+    /// @param params The parameters used to initialize the object
     ObjectFireball(const System::MapdataGeoObj &params) : ObjectCollidable(params) {}
 
     /// @addr{0x807689AC}
+    /// @brief Default virtual destructor
     ~ObjectFireball() = default;
 
     /// @addr{0x80768728}

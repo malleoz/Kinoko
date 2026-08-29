@@ -6,23 +6,8 @@
 
 namespace Kinoko::Kart {
 
-struct StartBoostEntry {
-    f32 range;
-    s16 frames;
-};
-
-/// @addr{0x808B64F8}
-/// @memberof KartState
-static constexpr std::array<StartBoostEntry, 6> START_BOOST_ENTRIES = {{
-        {0.85f, 0},
-        {0.88f, 10},
-        {0.905f, 20},
-        {0.925f, 30},
-        {0.94f, 45},
-        {0.95f, 70},
-}};
-
 /// @addr{0x805943B4}
+/// @brief Constructor that initializes the status bits to 0, except for @ref eStatus::AutoDrift
 KartState::KartState() {
     m_status.makeAllZero();
     m_status.changeBit(inputs()->driftIsAuto(), eStatus::AutoDrift);
@@ -32,14 +17,19 @@ KartState::KartState() {
     m_startBoostIdx = 0;
 }
 
+/// @addr{0x80595CC4}
+/// @brief Default destructor
+KartState::~KartState() = default;
+
 /// @addr{0x80594594}
+/// @brief Resets the kart's state to its initial values
 void KartState::reset() {
     // In the base game, we only wipe bitfield 0, 1, 2, and 3, so we need to bring back bitfield4.
     bool isAutoDrift = m_status.onBit(eStatus::AutoDrift);
     m_status.makeAllZero().changeBit(isAutoDrift, eStatus::AutoDrift);
 
     m_airtime = 0;
-    m_top.setZero();
+    m_up.setZero();
     m_hwgTimer = 0;
     m_boostRampType = -1;
     m_jumpPadVariant = -1;
@@ -50,8 +40,18 @@ void KartState::reset() {
     m_trickableTimer = 0;
 }
 
-/// @brief Each frame, read input and save related bit flags. Also handles start boosts.
 /// @addr{0x8059487C}
+/// @brief Each frame, reads controller input and saves related bit flags. Also handles start boosts
+/// @details Ignores inputs if the kart is currently in an action, respawning, in a cannon, or over
+/// a zipper. Stores the X and Y analog stick components internally and sets the respective status
+/// bits. If not in a burnout, also updates the accelerate, brake, and drift input status bits. If
+/// the player is in the countdown phase, then it calculates the current start boost progress.
+/// @warning This function sets the @enum eStatus::DriftInput bit solely based off of whether @red
+/// System::RaceInputState::drift() is true. That is to say, this function does not explicitly
+/// require that we are also accelerating on this frame. In this scenario, the ghost will hop
+/// without moving forward. This can lead to "successful" synchronization of ghosts which could not
+/// have been created legitimately in the first place. We implement this oversight as-is since it is
+/// part of the game's original behavior.
 void KartState::calcInput() {
     const auto *raceMgr = System::RaceManager::Instance();
     if (raceMgr->isStageReached(System::RaceManager::Stage::Race)) {
@@ -98,18 +98,17 @@ void KartState::calcInput() {
     }
 }
 
-/// @brief Every frame, resets the input state and saves collision-related bit flags.
 /// @addr{0x8059474C}
+/// @brief Every frame, resets the input state and saves collision-related bit flags
 void KartState::calc() {
     resetFlags();
-
     collide()->calcBeforeRespawnAndShrink();
-
     calcCollisions();
     collide()->calcBoundingRadius();
 }
 
 /// @addr{0x80594704}
+/// @brief Resets a subset of the status flags that are re-checked every frame
 void KartState::resetFlags() {
     m_status.resetBit(eStatus::Accelerate, eStatus::Brake, eStatus::DriftInput, eStatus::HopStart,
             eStatus::AccelerateStart, eStatus::GroundStart, eStatus::StickLeft,
@@ -121,12 +120,17 @@ void KartState::resetFlags() {
     m_stickX = 0.0f;
 }
 
-/// @brief Each frame, checks for collision and saves relevant bit flags.
 /// @addr{0x80594BD4}
+/// @brief Each frame, references collisions that occurred this frame and saves relevant bit flags
 /// @details Iterates each tire to check for collision. If any tire is colliding with the floor,
-/// the "Any Wheel Collision" bit is set. If all tires are colliding with the floor, the
-/// "All Wheels Collision" bit is set. Tracks airtime and computes the appropriate
-/// top vector, given the floor normals of all colliding floor KCLs.
+/// sets @enum eStatus::AnyWheelCollision. If all tires are colliding with the floor, sets @enum
+/// eStatus::AllWheelsCollision. Handles cactus collisions that cause a spinout. Checks if the kart
+/// is touching the floor, and if the kart was mid-air from a zipper, calls @ref
+/// KartHalfPipe::end() to release a boost. Handles trick boost releases when the kart lands back on
+/// the floor.
+/// @note This function also manages the "Horizontal Wall Glitch" timer. When this timer is
+/// active, wall collision normals will be skipped over, allowing karts to pass through walls until
+/// the timer expires.
 void KartState::calcCollisions() {
     bool wasTouchingGround = m_status.onBit(eStatus::TouchingGround);
     bool wasWallCollision = m_status.onBit(eStatus::WallCollision, eStatus::Wall3Collision);
@@ -141,7 +145,7 @@ void KartState::calcCollisions() {
         }
     }
 
-    m_top.setZero();
+    m_up.setZero();
     bool softWallCollision = false;
 
     if (collide()->numSoftWallCollisions() > 0) {
@@ -169,7 +173,7 @@ void KartState::calcCollisions() {
     for (u16 tireIdx = 0; tireIdx < tireCount(); ++tireIdx) {
         const auto &colData = collisionData(tireIdx);
         if (hasFloorCollision(tirePhysics(tireIdx))) {
-            m_top += colData.floorNrm;
+            m_up += colData.floorNrm;
             trickable = trickable || colData.bTrickable;
             ++wheelCollisions;
         }
@@ -190,10 +194,11 @@ void KartState::calcCollisions() {
     CollisionData &colData = collisionData();
     if (colData.bFloor) {
         m_status.setBit(eStatus::VehicleBodyFloorCollision);
-        m_top += colData.floorNrm;
+        m_up += colData.floorNrm;
         trickable = trickable || colData.bTrickable;
 
-        if (m_status.onBit(eStatus::OverZipper) && m_status.offBit(eStatus::HalfpipeMidair)) {
+        if (m_status.onBit(eStatus::OverZipper) &&
+                m_status.offBit(eStatus::ZipperBypassInvisWall)) {
             halfPipe()->end(true);
         }
     }
@@ -224,6 +229,7 @@ void KartState::calcCollisions() {
         if (!wasWallCollision) {
             m_status.setBit(eStatus::WallCollisionStart);
 
+            // Cactus collision logic
             if (wallKclType() == COL_TYPE_SPECIAL_WALL && wallKclVariant() == 0) {
                 if (m_status.offBit(eStatus::TriggerRespawn, eStatus::InRespawn,
                             eStatus::AfterRespawn, eStatus::BeforeRespawn, eStatus::InAction,
@@ -264,8 +270,8 @@ void KartState::calcCollisions() {
 
     if (effectiveSoftWallCount > 0 || hwg) {
         m_status.setBit(eStatus::SoftWallSuspension);
-        m_softWallSpeed = wallNrm;
-        m_softWallSpeed.normalise();
+        m_softWallNrm = wallNrm;
+        m_softWallNrm.normalise();
         if (effectiveSoftWallCount > 0 && m_status.offBit(eStatus::Hop)) {
             m_status.setBit(eStatus::SoftWallUnlockRotation);
         }
@@ -296,7 +302,7 @@ void KartState::calcCollisions() {
             m_status.setBit(eStatus::AirtimeOver20);
         }
     } else {
-        m_top.normalise();
+        m_up.normalise();
 
         m_status.setBit(eStatus::TouchingGround).resetBit(eStatus::AfterCannon);
 
@@ -315,7 +321,7 @@ void KartState::calcCollisions() {
         m_status.changeBit(m_trickableTimer > 0, eStatus::Trickable);
 
         if (m_status.offBit(eStatus::JumpPad)) {
-            m_status.resetBit(eStatus::JumpPadMushroomCollision);
+            m_status.resetBit(eStatus::JumpPadMushroom);
         }
 
         if (!wasTouchingGround) {
@@ -323,7 +329,7 @@ void KartState::calcCollisions() {
         }
 
         if (m_status.onBit(eStatus::InATrick) && jump()->trickDelay() == 0) {
-            move()->landTrick();
+            move()->calcTrickBoost();
             dynamics()->setForceUpright(true);
             jump()->end();
         }
@@ -332,8 +338,8 @@ void KartState::calcCollisions() {
     }
 }
 
-/// @brief Each frame, calculates the start boost charge.
 /// @addr{0x80595918}
+/// @brief Each frame, calculates the start boost charge
 /// @details If the player is holding accelerate, the start boost charge increases using exponential
 /// decay. If the player is not holding accelerate, the start boost charge decays by 4% each frame.
 void KartState::calcStartBoost() {
@@ -351,8 +357,8 @@ void KartState::calcStartBoost() {
     m_startBoostCharge = std::max(0.0f, std::min(1.0f, m_startBoostCharge));
 }
 
-/// @brief On countdown end, calculates and applies our start boost charge.
 /// @addr{0x805959D4}
+/// @brief On countdown end, calculates and applies our start boost charge
 void KartState::calcHandleStartBoost() {
     if (System::RaceManager::Instance()->getCountdownTimer() != 0) {
         return;
@@ -381,9 +387,10 @@ void KartState::calcHandleStartBoost() {
     m_status.resetBit(eStatus::ChargeStartBoost);
 }
 
-/// @brief Applies the relevant start boost duration.
 /// @addr{0x80595AF8}
-/// @param idx The index into the start boost entries array.
+/// @brief Applies the relevant start boost duration
+/// @param idx The index into the start boost entries array
+/// @details If the player accelerated for too long, activates a burnout.
 void KartState::handleStartBoost(size_t idx) {
     if (m_startBoostIdx == std::numeric_limits<size_t>::max()) {
         move()->burnout().start();

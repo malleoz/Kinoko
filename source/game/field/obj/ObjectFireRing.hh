@@ -7,7 +7,7 @@ namespace Kinoko::Field {
 /// @brief A rotating circle of fireballs that are spaced out equally
 /// @details The first param setting is the number of fireballs. The fourth param setting is the
 /// radius of the circle. The second param setting is the angular speed of the fire ring.
-class ObjectFireRing : public ObjectCollidable {
+class ObjectFireRing final : public ObjectCollidable {
 public:
     ObjectFireRing(const System::MapdataGeoObj &params);
     ~ObjectFireRing() override;

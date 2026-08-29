@@ -9,7 +9,7 @@ namespace Kinoko::Field {
 /// the floor. The cone stops rising once it reaches the final size defined by param setting 2. The
 /// growth speed is defined by param setting 1, and the start delay before growing is defined by
 /// param setting 3.
-class ObjectSandcone : public ObjectKCL {
+class ObjectSandcone final : public ObjectKCL {
 public:
     ObjectSandcone(const System::MapdataGeoObj &params);
     ~ObjectSandcone() override;

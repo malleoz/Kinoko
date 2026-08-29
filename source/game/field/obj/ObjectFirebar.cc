@@ -3,6 +3,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x807678F4}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
 ObjectFirebar::ObjectFirebar(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), m_spokes(std::max<u32>(1, params.setting(3))),
       m_angSpeed(static_cast<f32>(static_cast<s16>(params.setting(1)))) {
@@ -29,6 +31,7 @@ ObjectFirebar::ObjectFirebar(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x807688AC}
+/// @brief Default virtual destructor
 ObjectFirebar::~ObjectFirebar() = default;
 
 /// @addr{0x80767E04}

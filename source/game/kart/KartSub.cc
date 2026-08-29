@@ -3,7 +3,6 @@
 #include "game/kart/KartCollide.hh"
 #include "game/kart/KartSuspensionPhysics.hh"
 
-#include "game/field/BoxColManager.hh"
 #include "game/field/CollisionDirector.hh"
 
 #include "game/system/RaceConfig.hh"
@@ -11,9 +10,11 @@
 
 namespace Kinoko::Kart {
 
+/// @brief Default constructor
 KartSub::KartSub() = default;
 
 /// @addr{0x80598AC8}
+/// @brief Destructor that destroys all owning subsystems
 KartSub::~KartSub() {
     EGG::egg_delete(m_collide);
     EGG::egg_delete(m_state);
@@ -22,6 +23,9 @@ KartSub::~KartSub() {
 }
 
 /// @addr{0x80595D48}
+/// @brief Creates the Kart subsystems based on if the vehicle is a bike and the provided stats
+/// @param isBike Indicates if the vehicle is a bike
+/// @param stats The stats to initialize the subsystems with
 void KartSub::createSubsystems(bool isBike, const KartParam::Stats &stats) {
     m_move = isBike ? static_cast<KartMove *>(EGG::egg_new<KartMoveBike>()) :
                       EGG::egg_new<KartMove>();
@@ -31,8 +35,8 @@ void KartSub::createSubsystems(bool isBike, const KartParam::Stats &stats) {
     m_collide = EGG::egg_new<KartCollide>();
 }
 
-/// @brief Called during static construction of KartObject to synchronize the pointers.
 /// @addr{0x80596454}
+/// @brief Called during static construction of KartObject to synchronize the pointers
 void KartSub::copyPointers(KartAccessor &pointers) {
     pointers.collide = m_collide;
     pointers.state = m_state;
@@ -41,6 +45,7 @@ void KartSub::copyPointers(KartAccessor &pointers) {
 }
 
 /// @addr{0x80595F78}
+/// @brief Initializes the Kart subsystems and resets their physics states
 void KartSub::init() {
     resetPhysics();
     body()->reset();
@@ -51,6 +56,9 @@ void KartSub::init() {
 }
 
 /// @addr{0x8059828C}
+/// @brief Creates the kart's @ref Field::BoxColUnit so it can participate in collision detection
+/// @param accessor The KartAccessor containing the boxColUnit to initialize
+/// @param object The KartObject associated with this KartSub
 void KartSub::initAABB(KartAccessor &accessor, KartObject *object) {
     f32 radius = 25.0f + collide()->boundingRadius();
     f32 hardSpeedLimit = move()->hardSpeedLimit();
@@ -60,16 +68,18 @@ void KartSub::initAABB(KartAccessor &accessor, KartObject *object) {
 }
 
 /// @addr{0x80597934}
+/// @brief Initializes the kart's pose and hitbox positions
 void KartSub::initPhysicsValues() {
     physics()->updatePose();
     collide()->setHitboxLastPos();
 }
 
 /// @addr{0x8059617C}
+/// @brief Resets the kart's physics state and suspension/tire physics to their default values
+/// @details This is called during race initialization and in the balck screen during respawns.
 void KartSub::resetPhysics() {
     physics()->reset();
-    physics()->updatePose();
-    collide()->setHitboxLastPos();
+    initPhysicsValues();
 
     for (u16 wheelIdx = 0; wheelIdx < suspCount(); ++wheelIdx) {
         suspensionPhysics(wheelIdx)->reset();
@@ -82,13 +92,13 @@ void KartSub::resetPhysics() {
     resizeAABB(1.0f);
 
     m_sideCollisionTimer = 0;
-    m_someScale = 1.0f;
+    m_suspScale = 1.0f;
     m_maxSuspOvertravel.setZero();
     m_minSuspOvertravel.setZero();
 }
 
-/// @brief The first phase of physics computations on each frame.
 /// @addr{0x80596480}
+/// @brief The first phase of physics computations on each frame.
 /// @details Handles the first-half of physics calculations. This includes input processing,
 /// subsequent position/speed updates, as well as responding to last frame's collisions.
 void KartSub::calcPass0() {
@@ -109,7 +119,7 @@ void KartSub::calcPass0() {
         resetPhysics();
         state()->reset();
         move()->setTurnParams();
-        move()->calcRespawnStart();
+        move()->calcRespawnTrigger();
     }
 
     physics()->setPos(dynamics()->pos());
@@ -129,7 +139,7 @@ void KartSub::calcPass0() {
         return;
     }
 
-    tryEndHWG();
+    calcSoftWall();
 
     dynamics()->setUp(move()->up());
 
@@ -160,9 +170,9 @@ void KartSub::calcPass0() {
     }
 }
 
-/// @brief The second phase of physics computations on each frame.
 /// @addr{0x80596CFC}
-/// Handles the second-half of physics calculations. This mainly includes
+/// @brief The second phase of physics computations on each frame.
+/// @details Handles the second-half of physics calculations. This mainly includes
 /// collision detection, as well as suspension physics.
 void KartSub::calcPass1() {
     constexpr s16 SIDE_COLLISION_TIME = 5;
@@ -187,16 +197,16 @@ void KartSub::calcPass1() {
     auto &status = KartObjectProxy::status();
 
     if (status.onBit(eStatus::SoftWallPush)) {
-        const EGG::Vector3f &softWallSpeed = state()->softWallSpeed();
+        const EGG::Vector3f &softWallNrm = state()->softWallNrm();
         f32 speedFactor = 5.0f;
         EGG::Vector3f effectiveSpeed;
 
         if (status.onBit(eStatus::HWG)) {
             speedFactor = 10.0f;
-            effectiveSpeed = softWallSpeed;
+            effectiveSpeed = softWallNrm;
         } else {
-            effectiveSpeed = softWallSpeed.perpInPlane(move()->smoothedUp(), true);
-            f32 speedDotUp = softWallSpeed.dot(move()->smoothedUp());
+            effectiveSpeed = softWallNrm.perpInPlane(move()->smoothedUp(), true);
+            f32 speedDotUp = softWallNrm.dot(move()->smoothedUp());
             if (speedDotUp < 0.0f) {
                 speedFactor += -speedDotUp * 10.0f;
             }
@@ -252,7 +262,7 @@ void KartSub::calcPass1() {
     }
 
     EGG::Vector3f forward = fullRot().rotateVector(EGG::Vector3f::ez);
-    m_someScale = std::max(scale().y, param()->stats().shrinkScale);
+    m_suspScale = std::max(scale().y, param()->stats().shrinkScale);
 
     const EGG::Vector3f gravity(0.0f, -1.3f, 0.0f);
     f32 speedFactor = 1.0f;
@@ -283,7 +293,7 @@ void KartSub::calcPass1() {
 
             for (u16 wheelIdx = 0; wheelIdx < tireCount(); ++wheelIdx) {
                 const WheelPhysics *wheelPhysics = tirePhysics(wheelIdx);
-                if (wheelPhysics->_74() == 0.0f) {
+                if (wheelPhysics->hasSuspTravel() == 0.0f) {
                     continue;
                 }
 
@@ -309,7 +319,7 @@ void KartSub::calcPass1() {
             suspensionPhysics(wheelIdx)->calcSuspension(forward, vehicleCompensation);
         }
 
-        move()->calcHopPhysics();
+        move()->calcHop();
     }
 
     if (status.onBit(eStatus::CollidingOffroad)) {
@@ -334,12 +344,19 @@ void KartSub::calcPass1() {
 }
 
 /// @addr{0x80598338}
+/// @brief Resizes the kart's @ref Field::BoxColUnit to reflect its scaled radius and movement speed
+/// @param radiusScale The scale factor to apply to the kart's collision radius
 void KartSub::resizeAABB(f32 radiusScale) {
     f32 radius = radiusScale * collisionGroup()->boundingRadius();
     boxColUnit()->resize(radius + 25.0f, move()->hardSpeedLimit());
 }
 
 /// @addr{0x805980D8}
+/// @brief Called when a floor collision occurs
+/// @param colData The collision data for the floor collision
+/// @details Updates the @ref m_floorCollisionCount, @ref m_movingObjCollisionCount, and @ref
+/// m_movingWaterCollisionCount based on the collision data. Accumulates road velocity from moving
+/// objects. Updates the kart's @ref Status flags to reflect moving water collisions.
 void KartSub::addFloor(const CollisionData &colData, bool) {
     ++m_floorCollisionCount;
 
@@ -355,15 +372,18 @@ void KartSub::addFloor(const CollisionData &colData, bool) {
         status.changeBit(colData.bMovingWaterDecaySpeed, eStatus::MovingWaterDecaySpeed);
         status.changeBit(colData.bMovingWaterDisableAccel, eStatus::DisableAcceleration);
     } else {
-        status.resetBit(eStatus::MovingWaterDecaySpeed, eStatus::DisableAcceleration,
-                eStatus::MovingWaterVertical);
+        status.resetBit(eStatus::MovingWaterDecaySpeed, eStatus::DisableAcceleration);
     }
 
     status.changeBit(colData.bMovingWaterStickyRoad, eStatus::MovingWaterStickyRoad);
 }
 
 /// @addr{0x80598744}
-void KartSub::tryEndHWG() {
+/// @brief Manages the soft wall and Horizontal Wall Glitch (HWG) status bits
+/// @details This function checks the current status bits related to soft wall and HWG conditions
+/// and updates them accordingly. It's also what's responsible for forcing the kart upright for the
+/// vertical waterfall at the end of Koopa Cape.
+void KartSub::calcSoftWall() {
     auto &status = KartObjectProxy::status();
 
     if (status.onBit(eStatus::SoftWallUnlockRotation)) {
@@ -390,6 +410,8 @@ void KartSub::tryEndHWG() {
 }
 
 /// @addr{0x80597A88}
+/// @brief Processes the moving object velocity accumulated this frame (or decays it if no
+/// collisions occurred)
 void KartSub::calcMovingObj() {
     if (m_movingObjCollisionCount == 0) {
         f32 scalar = state()->airtime() < 20 ? 1.0f : 0.9f;
@@ -401,6 +423,7 @@ void KartSub::calcMovingObj() {
 }
 
 /// @addr{0x80597D4C}
+/// @brief Processes road velocity pertaining to the moving water on Koopa Cape
 void KartSub::calcMovingWater() {
     constexpr f32 DECAY_FLOOR_SCALAR = 0.7f;
     constexpr f32 DECAY_AIR_SCALAR = 0.5f;
