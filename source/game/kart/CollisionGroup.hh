@@ -43,6 +43,7 @@ struct CollisionData {
     bool bHasRoadVel; ///< Set if colliding with moving road KCL (e.g. from @ref Field::ObjectBelt)
     bool bWallAtLeftCloser;  ///< Set if the wall collision on the left side of the kart is closer
     bool bWallAtRightCloser; ///< Set if the wall collision on the right side of the kart is closer
+    bool bMovingWaterVertical; ///< KC last turn vertical water
 };
 
 /// @brief Represents a hitbox for the kart body or a wheel.

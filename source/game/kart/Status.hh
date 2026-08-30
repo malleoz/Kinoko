@@ -108,6 +108,7 @@ enum class eStatus {
     AfterCannon = 102,            ///< The kart is being dropped off after a cannon
     ActionMidZipper = 103,        ///< The kart is in an action after being mid-air from a zipper
     ChargeStartBoost = 104,       ///< The kart is charging the start boost during race countdown
+    MovingWaterVertical = 105,    ///< KC last turn vertical water
     EndHalfPipe = 107,            ///< An effect trigger ended the half-pipe state this frame
 
     /**************

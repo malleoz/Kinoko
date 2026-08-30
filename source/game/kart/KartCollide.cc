@@ -676,6 +676,7 @@ void KartCollide::processMovingWater(CollisionData &collisionData, Field::KCLTyp
     case 3:
         collisionData.bMovingWaterDecaySpeed = true;
         collisionData.bMovingWaterDisableAccel = true;
+        collisionData.bMovingWaterVertical = true;
         break;
     default:
         collisionData.bMovingWaterMomentum = true;

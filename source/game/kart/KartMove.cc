@@ -1279,8 +1279,9 @@ void KartMove::calcVehicleSpeed() {
 
     bool water = false;
 
-    if (status.onBit(eStatus::MovingWaterDecaySpeed) && status.offBit(eStatus::MushroomBoost) &&
-            EGG::Mathf::abs(m_speed) > 5.0f) {
+    if (status.onBit(eStatus::MovingWaterVertical) ||
+            (status.onBit(eStatus::MovingWaterDecaySpeed) && status.offBit(eStatus::MushroomBoost) &&
+                    EGG::Mathf::abs(m_speed) > 5.0f)) {
         water = true;
         m_speed *= collide()->pullPath().roadSpeedDecay();
     }
