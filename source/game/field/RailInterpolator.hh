@@ -235,7 +235,7 @@ public:
 
     /// @addr{0x806EF93C}
     [[nodiscard]] f32 getCurrVel() override {
-        return m_speed;
+        return m_velocity;
     }
 
     void evalPositionAndTangentBehind(f32 t, EGG::Vector3f &currPos,
@@ -290,7 +290,7 @@ private:
     std::span<const f32> m_pathPercentages;
 
     EGG::Vector3f m_prevPos; ///< The previous frame's position, used to calculate speed
-    f32 m_speed; ///< Magnitude of the difference between the current and previous frame's position
+    f32 m_velocity; ///< Magnitude of the diff between the current and previous frame's position
 };
 
 } // namespace Kinoko::Field
