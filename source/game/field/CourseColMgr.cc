@@ -10,14 +10,14 @@ namespace Kinoko::Field {
 /// @brief Checks collision between a point and course KCL tris, writing only partial collision info
 /// @param scale Compensates for local-to-world transformation for dyanmically-sized objects
 /// @param data Pointer to the parsed tri data to perform the lookup on
-/// @param v0 The point to check
-/// @param v1 The previous position of the point, used for calculating collision depth
+/// @param pos The point to check
+/// @param prevPos The previous position of the point, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
-/// @param info Out parameter for retrieving collision information (if any)
+/// @param info Out parameter for retrieving partial collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
-bool CourseColMgr::checkPointPartial(f32 scale, KColData *data, const EGG::Vector3f &v0,
-        const EGG::Vector3f &v1, KCLTypeMask mask, CollisionInfoPartial *info,
+bool CourseColMgr::checkPointPartial(f32 scale, KColData *data, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevpos, KCLTypeMask mask, CollisionInfoPartial *info,
         KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
@@ -26,7 +26,7 @@ bool CourseColMgr::checkPointPartial(f32 scale, KColData *data, const EGG::Vecto
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupPoint(v0 * invScale, v1 * invScale, mask);
+    data->lookupPoint(pos * invScale, prevpos * invScale, mask);
 
     if (info) {
         return doCheckWithPartialInfo(data, &KColData::checkPointCollision, info, maskOut);
@@ -37,17 +37,17 @@ bool CourseColMgr::checkPointPartial(f32 scale, KColData *data, const EGG::Vecto
 
 /// @addr{0x807C2DA0}
 /// @brief Checks collision between a point and course KCL tris, writing only partial collision
-/// info. Additionally pushes the collision entry into the CollisionDirector's cache.
+/// info. Additionally pushes the collision entry into the @ref CollisionDirector cache.
 /// @param scale Compensates for local-to-world transformation for dyanmically-sized objects
 /// @param data Pointer to the parsed tri data to perform the lookup on
-/// @param v0 The point to check
-/// @param v1 The previous position of the point, used for calculating collision depth
+/// @param pos The point to check
+/// @param prevPos The previous position of the point, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
-/// @param info Out parameter for retrieving collision information (if any)
+/// @param info Out parameter for retrieving partial collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
-bool CourseColMgr::checkPointPartialPush(f32 scale, KColData *data, const EGG::Vector3f &v0,
-        const EGG::Vector3f &v1, KCLTypeMask mask, CollisionInfoPartial *info,
+bool CourseColMgr::checkPointPartialPush(f32 scale, KColData *data, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevpos, KCLTypeMask mask, CollisionInfoPartial *info,
         KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
@@ -56,7 +56,7 @@ bool CourseColMgr::checkPointPartialPush(f32 scale, KColData *data, const EGG::V
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupPoint(v0 * invScale, v1 * invScale, mask);
+    data->lookupPoint(pos * invScale, prevpos * invScale, mask);
 
     if (info) {
         return doCheckWithPartialInfoPush(data, &KColData::checkPointCollision, info, maskOut);
@@ -68,14 +68,14 @@ bool CourseColMgr::checkPointPartialPush(f32 scale, KColData *data, const EGG::V
 /// @brief Checks collision between a point and course KCL tris, writing out full collision info
 /// @param scale Compensates for local-to-world transformation for dyanmically-sized objects
 /// @param data Pointer to the parsed tri data to perform the lookup on
-/// @param v0 The point to check
-/// @param v1 The previous position of the point, used for calculating collision depth
+/// @param pos The point to check
+/// @param prevPos The previous position of the point, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
-bool CourseColMgr::checkPointFull(f32 scale, KColData *data, const EGG::Vector3f &v0,
-        const EGG::Vector3f &v1, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
+bool CourseColMgr::checkPointFull(f32 scale, KColData *data, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevpos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
     }
@@ -83,7 +83,7 @@ bool CourseColMgr::checkPointFull(f32 scale, KColData *data, const EGG::Vector3f
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupPoint(v0 * invScale, v1 * invScale, mask);
+    data->lookupPoint(pos * invScale, prevpos * invScale, mask);
 
     if (info) {
         return doCheckWithFullInfo(data, &KColData::checkPointCollision, info, maskOut);
@@ -93,17 +93,17 @@ bool CourseColMgr::checkPointFull(f32 scale, KColData *data, const EGG::Vector3f
 
 /// @addr{0x807C3554}
 /// @brief Checks collision between a point and course KCL tris, writing out full collision info.
-/// Additionally pushes the collision entry into the CollisionDirector's cache.
+/// Additionally pushes the collision entry into the @ref CollisionDirector cache.
 /// @param scale Compensates for local-to-world transformation for dyanmically-sized objects
 /// @param data Pointer to the parsed tri data to perform the lookup on
-/// @param v0 The point to check
-/// @param v1 The previous position of the point, used for calculating collision depth
+/// @param pos The point to check
+/// @param prevPos The previous position of the point, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
-bool CourseColMgr::checkPointFullPush(f32 scale, KColData *data, const EGG::Vector3f &v0,
-        const EGG::Vector3f &v1, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
+bool CourseColMgr::checkPointFullPush(f32 scale, KColData *data, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevpos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
     }
@@ -111,7 +111,7 @@ bool CourseColMgr::checkPointFullPush(f32 scale, KColData *data, const EGG::Vect
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupPoint(v0 * invScale, v1 * invScale, mask);
+    data->lookupPoint(pos * invScale, prevpos * invScale, mask);
 
     if (info) {
         return doCheckWithFullInfoPush(data, &KColData::checkPointCollision, info, maskOut);
@@ -124,14 +124,14 @@ bool CourseColMgr::checkPointFullPush(f32 scale, KColData *data, const EGG::Vect
 /// @param scale Compensates for local-to-world transformation for dyanmically-sized objects
 /// @param radius The radius of the sphere to check
 /// @param data Pointer to the parsed tri data to perform the lookup on
-/// @param v0 The position of the sphere to check
-/// @param v1 The previous position of the sphere, used for calculating collision depth
+/// @param pos The position of the sphere to check
+/// @param prevPos The previous position of the sphere, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
-/// @param info Out parameter for retrieving collision information (if any)
+/// @param info Out parameter for retrieving partial collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::checkSpherePartial(f32 scale, f32 radius, KColData *data,
-        const EGG::Vector3f &v0, const EGG::Vector3f &v1, KCLTypeMask mask,
+        const EGG::Vector3f &pos, const EGG::Vector3f &prevpos, KCLTypeMask mask,
         CollisionInfoPartial *info, KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
@@ -140,7 +140,7 @@ bool CourseColMgr::checkSpherePartial(f32 scale, f32 radius, KColData *data,
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupSphere(radius * invScale, v0 * invScale, v1 * invScale, mask);
+    data->lookupSphere(radius * invScale, pos * invScale, prevpos * invScale, mask);
 
     if (info) {
         return doCheckWithPartialInfo(data, &KColData::checkSphereCollision, info, maskOut);
@@ -150,18 +150,18 @@ bool CourseColMgr::checkSpherePartial(f32 scale, f32 radius, KColData *data,
 
 /// @addr{0x807C3B5C}
 /// @brief Checks collision between a sphere and course KCL tris, writing partial collision info.
-/// Additionally pushes the collision entry into the CollisionDirector's cache.
+/// Additionally pushes the collision entry into the @ref CollisionDirector cache.
 /// @param scale Compensates for local-to-world transformation for dyanmically-sized objects
 /// @param radius The radius of the sphere to check
 /// @param data Pointer to the parsed tri data to perform the lookup on
-/// @param v0 The position of the sphere to check
-/// @param v1 The previous position of the sphere, used for calculating collision depth
+/// @param pos The position of the sphere to check
+/// @param prevPos The previous position of the sphere, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
-/// @param info Out parameter for retrieving collision information (if any)
+/// @param info Out parameter for retrieving partial collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::checkSpherePartialPush(f32 scale, f32 radius, KColData *data,
-        const EGG::Vector3f &v0, const EGG::Vector3f &v1, KCLTypeMask mask,
+        const EGG::Vector3f &pos, const EGG::Vector3f &prevpos, KCLTypeMask mask,
         CollisionInfoPartial *info, KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
@@ -170,7 +170,7 @@ bool CourseColMgr::checkSpherePartialPush(f32 scale, f32 radius, KColData *data,
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupSphere(radius * invScale, v0 * invScale, v1 * invScale, mask);
+    data->lookupSphere(radius * invScale, pos * invScale, prevpos * invScale, mask);
 
     if (info) {
         return doCheckWithPartialInfoPush(data, &KColData::checkSphereCollision, info, maskOut);
@@ -183,14 +183,14 @@ bool CourseColMgr::checkSpherePartialPush(f32 scale, f32 radius, KColData *data,
 /// @param scale Compensates for local-to-world transformation for dyanmically-sized objects
 /// @param radius The radius of the sphere to check
 /// @param data Pointer to the parsed tri data to perform the lookup on
-/// @param v0 The position of the sphere to check
-/// @param v1 The previous position of the sphere, used for calculating collision depth
+/// @param pos The position of the sphere to check
+/// @param prevPos The previous position of the sphere, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
-bool CourseColMgr::checkSphereFull(f32 scale, f32 radius, KColData *data, const EGG::Vector3f &v0,
-        const EGG::Vector3f &v1, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
+bool CourseColMgr::checkSphereFull(f32 scale, f32 radius, KColData *data, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevpos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
     }
@@ -198,7 +198,7 @@ bool CourseColMgr::checkSphereFull(f32 scale, f32 radius, KColData *data, const 
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupSphere(radius * invScale, v0 * invScale, v1 * invScale, mask);
+    data->lookupSphere(radius * invScale, pos * invScale, prevpos * invScale, mask);
 
     if (info) {
         return doCheckWithFullInfo(data, &KColData::checkSphereCollision, info, maskOut);
@@ -208,19 +208,19 @@ bool CourseColMgr::checkSphereFull(f32 scale, f32 radius, KColData *data, const 
 
 /// @addr{0x807C3E84}
 /// @brief Checks collision between a sphere and course KCL tris, writing full collision info.
-/// Additionally pushes the collision entry into the CollisionDirector's cache.
+/// Additionally pushes the collision entry into the @ref CollisionDirector cache.
 /// @param scale Compensates for local-to-world transformation for dyanmically-sized objects
 /// @param radius The radius of the sphere to check
 /// @param data Pointer to the parsed tri data to perform the lookup on
-/// @param v0 The position of the sphere to check
-/// @param v1 The previous position of the sphere, used for calculating collision depth
+/// @param pos The position of the sphere to check
+/// @param prevPos The previous position of the sphere, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::checkSphereFullPush(f32 scale, f32 radius, KColData *data,
-        const EGG::Vector3f &v0, const EGG::Vector3f &v1, KCLTypeMask mask, CollisionInfo *info,
-        KCLTypeMask *maskOut) {
+        const EGG::Vector3f &pos, const EGG::Vector3f &prevpos, KCLTypeMask mask,
+        CollisionInfo *info, KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
     }
@@ -228,7 +228,7 @@ bool CourseColMgr::checkSphereFullPush(f32 scale, f32 radius, KColData *data,
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupSphere(radius * invScale, v0 * invScale, v1 * invScale, mask);
+    data->lookupSphere(radius * invScale, pos * invScale, prevpos * invScale, mask);
 
     if (info) {
         return doCheckWithFullInfoPush(data, &KColData::checkSphereCollision, info, maskOut);
@@ -241,14 +241,14 @@ bool CourseColMgr::checkSphereFullPush(f32 scale, f32 radius, KColData *data,
 /// local spatial cache, writing only partial collision info
 /// @param scale Compensates for local-to-world transformation for dyanmically-sized objects
 /// @param data Pointer to the parsed tri data to perform the lookup on
-/// @param v0 The point to check
-/// @param v1 The previous position of the point, used for calculating collision depth
+/// @param pos The point to check
+/// @param prevPos The previous position of the point, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
-/// @param info Out parameter for retrieving collision information (if any)
+/// @param info Out parameter for retrieving partial collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
-bool CourseColMgr::checkPointCachedPartial(f32 scale, KColData *data, const EGG::Vector3f &v0,
-        const EGG::Vector3f &v1, KCLTypeMask mask, CollisionInfoPartial *info,
+bool CourseColMgr::checkPointCachedPartial(f32 scale, KColData *data, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevpos, KCLTypeMask mask, CollisionInfoPartial *info,
         KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
@@ -257,7 +257,7 @@ bool CourseColMgr::checkPointCachedPartial(f32 scale, KColData *data, const EGG:
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupPoint(v0 * invScale, v1 * invScale, mask);
+    data->lookupPoint(pos * invScale, prevpos * invScale, mask);
 
     if (info) {
         return doCheckWithPartialInfo(data, &KColData::checkPointCollision, info, maskOut);
@@ -268,17 +268,17 @@ bool CourseColMgr::checkPointCachedPartial(f32 scale, KColData *data, const EGG:
 /// @addr{0x807C41A4}
 /// @brief Checks collision between a point and course KCL tris by using the collision director's
 /// local spatial cache, writing only partial collision info. Additionally pushes the collision
-/// entry into the CollisionDirector's cache.
+/// entry into the @ref CollisionDirector cache.
 /// @param scale Compensates for local-to-world transformation for dyanmically-sized objects
 /// @param data Pointer to the parsed tri data to perform the lookup on
-/// @param v0 The point to check
-/// @param v1 The previous position of the point, used for calculating collision depth
+/// @param pos The point to check
+/// @param prevPos The previous position of the point, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
-/// @param info Out parameter for retrieving collision information (if any)
+/// @param info Out parameter for retrieving partial collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
-bool CourseColMgr::checkPointCachedPartialPush(f32 scale, KColData *data, const EGG::Vector3f &v0,
-        const EGG::Vector3f &v1, KCLTypeMask mask, CollisionInfoPartial *info,
+bool CourseColMgr::checkPointCachedPartialPush(f32 scale, KColData *data, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevpos, KCLTypeMask mask, CollisionInfoPartial *info,
         KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
@@ -291,7 +291,7 @@ bool CourseColMgr::checkPointCachedPartialPush(f32 scale, KColData *data, const 
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupPoint(v0 * invScale, v1 * invScale, mask);
+    data->lookupPoint(pos * invScale, prevpos * invScale, mask);
 
     if (info) {
         return doCheckWithPartialInfoPush(data, &KColData::checkPointCollision, info, maskOut);
@@ -304,14 +304,14 @@ bool CourseColMgr::checkPointCachedPartialPush(f32 scale, KColData *data, const 
 /// local spatial cache, writing out full collision info
 /// @param scale Compensates for local-to-world transformation for dyanmically-sized objects
 /// @param data Pointer to the parsed tri data to perform the lookup on
-/// @param v0 The point to check
-/// @param v1 The previous position of the point, used for calculating collision depth
+/// @param pos The point to check
+/// @param prevPos The previous position of the point, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
-bool CourseColMgr::checkPointCachedFull(f32 scale, KColData *data, const EGG::Vector3f &v0,
-        const EGG::Vector3f &v1, KCLTypeMask mask, CollisionInfo *pInfo, KCLTypeMask *maskOut) {
+bool CourseColMgr::checkPointCachedFull(f32 scale, KColData *data, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevpos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
     }
@@ -323,10 +323,10 @@ bool CourseColMgr::checkPointCachedFull(f32 scale, KColData *data, const EGG::Ve
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupPoint(v0 * invScale, v1 * invScale, mask);
+    data->lookupPoint(pos * invScale, prevpos * invScale, mask);
 
-    if (pInfo) {
-        return doCheckWithFullInfo(data, &KColData::checkPointCollision, pInfo, maskOut);
+    if (info) {
+        return doCheckWithFullInfo(data, &KColData::checkPointCollision, info, maskOut);
     }
     return doCheckMaskOnly(data, &KColData::checkPointCollision, maskOut);
 }
@@ -334,17 +334,17 @@ bool CourseColMgr::checkPointCachedFull(f32 scale, KColData *data, const EGG::Ve
 /// @addr{0x807C44BC}
 /// @brief Checks collision between a point and course KCL tris by using the collision director's
 /// local spatial cache, writing out full collision info. Additionally pushes the collision entry
-/// into the CollisionDirector's cache.
+/// into the @ref CollisionDirector cache.
 /// @param scale Compensates for local-to-world transformation for dyanmically-sized objects
 /// @param data Pointer to the parsed tri data to perform the lookup on
-/// @param v0 The point to check
-/// @param v1 The previous position of the point, used for calculating collision depth
+/// @param pos The point to check
+/// @param prevPos The previous position of the point, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
-bool CourseColMgr::checkPointCachedFullPush(f32 scale, KColData *data, const EGG::Vector3f &v0,
-        const EGG::Vector3f &v1, KCLTypeMask mask, CollisionInfo *pInfo, KCLTypeMask *maskOut) {
+bool CourseColMgr::checkPointCachedFullPush(f32 scale, KColData *data, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevpos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
     }
@@ -356,10 +356,10 @@ bool CourseColMgr::checkPointCachedFullPush(f32 scale, KColData *data, const EGG
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupPoint(v0 * invScale, v1 * invScale, mask);
+    data->lookupPoint(pos * invScale, prevpos * invScale, mask);
 
-    if (pInfo) {
-        return doCheckWithFullInfoPush(data, &KColData::checkPointCollision, pInfo, maskOut);
+    if (info) {
+        return doCheckWithFullInfoPush(data, &KColData::checkPointCollision, info, maskOut);
     }
     return doCheckMaskOnlyPush(data, &KColData::checkPointCollision, maskOut);
 }
@@ -370,10 +370,10 @@ bool CourseColMgr::checkPointCachedFullPush(f32 scale, KColData *data, const EGG
 /// @param scale Compensates for local-to-world transformation for dyanmically-sized objects
 /// @param radius The radius of the sphere to check
 /// @param data Pointer to the parsed tri data to perform the lookup on
-/// @param v0 The position of the sphere to check
-/// @param v1 The previous position of the sphere, used for calculating collision depth
+/// @param pos The position of the sphere to check
+/// @param prevPos The previous position of the sphere, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
-/// @param info Out parameter for retrieving collision information (if any)
+/// @param info Out parameter for retrieving partial collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::checkSphereCachedPartial(f32 scale, f32 radius, KColData *data,
@@ -402,14 +402,14 @@ bool CourseColMgr::checkSphereCachedPartial(f32 scale, f32 radius, KColData *dat
 /// @addr{0x807C47F0}
 /// @brief Checks collision between a sphere and course KCL tris by using the collision director's
 /// local spatial cache, writing partial collision info. Additionally pushes the collision entry
-/// into the CollisionDirector's cache.
+/// into the @ref CollisionDirector cache.
 /// @param scale Compensates for local-to-world transformation for dyanmically-sized objects
 /// @param radius The radius of the sphere to check
 /// @param data Pointer to the parsed tri data to perform the lookup on
-/// @param v0 The position of the sphere to check
-/// @param v1 The previous position of the sphere, used for calculating collision depth
+/// @param pos The position of the sphere to check
+/// @param prevPos The previous position of the sphere, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
-/// @param info Out parameter for retrieving collision information (if any)
+/// @param info Out parameter for retrieving partial collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::checkSphereCachedPartialPush(f32 scale, f32 radius, KColData *data,
@@ -441,15 +441,15 @@ bool CourseColMgr::checkSphereCachedPartialPush(f32 scale, f32 radius, KColData 
 /// @param scale Compensates for local-to-world transformation for dyanmically-sized objects
 /// @param radius The radius of the sphere to check
 /// @param data Pointer to the parsed tri data to perform the lookup on
-/// @param v0 The position of the sphere to check
-/// @param v1 The previous position of the sphere, used for calculating collision depth
+/// @param pos The position of the sphere to check
+/// @param prevPos The previous position of the sphere, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::checkSphereCachedFull(f32 scale, f32 radius, KColData *data,
         const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask mask,
-        CollisionInfo *pInfo, KCLTypeMask *maskOut) {
+        CollisionInfo *info, KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
     }
@@ -463,8 +463,8 @@ bool CourseColMgr::checkSphereCachedFull(f32 scale, f32 radius, KColData *data,
     f32 invScale = 1.0f / scale;
     data->lookupSphereCached(pos * invScale, prevPos * invScale, mask, radius * invScale);
 
-    if (pInfo) {
-        return doCheckWithFullInfo(data, &KColData::checkSphereCollision, pInfo, maskOut);
+    if (info) {
+        return doCheckWithFullInfo(data, &KColData::checkSphereCollision, info, maskOut);
     }
 
     return doCheckMaskOnly(data, &KColData::checkSphereCollision, maskOut);
@@ -473,19 +473,19 @@ bool CourseColMgr::checkSphereCachedFull(f32 scale, f32 radius, KColData *data,
 /// @addr{0x807C4B40}
 /// @brief Checks collision between a sphere and course KCL tris by using the collision director's
 /// local spatial cache, writing full collision info. Additionally pushes the collision entry into
-/// the CollisionDirector's cache.
+/// the @ref CollisionDirector cache.
 /// @param scale Compensates for local-to-world transformation for dyanmically-sized objects
 /// @param radius The radius of the sphere to check
 /// @param data Pointer to the parsed tri data to perform the lookup on
-/// @param v0 The position of the sphere to check
-/// @param v1 The previous position of the sphere, used for calculating collision depth
+/// @param pos The position of the sphere to check
+/// @param prevpos The previous position of the sphere, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::checkSphereCachedFullPush(f32 scale, f32 radius, KColData *data,
         const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask mask,
-        CollisionInfo *colInfo, KCLTypeMask *maskOut) {
+        CollisionInfo *info, KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
     }
@@ -499,8 +499,8 @@ bool CourseColMgr::checkSphereCachedFullPush(f32 scale, f32 radius, KColData *da
     f32 invScale = 1.0f / scale;
     data->lookupSphereCached(pos * invScale, prevPos * invScale, mask, radius * invScale);
 
-    if (colInfo) {
-        return doCheckWithFullInfoPush(data, &KColData::checkSphereCollision, colInfo, maskOut);
+    if (info) {
+        return doCheckWithFullInfoPush(data, &KColData::checkSphereCollision, info, maskOut);
     }
 
     return doCheckMaskOnlyPush(data, &KColData::checkSphereCollision, maskOut);
@@ -529,7 +529,7 @@ CourseColMgr::~CourseColMgr() {
 /// surfaces.
 /// @param data Pointer to the parsed tri data to perform the lookup on
 /// @param collisionCheckFunc The KColData query function to call
-/// @param info Out parameter for retrieving collision information (if any)
+/// @param info Out parameter for retrieving partial collision information (if any)
 /// @param typeMask The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::doCheckWithPartialInfo(KColData *data, CollisionCheckFunc collisionCheckFunc,
@@ -575,10 +575,10 @@ bool CourseColMgr::doCheckWithPartialInfo(KColData *data, CollisionCheckFunc col
 /// @addr{0x807C2F18}
 /// @brief Calls into the provided KColData query function, accumulates soft wall collision info,
 /// accumulates the colliding base type flags, and accumulates partial collision info for solid
-/// surfaces. Additionally pushes the collision entry into the CollisionDirector's cache.
+/// surfaces. Additionally pushes the collision entry into the @ref CollisionDirector cache.
 /// @param data Pointer to the parsed tri data to perform the lookup on
 /// @param collisionCheckFunc The KColData query function to call
-/// @param info Out parameter for retrieving collision information (if any)
+/// @param info Out parameter for retrieving partialcollision information (if any)
 /// @param typeMask The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::doCheckWithPartialInfoPush(KColData *data, CollisionCheckFunc collisionCheckFunc,
@@ -628,10 +628,10 @@ bool CourseColMgr::doCheckWithPartialInfoPush(KColData *data, CollisionCheckFunc
 /// @param data Pointer to the parsed tri data to perform the lookup on
 /// @param collisionCheckFunc The KColData query function to call
 /// @param info Out parameter for retrieving collision information (if any)
-/// @param typeMask The KCL flags that were hit during the collision check (if any)
+/// @param flagsOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::doCheckWithFullInfo(KColData *data, CollisionCheckFunc collisionCheckFunc,
-        CollisionInfo *colInfo, KCLTypeMask *flagsOut) {
+        CollisionInfo *info, KCLTypeMask *flagsOut) {
     f32 dist;
     EGG::Vector3f fnrm;
     u16 attribute;
@@ -657,7 +657,7 @@ bool CourseColMgr::doCheckWithFullInfo(KColData *data, CollisionCheckFunc collis
                 *flagsOut |= kclAttributeTypeBit;
             }
             if (kclAttributeTypeBit & KCL_TYPE_SOLID_SURFACE) {
-                colInfo->update(dist, fnrm * dist, fnrm, kclAttributeTypeBit);
+                info->update(dist, fnrm * dist, fnrm, kclAttributeTypeBit);
             }
         }
 
@@ -672,14 +672,14 @@ bool CourseColMgr::doCheckWithFullInfo(KColData *data, CollisionCheckFunc collis
 /// @addr{0x807C36CC}
 /// @brief Calls into the provided KColData query function, accumulates soft wall collision info,
 /// accumulates the colliding base type flags, and accumulates full collision info for solid
-/// surfaces. Additionally pushes the collision entry into the CollisionDirector's cache.
+/// surfaces. Additionally pushes the collision entry into the @ref CollisionDirector cache.
 /// @param data Pointer to the parsed tri data to perform the lookup on
 /// @param collisionCheckFunc The KColData query function to call
 /// @param info Out parameter for retrieving collision information (if any)
-/// @param typeMask The KCL flags that were hit during the collision check (if any)
+/// @param flagsOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::doCheckWithFullInfoPush(KColData *data, CollisionCheckFunc collisionCheckFunc,
-        CollisionInfo *colInfo, KCLTypeMask *flagsOut) {
+        CollisionInfo *info, KCLTypeMask *flagsOut) {
     f32 dist;
     EGG::Vector3f fnrm;
     u16 attribute;
@@ -706,7 +706,7 @@ bool CourseColMgr::doCheckWithFullInfoPush(KColData *data, CollisionCheckFunc co
                         kclAttributeTypeBit, attribute);
             }
             if (kclAttributeTypeBit & KCL_TYPE_SOLID_SURFACE) {
-                colInfo->update(dist, fnrm * dist, fnrm, kclAttributeTypeBit);
+                info->update(dist, fnrm * dist, fnrm, kclAttributeTypeBit);
             }
         }
 
@@ -741,7 +741,7 @@ bool CourseColMgr::doCheckMaskOnly(KColData *data, CollisionCheckFunc collisionC
 }
 
 /// @brief Calls into the provided KColData query function, only accumulating the colliding base
-/// type flags. Additionally pushes the collision entry into the CollisionDirector's cache.
+/// type flags. Additionally pushes the collision entry into the @ref CollisionDirector cache.
 /// @param data Pointer to the parsed tri data to perform the lookup on
 /// @param collisionCheckFunc The KColData query function to call
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
@@ -763,6 +763,6 @@ bool CourseColMgr::doCheckMaskOnlyPush(KColData *data, CollisionCheckFunc collis
     return hasCol;
 }
 
-CourseColMgr *CourseColMgr::s_instance = nullptr; ///< @addr{0x809C3C10}
+CourseColMgr *CourseColMgr::s_instance = nullptr;
 
 } // namespace Kinoko::Field

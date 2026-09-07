@@ -10,6 +10,7 @@ namespace Kinoko::Field {
 
 /// @brief Represents the walking Chain Chomps on DS Peach Gardens
 class ObjectHwanwan final : public ObjectCollidable, private StateManager {
+    /// @brief Grants the manager class access to the Chain Chomp's state
     friend class ObjectHwanwanManager;
 
 public:
@@ -20,8 +21,10 @@ public:
     void calc() override;
 
     /// @addr{0x806EC7B8}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806EC7AC}
@@ -30,7 +33,8 @@ public:
     }
 
     /// @addr{0x806EC7A8}
-    /// @brief Does nothing since its position is enforced by @ref ObjectHwanwanManager
+    /// @copybrief ObjectBase::loadRail()
+    /// @details Does nothing since its position is enforced by @ref ObjectHwanwanManager
     void loadRail() override {}
 
     /// @addr{0x806E9CAC}
@@ -71,6 +75,7 @@ private:
 
     static constexpr f32 DIAMETER = 400.0f; ///< The diameter of the Chain Chomp's collision sphere
 
+    /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 2> STATE_ENTRIES = {{
             {StateEntry<ObjectHwanwan, &ObjectHwanwan::enterStateStub, &ObjectHwanwan::calcBounce>(
                     0)},
@@ -87,22 +92,27 @@ public:
     void init() override;
 
     /// @addr{0x806C5AC4}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         calcState();
         calcPosAndTangent();
     }
 
     /// @addr{0x806C69B8}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806C69B4}
-    /// @brief Does nothing since this is just a manager class
+    /// @copybrief ObjectBase::loadGraphics()
+    /// @details Does nothing since this is just a manager class
     void loadGraphics() override {}
 
     /// @addr{0x806C69B0}
-    /// @brief Does nothing since this is just a manager class
+    /// @copybrief ObjectBase::createCollision()
+    /// @details no-op since this is just a manager class
     void createCollision() override {}
 
 private:

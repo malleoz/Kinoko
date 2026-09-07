@@ -72,15 +72,15 @@ KartObjectManager::~KartObjectManager() {
 /// @brief Parses the scale animation data from @p driver.brres pertaining to shrinking and crushing
 void KartObjectManager::loadScaleAnimations() {
     auto *resMgr = System::ResourceManager::Instance();
-    const void *file = resMgr->getFile("driver.brres", nullptr, System::ArchiveId::Core);
-    ASSERT(file);
+    std::span<const u8> file = resMgr->getFile("driver.brres", System::ArchiveId::Core);
+    ASSERT(!file.empty());
 
     // Copy construct onto the heap
-    auto resAnmChr = Abstract::g3d::ResFile(file).resAnmChr("thunder_scale_up");
+    auto resAnmChr = Abstract::g3d::ResFile(file.data()).resAnmChr("thunder_scale_up");
     s_thunderScaleUpAnmChr = EGG::egg_new<Abstract::g3d::ResAnmChr>(resAnmChr);
-    resAnmChr = Abstract::g3d::ResFile(file).resAnmChr("thunder_scale_down");
+    resAnmChr = Abstract::g3d::ResFile(file.data()).resAnmChr("thunder_scale_down");
     s_thunderScaleDownAnmChr = EGG::egg_new<Abstract::g3d::ResAnmChr>(resAnmChr);
-    resAnmChr = Abstract::g3d::ResFile(file).resAnmChr("press_scale_up");
+    resAnmChr = Abstract::g3d::ResFile(file.data()).resAnmChr("press_scale_up");
     s_pressScaleUpAnmChr = EGG::egg_new<Abstract::g3d::ResAnmChr>(resAnmChr);
 }
 

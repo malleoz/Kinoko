@@ -8,7 +8,7 @@ namespace Kinoko::Field {
 /// @param pos The position of the sphere to check
 /// @param prevPos The previous position of the sphere, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
-/// @param info Out parameter for retrieving collision information (if any)
+/// @param info Out parameter for retrieving partial collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @param timeOffset The time offset to use for the collision check
 /// @return Whether a collision was detected
@@ -33,12 +33,12 @@ bool ObjectDrivableDirector::checkSpherePartial(f32 radius, const EGG::Vector3f 
 
 /// @addr{0x8081BD70}
 /// @brief Checks collision between a sphere and objects, writing partial collision info.
-/// Additionally pushes the collision entry into the CollisionDirector's cache.
+/// Additionally pushes the collision entry into the @ref CollisionDirector cache.
 /// @param radius The radius of the sphere to check
 /// @param pos The position of the sphere to check
 /// @param prevPos The previous position of the sphere, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
-/// @param info Out parameter for retrieving collision information (if any)
+/// @param info Out parameter for retrieving partial collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @param timeOffset The time offset to use for the collision check
 /// @return Whether a collision was detected
@@ -91,7 +91,7 @@ bool ObjectDrivableDirector::checkSphereFull(f32 radius, const EGG::Vector3f &po
 
 /// @addr{0x8081BFA0}
 /// @brief Checks collision between a sphere and objects, writing full collision info.
-/// Additionally pushes the collision entry into the CollisionDirector's cache.
+/// Additionally pushes the collision entry into the @ref CollisionDirector cache.
 /// @param radius The radius of the sphere to check
 /// @param pos The position of the sphere to check
 /// @param prevPos The previous position of the sphere, used for calculating collision depth
@@ -126,7 +126,7 @@ bool ObjectDrivableDirector::checkSphereFullPush(f32 radius, const EGG::Vector3f
 /// @param pos The position of the sphere to check
 /// @param prevPos The previous position of the sphere, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
-/// @param info Out parameter for retrieving collision information (if any)
+/// @param info Out parameter for retrieving partial collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @param timeOffset The time offset to use for the collision check
 /// @return Whether a collision was detected
@@ -157,12 +157,12 @@ bool ObjectDrivableDirector::checkSphereCachedPartial(f32 radius, const EGG::Vec
 /// @addr{0x8081C6B4}
 /// @brief Checks collision between a sphere and objects by using the @ref BoxColManager's
 /// local spatial cache, writing only partial collision info. Additionally pushes the collision
-/// entry into the CollisionDirector's cache.
+/// entry into the @ref CollisionDirector cache.
 /// @param radius The radius of the sphere to check
 /// @param pos The position of the sphere to check
 /// @param prevPos The previous position of the sphere, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
-/// @param info Out parameter for retrieving collision information (if any)
+/// @param info Out parameter for retrieving partial collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @param timeOffset The time offset to use for the collision check
 /// @return Whether a collision was detected
@@ -193,7 +193,7 @@ bool ObjectDrivableDirector::checkSphereCachedPartialPush(f32 radius, const EGG:
 /// @addr{0x8081C958}
 /// @brief Checks collision between a sphere and objects by using the @ref BoxColManager's
 /// local spatial cache, writing full collision info. Additionally pushes the collision
-/// entry into the CollisionDirector's cache.
+/// entry into the @ref CollisionDirector cache.
 /// @param radius The radius of the sphere to check
 /// @param pos The position of the sphere to check
 /// @param prevPos The previous position of the sphere, used for calculating collision depth
@@ -265,6 +265,6 @@ ObjectDrivableDirector::~ObjectDrivableDirector() {
     }
 }
 
-ObjectDrivableDirector *ObjectDrivableDirector::s_instance = nullptr; ///< @addr{0x809C4310}
+ObjectDrivableDirector *ObjectDrivableDirector::s_instance = nullptr;
 
 } // namespace Kinoko::Field

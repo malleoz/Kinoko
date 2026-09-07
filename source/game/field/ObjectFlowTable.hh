@@ -12,8 +12,8 @@ namespace Kinoko::Field {
 /// @note In the base game, the @ref ObjectDirector will construct @ref ObjectKCL objects for course
 /// objects having a collision mode of @ref CollisionMode::Ground. However, since @ref
 /// ObjectDirector::createObject() is implemented in Kinoko as a switch statement, we add an
-/// explicit case for the one object that has this collision mode: WLDokanGC (the giant pipes on GCN
-/// Waluigi Stadium).
+/// explicit case for the one object that has this collision mode: @ref ObjectId::WLDokanGC (the
+/// giant pipes on GCN Waluigi Stadium).
 enum class CollisionMode {
     None = 0,     ///< The object does not have any collision
     Sphere = 1,   ///< Maps to @ref ObjectCollisionSphere
@@ -68,8 +68,9 @@ public:
     /// the count, and obtains pointers to the two data sections
     /// @param filename The name of the file to parse (`ObjFlow.bin`)
     ObjectFlowTable(const char *filename) {
-        SFile *file = reinterpret_cast<SFile *>(System::ResourceManager::Instance()->getFile(
-                filename, nullptr, System::ArchiveId::Core));
+        const SFile *file = reinterpret_cast<const SFile *>(System::ResourceManager::Instance()
+                        ->getFile(filename, System::ArchiveId::Core)
+                        .data());
 
         m_count = parse<s16>(file->count);
         m_sets = file->sets;

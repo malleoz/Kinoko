@@ -15,6 +15,8 @@ class ObjectFlamePole;
 /// scale to effectively cause the pole to appear to erupt out of the ground. The pole erupts
 /// upwards, dips a bit, rises back up, and then descends back beneath the foot.
 class ObjectFlamePoleFoot final : public ObjectKCL, private StateManager {
+    /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
+    /// state on context switch
     friend class Host::Context;
 
 public:
@@ -24,6 +26,7 @@ public:
     void init() override;
 
     /// @addr{0x8067EF70}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         if (System::RaceManager::Instance()->timer() < m_initDelay) {
             return;
@@ -35,8 +38,10 @@ public:
     }
 
     /// @addr{0x80681590}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806814C4}
@@ -149,6 +154,7 @@ private:
     /// flame pole's scale is computed as 3 + (s_flamePoleCount % 3)
     static u32 s_flamePoleCount;
 
+    /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 6> STATE_ENTRIES = {{
             {StateEntry<ObjectFlamePoleFoot, &ObjectFlamePoleFoot::enterExpanding,
                     &ObjectFlamePoleFoot::calcStateStub>(0)},

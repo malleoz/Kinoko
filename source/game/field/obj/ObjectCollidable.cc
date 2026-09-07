@@ -31,6 +31,7 @@ ObjectCollidable::~ObjectCollidable() {
 }
 
 /// @addr{0x8081F0A0}
+/// @copybrief ObjectBase::load()
 void ObjectCollidable::load() {
     loadGraphics();
     loadAnims();
@@ -83,6 +84,7 @@ void ObjectCollidable::processKartReactions(Kart::KartObject *kartObj,
 }
 
 /// @addr{0x8081F224}
+/// @copybrief ObjectBase::createCollision()
 void ObjectCollidable::createCollision() {
     const auto &flowTable = ObjectDirector::Instance()->flowTable();
     const auto *collisionSet = flowTable.set(flowTable.slot(id()));

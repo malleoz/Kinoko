@@ -6,7 +6,7 @@ namespace Kinoko::Kart {
 
 /// @brief State management for most components of a kart's physics
 /// @details Whenever another kart class is done with their calculations, they call to this class to
-/// set the relevant variables. For example, @ref KartMove::calcAcceleration() calculates
+/// set the relevant variables. For example, @ref KartMove::calcSpeed() calculates
 /// the kart's acceleration and subsequently sets the internal velocity in this class.
 class KartDynamics {
 public:

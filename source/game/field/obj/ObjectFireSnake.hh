@@ -7,18 +7,28 @@
 
 namespace Kinoko::Field {
 
+/// @brief Represents the smaller fireballs that trail behind a @ref ObjectFireSnake
 class ObjectFireSnakeKid final : public ObjectCollidable {
 public:
-    ObjectFireSnakeKid(const System::MapdataGeoObj &params);
-    ~ObjectFireSnakeKid() override;
+    /// @addr{0x806C0D18}
+    /// @brief Constructor
+    /// @param params The parameters used to initialize the object
+    ObjectFireSnakeKid(const System::MapdataGeoObj &params) : ObjectCollidable(params) {}
+
+    /// @addr{0x806C2ACC}
+    /// @brief Default virtual destructor
+    ~ObjectFireSnakeKid() override = default;
 
     /// @addr{0x806C2B60}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 };
 
-/// @brief Represents the bouncing fire snakes on Grumble Volcano and DS Desert Hills
+/// @brief Represents the bouncing fire snakes on DS Desert Hills and is the base class for the @ref
+/// ObjectFireSnakeV objects on Grumble Volcano
 /// @details Each firesnake has two children that follow behind. The children's position is set by
 /// copying the transformation matrix of the parent snake from previous frames. @ref
 /// ObjectFireSnakeV manages its own state lifecycle, whereas @ref ObjectFireSnake instances rely on
@@ -33,8 +43,10 @@ public:
     void calc() override;
 
     /// @addr{0x806C2A5C}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     void initProjectile(const EGG::Vector3f &pos) override;
@@ -48,7 +60,7 @@ public:
     void enterDespawned();
 
     /// @addr{0x806C19E8}
-    /// @brief Runs once when the fire snake respawns
+    /// @brief Runs once when the fire snake respawns, loading the collision bounding box
     void enterFalling() {
         if (!getUnit()) {
             loadAABB(0.0f);
@@ -114,6 +126,7 @@ private:
     u16 m_fallDuration;                         ///< How long the firesnake falls from the sun
     std::array<EGG::Matrix34f, 21> m_prevTransforms; ///< The last 21 transformation matrices
 
+    /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 6> STATE_ENTRIES = {{
             {StateEntry<ObjectFireSnake, &ObjectFireSnake::enterDespawned,
                     &ObjectFireSnake::calcStateStub>(0)},

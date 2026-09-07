@@ -23,6 +23,8 @@ struct MEMList;
 namespace EGG {
 
 class Archive : Disposer {
+    /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
+    /// state on context switch
     friend class Host::Context;
 
 public:

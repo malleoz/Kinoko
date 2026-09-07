@@ -19,6 +19,7 @@ public:
     void init() override;
 
     /// @addr{0x806D0780}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         StateManager::calc();
         setPos(m_workingPos);
@@ -29,8 +30,10 @@ public:
             EGG::Vector3f &hitDepth) override;
 
     /// @addr{0x806D18EC}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     void initProjectile(const EGG::Vector3f &pos) override;
@@ -124,6 +127,7 @@ private:
     static constexpr f32 BALL_RADIUS = 50.0f;         ///< Radius of the cannonball
     static constexpr f32 INIT_BLAST_RADIUS = 1500.0f; ///< Initial radius of the explosion
 
+    /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 4> STATE_ENTRIES = {{
             {StateEntry<ObjectHeyhoBall, &ObjectHeyhoBall::enterStateStub,
                     &ObjectHeyhoBall::calcIntangible>(0)},

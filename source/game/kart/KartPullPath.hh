@@ -199,7 +199,7 @@ private:
     KartPullPathTracker m_globalTracker;   ///< The global round-robin tracker instance
     KartPullPathTracker m_regionalTracker; ///< The regional tracker instance
     f32 m_roadSpeedDecay; ///< Speed decay factor while the kart is inside the pull area
-    s16 m_areaId;         ///< The ID of the currently active @ref MapdataAreaBase
+    s16 m_areaId;         ///< The ID of the currently active @ref System::MapdataAreaBase
 };
 
 } // namespace Kinoko::Kart

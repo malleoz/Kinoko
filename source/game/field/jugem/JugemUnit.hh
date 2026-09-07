@@ -222,11 +222,16 @@ private:
     JugemInterp *m_interp;        ///< Pointer to the keyframe interpolation controller
 
     /// @brief Linearly interpolates between two vectors
+    /// @param t Interpolation factor
+    /// @param v0 Starting vector
+    /// @param v1 Ending vector
+    /// @return The interpolated vector
     [[nodiscard]] static EGG::Vector3f Interpolate(f32 t, const EGG::Vector3f &v0,
             const EGG::Vector3f &v1) {
         return v0 + (v1 - v0) * t;
     }
 
+    /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 2> STATE_ENTRIES = {{
             StateEntry<JugemUnit, &JugemUnit::enterIdle, &JugemUnit::calcIdle>(0),
             StateEntry<JugemUnit, &JugemUnit::enterReverse, &JugemUnit::calcReverse>(1),

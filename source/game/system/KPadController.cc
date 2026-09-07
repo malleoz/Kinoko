@@ -2,10 +2,48 @@
 
 namespace Kinoko::System {
 
-/// @addr{0x8051EBA8}
-KPadController::KPadController() : m_connected(false) {}
+/// @brief Default constructor
+KPadGhostButtonsStream::KPadGhostButtonsStream()
+    : currentSequence(std::numeric_limits<u16>::max()), state(2) {}
+
+/// @brief Default virtual destructor
+KPadGhostButtonsStream::~KPadGhostButtonsStream() = default;
+
+/// @addr{0x80520D4C} @addr{0x80522C5C} @addr{0x80522F40}
+/// @brief Reads the data from the corresponding tuple in the buffer.
+/// @return The input value for the current frame.
+/// @details In the base game, this is a virtual function, but no derived class overrides this
+/// function. For the purposes of Kinoko, we can devirtualize.
+u8 KPadGhostButtonsStream::readFrame() {
+    if (state != 1) {
+        return 0;
+    }
+
+    if (currentSequence == std::numeric_limits<u16>::max()) {
+        readSequenceFrames = 0;
+        currentSequence = buffer.read_u16();
+    } else {
+        if (readIsNewSequence()) {
+            readSequenceFrames = 0;
+            currentSequence = buffer.read_u16();
+        }
+    }
+
+    ++readSequenceFrames;
+
+    // In the base game, this check normally occurs before a new sequence is read. As a result, the
+    // base game does not know that it has run out of inputs until the frame that it tries to access
+    // past the last valid input. We stray from this behavior so that we can know when we are on the
+    // last frame of input.
+    if (buffer.eof() && readIsNewSequence()) {
+        state = 2;
+    }
+
+    return readVal();
+}
 
 /// @addr{0x80520730}
+/// @brief Default constructor that creates streams for the buttons, trick buttons, and analog stick
 KPadGhostController::KPadGhostController() : m_acceptingInputs(false) {
     m_buttonsStreams[0] = EGG::egg_new<KPadGhostFaceButtonsStream>();
     m_buttonsStreams[1] = EGG::egg_new<KPadGhostDirectionButtonsStream>();
@@ -13,9 +51,12 @@ KPadGhostController::KPadGhostController() : m_acceptingInputs(false) {
 }
 
 /// @addr{0x80520924}
+/// @brief Default virtual destructor
 KPadGhostController::~KPadGhostController() = default;
 
 /// @addr{0x80520998}
+/// @copydoc KPadController::reset()
+/// @param driftIsAuto Indicates whether the controller should be set to auto drift mode.
 void KPadGhostController::reset(bool driftIsAuto) {
     m_driftIsAuto = driftIsAuto;
     m_raceInputState.reset();
@@ -30,20 +71,10 @@ void KPadGhostController::reset(bool driftIsAuto) {
     m_connected = true;
 }
 
-/// @brief Reads in the raw input data section from the ghost RKG file.
 /// @addr{Inlined in 0x80521844}
-/// @details The buffer is split into three sections: face buttons, analog stick, and the D-Pad.
-/// Each section is an array of tuples, where each tuple contains the input state and the duration
-/// of that input state. This is used to minimize data consumption given that the user is not
-/// changing inputs every frame. We first read in the header of the RKG input data section as
-/// follows:
-/// Offset | Size    | Description                                         |
-///------- | ------- | --------------------------------------------------- |
-/// 0x00   | 2 bytes | Count of face button input tuples                   |
-/// 0x02   | 2 bytes | Count of analog stick input tuples                  |
-/// 0x04   | 2 bytes | Count of D-Pad input tuples                         |
-/// 0x06   | 2 bytes | Unknown. Probably padding.                          |
-/// 0x08   |         | End of header, beginning of face button input data. |
+/// @brief Splits the ghost input data sections into their associated button streams
+/// @param buffer The uncompressed input data buffer from the ghost RKG file.
+/// @param driftIsAuto True for auto transmission, false for manual.
 void KPadGhostController::readGhostBuffer(const u8 *buffer, bool driftIsAuto) {
     constexpr u32 SEQUENCE_SIZE = 0x2;
 
@@ -64,6 +95,7 @@ void KPadGhostController::readGhostBuffer(const u8 *buffer, bool driftIsAuto) {
 }
 
 /// @addr{0x80520B9C}
+/// @brief Fetches all input data from the ghost buffer streams and updates the race input state
 void KPadGhostController::calcImpl() {
     if (!m_ghostBuffer || !m_acceptingInputs) {
         return;
@@ -94,98 +126,6 @@ void KPadGhostController::calcImpl() {
         m_raceInputState.trick = Trick::None;
         break;
     }
-}
-
-RaceInputState::RaceInputState() {
-    reset();
-}
-
-/// @addr{0x8051E85C}
-void RaceInputState::reset() {
-    buttons = 0;
-    buttonsRaw = 0;
-    stick = EGG::Vector2f::zero;
-    stickXRaw = 7;
-    stickYRaw = 7;
-    trick = Trick::None;
-    trickRaw = 0;
-}
-
-/// @brief Checks if the input state is valid.
-/// @return If the input state is valid.
-bool RaceInputState::isValid() const {
-    if (!isButtonsValid()) {
-        return false;
-    }
-
-    if (!isStickValid(stick.x) || !isStickValid(stick.y)) {
-        return false;
-    }
-
-    if (!isTrickValid()) {
-        return false;
-    }
-
-    return true;
-}
-
-/// @brief Checks if the stick values are within the domain of the physics engine.
-/// @details The set of valid stick values is \f$\{\frac{x-7}{7}|0\leq x\leq 14,\in\mathbb{Z}\}\f$.
-/// It's possible for the stick input to be 8/7 with x = 15, but only with ghost controllers.
-/// @return If the stick values are valid.
-bool RaceInputState::isStickValid(f32 stick) const {
-    if (stick > 1.0f || stick < -1.0f) {
-        return false;
-    }
-
-    for (size_t i = 0; i <= 14; ++i) {
-        auto cond = stick <=> RawStickToState(i);
-        ASSERT(cond != std::partial_ordering::unordered);
-
-        if (cond == std::partial_ordering::equivalent) {
-            return true;
-        } else if (cond == std::partial_ordering::less) {
-            return false;
-        }
-    }
-
-    // This is unreachable
-    return false;
-}
-
-KPadGhostButtonsStream::KPadGhostButtonsStream()
-    : currentSequence(std::numeric_limits<u32>::max()), state(2) {}
-
-KPadGhostButtonsStream::~KPadGhostButtonsStream() = default;
-
-/// @brief Reads the data from the corresponding tuple in the buffer.
-/// @addr{0x80520D4C} @addr{0x80522C5C} @addr{0x80522F40}
-u8 KPadGhostButtonsStream::readFrame() {
-    if (state != 1) {
-        return 0;
-    }
-
-    if (currentSequence == std::numeric_limits<u32>::max()) {
-        readSequenceFrames = 0;
-        currentSequence = buffer.read_u16();
-    } else {
-        if (readIsNewSequence()) {
-            readSequenceFrames = 0;
-            currentSequence = buffer.read_u16();
-        }
-    }
-
-    ++readSequenceFrames;
-
-    // In the base game, this check normally occurs before a new sequence is read. As a result, the
-    // base game does not know that it has run out of inputs until the frame that it tries to access
-    // past the last valid input. We stray from this behavior so that we can know when we are on the
-    // last frame of input.
-    if (buffer.eof() && readIsNewSequence()) {
-        state = 2;
-    }
-
-    return readVal();
 }
 
 } // namespace Kinoko::System

@@ -20,17 +20,25 @@ public:
     void calc() override;
 
     /// @addr{0x80764A1C}
+    /// @copybrief ObjectBase::calcModel()
+    /// @details Does nothing since the holder itself does not have a visual model.
     void calcModel() override {}
 
     /// @addr{0x80764A30}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x80764A2C}
+    /// @copybrief ObjectBase::loadGraphics()
+    /// @details This is a no-op in the base game.
     void loadGraphics() override {}
 
     /// @addr{0x80764A24}
+    /// @copybrief ObjectBase::createCollision()
+    /// @details This is a no-op in the base game.
     void createCollision() override {}
 
     /// @brief Runs once when the Thwomps enter the Still state at their home position

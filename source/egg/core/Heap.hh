@@ -22,6 +22,8 @@ class ExpHeap;
 /// @brief A high-level representation of a memory heap for managing dynamic memory allocation.
 /// Interface for allocating and freeing memory blocks.
 class Heap : Disposer {
+    /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
+    /// state on context switch
     friend class Host::Context;
 
 public:

@@ -4,24 +4,24 @@ namespace Kinoko::Field {
 
 /// @addr{0x8078F320}
 /// @brief Checks collision between a sphere and course KCL and object collision, writing partial
-/// collision info. Additionally pushes the collision entry into the CollisionDirector's cache.
+/// collision info. Additionally pushes the collision entry into the @ref CollisionDirector cache.
 /// @param radius The radius of the sphere to check
 /// @param pos The position of the sphere to check
 /// @param prevPos The previous position of the sphere, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
-/// @param info Out parameter for retrieving collision information (if any)
+/// @param info Out parameter for retrieving partial collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @param timeOffset Optional time delta
 /// @return Whether a collision was detected
 bool CollisionDirector::checkSpherePartialPush(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask flags, CollisionInfoPartial *info,
-        KCLTypeMask *typeMaskOut, u32 timeOffset) {
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+        KCLTypeMask *maskOut, u32 timeOffset) {
     if (info) {
         info->bbox.setZero();
     }
 
-    if (typeMaskOut) {
-        *typeMaskOut = KCL_NONE;
+    if (maskOut) {
+        *maskOut = KCL_NONE;
     }
 
     auto *courseColMgr = CourseColMgr::Instance();
@@ -31,12 +31,12 @@ bool CollisionDirector::checkSpherePartialPush(f32 radius, const EGG::Vector3f &
         noBounceInfo->dist = std::numeric_limits<f32>::min();
     }
 
-    bool colliding = flags &&
-            courseColMgr->checkSpherePartialPush(1.0f, radius, nullptr, pos, prevPos, flags, info,
-                    typeMaskOut);
+    bool colliding = mask &&
+            courseColMgr->checkSpherePartialPush(1.0f, radius, nullptr, pos, prevPos, mask, info,
+                    maskOut);
 
     colliding |= ObjectDrivableDirector::Instance()->checkSpherePartialPush(radius, pos, prevPos,
-            flags, info, typeMaskOut, timeOffset);
+            mask, info, maskOut, timeOffset);
 
     if (colliding) {
         if (info) {
@@ -64,15 +64,15 @@ bool CollisionDirector::checkSpherePartialPush(f32 radius, const EGG::Vector3f &
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @param timeOffset Optional time delta
 /// @return Whether a collision was detected
-bool CollisionDirector::checkSphereFull(f32 radius, const EGG::Vector3f &v0,
-        const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut,
+bool CollisionDirector::checkSphereFull(f32 radius, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
         u32 timeOffset) {
-    if (pInfo) {
-        pInfo->reset();
+    if (info) {
+        info->reset();
     }
 
-    if (pFlagsOut) {
-        *pFlagsOut = KCL_NONE;
+    if (maskOut) {
+        *maskOut = KCL_NONE;
     }
 
     auto *courseColMgr = CourseColMgr::Instance();
@@ -82,15 +82,15 @@ bool CollisionDirector::checkSphereFull(f32 radius, const EGG::Vector3f &v0,
         noBounceInfo->dist = std::numeric_limits<f32>::min();
     }
 
-    bool colliding = flags &&
-            courseColMgr->checkSphereFull(1.0f, radius, nullptr, v0, v1, flags, pInfo, pFlagsOut);
+    bool colliding = mask &&
+            courseColMgr->checkSphereFull(1.0f, radius, nullptr, pos, prevPos, mask, info, maskOut);
 
-    colliding |= ObjectDrivableDirector::Instance()->checkSphereFull(radius, v0, v1, flags, pInfo,
-            pFlagsOut, timeOffset);
+    colliding |= ObjectDrivableDirector::Instance()->checkSphereFull(radius, pos, prevPos, mask,
+            info, maskOut, timeOffset);
 
     if (colliding) {
-        if (pInfo) {
-            pInfo->tangentOff = pInfo->bbox.min + pInfo->bbox.max;
+        if (info) {
+            info->tangentOff = info->bbox.min + info->bbox.max;
         }
 
         if (noBounceInfo) {
@@ -105,7 +105,7 @@ bool CollisionDirector::checkSphereFull(f32 radius, const EGG::Vector3f &v0,
 
 /// @addr{0x8078F784}
 /// @brief Checks collision between a sphere and course KCL and object collision, writing out full
-/// collision info. Additionally pushes the collision entry into the CollisionDirector's cache.
+/// collision info. Additionally pushes the collision entry into the @ref CollisionDirector cache.
 /// @param radius The radius of the sphere to check
 /// @param pos The position of the sphere to check
 /// @param prevPos The previous position of the sphere, used for calculating collision depth
@@ -114,15 +114,15 @@ bool CollisionDirector::checkSphereFull(f32 radius, const EGG::Vector3f &v0,
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @param timeOffset Optional time delta
 /// @return Whether a collision was detected
-bool CollisionDirector::checkSphereFullPush(f32 radius, const EGG::Vector3f &v0,
-        const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut,
+bool CollisionDirector::checkSphereFullPush(f32 radius, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
         u32 timeOffset) {
-    if (pInfo) {
-        pInfo->reset();
+    if (info) {
+        info->reset();
     }
 
-    if (pFlagsOut) {
-        resetCollisionEntries(pFlagsOut);
+    if (maskOut) {
+        resetCollisionEntries(maskOut);
     }
 
     auto *courseColMgr = CourseColMgr::Instance();
@@ -132,16 +132,16 @@ bool CollisionDirector::checkSphereFullPush(f32 radius, const EGG::Vector3f &v0,
         noBounceInfo->dist = std::numeric_limits<f32>::min();
     }
 
-    bool colliding = flags &&
-            courseColMgr->checkSphereFullPush(1.0f, radius, nullptr, v0, v1, flags, pInfo,
-                    pFlagsOut);
+    bool colliding = mask &&
+            courseColMgr->checkSphereFullPush(1.0f, radius, nullptr, pos, prevPos, mask, info,
+                    maskOut);
 
-    colliding |= ObjectDrivableDirector::Instance()->checkSphereFullPush(radius, v0, v1, flags,
-            pInfo, pFlagsOut, timeOffset);
+    colliding |= ObjectDrivableDirector::Instance()->checkSphereFullPush(radius, pos, prevPos, mask,
+            info, maskOut, timeOffset);
 
     if (colliding) {
-        if (pInfo) {
-            pInfo->tangentOff = pInfo->bbox.min + pInfo->bbox.max;
+        if (info) {
+            info->tangentOff = info->bbox.min + info->bbox.max;
         }
 
         if (noBounceInfo) {
@@ -161,19 +161,19 @@ bool CollisionDirector::checkSphereFullPush(f32 radius, const EGG::Vector3f &v0,
 /// @param pos The position of the sphere to check
 /// @param prevPos The previous position of the sphere, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
-/// @param info Out parameter for retrieving collision information (if any)
+/// @param info Out parameter for retrieving partial collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @param timeOffset Optional time delta
 /// @return Whether a collision was detected
 bool CollisionDirector::checkSphereCachedPartial(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask typeMask, CollisionInfoPartial *info,
-        KCLTypeMask *typeMaskOut, u32 timeOffset) {
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+        KCLTypeMask *maskOut, u32 timeOffset) {
     if (info) {
         info->bbox.setZero();
     }
 
-    if (typeMaskOut) {
-        *typeMaskOut = KCL_NONE;
+    if (maskOut) {
+        *maskOut = KCL_NONE;
     }
 
     auto *courseColMgr = CourseColMgr::Instance();
@@ -184,10 +184,10 @@ bool CollisionDirector::checkSphereCachedPartial(f32 radius, const EGG::Vector3f
     }
 
     bool colliding = courseColMgr->checkSphereCachedPartial(1.0f, radius, nullptr, pos, prevPos,
-            typeMask, info, typeMaskOut);
+            mask, info, maskOut);
 
     colliding |= ObjectDrivableDirector::Instance()->checkSphereCachedPartial(radius, pos, prevPos,
-            typeMask, info, typeMaskOut, timeOffset);
+            mask, info, maskOut, timeOffset);
 
     if (colliding) {
         if (info) {
@@ -207,24 +207,24 @@ bool CollisionDirector::checkSphereCachedPartial(f32 radius, const EGG::Vector3f
 /// @addr{0x807903BC}
 /// @brief Checks collision between a sphere and course KCL and object collision by using the
 /// collision director's local spatial cache, writing partial collision info. Additionally pushes
-/// the collision entry into the CollisionDirector's cache.
+/// the collision entry into the @ref CollisionDirector cache.
 /// @param radius The radius of the sphere to check
 /// @param pos The position of the sphere to check
 /// @param prevPos The previous position of the sphere, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
-/// @param info Out parameter for retrieving collision information (if any)
+/// @param info Out parameter for retrieving partial collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @param timeOffset Optional time delta
 /// @return Whether a collision was detected
 bool CollisionDirector::checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask typeMask, CollisionInfoPartial *info,
-        KCLTypeMask *typeMaskOut, u32 timeOffset) {
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+        KCLTypeMask *maskOut, u32 timeOffset) {
     if (info) {
         info->bbox.setZero();
     }
 
-    if (typeMaskOut) {
-        resetCollisionEntries(typeMaskOut);
+    if (maskOut) {
+        resetCollisionEntries(maskOut);
     }
 
     auto *courseColMgr = CourseColMgr::Instance();
@@ -235,10 +235,10 @@ bool CollisionDirector::checkSphereCachedPartialPush(f32 radius, const EGG::Vect
     }
 
     bool colliding = courseColMgr->checkSphereCachedPartialPush(1.0f, radius, nullptr, pos, prevPos,
-            typeMask, info, typeMaskOut);
+            mask, info, maskOut);
 
     colliding |= ObjectDrivableDirector::Instance()->checkSphereCachedPartialPush(radius, pos,
-            prevPos, typeMask, info, typeMaskOut, timeOffset);
+            prevPos, mask, info, maskOut, timeOffset);
 
     courseColMgr->clearNoBounceWallInfo();
 
@@ -248,7 +248,7 @@ bool CollisionDirector::checkSphereCachedPartialPush(f32 radius, const EGG::Vect
 /// @addr{0x807907F8}
 /// @brief Checks collision between a sphere and course KCL and object collision by using the
 /// collision director's local spatial cache, writing out full collision info. Additionally pushes
-/// the collision entry into the CollisionDirector's cache.
+/// the collision entry into the @ref CollisionDirector cache.
 /// @param radius The radius of the sphere to check
 /// @param pos The position of the sphere to check
 /// @param prevPos The previous position of the sphere, used for calculating collision depth
@@ -258,36 +258,36 @@ bool CollisionDirector::checkSphereCachedPartialPush(f32 radius, const EGG::Vect
 /// @param timeOffset Optional time delta
 /// @return Whether a collision was detected
 bool CollisionDirector::checkSphereCachedFullPush(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask typeMask, CollisionInfo *colInfo,
-        KCLTypeMask *typeMaskOut, u32 timeOffset) {
-    if (colInfo) {
-        colInfo->reset();
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
+        u32 timeOffset) {
+    if (info) {
+        info->reset();
     }
 
-    if (typeMaskOut) {
-        resetCollisionEntries(typeMaskOut);
+    if (maskOut) {
+        resetCollisionEntries(maskOut);
     }
 
     auto *courseColMgr = CourseColMgr::Instance();
-    auto *info = courseColMgr->noBounceWallInfo();
-    if (info) {
-        info->bbox.setZero();
-        info->dist = std::numeric_limits<f32>::min();
+    auto *noBounceInfo = courseColMgr->noBounceWallInfo();
+    if (noBounceInfo) {
+        noBounceInfo->bbox.setZero();
+        noBounceInfo->dist = std::numeric_limits<f32>::min();
     }
 
     bool colliding = courseColMgr->checkSphereCachedFullPush(1.0f, radius, nullptr, pos, prevPos,
-            typeMask, colInfo, typeMaskOut);
+            mask, info, maskOut);
 
     colliding |= ObjectDrivableDirector::Instance()->checkSphereCachedFullPush(radius, pos, prevPos,
-            typeMask, colInfo, typeMaskOut, timeOffset);
+            mask, info, maskOut, timeOffset);
 
     if (colliding) {
-        if (colInfo) {
-            colInfo->tangentOff = colInfo->bbox.min + colInfo->bbox.max;
-        }
-
         if (info) {
             info->tangentOff = info->bbox.min + info->bbox.max;
+        }
+
+        if (noBounceInfo) {
+            noBounceInfo->tangentOff = noBounceInfo->bbox.min + noBounceInfo->bbox.max;
         }
     }
 
@@ -351,6 +351,6 @@ CollisionDirector::~CollisionDirector() {
     CourseColMgr::DestroyInstance();
 }
 
-CollisionDirector *CollisionDirector::s_instance = nullptr; ///< @addr{0x809C2F44}
+CollisionDirector *CollisionDirector::s_instance = nullptr;
 
 } // namespace Kinoko::Field

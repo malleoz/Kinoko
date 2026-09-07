@@ -6,19 +6,74 @@
 
 namespace Kinoko::Host {
 
+/// @brief Describes the various command-line options available in Kinoko
 enum class EOption {
-    Invalid = -1,
-    Mode,
-    Suite,
-    Ghost,
-    KRKG,
-    TargetFrame,
-    Progress,
+    Invalid = -1, ///< Represents an invalid or unrecognized option
+    Suite,        ///< Runs multiple `.rkg`+`.krkg` tests
+    Ghost,        ///< Specifies a ghost `.rkg` file
+    KRKG,         ///< Specifies a `.krkg` file
+    TargetFrame,  ///< The frame at which playback should end
+    Progress,     ///< Specifies the replay count interval to log info to the output
 };
 
 namespace Option {
 
-std::optional<EOption> CheckFlag(const char *arg);
+[[nodiscard]] inline std::optional<EOption> CheckFlag(const char *arg) {
+    ASSERT(arg);
+    if (arg[0] != '-') {
+        return std::nullopt;
+    }
+
+    // Verbose flag
+    if (arg[1] == '-') {
+        const char *verbose_arg = &arg[2];
+
+        if (strcmp(verbose_arg, "suite") == 0) {
+            return EOption::Suite;
+        }
+
+        if (strcmp(verbose_arg, "ghost") == 0) {
+            return EOption::Ghost;
+        }
+
+        if (strcmp(verbose_arg, "krkg") == 0) {
+            return EOption::KRKG;
+        }
+
+        if (strcmp(verbose_arg, "framecount") == 0) {
+            return EOption::TargetFrame;
+        }
+
+        if (strcmp(verbose_arg, "progress") == 0) {
+            return EOption::Progress;
+        }
+
+        return EOption::Invalid;
+    } else {
+        switch (arg[1]) {
+        case 'S':
+        case 's':
+            return EOption::Suite;
+        case 'G':
+        case 'g':
+            return EOption::Ghost;
+        case 'K':
+        case 'k':
+            return EOption::KRKG;
+        case 'F':
+        case 'f':
+            return EOption::TargetFrame;
+        case 'P':
+        case 'p':
+            return EOption::Progress;
+        default:
+            return EOption::Invalid;
+        }
+    }
+
+    // This is unreachable
+    return std::nullopt;
+}
 
 } // namespace Option
 } // namespace Kinoko::Host

@@ -17,7 +17,7 @@ public:
 
     /// @addr{0x8056B060}
     /// @brief Called when the kart starts being crushed
-    /// @details Sets the crush state to @enum CrushState::Crush, resets the press scale to the
+    /// @details Sets the crush state to @ref CrushState::Crush, resets the press scale to the
     /// default value, resets the uncrush animation framecounter, and marks that crush updates
     /// should be performed.
     void startCrush() {
@@ -29,7 +29,7 @@ public:
 
     /// @addr{0x8056B094}
     /// @brief Called when the kart finishes being crushed
-    /// @details Sets the crush state to @enum CrushState::Uncrush, resets the uncrush animation
+    /// @details Sets the crush state to @ref CrushState::Uncrush, resets the uncrush animation
     /// framecounter, and marks that crush updates should be performed. It also sets the press
     /// scale, which will get overwritten in @ref calcCrush on the following frame. It's set here
     /// so that @ref KartMove::calcScale() can snap the kart's scale to the correct value on the

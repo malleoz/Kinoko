@@ -8,6 +8,7 @@
 #include <egg/core/Heap.hh>
 
 #include <array>
+#include <bit>
 #include <limits>
 #include <utility>
 
@@ -15,171 +16,171 @@ namespace Kinoko {
 
 /// @brief Maps between a course and its internal ID
 enum class Course {
-    Mario_Circuit = 0,
-    Moo_Moo_Meadows = 1,
-    Mushroom_Gorge = 2,
-    Grumble_Volcano = 3,
-    Toads_Factory = 4,
-    Coconut_Mall = 5,
-    DK_Summit = 6,
-    Wario_Gold_Mine = 7,
-    Luigi_Circuit = 8,
-    Daisy_Circuit = 9,
-    Moonview_Highway = 10,
-    Maple_Treeway = 11,
-    Bowsers_Castle = 12,
-    Rainbow_Road = 13,
-    Dry_Dry_Ruins = 14,
-    Koopa_Cape = 15,
-    GCN_Peach_Beach = 16,
-    GCN_Mario_Circuit = 17,
-    GCN_Waluigi_Stadium = 18,
-    GCN_DK_Mountain = 19,
-    DS_Yoshi_Falls = 20,
-    DS_Desert_Hills = 21,
-    DS_Peach_Gardens = 22,
-    DS_Delfino_Square = 23,
-    SNES_Mario_Circuit_3 = 24,
-    SNES_Ghost_Valley_2 = 25,
-    N64_Mario_Raceway = 26,
-    N64_Sherbet_Land = 27,
-    N64_Bowsers_Castle = 28,
-    N64_DKs_Jungle_Parkway = 29,
-    GBA_Bowser_Castle_3 = 30,
-    GBA_Shy_Guy_Beach = 31,
-    Delfino_Pier = 32,
-    Block_Plaza = 33,
-    Chain_Chomp_Roulette = 34,
-    Funky_Stadium = 35,
-    Thwomp_Desert = 36,
-    GCN_Cookie_Land = 37,
-    DS_Twilight_House = 38,
-    SNES_Battle_Course_4 = 39,
-    GBA_Battle_Course_3 = 40,
-    N64_Skyscraper = 41,
-    Galaxy_Colosseum = 54,
-    Win_Demo = 55,
-    Lose_Demo = 56,
-    Draw_Demo = 57,
-    Ending_Demo = 58,
+    Mario_Circuit = 0,           ///< Mario Circuit
+    Moo_Moo_Meadows = 1,         ///< Moo Moo Meadows
+    Mushroom_Gorge = 2,          ///< Mushroom Gorge
+    Grumble_Volcano = 3,         ///< Grumble Volcano
+    Toads_Factory = 4,           ///< Toad's Factory
+    Coconut_Mall = 5,            ///< Coconut Mall
+    DK_Summit = 6,               ///< DK Summit
+    Wario_Gold_Mine = 7,         ///< Wario's Gold Mine
+    Luigi_Circuit = 8,           ///< Luigi Circuit
+    Daisy_Circuit = 9,           ///< Daisy Circuit
+    Moonview_Highway = 10,       ///< Moonview Highway
+    Maple_Treeway = 11,          ///< Maple Treeway
+    Bowsers_Castle = 12,         ///< Bowser's Castle
+    Rainbow_Road = 13,           ///< Rainbow Road
+    Dry_Dry_Ruins = 14,          ///< Dry Dry Ruins
+    Koopa_Cape = 15,             ///< Koopa Cape
+    GCN_Peach_Beach = 16,        ///< GCN Peach Beach
+    GCN_Mario_Circuit = 17,      ///< GCN Mario Circuit
+    GCN_Waluigi_Stadium = 18,    ///< GCN Waluigi Stadium
+    GCN_DK_Mountain = 19,        ///< GCN DK Mountain
+    DS_Yoshi_Falls = 20,         ///< DS Yoshi Falls
+    DS_Desert_Hills = 21,        ///< DS Desert Hills
+    DS_Peach_Gardens = 22,       ///< DS Peach Gardens
+    DS_Delfino_Square = 23,      ///< DS Delfino Square
+    SNES_Mario_Circuit_3 = 24,   ///< SNES Mario Circuit 3
+    SNES_Ghost_Valley_2 = 25,    ///< SNES Ghost Valley 2
+    N64_Mario_Raceway = 26,      ///< N64 Mario Raceway
+    N64_Sherbet_Land = 27,       ///< N64 Sherbet Land
+    N64_Bowsers_Castle = 28,     ///< N64 Bowser's Castle
+    N64_DKs_Jungle_Parkway = 29, ///< N64 DK's Jungle Parkway
+    GBA_Bowser_Castle_3 = 30,    ///< GBA Bowser Castle 3
+    GBA_Shy_Guy_Beach = 31,      ///< GBA Shy Guy Beach
+    Delfino_Pier = 32,           ///< Delfino Pier
+    Block_Plaza = 33,            ///< Block Plaza
+    Chain_Chomp_Roulette = 34,   ///< Chain Chomp Roulette
+    Funky_Stadium = 35,          ///< Funky Stadium
+    Thwomp_Desert = 36,          ///< Thwomp Desert
+    GCN_Cookie_Land = 37,        ///< GCN Cookie Land
+    DS_Twilight_House = 38,      ///< DS Twilight House
+    SNES_Battle_Course_4 = 39,   ///< SNES Battle Course 4
+    GBA_Battle_Course_3 = 40,    ///< GBA Battle Course 3
+    N64_Skyscraper = 41,         ///< N64 Skyscraper
+    Galaxy_Colosseum = 54,       ///< Galaxy Colosseum
+    Win_Demo = 55,               ///< Win Demo
+    Lose_Demo = 56,              ///< Lose Demo
+    Draw_Demo = 57,              ///< Draw Demo
+    Ending_Demo = 58,            ///< Ending Demo
 };
 
 /// @brief Maps between a vehicle and its internal ID
 enum class Vehicle {
-    Standard_Kart_S = 0,
-    Standard_Kart_M = 1,
-    Standard_Kart_L = 2,
-    Baby_Booster = 3,
-    Classic_Dragster = 4,
-    Offroader = 5,
-    Mini_Beast = 6,
-    Wild_Wing = 7,
-    Flame_Flyer = 8,
-    Cheep_Charger = 9,
-    Super_Blooper = 10,
-    Piranha_Prowler = 11,
-    Tiny_Titan = 12,
-    Daytripper = 13,
-    Jetsetter = 14,
-    Blue_Falcon = 15,
-    Sprinter = 16,
-    Honeycoupe = 17,
-    Standard_Bike_S = 18,
-    Standard_Bike_M = 19,
-    Standard_Bike_L = 20,
-    Bullet_Bike = 21,
-    Mach_Bike = 22,
-    Flame_Runner = 23,
-    Bit_Bike = 24,
-    Sugarscoot = 25,
-    Wario_Bike = 26,
-    Quacker = 27,
-    Zip_Zip = 28,
-    Shooting_Star = 29,
-    Magikruiser = 30,
-    Sneakster = 31,
-    Spear = 32,
-    Jet_Bubble = 33,
-    Dolphin_Dasher = 34,
-    Phantom = 35,
-    Max = 36,
+    Standard_Kart_S = 0,  ///< Standard Kart S (light weight class)
+    Standard_Kart_M = 1,  ///< Standard Kart M (medium weight class)
+    Standard_Kart_L = 2,  ///< Standard Kart L (heavy weight class)
+    Baby_Booster = 3,     ///< Baby Booster
+    Classic_Dragster = 4, ///< Classic Dragster
+    Offroader = 5,        ///< Offroader
+    Mini_Beast = 6,       ///< Mini Beast
+    Wild_Wing = 7,        ///< Wild Wing
+    Flame_Flyer = 8,      ///< Flame Flyer
+    Cheep_Charger = 9,    ///< Cheep Charger
+    Super_Blooper = 10,   ///< Super Blooper
+    Piranha_Prowler = 11, ///< Piranha Prowler
+    Tiny_Titan = 12,      ///< Tiny Titan
+    Daytripper = 13,      ///< Daytripper
+    Jetsetter = 14,       ///< Jetsetter
+    Blue_Falcon = 15,     ///< Blue Falcon
+    Sprinter = 16,        ///< Sprinter
+    Honeycoupe = 17,      ///< Honeycoupe
+    Standard_Bike_S = 18, ///< Standard Bike S
+    Standard_Bike_M = 19, ///< Standard Bike M
+    Standard_Bike_L = 20, ///< Standard Bike L
+    Bullet_Bike = 21,     ///< Bullet Bike
+    Mach_Bike = 22,       ///< Mach Bike
+    Flame_Runner = 23,    ///< Flame Runner
+    Bit_Bike = 24,        ///< Bit Bike
+    Sugarscoot = 25,      ///< Sugarscoot
+    Wario_Bike = 26,      ///< Wario Bike
+    Quacker = 27,         ///< Quacker
+    Zip_Zip = 28,         ///< Zip Zip
+    Shooting_Star = 29,   ///< Shooting Star
+    Magikruiser = 30,     ///< Magikruiser
+    Sneakster = 31,       ///< Sneakster
+    Spear = 32,           ///< Spear
+    Jet_Bubble = 33,      ///< Jet Bubble
+    Dolphin_Dasher = 34,  ///< Dolphin Dasher
+    Phantom = 35,         ///< Phantom
+    Max = 36,             ///< The total number of vehicles
 };
 
 /// @brief Maps between a character and its internal ID
 enum class Character {
-    Mario = 0,
-    Baby_Peach = 1,
-    Waluigi = 2,
-    Bowser = 3,
-    Baby_Daisy = 4,
-    Dry_Bones = 5,
-    Baby_Mario = 6,
-    Luigi = 7,
-    Toad = 8,
-    Donkey_Kong = 9,
-    Yoshi = 10,
-    Wario = 11,
-    Baby_Luigi = 12,
-    Toadette = 13,
-    Koopa_Troopa = 14,
-    Daisy = 15,
-    Peach = 16,
-    Birdo = 17,
-    Diddy_Kong = 18,
-    King_Boo = 19,
-    Bowser_Jr = 20,
-    Dry_Bowser = 21,
-    Funky_Kong = 22,
-    Rosalina = 23,
-    Small_Mii_Outfit_A_Male = 24,
-    Small_Mii_Outfit_A_Female = 25,
-    Small_Mii_Outfit_B_Male = 26,
-    Small_Mii_Outfit_B_Female = 27,
-    Small_Mii_Outfit_C_Male = 28,
-    Small_Mii_Outfit_C_Female = 29,
-    Medium_Mii_Outfit_A_Male = 30,
-    Medium_Mii_Outfit_A_Female = 31,
-    Medium_Mii_Outfit_B_Male = 32,
-    Medium_Mii_Outfit_B_Female = 33,
-    Medium_Mii_Outfit_C_Male = 34,
-    Medium_Mii_Outfit_C_Female = 35,
-    Large_Mii_Outfit_A_Male = 36,
-    Large_Mii_Outfit_A_Female = 37,
-    Large_Mii_Outfit_B_Male = 38,
-    Large_Mii_Outfit_B_Female = 39,
-    Large_Mii_Outfit_C_Male = 40,
-    Large_Mii_Outfit_C_Female = 41,
-    Medium_Mii = 42,
-    Small_Mii = 43,
-    Large_Mii = 44,
-    Peach_Biker_Outfit = 45,
-    Daisy_Biker_Outfit = 46,
-    Rosalina_Biker_Outfit = 47,
-    Max = 48,
+    Mario = 0,                       ///< Mario
+    Baby_Peach = 1,                  ///< Baby Peach
+    Waluigi = 2,                     ///< Waluigi
+    Bowser = 3,                      ///< Bowser
+    Baby_Daisy = 4,                  ///< Baby Daisy
+    Dry_Bones = 5,                   ///< Dry Bones
+    Baby_Mario = 6,                  ///< Baby Mario
+    Luigi = 7,                       ///< Luigi
+    Toad = 8,                        ///< Toad
+    Donkey_Kong = 9,                 ///< Donkey Kong
+    Yoshi = 10,                      ///< Yoshi
+    Wario = 11,                      ///< Wario
+    Baby_Luigi = 12,                 ///< Baby Luigi
+    Toadette = 13,                   ///< Toadette
+    Koopa_Troopa = 14,               ///< Koopa Troopa
+    Daisy = 15,                      ///< Daisy
+    Peach = 16,                      ///< Peach
+    Birdo = 17,                      ///< Birdo
+    Diddy_Kong = 18,                 ///< Diddy Kong
+    King_Boo = 19,                   ///< King Boo
+    Bowser_Jr = 20,                  ///< Bowser Jr
+    Dry_Bowser = 21,                 ///< Dry Bowser
+    Funky_Kong = 22,                 ///< Funky Kong
+    Rosalina = 23,                   ///< Rosalina
+    Small_Mii_Outfit_A_Male = 24,    ///< Small Mii Outfit A Male
+    Small_Mii_Outfit_A_Female = 25,  ///< Small Mii Outfit A Female
+    Small_Mii_Outfit_B_Male = 26,    ///< Small Mii Outfit B Male
+    Small_Mii_Outfit_B_Female = 27,  ///< Small Mii Outfit B Female
+    Small_Mii_Outfit_C_Male = 28,    ///< Small Mii Outfit C Male
+    Small_Mii_Outfit_C_Female = 29,  ///< Small Mii Outfit C Female
+    Medium_Mii_Outfit_A_Male = 30,   ///< Medium Mii Outfit A Male
+    Medium_Mii_Outfit_A_Female = 31, ///< Medium Mii Outfit A Female
+    Medium_Mii_Outfit_B_Male = 32,   ///< Medium Mii Outfit B Male
+    Medium_Mii_Outfit_B_Female = 33, ///< Medium Mii Outfit B Female
+    Medium_Mii_Outfit_C_Male = 34,   ///< Medium Mii Outfit C Male
+    Medium_Mii_Outfit_C_Female = 35, ///< Medium Mii Outfit C Female
+    Large_Mii_Outfit_A_Male = 36,    ///< Large Mii Outfit A Male
+    Large_Mii_Outfit_A_Female = 37,  ///< Large Mii Outfit A Female
+    Large_Mii_Outfit_B_Male = 38,    ///< Large Mii Outfit B Male
+    Large_Mii_Outfit_B_Female = 39,  ///< Large Mii Outfit B Female
+    Large_Mii_Outfit_C_Male = 40,    ///< Large Mii Outfit C Male
+    Large_Mii_Outfit_C_Female = 41,  ///< Large Mii Outfit C Female
+    Medium_Mii = 42,                 ///< Medium Mii
+    Small_Mii = 43,                  ///< Small Mii
+    Large_Mii = 44,                  ///< Large Mii
+    Peach_Biker_Outfit = 45,         ///< Peach Biker Outfit
+    Daisy_Biker_Outfit = 46,         ///< Daisy Biker Outfit
+    Rosalina_Biker_Outfit = 47,      ///< Rosalina Biker Outfit
+    Max = 48,                        ///< The total number of characters
 };
 
 /// @brief Represents the weight class of a character or vehicle
 enum class WeightClass {
-    Invalid = -1,
-    Light = 0,
-    Medium = 1,
-    Heavy = 2,
+    Invalid = -1, ///< Represents an invalid or uninitialized weight class
+    Light = 0,    ///< Represents the light weight class
+    Medium = 1,   ///< Represents the medium weight class
+    Heavy = 2,    ///< Represents the heavy weight class
 };
 
 /// @brief Unique identifier to better categorize regions of the game's heap allocation
 enum class GroupID : u16 {
-    None = 0,
-    Race = 1,
-    Gfx = 2,
-    Kart = 3,
-    Object = 4,
-    Course = 5,
+    None = 0,   ///< Represents no specific group or an uninitialized group
+    Race = 1,   ///< Pertains to @ref System::RaceManager allocation
+    Gfx = 2,    ///< Pertains to graphics-related allocation
+    Kart = 3,   ///< Pertains to kart-related allocation
+    Object = 4, ///< Pertains to object and rail-related allocation
+    Course = 5, ///< Pertains to course data allocation
     UI = 6,
     Effect = 7,
     Sound = 8,
-    Resource = 10,
+    Resource = 10, ///< Pertains to allocations for loading file archives
     HomeMenu = 11,
-    Item = 12,
+    Item = 12, ///< Pertains to allocations for item inventory management
     Net = 13,
 };
 
@@ -370,7 +371,12 @@ static constexpr const char *VEHICLE_NAMES[36] = {
         "le_bike",
 };
 
+/// @brief Compile-time assertion that checks the machine's floating-point epsilon value is
+/// equivalent to the value expected by the base game
 STATIC_ASSERT(std::numeric_limits<f32>::epsilon() == 1.0f / 8388608.0f);
+
+/// @brief Compile-time assertion that checks the machine's native endianness is either big or
+/// little
 STATIC_ASSERT(
         std::endian::native == std::endian::big || std::endian::native == std::endian::little);
 
@@ -380,12 +386,16 @@ STATIC_ASSERT(
 template <template <typename...> class Base, typename Derived>
 struct is_derived_from_template {
 private:
+    /// @brief Overload which returns true when the template type is derived from the base class
     template <typename... Ts>
     static std::true_type test(const Base<Ts...> *);
 
+    /// @brief Overload which returns false when the template type is not derived from the base
+    /// class
     static std::false_type test(...);
 
 public:
+    /// @brief Indicates whether the Derived class is derived from the templated Base class
     static constexpr bool value = decltype(test(std::declval<Derived *>()))::value;
 };
 
@@ -405,16 +415,6 @@ template <typename T>
 concept ParseableType = std::is_integral_v<T> ||
         (std::is_floating_point_v<T> && (sizeof(T) == 4 || sizeof(T) == 8));
 
-// Form data into integral value
-template <IntegralType T>
-static inline T form(const u8 *data) {
-    T result = 0;
-    for (size_t i = 0; i < sizeof(T); ++i) {
-        result = (result << 8) | data[i];
-    }
-    return result;
-}
-
 /// @brief Consistent file parsing with byte-swappable values
 template <ParseableType T>
 static inline constexpr T parse(T val, std::endian endian = std::endian::big) {
@@ -433,6 +433,9 @@ static inline constexpr T parse(T val, std::endian endian = std::endian::big) {
 static inline constexpr u32 f2u(f32 val) {
     return std::bit_cast<u32>(val);
 }
+
+/// @brief The maximum number of players in a race
+static constexpr size_t MAX_PLAYERS = 12;
 
 /// @brief The size of memory blocks that are allocated for game heap space.
 static constexpr size_t MEMORY_SPACE_SIZE = 0x1000000;

@@ -50,8 +50,8 @@ void BoxColManager::clear() {
 }
 
 /// @addr{0x807859B0}
-/// @brief Recalculates the bounds of all active units having @enum eBoxColFlag::PermRecalcAABB or
-/// @enum eBoxColFlag::TempRecalcAABB flag, and then updates the low and high points accordingly.
+/// @brief Recalculates the bounds of all active units having @ref eBoxColFlag::PermRecalcAABB or
+/// @ref eBoxColFlag::TempRecalcAABB flag, and then updates the low and high points accordingly.
 void BoxColManager::calc() {
     clear();
 
@@ -535,6 +535,6 @@ void BoxColManager::searchImpl(f32 radius, const EGG::Vector3f &pos, const BoxCo
     }
 }
 
-BoxColManager *BoxColManager::s_instance = nullptr; ///< @addr{0x809C2EF0}
+BoxColManager *BoxColManager::s_instance = nullptr;
 
 } // namespace Kinoko::Field

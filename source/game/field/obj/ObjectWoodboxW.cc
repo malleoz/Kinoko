@@ -32,6 +32,7 @@ ObjectWoodboxW::ObjectWoodboxW(const System::MapdataGeoObj &params)
 ObjectWoodboxW::~ObjectWoodboxW() = default;
 
 /// @addr{0x8077E1A0}
+/// @copybrief ObjectBase::init()
 void ObjectWoodboxW::init() {
     ASSERT(m_mapObj);
     u32 startDelay = m_mapObj->setting(4);
@@ -44,6 +45,7 @@ void ObjectWoodboxW::init() {
 }
 
 /// @addr{0x8077E1E4}
+/// @copybrief ObjectBase::calc()
 void ObjectWoodboxW::calc() {
     if (--m_spawnTimer >= 1) {
         return;

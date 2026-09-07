@@ -53,6 +53,7 @@ ObjectChoropu::ObjectChoropu(const System::MapdataGeoObj &params)
 ObjectChoropu::~ObjectChoropu() = default;
 
 /// @addr{0x806B9BF8}
+/// @copybrief ObjectBase::init()
 void ObjectChoropu::init() {
     if (m_isStationary) {
         disableCollision();
@@ -82,6 +83,7 @@ void ObjectChoropu::init() {
 }
 
 /// @addr{0x806B9E60}
+/// @copybrief ObjectBase::calc()
 void ObjectChoropu::calc() {
     constexpr u32 START_DELAY = 300;
 

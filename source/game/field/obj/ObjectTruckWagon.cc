@@ -20,6 +20,7 @@ ObjectTruckWagonCart::ObjectTruckWagonCart(const System::MapdataGeoObj &params)
 ObjectTruckWagonCart::~ObjectTruckWagonCart() = default;
 
 /// @addr{0x806E03E8}
+/// @copybrief ObjectBase::calc()
 void ObjectTruckWagonCart::calc() {
     if (!m_active) {
         return;
@@ -31,6 +32,7 @@ void ObjectTruckWagonCart::calc() {
 }
 
 /// @addr{0x806E2624}
+/// @copybrief ObjectBase::calcCollisionTransform()
 void ObjectTruckWagonCart::calcCollisionTransform() {
     auto *col = collision();
     if (!col || !m_active) {
@@ -238,6 +240,7 @@ ObjectTruckWagon::ObjectTruckWagon(const System::MapdataGeoObj &params)
 ObjectTruckWagon::~ObjectTruckWagon() = default;
 
 /// @addr{0x806E222C}
+/// @copybrief ObjectBase::init()
 void ObjectTruckWagon::init() {
     // If this spawner is for low LOD carts, then we need to skip init since the span is empty
     if (m_carts.empty()) {
@@ -266,6 +269,7 @@ void ObjectTruckWagon::init() {
 }
 
 /// @addr{0x806E23A4}
+/// @copybrief ObjectBase::calc()
 void ObjectTruckWagon::calc() {
     if (m_carts.empty()) {
         return;

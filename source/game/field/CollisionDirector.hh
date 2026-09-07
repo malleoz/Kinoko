@@ -22,6 +22,8 @@ namespace Field {
 /// cache). Also exposes functionality to find the closest colliding entry that matches a provided
 /// @ref KCLTypeMask.
 class CollisionDirector : EGG::Disposer {
+    /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
+    /// state on context switch
     friend class Host::Context;
 
 public:
@@ -90,23 +92,24 @@ public:
     }
 
     [[nodiscard]] bool checkSpherePartialPush(f32 radius, const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask flags, CollisionInfoPartial *info,
-            KCLTypeMask *typeMaskOut, u32 timeOffset);
-    [[nodiscard]] bool checkSphereFull(f32 radius, const EGG::Vector3f &v0, const EGG::Vector3f &v1,
-            KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *pFlagsOut, u32 timeOffset);
-    [[nodiscard]] bool checkSphereFullPush(f32 radius, const EGG::Vector3f &v0,
-            const EGG::Vector3f &v1, KCLTypeMask flags, CollisionInfo *pInfo,
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+            KCLTypeMask *maskOut, u32 timeOffset);
+    [[nodiscard]] bool checkSphereFull(f32 radius, const EGG::Vector3f &pos,
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
+            KCLTypeMask *pFlagsOut, u32 timeOffset);
+    [[nodiscard]] bool checkSphereFullPush(f32 radius, const EGG::Vector3f &pos,
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
             KCLTypeMask *pFlagsOut, u32 timeOffset);
 
     [[nodiscard]] bool checkSphereCachedPartial(f32 radius, const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask typeMask, CollisionInfoPartial *info,
-            KCLTypeMask *typeMaskOut, u32 timeOffset);
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+            KCLTypeMask *maskOut, u32 timeOffset);
     [[nodiscard]] bool checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask typeMask, CollisionInfoPartial *info,
-            KCLTypeMask *typeMaskOut, u32 timeOffset);
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+            KCLTypeMask *maskOut, u32 timeOffset);
     [[nodiscard]] bool checkSphereCachedFullPush(f32 radius, const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask typeMask, CollisionInfo *info,
-            KCLTypeMask *typeMaskOut, u32 timeOffset);
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
+            KCLTypeMask *maskOut, u32 timeOffset);
 
     /// @addr{0x807BDA7C}
     /// @brief Clears the collision cache count, effectively emptying the cache

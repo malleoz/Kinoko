@@ -5,21 +5,21 @@ namespace Kinoko::Kart {
 /// @addr{0x80591C9C}
 /// @brief Clears all loaded parameter files from the manager (but does not clear them from memory)
 void KartParamFileManager::clear() {
-    m_kartParam.clear();
-    m_driverParam.clear();
-    m_bikeDispParam.clear();
-    m_kartDispParam.clear();
-    m_kartCameraParam.clear();
+    m_kartParam = {};
+    m_driverParam = {};
+    m_bikeDispParam = {};
+    m_kartDispParam = {};
+    m_kartCameraParam = {};
 }
 
 /// @addr{0x805919F4}
 /// @brief Loads and validates the kart parameter files.
 void KartParamFileManager::init() {
-    m_kartParam.load("kartParam.bin");
-    m_driverParam.load("driverParam.bin");
-    m_bikeDispParam.load("bikePartsDispParam.bin");
-    m_kartDispParam.load("kartPartsDispParam.bin");
-    m_kartCameraParam.load("kartCameraParam.bin");
+    m_kartParam = load("kartParam.bin");
+    m_driverParam = load("driverParam.bin");
+    m_bikeDispParam = load("bikePartsDispParam.bin");
+    m_kartDispParam = load("kartPartsDispParam.bin");
+    m_kartCameraParam = load("kartCameraParam.bin");
     if (!validate()) {
         PANIC("Parameter files could not be validated!");
     }
@@ -69,7 +69,7 @@ EGG::RamStream KartParamFileManager::getDriverStream(Character character) const 
         break;
     }
 
-    auto *file = reinterpret_cast<ParamFile<KartParam::Stats> *>(m_driverParam.file);
+    auto *file = reinterpret_cast<const ParamFile<KartParam::Stats> *>(m_driverParam.data());
     ASSERT(file);
     return EGG::RamStream(&file->params[idx], sizeof(KartParam::Stats));
 }
@@ -84,7 +84,7 @@ EGG::RamStream KartParamFileManager::getVehicleStream(Vehicle vehicle) const {
     }
 
     s32 idx = static_cast<s32>(vehicle);
-    auto *file = reinterpret_cast<ParamFile<KartParam::Stats> *>(m_kartParam.file);
+    auto *file = reinterpret_cast<const ParamFile<KartParam::Stats> *>(m_kartParam.data());
     ASSERT(file);
     return EGG::RamStream(&file->params[idx], sizeof(KartParam::Stats));
 }
@@ -100,12 +100,11 @@ EGG::RamStream KartParamFileManager::getHitboxStream(Vehicle vehicle) const {
     }
 
     auto *resourceManager = System::ResourceManager::Instance();
-    size_t size;
 
-    auto *file = resourceManager->getBsp(vehicle, &size);
-    ASSERT(file);
-    ASSERT(size == sizeof(BSP));
-    return EGG::RamStream(file, size);
+    std::span<const u8> file = resourceManager->getBsp(vehicle);
+    ASSERT(!file.empty());
+    ASSERT(file.size() == sizeof(BSP));
+    return EGG::RamStream(file.data(), static_cast<u32>(file.size()));
 }
 
 /// @brief Gets a @ref EGG::RamStream for the provided bike's display parameters from
@@ -123,7 +122,7 @@ EGG::RamStream KartParamFileManager::getBikeDispParamsStream(Vehicle vehicle) co
     constexpr u32 KART_MAX = 18;
     s32 idx = static_cast<s32>(vehicle) - KART_MAX;
 
-    auto *file = reinterpret_cast<ParamFile<KartParam::BikeDisp> *>(m_bikeDispParam.file);
+    auto *file = reinterpret_cast<const ParamFile<KartParam::BikeDisp> *>(m_bikeDispParam.data());
     ASSERT(file);
     return EGG::RamStream(&file->params[idx], sizeof(KartParam::BikeDisp));
 }
@@ -141,7 +140,7 @@ EGG::RamStream KartParamFileManager::getKartDispParamsStream(Vehicle vehicle) co
 
     s32 idx = static_cast<s32>(vehicle);
 
-    auto *file = reinterpret_cast<ParamFile<KartParam::KartDisp> *>(m_kartDispParam.file);
+    auto *file = reinterpret_cast<const ParamFile<KartParam::KartDisp> *>(m_kartDispParam.data());
     ASSERT(file);
     return EGG::RamStream(&file->params[idx], sizeof(KartParam::KartDisp));
 }
@@ -151,7 +150,7 @@ EGG::RamStream KartParamFileManager::getKartDispParamsStream(Vehicle vehicle) co
 /// @param character The character to get the camera parameters for
 /// @return A @ref EGG::RamStream containing the character's camera parameters
 /// @details Panics if the character's weight class is invalid and asserts that the
-/// `kartCameraParam.bin file is loaded.
+/// `kartCameraParam.bin` file is loaded.
 /**
  * @note For each weight class, there are 4 sets of camera parameters, as follows:\n
  *
@@ -173,7 +172,7 @@ EGG::RamStream KartParamFileManager::getKartCameraStream(Character character) co
         PANIC("Invalid weight class when getting KartCamera stream");
     }
 
-    auto *file = reinterpret_cast<KartParam::KartCameraParam *>(m_kartCameraParam.file);
+    auto *file = reinterpret_cast<const KartParam::KartCameraParam *>(m_kartCameraParam.data());
     ASSERT(file);
 
     // We skip 1 to get 16:9
@@ -201,55 +200,57 @@ KartParamFileManager::~KartParamFileManager() {
 /// the number of entries in each file.
 bool KartParamFileManager::validate() const {
     // Validate kartParam.bin
-    if (!m_kartParam.file || m_kartParam.size == 0) {
+    if (m_kartParam.empty()) {
         return false;
     }
 
-    auto *kartFile = reinterpret_cast<ParamFile<KartParam::Stats> *>(m_kartParam.file);
-    if (m_kartParam.size !=
+    auto *kartFile = reinterpret_cast<const ParamFile<KartParam::Stats> *>(m_kartParam.data());
+    if (m_kartParam.size() !=
             parse<u32>(kartFile->count) * sizeof(KartParam::Stats) +
                     sizeof(decltype(kartFile->count))) {
         return false;
     }
 
     // Validate driverParam.bin
-    if (!m_driverParam.file || m_driverParam.size == 0) {
+    if (m_driverParam.empty()) {
         return false;
     }
 
-    auto *driverFile = reinterpret_cast<ParamFile<KartParam::Stats> *>(m_driverParam.file);
-    if (m_driverParam.size !=
+    auto *driverFile = reinterpret_cast<const ParamFile<KartParam::Stats> *>(m_driverParam.data());
+    if (m_driverParam.size() !=
             parse<u32>(driverFile->count) * sizeof(KartParam::Stats) +
                     sizeof(decltype(driverFile->count))) {
         return false;
     }
 
     // Validate bikePartsDispParam.bin
-    if (!m_bikeDispParam.file || m_bikeDispParam.size == 0) {
+    if (m_bikeDispParam.empty()) {
         return false;
     }
 
-    auto *bikeDispFile = reinterpret_cast<ParamFile<KartParam::BikeDisp> *>(m_bikeDispParam.file);
-    if (m_bikeDispParam.size !=
+    auto *bikeDispFile =
+            reinterpret_cast<const ParamFile<KartParam::BikeDisp> *>(m_bikeDispParam.data());
+    if (m_bikeDispParam.size() !=
             parse<u32>(bikeDispFile->count) * sizeof(KartParam::BikeDisp) +
                     sizeof(decltype(bikeDispFile->count))) {
         return false;
     }
 
     // Validate kartPartsDispParam.bin
-    if (!m_kartDispParam.file || m_kartDispParam.size == 0) {
+    if (m_kartDispParam.empty()) {
         return false;
     }
 
-    auto *kartDispFile = reinterpret_cast<ParamFile<KartParam::KartDisp> *>(m_kartDispParam.file);
-    if (m_kartDispParam.size !=
+    auto *kartDispFile =
+            reinterpret_cast<const ParamFile<KartParam::KartDisp> *>(m_kartDispParam.data());
+    if (m_kartDispParam.size() !=
             parse<u32>(kartDispFile->count) * sizeof(KartParam::KartDisp) +
                     sizeof(decltype(kartDispFile->count))) {
         return false;
     }
 
     // Validate kartCameraParam.bin
-    if (!m_kartCameraParam.file || m_kartCameraParam.size == 0) {
+    if (m_kartCameraParam.empty()) {
         return false;
     }
 

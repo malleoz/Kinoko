@@ -19,9 +19,9 @@ KartReject::~KartReject() = default;
 /// @details This function has two different branches. The first branch involves checking if a
 /// rejection should actually be applied to the kart. This is done by comparing the kart's up vector
 /// against its last direction to see if it is traveling upwards along the reject road. If so, it
-/// sets the @enum eStatus::RejectRoadTrigger flag to indicate that a rejection should be applied.
+/// sets the @ref eStatus::RejectRoadTrigger flag to indicate that a rejection should be applied.
 /// In doing so, it also computes in what direction (left or right) the rejection should be applied.
-/// Once @enum eStatus::RejectRoadTrigger is set, the second branch of this function updates the
+/// Once @ref eStatus::RejectRoadTrigger is set, the second branch of this function updates the
 /// kart's rotation and calls @ref calcRejection to apply the rejection on the kart's position.
 void KartReject::calc() {
     auto &status = KartObjectProxy::status();

@@ -21,6 +21,7 @@ ObjectPenguinS::ObjectPenguinS(const System::MapdataGeoObj &params) : ObjectPeng
 ObjectPenguinS::~ObjectPenguinS() = default;
 
 /// @addr{0x80776198}
+/// @copybrief ObjectBase::calc()
 void ObjectPenguinS::calc() {
     switch (m_state) {
     case State::Walk:
@@ -42,6 +43,8 @@ void ObjectPenguinS::calc() {
     }
 }
 
+/// @addr{0x8077739C}
+/// @copybrief ObjectBase::loadAnims()
 void ObjectPenguinS::loadAnims() {
     std::array<const char *, 4> names = {{
             "walk",

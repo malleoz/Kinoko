@@ -16,6 +16,7 @@ public:
     ~ObjectPakkunF() override;
 
     /// @addr{0x807743E4}
+    /// @copybrief ObjectBase::init()
     void init() override {
         m_state = State::Wait;
         m_waitFrames = m_waitDuration;
@@ -26,8 +27,10 @@ public:
     void calc() override;
 
     /// @addr{0x807754F4}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     void loadAnims() override;
@@ -48,7 +51,7 @@ private:
     };
 
     /// @addr{0x80774A00}
-    /// @briefs Runs every frame when the piranha is idle
+    /// @brief Runs every frame when the piranha is idle
     /// @details When the the wait timer reaches 0, the piranha will enter the attack state.
     void calcWait() {
         if (--m_waitFrames == 0) {

@@ -13,6 +13,7 @@ ObjectDossunSyuukai::ObjectDossunSyuukai(const System::MapdataGeoObj &params)
 ObjectDossunSyuukai::~ObjectDossunSyuukai() = default;
 
 /// @addr{0x80760C5C}
+/// @copybrief ObjectBase::calc()
 void ObjectDossunSyuukai::calc() {
     m_touchingGround = false;
 

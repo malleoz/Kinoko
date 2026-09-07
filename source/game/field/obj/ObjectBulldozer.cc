@@ -24,6 +24,7 @@ ObjectBulldozer::ObjectBulldozer(const System::MapdataGeoObj &params)
 ObjectBulldozer::~ObjectBulldozer() = default;
 
 /// @addr{0x807FDC50}
+/// @copybrief ObjectBase::calc()
 void ObjectBulldozer::calc() {
     u32 timer = System::RaceManager::Instance()->timer();
     f32 posOffset = calcPosOffset(m_timeOffset + timer);

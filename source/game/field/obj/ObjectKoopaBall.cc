@@ -19,6 +19,7 @@ ObjectKoopaBall::~ObjectKoopaBall() {
 }
 
 /// @addr{0x807703D0}
+/// @copybrief ObjectBase::init()
 /// @details Initializes the rail velocity, position, and collision scale
 void ObjectKoopaBall::init() {
     m_state = State::Intangible;
@@ -43,9 +44,9 @@ void ObjectKoopaBall::init() {
     m_bombCoreDrawMdl = EGG::egg_new<Render::DrawMdl>();
 
     auto *resMgr = System::ResourceManager::Instance();
-    const void *file = resMgr->getFile("bombCore.brres", nullptr, System::ArchiveId::Core);
-    ASSERT(file);
-    Abstract::g3d::ResFile resFile = Abstract::g3d::ResFile(file);
+    std::span<const u8> file = resMgr->getFile("bombCore.brres", System::ArchiveId::Core);
+    ASSERT(!file.empty());
+    Abstract::g3d::ResFile resFile = Abstract::g3d::ResFile(file.data());
 
     m_bombCoreDrawMdl->linkAnims(0, &resFile, "bombCore", Render::AnmType::Chr);
     auto *anmMgr = m_bombCoreDrawMdl->anmMgr();
@@ -60,6 +61,7 @@ void ObjectKoopaBall::init() {
 }
 
 /// @addr{0x80770ADC}
+/// @copybrief ObjectBase::calc()
 /// @details Calculates collision state-specific behavior, decrements the cycle timer, and updates
 /// the velocity based on the rail interpolator.
 void ObjectKoopaBall::calc() {

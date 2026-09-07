@@ -61,6 +61,7 @@ ObjectVolcanoBallLauncher::ObjectVolcanoBallLauncher(const System::MapdataGeoObj
 ObjectVolcanoBallLauncher::~ObjectVolcanoBallLauncher() = default;
 
 /// @addr{0x806E388C}
+/// @copybrief ObjectBase::init()
 /// @details Initializes all managed fireballs and sets the index of the next fireball to be
 /// launched to 0.
 void ObjectVolcanoBallLauncher::init() {
@@ -73,6 +74,7 @@ void ObjectVolcanoBallLauncher::init() {
 }
 
 /// @addr{0x806E3920}
+/// @copybrief ObjectBase::calc()
 /// @details Launches fireballs according to the current race timer.
 void ObjectVolcanoBallLauncher::calc() {
     u32 t = System::RaceManager::Instance()->timer();

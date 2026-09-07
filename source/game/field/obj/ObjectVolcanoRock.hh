@@ -14,6 +14,7 @@ public:
     ~ObjectVolcanoRock() override;
 
     /// @addr{0x8081A370}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         EGG::Vector3f prevPos = pos();
         setPos(calcPos(System::RaceManager::Instance()->timer()));
@@ -21,8 +22,10 @@ public:
     }
 
     /// @addr{0x8081A688}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x8081A668}

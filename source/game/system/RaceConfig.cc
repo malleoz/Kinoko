@@ -5,6 +5,7 @@
 namespace Kinoko::System {
 
 /// @addr{0x805302C4}
+/// @brief Initialization that occurs upon loading a race
 /// @details Normally we copy the menu scenario into the race scenario.
 /// However, Kinoko doesn't support menus, so we use a callback.
 void RaceConfig::initRace() {
@@ -18,8 +19,9 @@ void RaceConfig::initRace() {
 }
 
 /// @addr{0x8052F4E8}
-/// @brief Initializes the controllers.
+/// @brief Initializes the controllers for each player
 /// @details This is normally scoped within RaceConfig::Scenario, but Kinoko doesn't support menus.
+/// For Kinoko, we just care about the player at index 0.
 void RaceConfig::initControllers() {
     switch (m_raceScenario.players[0].type) {
     case Player::Type::Ghost:
@@ -35,7 +37,7 @@ void RaceConfig::initControllers() {
 }
 
 /// @addr{0x8052EEF0}
-/// @brief Initializes the ghost.
+/// @brief Initializes the ghost
 /// @details This is normally scoped within RaceConfig::Scenario, but Kinoko doesn't support menus.
 void RaceConfig::initGhost() {
     GhostFile ghost(m_ghost);
@@ -50,9 +52,11 @@ void RaceConfig::initGhost() {
 }
 
 /// @addr{0x8053015C}
+/// @brief Private default constructor
 RaceConfig::RaceConfig() = default;
 
 /// @addr{0x80530038}
+/// @brief Private virtual destructor
 RaceConfig::~RaceConfig() {
     if (s_instance) {
         s_instance = nullptr;
@@ -61,6 +65,11 @@ RaceConfig::~RaceConfig() {
 }
 
 /// @addr{Inlined in 0x8052DD40}
+/// @brief Initializes the scenario data for the race
+/// @details The base game sets the course to @ref Course::GCN_Mario_Circuit and all players to
+/// @ref Character::Mario with @ref Vehicle::Standard_Kart_M.
+/// @todo We should be able to skip this for Kinoko, since we don't rely on the default
+/// initialization.
 void RaceConfig::Scenario::init() {
     playerCount = 0;
     course = Course::GCN_Mario_Circuit;
@@ -73,19 +82,8 @@ void RaceConfig::Scenario::init() {
     }
 }
 
-RaceConfig *RaceConfig::s_instance = nullptr; ///< @addr{0x809BD728}
-
-/** @brief Host-agnostic way of initializing RaceConfig.
-    The type of the first player *must* be set to either Local or Ghost.
-
-    - If the type is Ghost, m_ghost must be set to a decompressed ghost file.
-
-    - If the type is Local, the race scenario's course and the first player's character, vehicle,
-    and driftIsAuto must be set.
- **/
+RaceConfig *RaceConfig::s_instance = nullptr;
 RaceConfig::InitCallback RaceConfig::s_onInitCallback = nullptr;
-
-/// @brief The argument sent into the callback. This is expected to be reinterpret_casted.
 void *RaceConfig::s_onInitCallbackArg = nullptr;
 
 } // namespace Kinoko::System

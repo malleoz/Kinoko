@@ -19,6 +19,7 @@ ObjectKinoko::ObjectKinoko(const System::MapdataGeoObj &params)
 ObjectKinoko::~ObjectKinoko() = default;
 
 /// @addr{0x8080782C}
+/// @copybrief ObjectBase::calc()
 void ObjectKinoko::calc() {
     constexpr s16 REST_DURATION = 10;
     constexpr s16 PULSE_DURATION = 40;

@@ -22,12 +22,12 @@ ObjColMgr::~ObjColMgr() {
 /// @brief Checks collision between a point and course KCL tris, writing only partial collision info
 /// @param pos The point to check
 /// @param prevPos The previous position of the point, used for calculating collision depth
-/// @param flags The KCL flags to check collision against (other types are ignored)
+/// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
-/// @param typeMaskOut The KCL flags that were hit during the collision check (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool ObjColMgr::checkPointPartial(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask flags, CollisionInfoPartial *info, KCLTypeMask *typeMaskOut) {
+        KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) {
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
@@ -41,8 +41,8 @@ bool ObjColMgr::checkPointPartial(const EGG::Vector3f &pos, const EGG::Vector3f 
             courseColMgr->setLocalMtx(&m_mtx);
         }
 
-        if (courseColMgr->checkPointPartial(m_kclScale, m_data, posWrtModel, prevPosWrtModel, flags,
-                    &tempInfo, typeMaskOut)) {
+        if (courseColMgr->checkPointPartial(m_kclScale, m_data, posWrtModel, prevPosWrtModel, mask,
+                    &tempInfo, maskOut)) {
             tempInfo.bbox.min = m_mtx.ps_multVector33(tempInfo.bbox.min);
             tempInfo.bbox.max = m_mtx.ps_multVector33(tempInfo.bbox.max);
 
@@ -59,21 +59,21 @@ bool ObjColMgr::checkPointPartial(const EGG::Vector3f &pos, const EGG::Vector3f 
         return false;
     }
 
-    return courseColMgr->checkPointPartial(m_kclScale, m_data, posWrtModel, prevPosWrtModel, flags,
-            info, typeMaskOut);
+    return courseColMgr->checkPointPartial(m_kclScale, m_data, posWrtModel, prevPosWrtModel, mask,
+            info, maskOut);
 }
 
 /// @addr{0x807C506C}
 /// @brief Checks collision between a point and course KCL tris, writing only partial collision
-/// info. Additionally pushes the collision entry into the CollisionDirector's cache.
+/// info. Additionally pushes the collision entry into the @ref CollisionDirector cache.
 /// @param pos The point to check
 /// @param prevPos The previous position of the point, used for calculating collision depth
-/// @param flags The KCL flags to check collision against (other types are ignored)
+/// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
-/// @param typeMaskOut The KCL flags that were hit during the collision check (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool ObjColMgr::checkPointPartialPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask flags, CollisionInfoPartial *info, KCLTypeMask *typeMaskOut) {
+        KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) {
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
@@ -88,7 +88,7 @@ bool ObjColMgr::checkPointPartialPush(const EGG::Vector3f &pos, const EGG::Vecto
         }
 
         if (courseColMgr->checkPointPartialPush(m_kclScale, m_data, posWrtModel, prevPosWrtModel,
-                    flags, &tempInfo, typeMaskOut)) {
+                    mask, &tempInfo, maskOut)) {
             tempInfo.bbox.min = m_mtx.ps_multVector33(tempInfo.bbox.min);
             tempInfo.bbox.max = m_mtx.ps_multVector33(tempInfo.bbox.max);
 
@@ -106,19 +106,19 @@ bool ObjColMgr::checkPointPartialPush(const EGG::Vector3f &pos, const EGG::Vecto
     }
 
     return courseColMgr->checkPointPartialPush(m_kclScale, m_data, posWrtModel, prevPosWrtModel,
-            flags, info, typeMaskOut);
+            mask, info, maskOut);
 }
 
 /// @addr{0x807C522C}
 /// @brief Checks collision between a point and course KCL tris, writing out full collision info
 /// @param pos The point to check
 /// @param prevPos The previous position of the point, used for calculating collision depth
-/// @param flags The KCL flags to check collision against (other types are ignored)
+/// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
-/// @param typeMaskOut The KCL flags that were hit during the collision check (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool ObjColMgr::checkPointFull(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask flags, CollisionInfo *info, KCLTypeMask *typeMaskOut) {
+        KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
@@ -132,8 +132,8 @@ bool ObjColMgr::checkPointFull(const EGG::Vector3f &pos, const EGG::Vector3f &pr
             courseColMgr->setLocalMtx(&m_mtx);
         }
 
-        if (courseColMgr->checkPointFull(m_kclScale, m_data, posWrtModel, prevPosWrtModel, flags,
-                    &tempInfo, typeMaskOut)) {
+        if (courseColMgr->checkPointFull(m_kclScale, m_data, posWrtModel, prevPosWrtModel, mask,
+                    &tempInfo, maskOut)) {
             info->transformInfo(tempInfo, m_mtx, m_movingObjVel);
 
             return true;
@@ -142,21 +142,21 @@ bool ObjColMgr::checkPointFull(const EGG::Vector3f &pos, const EGG::Vector3f &pr
         return false;
     }
 
-    return courseColMgr->checkPointFull(m_kclScale, m_data, posWrtModel, prevPosWrtModel, flags,
-            info, typeMaskOut);
+    return courseColMgr->checkPointFull(m_kclScale, m_data, posWrtModel, prevPosWrtModel, mask,
+            info, maskOut);
 }
 
 /// @addr{0x807C53A4}
 /// @brief Checks collision between a point and course KCL tris, writing out full collision info.
-/// Additionally pushes the collision entry into the CollisionDirector's cache.
+/// Additionally pushes the collision entry into the @ref CollisionDirector cache.
 /// @param pos The point to check
 /// @param prevPos The previous position of the point, used for calculating collision depth
-/// @param flags The KCL flags to check collision against (other types are ignored)
+/// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
-/// @param typeMaskOut The KCL flags that were hit during the collision check (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool ObjColMgr::checkPointFullPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask flags, CollisionInfo *info, KCLTypeMask *typeMaskOut) {
+        KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
@@ -170,8 +170,8 @@ bool ObjColMgr::checkPointFullPush(const EGG::Vector3f &pos, const EGG::Vector3f
             courseColMgr->setLocalMtx(&m_mtx);
         }
 
-        if (courseColMgr->checkPointFullPush(m_kclScale, m_data, posWrtModel, prevPosWrtModel,
-                    flags, &tempInfo, typeMaskOut)) {
+        if (courseColMgr->checkPointFullPush(m_kclScale, m_data, posWrtModel, prevPosWrtModel, mask,
+                    &tempInfo, maskOut)) {
             info->transformInfo(tempInfo, m_mtx, m_movingObjVel);
 
             return true;
@@ -180,8 +180,8 @@ bool ObjColMgr::checkPointFullPush(const EGG::Vector3f &pos, const EGG::Vector3f
         return false;
     }
 
-    return courseColMgr->checkPointFullPush(m_kclScale, m_data, posWrtModel, prevPosWrtModel, flags,
-            info, typeMaskOut);
+    return courseColMgr->checkPointFullPush(m_kclScale, m_data, posWrtModel, prevPosWrtModel, mask,
+            info, maskOut);
 }
 
 /// @addr{0x807C551C}
@@ -189,13 +189,13 @@ bool ObjColMgr::checkPointFullPush(const EGG::Vector3f &pos, const EGG::Vector3f
 /// @param radius The radius of the sphere to check
 /// @param pos The position of the sphere to check
 /// @param prevPos The previous position of the sphere, used for calculating collision depth
-/// @param flags The KCL flags to check collision against (other types are ignored)
+/// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
-/// @param typeMaskOut The KCL flags that were hit during the collision check (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool ObjColMgr::checkSpherePartial(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask flags, CollisionInfoPartial *info,
-        KCLTypeMask *typeMaskOut) {
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+        KCLTypeMask *maskOut) {
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
@@ -210,7 +210,7 @@ bool ObjColMgr::checkSpherePartial(f32 radius, const EGG::Vector3f &pos,
         }
 
         if (courseColMgr->checkSpherePartial(m_kclScale, radius, m_data, posWrtModel,
-                    prevPosWrtModel, flags, &tempInfo, typeMaskOut)) {
+                    prevPosWrtModel, mask, &tempInfo, maskOut)) {
             tempInfo.bbox.min = m_mtx.ps_multVector33(tempInfo.bbox.min);
             tempInfo.bbox.max = m_mtx.ps_multVector33(tempInfo.bbox.max);
 
@@ -228,22 +228,22 @@ bool ObjColMgr::checkSpherePartial(f32 radius, const EGG::Vector3f &pos,
     }
 
     return courseColMgr->checkSpherePartial(m_kclScale, radius, m_data, posWrtModel,
-            prevPosWrtModel, flags, info, typeMaskOut);
+            prevPosWrtModel, mask, info, maskOut);
 }
 
 /// @addr{0x807C56F8}
 /// @brief Checks collision between a sphere and course KCL tris, writing partial collision info.
-/// Additionally pushes the collision entry into the CollisionDirector's cache.
+/// Additionally pushes the collision entry into the @ref CollisionDirector cache.
 /// @param radius The radius of the sphere to check
 /// @param pos The position of the sphere to check
 /// @param prevPos The previous position of the sphere, used for calculating collision depth
-/// @param flags The KCL flags to check collision against (other types are ignored)
+/// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
-/// @param typeMaskOut The KCL flags that were hit during the collision check (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool ObjColMgr::checkSpherePartialPush(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask flags, CollisionInfoPartial *info,
-        KCLTypeMask *typeMaskOut) {
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+        KCLTypeMask *maskOut) {
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
@@ -258,7 +258,7 @@ bool ObjColMgr::checkSpherePartialPush(f32 radius, const EGG::Vector3f &pos,
         }
 
         if (courseColMgr->checkSpherePartialPush(m_kclScale, radius, m_data, posWrtModel,
-                    prevPosWrtModel, flags, &tempInfo, typeMaskOut)) {
+                    prevPosWrtModel, mask, &tempInfo, maskOut)) {
             tempInfo.bbox.min = m_mtx.ps_multVector33(tempInfo.bbox.min);
             tempInfo.bbox.max = m_mtx.ps_multVector33(tempInfo.bbox.max);
 
@@ -276,7 +276,7 @@ bool ObjColMgr::checkSpherePartialPush(f32 radius, const EGG::Vector3f &pos,
     }
 
     return courseColMgr->checkSpherePartialPush(m_kclScale, radius, m_data, posWrtModel,
-            prevPosWrtModel, flags, info, typeMaskOut);
+            prevPosWrtModel, mask, info, maskOut);
 }
 
 /// @addr{0x807C58D4}
@@ -284,12 +284,12 @@ bool ObjColMgr::checkSpherePartialPush(f32 radius, const EGG::Vector3f &pos,
 /// @param radius The radius of the sphere to check
 /// @param pos The position of the sphere to check
 /// @param prevPos The previous position of the sphere, used for calculating collision depth
-/// @param flags The KCL flags to check collision against (other types are ignored)
+/// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
-/// @param typeMaskOut The KCL flags that were hit during the collision check (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool ObjColMgr::checkSphereFull(f32 radius, const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask flags, CollisionInfo *info, KCLTypeMask *typeMaskOut) {
+        KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
@@ -304,7 +304,7 @@ bool ObjColMgr::checkSphereFull(f32 radius, const EGG::Vector3f &pos, const EGG:
         }
 
         if (courseColMgr->checkSphereFull(m_kclScale, radius, m_data, posWrtModel, prevPosWrtModel,
-                    flags, &tempInfo, typeMaskOut)) {
+                    mask, &tempInfo, maskOut)) {
             info->transformInfo(tempInfo, m_mtx, m_movingObjVel);
 
             return true;
@@ -314,22 +314,21 @@ bool ObjColMgr::checkSphereFull(f32 radius, const EGG::Vector3f &pos, const EGG:
     }
 
     return courseColMgr->checkSphereFull(m_kclScale, radius, m_data, posWrtModel, prevPosWrtModel,
-            flags, info, typeMaskOut);
+            mask, info, maskOut);
 }
 
 /// @addr{0x807C5A68}
 /// @brief Checks collision between a sphere and course KCL tris, writing full collision info.
-/// Additionally pushes the collision entry into the CollisionDirector's cache.
+/// Additionally pushes the collision entry into the @ref CollisionDirector cache.
 /// @param radius The radius of the sphere to check
 /// @param pos The position of the sphere to check
 /// @param prevPos The previous position of the sphere, used for calculating collision depth
-/// @param flags The KCL flags to check collision against (other types are ignored)
+/// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
-/// @param typeMaskOut The KCL flags that were hit during the collision check (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool ObjColMgr::checkSphereFullPush(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask flags, CollisionInfo *info,
-        KCLTypeMask *typeMaskOut) {
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
     EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
     bool hasPrevY = prevPos.y != std::numeric_limits<f32>::infinity();
     EGG::Vector3f prevPosWrtModel = hasPrevY ? m_mtxInv.ps_multVector(prevPos) : EGG::Vector3f::inf;
@@ -344,7 +343,7 @@ bool ObjColMgr::checkSphereFullPush(f32 radius, const EGG::Vector3f &pos,
         }
 
         if (courseColMgr->checkSphereFullPush(m_kclScale, radius, m_data, posWrtModel,
-                    prevPosWrtModel, flags, &tempInfo, typeMaskOut)) {
+                    prevPosWrtModel, mask, &tempInfo, maskOut)) {
             info->transformInfo(tempInfo, m_mtx, m_movingObjVel);
 
             return true;
@@ -354,7 +353,7 @@ bool ObjColMgr::checkSphereFullPush(f32 radius, const EGG::Vector3f &pos,
     }
 
     return courseColMgr->checkSphereFullPush(m_kclScale, radius, m_data, posWrtModel,
-            prevPosWrtModel, flags, info, typeMaskOut);
+            prevPosWrtModel, mask, info, maskOut);
 }
 
 /// @addr{0x807C5BFC}
@@ -362,12 +361,12 @@ bool ObjColMgr::checkSphereFullPush(f32 radius, const EGG::Vector3f &pos,
 /// local spatial cache, writing only partial collision info
 /// @param pos The point to check
 /// @param prevPos The previous position of the point, used for calculating collision depth
-/// @param flags The KCL flags to check collision against (other types are ignored)
+/// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
-/// @param typeMaskOut The KCL flags that were hit during the collision check (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool ObjColMgr::checkPointCachedPartial(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask flags, CollisionInfoPartial *info, KCLTypeMask *typeMaskOut) {
+        KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) {
     if (m_data->prismCache(0) == 0) {
         return false;
     }
@@ -386,7 +385,7 @@ bool ObjColMgr::checkPointCachedPartial(const EGG::Vector3f &pos, const EGG::Vec
         }
 
         if (courseColMgr->checkPointCachedPartial(m_kclScale, m_data, posWrtModel, prevPosWrtModel,
-                    flags, &tempInfo, typeMaskOut)) {
+                    mask, &tempInfo, maskOut)) {
             tempInfo.bbox.min = m_mtx.ps_multVector33(tempInfo.bbox.min);
             tempInfo.bbox.max = m_mtx.ps_multVector33(tempInfo.bbox.max);
 
@@ -404,21 +403,21 @@ bool ObjColMgr::checkPointCachedPartial(const EGG::Vector3f &pos, const EGG::Vec
     }
 
     return courseColMgr->checkPointCachedPartial(m_kclScale, m_data, posWrtModel, prevPosWrtModel,
-            flags, info, typeMaskOut);
+            mask, info, maskOut);
 }
 
 /// @addr{0x807C5DD4}
 /// @brief Checks collision between a point and course KCL tris by using the collision director's
 /// local spatial cache, writing only partial collision info. Additionally pushes the collision
-/// entry into the CollisionDirector's cache.
+/// entry into the @ref CollisionDirector cache.
 /// @param pos The point to check
 /// @param prevPos The previous position of the point, used for calculating collision depth
-/// @param flags The KCL flags to check collision against (other types are ignored)
+/// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
-/// @param typeMaskOut The KCL flags that were hit during the collision check (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool ObjColMgr::checkPointCachedPartialPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask flags, CollisionInfoPartial *info, KCLTypeMask *typeMaskOut) {
+        KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) {
     if (m_data->prismCache(0) == 0) {
         return false;
     }
@@ -437,7 +436,7 @@ bool ObjColMgr::checkPointCachedPartialPush(const EGG::Vector3f &pos, const EGG:
         }
 
         if (courseColMgr->checkPointCachedPartialPush(m_kclScale, m_data, posWrtModel,
-                    prevPosWrtModel, flags, &tempInfo, typeMaskOut)) {
+                    prevPosWrtModel, mask, &tempInfo, maskOut)) {
             tempInfo.bbox.min = m_mtx.ps_multVector33(tempInfo.bbox.min);
             tempInfo.bbox.max = m_mtx.ps_multVector33(tempInfo.bbox.max);
 
@@ -455,7 +454,7 @@ bool ObjColMgr::checkPointCachedPartialPush(const EGG::Vector3f &pos, const EGG:
     }
 
     return courseColMgr->checkPointCachedPartialPush(m_kclScale, m_data, posWrtModel,
-            prevPosWrtModel, flags, info, typeMaskOut);
+            prevPosWrtModel, mask, info, maskOut);
 }
 
 /// @addr{0x807C5FAC}
@@ -463,12 +462,12 @@ bool ObjColMgr::checkPointCachedPartialPush(const EGG::Vector3f &pos, const EGG:
 /// local spatial cache, writing out full collision info
 /// @param pos The point to check
 /// @param prevPos The previous position of the point, used for calculating collision depth
-/// @param flags The KCL flags to check collision against (other types are ignored)
+/// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
-/// @param typeMaskOut The KCL flags that were hit during the collision check (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool ObjColMgr::checkPointCachedFull(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask flags, CollisionInfo *info, KCLTypeMask *typeMaskOut) {
+        KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
     if (m_data->prismCache(0) == 0) {
         return false;
     }
@@ -487,7 +486,7 @@ bool ObjColMgr::checkPointCachedFull(const EGG::Vector3f &pos, const EGG::Vector
         }
 
         if (courseColMgr->checkPointCachedFull(m_kclScale, m_data, posWrtModel, prevPosWrtModel,
-                    flags, &tempInfo, typeMaskOut)) {
+                    mask, &tempInfo, maskOut)) {
             info->transformInfo(tempInfo, m_mtx, m_movingObjVel);
 
             return true;
@@ -497,21 +496,21 @@ bool ObjColMgr::checkPointCachedFull(const EGG::Vector3f &pos, const EGG::Vector
     }
 
     return courseColMgr->checkPointCachedFull(m_kclScale, m_data, posWrtModel, prevPosWrtModel,
-            flags, info, typeMaskOut);
+            mask, info, maskOut);
 }
 
 /// @addr{0x807C613C}
 /// @brief Checks collision between a point and course KCL tris by using the collision director's
 /// local spatial cache, writing out full collision info. Additionally pushes the collision entry
-/// into the CollisionDirector's cache.
+/// into the @ref CollisionDirector cache.
 /// @param pos The point to check
 /// @param prevPos The previous position of the point, used for calculating collision depth
-/// @param flags The KCL flags to check collision against (other types are ignored)
+/// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
-/// @param typeMaskOut The KCL flags that were hit during the collision check (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool ObjColMgr::checkPointCachedFullPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        KCLTypeMask flags, CollisionInfo *info, KCLTypeMask *typeMaskOut) {
+        KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
     if (m_data->prismCache(0) == 0) {
         return false;
     }
@@ -530,7 +529,7 @@ bool ObjColMgr::checkPointCachedFullPush(const EGG::Vector3f &pos, const EGG::Ve
         }
 
         if (courseColMgr->checkPointCachedFullPush(m_kclScale, m_data, posWrtModel, prevPosWrtModel,
-                    flags, &tempInfo, typeMaskOut)) {
+                    mask, &tempInfo, maskOut)) {
             info->transformInfo(tempInfo, m_mtx, m_movingObjVel);
 
             return true;
@@ -540,7 +539,7 @@ bool ObjColMgr::checkPointCachedFullPush(const EGG::Vector3f &pos, const EGG::Ve
     }
 
     return courseColMgr->checkPointCachedFullPush(m_kclScale, m_data, posWrtModel, prevPosWrtModel,
-            flags, info, typeMaskOut);
+            mask, info, maskOut);
 }
 
 /// @addr{0x807C62CC}
@@ -549,13 +548,13 @@ bool ObjColMgr::checkPointCachedFullPush(const EGG::Vector3f &pos, const EGG::Ve
 /// @param radius The radius of the sphere to check
 /// @param pos The position of the sphere to check
 /// @param prevPos The previous position of the sphere, used for calculating collision depth
-/// @param flags The KCL flags to check collision against (other types are ignored)
+/// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
-/// @param typeMaskOut The KCL flags that were hit during the collision check (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool ObjColMgr::checkSphereCachedPartial(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask typeflags, CollisionInfoPartial *info,
-        KCLTypeMask *typeMaskOut) {
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+        KCLTypeMask *maskOut) {
     if (m_data->prismCache(0) == 0) {
         return false;
     }
@@ -574,7 +573,7 @@ bool ObjColMgr::checkSphereCachedPartial(f32 radius, const EGG::Vector3f &pos,
         }
 
         if (courseColMgr->checkSphereCachedPartial(m_kclScale, radius, m_data, posWrtModel,
-                    prevPosWrtModel, typeflags, &tempInfo, typeMaskOut)) {
+                    prevPosWrtModel, mask, &tempInfo, maskOut)) {
             tempInfo.bbox.min = m_mtx.ps_multVector33(tempInfo.bbox.min);
             tempInfo.bbox.max = m_mtx.ps_multVector33(tempInfo.bbox.max);
 
@@ -592,23 +591,23 @@ bool ObjColMgr::checkSphereCachedPartial(f32 radius, const EGG::Vector3f &pos,
     }
 
     return courseColMgr->checkSphereCachedPartial(m_kclScale, radius, m_data, posWrtModel,
-            prevPosWrtModel, typeflags, info, typeMaskOut);
+            prevPosWrtModel, mask, info, maskOut);
 }
 
 /// @addr{0x807C64C0}
 /// @brief Checks collision between a sphere and course KCL tris by using the collision director's
 /// local spatial cache, writing partial collision info. Additionally pushes the collision entry
-/// into the CollisionDirector's cache.
+/// into the @ref CollisionDirector cache.
 /// @param radius The radius of the sphere to check
 /// @param pos The position of the sphere to check
 /// @param prevPos The previous position of the sphere, used for calculating collision depth
-/// @param flags The KCL flags to check collision against (other types are ignored)
+/// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
-/// @param typeMaskOut The KCL flags that were hit during the collision check (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool ObjColMgr::checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask typeflags, CollisionInfoPartial *info,
-        KCLTypeMask *typeMaskOut) {
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+        KCLTypeMask *maskOut) {
     if (m_data->prismCache(0) == 0) {
         return false;
     }
@@ -627,7 +626,7 @@ bool ObjColMgr::checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &po
         }
 
         if (courseColMgr->checkSphereCachedPartialPush(m_kclScale, radius, m_data, posWrtModel,
-                    prevPosWrtModel, typeflags, &tempInfo, typeMaskOut)) {
+                    prevPosWrtModel, mask, &tempInfo, maskOut)) {
             tempInfo.bbox.min = m_mtx.ps_multVector33(tempInfo.bbox.min);
             tempInfo.bbox.max = m_mtx.ps_multVector33(tempInfo.bbox.max);
 
@@ -645,7 +644,7 @@ bool ObjColMgr::checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &po
     }
 
     return courseColMgr->checkSphereCachedPartialPush(m_kclScale, radius, m_data, posWrtModel,
-            prevPosWrtModel, typeflags, info, typeMaskOut);
+            prevPosWrtModel, mask, info, maskOut);
 }
 
 /// @addr{0x807C66B4}
@@ -656,11 +655,10 @@ bool ObjColMgr::checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &po
 /// @param prevPos The previous position of the sphere, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
-/// @param typeMaskOut The KCL flags that were hit during the collision check (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool ObjColMgr::checkSphereCachedFull(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask typeflags, CollisionInfo *info,
-        KCLTypeMask *typeMaskOut) {
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
     if (m_data->prismCache(0) == 0) {
         return false;
     }
@@ -679,7 +677,7 @@ bool ObjColMgr::checkSphereCachedFull(f32 radius, const EGG::Vector3f &pos,
         }
 
         if (courseColMgr->checkSphereCachedFull(m_kclScale, radius, m_data, posWrtModel,
-                    prevPosWrtModel, typeflags, &tempInfo, typeMaskOut)) {
+                    prevPosWrtModel, mask, &tempInfo, maskOut)) {
             info->transformInfo(tempInfo, m_mtx, m_movingObjVel);
 
             return true;
@@ -689,23 +687,22 @@ bool ObjColMgr::checkSphereCachedFull(f32 radius, const EGG::Vector3f &pos,
     }
 
     return courseColMgr->checkSphereCachedFull(m_kclScale, radius, m_data, posWrtModel,
-            prevPosWrtModel, typeflags, info, typeMaskOut);
+            prevPosWrtModel, mask, info, maskOut);
 }
 
 /// @addr{0x807C6860}
 /// @brief Checks collision between a sphere and course KCL tris by using the collision director's
 /// local spatial cache, writing full collision info. Additionally pushes the collision entry into
-/// the CollisionDirector's cache.
+/// the @ref CollisionDirector cache.
 /// @param radius The radius of the sphere to check
 /// @param pos The position of the sphere to check
 /// @param prevPos The previous position of the sphere, used for calculating collision depth
-/// @param flags The KCL flags to check collision against (other types are ignored)
+/// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
-/// @param typeMaskOut The KCL flags that were hit during the collision check (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool ObjColMgr::checkSphereCachedFullPush(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask typeflags, CollisionInfo *info,
-        KCLTypeMask *typeMaskOut) {
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
     if (m_data->prismCache(0) == 0) {
         return false;
     }
@@ -724,7 +721,7 @@ bool ObjColMgr::checkSphereCachedFullPush(f32 radius, const EGG::Vector3f &pos,
         }
 
         if (courseColMgr->checkSphereCachedFullPush(m_kclScale, radius, m_data, posWrtModel,
-                    prevPosWrtModel, typeflags, &tempInfo, typeMaskOut)) {
+                    prevPosWrtModel, mask, &tempInfo, maskOut)) {
             info->transformInfo(tempInfo, m_mtx, m_movingObjVel);
 
             return true;
@@ -734,7 +731,7 @@ bool ObjColMgr::checkSphereCachedFullPush(f32 radius, const EGG::Vector3f &pos,
     }
 
     return courseColMgr->checkSphereCachedFullPush(m_kclScale, radius, m_data, posWrtModel,
-            prevPosWrtModel, typeflags, info, typeMaskOut);
+            prevPosWrtModel, mask, info, maskOut);
 }
 
 } // namespace Kinoko::Field

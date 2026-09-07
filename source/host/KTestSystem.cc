@@ -7,8 +7,10 @@
 
 namespace Kinoko {
 
-// We use an unscoped enum to avoid static_casting in all usecases
-// This is defined in the source due to its lack of scoping
+/// @enum Changelog
+/// @brief Represents the changelog entries for the test system.
+/// @details We use an unscoped enum to avoid static_casting in all usecases. This is defined in the
+/// source due to its lack of scoping.
 enum Changelog {
     Initial = 1,
     AddedExtVel = 2,
@@ -18,16 +20,9 @@ enum Changelog {
     AddedCheckpoints = 6,
 };
 
-struct TestHeader {
-    u32 signature;
-    u16 byteOrderMark;
-    u16 frameCount;
-    u16 versionMajor;
-    u16 versionMinor;
-    u32 dataOffset;
-};
-
-/// @brief Initializes the system.
+/// @brief Initializes the system
+/// @details Creates the scene manager, registers the @ref OnInit() callback function, initializes
+/// the test suite, and starts the first test case.
 void KTestSystem::init() {
     auto *sceneCreator = EGG::egg_new<Host::SceneCreatorDynamic>();
     m_sceneMgr = EGG::egg_new<EGG::SceneManager>(sceneCreator);
@@ -43,66 +38,7 @@ void KTestSystem::init() {
     m_sceneMgr->changeScene(0);
 }
 
-/// @details This reads over the KRKG and generates the list of test cases,
-/// before starting the first test case and initializing the race scene.
-void KTestSystem::initSuite() {
-    constexpr u32 TEST_HEADER_SIGNATURE = 0x54535448; // TSTH
-    constexpr u32 TEST_FOOTER_SIGNATURE = 0x54535446; // TSTF
-    constexpr u16 SUITE_MAJOR_VER = 1;
-    constexpr u16 SUITE_MAX_MINOR_VER = 0;
-
-    u16 numTestCases = m_stream.read_u16();
-    u16 testMajorVer = m_stream.read_u16();
-    u16 testMinorVer = m_stream.read_u16();
-
-    if (testMajorVer != SUITE_MAJOR_VER || testMinorVer > SUITE_MAX_MINOR_VER) {
-        PANIC("Version not supported! Provided file is %d.%d while Kinoko supports up to %d.%d",
-                testMajorVer, testMinorVer, SUITE_MAJOR_VER, SUITE_MAX_MINOR_VER);
-    }
-
-    for (u16 i = 0; i < numTestCases; ++i) {
-        // Validate alignment
-        if (m_stream.read_u32() != TEST_HEADER_SIGNATURE) {
-            PANIC("Invalid binary data for test case!");
-        }
-
-        u16 totalSize = m_stream.read_u16();
-        TestCase testCase;
-
-        u16 nameLen = m_stream.read_u16();
-        testCase.name = m_stream.read_string();
-        if (nameLen != testCase.name.size() + 1) {
-            PANIC("Test case name length mismatch!");
-        }
-
-        u16 rkgPathLen = m_stream.read_u16();
-        testCase.rkgPath = m_stream.read_string();
-        if (rkgPathLen != testCase.rkgPath.size() + 1) {
-            PANIC("Test case RKG Path length mismatch!");
-        }
-
-        u16 krkgPathLen = m_stream.read_u16();
-        testCase.krkgPath = m_stream.read_string();
-        if (krkgPathLen != testCase.krkgPath.size() + 1) {
-            PANIC("Test case KRKG Path length mismatch!");
-        }
-
-        testCase.targetFrame = m_stream.read_u16();
-
-        // Validate alignment
-        if (m_stream.read_u32() != TEST_FOOTER_SIGNATURE) {
-            PANIC("Invalid binary data for test case!");
-        }
-
-        if (totalSize != sizeof(u16) * 4 + nameLen + rkgPathLen + krkgPathLen) {
-            PANIC("Unexpected bytes in test case");
-        }
-
-        m_testCases.push(testCase);
-    }
-}
-
-/// @brief Executes a run.
+/// @brief Executes a run
 /// @details A run consists of iterating over all tests.
 /// @return Whether the run was successful or not.
 bool KTestSystem::run() {
@@ -154,14 +90,13 @@ void KTestSystem::parseOptions(int argc, char **argv) {
 
             ASSERT(i + 1 < argc);
 
-            size_t size;
-            u8 *data = Abstract::File::Load(argv[++i], size);
+            std::span<const u8> data = Abstract::File::Load(argv[++i]);
 
-            if (size == 0) {
+            if (data.empty()) {
                 PANIC("Failed to load suite data!");
             }
 
-            m_stream = EGG::RamStream(data, size);
+            m_stream = EGG::RamStream(data.data(), static_cast<u32>(data.size()));
             m_stream.setEndian(std::endian::big);
 
         } break;
@@ -226,8 +161,10 @@ void KTestSystem::parseOptions(int argc, char **argv) {
     }
 }
 
+/// @brief Default private constructor
 KTestSystem::KTestSystem() : m_testMode(Host::EOption::Invalid) {}
 
+/// @brief Private virtual destructor
 KTestSystem::~KTestSystem() {
     if (s_instance) {
         s_instance = nullptr;
@@ -235,18 +172,78 @@ KTestSystem::~KTestSystem() {
     }
 }
 
+/// @brief Initializes the test suite by reading the KRKG file and generating the list of test cases
+/// @details Validates that the header and footer signatures are present in the file. Validates that
+/// the `.krkg` file version is supported by the Kinoko executable. Validates that `.rkg` and
+/// `.krkg` filenames are specified for each test case.
+void KTestSystem::initSuite() {
+    constexpr u32 TEST_HEADER_SIGNATURE = 0x54535448; // TSTH
+    constexpr u32 TEST_FOOTER_SIGNATURE = 0x54535446; // TSTF
+    constexpr u16 SUITE_MAJOR_VER = 1;
+    constexpr u16 SUITE_MAX_MINOR_VER = 0;
+
+    u16 numTestCases = m_stream.read_u16();
+    u16 testMajorVer = m_stream.read_u16();
+    u16 testMinorVer = m_stream.read_u16();
+
+    if (testMajorVer != SUITE_MAJOR_VER || testMinorVer > SUITE_MAX_MINOR_VER) {
+        PANIC("Version not supported! Provided file is %d.%d while Kinoko supports up to %d.%d",
+                testMajorVer, testMinorVer, SUITE_MAJOR_VER, SUITE_MAX_MINOR_VER);
+    }
+
+    for (u16 i = 0; i < numTestCases; ++i) {
+        // Validate alignment
+        if (m_stream.read_u32() != TEST_HEADER_SIGNATURE) {
+            PANIC("Invalid binary data for test case!");
+        }
+
+        u16 totalSize = m_stream.read_u16();
+        TestCase testCase;
+
+        u16 nameLen = m_stream.read_u16();
+        testCase.name = m_stream.read_string();
+        if (nameLen != testCase.name.size() + 1) {
+            PANIC("Test case name length mismatch!");
+        }
+
+        u16 rkgPathLen = m_stream.read_u16();
+        testCase.rkgPath = m_stream.read_string();
+        if (rkgPathLen != testCase.rkgPath.size() + 1) {
+            PANIC("Test case RKG Path length mismatch!");
+        }
+
+        u16 krkgPathLen = m_stream.read_u16();
+        testCase.krkgPath = m_stream.read_string();
+        if (krkgPathLen != testCase.krkgPath.size() + 1) {
+            PANIC("Test case KRKG Path length mismatch!");
+        }
+
+        testCase.targetFrame = m_stream.read_u16();
+
+        // Validate alignment
+        if (m_stream.read_u32() != TEST_FOOTER_SIGNATURE) {
+            PANIC("Invalid binary data for test case!");
+        }
+
+        if (totalSize != sizeof(u16) * 4 + nameLen + rkgPathLen + krkgPathLen) {
+            PANIC("Unexpected bytes in test case");
+        }
+
+        m_testCases.push(testCase);
+    }
+}
+
 /// @brief Starts the next test case.
 void KTestSystem::startNextTestCase() {
     constexpr u32 KRKG_SIGNATURE = 0x4b524b47; // KRKG
 
-    size_t size;
-    u8 *krkg = Abstract::File::Load(getCurrentTestCase().krkgPath.data(), size);
-    m_stream = EGG::RamStream(krkg, static_cast<u32>(size));
+    std::span<const u8> krkg = Abstract::File::Load(getCurrentTestCase().krkgPath.data());
+    m_stream = EGG::RamStream(krkg.data(), static_cast<u32>(krkg.size()));
     m_currentFrame = -1;
     m_sync = true;
 
     // Initialize endianness for the RAM stream
-    u16 mark = reinterpret_cast<TestHeader *>(krkg)->byteOrderMark;
+    u16 mark = reinterpret_cast<const TestHeader *>(krkg.data())->byteOrderMark;
     std::endian endian = parse<u16>(mark) == 0xfeff ? std::endian::big : std::endian::little;
     m_stream.setEndian(endian);
 
@@ -273,6 +270,9 @@ void KTestSystem::startNextTestCase() {
 
 /// @brief Checks one frame in the test.
 /// @return Whether the test can continue.
+/// @details Increments the system's evaluated frame counter. Checks if the test case has reached
+/// its target frame. If the test case needs to continue, checks the frame's physics match expected
+/// values.
 bool KTestSystem::calcTest() {
     ++m_currentFrame;
 
@@ -286,13 +286,13 @@ bool KTestSystem::calcTest() {
     }
 
     // Test the current frame
-    testFrame(findCurrentFrameEntry());
+    testFrame(getCurrentFrameTestData());
     return m_sync;
 }
 
-/// @brief Finds the test data of the current frame.
+/// @brief Gets the test data of the current frame.
 /// @return The test data of the current frame.
-KTestSystem::TestData KTestSystem::findCurrentFrameEntry() {
+KTestSystem::TestData KTestSystem::getCurrentFrameTestData() {
     EGG::Vector3f pos;
     EGG::Quatf fullRot;
     EGG::Vector3f extVel;
@@ -353,6 +353,8 @@ KTestSystem::TestData KTestSystem::findCurrentFrameEntry() {
 
 /// @brief Tests the frame against the provided test data.
 /// @param data The test data to compare against.
+/// @details If any check fails, sets @ref m_sync to false without short-circuiting, so that we
+/// capture all desyncs that occurred.
 void KTestSystem::testFrame(const TestData &data) {
     auto *object = Kart::KartObjectManager::Instance()->object(0);
     const auto &pos = object->pos();

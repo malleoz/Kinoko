@@ -308,7 +308,7 @@ void KartMove::calc() {
 /// @addr{0x80584334}
 /// @brief Called when the screen wipes to black during a respawn
 /// @details Snaps the kart's position and rotation to the respawn point above the track and clears
-/// the kart's item inventory. Also transitions from @enum eStatus::TriggerRespawn to @enum
+/// the kart's item inventory. Also transitions from @ref eStatus::TriggerRespawn to @ref
 /// eStatus::InRespawn.
 void KartMove::calcRespawnTrigger() {
     constexpr float RESPAWN_HEIGHT = 700.0f;
@@ -418,7 +418,7 @@ void KartMove::calcRespawnBoost() {
 /// projects onto the kart's forward axis, clamped to [0.3f, 0.8f]. If the kart is in a nose dive,
 /// the stabilization factor is increased to help the kart re-orient itself faster. If the kart is
 /// on a boost ramp, the stabilization rate is instead set to 0.4f. Finally, applies the
-/// stabilization factor and updates @enum eStatus to reflect whether the new surface is trickable.
+/// stabilization factor and updates @ref eStatus to reflect whether the new surface is trickable.
 void KartMove::calcTop() {
     constexpr f32 DEFAULT_STABILIZATION_FACTOR = 0.1f;
     constexpr f32 BOOST_RAMP_STABILIZATION_FACTOR = 0.4f;
@@ -632,9 +632,9 @@ void KartMove::calcDirs() {
 /// three collision check passes, where each iteration steps the kart's position downward and
 /// narrows its "nextPos". If a collision occurs, updates @ref m_intVelDir to bend toward the curved
 /// surface. Also removes moving object and moving road velocity that would fight against the kart
-/// sticking to the curve. If the kart is on @enum eStatus::MovingWaterStickyRoad (Koopa Cape
+/// sticking to the curve. If the kart is on @ref eStatus::MovingWaterStickyRoad (Koopa Cape
 /// entering the pipe) then the kart's up vector is snapped directly to the floor normal so its
-/// rotation is sharply aligned with the curved path. If no collision occurs, resets the @enum
+/// rotation is sharply aligned with the curved path. If no collision occurs, resets the @ref
 /// eStatus::StickyRoad flag.
 void KartMove::calcStickyRoad() {
     constexpr f32 STICKY_RADIUS = 200.0f;
@@ -756,7 +756,7 @@ void KartMove::calcRisingWater() {
 
 /// @addr{0x805828CC}
 /// @brief Calculates standstill mini-turbo charges
-/// @details If the kart has been charging the SSMT for 75 frames, sets @enum eFlags::SsmtCharged.
+/// @details If the kart has been charging the SSMT for 75 frames, sets @ref eFlags::SsmtCharged.
 /// Implements a leeway timer that allows the player to resume charging a SSMT even if they
 /// accidentally let go for 1 frame. Once the SSMT is charged and the player lets go of either the
 /// accelerate or brake button, releases a 30 frame SSMT boost.
@@ -1024,10 +1024,10 @@ void KartMove::calcManualDrift() {
 /// @addr{0x8057E3F4}
 /// @brief Called when the player lands from a drift hop or a buffered slipdrift
 /// @details For outward drifting vehicles, computes the drift angle based on the drift direction
-/// (and the hop direction, if the drift started via a hop). Clears @enum eStatus::Hop and @enum
+/// (and the hop direction, if the drift started via a hop). Clears @ref eStatus::Hop and @ref
 /// eStatus::SlipdriftBuffered. If the drift input is not active or the hop stick X is zero, the
-/// function returns early without starting a manual drift. Otherwise, sets @enum
-/// eStatus::DriftManual and changes the drift state to @enum DriftState::ChargingMt.
+/// function returns early without starting a manual drift. Otherwise, sets @ref
+/// eStatus::DriftManual and changes the drift state to @ref DriftState::ChargingMt.
 void KartMove::startManualDrift() {
     constexpr f32 OUTSIDE_DRIFT_BONUS = 0.5f;
 
@@ -1069,7 +1069,7 @@ void KartMove::startManualDrift() {
 
 /// @addr{0x80582F9C}
 /// @brief Stops charging a mini-turbo, and applies boost if charged
-/// @details If a MT was not charged or the player is braking, resets the drift state to @enum
+/// @details If a MT was not charged or the player is braking, resets the drift state to @ref
 /// DriftState::NotDrifting and bails out. If a super mini-turbo was charged, extends the mini-turbo
 /// duration by 3x.
 void KartMove::releaseMt() {
@@ -1244,7 +1244,7 @@ void KartMove::calcRotation() {
 /// @details Applies the forward component of external velocity to the kart's speed. If the kart's
 /// speed is below -20.0f, it increases by 0.5f every frame. If the kart is in moving water that
 /// decays speed, the kart's speed is scaled by @ref KartPullPath::m_roadSpeedDecay. If the kart is
-/// in an @enum Action, then defers the rest of the vehicle's speed calculation to @ref
+/// in an @ref Action, then defers the rest of the vehicle's speed calculation to @ref
 /// KartAction::calcVehicleSpeed(). If in a ramp boost with fewer than 4 frames of airtime, sets
 /// acceleration to 7. Otherwise, computes @ref m_speedDragMultiplier depending on whether the kart
 /// is on a jump pad without accelerating, over a zipper, or has more than 5 frames of airtime.
@@ -1280,8 +1280,8 @@ void KartMove::calcVehicleSpeed() {
     bool water = false;
 
     if (status.onBit(eStatus::MovingWaterVertical) ||
-            (status.onBit(eStatus::MovingWaterDecaySpeed) && status.offBit(eStatus::MushroomBoost) &&
-                    EGG::Mathf::abs(m_speed) > 5.0f)) {
+            (status.onBit(eStatus::MovingWaterDecaySpeed) &&
+                    status.offBit(eStatus::MushroomBoost) && EGG::Mathf::abs(m_speed) > 5.0f)) {
         water = true;
         m_speed *= collide()->pullPath().roadSpeedDecay();
     }
@@ -1408,7 +1408,7 @@ f32 KartMove::calcVehicleAcceleration() const {
 /// speed factor. If the kart is not on a jump pad and this boost speed limit is greater than the
 /// previous computed speed limit, then the speed limit is set to this boost speed limit. If the
 /// kart is in a ramp boost, the speed limit is clamped to 100.0f. Finally, the speed limit is
-/// further scaled based off the return of @ef calcWallCollisionSpeedFactor.
+/// further scaled based off the return of @ref calcWallCollisionSpeedFactor.
 ///
 /// Next, this function computes the "soft" speed limit. If it's less than the speed limit computed
 /// above or a wall collision occured, it's set to the speed limit; otherwise, it decays by 3 units
@@ -1627,7 +1627,7 @@ f32 KartMove::calcWallCollisionSpeedFactor(f32 &walColSeverity) {
 /// the wall collision severity is very high (>= 0.9f), bails out.
 ///
 /// Computes the speed difference between this frame and the last frame. If the speed difference is
-/// > 30.0f, a wall bounce occurs. First @enum eFlags::WallBounce is set. Computes the vertical
+/// > 30.0f, a wall bounce occurs. First @ref eFlags::WallBounce is set. Computes the vertical
 /// center point of the vehicle to avoid excessive torque from wall collisions that occur far
 /// above/below the vehicle's center. Scales the wall normal based off of the speed difference
 /// (clamped to a max of 60.0f) and splits it into a projection and rejection relative to the
@@ -1932,10 +1932,10 @@ void KartMove::calcVehicleRotation(f32 turn) {
 /// @details If the kart has already charged a super mini-turbo, bails out early. Every frame, the
 /// MT charge increases by 2. Additionally, if the X stick input is large enough, the MT charge
 /// increases an additional 3 units. If the MT charge exceeds 270, it is clamped at 270 and the
-/// drift state advances to @enum DriftState::ChargingSmt to signal that a regular MT boost can be
+/// drift state advances to @ref DriftState::ChargingSmt to signal that a regular MT boost can be
 /// released and that the kart is now charging a super mini-turbo. After this point, the same
 /// incrementing logic applies but for super mini-turbos with a charge threshold of 300. Once this
-/// threshold is hit, the drift state advances to @enum DriftState::ChargedSmt to signal that a
+/// threshold is hit, the drift state advances to @ref DriftState::ChargedSmt to signal that a
 /// super mini-turbo boost can be released.
 void KartMove::calcMtCharge() {
     // TODO: Some of these are shared between the base and derived class implementations.
@@ -1991,7 +1991,7 @@ void KartMove::calcMtCharge() {
 
 /// @addr{0x8057DA5C}
 /// @brief Called when beginning a manual drift hop
-/// @details Sets the @enum eStatus::Hop flag. Cancels wheelies (if the vehicle is a bike).
+/// @details Sets the @ref eStatus::Hop flag. Cancels wheelies (if the vehicle is a bike).
 /// Calculates hop direction vectors based on the kart's current orientation. Initializes manual
 /// drift-related members. Applies initial hop velocity to @ref KartDynamics::m_extVel and clears
 /// the Y component of @ref KartDynamics::m_totalForce.
@@ -2022,28 +2022,28 @@ void KartMove::startHop() {
 
 /// @addr{0x8057FD18}
 /// @brief Applies calculations to start interacting with KCL #COL_TYPE_JUMP_PAD
-/// @details If the kart is in a respawn, action, or zipper, bails out early. Sets the @enum
+/// @details If the kart is in a respawn, action, or zipper, bails out early. Sets the @ref
 /// eStatus::JumpPad flag. Fetches the @ref JumpPadProperties corresponding to the current jump pad
 /// variant. If the variant is a Mushroom Gorge ramp (3) or a bouncy mushroom (4), then it overrides
 /// the previously fetched @ref JumpPadProperties so that the kart has more speed and also sets the
-/// @enum eStatus::JumpPadFixedSpeed flag.
+/// @ref eStatus::JumpPadFixedSpeed flag.
 ///
-/// If the variant is a bouncy mushroom (4), also sets the @enum eStatus::JumpPadMushroomTrigger,
-/// @enum eStatus::JumpPadMushroomVelYInc, and @enum eStatus::JumpPadMushroom flags. Otherwise, the
+/// If the variant is a bouncy mushroom (4), also sets the @ref eStatus::JumpPadMushroomTrigger,
+/// @ref eStatus::JumpPadMushroomVelYInc, and @ref eStatus::JumpPadMushroom flags. Otherwise, the
 /// jump pad applies vertical external velocity to the vehicle defined by ref
 /// JumpPadProperties::velY and clears the vertical component of @ref KartDynamics::m_totalForce. If
 /// the jump pad variant is not a Mushroom Gorge ramp (3) or a bouncy mushroom (4), then the kart's
 /// speed is scaled based on whether the kart's forward direction was angled upward or downward.
 /// Additionally, the kart's facing direction is snapped to lie within the XZ plane and the kart's
-/// internal velocity direction snaps to match this same facing direction. Also sets @enum
+/// internal velocity direction snaps to match this same facing direction. Also sets @ref
 /// eStatus::JumpPadDisableYsusForce so that the kart does not bounce when it lands.
 ///
 /// Regardless of the jump pad variant, the min and max speed are cached from the @ref
 /// JumpPadProperties and the speed is clamped to the min jump pad speed.
-/// @bug The ramps on Mushroom Gorge have variant 3, which sets the @enum eStatus::JumpPadFixedSpeed
-/// flag. This flag is only cleared in @ref tryEndJumpPad() if @enum eStatus::JumpPadMushroomTrigger
+/// @bug The ramps on Mushroom Gorge have variant 3, which sets the @ref eStatus::JumpPadFixedSpeed
+/// flag. This flag is only cleared in @ref tryEndJumpPad() if @ref eStatus::JumpPadMushroomTrigger
 /// is ALSO set. This means that if you hit a variant 3 ramp without also hitting a mushroom before
-/// landing back on the ground, @enum eStatus::JumpPadFixedSpeed will not be cleared. This results
+/// landing back on the ground, @ref eStatus::JumpPadFixedSpeed will not be cleared. This results
 /// in what is known as the "Off-Road Glitch", where the player can now drive through offroad
 /// without any drop in speed. Subsequently bouncing off a mushroom (variant 4) results in the flag
 /// being correctly cleared.
@@ -2114,18 +2114,18 @@ void KartMove::tryStartJumpPad() {
 
 /// @addr{0x80582530}
 /// @brief Checks if the jump pad effect should end for the kart
-/// @details If the kart lands on the ground after bouncing off a mushroom, clears @enum
-/// eStatus::JumpPadMushroomTrigger, @enum eStatus::JumpPadFixedSpeed, and @enum
-/// eStatus::JumpPadMushroomVelYInc. If the kart bounced off a mushroom and @enum
+/// @details If the kart lands on the ground after bouncing off a mushroom, clears @ref
+/// eStatus::JumpPadMushroomTrigger, @ref eStatus::JumpPadFixedSpeed, and @ref
+/// eStatus::JumpPadMushroomVelYInc. If the kart bounced off a mushroom and @ref
 /// eStatus::JumpPadMushroomVelYInc is set, applies 20 units up upward external velocity to the
 /// kart. It will keep adding 20 units every frame until the external velocity reaches the Y
-/// velocity defined by the jump pad properties, at which point it clears @enum
+/// velocity defined by the jump pad properties, at which point it clears @ref
 /// eStatus::JumpPadMushroomVelYInc. Finally, if the kart landed on the ground, the jump pad state
 /// is cancelled.
-/// @bug The ramps on Mushroom Gorge have variant 3, which sets the @enum eStatus::JumpPadFixedSpeed
-/// flag in @ref tryStartJumpPad(). This flag is only cleared in @ref this function if @enum
+/// @bug The ramps on Mushroom Gorge have variant 3, which sets the @ref eStatus::JumpPadFixedSpeed
+/// flag in @ref tryStartJumpPad(). This flag is only cleared in this function if @ref
 /// eStatus::JumpPadMushroomTrigger is ALSO set. This means that if you hit a variant 3 ramp without
-/// also hitting a mushroom before landing back on the ground, @enum eStatus::JumpPadFixedSpeed will
+/// also hitting a mushroom before landing back on the ground, @ref eStatus::JumpPadFixedSpeed will
 /// not be cleared. This results in what is known as the "Off-Road Glitch", where the player can now
 /// drive through offroad without any drop in speed. Subsequently bouncing off a mushroom (variant
 /// 4) results in the flag being correctly cleared.
@@ -2197,9 +2197,9 @@ void KartMove::activateZipperBoost() {
 
 /// @addr{0x80582E34}
 /// @brief Calculates the duration of the active zipper boost
-/// @details This function does nothing if @enum eStatus::ZipperBoost is not set. Sets
-/// @eStatus::Accelerate to indicate the kart is accelerating. Increments the @ref
-/// m_zipperBoostTimer to track the duration of the boost and clears @enum eStatus::ZipperBoost once
+/// @details This function does nothing if @ref eStatus::ZipperBoost is not set. Sets
+/// @ref eStatus::Accelerate to indicate the kart is accelerating. Increments the @ref
+/// m_zipperBoostTimer to track the duration of the boost and clears @ref eStatus::ZipperBoost once
 /// it exceeds the boost duration. For the first 9 frames of the boost, this function clears the Y
 /// component of @ref KartDynamics::m_angVel0.
 void KartMove::calcZipperBoost() {
@@ -2404,7 +2404,7 @@ void KartMove::calcRotCannon(const EGG::Vector3f &forward) {
 
 /// @addr{0x805852C8}
 /// @brief Called when the kart begins dropping from the cannon
-/// @details Transitions the kart from @enum eStatus::InCannon to @enum eStatus::AfterCannon, and
+/// @details Transitions the kart from @ref eStatus::InCannon to @ref eStatus::AfterCannon, and
 /// updates the vehicle's internval velocity to reflect the kart's non-cannon speed.
 void KartMove::exitCannon() {
     auto &status = KartObjectProxy::status();
@@ -2690,7 +2690,7 @@ void KartMoveBike::calcWheelie() {
 /// @details If the kart is not actually in the process of charging a mini-turbo, bails out early.
 /// Every frame, the MT charge increases by 2. Additionally, if the X stick input is large enough,
 /// the MT charge increases an additional 3 units. If the MT charge exceeds 270, it is clamped at
-/// 270 and the drift state advances to @enum DriftState::ChargedMt to signal that a boost can be
+/// 270 and the drift state advances to @ref DriftState::ChargedMt to signal that a boost can be
 /// released.
 void KartMoveBike::calcMtCharge() {
     constexpr u16 MAX_MT_CHARGE = 270;

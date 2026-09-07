@@ -15,6 +15,8 @@ namespace Kinoko::Field {
 /// desyncs, but must be implemented in Kinoko in order to make sure that the bridge's
 /// transformation matrix is accurately updated.
 class JugemDirector : EGG::Disposer {
+    /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
+    /// state on context switch
     friend class Host::Context;
 
 public:

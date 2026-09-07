@@ -19,19 +19,24 @@ public:
     void calc() override;
 
     /// @addr{0x806E3A74}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     };
 
     /// @addr{0x806E3A70}
+    /// @copybrief ObjectBase::loadGraphics()
     /// @details no-op because the launcher does not have any graphics to load
     void loadGraphics() override {}
 
     /// @addr{0x806E3A68}
+    /// @copybrief ObjectBase::createCollision()
     /// @details no-op because the launcher itself does not have any collision
     void createCollision() override {}
 
     /// @addr{0x806E3A6C}
+    /// @copybrief ObjectBase::loadRail()
     /// @details no-op because the launcher itself does not follow any rail path
     void loadRail() override {}
 

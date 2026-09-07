@@ -20,15 +20,23 @@ public:
     void calc() override;
 
     /// @addr{0x8080BE9C}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 3;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
+    /// calculated every frame
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
+    /// calculated every frame
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags().setBit(eLoadFlags::Calc, eLoadFlags::Draw);
     }
 
     /// @addr{0x8080BE98}
+    /// @copybrief ObjectBase::createCollision()
     /// @details This is a no-op because the manager itself does not have any collision
     void createCollision() override {}
 
     /// @addr{0x8080BE94}
+    /// @copybrief ObjectBase::calcCollisionTransform()
     /// @details This is a no-op because the manager itself does not have any collision
     void calcCollisionTransform() override {}
 

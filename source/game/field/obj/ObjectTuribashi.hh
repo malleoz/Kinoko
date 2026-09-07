@@ -15,21 +15,21 @@ public:
     ObjectTuribashi(const System::MapdataGeoObj &params);
     ~ObjectTuribashi() override;
 
-    /// @addr{0x80805AD8}
-    void init() override {}
-
-    /// @addr{0x80805C24}
-    void calc() override {}
-
     /// @addr{0x8080650C}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x80806508}
+    /// @copybrief ObjectBase::createCollision()
+    /// @details no-op because collision is handled entirely within the collision functions.
     void createCollision() override {}
 
     /// @addr{0x80806504}
+    /// @copybrief ObjectBase::calcCollisionTransform()
+    /// @details no-op because collision is handled entirely within the collision functions.
     void calcCollisionTransform() override {}
 
     /// @addr{0x808064E8}

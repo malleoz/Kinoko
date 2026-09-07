@@ -16,6 +16,7 @@ ObjectHeyhoShip::ObjectHeyhoShip(const System::MapdataGeoObj &params)
 ObjectHeyhoShip::~ObjectHeyhoShip() = default;
 
 /// @addr{0x806D19D8}
+/// @copybrief ObjectBase::init()
 void ObjectHeyhoShip::init() {
     m_railInterpolator->init(0.0f, 0);
     m_railInterpolator->setPerPointVelocities(true);
@@ -41,6 +42,7 @@ void ObjectHeyhoShip::init() {
 }
 
 /// @addr{0x806D1B9C}
+/// @copybrief ObjectBase::calc()
 void ObjectHeyhoShip::calc() {
     if (m_railInterpolator->calc() == RailInterpolator::Status::SegmentEnd) {
         m_framesSinceLastLaunch = 0;

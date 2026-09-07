@@ -16,6 +16,7 @@ ObjectTwistedWay::ObjectTwistedWay(const System::MapdataGeoObj &params) : Object
 ObjectTwistedWay::~ObjectTwistedWay() = default;
 
 /// @addr{0x80813CFC}
+/// @copybrief ObjectBase::calc()
 void ObjectTwistedWay::calc() {
     if (!System::RaceManager::Instance()->isStageReached(System::RaceManager::Stage::Race)) {
         ++m_introTimer;

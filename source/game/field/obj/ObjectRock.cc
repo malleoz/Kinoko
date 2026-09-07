@@ -19,6 +19,7 @@ ObjectRock::ObjectRock(const System::MapdataGeoObj &params)
 ObjectRock::~ObjectRock() = default;
 
 /// @addr{0x8076F384}
+/// @copybrief ObjectBase::init()
 void ObjectRock::init() {
     m_railInterpolator->init(0.0f, 0);
     m_railInterpolator->setCurrVel(m_railSpeed);
@@ -42,6 +43,7 @@ void ObjectRock::init() {
 }
 
 /// @addr{0x8076F590}
+/// @copybrief ObjectBase::calc()
 void ObjectRock::calc() {
     switch (m_state) {
     case State::Tangible:

@@ -20,6 +20,8 @@
 
 namespace Kinoko::Host {
 
+/// @brief Constructor which allocates memory for the context and `memcpy`'s the entire heap and
+/// copies all static pointers
 Context::Context() {
     m_contextMemory = malloc(MEMORY_SPACE_SIZE);
     ASSERT(m_contextMemory && EGG::SceneManager::s_rootHeap);
@@ -60,6 +62,8 @@ Context::Context() {
     m_statics.m_flamePoleCount = Field::ObjectFlamePoleFoot::s_flamePoleCount;
 }
 
+/// @brief Copy constructor which clones the provided context
+/// @param c The context to copy from.
 Context::Context(const Context &c) {
     m_contextMemory = malloc(MEMORY_SPACE_SIZE);
     ASSERT(m_contextMemory && c.m_contextMemory);
@@ -67,7 +71,9 @@ Context::Context(const Context &c) {
     m_statics = c.m_statics;
 }
 
-/// @brief Move constructs Context by stealing the memory block and ptrs from the provided context.
+/// @brief Move constructs a context by stealing the memory block and pointers from the provided
+/// context
+/// @param c The context to move from.
 Context::Context(Context &&c) {
     m_contextMemory = c.m_contextMemory;
     c.m_contextMemory = nullptr;
@@ -75,32 +81,16 @@ Context::Context(Context &&c) {
     c.m_statics = {};
 }
 
+/// @brief Destructor which frees the allocated context memory.
+/// @note This class does not manage the lifecycle of the heap that it referenced at the time of
+/// construction; it only manages the copy.
 Context::~Context() {
     free(m_contextMemory);
 }
 
-Context &Context::operator=(const Context &rhs) {
-    if (*this == rhs) {
-        return *this;
-    }
-
-    ASSERT(m_contextMemory && rhs.m_contextMemory && m_contextMemory != rhs.m_contextMemory);
-    memcpy(m_contextMemory, rhs.m_contextMemory, MEMORY_SPACE_SIZE);
-    m_statics = rhs.m_statics;
-
-    return *this;
-}
-
-Context &Context::operator=(Context &&rhs) {
-    free(m_contextMemory);
-    m_contextMemory = rhs.m_contextMemory;
-    rhs.m_contextMemory = nullptr;
-    m_statics = rhs.m_statics;
-    rhs.m_statics = {};
-
-    return *this;
-}
-
+/// @brief Equality comparison operator to check equivalence between two contexts
+/// @param rhs The context to compare against.
+/// @return `true` if the contexts are equivalent, `false` otherwise.
 bool Context::operator==(const Context &rhs) const {
     bool ret = m_contextMemory == rhs.m_contextMemory;
     ret = ret && m_statics.m_rootList == rhs.m_statics.m_rootList;
@@ -141,6 +131,11 @@ bool Context::operator==(const Context &rhs) const {
     return ret;
 }
 
+/// @brief Applies this context to the root heap, effectively loading a savestate
+/// @param rhs The context to apply to the root heap.
+/// @note This will overwrite the current state of the root heap with the state stored in the
+/// context. If you want to restore the previous state, you should save it in another context before
+/// calling this function.
 void Context::SetActiveContext(const Context &rhs) {
     ASSERT(EGG::SceneManager::s_rootHeap && rhs.m_contextMemory);
     memcpy(reinterpret_cast<void *>(EGG::SceneManager::s_rootHeap), rhs.m_contextMemory,

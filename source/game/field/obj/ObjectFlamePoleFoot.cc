@@ -31,6 +31,7 @@ ObjectFlamePoleFoot::~ObjectFlamePoleFoot() {
 }
 
 /// @addr{0x8067EC94}
+/// @copybrief ObjectBase::init()
 void ObjectFlamePoleFoot::init() {
     constexpr f32 NORMALIZATION = static_cast<f32>(CYCLE_DURATION) * (7.0f - 1.0f);
 

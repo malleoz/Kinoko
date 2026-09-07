@@ -27,6 +27,8 @@ ObjectFireSnakeV::~ObjectFireSnakeV() = default;
 /// @addr{0x806C2DA4}
 /// @brief Updates state lifecycle and children positions once the spawn delay has elapsed
 void ObjectFireSnakeV::calcSub() {
+    constexpr u16 LIFECYCLE_DURATION = 600;
+
     StateManager::calc();
 
     u32 frame = System::RaceManager::Instance()->timer() - m_delayFrame;
@@ -36,7 +38,7 @@ void ObjectFireSnakeV::calcSub() {
 
     if (m_currentStateId >= 1 && m_currentStateId <= 4) {
         ++m_age;
-        if (m_age >= 600 && m_currentStateId == 3) {
+        if (m_age >= LIFECYCLE_DURATION && m_currentStateId == 3) {
             m_nextStateId = 0;
         }
     }

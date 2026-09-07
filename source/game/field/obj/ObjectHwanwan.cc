@@ -15,6 +15,7 @@ ObjectHwanwan::ObjectHwanwan(const System::MapdataGeoObj &params)
 ObjectHwanwan::~ObjectHwanwan() = default;
 
 /// @addr{0x806E9724}
+/// @copybrief ObjectBase::init()
 void ObjectHwanwan::init() {
     m_workPos = m_initPos + EGG::Vector3f::ey * DIAMETER;
     m_extVel.setZero();
@@ -31,6 +32,7 @@ void ObjectHwanwan::init() {
 }
 
 /// @addr{0x806E9A78}
+/// @copybrief ObjectBase::calc()
 void ObjectHwanwan::calc() {
     constexpr EGG::Vector3f GRAVITY = EGG::Vector3f(0.0f, 2.5f, 0.0f);
 
@@ -105,6 +107,7 @@ ObjectHwanwanManager::ObjectHwanwanManager(const System::MapdataGeoObj &params)
 ObjectHwanwanManager::~ObjectHwanwanManager() = default;
 
 /// @addr{0x806C571C}
+/// @copybrief ObjectBase::init()
 void ObjectHwanwanManager::init() {
     m_railInterpolator->init(0.0f, 0);
     m_hwanwan->m_tangent = m_railInterpolator->curTangentDir();

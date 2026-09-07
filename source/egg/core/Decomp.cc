@@ -1,11 +1,15 @@
 #include "Decomp.hh"
 
+#include <cstring>
+
 namespace Kinoko::EGG::Decomp {
 
 /// @addr{0x8021997C}
 s32 GetExpandSize(const u8 *src) {
     if (src[0] == 'Y' && src[1] == 'a' && src[2] == 'z') {
-        return form<s32>(&src[4]);
+        s32 val;
+        memcpy(&val, &src[4], sizeof(val));
+        return parse<s32>(val);
     }
 
     return -1;

@@ -40,7 +40,8 @@ ObjectDossunc::ObjectDossunc(const System::MapdataGeoObj &params) : ObjectCollid
 ObjectDossunc::~ObjectDossunc() = default;
 
 /// @addr{0x80764A38}
-/// @brief This object is a holder for Dossun objects and does not have any resources of its own
+/// @copybrief ObjectBase::load()
+/// @details This object is a holder for Dossun objects and does not have any resources of its own
 void ObjectDossunc::load() {
     ObjectDirector::Instance()->addObjectNoImpl(this);
 }

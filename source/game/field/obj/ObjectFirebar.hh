@@ -13,6 +13,7 @@ public:
     ~ObjectFirebar() override;
 
     /// @addr{0x80767DEC}
+    /// @copybrief ObjectBase::init()
     void init() override {
         m_currAngle = 0.0f;
     }
@@ -20,8 +21,10 @@ public:
     void calc() override;
 
     /// @addr{0x807687D8}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x808CE358}

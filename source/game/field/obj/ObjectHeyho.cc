@@ -34,6 +34,7 @@ ObjectHeyho::ObjectHeyho(const System::MapdataGeoObj &params)
 ObjectHeyho::~ObjectHeyho() = default;
 
 /// @addr{0x806CEB90}
+/// @copybrief ObjectBase::init()
 void ObjectHeyho::init() {
     ASSERT(m_railInterpolator);
     m_railInterpolator->init(0.0f, m_railInterpolator->pointCount() / 2);
@@ -52,6 +53,7 @@ void ObjectHeyho::init() {
 }
 
 /// @addr{0x806D013C}
+/// @copybrief ObjectBase::loadAnims()
 void ObjectHeyho::loadAnims() {
     std::array<const char *, 4> names = {{
             "body_color",
@@ -71,6 +73,7 @@ void ObjectHeyho::loadAnims() {
 }
 
 /// @addr{0x806D01D4}
+/// @copybrief ObjectBase::calcCollisionTransform()
 void ObjectHeyho::calcCollisionTransform() {
     auto *objCol = collision();
     if (!objCol) {

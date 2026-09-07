@@ -115,7 +115,7 @@ public:
     /// @brief @ref KartBodyBike uses the handlebar position and rotation to compute front wheel's
     /// transformation matrix.
     /// @note The camera distance is implemented in Kinoko because the camera performs collision
-    /// checks during the race and this can result in an @ref ObjColMgr transformation matrix
+    /// checks during the race and this can result in an @ref Field::ObjColMgr transformation matrix
     /// update. This can cause desyncs on DS Delfino Square if not implemented.
     struct BikeDisp {
         /// @brief Uninitialized default constructor
@@ -150,7 +150,7 @@ public:
 
     /// @brief Parsed from `kartPartsDispParam.bin`. Contains display parameters for each kart.
     /// @note The camera distance is implemented in Kinoko because the camera performs collision
-    /// checks during the race and this can result in an @ref ObjColMgr transformation matrix
+    /// checks during the race and this can result in an @ref Field::ObjColMgr transformation matrix
     /// update. This can cause desyncs on DS Delfino Square if not implemented.
     struct KartDisp {
         /// @brief Uninitialized default constructor
@@ -246,7 +246,7 @@ public:
 
     /// @brief Parsed from `kartCameraParam.bin`. Stores camera parameters for a given weight class.
     /// @note The camera parameters are implemented in Kinoko because the camera performs collision
-    /// checks during the race and this can result in an @ref ObjColMgr transformation matrix
+    /// checks during the race and this can result in an @ref Field::ObjColMgr transformation matrix
     /// update. This can cause desyncs on DS Delfino Square if not implemented.
     struct KartCameraParam {
         /// @brief Uninitialized default constructor

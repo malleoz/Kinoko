@@ -76,6 +76,7 @@ ObjectHanachanHead::ObjectHanachanHead(const char *name, const EGG::Vector3f &po
 ObjectHanachanHead::~ObjectHanachanHead() = default;
 
 /// @addr{0x806C8450}
+/// @copybrief ObjectBase::calcCollisionTransform()
 /// @details Applies a forward and upwards offset so that the collision sphere sits above and in
 /// front of the head's origin.
 void ObjectHanachanHead::calcCollisionTransform() {
@@ -114,6 +115,7 @@ ObjectHanachanBody::ObjectHanachanBody(const char *name, const EGG::Vector3f &po
 ObjectHanachanBody::~ObjectHanachanBody() = default;
 
 /// @addr{0x806C8908}
+/// @copybrief ObjectBase::calcCollisionTransform()
 /// @details Uses base class implementation for all segments except the last. For the last segment,
 /// applies a forward offset so that the collision sphere sits in front of the body part's origin.
 void ObjectHanachanBody::calcCollisionTransform() {
@@ -176,6 +178,7 @@ ObjectHanachan::ObjectHanachan(const System::MapdataGeoObj &params)
 ObjectHanachan::~ObjectHanachan() = default;
 
 /// @addr{0x806C9630}
+/// @copybrief ObjectBase::init()
 void ObjectHanachan::init() {
     initRail();
     initBody();

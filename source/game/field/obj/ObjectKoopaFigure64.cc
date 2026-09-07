@@ -18,6 +18,7 @@ ObjectKoopaFigure64::ObjectKoopaFigure64(const System::MapdataGeoObj &params)
 ObjectKoopaFigure64::~ObjectKoopaFigure64() = default;
 
 /// @addr{0x806DAA44}
+/// @copybrief ObjectBase::init()
 void ObjectKoopaFigure64::init() {
     constexpr f32 BIG_SCALE = 20.0f;
 
@@ -37,8 +38,9 @@ void ObjectKoopaFigure64::init() {
 }
 
 /// @addr{0x806DAB5C}
+/// @copybrief ObjectBase::calc()
 /// @details Waits until m_startDelay have elapsed. Then, the statue will shoot fire for
-/// FIRE_DURATION frames, then stop for COOLDOWN_DURATION frames.
+/// `FIRE_DURATION` frames, then stop for `COOLDOWN_DURATION` frames.
 void ObjectKoopaFigure64::calc() {
     u32 timer = System::RaceManager::Instance()->timer();
     if (timer < m_startDelay) {
@@ -62,6 +64,7 @@ void ObjectKoopaFigure64::calc() {
 }
 
 /// @addr{0x806DAFB8}
+/// @copybrief ObjectBase::calcCollisionTransform()
 /// @details Applies the size of the fire blast to the collision transform.
 void ObjectKoopaFigure64::calcCollisionTransform() {
     constexpr EGG::Vector3f FIRE_POS_OFFSET = EGG::Vector3f(0.0f, -280.0f, 4000.0f);

@@ -18,17 +18,25 @@ public:
     void calc() override;
 
     /// @addr{0x8077CCF4}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x8077CCF0}
+    /// @copybrief ObjectBase::loadGraphics()
+    /// @details This is a no-op in the base game.
     void loadGraphics() override {}
 
     /// @addr{0x8077CCE8}
+    /// @copybrief ObjectBase::createCollision()
+    /// @details This is a no-op in the base game.
     void createCollision() override {}
 
-    /// @addr{0X8077CCE0}
+    /// @addr{0x8077CCE0}
+    /// @copybrief ObjectBase::loadRail()
+    /// @details This is a no-op in the base game.
     void loadRail() override {}
 
     [[nodiscard]] const ObjectBirdLeader *leader() const {
@@ -53,19 +61,24 @@ public:
     void init() override;
 
     /// @addr{0x8077C504}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         m_railInterpolator->calc();
         setPos(m_railInterpolator->curPos());
     }
 
     /// @addr{0x8077CCD4}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     void loadAnims() override;
 
-    /// @brief Not overridden in the base game, but collision mode 0 will cause our assert to fail.
+    /// @copybrief ObjectBase::createCollision()
+    /// @details Not overridden in the base game, but collision mode 0 will cause our assert to
+    /// fail.
     void createCollision() override {}
 
 protected:

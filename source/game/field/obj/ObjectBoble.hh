@@ -17,6 +17,7 @@ public:
     ~ObjectBoble() override = default;
 
     /// @addr{0x8075DBA0}
+    /// @copybrief ObjectBase::init()
     void init() override {
         m_railInterpolator->init(0.0f, 0);
         m_curTangentDir = m_railInterpolator->curTangentDir();
@@ -25,6 +26,7 @@ public:
     }
 
     /// @addr{0x8075DCA0}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         m_railInterpolator->calc();
         setPos(m_railInterpolator->curPos());
@@ -32,8 +34,10 @@ public:
     }
 
     /// @addr{0x8075E744}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x8075E1F4}

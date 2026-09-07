@@ -16,6 +16,7 @@ ObjectPoihanaBase::ObjectPoihanaBase(const System::MapdataGeoObj &params)
 ObjectPoihanaBase::~ObjectPoihanaBase() = default;
 
 /// @addr{0x80747248}
+/// @copybrief ObjectBase::init()
 void ObjectPoihanaBase::init() {
     m_workMat = EGG::Matrix34f::ident;
     m_accel.setZero();
@@ -39,6 +40,7 @@ ObjectPoihana::ObjectPoihana(const System::MapdataGeoObj &params)
 ObjectPoihana::~ObjectPoihana() = default;
 
 /// @addr{0x80748958}
+/// @copybrief ObjectBase::init()
 void ObjectPoihana::init() {
     ObjectPoihanaBase::init();
 

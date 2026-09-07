@@ -14,6 +14,7 @@ public:
     void createCollision() override;
 
     /// @addr{0x80681490}
+    /// @copybrief ObjectBase::calcCollisionTransform()
     void calcCollisionTransform() override {
         update(0);
     }

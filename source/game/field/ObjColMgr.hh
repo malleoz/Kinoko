@@ -8,7 +8,7 @@ namespace Kinoko::Field {
 /// @details Exposes collision queries which operate in local space rather than world space, in
 /// order to allow for dynamically sized objects. Parses tris from an object's KCL file so that
 /// collision queries can be performed against the object's KCL tris. Queries can be performed for
-/// both a point and a sphere. Some queries will cache the result in the @ref CollisionDirector's
+/// both a point and a sphere. Some queries will cache the result in the @ref CollisionDirector
 /// collision entry cache. This class also stores a KCL scale factor so that object collision
 /// queries can map local space collision info to world space in order to compensate for dynamically
 /// sized objects (such as the Bowser's Castle geysers, represented by @ref ObjectFlamePoleFoot).
@@ -20,10 +20,10 @@ public:
     /// @addr{0x807C4DC8}
     /// @brief Narrows the spatial cache of the @ref CourseColMgr to only include KCL tris defined
     /// by the provided mask within a certain radius of the given position.
-    void narrScLocal(f32 radius, const EGG::Vector3f &pos, KCLTypeMask flags) {
+    void narrScLocal(f32 radius, const EGG::Vector3f &pos, KCLTypeMask mask) {
         EGG::Vector3f posWrtModel = m_mtxInv.ps_multVector(pos);
         CourseColMgr::Instance()->scaledNarrowScopeLocal(m_kclScale, radius, m_data, posWrtModel,
-                flags);
+                mask);
     }
 
     /// @addr{0x807C4E4C}
@@ -41,51 +41,51 @@ public:
     }
 
     [[nodiscard]] bool checkPointPartial(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask flags, CollisionInfoPartial *infoOut, KCLTypeMask *typeMaskOut);
+            KCLTypeMask mask, CollisionInfoPartial *infoOut, KCLTypeMask *maskOut);
     [[nodiscard]] bool checkPointPartialPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask flags, CollisionInfoPartial *info, KCLTypeMask *typeMaskOut);
+            KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut);
     [[nodiscard]] bool checkPointFull(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *typeMaskOut);
+            KCLTypeMask mask, CollisionInfo *pInfo, KCLTypeMask *maskOut);
     [[nodiscard]] bool checkPointFullPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask flags, CollisionInfo *pInfo, KCLTypeMask *typeMaskOut);
+            KCLTypeMask mask, CollisionInfo *pInfo, KCLTypeMask *maskOut);
 
     [[nodiscard]] bool checkSpherePartial(f32 radius, const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask flags, CollisionInfoPartial *info,
-            KCLTypeMask *typeMaskOut);
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+            KCLTypeMask *maskOut);
     [[nodiscard]] bool checkSpherePartialPush(f32 radius, const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask flags, CollisionInfoPartial *info,
-            KCLTypeMask *typeMaskOut);
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+            KCLTypeMask *maskOut);
     [[nodiscard]] bool checkSphereFull(f32 radius, const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask flags, CollisionInfo *info,
-            KCLTypeMask *typeMaskOut);
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
+            KCLTypeMask *maskOut);
     [[nodiscard]] bool checkSphereFullPush(f32 radius, const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask flags, CollisionInfo *info,
-            KCLTypeMask *typeMaskOut);
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
+            KCLTypeMask *maskOut);
 
     [[nodiscard]] bool checkPointCachedPartial(const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask flags, CollisionInfoPartial *info,
-            KCLTypeMask *typeMaskOut);
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+            KCLTypeMask *maskOut);
     [[nodiscard]] bool checkPointCachedPartialPush(const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask flags, CollisionInfoPartial *info,
-            KCLTypeMask *typeMaskOut);
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+            KCLTypeMask *maskOut);
     [[nodiscard]] bool checkPointCachedFull(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask mask, CollisionInfo *pInfo, KCLTypeMask *typeMaskOut);
+            KCLTypeMask mask, CollisionInfo *pInfo, KCLTypeMask *maskOut);
     [[nodiscard]] bool checkPointCachedFullPush(const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask flags, CollisionInfo *pInfo,
-            KCLTypeMask *typeMaskOut);
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *pInfo,
+            KCLTypeMask *maskOut);
 
     [[nodiscard]] bool checkSphereCachedPartial(f32 radius, const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask flags, CollisionInfoPartial *info,
-            KCLTypeMask *typeMaskOut);
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+            KCLTypeMask *maskOut);
     [[nodiscard]] bool checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask flags, CollisionInfoPartial *info,
-            KCLTypeMask *typeMaskOut);
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+            KCLTypeMask *maskOut);
     [[nodiscard]] bool checkSphereCachedFull(f32 radius, const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask flags, CollisionInfo *pInfo,
-            KCLTypeMask *typeMaskOut);
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *pInfo,
+            KCLTypeMask *maskOut);
     [[nodiscard]] bool checkSphereCachedFullPush(f32 radius, const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask flags, CollisionInfo *pInfo,
-            KCLTypeMask *typeMaskOut);
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *pInfo,
+            KCLTypeMask *maskOut);
 
     /// @beginSetters
     /// @brief Sets the local-to-world transformation matrix

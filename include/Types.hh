@@ -8,6 +8,7 @@
 #include <egg/core/Allocator.hh>
 
 #include <cstdint>
+#include <deque>
 #include <list>
 #include <span>
 #include <type_traits>
@@ -33,6 +34,10 @@ typedef double f64;
 template <typename T>
 using alloc_list = std::list<T, EGG::Allocator<T>>;
 
+/// @brief Alias template for a std::deque that uses the EGG allocator
+/// @tparam T The type of objects in the deque
+template <typename T>
+using alloc_deque = std::deque<T, EGG::Allocator<T>>;
 
 /// @brief A contiguous storage container that manages the lifecycle of a buffer of a given size.
 /// @details Similar to std::unique_ptr in that we guarantee memory safety, however owning_span
@@ -72,6 +77,7 @@ public:
     }
 
     /// @brief Copy assignment operator
+    /// @return A reference to the current owning_span instance after the copy assignment
     /// @details Deletes the existing buffer and performs a deep copy
     owning_span &operator=(const owning_span &rhs) {
         if (this != &rhs) {
@@ -85,6 +91,7 @@ public:
     }
 
     /// @brief Move assignment operator
+    /// @return A reference to the current owning_span instance after the move assignment
     /// @details Transfers ownership of the buffer and leaves rhs in an invalid state
     owning_span &operator=(owning_span &&rhs) {
         if (this != &rhs) {
@@ -98,13 +105,14 @@ public:
         return *this;
     }
 
-    /// @brief Destroys the underlying buffer on teardown
+    /// @brief Destructor that destroys the underlying buffer on teardown
     ~owning_span() {
         EGG::egg_delete_array(m_data, m_size);
     }
 
     /// @brief Indexes into the underlying buffer
     /// @param idx The index of the element in the buffer to retrieve
+    /// @return A reference to the element at the specified index in the buffer
     [[nodiscard]] T &operator[](size_t idx) {
         ASSERT(idx < m_size);
         return m_data[idx];
@@ -112,62 +120,79 @@ public:
 
     /// @brief Indexes into the underlying buffer
     /// @param idx The index of the element in the buffer to retrieve
+    /// @return A const reference to the element at the specified index in the buffer
     [[nodiscard]] const T &operator[](size_t idx) const {
         ASSERT(idx < m_size);
         return m_data[idx];
     }
 
     /// @brief Retrieves the first element in the buffer
+    /// @return A reference to the first element in the buffer
     [[nodiscard]] T &front() {
         ASSERT(m_size > 0);
         return m_data[0];
     }
 
     /// @brief Retrieves the first element in the buffer
+    /// @return A const reference to the first element in the buffer
     [[nodiscard]] const T &front() const {
         ASSERT(m_size > 0);
         return m_data[0];
     }
 
     /// @brief Retrieves the last element in the buffer
+    /// @return A reference to the last element in the buffer
     [[nodiscard]] T &back() {
         ASSERT(m_size > 0);
         return m_data[m_size - 1];
     }
 
     /// @brief Retrieves the last element in the buffer
+    /// @return A const reference to the last element in the buffer
     [[nodiscard]] const T &back() const {
         ASSERT(m_size > 0);
         return m_data[m_size - 1];
     }
 
+    /// @brief Retrieves a pointer to the beginning of the span's data
+    /// @return A pointer to the first element in the buffer
+    /// @pre Assumes that the buffer is initialized and contains at least one element.
     [[nodiscard]] T *begin() {
         return m_data;
     }
 
+    /// @brief Retrieves a pointer to one past the last element in the buffer
+    /// @return A pointer to one past the last element in the buffer
     [[nodiscard]] T *end() {
         return m_data + m_size;
     }
 
+    /// @brief Retrieves a const pointer to the beginning of the span's data
+    /// @return A const pointer to the first element in the buffer
     [[nodiscard]] const T *begin() const {
         return m_data;
     }
 
+    /// @brief Retrieves a const pointer to one past the last element in the buffer
+    /// @return A const pointer to one past the last element in the buffer
     [[nodiscard]] const T *end() const {
         return m_data + m_size;
     }
 
     /// @brief Returns true if the buffer is uninitialized
+    /// @return `true` if the buffer is uninitialized or contains no elements, `false` otherwise.
     [[nodiscard]] bool empty() const {
         return m_size == 0;
     }
 
     /// @brief Returns the number of elements that fit in the buffer
+    /// @return The number of elements currently stored in the buffer
     [[nodiscard]] size_t size() const {
         return m_size;
     }
 
     /// @brief Returns a read-only view of the entire buffer
+    /// @return A `std::span` representing a read-only view of the buffer
     [[nodiscard]] std::span<const T> view() const {
         return {m_data, m_size};
     }
@@ -216,6 +241,7 @@ public:
     }
 
     /// @brief Copy assignment operator
+    /// @return A reference to the current fixed_vector instance after the copy assignment
     /// @details Destroys the existing buffer, then allocates a new one and deep copies
     fixed_vector &operator=(const fixed_vector &rhs) {
         if (this != &rhs) {
@@ -232,6 +258,7 @@ public:
     }
 
     /// @brief Move assignment operator
+    /// @return A reference to the current fixed_vector instance after the move assignment
     /// @details Destroys the existing buffer, then transfers ownership from rhs
     fixed_vector &operator=(fixed_vector &&rhs) {
         if (this != &rhs) {
@@ -249,8 +276,7 @@ public:
         return *this;
     }
 
-    /// @brief Destructor.
-    /// @details Destroys all existing elements in the array in-place from the end to the start.
+    /// @brief Destructor that destroys all existing elements in the array from the end to the start
     ~fixed_vector() {
         destroy();
     }

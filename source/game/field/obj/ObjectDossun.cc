@@ -16,6 +16,7 @@ ObjectDossun::ObjectDossun(const System::MapdataGeoObj &params)
 ObjectDossun::~ObjectDossun() = default;
 
 /// @addr{0x8075EEA8}
+/// @copybrief ObjectBase::init()
 void ObjectDossun::init() {
     constexpr f32 BEFORE_FALL_VEL = 30.0f;
 
@@ -77,7 +78,8 @@ void ObjectDossun::init() {
 }
 
 /// @addr{0x807648A4}
-/// @brief Scales up the height of the Thwomp's transformation matrix
+/// @copybrief ObjectBase::calcCollisionTransform()
+/// @details Scales up the height of the Thwomp's transformation matrix
 void ObjectDossun::calcCollisionTransform() {
     constexpr f32 HEIGHT = 400.0f;
 

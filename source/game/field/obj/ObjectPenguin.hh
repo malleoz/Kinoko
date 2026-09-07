@@ -17,6 +17,7 @@ public:
     ~ObjectPenguin() override;
 
     /// @addr{0x807756B0}
+    /// @copybrief ObjectBase::init()
     void init() override {
         m_railInterpolator->init(0.0f, 0);
         m_state = State::Walk;
@@ -24,6 +25,7 @@ public:
     }
 
     /// @addr{0x80775764}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         if (m_state == State::Walk) {
             calcWalk();
@@ -31,8 +33,10 @@ public:
     }
 
     /// @addr{0x80777324}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @brief Runs every frame that the penguin is walking
@@ -88,6 +92,7 @@ public:
     ~ObjectPenguinS() override;
 
     /// @addr{0x807760B0}
+    /// @copybrief ObjectBase::init()
     void init() override {
         initAnmTimer();
         m_railInterpolator->init(0.0f, 0);

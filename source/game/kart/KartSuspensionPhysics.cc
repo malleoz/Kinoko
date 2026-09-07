@@ -14,7 +14,7 @@ WheelPhysics::WheelPhysics(u16 wheelIdx, u16 bspWheelIdx)
     : m_wheelIdx(wheelIdx), m_bspWheelIdx(bspWheelIdx), m_bspWheel(nullptr) {}
 
 /// @addr{0x8059A9C4}
-/// @brief Destructor that destroys the underlying @CollisionGroup subsystem for this wheel
+/// @brief Destructor that destroys the underlying @ref CollisionGroup subsystem for this wheel
 WheelPhysics::~WheelPhysics() {
     EGG::egg_delete(m_hitboxGroup);
 }

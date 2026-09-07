@@ -15,6 +15,7 @@ ObjectSniper::ObjectSniper()
 ObjectSniper::~ObjectSniper() = default;
 
 /// @addr{0x806DDB34}
+/// @copybrief ObjectBase::init()
 /// @details Constructs the m_pointIdxs mapping between projectile indices and the corresponding
 /// rail point index to launch the projectile at.
 void ObjectSniper::init() {

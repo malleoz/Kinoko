@@ -21,6 +21,7 @@ ObjectPropeller::~ObjectPropeller() {
 }
 
 /// @addr{0x807655B4}
+/// @copybrief ObjectBase::createCollision()
 /// @details Creates cylindrical collision for the shell and each of the 3 blades
 void ObjectPropeller::createCollision() {
     ObjectCollidable::createCollision();
@@ -37,6 +38,7 @@ void ObjectPropeller::createCollision() {
 }
 
 /// @addr{0x80765738}
+/// @copybrief ObjectBase::calcCollisionTransform()
 /// @details Rotates the transformation matrix of each blade around the propeller's center point
 void ObjectPropeller::calcCollisionTransform() {
     constexpr f32 BLADE_LENGTH = 250.0f;

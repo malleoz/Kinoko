@@ -28,11 +28,16 @@ public:
     void calc() override;
 
     /// @addr{0x806DA7AC}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806D68B0}
+    /// @copybrief ObjectBase::getResources()
+    /// @details Returns the resource name of the car variant
+    /// @return The resource name of the car variant
     [[nodiscard]] const char *getResources() const override {
         return m_carName;
     }
@@ -104,6 +109,7 @@ private:
     bool m_hasAuxCollision; ///< Set when a collision was the result of @ref m_auxCollision
     f32 m_hitAngle; ///< Angular threshold for determining if player should be launched or squished
 
+    /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 3> STATE_ENTRIES = {{
             {StateEntry<ObjectCarTGE, &ObjectCarTGE::enterStateStub, &ObjectCarTGE::calcStateStub>(
                     0)},

@@ -106,6 +106,8 @@ struct BoxColHighPoint {
 /// in collision checks. Once the collision checks have been completed, resulting collision objects
 /// can be iterated using the @ref getNextObject and @ref getNextDrivable methods.
 class BoxColManager : EGG::Disposer {
+    /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
+    /// state on context switch
     friend class Host::Context;
 
 public:

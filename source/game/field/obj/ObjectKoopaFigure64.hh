@@ -17,11 +17,14 @@ public:
 
     /// @addr{0x806C0854}
     /// @details The game defines this in a GeoObjectSmoke base class, but we don't implement it.
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806DB154}
+    /// @copybrief ObjectBase::createCollision()
     /// @details Collision is only created for the large statue, not the mini ones.
     void createCollision() override {
         if (m_isBigStatue) {

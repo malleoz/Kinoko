@@ -268,9 +268,9 @@ f32 ObjectEscalator::calcWrappedStepCount(s32 t) {
 
 /// @addr{0x80800FBC}
 /// @brief Calculates the speed of the escalator at a given time t
-/// @details This is the derivative of the position function @ref calcWrappedStepCount integrates.
+/// @details This is the derivative of the position function @ref calcWrappedStepCount() integrates.
 /// @par Piecewise Speed Function
-/// Using the same symbols as @ref calcWrappedStepCount: \f$v_0, v_1, v_2\f$ are @ref m_speed,
+/// Using the same symbols as @ref calcWrappedStepCount(): \f$v_0, v_1, v_2\f$ are @ref m_speed,
 /// \f$t_{s0}, t_{s1}\f$ are @ref m_stopFrames, \f$t_{a0}, t_{a1}\f$ are @ref m_startFrames,
 /// \f$t_{f0} = t_{a0} + R\f$ and \f$t_{f1} = t_{a1} + R\f$ are @ref m_fullSpeedFrames, and
 /// \f$R\f$ is REVERSE_FRAMES_F32.

@@ -16,15 +16,16 @@ ObjectKCL::~ObjectKCL() {
     EGG::egg_delete(m_objColMgr);
 }
 
-/// @brief Loads the KCL file for the object and creates an @ref ObjColMgr to interface with it
 /// @addr{0x8081AA58}
+/// @copybrief ObjectBase::createCollision()
+/// @details Loads the KCL file for the object and creates an @ref ObjColMgr to interface with it
 void ObjectKCL::createCollision() {
     char filepath[128];
     snprintf(filepath, sizeof(filepath), "%s.kcl", getKclName());
 
     auto *resMgr = System::ResourceManager::Instance();
     m_objColMgr =
-            EGG::egg_new<ObjColMgr>(resMgr->getFile(filepath, nullptr, System::ArchiveId::Course));
+            EGG::egg_new<ObjColMgr>(resMgr->getFile(filepath, System::ArchiveId::Course).data());
 }
 
 /// @addr{0x8081AB4C}

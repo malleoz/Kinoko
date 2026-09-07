@@ -30,6 +30,8 @@ typedef f32 (*PlayPolicyFunc)(f32 start, f32 end, f32 frame);
 }
 
 class FrameCtrl {
+    /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
+    /// state on context switch
     friend class Host::Context;
 
 public:

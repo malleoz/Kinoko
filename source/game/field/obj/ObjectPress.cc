@@ -18,6 +18,7 @@ ObjectPress::ObjectPress(const System::MapdataGeoObj &params)
 ObjectPress::~ObjectPress() = default;
 
 /// @addr{0x8077763C}
+/// @copybrief ObjectBase::init()
 /// @details Performs a floor collision check to find the lowered position and to laterally adjust
 /// the stomper's position to avoid the stomper partially clipping into the floor.
 void ObjectPress::init() {
@@ -47,6 +48,7 @@ void ObjectPress::init() {
 }
 
 /// @addr{0x8077788C}
+/// @copybrief ObjectBase::calc()
 void ObjectPress::calc() {
     m_startedLowered = false;
 
@@ -70,6 +72,7 @@ void ObjectPress::calc() {
 }
 
 /// @addr{0x8077840C}
+/// @copybrief ObjectBase::createCollision()
 /// @details Defines the convex hull geometry that represents the press's collision shape.
 void ObjectPress::createCollision() {
     constexpr f32 POINT_SCALE = 10.0f;

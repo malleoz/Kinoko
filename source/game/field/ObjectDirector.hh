@@ -22,6 +22,8 @@ class ObjectPsea;
 /// @ref ObjectDrivableDirector, which manages objects that can be driven by karts because those
 /// objects may implement their own collision logic beyond a simple GJK collision check.
 class ObjectDirector : EGG::Disposer {
+    /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
+    /// state on context switch
     friend class Host::Context;
 
 public:

@@ -11,11 +11,13 @@ public:
     ~ObjectDokan() override;
 
     /// @addr{0x80778830}
+    /// @copybrief ObjectBase::init()
     void init() override {
         m_isAirborne = false;
     }
 
     /// @addr{0x807788C8}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         if (!m_isAirborne) {
             return;
@@ -26,8 +28,10 @@ public:
     }
 
     /// @addr{0x80778FE4}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     void calcCollisionTransform() override;

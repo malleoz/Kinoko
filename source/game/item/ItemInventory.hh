@@ -58,7 +58,7 @@ public:
     /// @endGetters
 
 private:
-    ItemId m_currentId; ///< The @enum ItemId for the current item
+    ItemId m_currentId; ///< The @ref ItemId for the current item
     int m_currentCount; ///< The number of uses remaining for the current item
 };
 

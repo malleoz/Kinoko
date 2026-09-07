@@ -258,7 +258,7 @@ void KartHalfPipe::calcCollision(bool notAirborne) {
 /// @param trick The trick type to activate
 /// @details Requires that the duration of the attempted trick is greater than 50 frames. Determines
 /// which trick type to activate based on the trick input and the duration of the airtime. Finally,
-/// initializes the properties of the trick in the @ref StuntManager and sets the @enum
+/// initializes the properties of the trick in the @ref StuntManager and sets the @ref
 /// eStatus::ZipperTrick bit.
 void KartHalfPipe::activateTrick(s32 duration, System::Trick trick) {
     if (duration < 51 || trick == System::Trick::None) {

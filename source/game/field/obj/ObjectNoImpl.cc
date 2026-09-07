@@ -11,6 +11,8 @@ ObjectNoImpl::ObjectNoImpl(const System::MapdataGeoObj &params) : ObjectBase(par
 /// @brief Default virtual destructor
 ObjectNoImpl::~ObjectNoImpl() = default;
 
+/// @copybrief ObjectBase::load()
+/// @details Registers the object to the ObjectDirector without any implementation.
 void ObjectNoImpl::load() {
     ObjectDirector::Instance()->addObjectNoImpl(this);
 }

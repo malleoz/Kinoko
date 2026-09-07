@@ -9,6 +9,7 @@
 namespace Kinoko::Scene {
 
 /// @addr{0x80542878}
+/// @brief Constructor
 RootScene::RootScene() {
     m_heap->setName("RootSceneHeap");
 }
@@ -17,6 +18,8 @@ RootScene::RootScene() {
 RootScene::~RootScene() = default;
 
 /// @addr{0x80542D4C}
+/// @brief Creates singleton instances for @ref System::ResourceManager, @ref System::KPadDirector,
+/// and @ref System::RaceConfig
 void RootScene::allocate() {
     {
         ScopeLock<GroupID> lock(GroupID::Resource);
@@ -31,6 +34,7 @@ void RootScene::allocate() {
 }
 
 /// @addr{0x805438B4}
+/// @brief Initializes the @ref System::RaceConfig singleton instance
 void RootScene::init() {
     {
         ScopeLock<GroupID> lock(GroupID::Race);

@@ -15,6 +15,7 @@ namespace Kinoko::Field {
 /// create a few const members for expressions that are commonly re-used in this piecewise function
 /// that do not need to be recomputed every frame.
 class ObjectEscalator final : public ObjectKCL {
+    /// @brief Grants the escalator group class access to the escalator's state
     friend class ObjectEscalatorGroup;
 
 public:
@@ -22,6 +23,7 @@ public:
     ~ObjectEscalator() override;
 
     /// @addr{0x808008FC}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         s32 t = static_cast<s32>(System::RaceManager::Instance()->timer());
         setMovingObjVel(m_stepDims * calcSpeed(t));
@@ -36,8 +38,10 @@ public:
     }
 
     /// @addr{0x80803CF8}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x80803910}

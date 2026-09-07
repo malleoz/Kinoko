@@ -19,12 +19,14 @@ public:
     ~ObjectWoodboxWSub() override = default;
 
     /// @addr{0x8077E3E4}
+    /// @copybrief ObjectBase::init()
     void init() override {
         ObjectBreakable::init();
         m_state = 0;
     }
 
     /// @addr{0x8077E49C}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         if (m_state - 1 > 1) {
             return;
@@ -34,8 +36,10 @@ public:
     }
 
     /// @addr{0x8077EDA4}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x8077E444}

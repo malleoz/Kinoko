@@ -18,6 +18,8 @@ namespace Item {
 /// @brief Singleton class that manages item state for all karts in the game
 /// @details Maintains an array of @ref KartItem objects, indexed based on player id.
 class ItemDirector : EGG::Disposer {
+    /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
+    /// state on context switch
     friend class Host::Context;
 
 public:

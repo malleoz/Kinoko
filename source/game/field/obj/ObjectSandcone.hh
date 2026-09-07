@@ -15,6 +15,7 @@ public:
     ~ObjectSandcone() override;
 
     /// @addr{0x806872A0}
+    /// @copybrief ObjectBase::init()
     void init() override {
         m_duration = m_finalHeightDelta / m_flowRate;
         m_currentMtx = m_rtMat;
@@ -24,13 +25,16 @@ public:
     }
 
     /// @addr{0x806873BC}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         setTransform(getUpdatedMatrix(0));
     }
 
     /// @addr{0x80687E14}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     [[nodiscard]] const EGG::Matrix34f &getUpdatedMatrix(u32 timeOffset) override;

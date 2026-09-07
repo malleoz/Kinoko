@@ -8,43 +8,59 @@ namespace Kinoko::System {
 
 class MapdataPointInfo;
 
+/// @brief Base class that describes an area of the course
 class MapdataAreaBase {
 public:
+    /// @brief The shape of the area
+    enum class Shape : s8 {
+        Box = 0,      ///< Box-shaped area
+        Cylinder = 1, ///< Cylinder-shaped area
+    };
+
+    /// @brief The type of the area
+    enum class Type : s8 {
+        MovingRoad = 3, ///< Moving road area
+    };
+
+    /// @brief Raw data structure for an area of the course
     struct SData {
-        s8 shape;
-        s8 type;
-        u8 _02[0x03 - 0x02];
-        u8 priority;
-        EGG::Vector3f position;
-        EGG::Vector3f rotation;
-        EGG::Vector3f scale;
-        s16 parameters[2];
+        s8 shape;               ///< Corresponds to @ref Shape
+        s8 type;                ///< Corresponds to @ref Type
+        u8 _02[0x03 - 0x02];    ///< Unused in Kinoko
+        u8 priority;            ///< The priority of the area
+        EGG::Vector3f position; ///< Position of the area
+        EGG::Vector3f rotation; ///< Rotation of the area
+        EGG::Vector3f scale;    ///< Scale of the area
+        s16 parameters[2];      ///< Setting parameters
         // Pre Revision 2200: End of structure
-        s8 railId;
-        u8 _2d[0x30 - 0x2d];
+        s8 railId;           ///< Rail ID associated with the area
+        u8 _2d[0x30 - 0x2d]; ///< Unused in Kinoko
     };
-
-    enum class Shape {
-        Box = 0,
-        Cylinder = 1,
-    };
-
-    enum class Type {
-        MovingRoad = 3,
-    };
+    STATIC_ASSERT(sizeof(SData) == 0x30);
 
     MapdataAreaBase(const SData *data, s16 index);
-    ~MapdataAreaBase() = default;
+
+    /// @brief Default destructor
+    virtual ~MapdataAreaBase() = default;
+
     void read(EGG::Stream &stream);
 
-    virtual bool testImpl(const EGG::Vector3f &pos) const = 0;
+    /// @brief Virtual function that tests whether the provided position lies within the area
+    /// @param pos The position to check
+    /// @return True if the position lies within the area, false otherwise
+    [[nodiscard]] virtual bool testImpl(const EGG::Vector3f &pos) const = 0;
 
     /// @addr{0x805160B0}
+    /// @brief Tests whether the provided position lies within the area
+    /// @param pos The position to check
+    /// @return True if the position lies within the area, false otherwise
+    /// @details Performs a preliminary check using the bounding sphere before invoking the more
+    /// detailed test implementation.
     [[nodiscard]] bool test(const EGG::Vector3f &pos) const {
-        return (m_position - pos).squaredLength() > m_sqBoundingSphereRadius ? false :
-                                                                               testImpl(pos);
+        return (m_position - pos).squaredLength() > m_boundingRadiusSq ? false : testImpl(pos);
     }
 
+    /// @beginGetters
     [[nodiscard]] MapdataPointInfo *getPointInfo() const;
 
     [[nodiscard]] Type type() const {
@@ -55,6 +71,9 @@ public:
         return m_priority;
     }
 
+    /// @brief Fetches the area settings
+    /// @param i The index of the setting to fetch
+    /// @return The value of the specified setting
     [[nodiscard]] s16 param(size_t i) const {
         ASSERT(i < m_params.size());
         return m_params[i];
@@ -63,28 +82,30 @@ public:
     [[nodiscard]] s16 index() const {
         return m_index;
     }
+    /// @endGetters
 
 protected:
-    const SData *m_rawData;
-    Type m_type;
-    u8 m_priority;
-    EGG::Vector3f m_position;
-    EGG::Vector3f m_rotation;
-    EGG::Vector3f m_scale;
-    std::array<s16, 2> m_params;
-    s8 m_railId;
+    [[maybe_unused]] const SData *const m_rawData; ///< Pointer to the raw area data
+    Type m_type;                                   ///< Type of the area
+    u8 m_priority;                                 ///< Priority of the area
+    EGG::Vector3f m_position;                      ///< Position of the area
+    EGG::Vector3f m_rotation;                      ///< Rotation of the area in degrees
+    EGG::Vector3f m_scale;                         ///< Scale of the area
+    std::array<s16, 2> m_params;                   ///< Area settings parameters
+    s8 m_railId; ///< @ref Field::Rail associated with the area (or -1 if no rail)
 
-    EGG::Vector3f m_right;
-    EGG::Vector3f m_up;
-    EGG::Vector3f m_forward;
-    EGG::Vector3f m_dimensions;
-    f32 m_ellipseRadiusSq;
-    f32 m_ellipseAspectRatio;
-    f32 m_sqBoundingSphereRadius; ///< Used to phase out intersection tests early.
-    s16 m_index;
+    EGG::Vector3f m_right;      ///< Right direction vector of the area
+    EGG::Vector3f m_up;         ///< Up direction vector of the area
+    EGG::Vector3f m_forward;    ///< Forward direction vector of the area
+    EGG::Vector3f m_dimensions; ///< Dimensions of the area
+    f32 m_ellipseRadiusSq;      ///< Square of the x-axis dimension (used for cylinders only)
+    f32 m_ellipseRatio;     ///< Ratio between the x and z-axis dimensions (used for cylinders only)
+    f32 m_boundingRadiusSq; ///< Square of the bounding sphere containing the entire area shape
+    const s16 m_index;      ///< Index of the entry in the AREA section of the KMP
 };
 
-class MapdataAreaBox : public MapdataAreaBase {
+/// @brief Represents a box-shaped area in the map
+class MapdataAreaBox final : public MapdataAreaBase {
 public:
     MapdataAreaBox(const SData *data, s16 index);
     ~MapdataAreaBox() = default;
@@ -92,7 +113,8 @@ public:
     [[nodiscard]] bool testImpl(const EGG::Vector3f &pos) const override;
 };
 
-class MapdataAreaCylinder : public MapdataAreaBase {
+/// @brief Represents a cylinder-shaped area in the map
+class MapdataAreaCylinder final : public MapdataAreaBase {
 public:
     MapdataAreaCylinder(const SData *data, s16 index);
     ~MapdataAreaCylinder() = default;
@@ -100,7 +122,9 @@ public:
     [[nodiscard]] bool testImpl(const EGG::Vector3f &pos) const override;
 };
 
-class MapdataAreaAccessor : public MapdataAccessorBase<MapdataAreaBase, MapdataAreaBase::SData> {
+/// @brief Provides access to entries in the AREA section of the course KMP
+class MapdataAreaAccessor final
+    : public MapdataAccessorBase<MapdataAreaBase, MapdataAreaBase::SData> {
 public:
     MapdataAreaAccessor(const MapSectionHeader *header);
     ~MapdataAreaAccessor() override;
@@ -108,12 +132,17 @@ public:
     void init(const MapdataAreaBase::SData *start, u16 count);
     void sort();
 
+    /// @brief Returns the sorted entry at the specified index
+    /// @param i The index of the sorted entry to retrieve
+    /// @return A pointer to the sorted entry at the specified index, or nullptr if the index is out
+    /// of bounds
     [[nodiscard]] MapdataAreaBase *getSorted(u16 i) const {
         ASSERT(!m_sortedEntries.empty());
         return i < m_sortedEntries.size() ? m_sortedEntries[i] : nullptr;
     }
 
 private:
+    /// @brief Array of sorted entries in the AREA (higher priority first)
     owning_span<MapdataAreaBase *> m_sortedEntries;
 };
 

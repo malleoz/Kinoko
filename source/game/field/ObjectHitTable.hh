@@ -30,11 +30,10 @@ public:
     /// @param filename The name of the file to parse (either `ObjHitTableKart.bin` or
     /// `ObjHitTableKartObj.bin`)
     ObjectHitTable(const char *filename) {
-        size_t size;
-        void *file = System::ResourceManager::Instance()->getFile(filename, &size,
-                System::ArchiveId::Core);
+        std::span<const u8> file =
+                System::ResourceManager::Instance()->getFile(filename, System::ArchiveId::Core);
 
-        EGG::RamStream stream = EGG::RamStream(file, size);
+        EGG::RamStream stream = EGG::RamStream(file.data(), static_cast<u32>(file.size()));
 
         m_count = stream.read_s16();
         m_fieldCount = stream.read_s16();

@@ -23,6 +23,7 @@ ObjectPillarC::ObjectPillarC(const System::MapdataGeoObj &params)
 ObjectPillarC::~ObjectPillarC() = default;
 
 /// @addr{0x807FEC30}
+/// @copybrief ObjectBase::calcCollisionTransform()
 void ObjectPillarC::calcCollisionTransform() {
     constexpr f32 HEIGHT = 1900.0f;
 
@@ -60,6 +61,7 @@ ObjectPillar::ObjectPillar(const System::MapdataGeoObj &params)
 ObjectPillar::~ObjectPillar() = default;
 
 /// @addr{0x807FF17C}
+/// @copybrief ObjectBase::calc()
 /// @details Checks the current time to update the pillar's fall state and rotation. If the pillar
 /// is upright, then the @ref ObjectPillarC collision is enabled. If the pillar is falling, then the
 /// rotation is updated and the collision transform is updated. If the pillar has finished falling,

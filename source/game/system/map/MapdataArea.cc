@@ -5,13 +5,16 @@
 namespace Kinoko::System {
 
 /// @addr{0x80516050}
+/// @brief Constructor that parses the raw area data
+/// @param data Pointer to the raw area data
+/// @param index Index of the entry in the AREA section of the KMP
 MapdataAreaBase::MapdataAreaBase(const SData *data, s16 index) : m_rawData(data), m_index(index) {
     EGG::RamStream stream = EGG::RamStream(data,
             CourseMap::Instance()->version() > 2200 ? sizeof(SData) : sizeof(SData) - 4);
     read(stream);
 
-    m_sqBoundingSphereRadius = 0.0f;
-    m_ellipseAspectRatio = 0.0f;
+    m_boundingRadiusSq = 0.0f;
+    m_ellipseRatio = 0.0f;
     m_ellipseRadiusSq = 0.0f;
     m_dimensions = EGG::Vector3f::zero;
     m_right = EGG::Vector3f::zero;
@@ -19,6 +22,10 @@ MapdataAreaBase::MapdataAreaBase(const SData *data, s16 index) : m_rawData(data)
     m_forward = EGG::Vector3f::zero;
 }
 
+/// @brief Parses the raw area data from the provided stream
+/// @param stream The stream from which to read the raw area data
+/// @note Earlier revisions of the KMP file format do not include the rail ID field. Even though all
+/// vanilla course KMP files have revision 2520, we add this check for posterity's sake.
 void MapdataAreaBase::read(EGG::Stream &stream) {
     stream.skip(1);
     m_type = static_cast<Type>(stream.read_s8());
@@ -38,6 +45,8 @@ void MapdataAreaBase::read(EGG::Stream &stream) {
 }
 
 /// @addr{0x80516168}
+/// @brief Fetches the @ref MapdataPointInfo for the associated rail, if any
+/// @return Pointer to the @ref MapdataPointInfo for the associated rail, or nullptr if none exists
 MapdataPointInfo *MapdataAreaBase::getPointInfo() const {
     // The rail ID doesn't exist in prior versions, so there's no point info
     auto *courseMap = CourseMap::Instance();
@@ -49,14 +58,17 @@ MapdataPointInfo *MapdataAreaBase::getPointInfo() const {
 }
 
 /// @addr{0x80516220}
+/// @brief Constructor
+/// @param data Pointer to the raw area data
+/// @param index Index of the entry in the AREA section of the KMP
 MapdataAreaBox::MapdataAreaBox(const SData *data, s16 index) : MapdataAreaBase(data, index) {
     m_dimensions.x = 0.5f * (10000.0f * m_scale.x);
     m_dimensions.y = 10000.0f * m_scale.y;
     m_dimensions.z = 0.5f * (10000.0f * m_scale.z);
 
-    m_ellipseAspectRatio = 0.0f;
+    m_ellipseRatio = 0.0f;
     m_ellipseRadiusSq = 0.0f;
-    m_sqBoundingSphereRadius = m_dimensions.squaredLength();
+    m_boundingRadiusSq = m_dimensions.squaredLength();
 
     EGG::Quatf rotation = EGG::Quatf::FromRPY(DEG2RAD * m_rotation.x, DEG2RAD * m_rotation.y,
             DEG2RAD * m_rotation.z);
@@ -67,6 +79,7 @@ MapdataAreaBox::MapdataAreaBox(const SData *data, s16 index) : MapdataAreaBase(d
 }
 
 /// @addr{0x805163F4}
+/// @copydoc MapdataAreaBase::testImpl()
 bool MapdataAreaBox::testImpl(const EGG::Vector3f &pos) const {
     EGG::Vector3f relPos = pos - m_position;
 
@@ -89,12 +102,15 @@ bool MapdataAreaBox::testImpl(const EGG::Vector3f &pos) const {
 }
 
 /// @addr{0x805164FC}
+/// @brief Constructor
+/// @param data Pointer to the raw area data
+/// @param index Index of the entry in the AREA section of the KMP
 MapdataAreaCylinder::MapdataAreaCylinder(const SData *data, s16 index)
     : MapdataAreaBase(data, index) {
     m_dimensions = m_scale * 5000.0f;
     m_ellipseRadiusSq = m_dimensions.x * m_dimensions.x;
-    m_sqBoundingSphereRadius = m_dimensions.x * m_dimensions.x + m_dimensions.z * m_dimensions.z;
-    m_ellipseAspectRatio = m_scale.x / m_scale.z;
+    m_boundingRadiusSq = m_dimensions.x * m_dimensions.x + m_dimensions.z * m_dimensions.z;
+    m_ellipseRatio = m_scale.x / m_scale.z;
 
     EGG::Quatf rotation = EGG::Quatf::FromRPY(DEG2RAD * m_rotation.x, DEG2RAD * m_rotation.y,
             DEG2RAD * m_rotation.z);
@@ -105,6 +121,7 @@ MapdataAreaCylinder::MapdataAreaCylinder(const SData *data, s16 index)
 }
 
 /// @addr{0x80516688}
+/// @copydoc MapdataAreaBase::testImpl()
 bool MapdataAreaCylinder::testImpl(const EGG::Vector3f &pos) const {
     EGG::Vector3f relPos = pos - m_position;
 
@@ -112,7 +129,7 @@ bool MapdataAreaCylinder::testImpl(const EGG::Vector3f &pos) const {
         return false;
     }
 
-    f32 f = m_ellipseAspectRatio * relPos.dot(m_forward);
+    f32 f = m_ellipseRatio * relPos.dot(m_forward);
     f32 r = relPos.dot(m_right);
     if (r * r + f * f < m_ellipseRadiusSq) {
         return false;
@@ -122,6 +139,8 @@ bool MapdataAreaCylinder::testImpl(const EGG::Vector3f &pos) const {
 }
 
 /// @addr{0x80515E50}
+/// @brief Constructor
+/// @param header Pointer to the header of the AREA section
 MapdataAreaAccessor::MapdataAreaAccessor(const MapSectionHeader *header)
     : MapdataAccessorBase<MapdataAreaBase, MapdataAreaBase::SData>(header) {
     init(reinterpret_cast<const MapdataAreaBase::SData *>(m_sectionHeader + 1),
@@ -131,8 +150,12 @@ MapdataAreaAccessor::MapdataAreaAccessor(const MapSectionHeader *header)
 }
 
 /// @addr{0x80518BDC}
+/// @brief Default virtual destructor
 MapdataAreaAccessor::~MapdataAreaAccessor() = default;
 
+/// @brief Constructs all AREA entries based off the raw AREA section data
+/// @param start Pointer to the start of the raw data
+/// @param count The number of entries in the AREA section
 void MapdataAreaAccessor::init(const MapdataAreaBase::SData *start, u16 count) {
     if (count != 0) {
         m_entries.reserve(count);
@@ -164,6 +187,7 @@ void MapdataAreaAccessor::init(const MapdataAreaBase::SData *start, u16 count) {
 }
 
 /// @addr{0x80515F8C}
+/// @brief Performs insertion sort such that entries are ordered by priority in descending order
 void MapdataAreaAccessor::sort() {
     for (size_t i = 0; i < size(); ++i) {
         m_sortedEntries[i] = get(i);

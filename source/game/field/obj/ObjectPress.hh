@@ -21,11 +21,14 @@ public:
     void calc() override;
 
     /// @addr{0x807787E8}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x807786E4}
+    /// @copybrief ObjectBase::loadAnims()
     void loadAnims() override {
         std::array<const char *, 1> names = {{
                 "Press",
@@ -145,11 +148,16 @@ public:
     }
 
     /// @addr{0x8076EA20}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x8076EA30}
+    /// @copybrief ObjectBase::getResources()
+    /// @details Returns the resource name for the press.
+    /// @return The resource name for the press (`Press`).
     [[nodiscard]] const char *getResources() const override {
         return "Press";
     }

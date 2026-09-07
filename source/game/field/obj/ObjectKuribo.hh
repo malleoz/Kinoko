@@ -14,6 +14,7 @@ public:
     void init() override;
 
     /// @addr{0x806DB5B0}
+    /// @copybrief ObjectBase::calc()
     /// @details Updates the animation timer mod the total animation duration, then calls the
     /// StateManager to run state-specific logic depending on whether the Goomba is changing
     /// direction or walking along the rail.
@@ -24,8 +25,14 @@ public:
     }
 
     /// @addr{0x806DD2C8}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 3;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
+    /// calculated every frame
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
+    /// calculated every frame
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags().setBit(eLoadFlags::Calc, eLoadFlags::Draw);
     }
 
     void loadAnims() override;
@@ -69,6 +76,7 @@ private:
     EGG::Vector3f m_floorNrm; ///< Up vector of the floor beneath the Goomba
     f32 m_animTimer;          ///< m_animDuration wrapped timer, determines if Goomba should walk
 
+    /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 4> STATE_ENTRIES = {{
             {StateEntry<ObjectKuribo, &ObjectKuribo::enterStateStub, &ObjectKuribo::calcReroute>(
                     0)},

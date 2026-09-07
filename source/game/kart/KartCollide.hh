@@ -12,8 +12,8 @@
 namespace Kinoko::Kart {
 
 /// @brief Represents the different reactions that can occur when a kart collides with an object.
-/// @details @ref ObjectCollidable objects can specify a reaction in their onCollision function in
-/// order to determine how the kart should respond to the collision.
+/// @details @ref Field::ObjectCollidable objects can specify a reaction in their onCollision
+/// function in order to determine how the kart should respond to the collision.
 enum class Reaction {
     None = 0,                  ///< No reaction occurs, the kart continues as normal
     UNK_3 = 3,                 ///< Unknown
@@ -37,7 +37,7 @@ enum class Reaction {
     SpinHitSomeSpeed = 22,     ///< Decays to SpinTwice or WallAllSpeed based on the kart's speed
     WeakWall = 23,             ///< The kart's speed drops by 82% due to a weak wall
     Offroad = 24,              ///< The kart will slowdown due to offroad collision
-    idewaysFlipTwice = 25,     ///< The kart launches sideways and flips twice
+    SidewaysFlipTwice = 25,    ///< The kart launches sideways and flips twice
     Wall3 = 26,                ///< The kart is colliding with Wall3
     RubberWall = 27,         ///< Elastic collision sending the kart away from the colliding object
     Wall2 = 28,              ///< Unused in Kinoko
@@ -235,8 +235,8 @@ public:
 
     /// @addr{0x805733F4}
     /// @brief Maps @ref Reaction::SidewaysFlipTwice to @ref Action::SidewaysFlipTwice
-    /// @param idx The index of the colliding object in the @ref ObjectDirector's array of colliding
-    /// objects
+    /// @param idx The index of the colliding object in the @ref Field::ObjectDirector's array of
+    /// colliding objects
     Action handleReactSidewaysFlipTwice(size_t idx) {
         action()->setVelocity(objectCollisionKart()->translation(idx));
         return Action::SidewaysFlipTwice;
@@ -374,8 +374,8 @@ private:
     u16 m_numSoftWallCollisions;   ///< Number of soft wall collisions that have occurred this frame
     f32 m_sumFloorBottomHeight;    ///< Accumulated bottom height of all colliding floor KCL
     u16 m_numFloorOnlyCollisions;  ///< Number of floor collisions without soft wall collisions
-    s16 m_poleAngVelTimer;     ///< Cooldown frames after hitting @enum Field::ObjectId::DummyPole
-    f32 m_poleYaw;             ///< Yaw induced by hitting @enum Field::ObjectId::DummyPole
+    s16 m_poleAngVelTimer;     ///< Cooldown frames after hitting @ref Field::ObjectId::DummyPole
+    f32 m_poleYaw;             ///< Yaw induced by hitting @ref Field::ObjectId::DummyPole
     f32 m_colPerpendicularity; ///< Dot product between floor and colliding wall normals.
 
     /// @brief The maximum number of reactions, used for array sizing
@@ -383,39 +383,39 @@ private:
 
     /// @brief Array of function pointers to the object collision handlers, indexed by @ref Reaction
     static constexpr std::array<ObjectCollisionHandler, MAX_REACTION> s_objectCollisionHandlers = {{
-            &KartCollide::handleReactNone,                ///< @enum Reaction::None
+            &KartCollide::handleReactNone,                ///< @ref Reaction::None
             &KartCollide::handleReactNone,                ///< Unused
             &KartCollide::handleReactNone,                ///< Unused
-            &KartCollide::handleReactNone,                ///< @enum Reaction::UNK_3
-            &KartCollide::handleReactNone,                ///< @enum Reaction::UNK_4
-            &KartCollide::handleReactNone,                ///< @enum Reaction::UNK_5
+            &KartCollide::handleReactNone,                ///< @ref Reaction::UNK_3
+            &KartCollide::handleReactNone,                ///< @ref Reaction::UNK_4
+            &KartCollide::handleReactNone,                ///< @ref Reaction::UNK_5
             &KartCollide::handleReactNone,                ///< Unused
-            &KartCollide::handleReactNone,                ///< @enum Reaction::UNK_7
-            &KartCollide::handleReactWall,                ///< @enum Reaction::Wall
-            &KartCollide::handleReactSpinOnce,            ///< @enum Reaction::SpinOnce
-            &KartCollide::handleReactSpinTwice,           ///< @enum Reaction::SpinTwice
-            &KartCollide::handleReactFireSpin,            ///< @enum Reaction::FireSpin
-            &KartCollide::handleReactNone,                ///< @enum Reaction::ClipThroughSomeSpeed
-            &KartCollide::handleReactSmallLaunch,         ///< @enum Reaction::SmallLaunch
-            &KartCollide::handleReactLaunchAwayFlipOnce,  ///< @enum Reaction::LaunchAwayFlipOnce
-            &KartCollide::handleReactLaunchSpinLoseItem,  ///< @enum Reaction::LaunchSpinLoseItem
-            &KartCollide::handleReactLaunchAwayFlipTwice, ///< @enum Reaction::LaunchAwayFlipTwice
-            &KartCollide::handleReactLongCrushLoseItem,   ///< @enum Reaction::LongCrushLoseItem
-            &KartCollide::handleReactSmallBump,           ///< @enum Reaction::SmallBump
-            &KartCollide::handleReactNone,                ///< @enum Reaction::BigBump
-            &KartCollide::handleReactSpinShrink,          ///< @enum Reaction::SpinShrink
-            &KartCollide::handleReactHighLaunchLoseItem,  ///< @enum Reaction::HighLaunchLoseItem
-            &KartCollide::handleReactNone,                ///< @enum Reaction::SpinHitSomeSpeed
-            &KartCollide::handleReactWeakWall,            ///< @enum Reaction::WeakWall
-            &KartCollide::handleReactOffroad,             ///< @enum Reaction::Offroad
-            &KartCollide::handleReactSidewaysFlipTwice,   ///< @enum Reaction::SidewaysFlipTwice
-            &KartCollide::handleReactWall3,               ///< @enum Reaction::Wall3
-            &KartCollide::handleReactRubberWall,          ///< @enum Reaction::RubberWall
-            &KartCollide::handleReactNone,                ///< @enum Reaction::Wall2
-            &KartCollide::handleReactUntrickableJumpPad,  ///< @enum Reaction::UntrickableJumpPad
-            &KartCollide::handleReactShortCrushLoseItem,  ///< @enum Reaction::ShortCrushLoseItem
-            &KartCollide::handleReactCrushRespawn,        ///< @enum Reaction::CrushRespawn
-            &KartCollide::handleReactExplosionLoseItem,   ///< @enum Reaction::ExplosionLoseItem
+            &KartCollide::handleReactNone,                ///< @ref Reaction::UNK_7
+            &KartCollide::handleReactWall,                ///< @ref Reaction::Wall
+            &KartCollide::handleReactSpinOnce,            ///< @ref Reaction::SpinOnce
+            &KartCollide::handleReactSpinTwice,           ///< @ref Reaction::SpinTwice
+            &KartCollide::handleReactFireSpin,            ///< @ref Reaction::FireSpin
+            &KartCollide::handleReactNone,                ///< @ref Reaction::ClipThroughSomeSpeed
+            &KartCollide::handleReactSmallLaunch,         ///< @ref Reaction::SmallLaunch
+            &KartCollide::handleReactLaunchAwayFlipOnce,  ///< @ref Reaction::LaunchAwayFlipOnce
+            &KartCollide::handleReactLaunchSpinLoseItem,  ///< @ref Reaction::LaunchSpinLoseItem
+            &KartCollide::handleReactLaunchAwayFlipTwice, ///< @ref Reaction::LaunchAwayFlipTwice
+            &KartCollide::handleReactLongCrushLoseItem,   ///< @ref Reaction::LongCrushLoseItem
+            &KartCollide::handleReactSmallBump,           ///< @ref Reaction::SmallBump
+            &KartCollide::handleReactNone,                ///< @ref Reaction::BigBump
+            &KartCollide::handleReactSpinShrink,          ///< @ref Reaction::SpinShrink
+            &KartCollide::handleReactHighLaunchLoseItem,  ///< @ref Reaction::HighLaunchLoseItem
+            &KartCollide::handleReactNone,                ///< @ref Reaction::SpinHitSomeSpeed
+            &KartCollide::handleReactWeakWall,            ///< @ref Reaction::WeakWall
+            &KartCollide::handleReactOffroad,             ///< @ref Reaction::Offroad
+            &KartCollide::handleReactSidewaysFlipTwice,   ///< @ref Reaction::SidewaysFlipTwice
+            &KartCollide::handleReactWall3,               ///< @ref Reaction::Wall3
+            &KartCollide::handleReactRubberWall,          ///< @ref Reaction::RubberWall
+            &KartCollide::handleReactNone,                ///< @ref Reaction::Wall2
+            &KartCollide::handleReactUntrickableJumpPad,  ///< @ref Reaction::UntrickableJumpPad
+            &KartCollide::handleReactShortCrushLoseItem,  ///< @ref Reaction::ShortCrushLoseItem
+            &KartCollide::handleReactCrushRespawn,        ///< @ref Reaction::CrushRespawn
+            &KartCollide::handleReactExplosionLoseItem,   ///< @ref Reaction::ExplosionLoseItem
     }};
 };
 

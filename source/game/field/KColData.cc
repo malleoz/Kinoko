@@ -7,6 +7,67 @@
 
 namespace Kinoko::Field {
 
+/// @brief Updates the internal state to reflect a new collision
+/// @param now_dist Distance from the colliding tri
+/// @param offset Position offset from the colliding tri
+/// @param fnrm Colliding tri face's up vector
+/// @param kclAttributeTypeBit KCL base type of the colliding tri
+void CollisionInfo::update(f32 now_dist, const EGG::Vector3f &offset, const EGG::Vector3f &fnrm,
+        u32 kclAttributeTypeBit) {
+    bbox.min = bbox.min.minimize(offset);
+    bbox.max = bbox.max.maximize(offset);
+
+    if (kclAttributeTypeBit & KCL_TYPE_FLOOR) {
+        updateFloor(now_dist, fnrm);
+    } else if (kclAttributeTypeBit & KCL_TYPE_WALL) {
+        if (wallDist > -std::numeric_limits<f32>::min()) {
+            f32 dot = 1.0f - wallNrm.ps_dot(fnrm);
+            if (dot > perpendicularity) {
+                perpendicularity = std::min(dot, 1.0f);
+            }
+        }
+
+        updateWall(now_dist, fnrm);
+    }
+}
+
+/// @addr{0x807C26AC}
+/// @brief Maps the provided collision info from local to world space
+/// @details Also updates the provided collision info's bbox to world space.
+/// @param rhs The collision info accumulated from local space
+/// @param mtx The local-to-world transformation matrix
+/// @param v Moving road velocity of the colliding tri
+void CollisionInfo::transformInfo(CollisionInfo &rhs, const EGG::Matrix34f &mtx,
+        const EGG::Vector3f &v) {
+    rhs.bbox.min = mtx.ps_multVector33(rhs.bbox.min);
+    rhs.bbox.max = mtx.ps_multVector33(rhs.bbox.max);
+
+    EGG::Vector3f min = rhs.bbox.min;
+
+    rhs.bbox.min = min.minimize(rhs.bbox.max);
+    rhs.bbox.max = min.maximize(rhs.bbox.max);
+
+    bbox.min = bbox.min.minimize(rhs.bbox.min);
+    bbox.max = bbox.max.maximize(rhs.bbox.max);
+
+    if (floorDist < rhs.floorDist) {
+        floorDist = rhs.floorDist;
+        floorNrm = mtx.ps_multVector33(rhs.floorNrm);
+    }
+
+    if (wallDist < rhs.wallDist) {
+        wallDist = rhs.wallDist;
+        wallNrm = mtx.ps_multVector33(rhs.wallNrm);
+    }
+
+    if (movingFloorDist < rhs.floorDist) {
+        movingFloorDist = rhs.floorDist;
+        roadVelocity = v;
+    }
+
+    perpendicularity = std::max(perpendicularity, rhs.perpendicularity);
+}
+
 /// @addr{0x807BDC5C}
 /// @brief Constructor that parses KCL data from the provided file pointer
 /// @param file Pointer to the .kcl file in memory
@@ -55,6 +116,10 @@ KColData::KColData(const void *file) {
 KColData::~KColData() = default;
 
 /// @addr{0x807C24C0}
+/// @brief Prepares the prism cache for a sphere query and performs the query
+/// @param pos The position of the sphere
+/// @param radius The radius of the sphere
+/// @param mask The type mask to filter which prisms are considered for the query
 void KColData::narrowScopeLocal(const EGG::Vector3f &pos, f32 radius, KCLTypeMask mask) {
     m_prismCacheIter = m_prismCache.data();
     m_pos = pos;
@@ -71,7 +136,8 @@ void KColData::narrowScopeLocal(const EGG::Vector3f &pos, f32 radius, KCLTypeMas
 }
 
 /// @addr{0x807C243C}
-/// @todo
+/// @brief Iteratively performs collision checks against each prism in the provided array
+/// @param prismArray The array of prism indices in the octree to check for collisions
 void KColData::narrowPolygon_EachBlock(const u16 *prismArray) {
     m_prismIter = prismArray;
 
@@ -80,15 +146,15 @@ void KColData::narrowPolygon_EachBlock(const u16 *prismArray) {
         /// so do not parse out the prism index and directly store it in the cache.
         *(m_prismCacheIter++) = *m_prismIter;
 
-        if (m_prismCacheIter == m_prismCache.end()) {
+        if (m_prismCacheIter == m_prismCache.data() + m_prismCache.size()) {
             --m_prismCacheIter;
             return;
         }
     }
 }
 
-/// @brief Calculates a EGG::BoundBox3f that describes the boundary of the track's KCL
 /// @addr{0x807BDDFC}
+/// @brief Calculates a @ref EGG::BoundBox3f describing the boundary of all prisms in the KCL file
 void KColData::computeBBox() {
     m_bbox.max.set(-999999.0f);
     m_bbox.min.set(999999.0f);
@@ -113,12 +179,12 @@ void KColData::computeBBox() {
     }
 }
 
-/// @brief Iterates the list of looked-up triangles to see if we are colliding
 /// @addr{0x807C1514}
+/// @brief Iterates the list of nearby triangles to see if a sphere is colliding with any plane
 /// @param distOut If colliding, returns the distance between the player and the triangle
 /// @param fnrmOut If colliding, returns the floor normal of the triangle
 /// @param flagsOut If colliding, returns the KCL attributes for that triangle
-/// @return whether or not the player is colliding with the triangle
+/// @return Whether or not the player is colliding with the plane of a triangle
 bool KColData::checkSphere(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsOut) {
     // If there's no list of triangles to check, there's no collision
     if (!m_prismIter) {
@@ -128,7 +194,7 @@ bool KColData::checkSphere(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsOut) 
     // Check collision for all triangles, and continuously call the function until we're out
     while (*++m_prismIter != 0) {
         const KCollisionPrism &prism = m_prisms[parse<u16>(*m_prismIter)];
-        if (checkCollision<CollisionCheckType::Plane>(prism, distOut, fnrmOut, flagsOut)) {
+        if (checkSphereCollision<CollisionCheckType::Plane>(prism, distOut, fnrmOut, flagsOut)) {
             return true;
         }
     }
@@ -139,27 +205,33 @@ bool KColData::checkSphere(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsOut) 
 }
 
 /// @addr{0x807C0F00}
+/// @brief Iterates the list of nearby triangles, skipping prisms that are in the cache, to see if
+/// we are colliding with any edge
+/// @param distOut If colliding, returns the distance between the player and the triangle
+/// @param fnrmOut If colliding, returns the floor normal of the triangle
+/// @param flagsOut If colliding, returns the KCL attributes for that triangle
+/// @return Whether or not the player is colliding with an edge of a triangle
 bool KColData::checkSphereSingle(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsOut) {
     if (!m_prismIter) {
         return false;
     }
 
     while (*++m_prismIter != 0) {
-        if (m_prismCacheIter != m_prismCache.begin()) {
+        if (m_prismCacheIter != m_prismCache.data()) {
             u16 *puVar10 = m_prismCacheIter - 1;
             while (*m_prismIter != *puVar10) {
-                if (puVar10-- < m_prismCache.begin()) {
+                if (puVar10-- < m_prismCache.data()) {
                     break;
                 }
             }
 
-            if (puVar10 >= m_prismCache.begin()) {
+            if (puVar10 >= m_prismCache.data()) {
                 continue;
             }
         }
 
         const KCollisionPrism &prism = m_prisms[parse<u16>(*m_prismIter)];
-        if (checkCollision<CollisionCheckType::Edge>(prism, distOut, fnrmOut, flagsOut)) {
+        if (checkSphereCollision<CollisionCheckType::Edge>(prism, distOut, fnrmOut, flagsOut)) {
             return true;
         }
     }
@@ -169,35 +241,42 @@ bool KColData::checkSphereSingle(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flag
 }
 
 /// @addr{0x807C1DE8}
-void KColData::lookupSphereCached(const EGG::Vector3f &p1, const EGG::Vector3f &p2, u32 typeMask,
-        f32 radius) {
-    EGG::Sphere3f sphere1(p1, radius);
+/// @brief Prepares query parameters with the provided parameters. Re-uses the cached prism list if
+/// the provided sphere lies within the cached query's sphere, otherwise performs a new octree
+/// lookup.
+/// @param pos The current position of the sphere
+/// @param prevPos The previous position of the sphere
+/// @param typeMask The KCL types to filter the collision query to
+/// @param radius The radius of the sphere
+void KColData::lookupSphereCached(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
+        u32 typeMask, f32 radius) {
+    EGG::Sphere3f sphere1(pos, radius);
     EGG::Sphere3f sphere2(m_cachedPos, m_cachedRadius);
 
     if (!sphere1.isInsideOtherSphere(sphere2)) {
-        m_prismIter = searchBlock(p1);
+        m_prismIter = searchBlock(pos);
         m_radius = std::min(m_sphereRadius, radius);
     } else {
         m_radius = radius;
         m_prismIter = m_prismCache.data() - 1;
     }
 
-    m_pos = p1;
-    m_prevPos = p2;
-    m_movement = p1 - p2;
+    m_pos = pos;
+    m_prevPos = prevPos;
+    m_movement = pos - prevPos;
     m_typeMask = typeMask;
 }
 
-/// @brief Finds the data block corresponding to the provided position
 /// @addr{0x807BE030}
-/// @param point The player's position
-/// @return the address of the leaf node containing the input point.
-const u16 *KColData::searchBlock(const EGG::Vector3f &point) {
+/// @brief Traverses the octree to find the leaf node containing the provided position
+/// @param pos The position to search for within the octree
+/// @return A pointer to the leaf node containing the input position
+const u16 *KColData::searchBlock(const EGG::Vector3f &pos) {
     // Calculate the x, y, and z offsets of the point from the minimum
     // corner of the tree's bounding box.
-    const int x = point.x - m_areaMinPos.x;
-    const int y = point.y - m_areaMinPos.y;
-    const int z = point.z - m_areaMinPos.z;
+    const int x = pos.x - m_areaMinPos.x;
+    const int y = pos.y - m_areaMinPos.y;
+    const int z = pos.z - m_areaMinPos.z;
 
     // Check if the point is outside the tree's bounding box in the x, y,
     // or z dimensions. If it is, return 0.
@@ -240,7 +319,7 @@ const u16 *KColData::searchBlock(const EGG::Vector3f &point) {
     return reinterpret_cast<const u16 *>(curBlock + (offset & ~0x80000000));
 }
 
-/// @brief Creates a copy of the prisms in memory.
+/// @brief Creates a one-indexed byte-swapped copy of the prisms in memory
 /// @details Optimizes for time by copying all of the prisms to avoid constant byteswapping.
 /// Memory cost is typically upwards of a few hundred KB, with the worst case being ~1MB.
 void KColData::preloadPrisms() {
@@ -267,7 +346,7 @@ void KColData::preloadPrisms() {
     }
 }
 
-/// @brief Creates a copy of the normals in memory.
+/// @brief Creates a byte-swapped copy of the normals in memory
 /// @details Optimizes for time by copying all of the normals to avoid constant byteswapping.
 /// Memory cost is typically upwards of a few hundred KB, with the worst case being ~750KB.
 void KColData::preloadNormals() {
@@ -283,7 +362,7 @@ void KColData::preloadNormals() {
     }
 }
 
-/// @brief Creates a copy of the vertices in memory.
+/// @brief Creates a byte-swapped copy of the vertex positions in memory
 /// @details Optimizes for time by copying all of the vertices to avoid constant byteswapping.
 /// Memory cost is typically upwards of a few hundred KB, with the worst case being ~750KB.
 void KColData::preloadVertices() {
@@ -299,14 +378,21 @@ void KColData::preloadVertices() {
     }
 }
 
-/// @brief This is a combination of the three collision checks in the base game.
+/// @brief This is a combination of the three sphere collision checks in the base game.
+/// @tparam Type The type of collision check to perform (@ref CollisionCheckType::Edge,
+/// CollisionCheckType::Plane, or CollisionCheckType::Movement)
+/// @param prism The prism to check for collision against
+/// @param distOut Output parameter for the distance to the collision point, if colliding
+/// @param fnrmOut Output parameter for the prism's face normal, if colliding
+/// @param flagsOut Output parameter for the KCL flags of the prism, if colliding
+/// @return True if a collision is detected, false otherwise
 /// @details The checks vary only by a few if-statements, related to whether we are checking for:
 /// 1. A collision with at least the triangle edge (0x807C0F00)
 /// 2. A collision with the triangle plane (0x807C1514)
 /// 3. A collision such that we are inside the triangle (0x807C0884)
 template <KColData::CollisionCheckType Type>
-bool KColData::checkCollision(const KCollisionPrism &prism, f32 *distOut, EGG::Vector3f *fnrmOut,
-        u16 *flagsOut) {
+bool KColData::checkSphereCollision(const KCollisionPrism &prism, f32 *distOut,
+        EGG::Vector3f *fnrmOut, u16 *flagsOut) {
     // Responsible for updating the output params
     auto out = [&](f32 dist) {
         if (distOut) {
@@ -490,8 +576,15 @@ bool KColData::checkCollision(const KCollisionPrism &prism, f32 *distOut, EGG::V
     return out(dist);
 }
 
-/// @brief This is a combination of two point collision check functions. They only vary based on
-/// whether we are checking movement.
+/// @brief This is a combination of two point collision check functions that check whether a point
+/// is colliding with any edge of a prism. They only vary based on whether we are checking movement.
+/// @param prism The collision prism to check against
+/// @param distOut Output parameter for the distance to the collision point, if colliding
+/// @param fnrmOut Output parameter for the prism's face normal, if colliding
+/// @param flagsOut Output parameter for the KCL flags of the prism, if colliding
+/// @param movement Whether to gate the collision on whether the point is driving in the direction
+/// of the prism's face normal
+/// @return Whether or not a collision has occurred
 bool KColData::checkPointCollision(const KCollisionPrism &prism, f32 *distOut,
         EGG::Vector3f *fnrmOut, u16 *flagsOut, bool movement) {
     KCLTypeMask attrMask = KCL_ATTRIBUTE_TYPE_BIT(prism.attribute);
@@ -564,7 +657,8 @@ bool KColData::checkSphereMovement(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *at
     // Check collision for all triangles, and continuously call the function until we're out
     while (*++m_prismIter != 0) {
         const KCollisionPrism &prism = m_prisms[parse<u16>(*m_prismIter)];
-        if (checkCollision<CollisionCheckType::Movement>(prism, distOut, fnrmOut, attributeOut)) {
+        if (checkSphereCollision<CollisionCheckType::Movement>(prism, distOut, fnrmOut,
+                    attributeOut)) {
             return true;
         }
     }
@@ -574,8 +668,16 @@ bool KColData::checkSphereMovement(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *at
     return false;
 }
 
-/// @addr{0x807C21F4}
-bool KColData::checkPoint(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *attributeOut) {
+/// @addr{0x807C21F4} @addr{0x807C1F80}
+/// @brief Combination of two point collision check functions. Iterates the nearby triangles to see
+/// if a point is colliding with any edge of a prism
+/// @param distOut If colliding, returns the distance between the player and the triangle
+/// @param fnrmOut If colliding, returns the floor normal of the triangle
+/// @param attributeOut If colliding, returns the KCL attributes for that triangle
+/// @param movement Whether to gate the collision on whether the point is driving in the direction
+/// of the prism's face normal
+/// @return Whether or not the player is colliding with any edge of a triangle
+bool KColData::checkPoint(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *attributeOut, bool movement) {
     // If there's no list of triangles to check, there's no collision
     if (!m_prismIter) {
         return false;
@@ -584,7 +686,7 @@ bool KColData::checkPoint(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *attributeOu
     // Check collision for all triangles, and continuously call the function until we're out
     while (*++m_prismIter != 0) {
         const KCollisionPrism &prism = m_prisms[parse<u16>(*m_prismIter)];
-        if (checkPointCollision(prism, distOut, fnrmOut, attributeOut, false)) {
+        if (checkPointCollision(prism, distOut, fnrmOut, attributeOut, movement)) {
             return true;
         }
     }
@@ -592,103 +694,6 @@ bool KColData::checkPoint(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *attributeOu
     // We're out of triangles to check - another list must be prepared for subsequent calls
     m_prismIter = nullptr;
     return false;
-}
-
-/// @addr{0x807C1F80}
-bool KColData::checkPointMovement(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *attributeOut) {
-    // If there's no list of triangles to check, there's no collision
-    if (!m_prismIter) {
-        return false;
-    }
-
-    // Check collision for all triangles, and continuously call the function until we're out
-    while (*++m_prismIter != 0) {
-        const KCollisionPrism &prism = m_prisms[parse<u16>(*m_prismIter)];
-        if (checkPointCollision(prism, distOut, fnrmOut, attributeOut, true)) {
-            return true;
-        }
-    }
-
-    // We're out of triangles to check - another list must be prepared for subsequent calls
-    m_prismIter = nullptr;
-    return false;
-}
-
-/// @brief Non-initializing default constructor
-KColData::KCollisionPrism::KCollisionPrism() = default;
-
-/// @brief Initializing constructor
-/// @param height The height of the tri
-/// @param posIndex Index of the first vertex's index in @ref m_vertices
-/// @param faceNormIndex Index of the face normal in @ref m_nrms
-/// @param edge1NormIndex  Index of the first edge's normal in @ref m_nrms
-/// @param edge2NormIndex  Index of the second edge's normal in @ref m_nrms
-/// @param edge3NormIndex  Index of the third edge's normal in @ref m_nrms
-/// @param attribute  KCL attribute of the tri
-KColData::KCollisionPrism::KCollisionPrism(f32 height, u16 posIndex, u16 faceNormIndex,
-        u16 edge1NormIndex, u16 edge2NormIndex, u16 edge3NormIndex, u16 attribute)
-    : height(height), pos_i(posIndex), fnrm_i(faceNormIndex), enrm1_i(edge1NormIndex),
-      enrm2_i(edge2NormIndex), enrm3_i(edge3NormIndex), attribute(attribute) {}
-
-/// @brief Updates the internal state to reflect a new collision
-/// @param now_dist Distance from the colliding tri
-/// @param offset Position offset from the colliding tri
-/// @param fnrm Colliding tri face's up vector
-/// @param kclAttributeTypeBit KCL base type of the colliding tri
-void CollisionInfo::update(f32 now_dist, const EGG::Vector3f &offset, const EGG::Vector3f &fnrm,
-        u32 kclAttributeTypeBit) {
-    bbox.min = bbox.min.minimize(offset);
-    bbox.max = bbox.max.maximize(offset);
-
-    if (kclAttributeTypeBit & KCL_TYPE_FLOOR) {
-        updateFloor(now_dist, fnrm);
-    } else if (kclAttributeTypeBit & KCL_TYPE_WALL) {
-        if (wallDist > -std::numeric_limits<f32>::min()) {
-            f32 dot = 1.0f - wallNrm.ps_dot(fnrm);
-            if (dot > perpendicularity) {
-                perpendicularity = std::min(dot, 1.0f);
-            }
-        }
-
-        updateWall(now_dist, fnrm);
-    }
-}
-
-/// @addr{0x807C26AC}
-/// @brief Maps the provided collision info from local to world space
-/// @details Also updates the provided collision info's bbox to world space.
-/// @param rhs The collision info accumulated from local space
-/// @param mtx The local-to-world transformation matrix
-/// @param v Moving road velocity of the colliding tri
-void CollisionInfo::transformInfo(CollisionInfo &rhs, const EGG::Matrix34f &mtx,
-        const EGG::Vector3f &v) {
-    rhs.bbox.min = mtx.ps_multVector33(rhs.bbox.min);
-    rhs.bbox.max = mtx.ps_multVector33(rhs.bbox.max);
-
-    EGG::Vector3f min = rhs.bbox.min;
-
-    rhs.bbox.min = min.minimize(rhs.bbox.max);
-    rhs.bbox.max = min.maximize(rhs.bbox.max);
-
-    bbox.min = bbox.min.minimize(rhs.bbox.min);
-    bbox.max = bbox.max.maximize(rhs.bbox.max);
-
-    if (floorDist < rhs.floorDist) {
-        floorDist = rhs.floorDist;
-        floorNrm = mtx.ps_multVector33(rhs.floorNrm);
-    }
-
-    if (wallDist < rhs.wallDist) {
-        wallDist = rhs.wallDist;
-        wallNrm = mtx.ps_multVector33(rhs.wallNrm);
-    }
-
-    if (movingFloorDist < rhs.floorDist) {
-        movingFloorDist = rhs.floorDist;
-        roadVelocity = v;
-    }
-
-    perpendicularity = std::max(perpendicularity, rhs.perpendicularity);
 }
 
 } // namespace Kinoko::Field

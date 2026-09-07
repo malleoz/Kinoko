@@ -11,7 +11,7 @@ namespace Kinoko::Field {
 ObjectCollisionKart::ObjectCollisionKart() : m_kartObject(nullptr) {}
 
 /// @addr{0x8081E0E4}
-/// @brief Destructor that destroys the convex hull associated with the @ref KartObject
+/// @brief Destructor that destroys the convex hull associated with the @ref Kart::KartObject
 ObjectCollisionKart::~ObjectCollisionKart() {
     EGG::egg_delete(m_hull);
 }

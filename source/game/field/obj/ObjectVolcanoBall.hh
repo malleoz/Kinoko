@@ -11,6 +11,7 @@ namespace Kinoko::Field {
 /// constant acceleration. Once the ball reaches the end of its rail, it will transition to the
 /// burning state. It will become intangible after the burning duration has elapsed.
 class ObjectVolcanoBall final : public ObjectCollidable, private StateManager {
+    /// @brief Grants the launcher class access to the fireball's state
     friend class ObjectVolcanoBallLauncher;
 
 public:
@@ -19,19 +20,23 @@ public:
     ~ObjectVolcanoBall() override;
 
     /// @addr{0x806E2C4C}
+    /// @copybrief ObjectBase::init()
     void init() override {
         m_railInterpolator->init(0.0f, 0);
         setPos(m_railInterpolator->curPos());
     }
 
     /// @addr{0x806E2E08}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         StateManager::calc();
     }
 
     /// @addr{0x806E3A7C}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
 private:
@@ -64,6 +69,7 @@ private:
     const f32 m_endPosY;    ///< Height of the ball at the end of its rail
     const f32 m_sqVelXZ;    ///< Squared X-Z plane velocity
 
+    /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 3> STATE_ENTRIES = {{
             {StateEntry<ObjectVolcanoBall, &ObjectVolcanoBall::enterDormant,
                     &ObjectVolcanoBall::calcStateStub>(0)},

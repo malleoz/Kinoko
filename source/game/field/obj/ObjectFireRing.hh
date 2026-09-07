@@ -13,6 +13,7 @@ public:
     ~ObjectFireRing() override;
 
     /// @addr{0x807683F0}
+    /// @copybrief ObjectBase::init()
     void init() override {
         m_currAngle = 0.0f;
     }
@@ -20,12 +21,15 @@ public:
     void calc() override;
 
     /// @addr{0x80768740}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
-    /// @brief Does not create any collision, since this is effectively a manager class
     /// @addr{0x80768734}
+    /// @copybrief ObjectBase::createCollision()
+    /// @details Does not create any collision, since this is effectively a manager class
     void createCollision() override {}
 
 private:

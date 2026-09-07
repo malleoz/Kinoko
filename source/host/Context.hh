@@ -2,6 +2,7 @@
 
 #include "Common.hh"
 
+#include <cstring>
 #include <functional>
 
 namespace Kinoko {
@@ -61,11 +62,12 @@ class KSystem;
 
 namespace Host {
 
-/// @brief Contexts can be used to restore a previous memory state for the current session.
+/// @brief Stores the complete state of the game, including heap memory and static variables
 /// @details Contexts can be thought of like savestates, where we can save and load a given
-/// checkpoint. Contexts work by performing a memcpy of the entire game heap, which is reliable
-/// since we override operator new with an EGG::Heap implementation. For variables with static
-/// storage duration, they may exist out of the heap. Thus, we need to manually copy those.
+/// "checkpoint". Contexts work by performing a `memcpy` of the entire game heap, which is reliable
+/// since we override `operator new` with an @ref EGG::Heap implementation. For variables with
+/// static storage duration, they may exist out of the heap. Thus, we need to manually copy those
+/// via @ref Context::Statics.
 class Context {
 public:
     Context();
@@ -73,10 +75,35 @@ public:
     Context(Context &&c);
     ~Context();
 
-    Context &operator=(const Context &rhs);
-    Context &operator=(Context &&rhs);
+    /// @brief Copy assignment operator
+    /// @param rhs The context to copy from.
+    /// @return A reference to this context.
+    Context &operator=(const Context &rhs) {
+        if (*this == rhs) {
+            return *this;
+        }
 
-    bool operator==(const Context &rhs) const;
+        ASSERT(m_contextMemory && rhs.m_contextMemory && m_contextMemory != rhs.m_contextMemory);
+        memcpy(m_contextMemory, rhs.m_contextMemory, MEMORY_SPACE_SIZE);
+        m_statics = rhs.m_statics;
+
+        return *this;
+    }
+
+    /// @brief Move assignment operator
+    /// @param rhs The context to move from.
+    /// @return A reference to this context.
+    Context &operator=(Context &&rhs) {
+        free(m_contextMemory);
+        m_contextMemory = rhs.m_contextMemory;
+        rhs.m_contextMemory = nullptr;
+        m_statics = rhs.m_statics;
+        rhs.m_statics = {};
+
+        return *this;
+    }
+
+    [[nodiscard]] bool operator==(const Context &rhs) const;
 
     static void SetActiveContext(const Context &rhs);
 

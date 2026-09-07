@@ -13,11 +13,16 @@ public:
     ~ObjectEscalatorGroup() override;
 
     /// @addr{0x80802D18}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x80802D00}
+    /// @copybrief ObjectBase::getResources()
+    /// @details Returns the resource name for the dancing Piantas between the escalators.
+    /// @return The resource name for the dancing Piantas between the escalators (`monte_a`).
     [[nodiscard]] const char *getResources() const override {
         return "monte_a";
     }
@@ -27,8 +32,9 @@ public:
         return "monte_a";
     }
 
-    /// @brief Not overridden in the base game, but it's effectively a nop because the corresponding
-    /// kcl (monte_a) doesn't have any primitive collision.
+    /// @copybrief ObjectBase::createCollision()
+    /// @details Not overridden in the base game, but it's effectively a no-p because the
+    /// corresponding kcl (`monte_a`) doesn't have any primitive collision.
     void createCollision() override {}
 
 private:

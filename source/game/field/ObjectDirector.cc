@@ -420,6 +420,6 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
 /// ObjectDirector::createObjects().
 f32 ObjectDirector::s_wanwanMaxPitch;
 
-ObjectDirector *ObjectDirector::s_instance = nullptr; ///< @addr{0x809C4330}
+ObjectDirector *ObjectDirector::s_instance = nullptr;
 
 } // namespace Kinoko::Field

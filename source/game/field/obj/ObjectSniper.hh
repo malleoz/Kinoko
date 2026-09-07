@@ -18,6 +18,7 @@ public:
     void init() override;
 
     /// @addr{0x806DDC44}
+    /// @copybrief ObjectBase::calc()
     /// @details Checks if the launcher is ready to launch a projectile and triggers the
     /// corresponding projectile's launch.
     void calc() override {
@@ -29,20 +30,25 @@ public:
     }
 
     /// @addr{0x806D2900}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806D28FC}
+    /// @copybrief ObjectBase::loadGraphics()
     /// @details no-op because the manager object does not have any graphics to load.
     void loadGraphics() override {}
 
     /// @addr{0x806D28F4}
+    /// @copybrief ObjectBase::createCollision()
     /// @details no-op because the manager object does not have any collision to load. The launcher
     /// object independently loads its own collision.
     void createCollision() override {}
 
     /// @addr{0x806D28F8}
+    /// @copybrief ObjectBase::loadRail()
     /// @details no-op because the manager object does not have any rail to load. The launcher
     /// object independently manages its own position.
     void loadRail() override {}

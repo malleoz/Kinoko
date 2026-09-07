@@ -77,6 +77,7 @@ private:
 
 /// @brief Base class for one of the spherical body segments of a Wiggler
 class ObjectHanachanPart : public ObjectCollidable {
+    /// @brief Grants the main ObjectHanachan class access to the part's state
     friend class ObjectHanachan;
 
 public:
@@ -98,8 +99,10 @@ public:
     ~ObjectHanachanPart() override = default;
 
     /// @addr{0x806CCAD0}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806CCB88}
@@ -108,6 +111,9 @@ public:
     }
 
     /// @addr{0x806CCACC}
+    /// @copybrief ObjectBase::loadRail()
+    /// @details no-op because the head and body segments are managed by the main @ref
+    /// ObjectHanachan class.
     void loadRail() override {}
 
 private:
@@ -131,6 +137,7 @@ public:
     ~ObjectHanachanHead() override;
 
     /// @addr{0x806C818C}
+    /// @copybrief ObjectBase::createCollision()
     void createCollision() override {
         m_collision = EGG::egg_new<ObjectCollisionSphere>(150.0f, collisionCenter());
     }
@@ -143,6 +150,7 @@ private:
 
 /// @brief Represents one of the body segments of a Wiggler that trails behind the head segment
 class ObjectHanachanBody final : public ObjectHanachanPart {
+    /// @brief Grants the main ObjectHanachan class access to the body segment's state
     friend class ObjectHanachan;
 
 public:
@@ -183,6 +191,7 @@ public:
     void init() override;
 
     /// @addr{0x806C9860}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         calcRail();
         StateManager::calc();
@@ -190,15 +199,20 @@ public:
     }
 
     /// @addr{0x806CC9FC}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806CC9F8}
+    /// @copybrief ObjectBase::loadGraphics()
+    /// @details This is a no-op in the base game.
     void loadGraphics() override {}
 
-    /// @brief Does not creat collision since the body parts have their own collision spheres
     /// @addr{0x806CC9F4}
+    /// @copybrief ObjectBase::createCollision()
+    /// @details Does not creat collision since the body parts have their own collision spheres
     void createCollision() override {}
 
 private:
@@ -341,6 +355,7 @@ private:
             510.0f,
     }};
 
+    /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 2> STATE_ENTRIES = {{
             {StateEntry<ObjectHanachan, &ObjectHanachan::enterWalk, &ObjectHanachan::calcWalk>(0)},
             {StateEntry<ObjectHanachan, &ObjectHanachan::enterStateStub, &ObjectHanachan::calcWait>(

@@ -9,6 +9,8 @@ class Heap;
 /// @brief An interface for ensuring certain structures and classes are destroyed with the heap.
 /// @details Singletons are expected to inherit Disposer.
 class Disposer {
+    /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
+    /// state on context switch
     friend class Heap;
 
 public:

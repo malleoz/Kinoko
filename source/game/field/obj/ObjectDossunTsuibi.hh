@@ -21,6 +21,7 @@ public:
     ~ObjectDossunTsuibi() override = default;
 
     /// @addr{0x80763A04}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         m_touchingGround = false;
     }

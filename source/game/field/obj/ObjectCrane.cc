@@ -23,6 +23,7 @@ ObjectCrane::ObjectCrane(const System::MapdataGeoObj &params)
 ObjectCrane::~ObjectCrane() = default;
 
 /// @addr{0x807FE7EC}
+/// @copybrief ObjectBase::calc()
 void ObjectCrane::calc() {
     const EGG::Vector3f prevPos = pos();
 

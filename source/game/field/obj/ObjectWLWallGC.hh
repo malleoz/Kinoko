@@ -17,6 +17,7 @@ public:
     ~ObjectWLWallGC() override;
 
     /// @addr{0x8086BE34}
+    /// @copybrief ObjectBase::init()
     void init() override {
         setPos(m_initialPos);
         calcTransform();
@@ -24,6 +25,7 @@ public:
     }
 
     /// @addr{0x8086C108}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         EGG::Vector3f prevPos = pos();
         setTransform(getUpdatedMatrix(0));
@@ -31,8 +33,10 @@ public:
     }
 
     /// @addr{0x8086C640}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     [[nodiscard]] const EGG::Matrix34f &getUpdatedMatrix(u32 timeOffset) override;

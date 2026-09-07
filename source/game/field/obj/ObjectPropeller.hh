@@ -15,8 +15,9 @@ public:
     ~ObjectPropeller() override;
 
     /// @addr{0x80764EB4}
-    /// @brief Initializes the propeller's angular velocity and rotation matrix
-    /// @details The rotation direction is flipped if param setting 2 is set to 1.
+    /// @copybrief ObjectBase::init()
+    /// @details Initializes the propeller's angular velocity and rotation matrix. The rotation
+    /// direction is flipped if param setting 2 is set to 1.
     void init() override {
         initAngVel();
         m_initMat.makeR(rot());
@@ -25,13 +26,16 @@ public:
     }
 
     /// @addr{0x80765068}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         calcAngleAndRot();
     }
 
     /// @addr{0x80765BC0}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     void createCollision() override;

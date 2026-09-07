@@ -17,24 +17,24 @@ std::filesystem::path Path(const char *path) {
     return std::filesystem::path(filepath);
 }
 
-u8 *Load(const std::filesystem::path &path, size_t &size) {
+std::span<const u8> Load(const std::filesystem::path &path) {
     std::ifstream file(path, std::ios::binary);
     if (!file) {
-        PANIC("File with provided path %s was not loaded correctly!", path.c_str());
+        PANIC("File with provided path %s was not loaded correctly!", path.string().c_str());
     }
 
     file.seekg(0, std::ios::end);
-    size = file.tellg();
+    size_t size = file.tellg();
     file.seekg(0, std::ios::beg);
 
     u8 *buffer = static_cast<u8 *>(EGG::egg_alloc(size, 4));
     file.read(reinterpret_cast<char *>(buffer), size);
 
-    return buffer;
+    return std::span<const u8>(buffer, size);
 }
 
-u8 *Load(const char *path, size_t &size) {
-    return Load(Path(path), size);
+std::span<const u8> Load(const char *path) {
+    return Load(Path(path));
 }
 
 void Append(const char *path, const char *data, size_t size) {

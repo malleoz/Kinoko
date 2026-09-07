@@ -70,6 +70,7 @@ struct KartAccessor {
 /// KartObject::Create factory function will apply the @ref KartAccessor struct to @ref m_accessor
 /// for all of the subsystems, so that they can access each other.
 class KartObjectProxy {
+    /// @brief Grants the @ref KartObject class to set the accessor list
     friend class KartObject;
 
 public:

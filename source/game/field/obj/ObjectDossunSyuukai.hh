@@ -11,6 +11,7 @@ public:
     ~ObjectDossunSyuukai() override;
 
     /// @addr{0x80760BD4}
+    /// @copybrief ObjectBase::init()
     void init() override {
         ObjectDossun::init();
 

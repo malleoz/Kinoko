@@ -460,7 +460,7 @@ private:
     /// @details Validates that `e` is in the range of `N`.
     /// @param on Determines whether to set or reset the bit.
     /// @param e Enum value representing the bit to change.
-    [[nodiscard]] constexpr void changeBit_(bool on, E e) {
+    constexpr void changeBit_(bool on, E e) {
         on ? setBit_(e) : resetBit_(e);
     }
 

@@ -6,30 +6,100 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x80807ED0}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
-ObjectAmi::ObjectAmi(const System::MapdataGeoObj &params) : ObjectDrivable(params) {}
+/// @addr{0x808088A0}
+/// @brief Private function that checks collision between a sphere and the object, writing
+/// partial collision info
+/// @param radius The radius of the sphere to check
+/// @param pos The position of the sphere to check
+/// @param prevPos The previous position of the sphere, used for calculating collision depth
+/// @param mask The KCL flags to check collision against (other types are ignored)
+/// @param info Out parameter for retrieving partial collision information (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
+/// @param timeOffset Optional time delta
+/// @return Whether a collision was detected
+bool ObjectAmi::checkSpherePartialImpl(f32 radius, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+        KCLTypeMask *maskOut, u32 timeOffset) {
+    return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, timeOffset, false);
+}
 
-/// @addr{0x80808860}
-/// @brief Default virtual destructor
-ObjectAmi::~ObjectAmi() = default;
+/// @addr{0x80808A8C}
+/// @brief Private function that checks collision between a sphere and the object, writing
+/// partial collision info. Additionally pushes the collision entry into the @ref
+/// CollisionDirector cache.
+/// @param radius The radius of the sphere to check
+/// @param pos The position of the sphere to check
+/// @param prevPos The previous position of the sphere, used for calculating collision depth
+/// @param mask The KCL flags to check collision against (other types are ignored)
+/// @param info Out parameter for retrieving partial collision information (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
+/// @param timeOffset Optional time delta
+/// @return Whether a collision was detected
+bool ObjectAmi::checkSpherePartialPushImpl(f32 radius, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+        KCLTypeMask *maskOut, u32 timeOffset) {
+    return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, timeOffset, true);
+}
+
+/// @addr{0x80808CA8}
+/// @brief Private function that checks collision between a sphere and the object, writing
+/// out full collision info
+/// @param radius The radius of the sphere to check
+/// @param pos The position of the sphere to check
+/// @param prevPos The previous position of the sphere, used for calculating collision depth
+/// @param mask The KCL flags to check collision against (other types are ignored)
+/// @param info Out parameter for retrieving partial collision information (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
+/// @param timeOffset Optional time delta
+/// @return Whether a collision was detected
+bool ObjectAmi::checkSphereFullImpl(f32 radius, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
+        u32 timeOffset) {
+    return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, timeOffset, false);
+}
+
+/// @addr{0x80809060}
+/// @brief Private function that checks collision between a sphere and the object, writing
+/// out full collision info. Additionally pushes the collision entry into the @ref
+/// CollisionDirector cache.
+/// @param radius The radius of the sphere to check
+/// @param pos The position of the sphere to check
+/// @param prevPos The previous position of the sphere, used for calculating collision depth
+/// @param mask The KCL flags to check collision against (other types are ignored)
+/// @param info Out parameter for retrieving partial collision information (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
+/// @param timeOffset Optional time delta
+/// @return Whether a collision was detected
+bool ObjectAmi::checkSphereFullPushImpl(f32 radius, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
+        u32 timeOffset) {
+    return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, timeOffset, true);
+}
 
 /// @brief Helper function which contains frequently re-used code. Behavior branches depending on
 /// whether it is a full or partial check (call CollisionInfo::updateFloor) or push (push entry in
 /// the CollisionDirector).
 /// @tparam T The CollisionInfo object type, either CollisionInfoPartial or CollisionInfo.
+/// @param radius The radius of the sphere to check
+/// @param pos The current position of the sphere to check
+/// @param flags The KCL flags to check collision against (other types are ignored)
+/// @param info Out parameter for retrieving partial collision information (if any)
+/// @param pFlagsOut The KCL flags that were hit during the collision check (if any)
+/// @param timeOffset Optional time delta
+/// @param push Whether to push a collision entry
+/// @return Whether a collision was detected
 /// @param push Whether to push a collision entry
 template <typename T>
     requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
-bool ObjectAmi::checkSphereImpl(f32 radius, const EGG::Vector3f &v0, const EGG::Vector3f & /*v1*/,
-        KCLTypeMask flags, T *pInfo, KCLTypeMask *pFlagsOut, u32 timeOffset, bool push) {
+bool ObjectAmi::checkSphereImpl(f32 radius, const EGG::Vector3f &pos,
+        const EGG::Vector3f & /*prevPos*/, KCLTypeMask flags, T *info, KCLTypeMask *pFlagsOut,
+        u32 timeOffset, bool push) {
     // We check flags first to avoid unnecessary position posDelta computation.
     if (!(flags & KCL_TYPE_FLOOR)) {
         return false;
     }
 
-    EGG::Vector3f posDelta = v0 - pos();
+    EGG::Vector3f posDelta = pos - ObjectBase::pos();
     posDelta.z *= -1.0f;
 
     if (posDelta.z < 0.0f || posDelta.z > DIMS.z || EGG::Mathf::abs(posDelta.x) > DIMS.x) {
@@ -45,12 +115,12 @@ bool ObjectAmi::checkSphereImpl(f32 radius, const EGG::Vector3f &v0, const EGG::
         return false;
     }
 
-    if (pInfo) {
-        pInfo->bbox.min = pInfo->bbox.min.minimize(bbox);
-        pInfo->bbox.max = pInfo->bbox.max.maximize(bbox);
+    if (info) {
+        info->bbox.min = info->bbox.min.minimize(bbox);
+        info->bbox.max = info->bbox.max.maximize(bbox);
 
         if constexpr (std::is_same_v<T, CollisionInfo>) {
-            pInfo->updateFloor(dist, fnrm);
+            info->updateFloor(dist, fnrm);
         }
     }
 

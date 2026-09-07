@@ -21,11 +21,16 @@ public:
     ~ObjectWanwanPile() override = default;
 
     /// @addr{0x806E9560}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806E9554}
+    /// @copybrief ObjectBase::getResources()
+    /// @details Returns the resource name for the Chain Chomp.
+    /// @return The resource name for the Chain Chomp (`wanwan`).
     [[nodiscard]] const char *getResources() const override {
         return "wanwan";
     }
@@ -58,8 +63,14 @@ public:
     void calc() override;
 
     /// @addr{0x806E94BC}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 3;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
+    /// calculated every frame
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
+    /// calculated every frame
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags().setBit(eLoadFlags::Calc, eLoadFlags::Draw);
     }
 
     Kart::Reaction onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
@@ -198,6 +209,7 @@ private:
     /// @brief Length of a single chain segment, before scaling
     static constexpr f32 CHAIN_LENGTH = 135.0f;
 
+    /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 3> STATE_ENTRIES = {{
             {StateEntry<ObjectWanwan, &ObjectWanwan::enterWait, &ObjectWanwan::calcWait>(0)},
             {StateEntry<ObjectWanwan, &ObjectWanwan::enterAttack, &ObjectWanwan::calcAttack>(1)},

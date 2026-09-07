@@ -32,6 +32,7 @@ ObjectFireRing::ObjectFireRing(const System::MapdataGeoObj &params)
 ObjectFireRing::~ObjectFireRing() = default;
 
 /// @addr{0x80768408}
+/// @copybrief ObjectBase::calc()
 void ObjectFireRing::calc() {
     m_phase += 1.0f;
     m_currAngle += m_angSpeed / 60.0f;

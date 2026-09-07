@@ -21,7 +21,8 @@ public:
     /// @brief Default virtual destructor
     ~ObjectProjectileLauncher() override = default;
 
-    // Not overridden in the base game, but has collision mode 0
+    /// @copybrief ObjectBase::createCollision()
+    /// @details Not overridden in the base game, but has collision mode 0.
     void createCollision() override {}
 
     /// @brief Used by @ref ObjectSniper to check which object index (if any) should be thrown

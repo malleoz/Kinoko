@@ -32,6 +32,7 @@ ObjectBird::ObjectBird(const System::MapdataGeoObj &params) : ObjectCollidable(p
 ObjectBird::~ObjectBird() = default;
 
 /// @addr{0x8077BFC8}
+/// @copybrief ObjectBase::calc()
 void ObjectBird::calc() {
     constexpr f32 MIN_SPACING = 300.0f;
 
@@ -61,6 +62,7 @@ ObjectBirdLeader::ObjectBirdLeader(const System::MapdataGeoObj &params, ObjectBi
 ObjectBirdLeader::~ObjectBirdLeader() = default;
 
 /// @addr{0x8077C384}
+/// @copybrief ObjectBase::init()
 void ObjectBirdLeader::init() {
     auto *anmMgr = m_drawMdl->anmMgr();
     anmMgr->playAnim(0.0f, 1.0f, 0);
@@ -77,6 +79,7 @@ void ObjectBirdLeader::init() {
 }
 
 /// @addr{0x8077CC78}
+/// @copybrief ObjectBase::loadAnims()
 void ObjectBirdLeader::loadAnims() {
     std::array<const char *, 1> names = {{
             "flying",
@@ -98,6 +101,7 @@ ObjectBirdFollower::ObjectBirdFollower(const System::MapdataGeoObj &params, Obje
 ObjectBirdFollower::~ObjectBirdFollower() = default;
 
 /// @addr{0x8077C5E0}
+/// @copybrief ObjectBase::init()
 void ObjectBirdFollower::init() {
     constexpr f32 POS_DELTA_RANGE = 1000.0f;
     constexpr f32 POS_DELTA_CENTER = 500.0f;
@@ -122,6 +126,7 @@ void ObjectBirdFollower::init() {
 }
 
 /// @addr{0x8077C7F0}
+/// @copybrief ObjectBase::calc()
 void ObjectBirdFollower::calc() {
     calcPos();
 

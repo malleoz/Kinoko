@@ -15,9 +15,6 @@ public:
     ObjectTruckWagonCart(const System::MapdataGeoObj &params);
     ~ObjectTruckWagonCart() override;
 
-    /// @addr{0x806E0160}
-    void init() override {}
-
     void calc() override;
 
     /// @addr{0x806E260C}
@@ -26,8 +23,10 @@ public:
     }
 
     /// @addr{0x806E2744}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806E2618}
@@ -96,6 +95,7 @@ private:
     f32 m_pitch;             ///< Current rocking angle of the suspended minecart
     f32 m_angVel;            ///< Angular velocity of the swing of the suspended minecart
 
+    /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 4> STATE_ENTRIES = {{
             {StateEntry<ObjectTruckWagonCart, &ObjectTruckWagonCart::enterStateStub,
                     &ObjectTruckWagonCart::calcRolling>(0)},
@@ -121,17 +121,30 @@ public:
     void calc() override;
 
     /// @addr{0x806E24EC}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 3;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
+    /// calculated every frame
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
+    /// calculated every frame
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags().setBit(eLoadFlags::Calc, eLoadFlags::Draw);
     }
 
     /// @addr{0x806E24E8}
+    /// @copybrief ObjectBase::loadGraphics()
+    /// @details This is a no-op in the base game since the spawner does not have any graphics.
     void loadGraphics() override {}
 
     /// @addr{0x806E24E0}
+    /// @copybrief ObjectBase::createCollision()
+    /// @details no-op because the spawner itself does not have any collision.
     void createCollision() override {}
 
     /// @addr{0x806E24E4}
+    /// @copybrief ObjectBase::loadRail()
+    /// @details no-op because the spawner itself does not have any rail. The individual carts
+    /// manage their own positions along the rail.
     void loadRail() override {}
 
 private:

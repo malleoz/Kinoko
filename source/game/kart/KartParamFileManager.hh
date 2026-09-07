@@ -18,6 +18,8 @@ namespace Kart {
 /// @details This has been modified from the base game in order to perform validation and make the
 /// class accessible as a singleton.
 class KartParamFileManager : EGG::Disposer {
+    /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
+    /// state on context switch
     friend class Host::Context;
 
 public:
@@ -74,25 +76,6 @@ private:
         }
     };
 
-    /// @brief A struct that represents a file and its size in bytes
-    struct FileInfo {
-        /// @brief Clears the file pointer and sets the size to 0
-        void clear() {
-            file = nullptr;
-            size = 0;
-        }
-
-        /// @brief Loads the provided filename from the core archive into memory
-        /// @param filename The name of the file to load from the core archive
-        void load(const char *filename) {
-            auto *resourceManager = System::ResourceManager::Instance();
-            file = resourceManager->getFile(filename, &size, System::ArchiveId::Core);
-        }
-
-        void *file;  ///< A pointer to the file data in memory
-        size_t size; ///< The size of the file in bytes
-    };
-
     EGG_NEW_DELETE_FRIEND
 
     KartParamFileManager();
@@ -100,11 +83,18 @@ private:
 
     [[nodiscard]] bool validate() const;
 
-    FileInfo m_kartParam;       ///< File pointer and size for `kartParam.bin`
-    FileInfo m_driverParam;     ///< File pointer and size for `driverParam.bin`
-    FileInfo m_bikeDispParam;   ///< File pointer and size for `bikePartsDispParam.bin`
-    FileInfo m_kartDispParam;   ///< File pointer and size for `kartPartsDispParam.bin`
-    FileInfo m_kartCameraParam; ///< File pointer and size for `kartCameraParam.bin`
+    /// @brief Loads the provided filename from the core archive into memory
+    /// @param filename The name of the file to load from the core archive
+    /// @return A read-only span of the file data in memory
+    [[nodiscard]] std::span<const u8> load(const char *filename) {
+        return System::ResourceManager::Instance()->getFile(filename, System::ArchiveId::Core);
+    }
+
+    std::span<const u8> m_kartParam;       ///< File pointer and size for `kartParam.bin`
+    std::span<const u8> m_driverParam;     ///< File pointer and size for `driverParam.bin`
+    std::span<const u8> m_bikeDispParam;   ///< File pointer and size for `bikePartsDispParam.bin`
+    std::span<const u8> m_kartDispParam;   ///< File pointer and size for `kartPartsDispParam.bin`
+    std::span<const u8> m_kartCameraParam; ///< File pointer and size for `kartCameraParam.bin`
 
     /// @brief Pointer to the singleton instance of the @ref KartParamFileManager
     static KartParamFileManager *s_instance;

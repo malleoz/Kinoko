@@ -47,6 +47,7 @@ protected:
 /// @details Walks from rail segmment waypoint to waypoint, stopping to eat grass along the way. The
 /// time it spends eating grass is a random number between 120 and 240 frames.
 class ObjectCowLeader final : public ObjectCow, private StateManager {
+    /// @brief Grants the herd class access to the leader's state
     friend class ObjectCowHerd;
 
 public:
@@ -57,8 +58,10 @@ public:
     void calc() override;
 
     /// @addr{0x806BF42C}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
 private:
@@ -108,6 +111,7 @@ private:
     EatAnmType m_eatAnmType; ///< The current state of the cow's eating animation
     u16 m_eatFrames;         ///< How long the cow stays in its EatAnmType::Eat state for
 
+    /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 3> STATE_ENTRIES = {{
             {StateEntry<ObjectCowLeader, &ObjectCowLeader::enterWait, &ObjectCowLeader::calcWait>(
                     0)},
@@ -119,6 +123,7 @@ private:
 
 /// @brief A cow that follows a leader by sharing the same rail.
 class ObjectCowFollower final : public ObjectCow, private StateManager {
+    /// @brief Grants the herd class access to the follower's state
     friend class ObjectCowHerd;
 
 public:
@@ -129,11 +134,15 @@ public:
     void calc() override;
 
     /// @addr{0x806BF424}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806BF420}
+    /// @copybrief ObjectBase::loadRail()
+    /// @details no-op because the herd's rail is managed by @ref ObjectCowLeader.
     void loadRail() override {}
 
 private:
@@ -177,6 +186,7 @@ private:
     /// @brief Distance at which a cow is considered close enough to the rail to stop moving.
     static constexpr f32 DIST_THRESHOLD = 200.0f;
 
+    /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 3> STATE_ENTRIES = {{
             {StateEntry<ObjectCowFollower, &ObjectCowFollower::enterWait,
                     &ObjectCowFollower::calcWait>(0)},
@@ -197,7 +207,8 @@ public:
     ~ObjectCowHerd() override;
 
     /// @addr{0x806BF02C}
-    /// @brief Assigns the herd's rail to each child.
+    /// @copybrief ObjectBase::init()
+    /// @details Assigns the herd's rail to each child.
     void init() override {
         for (auto *&child : m_followers) {
             child->m_rail = m_leader->m_railInterpolator;
@@ -207,14 +218,19 @@ public:
     void calc() override;
 
     /// @addr{0x806BF42C}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806BF348}
+    /// @copybrief ObjectBase::createCollision()
     void createCollision() override {}
 
     /// @addr{0x806BF34C}
+    /// @copybrief ObjectBase::loadRail()
+    /// @details no-op because the herd's rail is managed by @ref ObjectCowLeader.
     void loadRail() override {}
 
 private:

@@ -17,6 +17,7 @@ ObjectKuribo::ObjectKuribo(const System::MapdataGeoObj &params)
 ObjectKuribo::~ObjectKuribo() = default;
 
 /// @addr{0x806DB40C}
+/// @copybrief ObjectBase::init()
 void ObjectKuribo::init() {
     calcTransform();
     m_forward = transform().base(2);
@@ -35,6 +36,7 @@ void ObjectKuribo::init() {
 }
 
 /// @addr{0x806dd278}
+/// @copybrief ObjectBase::loadAnims()
 void ObjectKuribo::loadAnims() {
     std::array<const char *, 2> names = {{
             "walk_l",

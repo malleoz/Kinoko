@@ -25,6 +25,7 @@ public:
     ~ObjectFlamePole() override = default;
 
     /// @addr{0x8067E410}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         if (m_isActive) {
             resize(RADIUS * scale().y, 0.0f);
@@ -32,10 +33,15 @@ public:
     }
 
     /// @addr{0x80681820}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
+    /// @copybrief ObjectBase::getResources()
+    /// @details Returns the resource name for the flame pole.
+    /// @return The resource name for the flame pole (`FlamePole`).
     [[nodiscard]] const char *getResources() const override {
         return "FlamePole";
     }

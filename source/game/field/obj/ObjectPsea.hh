@@ -9,7 +9,7 @@ namespace Kinoko::Field {
 /// the water's height is only a function of one of them. We can simplify in Kinoko and remove that
 /// subclass entirely since its position can be easily represented without an instance of the class.
 /// This object is used in an unusual way - the @ref ObjectDirector keeps a pointer to it and uses
-/// it to determine the height of the rising water. @ref KartMove will then use that height to
+/// it to determine the height of the rising water. @ref Kart::KartMove will then use that height to
 /// determine whether the kart is submerged and should be slowed down.
 class ObjectPsea final : public ObjectCollidable {
 public:
@@ -19,13 +19,19 @@ public:
     void calc() override;
 
     /// @addr{0x8082C888}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x8082C884}
+    /// @copybrief ObjectBase::loadGraphics()
+    /// @details This is a no-op in the base game.
     void loadGraphics() override {}
 
+    /// @copybrief ObjectBase::createCollision()
+    /// @details no-op because collision is managed via @ref Kart::KartMove::calcRisingWater().
     void createCollision() override {}
 
 private:

@@ -355,7 +355,7 @@ public:
     }
 
     /// @addr{0x80199FC8}
-    /// @warn The out reference will not be initialized if the matrix is singular.
+    /// @warning The out reference will not be initialized if the matrix is singular.
     /// @return Whether or not the matrix is invertible.
     constexpr bool ps_inverse(Matrix34f &out) const {
         f32 fVar14 = fms(mtx[0][1], mtx[1][2], mtx[1][1] * mtx[0][2]);

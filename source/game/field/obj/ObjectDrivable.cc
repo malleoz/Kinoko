@@ -13,8 +13,10 @@ ObjectDrivable::ObjectDrivable(const System::MapdataGeoObj &params) : ObjectBase
 /// @brief Default virtual destructor
 ObjectDrivable::~ObjectDrivable() = default;
 
-/// @brief Creates collision and BoxColUnit, and registers the object to the ObjectDrivableDirector
 /// @addr{0x8081A79C}
+/// @copybrief ObjectBase::load()
+/// @details Creates collision and BoxColUnit, and registers the object to the
+/// ObjectDrivableDirector
 void ObjectDrivable::load() {
     createCollision();
     initCollision();

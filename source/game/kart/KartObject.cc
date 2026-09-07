@@ -39,7 +39,7 @@ KartObject::~KartObject() {
 }
 
 /// @addr{0x8058EA0C}
-/// @details Creates 4 tire objects, except for @enum Vehicle::Blue_Falcon which only has 3 tires.
+/// @details Creates 4 tire objects, except for @ref Vehicle::Blue_Falcon which only has 3 tires.
 /// Adds the tire and suspension objects to the shared @ref KartAccessor. Finally, initializes the
 /// tire suspensions.
 void KartObject::createTires() {

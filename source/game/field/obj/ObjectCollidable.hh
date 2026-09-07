@@ -27,7 +27,8 @@ public:
     void load() override;
 
     /// @addr{0x8081F7C8}
-    /// @brief Updates the GJK collision transform
+    /// @copybrief ObjectBase::calcCollisionTransform()
+    /// @details Updates the GJK collision transform
     void calcCollisionTransform() override {
         calcTransform();
         m_collision->transform(transform(), scale(), getCollisionTranslation());
@@ -53,8 +54,8 @@ public:
     virtual void processKartReactions(Kart::KartObject *kartObj, Kart::Reaction &reactionOnKart,
             Kart::Reaction &reactionOnObj);
 
-    /// @brief Called when a collision occurs between a kart and this object
     /// @addr{0x8068179C}
+    /// @brief Called when a collision occurs between a kart and this object
     /// @return The reaction that should be applied to the kart
     virtual Kart::Reaction onCollision(Kart::KartObject * /*kartObj*/,
             Kart::Reaction reactionOnKart, Kart::Reaction /*reactionOnObj*/,
@@ -77,8 +78,8 @@ public:
         return lhs->check(*collision(), dist);
     }
 
-    /// @brief The translation applied on top of the object's world transform for collision checks
     /// @addr{0x8068173C}
+    /// @brief The translation applied on top of the object's world transform for collision checks
     [[nodiscard]] virtual const EGG::Vector3f &getCollisionTranslation() const {
         return EGG::Vector3f::zero;
     }
@@ -91,8 +92,8 @@ public:
 protected:
     void createCollision() override;
 
-    /// @brief Defines a local offset for the GJK collision object
     /// @addr{0x806816B8}
+    /// @brief Defines a local offset for the GJK collision object
     [[nodiscard]] virtual const EGG::Vector3f &collisionCenter() const {
         return EGG::Vector3f::zero;
     }

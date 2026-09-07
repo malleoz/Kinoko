@@ -8,7 +8,7 @@ namespace Kinoko::Kart {
 /// @brief Represents the body of a general vehicle
 /// @details This class owns the @ref KartPhysics object for this kart. It also tracks the current
 /// and target sink depth of the kart, which represents how far the kart can sink into the ground in
-/// response to the colliding @ref CollisionInfo::intensity.
+/// response to the colliding @ref Field::CollisionInfo::intensity.
 class KartBody : protected KartObjectProxy {
 public:
     KartBody(KartPhysics *physics);
@@ -30,7 +30,7 @@ public:
     /// @brief Resets the kart's body to default values
     void reset() {
         m_physics->reset();
-        m_anAngle = 0.0f;
+        m_leanAngle = 0.0f;
         m_sinkDepth = 0.0f;
         m_targetSinkDepth = 0.0f;
     }
@@ -59,8 +59,8 @@ public:
 
     /// @beginSetters
     /// @addr{0x8056E424}
-    void setAngle(f32 val) {
-        m_anAngle = val;
+    void setLeanAngle(f32 val) {
+        m_leanAngle = val;
     }
     /// @endSetters
 
@@ -76,7 +76,7 @@ public:
 
 protected:
     KartPhysics *m_physics; ///< Pointer to the kart's physics state manager
-    f32 m_anAngle;          ///< @rename Possible pertains to handlebar/front wheel rotation
+    f32 m_leanAngle;        ///< Lean angle of the kart incurred from drifting, SSMT, or burnout
     f32 m_sinkDepth;        ///< Current smoothed vehicle offset applied downward into collision
     f32 m_targetSinkDepth;  ///< Maximum vehicle offset applied downward into collision
 };
@@ -109,19 +109,23 @@ public:
     [[nodiscard]] EGG::Matrix34f wheelMatrix(u16 wheelIdx) override;
 };
 
-/// @brief Represents the body of @enum Vehicle::Quacker
-/// @details For the purposes of Kinoko, this effectively behaves the same as @ref KartObjectKart in
+/// @brief Represents the body of @ref Vehicle::Quacker
+/// @details For the purposes of Kinoko, this effectively behaves the same as @ref KartBody in
 /// terms of @ref wheelMatrix(). We keep it separate to maintain clarity and accuracy of the @p
 /// addr{} Doxygen annotations.
 class KartBodyQuacker : public KartBodyBike {
 public:
+    /// @addr{0x8056E218}
     /// @brief Constructor
     /// @param physics Pointer to the kart's physics state manager
     KartBodyQuacker(KartPhysics *physics) : KartBodyBike(physics) {}
 
+    /// @addr{0x8056E42C}
     /// @brief Default virtual destructor
     ~KartBodyQuacker() override = default;
 
+    /// @addr{0x8056E2FC}
+    /// @brief Computes a matrix to represent wheel rotation. For Quacker, this is wheel-agnostic.
     [[nodiscard]] EGG::Matrix34f wheelMatrix(u16 /* wheelIdx */) override {
         EGG::Matrix34f mat;
         mat.makeQT(fullRot(), pos());

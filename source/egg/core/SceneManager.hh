@@ -15,6 +15,8 @@ namespace EGG {
 
 /// @brief Manages the scene stack and transitions between scenes.
 class SceneManager {
+    /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
+    /// state on context switch
     friend class Host::Context;
 
 public:

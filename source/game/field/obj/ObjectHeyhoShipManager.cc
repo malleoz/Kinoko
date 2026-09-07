@@ -36,7 +36,7 @@ ObjectHeyhoShipManager::ObjectHeyhoShipManager() {
 ObjectHeyhoShipManager::~ObjectHeyhoShipManager() = default;
 
 /// @addr{0x806D2590}
-/// @copydoc ObjectBase::init()
+/// @copybrief ObjectBase::init()
 void ObjectHeyhoShipManager::init() {
     /// Projectiles are fired perpendicular to the ship direction
     constexpr f32 PROJECTILE_ANGLE = F_PI / 2.0f;
@@ -69,7 +69,7 @@ void ObjectHeyhoShipManager::init() {
 }
 
 /// @addr{0x806D2868}
-/// @copydoc ObjectBase::calc()
+/// @copybrief ObjectBase::calc()
 /// @details Checks to see if the ship should throw a cannonball and calls the projectile's
 /// onLaunch() callback method if so.
 void ObjectHeyhoShipManager::calc() {

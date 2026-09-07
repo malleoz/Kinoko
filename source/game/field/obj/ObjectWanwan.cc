@@ -77,6 +77,7 @@ ObjectWanwan::ObjectWanwan(const System::MapdataGeoObj &params)
 ObjectWanwan::~ObjectWanwan() = default;
 
 /// @addr{0x806E4B9C}
+/// @copybrief ObjectBase::init()
 void ObjectWanwan::init() {
     setPos(m_initPos);
     m_chainAttachPos = m_initPos;
@@ -99,6 +100,7 @@ void ObjectWanwan::init() {
 }
 
 /// @addr{0x806E4F2C}
+/// @copybrief ObjectBase::calc()
 void ObjectWanwan::calc() {
     StateManager::calc();
 

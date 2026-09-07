@@ -16,6 +16,7 @@ public:
     void init() override;
 
     /// @addr{0x806C3FCC}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         if (System::RaceManager::Instance()->timer() <= m_initDelay) {
             return;
@@ -28,11 +29,16 @@ public:
     }
 
     /// @addr{0x806C4898}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806C488C}
+    /// @copybrief ObjectBase::getResources()
+    /// @details Returns the resource name for the vertical flame pole.
+    /// @return The resource name for the vertical flame pole (`FlamePole_v`).
     [[nodiscard]] const char *getResources() const override {
         return "FlamePole_v";
     }
@@ -132,6 +138,7 @@ private:
     static constexpr f32 BEFORE_ERUPT_FRAMES = 50.0f; ///< Delay before pole starts erupting
     static constexpr f32 FALL_FRAMES = 180.0f;        ///< Frames it takes to lower into the ground
 
+    /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 5> STATE_ENTRIES = {{
             {StateEntry<ObjectFlamePoleV, &ObjectFlamePoleV::enterBeforeErupting,
                     &ObjectFlamePoleV::calcBeforeErupting>(0)},

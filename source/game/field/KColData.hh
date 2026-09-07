@@ -85,9 +85,21 @@ public:
 
     /// @brief Represesnts a KCL collision prism
     struct KCollisionPrism {
-        KCollisionPrism();
+        /// @brief Non-initializing default constructor
+        KCollisionPrism() = default;
+
+        /// @brief Initializing constructor
+        /// @param height The height of the tri
+        /// @param posIndex Index of the first vertex's index in @ref KColData::m_vertices
+        /// @param faceNormIndex Index of the face normal in @ref KColData::m_nrms
+        /// @param edge1NormIndex  Index of the first edge's normal in @ref KColData::m_nrms
+        /// @param edge2NormIndex  Index of the second edge's normal in @ref KColData::m_nrms
+        /// @param edge3NormIndex  Index of the third edge's normal in @ref KColData::m_nrms
+        /// @param attribute  KCL attribute of the tri
         KCollisionPrism(f32 height, u16 posIndex, u16 faceNormIndex, u16 edge1NormIndex,
-                u16 edge2NormIndex, u16 edge3NormIndex, u16 attribute);
+                u16 edge2NormIndex, u16 edge3NormIndex, u16 attribute)
+            : height(height), pos_i(posIndex), fnrm_i(faceNormIndex), enrm1_i(edge1NormIndex),
+              enrm2_i(edge2NormIndex), enrm3_i(edge3NormIndex), attribute(attribute) {}
 
         /// @brief Default destructor
         ~KCollisionPrism() = default;
@@ -118,8 +130,7 @@ public:
     /// @param fnrmOut Output parameter for the face normal at the collision point
     /// @param flagsOut Output parameter for the collision flags
     [[nodiscard]] bool checkPointCollision(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsOut) {
-        return std::isfinite(m_prevPos.y) ? checkPointMovement(distOut, fnrmOut, flagsOut) :
-                                            checkPoint(distOut, fnrmOut, flagsOut);
+        return checkPoint(distOut, fnrmOut, flagsOut, std::isfinite(m_prevPos.y));
     }
 
     /// @addr{0x807C2410}
@@ -166,7 +177,7 @@ public:
         m_typeMask = typeMask;
     }
 
-    void lookupSphereCached(const EGG::Vector3f &p1, const EGG::Vector3f &p2, u32 typeMask,
+    void lookupSphereCached(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, u32 typeMask,
             f32 radius);
 
     [[nodiscard]] const u16 *searchBlock(const EGG::Vector3f &pos);
@@ -202,13 +213,13 @@ public:
     /// @param enrm The edge normal opposite to the second vertex
     /// @details @par Triangle Vertices Formula
     /// Given a triangle with vertices \f$\vec{A}, \vec{B}, \vec{C}\f$, face normal \f$\hat{f}\f$,
-    /// and height \f$h\f$, label the edge normals by: \begin{aligned}\hat{en}_1 := e_{AB}, \,\,
-    /// \hat{en}_2:= e_{AC}, \,\,\hat{en}_3:=e_{BC} \end{aligned} We can recover \f$\vec{B},
-    /// \vec{C}\f$ via: \begin{aligned} \vec{B} = \vec{A} + \dfrac{h}{(\hat{en}_2 \times \hat{f})
+    /// and height \f$h\f$, label the edge normals by: \f{aligned}{\hat{en}_1 := e_{AB}, \,\,
+    /// \hat{en}_2:= e_{AC}, \,\,\hat{en}_3:=e_{BC}}\f} We can recover \f$\vec{B},
+    /// \vec{C}\f$ via: \f{aligned}{ \vec{B} = \vec{A} + \dfrac{h}{(\hat{en}_2 \times \hat{f})
     /// \cdot
     /// \hat{en}_3}\left(\hat{en}_2 \times \hat{f}\right), \, \, \vec{C} = \vec{A} +
     /// \dfrac{h}{(\hat{en}_1 \times \hat{f}) \cdot \hat{en}_3}(\hat{en}_1 \times \hat{f}) \, .
-    /// \end{aligned}
+    /// }\f}
     [[nodiscard]] EGG::Vector3f GetVertex(f32 height, const EGG::Vector3f &vertex1,
             const EGG::Vector3f &fnrm, const EGG::Vector3f &enrm3, const EGG::Vector3f &enrm) {
         EGG::Vector3f cross = fnrm.cross(enrm);
@@ -224,14 +235,14 @@ private:
     void preloadVertices();
 
     template <CollisionCheckType Type>
-    [[nodiscard]] bool checkCollision(const KCollisionPrism &prism, f32 *distOut,
+    [[nodiscard]] bool checkSphereCollision(const KCollisionPrism &prism, f32 *distOut,
             EGG::Vector3f *fnrmOut, u16 *flagsOut);
 
     [[nodiscard]] bool checkPointCollision(const KCollisionPrism &prism, f32 *distOut,
             EGG::Vector3f *fnrmOut, u16 *flagsOut, bool movement);
     [[nodiscard]] bool checkSphereMovement(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *attributeOut);
-    [[nodiscard]] bool checkPointMovement(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *attributeOut);
-    [[nodiscard]] bool checkPoint(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *attributeOut);
+    [[nodiscard]] bool checkPoint(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *attributeOut,
+            bool movement);
 
     const void *m_posData;      ///< Pointer to the KCL file section containing vertex positions
     const void *m_nrmData;      ///< Pointer to the KCL file section containing normal vectors
@@ -258,7 +269,7 @@ private:
     EGG::Vector3f m_cachedPos; ///< Position of the point/sphere corresponding to the current cache
     f32 m_cachedRadius;        ///< Radius of the sphere corresponding to the current cache
 
-    /// @brief Byte-swapped array of all @ref KCollisionPrism objects in the KCL file
+    /// @brief One-indexed byte-swapped array of all @ref KCollisionPrism objects in the KCL file
     /// @details Optimizes for time by avoiding unnecessary byteswapping. The Wii doesn't have this
     /// problem because big endian is always assumed.
     owning_span<KCollisionPrism> m_prisms;

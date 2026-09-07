@@ -23,8 +23,10 @@ public:
     void calc() override;
 
     /// @addr{0x806BBE34}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806BA144}
@@ -83,6 +85,7 @@ private:
     static constexpr f32 RADIUS = 300.0f; ///< Radius of the dirt trail segments' collision sphere
     static constexpr f32 MAX_GROUND_LEN = 3000.0f; ///< Max length of the dirt trail
 
+    /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 5> STATE_ENTRIES = {{
             StateEntry<ObjectChoropu, &ObjectChoropu::enterDigging, &ObjectChoropu::calcDigging>(0),
             StateEntry<ObjectChoropu, &ObjectChoropu::enterPeeking, &ObjectChoropu::calcPeeking>(1),
@@ -102,8 +105,10 @@ public:
     ~ObjectChoropuGround() override;
 
     /// @addr{0x806BBEB0}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806B9164}
@@ -130,6 +135,7 @@ public:
     ~ObjectChoropuHoll() override;
 
     /// @addr{0x806B94A0}
+    /// @copybrief ObjectBase::init()
     void init() override {
         resize(RADIUS, 0.0f);
     }
@@ -140,8 +146,10 @@ public:
     }
 
     /// @addr{0x806BBE64}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806BBE58}
@@ -150,11 +158,14 @@ public:
     }
 
     /// @addr{0x806B9428}
+    /// @copybrief ObjectBase::createCollision()
     void createCollision() override {
         m_collision = EGG::egg_new<ObjectCollisionSphere>(RADIUS, EGG::Vector3f::zero);
     }
 
     /// @addr{0x806BBE40}
+    /// @copybrief ObjectBase::loadRail()
+    /// @details no-op because the hole is managed by the @ref ObjectChoropu, not a rail.
     void loadRail() override {}
 
     /// @addr{0x806B9594}

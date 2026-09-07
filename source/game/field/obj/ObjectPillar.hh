@@ -62,6 +62,7 @@ public:
     ~ObjectPillar() override;
 
     /// @addr{0x807FEFD8}
+    /// @copybrief ObjectBase::init()
     void init() override {
         ObjectBase::init();
 
@@ -73,8 +74,10 @@ public:
     void calc() override;
 
     /// @addr{0x807FFA2C}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x807FF980}

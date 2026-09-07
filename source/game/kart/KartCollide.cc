@@ -443,7 +443,6 @@ void KartCollide::activateOob(bool /*detachCamera*/, Field::KCLTypeMask * /*mask
 /// @param hitboxGroup The wheel's collision information
 /// @param colVel The wheel's velocity. In the base game, it is always \f$\vec{v} = \begin{bmatrix}
 /// 0 \\ -13 \\ 0 \end{bmatrix}\f$
-/// @param colVel The wheel's velocity
 /// @param center The wheel's position
 /// @param radius The wheel's size
 void KartCollide::calcWheelCollision(u16 /*wheelIdx*/, CollisionGroup *hitboxGroup,

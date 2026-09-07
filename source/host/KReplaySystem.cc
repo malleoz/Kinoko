@@ -2,7 +2,6 @@
 
 #include "host/Option.hh"
 
-
 #include <game/system/RaceManager.hh>
 
 #include <iomanip>
@@ -37,7 +36,7 @@ bool KReplaySystem::run() {
 }
 
 /// @brief Parses non-generic command line options.
-/// @details The only currently accepted option is the ghost flag.
+/// @details The only currently accepted option is the ghost flag and a progress interval flag.
 /// @param argc The number of arguments.
 /// @param argv The arguments.
 void KReplaySystem::parseOptions(int argc, char **argv) {
@@ -70,7 +69,7 @@ void KReplaySystem::parseOptions(int argc, char **argv) {
                         std::filesystem::is_regular_file(filepath)) {
                     m_ghostArgs.push(filepath);
                 } else {
-                    WARN("Unable to find %s. Skipping...", filepath.c_str());
+                    WARN("Unable to find %s. Skipping...", filepath.string().c_str());
                 }
             }
         } break;
@@ -89,10 +88,11 @@ void KReplaySystem::parseOptions(int argc, char **argv) {
     }
 }
 
+/// @brief Default private constructor
 KReplaySystem::KReplaySystem()
-    : m_progressInterval(0), m_replaysPlayed(0), m_replaysSynced(0), m_currentGhost(nullptr),
-      m_currentRawGhost(nullptr), m_currentRawGhostSize(0) {}
+    : m_progressInterval(0), m_replaysPlayed(0), m_replaysSynced(0), m_currentGhost(nullptr) {}
 
+/// @brief Default virtual destructor
 KReplaySystem::~KReplaySystem() {
     if (s_instance) {
         s_instance = nullptr;
@@ -101,7 +101,7 @@ KReplaySystem::~KReplaySystem() {
 
     EGG::egg_delete(m_sceneMgr);
     EGG::egg_delete(m_currentGhost);
-    EGG::egg_free(const_cast<u8 *>(m_currentRawGhost));
+    EGG::egg_free(const_cast<u8 *>(m_currentRawGhost.data()));
 }
 
 /// @brief Determines whether or not the ghost simulation should end.
@@ -121,6 +121,9 @@ bool KReplaySystem::calcEnd() const {
     return false;
 }
 
+/// @brief Runs replays for all ghost files within a specified directory (and its subdirectories)
+/// @param dirPath The path to the directory containing ghost files
+/// @return `true` if all replays synchronize successfully, `false` otherwise
 bool KReplaySystem::runDirectory(const std::filesystem::path &dirPath) {
     bool success = true;
 
@@ -133,13 +136,18 @@ bool KReplaySystem::runDirectory(const std::filesystem::path &dirPath) {
         }
     }
 
-    REPORT("Progress: %llu/%llu replays synced (Error rate: %.2f%)", m_replaysSynced,
+    REPORT("Progress: %llu/%llu replays synced (Error rate: %.2f%%)", m_replaysSynced,
             m_replaysPlayed,
             static_cast<f64>(m_replaysPlayed - m_replaysSynced) / m_replaysPlayed * 100);
 
     return success;
 }
 
+/// @brief Runs a replay for the ghost file at the path specified
+/// @param ghostPath The path to the ghost file to be replayed
+/// @return `true` if the replay synchronizes successfully or is not a ghost file, `false` otherwise
+/// @details Based off of the @ref m_progressInterval, conditionally reports the current
+/// synchronization status of all ghost playbacks thus far.
 bool KReplaySystem::runGhost(const std::filesystem::path &ghostPath) {
     if (!ghostPath.has_extension()) {
         return true;
@@ -172,9 +180,8 @@ bool KReplaySystem::runGhost(const std::filesystem::path &ghostPath) {
     m_sceneMgr->currentScene()->heap()->enableAllocation();
     m_sceneMgr->destroyScene(m_sceneMgr->currentScene());
 
-    EGG::egg_free(const_cast<u8 *>(m_currentRawGhost));
-    m_currentRawGhost = nullptr;
-    m_currentRawGhostSize = 0;
+    EGG::egg_free(const_cast<u8 *>(m_currentRawGhost.data()));
+    m_currentRawGhost = {};
 
     delete m_currentGhost;
     m_currentGhost = nullptr;
@@ -186,7 +193,7 @@ bool KReplaySystem::runGhost(const std::filesystem::path &ghostPath) {
     }
 
     if (m_progressInterval > 0 && m_replaysPlayed % m_progressInterval == 0) {
-        REPORT("Progress: %llu/%llu replays synced (Error rate: %.2f%)", m_replaysSynced,
+        REPORT("Progress: %llu/%llu replays synced (Error rate: %.2f%%)", m_replaysSynced,
                 m_replaysPlayed,
                 static_cast<f64>(m_replaysPlayed - m_replaysSynced) / m_replaysPlayed * 100);
     }
@@ -194,16 +201,19 @@ bool KReplaySystem::runGhost(const std::filesystem::path &ghostPath) {
     return isSuccess;
 }
 
+/// @brief Loads data from the provided filepath and constructs a @ref System::GhostFile that parses
+/// the data
+/// @param ghostPath The path to the ghost file to be loaded
 void KReplaySystem::loadGhost(const std::filesystem::path &ghostPath) {
     m_currentGhostPath = ghostPath;
-    m_currentRawGhost = Abstract::File::Load(m_currentGhostPath, m_currentRawGhostSize);
-    if (m_currentRawGhostSize < System::RKG_HEADER_SIZE ||
-            m_currentRawGhostSize > sizeof(System::RawGhostFile)) {
-        PANIC("File cannot be a ghost! Check the file size. %llu", m_currentRawGhostSize);
+    m_currentRawGhost = Abstract::File::Load(m_currentGhostPath);
+    if (m_currentRawGhost.size() < System::RKG_HEADER_SIZE ||
+            m_currentRawGhost.size() > sizeof(System::RawGhostFile)) {
+        PANIC("File cannot be a ghost! Check the file size. %llu", m_currentRawGhost.size());
     }
 
     // Creating the raw ghost file validates it
-    System::RawGhostFile file = System::RawGhostFile(m_currentRawGhost);
+    System::RawGhostFile file = System::RawGhostFile(m_currentRawGhost.data());
     m_currentGhost = new System::GhostFile(file);
 }
 

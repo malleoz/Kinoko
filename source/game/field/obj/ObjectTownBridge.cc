@@ -36,6 +36,7 @@ ObjectTownBridge::~ObjectTownBridge() {
 }
 
 /// @addr{0x80809774}
+/// @copybrief ObjectBase::calc()
 /// @details Calculates rotation and updates the collision manager based on the current angle.
 void ObjectTownBridge::calc() {
     u32 t = System::RaceManager::Instance()->timer();
@@ -59,6 +60,7 @@ void ObjectTownBridge::calc() {
 }
 
 /// @addr{0x808095B8}
+/// @copybrief ObjectBase::createCollision()
 /// @details Creates the collision managers for the bridge's different states.
 void ObjectTownBridge::createCollision() {
     ObjectKCL::createCollision();
@@ -69,11 +71,11 @@ void ObjectTownBridge::createCollision() {
 
     snprintf(filepath, sizeof(filepath), "%s2.kcl", name);
     m_midColMgr =
-            EGG::egg_new<ObjColMgr>(resMgr->getFile(filepath, nullptr, System::ArchiveId::Course));
+            EGG::egg_new<ObjColMgr>(resMgr->getFile(filepath, System::ArchiveId::Course).data());
 
     snprintf(filepath, sizeof(filepath), "%s3.kcl", name);
     m_flatColMgr =
-            EGG::egg_new<ObjColMgr>(resMgr->getFile(filepath, nullptr, System::ArchiveId::Course));
+            EGG::egg_new<ObjColMgr>(resMgr->getFile(filepath, System::ArchiveId::Course).data());
 
     m_raisedColMgr = m_objColMgr;
 }

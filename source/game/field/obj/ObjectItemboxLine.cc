@@ -34,6 +34,7 @@ ObjectItemboxLine::ObjectItemboxLine(const System::MapdataGeoObj &params)
 ObjectItemboxLine::~ObjectItemboxLine() = default;
 
 /// @addr{0x8076D604}
+/// @copybrief ObjectBase::init()
 void ObjectItemboxLine::init() {
     ASSERT(m_mapObj);
     u32 timer = static_cast<u32>(m_mapObj->setting(4));
@@ -47,6 +48,7 @@ void ObjectItemboxLine::init() {
 }
 
 /// @addr{0x8076D64C}
+/// @copybrief ObjectBase::calc()
 /// @details Decrements the cooldown timer and activates the next stomper when it reaches 0
 void ObjectItemboxLine::calc() {
     if (--m_stompCooldown > 0) {

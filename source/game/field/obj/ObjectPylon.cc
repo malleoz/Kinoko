@@ -18,6 +18,7 @@ ObjectPylon::ObjectPylon(const System::MapdataGeoObj &params)
 ObjectPylon::~ObjectPylon() = default;
 
 /// @addr{0x8082CD60}
+/// @copybrief ObjectBase::init()
 /// @details Checks for floor and wall collision to make sure the pylon is not clipping. Assigns
 /// neighbors based off adjacency in the managed object array.
 /// @warning The base game does not apply any ObjectId check when assigning neighbors. Therefore,
@@ -78,6 +79,7 @@ void ObjectPylon::init() {
 }
 
 /// @addr{0x8082D044}
+/// @copybrief ObjectBase::calc()
 void ObjectPylon::calc() {
     switch (m_state) {
     case State::Hit:

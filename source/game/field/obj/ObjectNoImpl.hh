@@ -12,7 +12,13 @@ public:
     ~ObjectNoImpl() override;
 
     void load() override;
+
+    /// @copybrief ObjectBase::createCollision()
+    /// @details no-op since these objects are not implemented.
     void createCollision() override {}
+
+    /// @copybrief ObjectBase::calcCollisionTransform()
+    /// @details no-op since these objects are not implemented.
     void calcCollisionTransform() override {}
 };
 

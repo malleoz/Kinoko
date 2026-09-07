@@ -3,6 +3,8 @@
 #include "game/field/StateManager.hh"
 #include "game/field/obj/ObjectProjectileLauncher.hh"
 
+#include "game/system/RaceManager.hh"
+
 namespace Kinoko::Field {
 
 /// @brief Represents the sun on DS Desert Hills that launches @ref ObjectFireSnake projectiles
@@ -24,11 +26,13 @@ public:
     ~ObjectSunDS() = default;
 
     /// @addr{0x806DDFD4}
+    /// @copybrief ObjectBase::init()
     void init() override {
         m_stillDuration = 0;
     }
 
     /// @addr{0x806DE03C}
+    /// @copybrief ObjectBase::calc()
     /// @details Updates the sun's position along its rail. If the sun reaches a stop point, it
     /// transitions to the still state.
     void calc() override {
@@ -42,8 +46,10 @@ public:
     }
 
     /// @addr{0x806DE614}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806DE598}
@@ -112,6 +118,7 @@ private:
     const s32 m_startFrame;      ///< The sun is inactive until this frame
     u32 m_stillDuration;         ///< How long the sun remains stationary for before moving again
 
+    /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 2> STATE_ENTRIES = {{
             {StateEntry<ObjectSunDS, &ObjectSunDS::enterStill, &ObjectSunDS::calcStill>(0)},
             {StateEntry<ObjectSunDS, &ObjectSunDS::enterRevolving, &ObjectSunDS::calcRevolving>(1)},

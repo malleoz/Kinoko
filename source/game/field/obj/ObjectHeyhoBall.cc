@@ -18,6 +18,7 @@ ObjectHeyhoBall::ObjectHeyhoBall(const System::MapdataGeoObj &params)
 ObjectHeyhoBall::~ObjectHeyhoBall() = default;
 
 /// @addr{0x806D05F0}
+/// @copybrief ObjectBase::init()
 void ObjectHeyhoBall::init() {
     m_nextStateId = 0;
     m_shipPos.setZero();

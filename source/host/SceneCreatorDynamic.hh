@@ -10,19 +10,25 @@
 /// @brief Represents the host application.
 namespace Kinoko::Host {
 
+/// @brief Factory function which creates and destroys scenes based on their @ref SceneId
 class SceneCreatorDynamic final : public EGG::SceneCreator {
 public:
+    /// @copydoc EGG::SceneCreator::create()
     [[nodiscard]] EGG::Scene *create(int sceneId) const override {
-        return create(static_cast<SceneId>(sceneId));
+        return Create(static_cast<SceneId>(sceneId));
     }
 
+    /// @copydoc EGG::SceneCreator::destroy()
     void destroy(int sceneId) const override {
-        destroy(static_cast<SceneId>(sceneId));
+        Destroy(static_cast<SceneId>(sceneId));
     }
 
 private:
     /// @addr{0x8054AA64}
-    [[nodiscard]] EGG::Scene *create(SceneId sceneId) const {
+    /// @brief Factory function which creates the scene corresponding to the given @ref SceneId
+    /// @param sceneId The @ref SceneId of the scene to create
+    /// @return A pointer to the newly created scene
+    [[nodiscard]] static EGG::Scene *Create(SceneId sceneId) {
         switch (sceneId) {
         case SceneId::Root:
             return EGG::egg_new<Scene::RootScene>();
@@ -34,7 +40,10 @@ private:
     }
 
     /// @addr{0x8054AB28}
-    void destroy(SceneId sceneId) const {
+    /// @brief Destroys the scene corresponding to the given @ref SceneId
+    /// @param sceneId The @ref SceneId of the scene to destroy
+    /// @details The base game doesn't actually do anything in this function, so we don't either.
+    static void Destroy(SceneId sceneId) {
         switch (sceneId) {
         case SceneId::Root:
         case SceneId::Race:

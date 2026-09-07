@@ -14,6 +14,7 @@ ObjectPakkunF::ObjectPakkunF(const System::MapdataGeoObj &params)
 ObjectPakkunF::~ObjectPakkunF() = default;
 
 /// @addr{0x80774754}
+/// @copybrief ObjectBase::calc()
 void ObjectPakkunF::calc() {
     switch (m_state) {
     case State::Wait:
@@ -30,6 +31,7 @@ void ObjectPakkunF::calc() {
 }
 
 /// @addr{0x80775464}
+/// @copybrief ObjectBase::loadAnims()
 void ObjectPakkunF::loadAnims() {
     std::array<const char *, 3> names = {{
             "attack",
@@ -47,6 +49,7 @@ void ObjectPakkunF::loadAnims() {
 }
 
 /// @addr{0x80775108}
+/// @copybrief ObjectBase::calcCollisionTransform()
 /// @details Offsets the collision position when the piranha is attacking. For the first 10 frames,
 /// it remains at an initial position. For the next 10 frames, it linearly interpolates from the
 /// initial position to a "final" position. For the next 10 frames, it linearly interpolates back to

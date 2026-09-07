@@ -39,70 +39,70 @@ void KartObjectProxy::setInertiaScale(const EGG::Vector3f &scale) {
 
 /// @addr{0x80590D20}
 /// @brief Gets a pointer to the kart's @ref KartAction subsystem
-/// @ref A pointer to the kart's @ref KartAction subsystem
+/// @return A pointer to the kart's @ref KartAction subsystem
 KartAction *KartObjectProxy::action() {
     return m_accessor->action;
 }
 
 /// @addr{0x80590D20}
 /// @brief Gets a pointer to the kart's @ref KartAction subsystem
-/// @ref A const pointer to the kart's @ref KartAction subsystem
+/// @return A const pointer to the kart's @ref KartAction subsystem
 const KartAction *KartObjectProxy::action() const {
     return m_accessor->action;
 }
 
 /// @addr{0x8059069C}
 /// @brief Gets a pointer to the kart's @ref KartBody subsystem
-/// @ref A pointer to the kart's @ref KartBody subsystem
+/// @return A pointer to the kart's @ref KartBody subsystem
 KartBody *KartObjectProxy::body() {
     return m_accessor->body;
 }
 
 /// @addr{0x8059069C}
 /// @brief Gets a pointer to the kart's @ref KartBody subsystem
-/// @ref A const pointer to the kart's @ref KartBody subsystem
+/// @return A const pointer to the kart's @ref KartBody subsystem
 const KartBody *KartObjectProxy::body() const {
     return m_accessor->body;
 }
 
 /// @addr{0x8059084C}
 /// @brief Gets a pointer to the kart's @ref KartCollide subsystem
-/// @ref A pointer to the kart's @ref KartCollide subsystem
+/// @return A pointer to the kart's @ref KartCollide subsystem
 KartCollide *KartObjectProxy::collide() {
     return m_accessor->collide;
 }
 
 /// @addr{0x8059084C}
 /// @brief Gets a pointer to the kart's @ref KartCollide subsystem
-/// @ref A const pointer to the kart's @ref KartCollide subsystem
+/// @return A const pointer to the kart's @ref KartCollide subsystem
 const KartCollide *KartObjectProxy::collide() const {
     return m_accessor->collide;
 }
 
 /// @addr{0x805907D8}
 /// @brief Gets a pointer to the kart's @ref CollisionGroup subsystem
-/// @ref A pointer to the kart's @ref CollisionGroup subsystem
+/// @return A pointer to the kart's @ref CollisionGroup subsystem
 CollisionGroup *KartObjectProxy::collisionGroup() {
     return m_accessor->body->physics()->hitboxGroup();
 }
 
 /// @addr{0x805907D8}
 /// @brief Gets a pointer to the kart's @ref CollisionGroup subsystem
-/// @ref A const pointer to the kart's @ref CollisionGroup subsystem
+/// @return A const pointer to the kart's @ref CollisionGroup subsystem
 const CollisionGroup *KartObjectProxy::collisionGroup() const {
     return m_accessor->body->physics()->hitboxGroup();
 }
 
 /// @addr{0x8059077C}
 /// @brief Gets a pointer to the kart's @ref KartMove subsystem
-/// @ref A pointer to the kart's @ref KartMove subsystem
+/// @return A pointer to the kart's @ref KartMove subsystem
 KartMove *KartObjectProxy::move() {
     return m_accessor->move;
 }
 
 /// @addr{0x8059077C}
 /// @brief Gets a pointer to the kart's @ref KartMove subsystem
-/// @ref A const pointer to the kart's @ref KartMove subsystem
+/// @return A const pointer to the kart's @ref KartMove subsystem
 const KartMove *KartObjectProxy::move() const {
     return m_accessor->move;
 }
@@ -614,8 +614,8 @@ s32 KartObjectProxy::hopStickX() const {
 }
 
 /// @addr{0x80590A10}
-/// @brief Gets the @param KartParam::Stats::DriftType of the kart from its parameters
-/// @return The @param KartParam::Stats::DriftType of the kart
+/// @brief Gets the @ref KartParam::Stats::DriftType of the kart from its parameters
+/// @return The @ref KartParam::Stats::DriftType of the kart
 KartParam::Stats::DriftType KartObjectProxy::vehicleType() const {
     return param()->stats().driftType;
 }

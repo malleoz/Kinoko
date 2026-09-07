@@ -17,11 +17,14 @@ public:
     void calc() override;
 
     /// @addr{0x8077ECDC}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x8077ECD0}
+    /// @copybrief ObjectBase::createCollision()
     /// @details no-op because the spawner itself does not have any collision
     void createCollision() override {}
 

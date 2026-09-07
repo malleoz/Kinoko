@@ -24,6 +24,6 @@ void JugemDirector::createUnits() {
     m_unit->createSwitchRace();
 }
 
-JugemDirector *JugemDirector::s_instance = nullptr; ///< @addr{0x809C28B8}
+JugemDirector *JugemDirector::s_instance = nullptr;
 
 } // namespace Kinoko::Field

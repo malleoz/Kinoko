@@ -106,6 +106,7 @@ ObjectCowLeader::ObjectCowLeader(const System::MapdataGeoObj &params)
 ObjectCowLeader::~ObjectCowLeader() = default;
 
 /// @addr{0x806BD264}
+/// @copybrief ObjectBase::init()
 void ObjectCowLeader::init() {
     setup();
     m_railInterpolator->init(0.0f, 0);
@@ -124,6 +125,7 @@ void ObjectCowLeader::init() {
 }
 
 /// @addr{0x806BD388}
+/// @copybrief ObjectBase::calc()
 void ObjectCowLeader::calc() {
     u32 t = System::RaceManager::Instance()->timer();
 
@@ -233,6 +235,7 @@ ObjectCowFollower::ObjectCowFollower(const System::MapdataGeoObj &params, const 
 ObjectCowFollower::~ObjectCowFollower() = default;
 
 /// @addr{0x806BE060}
+/// @copybrief ObjectBase::init()
 void ObjectCowFollower::init() {
     setup();
     addPos(m_posOffset);
@@ -249,6 +252,7 @@ void ObjectCowFollower::init() {
 }
 
 /// @addr{0x806BE1A8}
+/// @copybrief ObjectBase::calc()
 void ObjectCowFollower::calc() {
     u32 t = System::RaceManager::Instance()->timer();
 
@@ -409,6 +413,7 @@ ObjectCowHerd::ObjectCowHerd(const System::MapdataGeoObj &params) : ObjectCollid
 ObjectCowHerd::~ObjectCowHerd() = default;
 
 /// @addr{0x806BF064}
+/// @copybrief ObjectBase::calc()
 void ObjectCowHerd::calc() {
     constexpr f32 MAX_DIST = 4000.0f; ///< Distance at which a Cow will return to its leader
 

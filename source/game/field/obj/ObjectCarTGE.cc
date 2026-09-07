@@ -103,6 +103,7 @@ ObjectCarTGE::~ObjectCarTGE() {
 }
 
 /// @addr{0x806D6B14}
+/// @copybrief ObjectBase::init()
 void ObjectCarTGE::init() {
     constexpr f32 HIT_ANGLE_TRUCK = 20.0f;
     constexpr f32 HIT_ANGLE_NORMAL = 40.0f;
@@ -133,6 +134,7 @@ void ObjectCarTGE::init() {
 }
 
 /// @addr{0x806D6ECC}
+/// @copybrief ObjectBase::calc()
 void ObjectCarTGE::calc() {
     StateManager::calc();
 
@@ -146,7 +148,9 @@ void ObjectCarTGE::calc() {
 }
 
 /// @addr{0x806D7AF8}
-/// @brief Creates two collision objects, the second being a cylinder scaled based off vehicle type
+/// @copybrief ObjectBase::createCollision()
+/// @details Creates two collision objects, the second being a cylinder scaled based off vehicle
+/// type
 void ObjectCarTGE::createCollision() {
     constexpr f32 TRUCK_RADIUS = 190.0f;
     constexpr f32 TRUCK_HEIGHT = 500.0f;
@@ -166,6 +170,7 @@ void ObjectCarTGE::createCollision() {
 }
 
 /// @addr{0x806D7BF8}
+/// @copybrief ObjectBase::calcCollisionTransform()
 void ObjectCarTGE::calcCollisionTransform() {
     auto *col = collision();
 
@@ -217,7 +222,7 @@ Kart::Reaction ObjectCarTGE::onCollision(Kart::KartObject *kartObj, Kart::Reacti
         posDelta.normalise2();
 
         if (v2.dot(posDelta) < EGG::Mathf::CosFIdx(0.7111111f * m_hitAngle) && !m_hasAuxCollision) {
-            reactionOnKart = Kart::Reaction::idewaysFlipTwice;
+            reactionOnKart = Kart::Reaction::SidewaysFlipTwice;
         }
 
         hitDepth.setZero();

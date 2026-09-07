@@ -8,20 +8,9 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x806B5C84}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
-ObjectBasabasaDummy::ObjectBasabasaDummy(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), StateManager(this, STATE_ENTRIES),
-      m_bigBump(params.setting(7) == 1) {
-    m_active = true;
-}
-
-/// @addr{0x806B7630}
-/// @brief Default virtual destructor
-ObjectBasabasaDummy::~ObjectBasabasaDummy() = default;
-
 /// @addr{0x806B5E80}
+/// @copybrief ObjectBase::init()
+/// @details Fetches the bat's initial position by advancing RNG
 void ObjectBasabasaDummy::init() {
     m_railInterpolator->init(0.0f, 0);
     setPos(m_railInterpolator->curPos());
@@ -37,6 +26,8 @@ void ObjectBasabasaDummy::init() {
 }
 
 /// @addr{0x806B6874}
+/// @copydoc ObjectBase::onCollision()
+/// @details Adjusts the reaction based on the course and whether the bat has a big bump
 Kart::Reaction ObjectBasabasaDummy::onCollision(Kart::KartObject * /*kartObj*/,
         Kart::Reaction reactionOnKart, Kart::Reaction /*reactionOnObj*/,
         EGG::Vector3f & /*hitDepth*/) {
@@ -50,8 +41,8 @@ Kart::Reaction ObjectBasabasaDummy::onCollision(Kart::KartObject * /*kartObj*/,
 }
 
 /// @addr{0x806B6100}
-/// @brief Calculates the bat's position based off the rail interpolator
-void ObjectBasabasaDummy::calcState0() {
+/// @brief While spawned, calculates the bat's position based off the rail interpolator
+void ObjectBasabasaDummy::calcStateActive() {
     if (!m_active) {
         return;
     }
@@ -70,6 +61,10 @@ void ObjectBasabasaDummy::calcState0() {
 }
 
 /// @addr{0x806B70D0}
+/// @brief Constructor
+/// @param params The map data parameters used to initialize the object
+/// @details Computes the spacing and number of bats per group. Constructs and loads all underlying
+/// bat objects.
 ObjectBasabasa::ObjectBasabasa(const System::MapdataGeoObj &params)
     : ObjectCollidable(params), m_initialTimer(params.setting(1)),
       m_batsPerGroup(params.setting(2)), m_startFrame(params.setting(6)),
@@ -93,9 +88,13 @@ ObjectBasabasa::ObjectBasabasa(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x806B72F4}
+/// @brief Default virtual destructor
 ObjectBasabasa::~ObjectBasabasa() = default;
 
 /// @addr{0x806B7334}
+/// @copybrief ObjectBase::init()
+/// @details Initializes all bats to be inactive and resets the spawner's cycle timer and active bat
+/// count.
 void ObjectBasabasa::init() {
     for (auto *&bat : m_bats) {
         if (bat->active()) {
@@ -109,6 +108,8 @@ void ObjectBasabasa::init() {
 }
 
 /// @addr{0x806B74C4}
+/// @copybrief ObjectBase::calc()
+/// @details Spawns bats according to the cycle timer and manages their active state.
 void ObjectBasabasa::calc() {
     if (System::RaceManager::Instance()->timer() <= m_startFrame) {
         return;

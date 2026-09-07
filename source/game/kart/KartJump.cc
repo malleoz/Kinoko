@@ -82,7 +82,7 @@ void KartJump::setupProperties() {
 /// @brief Starts a trick if the player is moving fast enough and the trick start flag is set
 /// @param left The left vector of the kart at the start of the trick
 /// @details Maps the boost ramp type to a surface variant, and then calls @ref start to initialize
-/// the trick. Finally clears the @enum eStatus::TrickStart flag.
+/// the trick. Finally clears the @ref eStatus::TrickStart flag.
 void KartJump::tryStart(const EGG::Vector3f &left) {
     auto &status = KartObjectProxy::status();
 

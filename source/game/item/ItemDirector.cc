@@ -23,6 +23,6 @@ ItemDirector::~ItemDirector() {
     }
 }
 
-ItemDirector *ItemDirector::s_instance = nullptr; ///< @addr{0x809C3618}
+ItemDirector *ItemDirector::s_instance = nullptr;
 
 } // namespace Kinoko::Item

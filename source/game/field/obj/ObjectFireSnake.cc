@@ -5,16 +5,6 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x806C0D18}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
-ObjectFireSnakeKid::ObjectFireSnakeKid(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params) {}
-
-/// @addr{0x806C2ACC}
-/// @brief Default virtual destructor
-ObjectFireSnakeKid::~ObjectFireSnakeKid() = default;
-
 /// @addr{0x806C0F30}
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
@@ -41,6 +31,7 @@ ObjectFireSnake::ObjectFireSnake(const System::MapdataGeoObj &params)
 ObjectFireSnake::~ObjectFireSnake() = default;
 
 /// @addr{0x806C13B0}
+/// @copybrief ObjectBase::init()
 void ObjectFireSnake::init() {
     m_nextStateId = 0;
     enterDespawned();
@@ -53,6 +44,7 @@ void ObjectFireSnake::init() {
 }
 
 /// @addr{0x806C14E4}
+/// @copybrief ObjectBase::calc()
 void ObjectFireSnake::calc() {
     StateManager::calc();
 

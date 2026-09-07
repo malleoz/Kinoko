@@ -15,30 +15,37 @@ public:
     ~ObjectHighwayManager() override;
 
     /// @addr{0x806D332C}
+    /// @copybrief ObjectBase::init()
     void init() override {
         m_squashTimer = SQUASH_MAX;
     }
 
     /// @addr{0x806D345C}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         calcSquash();
     }
 
     /// @addr{0x806D5C6C}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806D5C68}
-    /// @brief Does nothing since this is just a watcher class
+    /// @copybrief ObjectBase::loadGraphics()
+    /// @details Does nothing since this is just a watcher class
     void loadGraphics() override {}
 
     /// @addr{0x806D5C60}
-    /// @brief Does nothing since this is just a watcher class
+    /// @copybrief ObjectBase::createCollision()
+    /// @details Does nothing since this is just a watcher class
     void createCollision() override {}
 
     /// @addr{0x806D5C64}
-    /// @brief Does nothing since this is just a watcher class
+    /// @copybrief ObjectBase::loadRail()
+    /// @details Does nothing since this is just a watcher class
     void loadRail() override {}
 
     [[nodiscard]] u32 squashTimer() const {

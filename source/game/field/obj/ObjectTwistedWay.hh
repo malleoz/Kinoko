@@ -13,6 +13,7 @@ public:
     ~ObjectTwistedWay() override;
 
     /// @addr{0x80813C40}
+    /// @copybrief ObjectBase::init()
     void init() override {
         m_introTimer = 1000;
     }
@@ -20,14 +21,20 @@ public:
     void calc() override;
 
     /// @addr{0x80814910}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x8081490C}
+    /// @copybrief ObjectBase::createCollision()
+    /// @details no-op because collision is handled entirely within the collision functions.
     void createCollision() override {}
 
     /// @addr{0x80814908}
+    /// @copybrief ObjectBase::calcCollisionTransform()
+    /// @details no-op because collision is handled entirely within the collision functions.
     void calcCollisionTransform() override {}
 
     /// @addr{0x808148F8}

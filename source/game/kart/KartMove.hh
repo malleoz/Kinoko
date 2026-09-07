@@ -57,7 +57,7 @@ public:
 
     virtual void reset(bool preserveScale, bool preserveFloorCount);
 
-    /// @brief Clears some of the kart's movement state when starting an @enum Action
+    /// @brief Clears some of the kart's movement state when starting an @ref Action
     virtual void clear();
 
     /// @brief Gets the lean rotation of the vehicle
@@ -108,7 +108,7 @@ public:
 
     /// @addr{0x80582804}
     /// @brief Computes the current ramp boost state for the kart
-    /// @details Clears @enum eStatus::RampBoost when the ramp boost timer ends.
+    /// @details Clears @ref eStatus::RampBoost when the ramp boost timer ends.
     void calcRampBoost() {
         auto &status = KartObjectProxy::status();
 
@@ -260,19 +260,15 @@ public:
 
     void applyForce(f32 force, const EGG::Vector3f &hitDir, bool stop);
 
-    /// @brief Every frame, calculates rotation, EV, and angular velocity for the kart
-    /// @param turn The amount the vehicle is turning
     virtual void calcVehicleRotation(f32 turn);
-
-    /// @brief Initializes hop information, resets upwards EV and clears upwards force
     virtual void startHop();
 
     /// @brief Called when the vehicle hops or initiates a slipdrift. It just cancels wheelies.
     /// @details For the base class, this is a no-op since karts cannot wheelie.
     virtual void onPreDrift() {}
 
-    /// @brief Called when you collide with a wall so that wheelies can be cancelled
     /// @addr{0x80570D20}
+    /// @brief Called when you collide with a wall so that wheelies can be cancelled
     /// @details For the base class, this is a no-op since karts cannot wheelie.
     virtual void onWallCollision() {}
 
@@ -289,15 +285,15 @@ public:
         clearOffroadInvincibility();
     }
 
-    /// @brief Returns the % speed boost from wheelies.
     /// @addr{0x8057C3C8}
+    /// @brief Returns the % speed boost from wheelies.
     /// @details For karts, this is always 0.0f since karts cannot wheelie.
     [[nodiscard]] virtual f32 getWheelieSoftSpeedLimitBonus() const {
         return 0.0f;
     }
 
-    /// @brief Returns whether the vehicle can perform a wheelie
     /// @addr{0x8058758C}
+    /// @brief Returns whether the vehicle can perform a wheelie
     [[nodiscard]] virtual bool canWheelie() const {
         return false;
     }
@@ -346,7 +342,7 @@ public:
 
     /// @addr{Inlined at 0x80587590}
     /// @brief Activates a boost ramp boost if the kart is not in an action or preparing to respawn
-    /// @details Also sets 60 frames of offroad invincibility and sets @enum eStatus::RampBoost.
+    /// @details Also sets 60 frames of offroad invincibility and sets @ref eStatus::RampBoost.
     void tryStartBoostRamp() {
         constexpr s16 BOOST_RAMP_DURATION = 60;
 
@@ -375,7 +371,7 @@ public:
     /// @brief Activates a boost of the specified type for a set number of frames
     /// @param type The type of boost to activate
     /// @param frames The number of frames to apply the boost for
-    /// @details Also sets the @enum eStatus::Boost flag if the boost is successfully activated.
+    /// @details Also sets the @ref eStatus::Boost flag if the boost is successfully activated.
     void activateBoost(KartBoost::Type type, s16 frames) {
         if (m_boost.activate(type, frames)) {
             status().setBit(eStatus::Boost);
@@ -395,7 +391,7 @@ public:
     /// @addr{0x805824C8}
     /// @brief Ignores offroad KCL collision for a set amount of time
     /// @param timer Number of frames to ignore offroad slowdown for
-    /// @details Also sets the @enum eStatus::BoostOffroadInvincibility flag.
+    /// @details Also sets the @ref eStatus::BoostOffroadInvincibility flag.
     void setOffroadInvincibility(s16 timer) {
         if (timer > m_offroadInvincibilityTimer) {
             m_offroadInvincibilityTimer = timer;
@@ -406,7 +402,7 @@ public:
 
     /// @addr{0x805824F0}
     /// @brief Checks a timer to see if we are still ignoring offroad slowdown
-    /// @details When the timer expires, resets the @enum eStatus::BoostOffroadInvincibility flag.
+    /// @details When the timer expires, resets the @ref eStatus::BoostOffroadInvincibility flag.
     void calcOffroadInvincibility() {
         auto &status = KartObjectProxy::status();
 
@@ -422,7 +418,7 @@ public:
     }
 
     /// @brief Checks a timer to see if we are still boosting from a mushroom
-    /// @details When the timer expires, resets the @enum eStatus::MushroomBoost flag.
+    /// @details When the timer expires, resets the @ref eStatus::MushroomBoost flag.
     void calcMushroomBoost() {
         auto &status = KartObjectProxy::status();
 
@@ -478,7 +474,7 @@ public:
 
     /// @addr{0x80580F9C}
     /// @brief Checks if the crush effect is still active and updates the timer
-    /// @details When the timer expires, resets the @enum eStatus::Crushed flag and re-scales the
+    /// @details When the timer expires, resets the @ref eStatus::Crushed flag and re-scales the
     /// kart.
     void calcCrushed() {
         if (status().offBit(eStatus::Crushed)) {
@@ -539,7 +535,7 @@ public:
 
     /// @addr{0x805799AC}
     /// @brief Called when the screen wipes to black during a respawn
-    /// @details Resets the respawn framecounter and sets the @enum eStatus::TriggerRespawn flag.
+    /// @details Resets the respawn framecounter and sets the @ref eStatus::TriggerRespawn flag.
     void triggerRespawn() {
         m_timeInRespawn = 0;
         status().setBit(eStatus::TriggerRespawn);
@@ -744,7 +740,7 @@ protected:
         WallBounce = 8,       ///< Set when our speed loss from wall collision is > 30.0f.
     };
 
-    /// @brief Bitfield representing the various flags defined in @enum eFlags
+    /// @brief Bitfield representing the various flags defined in @ref eFlags
     typedef EGG::TBitFlag<u16, eFlags> Flags;
 
     /// @brief The direction the player is currently driving in
@@ -853,7 +849,7 @@ protected:
     s16 m_respawnPreLandTimer;        ///< 4 frame respawn boost leniency timer before landing
     s16 m_respawnPostLandTimer;       ///< 4 frame respawn boost leniency timer after landing
     s16 m_respawnBoostTimer;          ///< Number of frames until the respawn boost runs out
-    s16 m_bumpTimer;                  ///< Cooldown after a @enum Reaction::SmallBump collision
+    s16 m_bumpTimer;                  ///< Cooldown after a @ref Reaction::SmallBump collision
     DrivingDirection m_drivingDirection; ///< Current state of the kart's driving direction
     s16 m_backwardsAllowCounter;         ///< Tracks the 15f delay before reversing
     PadType m_padType;                   ///< Bitfield of the pad types currently active

@@ -14,14 +14,19 @@
 namespace Kinoko::Scene {
 
 /// @addr{0x80553B88}
+/// @brief Constructor
 RaceScene::RaceScene() {
     m_heap->setName("RaceSceneHeap");
 }
 
 /// @addr{0x80553BD4}
+/// @brief Default virtual destructor
 RaceScene::~RaceScene() = default;
 
 /// @addr{0x80554208}
+/// @copybrief GameScene::createEngines()
+/// @details Singleton creation is grouped using a `ScopeLock` for each relevant @ref GroupID to
+/// make it easier to track memory allocation for debugging purposes.
 void RaceScene::createEngines() {
     {
         ScopeLock<GroupID> lock(GroupID::Gfx);
@@ -67,6 +72,7 @@ void RaceScene::createEngines() {
 }
 
 /// @addr{0x8055472C}
+/// @copybrief GameScene::initEngines()
 void RaceScene::initEngines() {
     {
         ScopeLock<GroupID> lock(GroupID::Kart);
@@ -98,8 +104,10 @@ void RaceScene::initEngines() {
 }
 
 /// @addr{0x80554E6C}
+/// @copybrief GameScene::calcEngines()
 /// @details In Kinoko, it is not possible to pause the race scene, so Kinoko's implementation for
-/// this function is really the base game's `calcEnginesUnpaused` located at `0x80554AD4`.
+/// this function is really the base game's `calcEnginesUnpaused` located at `0x80554AD4`. This
+/// function also increments the random number generator.
 void RaceScene::calcEngines() {
     auto *raceMgr = System::RaceManager::Instance();
     raceMgr->calc();
@@ -112,6 +120,7 @@ void RaceScene::calcEngines() {
 }
 
 /// @addr{0x805549B0}
+/// @copybrief GameScene::destroyEngines()
 void RaceScene::destroyEngines() {
     System::KPadDirector::Instance()->endGhostProxies();
     Render::KartCamera::DestroyInstance();
@@ -126,8 +135,8 @@ void RaceScene::destroyEngines() {
     System::CourseMap::DestroyInstance();
 }
 
-/// @brief Retrieves Common.szs and the course archive.
 /// @addr{0x80553C50}
+/// @brief Retrieves Common.szs and the course archive
 void RaceScene::configure() {
     auto *raceCfg = System::RaceConfig::Instance();
     auto *resMgr = System::ResourceManager::Instance();

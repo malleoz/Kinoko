@@ -18,6 +18,7 @@ public:
     void init() override;
 
     /// @addr{0x806CEDF8}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         calcStateTransition();
         calcMotion();
@@ -29,8 +30,14 @@ public:
     void calcCollisionTransform() override;
 
     /// @addr{0x806D02B4}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 3;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
+    /// calculated every frame
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
+    /// calculated every frame
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags().setBit(eLoadFlags::Calc, eLoadFlags::Draw);
     }
 
 private:
@@ -94,6 +101,7 @@ private:
     f32 m_launchVel;          ///< Speed at moment of leaving the rail, used to snap back on landing
     s16 m_spinFrame;          ///< Frame counter that ticks up while the Shy Guy is spinning mid-air
 
+    /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 2> STATE_ENTRIES = {{
             {StateEntry<ObjectHeyho, &ObjectHeyho::enterStateStub, &ObjectHeyho::calcMove>(0)},
             {StateEntry<ObjectHeyho, &ObjectHeyho::enterJump, &ObjectHeyho::calcJump>(1)},

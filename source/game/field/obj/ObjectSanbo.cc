@@ -16,6 +16,7 @@ ObjectSanbo::ObjectSanbo(const System::MapdataGeoObj &params) : ObjectCollidable
 ObjectSanbo::~ObjectSanbo() = default;
 
 /// @addr{0x8077A1E8}
+/// @copybrief ObjectBase::init()
 void ObjectSanbo::init() {
     m_up = EGG::Vector3f::ey;
     EGG::Matrix34f rotMat;

@@ -6,7 +6,7 @@ namespace Kinoko::Kart {
 /// @brief Constructor
 /// @param physics Pointer to the kart's physics state manager
 KartBody::KartBody(KartPhysics *physics) : m_physics(physics) {
-    m_anAngle = 0.0f;
+    m_leanAngle = 0.0f;
     m_sinkDepth = 0.0f;
     m_targetSinkDepth = 0.0f;
 }
@@ -42,7 +42,7 @@ EGG::Matrix34f KartBodyBike::wheelMatrix(u16 wheelIdx) {
     handleMatrix.makeRT(rotation, position);
     EGG::Matrix34f tmp = mat.multiplyTo(handleMatrix);
 
-    EGG::Vector3f yRotation = EGG::Vector3f(0.0f, DEG2RAD * m_anAngle, 0.0f);
+    EGG::Vector3f yRotation = EGG::Vector3f(0.0f, DEG2RAD * m_leanAngle, 0.0f);
     EGG::Matrix34f yRotMatrix;
     yRotMatrix.makeR(yRotation);
     mat = tmp.multiplyTo(yRotMatrix);

@@ -19,6 +19,8 @@ namespace Field {
 /// Separately owns the @ref ObjectObakeManager, which handles SNES Ghost Valley 2 block
 /// management and spatial indexing for drivable objects.
 class ObjectDrivableDirector : EGG::Disposer {
+    /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
+    /// state on context switch
     friend class Host::Context;
 
 public:

@@ -26,6 +26,7 @@ ObjectVolcanoPiece::~ObjectVolcanoPiece() {
 }
 
 /// @addr{0x80819400}
+/// @copybrief ObjectBase::calc()
 void ObjectVolcanoPiece::calc() {
     u32 timer = System::RaceManager::Instance()->timer();
     if (calcState(timer) == State::Fall && FALL_DURATION - 1 == calcT(timer)) {
@@ -38,6 +39,7 @@ void ObjectVolcanoPiece::calc() {
 }
 
 /// @addr{0x80817F6C}
+/// @copybrief ObjectBase::createCollision()
 /// @details Also constructs the secondary and tertiary collision managers for the volcano piece, if
 /// the corresponding KCL files exist.
 void ObjectVolcanoPiece::createCollision() {
@@ -45,19 +47,18 @@ void ObjectVolcanoPiece::createCollision() {
 
     char filepath[128];
     snprintf(filepath, sizeof(filepath), "%sb.kcl", getKclName());
-    auto *file = System::ResourceManager::Instance()->getFile(filepath, nullptr,
-            System::ArchiveId::Course);
+    std::span<const u8> file =
+            System::ResourceManager::Instance()->getFile(filepath, System::ArchiveId::Course);
 
-    if (file) {
-        m_colMgrB = EGG::egg_new<ObjColMgr>(file);
+    if (!file.empty()) {
+        m_colMgrB = EGG::egg_new<ObjColMgr>(file.data());
     }
 
     snprintf(filepath, sizeof(filepath), "%sc.kcl", getKclName());
-    file = System::ResourceManager::Instance()->getFile(filepath, nullptr,
-            System::ArchiveId::Course);
+    file = System::ResourceManager::Instance()->getFile(filepath, System::ArchiveId::Course);
 
-    if (file) {
-        m_colMgrC = EGG::egg_new<ObjColMgr>(file);
+    if (!file.empty()) {
+        m_colMgrC = EGG::egg_new<ObjColMgr>(file.data());
     }
 
     EGG::Matrix34f rtMat;

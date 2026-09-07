@@ -6,35 +6,63 @@
 
 namespace Kinoko::Render {
 
+/// @brief Constructor
 KartModel::KartModel() {
-    m_somethingLeft = false;
-    m_somethingRight = false;
-    _58 = 0.0f;
-    _54 = 1.0f;
-    _5c = 0.0f;
-    _64 = 0.0f;
-    _2e8 = 0.0f;
+    m_isLeaningLeft = false;
+    m_isLeaningRight = false;
+    m_leanWobble = 0.0f;
+    m_leanAmplitude = 1.0f;
+    m_bodyLeanAngle = 0.0f;
+    m_bodyLeanStep = 0.0f;
+    m_prevBurnoutPitch = 0.0f;
 }
 
+/// @brief Default virtual destructor
 KartModel::~KartModel() = default;
 
+/// @addr{0x807CB198}
+/// @brief Calculates the leaning state of the kart based on input and drift status
+void KartModel::calcLeaning() {
+    m_isLeaningRight = false;
+    m_isLeaningLeft = false;
+    auto &status = KartObjectProxy::status();
+
+    bool turnInput = status.onBit(Kart::eStatus::StickLeft, Kart::eStatus::StickRight);
+    if (state()->isDrifting() || (status.onBit(Kart::eStatus::ChargingSSMT) && turnInput)) {
+        if (hopStickX() == 1) {
+            m_isLeaningLeft = true;
+        } else {
+            if (hopStickX() == -1) {
+                m_isLeaningRight = true;
+            } else if (status.offBit(Kart::eStatus::StickLeft)) {
+                m_isLeaningRight = true;
+            } else {
+                m_isLeaningLeft = true;
+            }
+        }
+    }
+}
+
 /// @addr{0x807CD32C}
-void KartModel::vf_1c() {
+/// @brief Calculates the vehicle's lean wobble and angle and applies it to @ref Kart::KartBody
+/// @details This is a virtual function in the basegame, but since it is not overridden by any
+/// derived class, we can devirtualize in Kinoko.
+void KartModel::calcLeanAngle() {
     const auto &status = KartObjectProxy::status();
 
     if (status.onBit(Kart::eStatus::Burnout)) {
-        _54 = 1.0f;
+        m_leanAmplitude = 1.0f;
 
         f32 pitch = move()->burnout().pitch();
-        f32 fVar2 = pitch + 75.0f * (pitch - _2e8);
+        f32 fVar2 = pitch + 75.0f * (pitch - m_prevBurnoutPitch);
         f32 fVar4 = std::min(0.2f, 0.04f * EGG::Mathf::abs(fVar2));
         fVar4 = fVar2 > 0.0f ? fVar4 : -fVar4;
 
-        _2e8 = pitch;
-        _58 += fVar4;
+        m_prevBurnoutPitch = pitch;
+        m_leanWobble += fVar4;
     } else {
-        _2e8 = 0.0f;
-        _58 *= 0.9f;
+        m_prevBurnoutPitch = 0.0f;
+        m_leanWobble *= 0.9f;
     }
 
     bool frozenInIce =
@@ -44,13 +72,13 @@ void KartModel::vf_1c() {
     bool isInCannon = status.onBit(Kart::eStatus::InCannon);
     f32 fVar2 = isInCannon ? 0.02f : 0.1f;
 
-    f32 local_f31 = _58;
+    f32 local_f31 = m_leanWobble;
     if (xStick <= 0.2f) {
         if (xStick < -0.2f) {
-            _58 -= fVar2;
+            m_leanWobble -= fVar2;
         }
     } else {
-        _58 += fVar2;
+        m_leanWobble += fVar2;
     }
 
     xStick = EGG::Mathf::abs(xStick);
@@ -60,23 +88,23 @@ void KartModel::vf_1c() {
         fVar2 = 0.05f;
     }
 
-    _54 += fVar2 * (xStick - _54);
+    m_leanAmplitude += fVar2 * (xStick - m_leanAmplitude);
 
-    if (local_f31 < -_54 || _54 < local_f31) {
-        if (-_54 <= _58) {
-            if (_54 < _58) {
-                _58 -= 0.1f;
+    if (local_f31 < -m_leanAmplitude || m_leanAmplitude < local_f31) {
+        if (-m_leanAmplitude <= m_leanWobble) {
+            if (m_leanAmplitude < m_leanWobble) {
+                m_leanWobble -= 0.1f;
             }
         } else {
-            _58 += 0.1f;
+            m_leanWobble += 0.1f;
         }
-    } else if (-_54 <= _58) {
-        _58 = std::min(_54, _58);
+    } else if (-m_leanAmplitude <= m_leanWobble) {
+        m_leanWobble = std::min(m_leanAmplitude, m_leanWobble);
     } else {
-        _58 = -_54;
+        m_leanWobble = -m_leanAmplitude;
     }
 
-    f32 dVar13 = _58;
+    f32 dVar13 = m_leanWobble;
 
     if (isBike()) {
         if (state()->isDrifting()) {
@@ -89,56 +117,33 @@ void KartModel::vf_1c() {
     }
 
     f32 dVar12 = 0.0f;
-    _64 = dVar13 * 0.1f;
+    m_bodyLeanStep = dVar13 * 0.1f;
 
     if (isBike()) {
-        dVar12 = -_58 * dVar13;
+        dVar12 = -m_leanWobble * dVar13;
 
-        if (m_somethingLeft) {
+        if (m_isLeaningLeft) {
             dVar12 += m_isInsideDrift ? 5.0f : 10.0f;
-        } else if (m_somethingRight) {
+        } else if (m_isLeaningRight) {
             dVar12 -= m_isInsideDrift ? 5.0f : 10.0f;
         }
     } else {
-        if (!m_somethingLeft && m_somethingRight) {
+        if (!m_isLeaningLeft && m_isLeaningRight) {
             dVar12 -= 5.0f;
         } else {
             dVar12 += 5.0f;
         }
     }
 
-    if (dVar12 <= _5c) {
-        _5c -= _64;
-        _5c = std::max(_5c, dVar12);
+    if (dVar12 <= m_bodyLeanAngle) {
+        m_bodyLeanAngle -= m_bodyLeanStep;
+        m_bodyLeanAngle = std::max(m_bodyLeanAngle, dVar12);
     } else {
-        _5c += _64;
-        _5c = std::min(_5c, dVar12);
+        m_bodyLeanAngle += m_bodyLeanStep;
+        m_bodyLeanAngle = std::min(m_bodyLeanAngle, dVar12);
     }
 
-    body()->setAngle(_5c);
-}
-
-/// @addr{0x807CB198}
-/// @rename
-void KartModel::FUN_807CB198() {
-    m_somethingRight = false;
-    m_somethingLeft = false;
-    auto &status = KartObjectProxy::status();
-
-    bool turnInput = status.onBit(Kart::eStatus::StickLeft, Kart::eStatus::StickRight);
-    if (state()->isDrifting() || (status.onBit(Kart::eStatus::ChargingSSMT) && turnInput)) {
-        if (hopStickX() == 1) {
-            m_somethingLeft = true;
-        } else {
-            if (hopStickX() == -1) {
-                m_somethingRight = true;
-            } else if (status.offBit(Kart::eStatus::StickLeft)) {
-                m_somethingRight = true;
-            } else {
-                m_somethingLeft = true;
-            }
-        }
-    }
+    body()->setLeanAngle(m_bodyLeanAngle);
 }
 
 } // namespace Kinoko::Render

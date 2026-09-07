@@ -39,13 +39,13 @@ private:
     }
 
     /// @addr{0x80589844}
-    /// @brief Sets the @enum eStatus::Burnout bit in the kart's status
+    /// @brief Sets the @ref eStatus::Burnout bit in the kart's status
     void activate() {
         status().setBit(eStatus::Burnout);
     }
 
     /// @addr{0x80589818}
-    /// @brief Resets the @enum eStatus::Burnout bit in the kart's status
+    /// @brief Resets the @ref eStatus::Burnout bit in the kart's status
     void deactivate() {
         status().resetBit(eStatus::Burnout);
     }

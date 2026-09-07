@@ -14,6 +14,7 @@ ObjectShip64::~ObjectShip64() {
 }
 
 /// @addr{0x80766864}
+/// @copybrief ObjectBase::createCollision()
 /// @details Creates the primary and paddle wheel collision objects for the ship.
 void ObjectShip64::createCollision() {
     constexpr f32 RADIUS = 1500.0f;
@@ -25,6 +26,7 @@ void ObjectShip64::createCollision() {
 }
 
 /// @addr{0x807668D4}
+/// @copybrief ObjectBase::calcCollisionTransform()
 /// @details Calculates the transformation matrices for the primary and paddle wheel collision
 /// objects based on the ship's current orientation.
 void ObjectShip64::calcCollisionTransform() {

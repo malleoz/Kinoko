@@ -21,9 +21,10 @@ static void FlushDenormalsToZero() {
 }
 #endif
 
-static void *s_memorySpace = nullptr;
-static EGG::Heap *s_rootHeap = nullptr;
+static void *s_memorySpace = nullptr;   ///< A 16MB memory arena used for all heap allocation
+static EGG::Heap *s_rootHeap = nullptr; ///< Pointer to the root heap
 
+/// @brief Creates the memory arena and initializes the root heap
 static void InitMemory() {
     s_memorySpace = malloc(MEMORY_SPACE_SIZE);
     s_rootHeap = EGG::ExpHeap::create(s_memorySpace, MEMORY_SPACE_SIZE, DEFAULT_OPT);

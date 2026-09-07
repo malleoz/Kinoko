@@ -31,6 +31,8 @@ typedef bool (
 /// compensate for dynamically sized objects (such as the Bowser's Castle geysers, represented by
 /// @ref ObjectFlamePoleFoot).
 class CourseColMgr : EGG::Disposer {
+    /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
+    /// state on context switch
     friend class Host::Context;
 
 public:
@@ -51,8 +53,8 @@ public:
     void init() {
         // In the base game, this file is loaded in CollisionDirector::CreateInstance and passed
         // into this function. It's simpler to just keep it here.
-        void *file = LoadFile("course.kcl");
-        m_data = EGG::egg_new<KColData>(file);
+        std::span<const u8> file = LoadFile("course.kcl");
+        m_data = EGG::egg_new<KColData>(file.data());
     }
 
     /// @addr{0x807C293C}
@@ -121,10 +123,10 @@ public:
             CollisionInfoPartial *info, KCLTypeMask *maskOut);
     [[nodiscard]] bool checkSphereCachedFull(f32 scale, f32 radius, KColData *data,
             const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask typeMask,
-            CollisionInfo *colInfo, KCLTypeMask *maskOut);
+            CollisionInfo *info, KCLTypeMask *maskOut);
     [[nodiscard]] bool checkSphereCachedFullPush(f32 scale, f32 radius, KColData *data,
             const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask typeMask,
-            CollisionInfo *colInfo, KCLTypeMask *maskOut);
+            CollisionInfo *info, KCLTypeMask *maskOut);
 
     /// @beginSetters
     /// @brief Points to the @ref NoBounceWallColInfo struct that should be used to accumulate soft
@@ -160,9 +162,9 @@ public:
     /// @endGetters
 
     /// @brief Loads a particular section of a .szs file
-    static void *LoadFile(const char *filename) {
+    [[nodiscard]] static std::span<const u8> LoadFile(const char *filename) {
         auto *resMgr = System::ResourceManager::Instance();
-        return resMgr->getFile(filename, nullptr, System::ArchiveId::Course);
+        return resMgr->getFile(filename, System::ArchiveId::Course);
     }
 
     /// @addr{0x807C2824}

@@ -25,14 +25,14 @@ enum class eStatus {
     DriftManual = 3,                ///< Currently in a drift with manual transmission
     BeforeRespawn = 4,              ///< Set on respawn collision, cleared on position snap
     Wall3Collision = 5,             ///< Set when colliding with wall KCL #COL_TYPE_WALL_2
-    WallCollision = 6,              ///< Colliding with KCL #COL_TYPE_WALL_ or #COL_TYPE_WALL_2
+    WallCollision = 6,              ///< Colliding with KCL #COL_TYPE_WALL or #COL_TYPE_WALL_2
     HopStart = 7,                   ///< Starting a drift hop this frame
     AccelerateStart = 8,            ///< Starting accelerating this frame
     GroundStart = 9,                ///< First frame landing from airtime
     VehicleBodyFloorCollision = 10, ///< The vehicle body is colliding with the floor
     AnyWheelCollision = 11,         ///< Any wheel is touching floor collision
     AllWheelsCollision = 12,        ///< All wheels are touching floor collision
-    StickLeft = 13,           ///< Left controller input. Mutually exclusive to @enum StickRight
+    StickLeft = 13, ///< Left controller input. Mutually exclusive to @ref eStatus::StickRight
     WallCollisionStart = 14,  ///< Starting colliding with a wall this frame
     AirtimeOver20 = 15,       ///< The kart has 20 frames of airtime, resets on landing
     StickyRoad = 16,          ///< Colliding with KCL #COL_TYPE_STICKY_ROAD
@@ -41,20 +41,20 @@ enum class eStatus {
     Boost = 20,               ///< Currently in a boost (MTs, mushrooms, boost panels, etc.)
     DisableAcceleration = 22, ///< The kart cannot accelerate (water on last turn of Koopa Cape)
     AirStart = 23,            ///< The kart left the ground this frame
-    StickRight = 24,          ///< Right controller input. Mutually exclusive to @enum StickLeft
-    LargeFlipHit = 25,        ///< The kart is in a large flip action
-    MushroomBoost = 26,       ///< The kart is actively in a boost from a Mushroom
-    SlipdriftBuffered = 27,   ///< Drift input is being held mid-air and drift will begin on landing
-    DriftAuto = 28,           ///< Currently in a drift with automatic transmission
-    Wheelie = 29,             ///< Currently in a wheelie (even during the countdown)
-    JumpPad = 30,             ///< Currently mid-air due to a jump pad
-    RampBoost = 31,           ///< Currently in a boost from a ramp
+    StickRight = 24,    ///< Right controller input. Mutually exclusive to @ref eStatus::StickLeft
+    LargeFlipHit = 25,  ///< The kart is in a large flip action
+    MushroomBoost = 26, ///< The kart is actively in a boost from a Mushroom
+    SlipdriftBuffered = 27, ///< Drift input is being held mid-air and drift will begin on landing
+    DriftAuto = 28,         ///< Currently in a drift with automatic transmission
+    Wheelie = 29,           ///< Currently in a wheelie (even during the countdown)
+    JumpPad = 30,           ///< Currently mid-air due to a jump pad
+    RampBoost = 31,         ///< Currently in a boost from a ramp
 
     /**************
      * BITFIELD 1
      *************/
 
-    InAction = 32,       ///< Currenty in a @enum Action
+    InAction = 32,       ///< Currenty in a @ref Action
     TriggerRespawn = 33, ///< The kart's position needs to be snapped to the respawn point
     CannonStart = 35,    ///< Entering a cannon after colliding with KCL #COL_TYPE_CANNON_TRIGGER
     InCannon = 36,       ///< Currently in a cannon, cleared once dropping from the cannon

@@ -11,14 +11,19 @@ public:
     ~ObjectBelt() override;
 
     /// @addr{0x807FD79C}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x807FD798}
+    /// @copybrief ObjectBase::createCollision()
     void createCollision() override {}
 
     /// @addr{0x807FD794}
+    /// @copybrief ObjectBase::calcCollisionTransform()
+    /// @details no-op because collision is managed entirely by the collision functions.
     void calcCollisionTransform() override {}
 
     /// @addr{0x807FD784}

@@ -6,6 +6,9 @@
 
 namespace Kinoko {
 
+/// @brief A generic scope-based lock that temporarily changes a property or state
+/// @tparam T The type of property or state that the scope lock will manage
+/// @see @ref ScopeLock<GroupID>
 template <typename T>
 class ScopeLock;
 
@@ -14,6 +17,8 @@ class ScopeLock;
 template <>
 class ScopeLock<GroupID> {
 public:
+    /// @brief Constructor
+    /// @param newID The @ref GroupID to assign to the heap for the duration of the current scope
     ScopeLock(GroupID newID) {
         EGG::ExpHeap *heap = EGG::Heap::dynamicCastToExp(EGG::Heap::getCurrentHeap());
         ASSERT(heap);
@@ -26,6 +31,7 @@ public:
         heap->setGroupID(static_cast<u16>(newID));
     }
 
+    /// @brief Destructor that resets the @ref GroupID for the current heap to the default value
     ~ScopeLock() {
         EGG::ExpHeap *heap = EGG::Heap::dynamicCastToExp(EGG::Heap::getCurrentHeap());
         ASSERT(heap);

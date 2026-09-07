@@ -17,6 +17,7 @@ public:
     void init() override;
 
     /// @addr{0x806B82CC}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         StateManager::calc();
         calcRail();
@@ -24,11 +25,14 @@ public:
     }
 
     /// @addr{0x806B8F44}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806B7B44}
+    /// @copybrief ObjectBase::createCollision()
     void createCollision() override {
         constexpr f32 RADIUS = 210.0f;
         constexpr f32 HEIGHT = 200.0f;
@@ -113,6 +117,7 @@ private:
     MotionState m_motionState;   ///< The current motion state of the car
     bool m_changingDir;          ///< Triggers the deceleration-to-stop logic
 
+    /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 3> STATE_ENTRIES = {{
             {StateEntry<ObjectCarA, &ObjectCarA::enterStop, &ObjectCarA::calcStop>(0)},
             {StateEntry<ObjectCarA, &ObjectCarA::enterAccel, &ObjectCarA::calcAccel>(1)},

@@ -25,10 +25,18 @@ public:
         Virtual
      *----------*/
 
+    /// @brief Responsible for performing per-frame updates for the scene
     virtual void calc() {}
+
+    /// @brief Called when the scene is entered, performing necessary setup
     virtual void enter() {}
+
+    /// @brief Called when the scene is exited, responsible for performing necessary cleanup
     virtual void exit() {}
+
+    /// @brief Responsible for reinitializing the scene
     virtual void reinit() {}
+
     virtual void incoming_childDestroy() {}
     virtual void outgoing_childCreate() {}
 

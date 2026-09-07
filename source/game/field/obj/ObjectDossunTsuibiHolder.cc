@@ -22,6 +22,7 @@ ObjectDossunTsuibiHolder::ObjectDossunTsuibiHolder(const System::MapdataGeoObj &
 ObjectDossunTsuibiHolder::~ObjectDossunTsuibiHolder() = default;
 
 /// @addr{0x80761744}
+/// @copybrief ObjectBase::init()
 void ObjectDossunTsuibiHolder::init() {
     for (auto *&dossun : m_dossuns) {
         dossun->init();
@@ -43,6 +44,7 @@ void ObjectDossunTsuibiHolder::init() {
 }
 
 /// @addr{0x8076198C}
+/// @copybrief ObjectBase::calc()
 void ObjectDossunTsuibiHolder::calc() {
     for (auto &dossun : m_dossuns) {
         dossun->calc();

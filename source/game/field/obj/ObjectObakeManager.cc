@@ -33,6 +33,7 @@ ObjectObakeManager::~ObjectObakeManager() {
 }
 
 /// @addr{0x8080BB28}
+/// @copybrief ObjectBase::calc()
 /// @details Checks if any blocks should start falling and updates the state of any falling blocks.
 void ObjectObakeManager::calc() {
     u32 frame = System::RaceManager::Instance()->timer();
@@ -150,7 +151,7 @@ bool ObjectObakeManager::checkSpherePartialImpl(f32 radius, const EGG::Vector3f 
 
 /// @addr{0x8080C41C}
 /// @brief Checks collision between a sphere and the cached blocks, writing partial collision info
-///        Additionally pushes the collision entry into the CollisionDirector's cache.
+///        Additionally pushes the collision entry into the @ref CollisionDirector cache.
 /// @param radius The radius of the sphere to check
 /// @param pos The position of the sphere to check
 /// @param mask The KCL flags to check collision against (other types are ignored)
@@ -346,7 +347,7 @@ bool ObjectObakeManager::checkSphereFullImpl(f32 radius, const EGG::Vector3f &po
 
 /// @addr{0x8080D12C}
 /// @brief Checks collision between a sphere and the cached blocks, writing full collision info
-///        Additionally pushes the collision entry into the CollisionDirector's cache.
+///        Additionally pushes the collision entry into the @ref CollisionDirector cache.
 /// @param radius The radius of the sphere to check
 /// @param pos The position of the sphere to check
 /// @param mask The KCL flags to check collision against (other types are ignored)

@@ -21,11 +21,13 @@ public:
     ~ObjectItemboxPress() override = default;
 
     /// @addr{0x8076DA88}
+    /// @copybrief ObjectBase::init()
     void init() override {
         m_state = 0;
     }
 
     /// @addr{0x8076DAF4}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         constexpr f32 HEIGHT_OFFSET = 180.0f;
 
@@ -47,11 +49,16 @@ public:
     }
 
     /// @addr{0x8076E9C4}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x8076E9CC}
+    /// @copybrief ObjectBase::getResources()
+    /// @details Returns the resource name for the itembox.
+    /// @return The resource name for the itembox (`itembox`).
     [[nodiscard]] const char *getResources() const override {
         return "itembox";
     }

@@ -16,6 +16,8 @@ namespace Field {
 /// @details For each rail, determines whether it represents a linear rail (@ref RailLine) or a
 /// curved rail (@ref RailSpline).
 class RailManager {
+    /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
+    /// state on context switch
     friend class Host::Context;
 
 public:

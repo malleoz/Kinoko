@@ -67,6 +67,10 @@ private:
     [[nodiscard]] EGG::Matrix34f calcLeanBasis();
 
     /// @brief Linearly interpolates between two vectors
+    /// @param t Interpolation factor
+    /// @param v0 Starting vector
+    /// @param v1 Ending vector
+    /// @return The interpolated vector
     [[nodiscard]] static EGG::Vector3f Interpolate(f32 t, const EGG::Vector3f &v0,
             const EGG::Vector3f &v1) {
         return v0 + (v1 - v0) * t;

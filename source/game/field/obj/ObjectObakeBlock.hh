@@ -24,14 +24,17 @@ public:
     void calc() override;
 
     /// @addr{0x8080BDE0}
+    /// @copybrief ObjectBase::load()
     /// @details no-op because collision is handled by @ref ObjectObakeManager
     void load() override {}
 
     /// @addr{0x8080BDDC}
+    /// @copybrief ObjectBase::createCollision()
     /// @details no-op because collision is handled by @ref ObjectObakeManager
     void createCollision() override {}
 
     /// @addr{0x8080BDD4}
+    /// @copybrief ObjectBase::calcCollisionTransform()
     /// @details no-op because collision is handled by @ref ObjectObakeManager
     void calcCollisionTransform() override {}
 

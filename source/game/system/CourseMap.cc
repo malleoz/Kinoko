@@ -3,20 +3,22 @@
 namespace Kinoko::System {
 
 /// @addr{0x805127EC}
+/// @brief Initializes the course map by loading the course KMP file and parsing its sections
+/// @details Also computes the starting position spacing.
 void CourseMap::init() {
-    void *buffer = LoadFile("course.kmp");
-    m_course = EGG::egg_new<MapdataFileAccessor>(
-            reinterpret_cast<const MapdataFileAccessor::SData *>(buffer));
+    std::span<const u8> buffer = LoadFile("course.kmp");
+    m_header = EGG::egg_new<MapdataFileAccessor>(
+            reinterpret_cast<const MapdataFileAccessor::SData *>(buffer.data()));
 
-    constexpr u32 AREA_SIGNATURE = 0x41524541;
-    constexpr u32 CANNON_POINT_SIGNATURE = 0x434e5054;
-    constexpr u32 CHECK_PATH_SIGNATURE = 0x434b5048;
-    constexpr u32 CHECK_POINT_SIGNATURE = 0x434b5054;
-    constexpr u32 GEO_OBJ_SIGNATURE = 0x474f424a;
-    constexpr u32 JUGEM_POINT_SIGNATURE = 0x4a475054;
-    constexpr u32 START_POINT_SIGNATURE = 0x4b545054;
-    constexpr u32 POINT_INFO_SIGNATURE = 0x504f5449;
-    constexpr u32 STAGE_INFO_SIGNATURE = 0x53544749;
+    constexpr u32 AREA_SIGNATURE = Signature("AREA");
+    constexpr u32 CANNON_POINT_SIGNATURE = Signature("CNPT");
+    constexpr u32 CHECK_PATH_SIGNATURE = Signature("CKPH");
+    constexpr u32 CHECK_POINT_SIGNATURE = Signature("CKPT");
+    constexpr u32 GEO_OBJ_SIGNATURE = Signature("GOBJ");
+    constexpr u32 JUGEM_POINT_SIGNATURE = Signature("JGPT");
+    constexpr u32 START_POINT_SIGNATURE = Signature("KTPT");
+    constexpr u32 POINT_INFO_SIGNATURE = Signature("POTI");
+    constexpr u32 STAGE_INFO_SIGNATURE = Signature("STGI");
 
     m_startPoint = parseMapdata<MapdataStartPointAccessor>(START_POINT_SIGNATURE);
     m_checkPath = parseMapdata<MapdataCheckPathAccessor>(CHECK_PATH_SIGNATURE);
@@ -34,20 +36,25 @@ void CourseMap::init() {
     MapdataStageInfo *stageInfo = getStageInfo();
     constexpr u8 TRANSLATION_MODE_NARROW = 1;
     if (stageInfo && stageInfo->translationMode() == TRANSLATION_MODE_NARROW) {
-        m_startTmpAngle = 25.0f;
-        m_startTmp2 = 250.0f;
-        m_startTmp3 = 0.0f;
+        m_skewAngle = 25.0f;
+        m_longitudinalOffset = 250.0f;
+        m_longitudinalWideOffset = 0.0f;
     } else {
-        m_startTmpAngle = 30.0f;
-        m_startTmp2 = 400.0f;
-        m_startTmp3 = 100.0f;
+        m_skewAngle = 30.0f;
+        m_longitudinalOffset = 400.0f;
+        m_longitudinalWideOffset = 100.0f;
     }
 
-    m_startTmp0 = 800.0f;
-    m_startTmp1 = 1200.0f;
+    m_lateralSpacing = 800.0f;
+    m_longitudinalSpacing = 1200.0f;
 }
 
 /// @addr{0x80511500}
+/// @brief Finds the sector (checkpoint) that contains the given position
+/// @param pos The position to check
+/// @param checkpointIdx The index of the checkpoint to start the search from
+/// @param distanceRatio Output parameter for the distance ratio within the sector
+/// @return The ID of the sector containing the position, or -1 if not found
 s16 CourseMap::findSector(const EGG::Vector3f &pos, u16 checkpointIdx, f32 &distanceRatio) {
     clearSectorChecked();
 
@@ -84,6 +91,18 @@ s16 CourseMap::findSector(const EGG::Vector3f &pos, u16 checkpointIdx, f32 &dist
 }
 
 /// @addr{0x80511110}
+/// @brief Recursively depth-first searches for the sector (checkpoint) that contains the position
+/// @param pos The position to check
+/// @param depth The current depth of the recursive search
+/// @param searchBackwardsFirst Whether to search backwards first
+/// @param checkpoint The checkpoint to start the search from
+/// @param distanceRatio Output parameter for the distance ratio within the sector
+/// @param playerIsForwards Whether the player is moving forwards
+/// @return The ID of the sector containing the position, or -1 if not found
+/// @details This function performs a depth-first search through the checkpoint graph, starting from
+/// the given checkpoint, to find the sector that contains the specified position. It considers the
+/// player's movement direction and the search order (forwards or backwards) to determine the most
+/// likely sector. The search is limited by a maximum depth to prevent infinite recursion.
 s16 CourseMap::findRecursiveSector(const EGG::Vector3f &pos, s16 depth, bool searchBackwardsFirst,
         MapdataCheckPoint *checkpoint, f32 &distanceRatio, bool playerIsForwards) const {
     constexpr s16 MAX_DEPTH = 6;
@@ -116,7 +135,7 @@ s16 CourseMap::findRecursiveSector(const EGG::Vector3f &pos, s16 depth, bool sea
         }
 
         // Stop if current checkpoint is a KCP
-        if (checkpoint->checkArea() >= 0) {
+        if (checkpoint->type() >= 0) {
             return -1;
         }
 
@@ -145,7 +164,7 @@ s16 CourseMap::findRecursiveSector(const EGG::Vector3f &pos, s16 depth, bool sea
     }
 
     // Stop if current checkpoint is a KCP (skipped for online players, but they aren't supported)
-    if (checkpoint->checkArea() >= 0) {
+    if (checkpoint->type() >= 0) {
         return -1;
     }
 
@@ -163,6 +182,11 @@ s16 CourseMap::findRecursiveSector(const EGG::Vector3f &pos, s16 depth, bool sea
 }
 
 /// @addr{0x80516808}
+/// @brief Gets the ID of the current area that contains the given position, if any
+/// @param i The index of the area to check first
+/// @param pos The position to check
+/// @param type The type of area to search for
+/// @return The ID of the area containing the position, or -1 if not found
 s16 CourseMap::getCurrentAreaID(s16 i, const EGG::Vector3f &pos, MapdataAreaBase::Type type) const {
     // Check if we're colliding with the provided area ID
     if (i >= 0) {
@@ -184,18 +208,21 @@ s16 CourseMap::getCurrentAreaID(s16 i, const EGG::Vector3f &pos, MapdataAreaBase
 }
 
 /// @addr{0x8051276C}
+/// @brief Private constructor
 CourseMap::CourseMap()
-    : m_course(nullptr), m_startPoint(nullptr), m_stageInfo(nullptr), m_startTmpAngle(0.0f),
-      m_startTmp0(0.0f), m_startTmp1(0.0f), m_startTmp2(0.0f), m_startTmp3(0.0f) {}
+    : m_header(nullptr), m_startPoint(nullptr), m_stageInfo(nullptr), m_skewAngle(0.0f),
+      m_lateralSpacing(0.0f), m_longitudinalSpacing(0.0f), m_longitudinalOffset(0.0f),
+      m_longitudinalWideOffset(0.0f) {}
 
 /// @addr{0x805127AC}
+/// @brief Private destructor that destroys the accessors to the `course.kmp` sections
 CourseMap::~CourseMap() {
     if (s_instance) {
         s_instance = nullptr;
         WARN("CourseMap instance not explicitly handled!");
     }
 
-    EGG::egg_delete(m_course);
+    EGG::egg_delete(m_header);
     EGG::egg_delete(m_startPoint);
     EGG::egg_delete(m_checkPath);
     EGG::egg_delete(m_checkPoint);
@@ -207,6 +234,12 @@ CourseMap::~CourseMap() {
     EGG::egg_delete(m_stageInfo);
 }
 
+/// @brief Searches for the sector containing the given position when the player is @ref
+/// MapdataCheckPoint::SectorOccupancy::BetweenSides of the current checkpoint's quad
+/// @param pos The position to check
+/// @param checkpoint The checkpoint to start the search from
+/// @param distanceRatio Output parameter for the completion ratio within the sector
+/// @return The ID of the sector containing the position, or -1 if not found
 s16 CourseMap::findSectorBetweenSides(const EGG::Vector3f &pos, MapdataCheckPoint *checkpoint,
         f32 &distanceRatio) {
     s16 id = -1;
@@ -311,6 +344,12 @@ s16 CourseMap::findSectorBetweenSides(const EGG::Vector3f &pos, MapdataCheckPoin
     return id;
 }
 
+/// @brief Searches for the sector containing the given position when the player is @ref
+/// MapdataCheckPoint::SectorOccupancy::OutsideSector the current checkpoint's quad
+/// @param pos The position to check
+/// @param checkpoint The checkpoint to start the search from
+/// @param distanceRatio Output parameter for the completion ratio within the sector
+/// @return The ID of the sector containing the position, or -1 if not found
 s16 CourseMap::findSectorOutsideSector(const EGG::Vector3f &pos, MapdataCheckPoint *checkpoint,
         f32 &distanceRatio) {
     s16 id = -1;
@@ -374,7 +413,11 @@ s16 CourseMap::findSectorOutsideSector(const EGG::Vector3f &pos, MapdataCheckPoi
     return id;
 }
 
-// If local search fails, remove depth limit and search all "loaded" checkpoints
+/// @brief Last resort fallback which removes the recursion limit and searches all checkpoints
+/// @param pos The position to check
+/// @param checkpoint The checkpoint to start the search from
+/// @param distanceRatio Output parameter for the completion ratio within the sector
+/// @return The ID of the sector containing the position, or -1 if not found
 s16 CourseMap::findSectorRegional(const EGG::Vector3f &pos, MapdataCheckPoint *checkpoint,
         f32 &distanceRatio) {
     s16 id = -1;
@@ -401,8 +444,16 @@ s16 CourseMap::findSectorRegional(const EGG::Vector3f &pos, MapdataCheckPoint *c
 }
 
 /// @addr{0x80510F58}
+/// @brief Recurses through the next checkpoints to find the sector containing the given position
+/// @param pos The position to check
+/// @param depth The current depth of the recursive search
+/// @param checkpoint The checkpoint to start the search from
+/// @param distanceRatio Output parameter for the completion ratio within the sector
+/// @param playerIsForwards Whether the player is moving forwards
+/// @param useCache Whether to use the cached search results
+/// @return The ID of the sector containing the position, or -1 if not found
 s16 CourseMap::searchNextCheckpoint(const EGG::Vector3f &pos, s16 depth,
-        const MapdataCheckPoint *checkpoint, f32 &completion, bool playerIsForwards,
+        const MapdataCheckPoint *checkpoint, f32 &distanceRatio, bool playerIsForwards,
         bool useCache) const {
     s16 id = -1;
     depth = depth >= 0 ? depth + 1 : -1;
@@ -411,7 +462,7 @@ s16 CourseMap::searchNextCheckpoint(const EGG::Vector3f &pos, s16 depth,
         MapdataCheckPoint *next = checkpoint->nextPoint(i);
 
         if (!useCache || !next->searched()) {
-            id = findRecursiveSector(pos, depth, false, next, completion, playerIsForwards);
+            id = findRecursiveSector(pos, depth, false, next, distanceRatio, playerIsForwards);
 
             if (id != -1) {
                 return id;
@@ -423,8 +474,17 @@ s16 CourseMap::searchNextCheckpoint(const EGG::Vector3f &pos, s16 depth,
 }
 
 /// @addr{0x80511034}
+/// @brief Recurses through the previous checkpoints to find the sector containing the given
+/// position
+/// @param pos The position to check
+/// @param depth The current depth of the recursive search
+/// @param checkpoint The checkpoint to start the search from
+/// @param distanceRatio Output parameter for the completion ratio within the sector
+/// @param playerIsForwards Whether the player is moving forwards
+/// @param useCache Whether to use the cached search results
+/// @return The ID of the sector containing the position, or -1 if not found
 s16 CourseMap::searchPrevCheckpoint(const EGG::Vector3f &pos, s16 depth,
-        const MapdataCheckPoint *checkpoint, f32 &completion, bool playerIsForwards,
+        const MapdataCheckPoint *checkpoint, f32 &distanceRatio, bool playerIsForwards,
         bool useCache) const {
     s16 id = -1;
     depth = depth >= 0 ? depth + 1 : -1;
@@ -433,7 +493,7 @@ s16 CourseMap::searchPrevCheckpoint(const EGG::Vector3f &pos, s16 depth,
         MapdataCheckPoint *prev = checkpoint->prevPoint(i);
 
         if (!useCache || !prev->searched()) {
-            id = findRecursiveSector(pos, depth, true, prev, completion, playerIsForwards);
+            id = findRecursiveSector(pos, depth, true, prev, distanceRatio, playerIsForwards);
 
             if (id != -1) {
                 return id;
@@ -444,6 +504,6 @@ s16 CourseMap::searchPrevCheckpoint(const EGG::Vector3f &pos, s16 depth,
     return id;
 }
 
-CourseMap *CourseMap::s_instance = nullptr; ///< @addr{0x809BD6E8}
+CourseMap *CourseMap::s_instance = nullptr;
 
 } // namespace Kinoko::System

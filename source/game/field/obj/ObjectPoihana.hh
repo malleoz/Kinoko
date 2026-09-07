@@ -14,13 +14,16 @@ public:
     void init() override;
 
     /// @addr{0x807472F4}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         StateManager::calc();
     }
 
     /// @addr{0x8074815C}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
 protected:
@@ -58,6 +61,7 @@ public:
     void init() override;
 
     /// @addr{0x80748B70}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         ObjectPoihanaBase::calc();
     }
@@ -125,6 +129,7 @@ private:
         return v1 * scale;
     }
 
+    /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 1> STATE_ENTRIES = {{
             {StateEntry<ObjectPoihana, &ObjectPoihana::enterWalk, &ObjectPoihana::calcWalk>(0)},
     }};

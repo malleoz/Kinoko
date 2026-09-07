@@ -16,13 +16,16 @@ public:
     void init() override;
 
     /// @addr{0x8077A36C}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         calcMove();
     }
 
     /// @addr{0x8077BD38}
-    [[nodiscard]] u32 loadFlags() const override {
-        return 1;
+    /// @copybrief ObjectBase::loadFlags()
+    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    [[nodiscard]] LoadFlags loadFlags() const override {
+        return LoadFlags(eLoadFlags::Calc);
     }
 
 private:

@@ -16,6 +16,7 @@ ObjectCrab::ObjectCrab(const System::MapdataGeoObj &params)
 ObjectCrab::~ObjectCrab() = default;
 
 /// @addr{0x80883844}
+/// @copybrief ObjectBase::init()
 void ObjectCrab::init() {
     m_railInterpolator->init(0.0f, 0);
 
@@ -32,6 +33,7 @@ void ObjectCrab::init() {
 }
 
 /// @addr{0x80883B98}
+/// @copybrief ObjectBase::calc()
 void ObjectCrab::calc() {
     if (System::RaceManager::Instance()->timer() == 0 && m_introCalc) {
         return;

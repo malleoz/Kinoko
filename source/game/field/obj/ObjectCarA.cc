@@ -18,6 +18,7 @@ ObjectCarA::ObjectCarA(const System::MapdataGeoObj &params)
 ObjectCarA::~ObjectCarA() = default;
 
 /// @addr{0x806B7CE0}
+/// @copybrief ObjectBase::init()
 void ObjectCarA::init() {
     constexpr f32 RADIUS = 400.0f;
 
@@ -41,6 +42,7 @@ void ObjectCarA::init() {
 }
 
 /// @addr{0x806B7BC4}
+/// @copybrief ObjectBase::calcCollisionTransform()
 void ObjectCarA::calcCollisionTransform() {
     ObjectCollisionBase *objCol = collision();
     if (!objCol) {

@@ -16,6 +16,7 @@ ObjectDokan::ObjectDokan(const System::MapdataGeoObj &params) : ObjectCollidable
 ObjectDokan::~ObjectDokan() = default;
 
 /// @addr{0x80778D50}
+/// @copybrief ObjectBase::calcCollisionTransform()
 void ObjectDokan::calcCollisionTransform() {
     if (m_id == ObjectId::DokanSFC) {
         ObjectCollidable::calcCollisionTransform();

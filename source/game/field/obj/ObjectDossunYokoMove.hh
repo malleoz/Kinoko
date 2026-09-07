@@ -17,11 +17,13 @@ public:
     ~ObjectDossunYokoMove() override = default;
 
     /// @addr{0x80763C14}
+    /// @copybrief ObjectBase::init()
     void init() override {
         m_railInterpolator->init(0.0f, 0);
     }
 
     /// @addr{0x80763E0C}
+    /// @copybrief ObjectBase::calc()
     void calc() override {
         m_railInterpolator->calc();
         setPos(m_railInterpolator->curPos());

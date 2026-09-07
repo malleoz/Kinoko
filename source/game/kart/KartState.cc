@@ -46,7 +46,7 @@ void KartState::reset() {
 /// a zipper. Stores the X and Y analog stick components internally and sets the respective status
 /// bits. If not in a burnout, also updates the accelerate, brake, and drift input status bits. If
 /// the player is in the countdown phase, then it calculates the current start boost progress.
-/// @warning This function sets the @enum eStatus::DriftInput bit solely based off of whether @red
+/// @warning This function sets the @ref eStatus::DriftInput bit solely based off of whether @ref
 /// System::RaceInputState::drift() is true. That is to say, this function does not explicitly
 /// require that we are also accelerating on this frame. In this scenario, the ghost will hop
 /// without moving forward. This can lead to "successful" synchronization of ghosts which could not
@@ -123,7 +123,7 @@ void KartState::resetFlags() {
 /// @addr{0x80594BD4}
 /// @brief Each frame, references collisions that occurred this frame and saves relevant bit flags
 /// @details Iterates each tire to check for collision. If any tire is colliding with the floor,
-/// sets @enum eStatus::AnyWheelCollision. If all tires are colliding with the floor, sets @enum
+/// sets @ref eStatus::AnyWheelCollision. If all tires are colliding with the floor, sets @ref
 /// eStatus::AllWheelsCollision. Handles cactus collisions that cause a spinout. Checks if the kart
 /// is touching the floor, and if the kart was mid-air from a zipper, calls @ref
 /// KartHalfPipe::end() to release a boost. Handles trick boost releases when the kart lands back on

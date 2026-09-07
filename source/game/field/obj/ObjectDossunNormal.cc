@@ -13,6 +13,7 @@ ObjectDossunNormal::ObjectDossunNormal(const System::MapdataGeoObj &params)
 ObjectDossunNormal::~ObjectDossunNormal() = default;
 
 /// @addr{0x8076023C}
+/// @copybrief ObjectBase::init()
 void ObjectDossunNormal::init() {
     ObjectDossun::init();
 
@@ -25,6 +26,7 @@ void ObjectDossunNormal::init() {
 }
 
 /// @addr{0x807602E0}
+/// @copybrief ObjectBase::calc()
 void ObjectDossunNormal::calc() {
     m_touchingGround = false;
 

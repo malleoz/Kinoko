@@ -38,6 +38,7 @@ ObjectObakeBlock::ObjectObakeBlock(const System::MapdataGeoObj &params)
 ObjectObakeBlock::~ObjectObakeBlock() = default;
 
 /// @addr{0x8080BC64}
+/// @copybrief ObjectBase::calc()
 /// @details When the block is falling, updates position and rotation.
 void ObjectObakeBlock::calc() {
     constexpr s32 FALL_DURATION = 255;

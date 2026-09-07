@@ -5,6 +5,13 @@
 namespace Kinoko::Render {
 
 /// @addr{0x805A21D0}
+/// @brief Every frame, updates the front and rear cameras to reflect the kart's position and state
+/// @details Cancels out any change in the kart's height resulting from a drift hop. Calls @ref
+/// calcForward() to interpolate the camera's facing direction towards the kart's smoothed forward
+/// vector. Calls @ref calcManualDriftOffset() to account for yaw resulting from the kart drifting
+/// left or right. Dispatches to @ref calcCamera() to finalize the update to the the two cameras'
+/// positions and orientations. Lastly, calls @ref calcCollision() to perform collision checks for
+/// both cameras.
 void KartCamera::calc() {
     constexpr f32 HOP_POS_INTERP_RATE = 0.8f;
     constexpr f32 FORWARD_INTERP_RATE = 0.35f;
@@ -18,7 +25,7 @@ void KartCamera::calc() {
     targetPos.y -= m_hopPosY;
 
     calcForward(FORWARD_INTERP_RATE, kartObj);
-    calcDriftOffset(kartObj);
+    calcManualDriftOffset(kartObj);
 
     calcCamera(HORIZ_POS_INTERP_RATE, VERT_POS_INTERP_RATE, FAST_VERT_POS_INTERP_RATE,
             m_forwardCamera, false, kartObj, targetPos);
@@ -30,13 +37,20 @@ void KartCamera::calc() {
 }
 
 /// @addr{0x805A1D10}
+/// @brief Private constructor
 KartCamera::KartCamera() : m_hopPosY(0), m_forward(EGG::Vector3f::zero), m_camParams(nullptr) {}
 
 /// @addr{0x805A8F7C}
+/// @brief Private destructor
 KartCamera::~KartCamera() = default;
 
 /// @addr{0x805A3070}
-void KartCamera::calcDriftOffset(const Kart::KartObjectProxy *proxy) {
+/// @brief Calculates the camera's yaw offset resulting from the kart performing a manual drift
+/// @param proxy Pointer to the kart object proxy
+/// @details If the kart is no longer drifting, then the yaw linearly approaches zero. If the kart
+/// is performing a manual drift or is hopping right before a manual drift, then the yaw is computed
+/// based on the magnitude of the X stick input, clamped to a max of 15 degrees.
+void KartCamera::calcManualDriftOffset(const Kart::KartObjectProxy *proxy) {
     constexpr f32 MAX_DRIFT_YAW_AUTOMATIC = 10.0f;
     constexpr f32 MAX_DRIFT_YAW_MANUAL = 15.0f;
     constexpr f32 YAW_STEP_AUTOMATIC = 0.5f;
@@ -69,6 +83,18 @@ void KartCamera::calcDriftOffset(const Kart::KartObjectProxy *proxy) {
 }
 
 /// @addr{0x805A34B0}
+/// @brief Calculates the camera's position and rotation based on the current state and kart status
+/// @param horizInterpRate Horizontal interpolation rate for the camera
+/// @param vertInterpRate Vertical interpolation rate for the camera
+/// @param fastVertInterpRate Fast vertical interpolation rate for the camera
+/// @param state The camera state to update
+/// @param isBackwards Whether the camera is the rear camera
+/// @param proxy Pointer to the kart object proxy
+/// @param targetPos The position the camera should look towards (the kart's position)
+/// @details Computes the orbit direction of the camera around the kart, taking into account drift
+/// yaw and pitch resulting from excessive airtime. The interpolation rate used for the camera's
+/// movement increases if the kart has just landed on the ground with more than 30 units per frame
+/// of speed and when the camera pitch is over 15 degrees.
 void KartCamera::calcCamera(f32 horizInterpRate, f32 vertInterpRate, f32 fastVertInterpRate,
         KartCameraState &state, bool isBackwards, const Kart::KartObjectProxy *proxy,
         const EGG::Vector3f &targetPos) const {
@@ -99,12 +125,12 @@ void KartCamera::calcCamera(f32 horizInterpRate, f32 vertInterpRate, f32 fastVer
     if (pitch > 0.0f) {
         EGG::Matrix34f downPitchMat;
         f32 fVar16 = status.onBit(Kart::eStatus::TouchingGround) ? 0.1f : 0.6f;
-        state.m_1c = state.m_1c + 0.2f * (fVar16 - state.m_1c);
-        downPitchMat.setAxisRotation(DEG2RAD * pitch * state.m_1c, pitchAxis);
+        state.m_downPitchRatio = state.m_downPitchRatio + 0.2f * (fVar16 - state.m_downPitchRatio);
+        downPitchMat.setAxisRotation(DEG2RAD * pitch * state.m_downPitchRatio, pitchAxis);
         orbitDir = downPitchMat.ps_multVector(orbitDir);
     }
     orbitDir *= -1.0f;
-    calcAirtimeHeight(state, proxy);
+    calcAirtime(state, proxy);
     state.m_pos += targetPos - state.m_targetPos;
     EGG::Vector3f posOffset = state.m_dist * orbitDir;
     posOffset.y += m_camParams->posY - proxy->cameraDistY() + state.m_bigAirHeight;
@@ -128,8 +154,14 @@ void KartCamera::calcCamera(f32 horizInterpRate, f32 vertInterpRate, f32 fastVer
 }
 
 /// @addr{0x805A463C}
-void KartCamera::calcAirtimeHeight(KartCameraState &state,
-        const Kart::KartObjectProxy *proxy) const {
+/// @brief Calculates the additional camera height and pitch applied during big air events
+/// @param state The camera state to update with airtime effects
+/// @param proxy Pointer to the kart object proxy
+/// @details When the kart has been in the air for more than 20 frames, the camera raises 10 units
+/// per frame to a maximum offset of 300 units. The pitch of the camera also gradually tilts
+/// downward as the kart falls. The rate of pitch change depends on the kart's downward velocity,
+/// and the maximum tilt is about 17 degrees.
+void KartCamera::calcAirtime(KartCameraState &state, const Kart::KartObjectProxy *proxy) const {
     constexpr f32 BIG_AIR_HEIGHT_CAP = 300.0f;
 
     f32 targetPitch = 0.0f;
@@ -152,6 +184,7 @@ void KartCamera::calcAirtimeHeight(KartCameraState &state,
 }
 
 /// @addr{0x805A49BC}
+/// @brief Initializes the camera's position and orientation to the default state
 void KartCamera::initPos() {
     constexpr f32 FORWARD_INTERP_RATE = 1.0f;
     constexpr f32 HORIZ_POS_INTERP_RATE = 1.0f;
@@ -171,6 +204,9 @@ void KartCamera::initPos() {
 }
 
 /// @addr{0x805A5D70}
+/// @brief Performs collision checks for the specified camera state
+/// @param state The camera state to check for collisions
+/// @param isBackwards Whether the camera is the rear camera
 void KartCamera::calcCollision(KartCameraState &state, bool isBackwards) const {
     constexpr f32 FRONT_RADIUS = 80.0f;
     constexpr f32 BACK_RADIUS = 140.0f;

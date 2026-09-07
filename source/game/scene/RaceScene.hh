@@ -16,8 +16,8 @@ public:
     void destroyEngines() override;
     void configure() override;
 
-    /// @brief This is called on race shutdown in order to prep for the next race.
     /// @addr{0x80554A94}
+    /// @copybrief GameScene::onReinit
     void onReinit() override {
         configure();
     }

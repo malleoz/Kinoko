@@ -9,25 +9,21 @@ namespace Kinoko::System {
 class MapdataCheckPoint;
 class MapdataCheckPointAccessor;
 
-struct LinkedCheckpoint {
-    MapdataCheckPoint *checkpoint;
-    EGG::Vector2f p0diff;
-    EGG::Vector2f p1diff;
-    f32 distance;
-};
-
+/// @brief Describes a checkpoint in a course
 class MapdataCheckPoint {
 public:
+    /// @brief Raw data structure representing a checkpoint in the course
     struct SData {
-        EGG::Vector2f left;
-        EGG::Vector2f right;
-        s8 jugemIndex;
-        s8 checkArea;
-        u8 prevPt;
-        u8 nextPt;
+        EGG::Vector2f left;  ///< Position of the left boundary of the checkpoint
+        EGG::Vector2f right; ///< Position of the right boundary of the checkpoint
+        s8 jugemIndex;       ///< The respawn point associated with this checkpoint
+        s8 checkArea;        ///< The type of checkpoint area (normal checkpoint / finish line)
+        u8 prevPt;           ///< ID of the previous checkpoint
+        u8 nextPt;           ///< ID of the next checkpoint
     };
     STATIC_ASSERT(sizeof(SData) == 0x14);
 
+    /// @brief Describes the player's position relative to the checkpoint area
     enum class SectorOccupancy {
         InsideSector,  ///< Player is inside the given checkpoint group
         OutsideSector, ///< Player is outside the given checkpoint group
@@ -35,15 +31,29 @@ public:
                        ///< between this checkpoint and next
     };
 
+    /// @brief Bundles the next checkpoint pointer with data describing the quadrilateral formed
+    /// between _this_ checkpoint and that next checkpoint
+    struct LinkedCheckpoint {
+        MapdataCheckPoint *checkpoint; ///< Pointer to the next checkpoint
+        EGG::Vector2f p0diff;          ///< Diff between this checkpoint's and next's left boundary
+        EGG::Vector2f p1diff;          ///< Diff between this checkpoint's and next's right boundary
+        f32 distance; ///< Distance between the midpoints of this checkpoint and the next
+    };
+
     MapdataCheckPoint(const SData *data);
 
+    /// @brief Default destructor
+    ~MapdataCheckPoint() = default;
+
+    /// @brief Reads the checkpoint data from the given stream
+    /// @param stream The stream to read from
     void read(EGG::Stream &stream) {
         m_left.read(stream);
         m_right.read(stream);
         m_jugemIndex = stream.read_s8();
-        m_checkArea = stream.read_s8();
-        m_prevPt = stream.read_u8();
-        m_nextPt = stream.read_u8();
+        m_type = stream.read_s8();
+        m_prevId = stream.read_u8();
+        m_nextId = stream.read_u8();
     }
 
     void initCheckpointLinks(MapdataCheckPointAccessor &accessor, int id);
@@ -53,13 +63,13 @@ public:
     [[nodiscard]] u16 getEntryOffsetMs(const EGG::Vector2f &prevPos,
             const EGG::Vector2f &pos) const;
 
-    /// @brief Finds the offset between the two positions that enter the checkpoint.
-    /// @details This assumes the player is entering the checkpoint as intended, and not from the
-    /// side. This function isn't in the base game, but it can be used to determine improvements to
-    /// runs.
+    /// @brief Finds at what fractional millisecond of a frame the player enters the checkpoint
     /// @param prevPos The previous position, likely not located in the checkpoint.
     /// @param pos The current position, likely located in the checkpoint.
     /// @return The exact offset that crosses into the checkpoint, in the range [0, 1000 / 59.94].
+    /// @details This assumes the player is entering the checkpoint as intended, and not from the
+    /// side. This function isn't in the base game, but it can be used to determine improvements to
+    /// runs.
     [[nodiscard]] f32 getEntryOffsetExact(const EGG::Vector2f &prevPos,
             const EGG::Vector2f &pos) const {
         constexpr f32 REFRESH_PERIOD = 1000.0f / 59.94f;
@@ -78,12 +88,16 @@ public:
         return y != 0.0f ? x / y : 0.0f;
     }
 
+    /// @brief Checks whether this checkpoint is a regular checkpoint
+    /// @return True if this checkpoint is a regular checkpoint, false otherwise.
     [[nodiscard]] bool isNormalCheckpoint() const {
-        return static_cast<CheckArea>(m_checkArea) == CheckArea::NormalCheckpoint;
+        return static_cast<Type>(m_type) == Type::NormalCheckpoint;
     }
 
+    /// @brief Checks whether this checkpoint increments the lap count
+    /// @return True if this checkpoint increments the lap count, false otherwise.
     [[nodiscard]] bool isFinishLine() const {
-        return static_cast<CheckArea>(m_checkArea) == CheckArea::FinishLine;
+        return static_cast<Type>(m_type) == Type::FinishLine;
     }
 
     /// @beginSetters
@@ -105,8 +119,8 @@ public:
         return m_jugemIndex;
     }
 
-    [[nodiscard]] s8 checkArea() const {
-        return m_checkArea;
+    [[nodiscard]] s8 type() const {
+        return m_type;
     }
 
     [[nodiscard]] u16 nextCount() const {
@@ -136,13 +150,23 @@ public:
     }
     /// @endGetters
 
-    enum class CheckArea {
-        NormalCheckpoint = -1, ///< Only used for picking respawn position
+    /// @brief Describes the type of checkpoint
+    /// @details Key checkpoints can take on values between 1 and 126. The type value represents the
+    /// index, meaning players must pass key checkpoint 1, then 2, then 3, etc.
+    enum class Type {
+        NormalCheckpoint = -1, ///< Used to calculate respawns
         FinishLine = 0,        ///< Triggers a lap change
     };
 
 private:
     /// @addr{0x80510C74}
+    /// @brief Classifies where the player's position sits relative to the quadrilateral formed
+    /// between this checkpoint and the next checkpoint
+    /// @param next The linked checkpoint to check against
+    /// @param p0 The XZ vector from the next checkpoint's left boundary to the player
+    /// @param p1 The XZ vector from this checkpoint right boundary to the player
+    /// @param distanceRatio The distance ratio reference to set
+    /// @return The sector occupancy of the player's position relative to the checkpoint quad
     [[nodiscard]] SectorOccupancy checkSectorAndDistanceRatio(const LinkedCheckpoint &next,
             const EGG::Vector2f &p0, const EGG::Vector2f &p1, f32 &distanceRatio) const {
         if (!checkSector(next, p0, p1)) {
@@ -157,9 +181,11 @@ private:
             const EGG::Vector2f &p1) const;
 
     /// @addr{0x80510BF0}
-    /// @brief Sets the distance ratio, which is the progress of traversal through the checkpoint
-    /// quad.
-    /// @param distanceRatio The distance ratio reference to set.
+    /// @brief Computes the the distance ratio: progress of traversal through the checkpoint quad
+    /// @param next The linked checkpoint to check against
+    /// @param p0 The XZ vector from the next checkpoint's left boundary to the player
+    /// @param p1 The XZvector from this checkpoint right boundary to the player
+    /// @param distanceRatio The distance ratio reference to set
     /// @return Whether the distance ratio is in its valid range, [0, 1].
     [[nodiscard]] bool checkDistanceRatio(const LinkedCheckpoint &next, const EGG::Vector2f &p0,
             const EGG::Vector2f &p1, f32 &distanceRatio) const {
@@ -171,45 +197,45 @@ private:
 
     static constexpr size_t MAX_NEIGHBORS = 6;
 
-    [[maybe_unused]] const SData *m_rawData;
-    EGG::Vector2f m_left;
-    EGG::Vector2f m_right;
-    s8 m_jugemIndex; ///< Index of respawn point associated with this checkpoint. Players who die
-                     ///< here will be respawned at this point.
-    /// Either:
-    /// - a @ref `NORMAL_CHECKPOINT` (-1) used to calculate respawns,
-    /// - a @ref `FINISH_LINE` (0) which updates the lap count when crossed, or
-    /// - a "key checkpoint" (1-127) used to ensure racers travel around the entire
-    /// course before proceeding to the next lap. the type value represents the index,
-    /// i.e. racers must pass checkpoint with @ref `m_type` 1, then 2, then 3 etc..
-    s8 m_checkArea;
-    u8 m_prevPt;
-    u8 m_nextPt;
-    u16 m_nextCount;
-    u16 m_prevCount;
-    EGG::Vector2f m_midpoint;
-    EGG::Vector2f m_dir;
-    bool m_searched;
-    u16 m_id;
+    [[maybe_unused]] const SData *m_rawData; ///< Pointer to the raw checkpoint data
+    EGG::Vector2f m_left;     ///< The left boundary of the checkpoint in XZ coordinates
+    EGG::Vector2f m_right;    ///< The right boundary of the checkpoint in XZ coordinates
+    s8 m_jugemIndex;          ///< Index of respawn point associated with this checkpoint
+    s8 m_type;                ///< The type of checkpoint (see @ref Type)
+    u8 m_prevId;              ///< ID of the previous checkpoint
+    u8 m_nextId;              ///< ID of the next checkpoint
+    u16 m_nextCount;          ///< Number of next checkpoints
+    u16 m_prevCount;          ///< Number of previous checkpoints
+    EGG::Vector2f m_midpoint; ///< The midpoint of the checkpoint in XZ coordinates
+    EGG::Vector2f m_dir;      ///< The direction vector of the checkpoint in XZ coordinates
+    bool m_searched; ///< Indicates whether the checkpoint has been searched against this frame
+    u16 m_id;        ///< ID of the checkpoint
+
+    /// @brief Array of previous checkpoint pointers (only @ref m_prevCount are valid)
     std::array<MapdataCheckPoint *, MAX_NEIGHBORS> m_prevPoints;
+
+    /// @brief Array of next checkpoint links (only @ref m_nextCount are valid)
     std::array<LinkedCheckpoint, MAX_NEIGHBORS> m_nextPoints;
 };
 
+/// @brief Provides access to entries in the CKPT section of the course KMP
 class MapdataCheckPointAccessor
     : public MapdataAccessorBase<MapdataCheckPoint, MapdataCheckPoint::SData> {
 public:
     MapdataCheckPointAccessor(const MapSectionHeader *header);
     ~MapdataCheckPointAccessor() override;
 
+    /// @beginGetters
     [[nodiscard]] s8 lastKcpType() const {
         return m_lastKcpType;
     }
+    /// @endGetters
 
 private:
     void init();
 
-    s8 m_lastKcpType;
-    u16 m_finishLineCheckpointId;
+    s8 m_lastKcpType;             ///< The type of the last key checkpoint encountered
+    u16 m_finishLineCheckpointId; ///< The ID of the finish line checkpoint
 };
 
 } // namespace Kinoko::System
