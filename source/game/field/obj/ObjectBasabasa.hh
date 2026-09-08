@@ -11,8 +11,11 @@ public:
     /// @addr{0x806B5C84}
     /// @brief Constructor
     /// @param params The parameters used to initialize the object
+    /// @details Uses setting 8 to determine if collisions with the bat should result in a larger
+    /// bump effect.
     ObjectBasabasaDummy(const System::MapdataGeoObj &params)
-        : ObjectCollidable(params), StateManager(this, STATE_ENTRIES),
+        : ObjectCollidable(params),
+          StateManager(this, STATE_ENTRIES),
           m_bigBump(params.setting(7) == 1) {
         m_active = true;
     }
@@ -61,14 +64,7 @@ public:
     }
 
 private:
-    /// @brief No-op when the bat transitions between states
-    void enterStateStub() {}
-
     void calcStateActive();
-
-    /// @addr{0x806B652C}
-    /// @brief No-op when the bat is inactive (despawned)
-    void calcStateStub() {}
 
     const bool m_bigBump;       ///< Affects the severity of the "push" when colliding with bat
     EGG::Vector3f m_initialPos; ///< RNG-based starting position for the bat
@@ -76,10 +72,10 @@ private:
 
     /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 2> STATE_ENTRIES = {{
-            {StateEntry<ObjectBasabasaDummy, &ObjectBasabasaDummy::enterStateStub,
+            {StateEntry<ObjectBasabasaDummy, nullptr,
                     &ObjectBasabasaDummy::calcStateActive>(0)},
-            {StateEntry<ObjectBasabasaDummy, &ObjectBasabasaDummy::enterStateStub,
-                    &ObjectBasabasaDummy::calcStateStub>(1)},
+            {StateEntry<ObjectBasabasaDummy, nullptr,
+                    nullptr>(1)},
     }};
 };
 

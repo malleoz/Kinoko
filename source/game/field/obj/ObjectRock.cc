@@ -10,7 +10,8 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectRock::ObjectRock(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), m_cooldownDuration(m_mapObj->setting(1)),
+    : ObjectCollidable(params),
+      m_cooldownDuration(m_mapObj->setting(1)),
       m_railSpeed(static_cast<f32>(m_mapObj->setting(2))),
       m_bounceFactor(static_cast<f32>(m_mapObj->setting(3))) {}
 

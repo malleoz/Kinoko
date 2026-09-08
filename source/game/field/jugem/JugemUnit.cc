@@ -9,7 +9,9 @@ namespace Kinoko::Field {
 /// @addr{0x80721514}
 /// @brief Constructs the movement and interpolation controllers for the Lakitu unit
 JugemUnit::JugemUnit(const Kart::KartObject *kartObj)
-    : StateManager(this, STATE_ENTRIES), m_kartObj(kartObj), m_switchReverse(nullptr) {
+    : StateManager(this, STATE_ENTRIES),
+      m_kartObj(kartObj),
+      m_switchReverse(nullptr) {
     m_move = EGG::egg_new<JugemMove>(kartObj);
     m_interp = EGG::egg_new<JugemInterp>(2);
 }

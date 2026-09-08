@@ -28,6 +28,8 @@ public:
     }
 
     /// @addr{0x80802D0C}
+    /// @copybrief ObjectBase::getKclName()
+    /// @return The model name of the dancing Piantas between the escalators (`monte_a`).
     [[nodiscard]] const char *getKclName() const override {
         return "monte_a";
     }

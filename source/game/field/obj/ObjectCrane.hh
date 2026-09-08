@@ -22,6 +22,7 @@ public:
     }
 
     /// @addr{0x807FEAF0}
+    /// @copybrief ObjectKCL::colRadiusAdditionalLength()
     [[nodiscard]] f32 colRadiusAdditionalLength() const override {
         return m_xAmplitude;
     }

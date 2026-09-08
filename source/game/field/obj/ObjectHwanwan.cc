@@ -8,7 +8,9 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectHwanwan::ObjectHwanwan(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), StateManager(this, STATE_ENTRIES), m_initPos(pos()) {}
+    : ObjectCollidable(params),
+      StateManager(this, STATE_ENTRIES),
+      m_initPos(pos()) {}
 
 /// @addr{0x806EC6E0}
 /// @brief Default virtual destructor

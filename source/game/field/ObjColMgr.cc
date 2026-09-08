@@ -6,7 +6,9 @@ namespace Kinoko::Field {
 /// @brief Constructor that parses the KCL data from the provided file pointer
 /// @param file Pointer to the .kcl file in memory
 ObjColMgr::ObjColMgr(const void *file)
-    : m_mtx(EGG::Matrix34f::ident), m_mtxInv(EGG::Matrix34f::ident), m_kclScale(1.0f),
+    : m_mtx(EGG::Matrix34f::ident),
+      m_mtxInv(EGG::Matrix34f::ident),
+      m_kclScale(1.0f),
       m_movingObjVel(EGG::Vector3f::zero) {
     m_data = EGG::egg_new<KColData>(file);
 }

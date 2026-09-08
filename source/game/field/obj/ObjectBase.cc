@@ -10,9 +10,16 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectBase::ObjectBase(const System::MapdataGeoObj &params)
-    : m_drawMdl(nullptr), m_resFile(nullptr), m_id(static_cast<ObjectId>(params.id())),
-      m_railInterpolator(nullptr), m_mapObj(&params), m_pos(params.pos()), m_scale(params.scale()),
-      m_rot(params.rot() * DEG2RAD), m_rotUpdated(true), m_transform(EGG::Matrix34f::ident) {
+    : m_drawMdl(nullptr),
+      m_resFile(nullptr),
+      m_id(static_cast<ObjectId>(params.id())),
+      m_railInterpolator(nullptr),
+      m_mapObj(&params),
+      m_pos(params.pos()),
+      m_scale(params.scale()),
+      m_rot(params.rot() * DEG2RAD),
+      m_rotUpdated(true),
+      m_transform(EGG::Matrix34f::ident) {
     m_flags.setBit(eFlags::Position, eFlags::Rotation, eFlags::Scale);
 }
 
@@ -24,8 +31,14 @@ ObjectBase::ObjectBase(const System::MapdataGeoObj &params)
 /// @param scale The initial scale of the object
 ObjectBase::ObjectBase(const char *name, const EGG::Vector3f &pos, const EGG::Vector3f &rot,
         const EGG::Vector3f &scale)
-    : m_drawMdl(nullptr), m_resFile(nullptr), m_railInterpolator(nullptr), m_mapObj(nullptr),
-      m_pos(pos), m_scale(scale), m_rot(rot), m_rotUpdated(true),
+    : m_drawMdl(nullptr),
+      m_resFile(nullptr),
+      m_railInterpolator(nullptr),
+      m_mapObj(nullptr),
+      m_pos(pos),
+      m_scale(scale),
+      m_rot(rot),
+      m_rotUpdated(true),
       m_transform(EGG::Matrix34f::ident) {
     m_flags.setBit(eFlags::Position, eFlags::Rotation, eFlags::Scale);
     m_id = ObjectDirector::Instance()->flowTable().getIdFromName(name);
@@ -70,7 +83,7 @@ void ObjectBase::loadGraphics() {
 }
 
 /// @addr{0x80820980}
-/// @brief Loads the rail interpolator for the object, if any
+/// @brief Loads the rail interpolator for the object
 void ObjectBase::loadRail() {
     if (!m_mapObj) {
         return;

@@ -19,6 +19,8 @@ public:
     ~ObjectWoodbox() override = default;
 
     /// @addr{0x8077ED7C}
+    /// @copybrief ObjectBase::getKclName()
+    /// @return The model name of the ironbox (always `ironbox` in time trials).
     [[nodiscard]] const char *getKclName() const override {
         return "ironbox"; // woodbox when not in TTs
     }

@@ -69,7 +69,8 @@ void HanachanChainManager::calc() {
 /// @param scale The initial scale of the object
 ObjectHanachanHead::ObjectHanachanHead(const char *name, const EGG::Vector3f &pos,
         const EGG::Vector3f &rot, const EGG::Vector3f &scale)
-    : ObjectHanachanPart(name, pos, rot, scale), m_lastPos(EGG::Vector3f::zero) {}
+    : ObjectHanachanPart(name, pos, rot, scale),
+      m_lastPos(EGG::Vector3f::zero) {}
 
 /// @addr{0x806CCB94}
 /// @brief Default virtual destructor
@@ -96,7 +97,9 @@ void ObjectHanachanHead::calcCollisionTransform() {
 /// @param params The parameters used to initialize the object
 /// @param mdlName The name of the model corresponding to this body segment
 ObjectHanachanBody::ObjectHanachanBody(const System::MapdataGeoObj &params, const char *mdlName)
-    : ObjectHanachanPart(params), m_mdlName(mdlName), m_lastSegment(false),
+    : ObjectHanachanPart(params),
+      m_mdlName(mdlName),
+      m_lastSegment(false),
       m_lastPos(EGG::Vector3f::zero) {}
 
 /// @brief Constructor
@@ -107,7 +110,9 @@ ObjectHanachanBody::ObjectHanachanBody(const System::MapdataGeoObj &params, cons
 /// @param mdlName The name of the model corresponding to this body segment
 ObjectHanachanBody::ObjectHanachanBody(const char *name, const EGG::Vector3f &pos,
         const EGG::Vector3f &rot, const EGG::Vector3f &scale, const char *mdlName)
-    : ObjectHanachanPart(name, pos, rot, scale), m_mdlName(mdlName), m_lastSegment(false),
+    : ObjectHanachanPart(name, pos, rot, scale),
+      m_mdlName(mdlName),
+      m_lastSegment(false),
       m_lastPos(EGG::Vector3f::zero) {}
 
 /// @addr{0x806CCAD8}
@@ -136,7 +141,9 @@ void ObjectHanachanBody::calcCollisionTransform() {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectHanachan::ObjectHanachan(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), StateManager(this, STATE_ENTRIES), m_chain(BODY_PART_DISTANCES),
+    : ObjectCollidable(params),
+      StateManager(this, STATE_ENTRIES),
+      m_chain(BODY_PART_DISTANCES),
       m_walkSpeed(static_cast<f32>(static_cast<s16>(params.setting(0)))) {
     constexpr f32 SCALE = 3.0f;
     constexpr EGG::Vector3f SCALE_VEC = EGG::Vector3f(SCALE, SCALE, SCALE);

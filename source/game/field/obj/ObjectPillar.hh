@@ -17,6 +17,8 @@ public:
     ~ObjectPillarBase() override;
 
     /// @addr{0x807FFA94}
+    /// @copybrief ObjectBase::getKclName()
+    /// @return The model name of the pillar base (`dc_pillar_base`)
     [[nodiscard]] const char *getKclName() const override {
         return "dc_pillar_base";
     }
@@ -33,11 +35,15 @@ public:
     void calcCollisionTransform() override;
 
     /// @addr{0x807FFA74}
+    /// @copybrief ObjectBase::getCollisionRadius()
+    /// @return The collision radius of the falling pillar, `3000.0f`.
     [[nodiscard]] f32 getCollisionRadius() const override {
         return 3000.0f;
     }
 
     /// @addr{0x807FFA80}
+    /// @copybrief ObjectBase::id()
+    /// @return The ID of the falling pillar object, `ObjectId::DCPillarC`.
     [[nodiscard]] ObjectId id() const override {
         return ObjectId::DCPillarC;
     }
@@ -81,6 +87,7 @@ public:
     }
 
     /// @addr{0x807FF980}
+    /// @copybrief ObjectKCL::colRadiusAdditionalLength()
     [[nodiscard]] f32 colRadiusAdditionalLength() const override {
         return 4000.0f;
     }

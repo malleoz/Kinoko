@@ -60,7 +60,8 @@ void GameScene::calcCamera() {
 /// @addr{Inlined in 0x8051AA58}
 /// @brief Constructor
 GameScene::Resource::Resource(System::MultiDvdArchive *archive, s32 id)
-    : archive(archive), id(id) {}
+    : archive(archive),
+      id(id) {}
 
 /// @addr{0x8051AAE8}
 /// @brief Decrements the refcounter for each managed archive and clears the resource list

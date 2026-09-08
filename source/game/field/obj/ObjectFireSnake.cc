@@ -9,7 +9,9 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectFireSnake::ObjectFireSnake(const System::MapdataGeoObj &params)
-    : StateManager(this, STATE_ENTRIES), ObjectProjectile(params), m_initPos(params.pos()),
+    : StateManager(this, STATE_ENTRIES),
+      ObjectProjectile(params),
+      m_initPos(params.pos()),
       m_maxAge(static_cast<s16>(params.setting(1))) {
     if (ObjectDirector::Instance()->managedObjects().size() > 0) {
         registerManagedObject();
@@ -58,6 +60,7 @@ void ObjectFireSnake::calc() {
 }
 
 /// @addr{0x806C23C8}
+/// @brief Callback function called by the managing @ref ObjectSunDS.
 void ObjectFireSnake::initProjectile(const EGG::Vector3f &pos) {
     m_spawnPos = pos;
 

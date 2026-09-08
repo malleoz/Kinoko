@@ -16,7 +16,8 @@ ObjectPillarBase::~ObjectPillarBase() = default;
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectPillarC::ObjectPillarC(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), m_fallStart(static_cast<u32>(params.setting(0))) {}
+    : ObjectCollidable(params),
+      m_fallStart(static_cast<u32>(params.setting(0))) {}
 
 /// @addr{0x807FFAE0}
 /// @brief Default virtual destructor
@@ -44,8 +45,11 @@ void ObjectPillarC::calcCollisionTransform() {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectPillar::ObjectPillar(const System::MapdataGeoObj &params)
-    : ObjectKCL(params), m_state(State::Upright), m_fallStart(static_cast<u32>(params.setting(0))),
-      m_targetRotation(F_PI * static_cast<f32>(params.setting(1)) / 180.0f), m_initRot(rot().x),
+    : ObjectKCL(params),
+      m_state(State::Upright),
+      m_fallStart(static_cast<u32>(params.setting(0))),
+      m_targetRotation(F_PI * static_cast<f32>(params.setting(1)) / 180.0f),
+      m_initRot(rot().x),
       m_currRot(EGG::Vector3f::zero) {
     m_base = EGG::egg_new<ObjectPillarBase>(params);
     m_collidable = EGG::egg_new<ObjectPillarC>(params);
@@ -98,6 +102,8 @@ void ObjectPillar::calc() {
 }
 
 /// @addr{0x807FF83C}
+/// @copybrief ObjectKCL::getUpdatedMatrix()
+/// @param timeOffset The time offset used to calculate the current frame's transformation
 const EGG::Matrix34f &ObjectPillar::getUpdatedMatrix(u32 timeOffset) {
     f32 rot = calcRot(System::RaceManager::Instance()->timer() - timeOffset);
     m_workMat.makeRT(EGG::Vector3f(rot, m_currRot.y, m_currRot.z), pos());

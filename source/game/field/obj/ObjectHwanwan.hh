@@ -28,6 +28,8 @@ public:
     }
 
     /// @addr{0x806EC7AC}
+    /// @copybrief ObjectBase::getKclName()
+    /// @return The model name of the Chain Chomp (`wanwan`)
     [[nodiscard]] const char *getKclName() const override {
         return "wanwan";
     }
@@ -45,9 +47,6 @@ public:
     }
 
 private:
-    void enterStateStub() {}
-    void calcStateStub() {}
-
     /// @addr{0x806E9E10}
     /// @brief Runs every frame that the Chain Chomp is walking/bouncing along the rail
     /// @details For all intents and purposes, this is run every frame. The only time this is not
@@ -77,10 +76,10 @@ private:
 
     /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 2> STATE_ENTRIES = {{
-            {StateEntry<ObjectHwanwan, &ObjectHwanwan::enterStateStub, &ObjectHwanwan::calcBounce>(
+            {StateEntry<ObjectHwanwan, nullptr, &ObjectHwanwan::calcBounce>(
                     0)},
-            {StateEntry<ObjectHwanwan, &ObjectHwanwan::enterStateStub,
-                    &ObjectHwanwan::calcStateStub>(1)},
+            {StateEntry<ObjectHwanwan, nullptr,
+                    nullptr>(1)},
     }};
 };
 

@@ -90,7 +90,10 @@ void KReplaySystem::parseOptions(int argc, char **argv) {
 
 /// @brief Default private constructor
 KReplaySystem::KReplaySystem()
-    : m_progressInterval(0), m_replaysPlayed(0), m_replaysSynced(0), m_currentGhost(nullptr) {}
+    : m_progressInterval(0),
+      m_replaysPlayed(0),
+      m_replaysSynced(0),
+      m_currentGhost(nullptr) {}
 
 /// @brief Default virtual destructor
 KReplaySystem::~KReplaySystem() {

@@ -5,8 +5,12 @@ namespace Kinoko::System {
 /// @addr{0x80518CC0}
 /// @brief Constructor
 DvdArchive::DvdArchive()
-    : m_archive(nullptr), m_archiveStart(nullptr), m_archiveSize(0), m_fileStart(nullptr),
-      m_fileSize(0), m_state(State::Cleared) {}
+    : m_archive(nullptr),
+      m_archiveStart(nullptr),
+      m_archiveSize(0),
+      m_fileStart(nullptr),
+      m_fileSize(0),
+      m_state(State::Cleared) {}
 
 /// @addr{0x80518CF4}
 /// @brief Destructor that unmounts the archive and clears all associated data from memory

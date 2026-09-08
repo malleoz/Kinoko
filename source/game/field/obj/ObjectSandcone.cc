@@ -8,8 +8,10 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectSandcone::ObjectSandcone(const System::MapdataGeoObj &params)
-    : ObjectKCL(params), m_flowRate(static_cast<f32>(params.setting(0)) / 100.0f),
-      m_finalHeightDelta(static_cast<f32>(params.setting(1))), m_startFrame(params.setting(2)) {
+    : ObjectKCL(params),
+      m_flowRate(static_cast<f32>(params.setting(0)) / 100.0f),
+      m_finalHeightDelta(static_cast<f32>(params.setting(1))),
+      m_startFrame(params.setting(2)) {
     m_rtMat.makeRT(rot(), pos());
 }
 
@@ -18,6 +20,8 @@ ObjectSandcone::ObjectSandcone(const System::MapdataGeoObj &params)
 ObjectSandcone::~ObjectSandcone() = default;
 
 /// @addr{0x80687800}
+/// @copybrief ObjectKCL::getUpdatedMatrix()
+/// @param timeOffset The time offset used to calculate the current frame's transformation
 /// @details Based off the current race timer, raises the sandcone's height gradually until it
 /// reaches the final height.
 const EGG::Matrix34f &ObjectSandcone::getUpdatedMatrix(u32 timeOffset) {

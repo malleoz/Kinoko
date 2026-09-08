@@ -6,7 +6,9 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectObakeBlock::ObjectObakeBlock(const System::MapdataGeoObj &params)
-    : ObjectBase(params), m_initialPos(params.pos()), m_fallState(FallState::Rest),
+    : ObjectBase(params),
+      m_initialPos(params.pos()),
+      m_fallState(FallState::Rest),
       m_fallFrame(static_cast<s32>(
               static_cast<s16>(params.setting(2)) + static_cast<s16>(params.setting(1)) * 60)) {
     constexpr f32 FALL_LINEAR_SPEED = 1.0f;

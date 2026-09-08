@@ -14,7 +14,8 @@ public:
     /// @brief Constructor
     /// @param params The parameters used to initialize the object
     ObjectDossunTsuibi(const System::MapdataGeoObj &params, ObjectDossunTsuibiHolder *holder)
-        : ObjectDossun(params), m_holder(holder) {}
+        : ObjectDossun(params),
+          m_holder(holder) {}
 
     /// @addr{0x80764C48}
     /// @brief Default virtual destructor

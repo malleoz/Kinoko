@@ -28,7 +28,9 @@ public:
     }
 
     /// @addr{0x80807D8C}
+    /// @copybrief ObjectBase::getKclName()
     /// @details Loads the KCL for the corresponding light or dark variant
+    /// @return The model name of the mushroom (`kinoko_r` for light, `kinoko_d_r` for dark)
     [[nodiscard]] const char *getKclName() const override {
         return m_type == KinokoType::Light ? "kinoko_r" : "kinoko_d_r";
     }
@@ -57,13 +59,16 @@ public:
     void calcOscillation() override;
 
     /// @addr{0x80807DFC}
+    /// @copybrief ObjectBase::getKclName()
     /// @details The base game does check for the light type, however since m_type never gets set
     /// it'll always be 0 which means it always returns "kinoko_r"
+    /// @return The model name of the mushroom (`kinoko_r`)
     [[nodiscard]] const char *getKclName() const override {
         return "kinoko_r";
     }
 
     /// @addr{0x80807DF8}
+    /// @copybrief ObjectKCL::calcScale()
     /// @details This is a nop because these mushrooms maintain constant scale
     void calcScale(u32) override {}
 
@@ -84,6 +89,8 @@ public:
     void calcOscillation() override;
 
     /// @addr{0x80807D88}
+    /// @copybrief ObjectKCL::calcScale()
+    /// @details This is a nop because these mushrooms maintain constant scale
     void calcScale(u32) override {}
 
 private:
@@ -100,6 +107,8 @@ public:
     ~ObjectKinokoNm() override;
 
     /// @addr{0x80827A74}
+    /// @copybrief ObjectBase::getKclName()
+    /// @return The model name of the mushroom (`kinoko_g` for light, `kinoko_d_g` for dark)
     [[nodiscard]] const char *getKclName() const override {
         return m_type == KinokoType::Light ? "kinoko_g" : "kinoko_d_g";
     }

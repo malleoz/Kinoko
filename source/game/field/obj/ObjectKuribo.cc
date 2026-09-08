@@ -8,7 +8,8 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectKuribo::ObjectKuribo(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), StateManager(this, STATE_ENTRIES),
+    : ObjectCollidable(params),
+      StateManager(this, STATE_ENTRIES),
       m_accel(static_cast<f32>(params.setting(1)) / 100.0f),
       m_animRate(static_cast<f32>(params.setting(2)) / 100.0f) {}
 

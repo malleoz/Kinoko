@@ -250,7 +250,9 @@ void ObjectDrivableDirector::colNarScLocal(f32 radius, const EGG::Vector3f &pos,
 /// @addr{0x8081B324}
 /// @brief Private constructor
 ObjectDrivableDirector::ObjectDrivableDirector()
-    : m_objects(MAX_OBJECTS), m_calcObjects(MAX_OBJECTS), m_obakeManager(nullptr) {}
+    : m_objects(MAX_OBJECTS),
+      m_calcObjects(MAX_OBJECTS),
+      m_obakeManager(nullptr) {}
 
 /// @addr{0x8081B380}
 /// @brief Private destructor

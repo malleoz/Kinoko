@@ -15,7 +15,9 @@ namespace Kinoko::Field {
 /// number of chains based off the chain length defined by param setting 1. Sets a course-specific
 /// wander constraint point.
 ObjectWanwan::ObjectWanwan(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), StateManager(this, STATE_ENTRIES), m_pitch(0.0f),
+    : ObjectCollidable(params),
+      StateManager(this, STATE_ENTRIES),
+      m_pitch(0.0f),
       m_chainLength(static_cast<f32>(params.setting(0))),
       m_attackDistance(4800.0f + static_cast<f32>(params.setting(2))),
       m_attackDirectionX(10.0f * static_cast<f32>(static_cast<s16>(params.setting(3)))),

@@ -17,7 +17,8 @@ public:
     /// @brief Constructor
     /// @param params The parameters used to initialize the object
     ObjectSunDS(const System::MapdataGeoObj &params)
-        : ObjectProjectileLauncher(params), StateManager(this, STATE_ENTRIES),
+        : ObjectProjectileLauncher(params),
+          StateManager(this, STATE_ENTRIES),
           m_revolutionSpeed(static_cast<f32>(params.setting(0))),
           m_startFrame(static_cast<s32>(params.setting(1))) {}
 
@@ -53,8 +54,7 @@ public:
     }
 
     /// @addr{0x806DE598}
-    /// @brief If a projectile should be launched this frame, returns the corresponding rail point
-    /// index. Otherwise, returns -1.
+    /// @copydoc ObjectProjectileLauncher::launchPointIdx()
     [[nodiscard]] s16 launchPointIdx() override {
         constexpr u16 THROW_DELAY = 30;
 

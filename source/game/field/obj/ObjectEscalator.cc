@@ -9,7 +9,8 @@ namespace Kinoko::Field {
 /// @param params The parameters used to initialize the object
 /// @param reverse Whether the escalator should move in reverse
 ObjectEscalator::ObjectEscalator(const System::MapdataGeoObj &params, bool reverse /* = false */)
-    : ObjectKCL(params), m_initialPos(pos()),
+    : ObjectKCL(params),
+      m_initialPos(pos()),
       m_stillFrames(
               {static_cast<s32>(params.setting(2)) * 60, static_cast<s32>(params.setting(4)) * 60}),
       m_speed({(reverse ? -1.0f : 1.0f) *
@@ -41,6 +42,7 @@ ObjectEscalator::ObjectEscalator(const System::MapdataGeoObj &params, bool rever
 ObjectEscalator::~ObjectEscalator() = default;
 
 /// @addr{0x808011CC}
+/// @copydoc ObjectKCL::checkCollision()
 bool ObjectEscalator::checkCollision(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
         u32 timeOffset) {
@@ -75,6 +77,7 @@ bool ObjectEscalator::checkCollision(f32 radius, const EGG::Vector3f &pos,
 }
 
 /// @addr{0x808014AC}
+/// @copydoc ObjectKCL::checkCollisionCached()
 bool ObjectEscalator::checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
         u32 timeOffset) {

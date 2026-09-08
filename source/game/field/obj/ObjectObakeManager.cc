@@ -10,7 +10,10 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectObakeManager::ObjectObakeManager(const System::MapdataGeoObj &params)
-    : ObjectDrivable(params), m_blockCache({}), m_blocks(MAX_BLOCKS), m_fallingBlocks(MAX_BLOCKS) {
+    : ObjectDrivable(params),
+      m_blockCache({}),
+      m_blocks(MAX_BLOCKS),
+      m_fallingBlocks(MAX_BLOCKS) {
     static constexpr f32 BLOCK_WIDTH = 195.00002f;
     static constexpr f32 BLOCK_HEIGHT = 130.0f;
 

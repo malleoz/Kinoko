@@ -34,8 +34,6 @@ public:
 private:
     void calcSub();
 
-    void enterStateStub() {}
-
     /// @addr{0x806C30F0}
     /// @brief Runs once when the fire snake despawns
     void enterDespawned() {
@@ -49,7 +47,6 @@ private:
         ObjectFireSnake::enterRest();
     }
 
-    void calcStateStub() {}
     void calcFalling();
     void calcHighBounce();
 
@@ -67,17 +64,17 @@ private:
     /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 6> STATE_ENTRIES = {{
             {StateEntry<ObjectFireSnakeV, &ObjectFireSnakeV::enterDespawned,
-                    &ObjectFireSnakeV::calcStateStub>(0)},
+                    nullptr>(0)},
             {StateEntry<ObjectFireSnakeV, &ObjectFireSnakeV::enterFalling,
                     &ObjectFireSnakeV::calcFalling>(1)},
-            {StateEntry<ObjectFireSnakeV, &ObjectFireSnakeV::enterStateStub,
+            {StateEntry<ObjectFireSnakeV, nullptr,
                     &ObjectFireSnakeV::calcHighBounce>(2)},
             {StateEntry<ObjectFireSnakeV, &ObjectFireSnakeV::enterRest,
                     &ObjectFireSnakeV::calcRest>(3)},
-            {StateEntry<ObjectFireSnakeV, &ObjectFireSnakeV::enterStateStub,
+            {StateEntry<ObjectFireSnakeV, nullptr,
                     &ObjectFireSnakeV::calcBounce>(4)},
-            {StateEntry<ObjectFireSnakeV, &ObjectFireSnakeV::enterStateStub,
-                    &ObjectFireSnakeV::calcStateStub>(5)},
+            {StateEntry<ObjectFireSnakeV, nullptr,
+                    nullptr>(5)},
     }};
 
     const u16 m_cycleDuration; ///< Number of frames between two fire snake spawns

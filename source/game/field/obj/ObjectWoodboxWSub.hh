@@ -43,6 +43,7 @@ public:
     }
 
     /// @addr{0x8077E444}
+    /// @copydoc ObjectBreakable::enableCollision()
     void enableCollision() override {
         ObjectBreakable::enableCollision();
         m_railInterpolator->init(0.0f, 0);

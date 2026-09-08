@@ -10,7 +10,9 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectFlamePoleFoot::ObjectFlamePoleFoot(const System::MapdataGeoObj &params)
-    : ObjectKCL(params), StateManager(this, STATE_ENTRIES), m_extraCycleFrames(params.setting(0)),
+    : ObjectKCL(params),
+      StateManager(this, STATE_ENTRIES),
+      m_extraCycleFrames(params.setting(0)),
       m_initDelay(params.setting(1)) {
     m_maxScale = static_cast<f32>(params.setting(2));
 
@@ -117,6 +119,8 @@ void ObjectFlamePoleFoot::calcStates() {
 }
 
 /// @addr{0x8067FC50}
+/// @copybrief ObjectKCL::getScaleY()
+/// @param timeOffset The time offset used to calculate the current frame's scale
 /// @details Updates the scale of the geyser hump based off framecount in the cycle
 f32 ObjectFlamePoleFoot::getScaleY(u32 timeOffset) const {
     u32 frame = System::RaceManager::Instance()->timer() - timeOffset;
@@ -159,8 +163,8 @@ f32 ObjectFlamePoleFoot::getScaleY(u32 timeOffset) const {
 }
 
 /// @addr{0x8067FE88}
-/// @copybrief ObjectKCL::checkCollision()
-/// @details Humps become trickable once the scale is 2 or greater
+/// @copydoc ObjectKCL::checkCollision()
+/// @details Humps become trickable once the scale is 2 or greater.
 bool ObjectFlamePoleFoot::checkCollision(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
         u32 timeOffset) {
@@ -181,7 +185,7 @@ bool ObjectFlamePoleFoot::checkCollision(f32 radius, const EGG::Vector3f &pos,
 
 /// @addr{0x80680218}
 /// @copydoc ObjectKCL::checkCollisionCached()
-/// @details Humps become trickable once the scale is 2 or greater
+/// @details Humps become trickable once the scale is 2 or greater.
 bool ObjectFlamePoleFoot::checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
         u32 timeOffset) {

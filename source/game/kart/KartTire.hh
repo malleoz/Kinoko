@@ -12,7 +12,8 @@ public:
     /// @param tireType The type of tire
     /// @param bspWheelIdx The index of the wheel in the @ref BSP::wheels array
     KartTire(KartSuspensionPhysics::TireType tireType, u16 bspWheelIdx)
-        : m_tireType(tireType), m_bspWheelIdx(bspWheelIdx) {}
+        : m_tireType(tireType),
+          m_bspWheelIdx(bspWheelIdx) {}
 
     /// @addr{0x8058EC08}
     /// @brief Virtual destructor which destroys the underlying @ref WheelPhysics subsystem

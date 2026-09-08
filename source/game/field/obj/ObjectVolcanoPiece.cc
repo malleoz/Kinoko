@@ -8,10 +8,13 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectVolcanoPiece::ObjectVolcanoPiece(const System::MapdataGeoObj &params)
-    : ObjectKCL(params), m_initialPos(pos()), m_initialRot(rot()),
+    : ObjectKCL(params),
+      m_initialPos(pos()),
+      m_initialRot(rot()),
       m_restDuration(params.setting(1) * 60),
       m_shakeDuration(m_restDuration + params.setting(2) * 60),
-      m_quakeDuration(m_shakeDuration + params.setting(7) + 1), m_colMgrB(nullptr),
+      m_quakeDuration(m_shakeDuration + params.setting(7) + 1),
+      m_colMgrB(nullptr),
       m_colMgrC(nullptr) {
     snprintf(m_modelName, sizeof(m_modelName), "VolcanoPiece%hd",
             static_cast<s16>(params.setting(0)));
@@ -152,6 +155,10 @@ bool ObjectVolcanoPiece::checkCollisionImpl(f32 radius, const EGG::Vector3f &v0,
 }
 
 /// @addr{0x808044C0}
+/// @copybrief ObjectDrivable::narrScLocal()
+/// @param radius The radius of the sphere to check
+/// @param pos The position of the sphere to check
+/// @param mask The KCL flags to check collision against (other types are ignored)
 void ObjectVolcanoPiece::narrScLocal(f32 radius, const EGG::Vector3f &pos, KCLTypeMask mask,
         u32 /*timeOffset*/) {
     State state = calcState(System::RaceManager::Instance()->timer());
@@ -171,6 +178,7 @@ void ObjectVolcanoPiece::narrScLocal(f32 radius, const EGG::Vector3f &pos, KCLTy
 }
 
 /// @addr{0x80818334}
+/// @copydoc ObjectKCL::update()
 void ObjectVolcanoPiece::update(u32 timeOffset) {
     State state = calcState(System::RaceManager::Instance()->timer() - timeOffset);
     if (state == State::Rest || state == State::Gone) {
@@ -194,6 +202,7 @@ void ObjectVolcanoPiece::update(u32 timeOffset) {
 }
 
 /// @addr{0x80818674}
+/// @copydoc ObjectKCL::calcScale()
 void ObjectVolcanoPiece::calcScale(u32 timeOffset) {
     State state = calcState(System::RaceManager::Instance()->timer() - timeOffset);
 

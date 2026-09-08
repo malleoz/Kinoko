@@ -55,7 +55,8 @@ public:
     /// @brief Performs a deep copy from a std::span of const T
     /// @details Will compile to a memcpy for trivially copyable types
     owning_span(const std::span<const T> &span)
-        : m_data(EGG::egg_new_array<T>(span.size())), m_size(span.size()) {
+        : m_data(EGG::egg_new_array<T>(span.size())),
+          m_size(span.size()) {
         std::copy(span.begin(), span.end(), m_data);
     }
 
@@ -234,7 +235,9 @@ public:
     /// @brief Move constructor
     /// @details Transfers ownership of the buffer and leaves rhs in an invalid state
     fixed_vector(fixed_vector &&rhs)
-        : m_data(rhs.m_data), m_size(rhs.m_size), m_capacity(rhs.m_capacity) {
+        : m_data(rhs.m_data),
+          m_size(rhs.m_size),
+          m_capacity(rhs.m_capacity) {
         rhs.m_data = nullptr;
         rhs.m_size = 0;
         rhs.m_capacity = 0;

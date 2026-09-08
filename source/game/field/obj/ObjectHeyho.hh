@@ -61,10 +61,6 @@ private:
         m_currentAnim = anim;
     }
 
-    void enterStateStub() {}
-
-    /// @addr{0x806CF714}
-    /// @brief Runs once when the Shy Guy goes above the zipper
     void enterJump() {
         m_spinFrame = 0;
     }
@@ -103,7 +99,7 @@ private:
 
     /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 2> STATE_ENTRIES = {{
-            {StateEntry<ObjectHeyho, &ObjectHeyho::enterStateStub, &ObjectHeyho::calcMove>(0)},
+            {StateEntry<ObjectHeyho, nullptr, &ObjectHeyho::calcMove>(0)},
             {StateEntry<ObjectHeyho, &ObjectHeyho::enterJump, &ObjectHeyho::calcJump>(1)},
     }};
 

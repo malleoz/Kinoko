@@ -9,7 +9,7 @@ namespace Kinoko::Field {
 /// @brief Oscillating cars on Coconut Mall
 /// @details These cars move along a rail and have a trapezoidal motion profile; they accelerate to
 /// a set velocity, drive at that velocity for a set amount of time, and then decelerate to a stop.
-class ObjectCarA : public ObjectCollidable, private StateManager {
+class ObjectCarA final : public ObjectCollidable, private StateManager {
 public:
     ObjectCarA(const System::MapdataGeoObj &params);
     ~ObjectCarA() override;
@@ -18,6 +18,8 @@ public:
 
     /// @addr{0x806B82CC}
     /// @copybrief ObjectBase::calc()
+    /// @details Runs the car's state machine, updates its rail, and updates its position along the
+    /// rail.
     void calc() override {
         StateManager::calc();
         calcRail();
@@ -33,6 +35,7 @@ public:
 
     /// @addr{0x806B7B44}
     /// @copybrief ObjectBase::createCollision()
+    /// @details Creates a cylindrical collision object for the car.
     void createCollision() override {
         constexpr f32 RADIUS = 210.0f;
         constexpr f32 HEIGHT = 200.0f;
@@ -46,11 +49,11 @@ public:
             Kart::Reaction reactionOnObj, EGG::Vector3f &hitDepth) override;
 
 private:
-    // Trapezoidal motion profile
+    /// @brief Describes the trapezoidal motion profile for the car
     enum class MotionState {
-        Accelerating = 0,
-        Cruising = 1,
-        Decelerating = 2,
+        Accelerating = 0, ///< The car is speeding up
+        Cruising = 1,     ///< The car is maintaining a constant speed
+        Decelerating = 2, ///< The car is slowing down
     };
 
     /// @addr{0x806B8CCC}
@@ -73,23 +76,24 @@ private:
 
     /// @addr{0x806B84FC}
     /// @brief Runs once when the car has entered the stop state
+    /// @details Sets the car's velocity to 0.
     void enterStop() {
         m_currVel = 0.0f;
     }
 
-    /// @brief Runs once when the car starts accelerating
-    void enterAccel() {}
-
     /// @addr{0x806B8838}
     /// @brief Runs once when the car has entered the cruising state
+    /// @details Sets the car's velocity to the target cruising velocity.
     void enterCruising() {
-        m_currVel = m_finalVel;
+        m_currVel = m_finalSpeed;
     }
 
     /// @addr{0x806B8588}
     /// @brief Runs once per frame when the car is in the stop state
+    /// @details Checks if the stop time has elapsed and transitions to the accelerating state if
+    /// necessary.
     void calcStop() {
-        if (m_currentFrame > m_stopTime) {
+        if (m_currentFrame > m_stopDuration) {
             m_motionState = MotionState::Accelerating;
             m_currentStateId = 1;
         }
@@ -99,6 +103,8 @@ private:
 
     /// @addr{0x806B8844}
     /// @brief Runs once per frame when the car is in the cruising state
+    /// @details Checks if the cruising time has elapsed and transitions to the decelerating state
+    /// if necessary.
     void calcCruising() {
         // We might've had decimals, better to undershoot the cruising time and handle it in decel
         if (static_cast<f32>(m_currentFrame) > m_cruiseTime - 1.0f) {
@@ -107,9 +113,9 @@ private:
         }
     }
 
-    const f32 m_finalVel;        ///< Target velocity after accelerating
+    const f32 m_finalSpeed;      ///< Target speed after accelerating
     const f32 m_accel;           ///< Acceleration and deceleration rate
-    const u32 m_stopTime;        ///< How long to spend at 0 velocity before accelerating.
+    const u32 m_stopDuration;    ///< How long to spend at 0 velocity before accelerating.
     f32 m_cruiseTime;            ///< How long to spend at cruising speed before decelerating.
     EGG::Vector3f m_currTangent; ///< It's EGG::Vector3f::ey unless it flies up in the air.
     EGG::Vector3f m_currUp;      ///< It's EGG::Vector3f::ey unless it flies up in the air.
@@ -120,7 +126,7 @@ private:
     /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 3> STATE_ENTRIES = {{
             {StateEntry<ObjectCarA, &ObjectCarA::enterStop, &ObjectCarA::calcStop>(0)},
-            {StateEntry<ObjectCarA, &ObjectCarA::enterAccel, &ObjectCarA::calcAccel>(1)},
+            {StateEntry<ObjectCarA, nullptr, &ObjectCarA::calcAccel>(1)},
             {StateEntry<ObjectCarA, &ObjectCarA::enterCruising, &ObjectCarA::calcCruising>(2)},
     }};
 };

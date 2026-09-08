@@ -37,6 +37,8 @@ public:
     void calcCollisionTransform() override;
 
     /// @addr{0x80775458}
+    /// @copybrief ObjectBase::getCollisionRadius()
+    /// @return The collision radius of the piranha, `1000.0f`.
     /// @details Extends the collision radius to ensure GJK collision checks occur from far enough
     /// away when the piranha chomps forward.
     [[nodiscard]] f32 getCollisionRadius() const override {

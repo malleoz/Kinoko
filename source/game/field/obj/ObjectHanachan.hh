@@ -106,6 +106,8 @@ public:
     }
 
     /// @addr{0x806CCB88}
+    /// @copybrief ObjectBase::getKclName()
+    /// @return The model name of the Wiggler head (`hanachan`)
     [[nodiscard]] const char *getKclName() const override {
         return "hanachan";
     }
@@ -160,6 +162,9 @@ public:
     ~ObjectHanachanBody() override;
 
     /// @addr{0x806CCB80}
+    /// @copybrief ObjectBase::getKclName()
+    /// @return The model name of the Wiggler body segment (`hanachan_body1`, `hanachan_body2`,
+    /// `hanachan_body3`, or `hanachan_body4`)
     [[nodiscard]] const char *getKclName() const override {
         return m_mdlName;
     }
@@ -223,8 +228,6 @@ private:
         MisalignedLeft = 1,
         MisalignedRight = 2,
     };
-
-    void enterStateStub() {}
 
     /// @addr{0x806C9BC0}
     /// @brief Runs once when the Wiggler begins walking
@@ -358,7 +361,7 @@ private:
     /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 2> STATE_ENTRIES = {{
             {StateEntry<ObjectHanachan, &ObjectHanachan::enterWalk, &ObjectHanachan::calcWalk>(0)},
-            {StateEntry<ObjectHanachan, &ObjectHanachan::enterStateStub, &ObjectHanachan::calcWait>(
+            {StateEntry<ObjectHanachan, nullptr, &ObjectHanachan::calcWait>(
                     1)},
     }};
 

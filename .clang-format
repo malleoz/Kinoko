@@ -36,6 +36,7 @@ InsertNewlineAtEOF: true
 KeepEmptyLinesAtTheStartOfBlocks: False
 MaxEmptyLinesToKeep: 1
 Language: Cpp
+PackConstructorInitializers: CurrentLine
 PointerAlignment: Right
 SortIncludes: CaseSensitive
 SpaceAfterCStyleCast: False

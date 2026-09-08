@@ -29,11 +29,15 @@ public:
     }
 
     /// @addr{0x8081A668}
+    /// @copybrief ObjectBase::getKclName()
+    /// @return The model name of the volcano rock (`VolcanoRock1` or `VolcanoRock2`).
     [[nodiscard]] const char *getKclName() const override {
         return m_variant ? "VolcanoRock2" : "VolcanoRock1";
     }
 
     /// @addr{0x8081A60C}
+    /// @copybrief ObjectKCL::getUpdatedMatrix()
+    /// @param timeOffset The time offset used to calculate the current frame's transformation
     [[nodiscard]] const EGG::Matrix34f &getUpdatedMatrix(u32 timeOffset) override {
         u32 t = System::RaceManager::Instance()->timer() - timeOffset;
         m_rtMat.makeRT(m_initialRot, calcPos(t));
@@ -41,6 +45,7 @@ public:
     }
 
     /// @addr{0x8081A5D0}
+    /// @copybrief ObjectKCL::colRadiusAdditionalLength()
     [[nodiscard]] f32 colRadiusAdditionalLength() const override {
         return 2000.0f + m_zAmplitude;
     }

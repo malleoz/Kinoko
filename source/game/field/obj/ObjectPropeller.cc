@@ -8,7 +8,8 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectPropeller::ObjectPropeller(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), m_angle(0.0f) {
+    : ObjectCollidable(params),
+      m_angle(0.0f) {
     m_blades.fill(nullptr);
 }
 
@@ -60,6 +61,8 @@ void ObjectPropeller::calcCollisionTransform() {
 }
 
 /// @addr{0x80765930}
+/// @copybrief ObjectBase::getCollisionRadius()
+/// @return The collision radius of the propeller, calculated based on its bounding box.
 f32 ObjectPropeller::getCollisionRadius() const {
     const auto &flowTable = ObjectDirector::Instance()->flowTable();
     const auto &params = flowTable.set(flowTable.slot(id()))->params.box;

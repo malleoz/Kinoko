@@ -13,9 +13,16 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectCarTGE::ObjectCarTGE(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), StateManager(this, STATE_ENTRIES), m_auxCollision(nullptr),
-      m_carName{}, m_mdlName{}, m_carType(CarType::Normal), m_dummyId(ObjectId::None),
-      m_scaledTangentDir(EGG::Vector3f::zero), m_currSpeed(0.0f), m_up(EGG::Vector3f::zero),
+    : ObjectCollidable(params),
+      StateManager(this, STATE_ENTRIES),
+      m_auxCollision(nullptr),
+      m_carName{},
+      m_mdlName{},
+      m_carType(CarType::Normal),
+      m_dummyId(ObjectId::None),
+      m_scaledTangentDir(EGG::Vector3f::zero),
+      m_currSpeed(0.0f),
+      m_up(EGG::Vector3f::zero),
       m_tangent(EGG::Vector3f::zero) {
     u32 carVariant = static_cast<u32>(params.setting(3));
     m_highwayVel = static_cast<f32>(params.setting(2));

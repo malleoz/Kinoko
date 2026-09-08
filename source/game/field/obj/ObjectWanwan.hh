@@ -36,6 +36,8 @@ public:
     }
 
     /// @addr{0x806E9548}
+    /// @copybrief ObjectBase::getKclName()
+    /// @return The model name of the stake (`pile`).
     [[nodiscard]] const char *getKclName() const override {
         return "pile";
     }

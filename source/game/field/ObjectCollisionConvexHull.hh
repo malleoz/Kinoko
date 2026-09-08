@@ -43,7 +43,7 @@ protected:
 private:
     const f32 m_initRadius; ///< Initial radius of the bounding sphere in world space
     owning_span<EGG::Vector3f> m_worldPoints; ///< Array of hull points transformed into world space
-    f32 m_scaledRadius;                        ///< Scaled radius of the bounding sphere
+    f32 m_scaledRadius;                       ///< Scaled radius of the bounding sphere
 };
 
 } // namespace Kinoko::Field

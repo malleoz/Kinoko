@@ -11,7 +11,8 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectChoropu::ObjectChoropu(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), StateManager(this, STATE_ENTRIES) {
+    : ObjectCollidable(params),
+      StateManager(this, STATE_ENTRIES) {
     constexpr f32 MAX_SPEED = 20.0f;
 
     m_startFrameOffset = static_cast<s16>(params.setting(1));

@@ -13,8 +13,11 @@ static size_t SUFFIX_SIZE = 8;
 /// @details Allocates arrays for the sub-archives and the file starts, file sizes, suffixes, and
 /// formats for each sub-archive.
 MultiDvdArchive::MultiDvdArchive(u16 archiveCount)
-    : m_archives(archiveCount), m_fileStarts(archiveCount), m_fileSizes(archiveCount),
-      m_suffixes(archiveCount), m_formats(archiveCount) {
+    : m_archives(archiveCount),
+      m_fileStarts(archiveCount),
+      m_fileSizes(archiveCount),
+      m_suffixes(archiveCount),
+      m_formats(archiveCount) {
     for (u16 i = 0; i < m_archives.size(); i++) {
         m_fileStarts[i] = nullptr;
         m_fileSizes[i] = 0;

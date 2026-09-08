@@ -8,7 +8,8 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectPsea::ObjectPsea(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), m_period(F_TAU / static_cast<f32>(CYCLE_DURATION)) {
+    : ObjectCollidable(params),
+      m_period(F_TAU / static_cast<f32>(CYCLE_DURATION)) {
     constexpr EGG::Vector3f POS_OFFSET = EGG::Vector3f(0.0f, 6.75f, 0.0f) * 96.0f;
     constexpr EGG::Vector3f EXTRA_OFFSET = EGG::Vector3f(0.0f, 1.0f, 0.0f);
 

@@ -42,12 +42,14 @@ public:
     [[nodiscard]] const EGG::Matrix34f &getUpdatedMatrix(u32 timeOffset) override;
 
     /// @addr{0x8086C648}
+    /// @copybrief ObjectKCL::colRadiusAdditionalLength()
     /// @details Factors in the extended position of the piranha
     [[nodiscard]] f32 colRadiusAdditionalLength() const override {
         return (m_initialPos - m_extendedPos).length();
     }
 
     /// @addr{0x8086C328}
+    /// @copydoc ObjectKCL::checkCollision()
     [[nodiscard]] bool checkCollision(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
             KCLTypeMask *maskOut, u32 timeOffset) override {
@@ -58,6 +60,7 @@ public:
     }
 
     /// @addr{0x8086C5A8}
+    /// @copydoc ObjectKCL::checkCollisionCached()
     [[nodiscard]] bool checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
             KCLTypeMask *maskOut, u32 timeOffset) override {

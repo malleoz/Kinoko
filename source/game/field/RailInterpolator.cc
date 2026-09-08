@@ -9,7 +9,9 @@ namespace Kinoko::Field {
 /// @param speed The default speed of the interpolator
 /// @param idx The index of the rail to interpolate along
 RailInterpolator::RailInterpolator(f32 speed, u32 idx)
-    : m_railIdx(idx), m_points(RailManager::Instance()->rail(idx)->points()), m_speed(speed),
+    : m_railIdx(idx),
+      m_points(RailManager::Instance()->rail(idx)->points()),
+      m_speed(speed),
       m_currSpeed(0.0f) {
     auto *rail = RailManager::Instance()->rail(idx);
     m_pointCount = rail->pointCount();

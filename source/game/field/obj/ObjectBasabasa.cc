@@ -26,7 +26,7 @@ void ObjectBasabasaDummy::init() {
 }
 
 /// @addr{0x806B6874}
-/// @copydoc ObjectBase::onCollision()
+/// @copydoc ObjectCollidable::onCollision()
 /// @details Adjusts the reaction based on the course and whether the bat has a big bump
 Kart::Reaction ObjectBasabasaDummy::onCollision(Kart::KartObject * /*kartObj*/,
         Kart::Reaction reactionOnKart, Kart::Reaction /*reactionOnObj*/,
@@ -66,8 +66,10 @@ void ObjectBasabasaDummy::calcStateActive() {
 /// @details Computes the spacing and number of bats per group. Constructs and loads all underlying
 /// bat objects.
 ObjectBasabasa::ObjectBasabasa(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), m_initialTimer(params.setting(1)),
-      m_batsPerGroup(params.setting(2)), m_startFrame(params.setting(6)),
+    : ObjectCollidable(params),
+      m_initialTimer(params.setting(1)),
+      m_batsPerGroup(params.setting(2)),
+      m_startFrame(params.setting(6)),
       m_batSpacing(static_cast<u32>(static_cast<f32>(params.setting(5)) /
               static_cast<f32>(params.setting(0)) / static_cast<f32>(m_batsPerGroup))) {
     f32 railLen = RailManager::Instance()->rail(params.pathId())->getPathLength();

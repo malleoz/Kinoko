@@ -16,7 +16,9 @@ public:
     /// @param height Height of the cylinder
     /// @param center Center position of the cylinder in local space
     ObjectCollisionCylinder(f32 radius, f32 height, const EGG::Vector3f &center)
-        : m_radius(radius), m_height(height), m_pos(center) {
+        : m_radius(radius),
+          m_height(height),
+          m_pos(center) {
         m_scaledRadius = radius;
         m_scaledHeight = height;
         m_scaledPos = center;

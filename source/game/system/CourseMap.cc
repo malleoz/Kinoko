@@ -210,8 +210,13 @@ s16 CourseMap::getCurrentAreaID(s16 i, const EGG::Vector3f &pos, MapdataAreaBase
 /// @addr{0x8051276C}
 /// @brief Private constructor
 CourseMap::CourseMap()
-    : m_header(nullptr), m_startPoint(nullptr), m_stageInfo(nullptr), m_skewAngle(0.0f),
-      m_lateralSpacing(0.0f), m_longitudinalSpacing(0.0f), m_longitudinalOffset(0.0f),
+    : m_header(nullptr),
+      m_startPoint(nullptr),
+      m_stageInfo(nullptr),
+      m_skewAngle(0.0f),
+      m_lateralSpacing(0.0f),
+      m_longitudinalSpacing(0.0f),
+      m_longitudinalOffset(0.0f),
       m_longitudinalWideOffset(0.0f) {}
 
 /// @addr{0x805127AC}

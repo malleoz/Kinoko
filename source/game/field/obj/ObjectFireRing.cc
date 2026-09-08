@@ -6,8 +6,10 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectFireRing::ObjectFireRing(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), m_angSpeed(static_cast<f32>(static_cast<s16>(params.setting(1)))),
-      m_pulseAmplitude(0.1f * static_cast<f32>(params.setting(2))), m_phase(0.0f) {
+    : ObjectCollidable(params),
+      m_angSpeed(static_cast<f32>(static_cast<s16>(params.setting(1)))),
+      m_pulseAmplitude(0.1f * static_cast<f32>(params.setting(2))),
+      m_phase(0.0f) {
     size_t fireballCount = std::max<u32>(1, params.setting(0));
     m_fireballs = owning_span<ObjectFireball *>(fireballCount);
     f32 distance = 100.0f * static_cast<f32>(params.setting(3));

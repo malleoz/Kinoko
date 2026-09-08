@@ -44,6 +44,8 @@ public:
     }
 
     /// @addr{0x8076E9E4}
+    /// @copybrief ObjectBase::id()
+    /// @return The ID of an itembox, `ObjectId::Itembox`.
     [[nodiscard]] ObjectId id() const override {
         return ObjectId::Itembox;
     }
@@ -64,6 +66,8 @@ public:
     }
 
     /// @addr{0x8076E9D8}
+    /// @copybrief ObjectBase::getKclName()
+    /// @return The model name of the itembox (`itembox`).
     [[nodiscard]] const char *getKclName() const override {
         return "itembox";
     }

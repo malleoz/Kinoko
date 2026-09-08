@@ -8,8 +8,10 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectHeyhoBall::ObjectHeyhoBall(const System::MapdataGeoObj &params)
-    : ObjectProjectile(params), StateManager(this, STATE_ENTRIES),
-      m_airtime(static_cast<f32>(params.setting(1))), m_initPos(params.pos()) {
+    : ObjectProjectile(params),
+      StateManager(this, STATE_ENTRIES),
+      m_airtime(static_cast<f32>(params.setting(1))),
+      m_initPos(params.pos()) {
     registerManagedObject();
 }
 
@@ -51,6 +53,7 @@ Kart::Reaction ObjectHeyhoBall::onCollision(Kart::KartObject * /*kartObj*/,
 }
 
 /// @addr{0x806D10A4}
+/// @brief Callback function called by the managing @ref ObjectHeyhoShip.
 void ObjectHeyhoBall::initProjectile(const EGG::Vector3f &pos) {
     m_shipPos = pos;
     m_xzDir = (m_initPos + EGG::Vector3f::ey * -BALL_RADIUS) - m_shipPos;

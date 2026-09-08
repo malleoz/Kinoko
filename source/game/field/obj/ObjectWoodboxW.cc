@@ -8,7 +8,8 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectWoodboxW::ObjectWoodboxW(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), m_spawnInterval(params.setting(5)) {
+    : ObjectCollidable(params),
+      m_spawnInterval(params.setting(5)) {
     constexpr u16 DEFAULT_BOX_COUNT = 5;
 
     ObjectCollidable::init();

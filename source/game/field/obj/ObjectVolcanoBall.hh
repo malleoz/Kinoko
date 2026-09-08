@@ -50,10 +50,6 @@ private:
         init();
     }
 
-    void enterStateStub() {}
-
-    void calcStateStub() {}
-
     void calcFalling();
 
     /// @addr{0x806E3324}
@@ -72,10 +68,10 @@ private:
     /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 3> STATE_ENTRIES = {{
             {StateEntry<ObjectVolcanoBall, &ObjectVolcanoBall::enterDormant,
-                    &ObjectVolcanoBall::calcStateStub>(0)},
+                    nullptr>(0)},
             {StateEntry<ObjectVolcanoBall, &ObjectVolcanoBall::enterFalling,
                     &ObjectVolcanoBall::calcFalling>(1)},
-            {StateEntry<ObjectVolcanoBall, &ObjectVolcanoBall::enterStateStub,
+            {StateEntry<ObjectVolcanoBall, nullptr,
                     &ObjectVolcanoBall::calcBurning>(2)},
     }};
 };

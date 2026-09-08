@@ -9,7 +9,9 @@ namespace Kinoko::Field {
 /// @param idx The index of the rail
 /// @param info Pointer to the map data point info containing the rail's points and settings
 Rail::Rail(u16 idx, System::MapdataPointInfo *info)
-    : m_pointCount(info->pointCount()), m_isOscillating(info->setting(1) == 1), m_idx(idx) {
+    : m_pointCount(info->pointCount()),
+      m_isOscillating(info->setting(1) == 1),
+      m_idx(idx) {
     m_points = info->points();
     m_hasCheckedCol = false;
 }

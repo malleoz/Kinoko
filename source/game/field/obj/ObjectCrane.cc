@@ -6,7 +6,8 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectCrane::ObjectCrane(const System::MapdataGeoObj &params)
-    : ObjectKCL(params), m_startPos(pos()) {
+    : ObjectKCL(params),
+      m_startPos(pos()) {
     m_xt = params.setting(3);
     m_yt = 0;
     m_xPeriod = std::max(static_cast<u16>(2), params.setting(1));

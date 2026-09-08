@@ -33,6 +33,8 @@ public:
     }
 
     /// @addr{0x80803CF0}
+    /// @copybrief ObjectBase::id()
+    /// @return The ID of the escalator object, `ObjectId::Escalator`.
     [[nodiscard]] ObjectId id() const override {
         return ObjectId::Escalator;
     }
@@ -45,30 +47,35 @@ public:
     }
 
     /// @addr{0x80803910}
+    /// @copydoc ObjectDrivable::checkPointPartial()
     [[nodiscard]] bool checkPointPartial(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
             KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) override {
         return checkPointImpl(&ObjColMgr::checkPointPartial, pos, prevPos, mask, info, maskOut);
     }
 
     /// @addr{0x80803A04}
+    /// @copydoc ObjectDrivable::checkPointPartialPush()
     [[nodiscard]] bool checkPointPartialPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
             KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) override {
         return checkPointImpl(&ObjColMgr::checkPointPartialPush, pos, prevPos, mask, info, maskOut);
     }
 
     /// @addr{0x80803AF8}
+    /// @copydoc ObjectDrivable::checkPointFull()
     [[nodiscard]] bool checkPointFull(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
             KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override {
         return checkPointImpl(&ObjColMgr::checkPointFull, pos, prevPos, mask, info, maskOut);
     }
 
     /// @addr{0x80803BEC}
+    /// @copydoc ObjectDrivable::checkPointFullPush()
     [[nodiscard]] bool checkPointFullPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
             KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override {
         return checkPointImpl(&ObjColMgr::checkPointFullPush, pos, prevPos, mask, info, maskOut);
     }
 
     /// @addr{0x80803540}
+    /// @copydoc ObjectDrivable::checkSpherePartial()
     [[nodiscard]] bool checkSpherePartial(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
             KCLTypeMask *maskOut, u32 timeOffset) override {
@@ -77,6 +84,7 @@ public:
     }
 
     /// @addr{0x80803680}
+    /// @copydoc ObjectDrivable::checkSpherePartialPush()
     [[nodiscard]] bool checkSpherePartialPush(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
             KCLTypeMask *maskOut, u32 timeOffset) override {
@@ -85,6 +93,7 @@ public:
     }
 
     /// @addr{0x808037C0}
+    /// @copydoc ObjectDrivable::checkSphereFull()
     [[nodiscard]] bool checkSphereFull(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
             KCLTypeMask *maskOut, u32 timeOffset) override {
@@ -93,6 +102,7 @@ public:
     }
 
     /// @addr{0x80803900}
+    /// @copydoc ObjectDrivable::checkSphereFullPush()
     [[nodiscard]] bool checkSphereFullPush(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
             KCLTypeMask *maskOut, u32 timeOffset) override {
@@ -100,12 +110,18 @@ public:
     }
 
     /// @addr{0x80802D98}
+    /// @copybrief ObjectDrivable::narrScLocal()
+    /// @param radius The radius of the sphere to check
+    /// @param pos The position of the sphere to check
+    /// @param mask The KCL flags to check collision against (other types are ignored)
+    /// @param timeOffset Optional time delta
     void narrScLocal(f32 radius, const EGG::Vector3f &pos, KCLTypeMask mask,
             u32 /*timeOffset*/) override {
         m_objColMgr->narrScLocal(radius, pos, mask);
     }
 
     /// @addr{0x80803170}
+    /// @copydoc ObjectDrivable::checkPointCachedPartial()
     [[nodiscard]] bool checkPointCachedPartial(const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
             KCLTypeMask *maskOut) override {
@@ -114,6 +130,7 @@ public:
     }
 
     /// @addr{0x80803264}
+    /// @copydoc ObjectDrivable::checkPointCachedPartialPush()
     [[nodiscard]] bool checkPointCachedPartialPush(const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
             KCLTypeMask *maskOut) override {
@@ -122,12 +139,14 @@ public:
     }
 
     /// @addr{0x80803358}
+    /// @copydoc ObjectDrivable::checkPointCachedFull()
     [[nodiscard]] bool checkPointCachedFull(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
             KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override {
         return checkPointImpl(&ObjColMgr::checkPointCachedFull, pos, prevPos, mask, info, maskOut);
     }
 
     /// @addr{0x8080344C}
+    /// @copydoc ObjectDrivable::checkPointCachedFullPush()
     [[nodiscard]] bool checkPointCachedFullPush(const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
             KCLTypeMask *maskOut) override {
@@ -136,6 +155,7 @@ public:
     }
 
     /// @addr{0x80802DA0}
+    /// @copydoc ObjectDrivable::checkSphereCachedPartial()
     [[nodiscard]] bool checkSphereCachedPartial(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
             KCLTypeMask *maskOut, u32 timeOffset) override {
@@ -144,6 +164,7 @@ public:
     }
 
     /// @addr{0x80802EE0}
+    /// @copydoc ObjectDrivable::checkSphereCachedPartialPush()
     [[nodiscard]] bool checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
             KCLTypeMask *maskOut, u32 timeOffset) override {
@@ -152,6 +173,7 @@ public:
     }
 
     /// @addr{0x80803020}
+    /// @copydoc ObjectDrivable::checkSphereCachedFull()
     [[nodiscard]] bool checkSphereCachedFull(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
             KCLTypeMask *maskOut, u32 timeOffset) override {
@@ -160,6 +182,7 @@ public:
     }
 
     /// @addr{0x80803160}
+    /// @copydoc ObjectDrivable::checkSphereCachedFullPush()
     [[nodiscard]] bool checkSphereCachedFullPush(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
             KCLTypeMask *maskOut, u32 timeOffset) override {
@@ -167,6 +190,8 @@ public:
     }
 
     /// @addr{0x80800A10}
+    /// @copybrief ObjectKCL::getUpdatedMatrix()
+    /// @param timeOffset The time offset used to calculate the current frame's transformation
     [[nodiscard]] const EGG::Matrix34f &getUpdatedMatrix(u32 timeOffset) override {
         u32 t = System::RaceManager::Instance()->timer() - timeOffset;
         m_workMatrix.makeRT(rot(), m_initialPos + m_stepDims * calcWrappedStepCount(t));
@@ -174,6 +199,7 @@ public:
     }
 
     /// @addr{0x80803CE0}
+    /// @copybrief ObjectKCL::colRadiusAdditionalLength()
     [[nodiscard]] f32 colRadiusAdditionalLength() const override {
         return 1000.0f;
     }

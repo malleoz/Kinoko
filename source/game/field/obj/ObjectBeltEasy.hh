@@ -10,6 +10,7 @@ public:
     /// @addr{0x807FC578}
     /// @brief Constructor
     /// @param params The parameters used to initialize the object
+    /// @details Initializes the road velocity to `20.0f`.
     ObjectBeltEasy(const System::MapdataGeoObj &params) : ObjectBelt(params) {
         m_roadVel = 20.0f;
     }
@@ -20,6 +21,9 @@ public:
 
 private:
     /// @addr{0x807FC62C}
+    /// @brief Calculates the conveyer belt's velocity at a given position based on its variant
+    /// @param variant The variant of the conveyer belt
+    /// @return The velocity of the conveyer belt at the given position and variant
     [[nodiscard]] EGG::Vector3f calcRoadVelocity(u32 variant, const EGG::Vector3f & /*pos*/,
             u32 /*timeOffset*/) const override {
         switch (variant) {
@@ -33,6 +37,9 @@ private:
     }
 
     /// @addr{0x807FC6C8}
+    /// @brief Determines whether or not the conveyer belt is moving based on its variant
+    /// @param variant The variant of the conveyer belt
+    /// @return Whether or not the conveyer belt is moving at the given position and variant
     [[nodiscard]] bool isMoving(u32 variant, const EGG::Vector3f & /*pos*/) const override {
         return variant == 2 || variant == 3;
     }

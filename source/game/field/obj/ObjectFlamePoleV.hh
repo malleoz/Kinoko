@@ -44,13 +44,13 @@ public:
     }
 
     /// @addr{0x806C4880}
+    /// @copybrief ObjectBase::getKclName()
+    /// @return The model name of the vertical flame pole (`FlamePoleEff`)
     [[nodiscard]] const char *getKclName() const override {
         return "FlamePoleEff";
     }
 
 private:
-    void enterStateStub() {}
-
     /// @addr{0x806C40E4}
     /// @brief Runs once when the geyser is leaving dormancy
     void enterBeforeErupting() {
@@ -144,7 +144,7 @@ private:
                     &ObjectFlamePoleV::calcBeforeErupting>(0)},
             {StateEntry<ObjectFlamePoleV, &ObjectFlamePoleV::enterErupting,
                     &ObjectFlamePoleV::calcErupting>(1)},
-            {StateEntry<ObjectFlamePoleV, &ObjectFlamePoleV::enterStateStub,
+            {StateEntry<ObjectFlamePoleV, nullptr,
                     &ObjectFlamePoleV::calcErupted>(2)},
             {StateEntry<ObjectFlamePoleV, &ObjectFlamePoleV::enterLowering,
                     &ObjectFlamePoleV::calcLowering>(3)},

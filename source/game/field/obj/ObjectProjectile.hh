@@ -10,7 +10,8 @@ public:
     /// @brief Constructor
     /// @param params The parameters used to initialize the object
     ObjectProjectile(const System::MapdataGeoObj &params)
-        : ObjectCollidable(params), m_idx(params.setting(0)) {}
+        : ObjectCollidable(params),
+          m_idx(params.setting(0)) {}
 
     /// @brief Default virtual destructor
     ~ObjectProjectile() override = default;

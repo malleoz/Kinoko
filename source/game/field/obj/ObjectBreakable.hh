@@ -32,7 +32,7 @@ public:
     }
 
     /// @addr{0x8076ED70}
-    /// @brief Interface through which a spawner can make the object tangible again
+    /// @brief Enables a spawner to make the object tangible again
     virtual void enableCollision() {
         m_state = 1;
     }

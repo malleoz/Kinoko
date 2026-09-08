@@ -10,7 +10,9 @@ namespace Kinoko::System {
 /// @brief Constructor
 /// @param data Pointer to the raw checkpoint data
 MapdataCheckPoint::MapdataCheckPoint(const SData *data)
-    : m_rawData(data), m_nextCount(0), m_prevCount(0) {
+    : m_rawData(data),
+      m_nextCount(0),
+      m_prevCount(0) {
     EGG::RamStream stream = EGG::RamStream(data, sizeof(SData));
     read(stream);
     m_midpoint = 0.5f * (m_left + m_right);

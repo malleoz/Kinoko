@@ -39,6 +39,8 @@ public:
     void initProjectile(const EGG::Vector3f &pos) override;
 
     /// @addr{0x806D188C}
+    /// @brief Callback function use by the @ref ObjectHeyhoShip that wants to throw this
+    /// projectile.
     void onLaunch() override {
         m_nextStateId = 1;
     }
@@ -49,8 +51,6 @@ private:
         ExplosionLoseItem = 0, ///< The kart loses its items and is knocked upwards
         SpinSomeSpeed = 1,     ///< The kart spins out but keeps its items
     };
-
-    void enterStateStub() {}
 
     /// @addr{0x806D0A3C}
     /// @brief Runs once when the cannonball is fired
@@ -129,7 +129,7 @@ private:
 
     /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 4> STATE_ENTRIES = {{
-            {StateEntry<ObjectHeyhoBall, &ObjectHeyhoBall::enterStateStub,
+            {StateEntry<ObjectHeyhoBall, nullptr,
                     &ObjectHeyhoBall::calcIntangible>(0)},
             {StateEntry<ObjectHeyhoBall, &ObjectHeyhoBall::enterFalling,
                     &ObjectHeyhoBall::calcFalling>(1)},

@@ -28,6 +28,8 @@ public:
     }
 
     /// @addr{0x808CE358}
+    /// @copybrief ObjectBase::getKclName()
+    /// @return The model name of the firebar (`WLfirebarGC` or `koopaFirebar`)
     [[nodiscard]] const char *getKclName() const override {
         return id() == ObjectId::WLFirebarGC ? "WLfirebarGC" : "koopaFirebar";
     }

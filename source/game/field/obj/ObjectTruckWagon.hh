@@ -18,6 +18,8 @@ public:
     void calc() override;
 
     /// @addr{0x806E260C}
+    /// @copybrief ObjectBase::getName()
+    /// @return The name of the object, `TruckWagon`
     [[nodiscard]] const char *getName() const override {
         return "TruckWagon";
     }
@@ -30,6 +32,8 @@ public:
     }
 
     /// @addr{0x806E2618}
+    /// @copybrief ObjectBase::getKclName()
+    /// @return The model name of the truck wagon (`TruckWagon`).
     [[nodiscard]] const char *getKclName() const override {
         return "TruckWagon";
     }
@@ -68,10 +72,6 @@ public:
     }
 
 private:
-    void enterStateStub() {}
-
-    void calcStateStub() {}
-
     void calcRolling();
     void calcSuspended();
 
@@ -97,14 +97,14 @@ private:
 
     /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 4> STATE_ENTRIES = {{
-            {StateEntry<ObjectTruckWagonCart, &ObjectTruckWagonCart::enterStateStub,
+            {StateEntry<ObjectTruckWagonCart, nullptr,
                     &ObjectTruckWagonCart::calcRolling>(0)},
-            {StateEntry<ObjectTruckWagonCart, &ObjectTruckWagonCart::enterStateStub,
+            {StateEntry<ObjectTruckWagonCart, nullptr,
                     &ObjectTruckWagonCart::calcSuspended>(1)},
-            {StateEntry<ObjectTruckWagonCart, &ObjectTruckWagonCart::enterStateStub,
+            {StateEntry<ObjectTruckWagonCart, nullptr,
                     &ObjectTruckWagonCart::calcState2>(2)},
-            {StateEntry<ObjectTruckWagonCart, &ObjectTruckWagonCart::enterStateStub,
-                    &ObjectTruckWagonCart::calcStateStub>(3)},
+            {StateEntry<ObjectTruckWagonCart, nullptr,
+                    nullptr>(3)},
     }};
 };
 

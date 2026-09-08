@@ -8,7 +8,9 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectKCL::ObjectKCL(const System::MapdataGeoObj &params)
-    : ObjectDrivable(params), m_lastMtxUpdateFrame(-2000), m_lastScaleUpdateFrame(-2000) {}
+    : ObjectDrivable(params),
+      m_lastMtxUpdateFrame(-2000),
+      m_lastScaleUpdateFrame(-2000) {}
 
 /// @addr{0x8067EAFC}
 /// @brief Default virtual destructor that destroys the associated collision manager
@@ -51,8 +53,9 @@ void ObjectKCL::initCollision() {
     m_bboxHalfSideLength = maxDiff * 0.5f;
 }
 
-/// @brief Advances the collision manager's transform to reflect the current frame
 /// @addr{0x8081AD6C}
+/// @brief Advances the collision manager's transform to reflect the current frame
+/// @param timeOffset The time offset used to calculate the current frame's transformation
 void ObjectKCL::update(u32 timeOffset) {
     u32 time = System::RaceManager::Instance()->timer() - timeOffset;
     if (m_lastMtxUpdateFrame == static_cast<s32>(time)) {
@@ -76,8 +79,9 @@ void ObjectKCL::update(u32 timeOffset) {
     m_lastMtxUpdateFrame = time;
 }
 
-/// @brief Updates the collision manager's scale to reflect the current frame
 /// @addr{0x8081AF28}
+/// @brief Updates the collision manager's scale to reflect the current frame
+/// @param timeOffset The time offset used to calculate the current frame's transformation
 void ObjectKCL::calcScale(u32 timeOffset) {
     u32 time = System::RaceManager::Instance()->timer() - timeOffset;
     if (m_lastScaleUpdateFrame == static_cast<s32>(time)) {

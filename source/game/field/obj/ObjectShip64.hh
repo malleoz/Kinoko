@@ -49,6 +49,8 @@ public:
     }
 
     /// @addr{0x80766BC0}
+    /// @copybrief ObjectBase::getKclName()
+    /// @return The model name of the ship (`DKShip64`).
     [[nodiscard]] const char *getKclName() const override {
         return "DKShip64";
     }

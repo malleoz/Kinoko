@@ -4,7 +4,8 @@ namespace Kinoko::System {
 
 /// @brief Default constructor
 KPadGhostButtonsStream::KPadGhostButtonsStream()
-    : currentSequence(std::numeric_limits<u16>::max()), state(2) {}
+    : currentSequence(std::numeric_limits<u16>::max()),
+      state(2) {}
 
 /// @brief Default virtual destructor
 KPadGhostButtonsStream::~KPadGhostButtonsStream() = default;

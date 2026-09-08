@@ -38,10 +38,6 @@ public:
     void loadAnims() override;
 
 private:
-    void enterStateStub() {}
-
-    void calcStateStub() {}
-
     void calcReroute();
 
     /// @addr{0x806DC3F8}
@@ -78,12 +74,12 @@ private:
 
     /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 4> STATE_ENTRIES = {{
-            {StateEntry<ObjectKuribo, &ObjectKuribo::enterStateStub, &ObjectKuribo::calcReroute>(
+            {StateEntry<ObjectKuribo, nullptr, &ObjectKuribo::calcReroute>(
                     0)},
-            {StateEntry<ObjectKuribo, &ObjectKuribo::enterStateStub, &ObjectKuribo::calcWalk>(1)},
-            {StateEntry<ObjectKuribo, &ObjectKuribo::enterStateStub, &ObjectKuribo::calcStateStub>(
+            {StateEntry<ObjectKuribo, nullptr, &ObjectKuribo::calcWalk>(1)},
+            {StateEntry<ObjectKuribo, nullptr, nullptr>(
                     2)},
-            {StateEntry<ObjectKuribo, &ObjectKuribo::enterStateStub, &ObjectKuribo::calcStateStub>(
+            {StateEntry<ObjectKuribo, nullptr, nullptr>(
                     3)},
     }};
 };

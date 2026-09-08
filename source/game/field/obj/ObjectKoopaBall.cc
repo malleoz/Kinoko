@@ -10,7 +10,8 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectKoopaBall::ObjectKoopaBall(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), m_vel(EGG::Vector3f::zero) {}
+    : ObjectCollidable(params),
+      m_vel(EGG::Vector3f::zero) {}
 
 /// @addr{0x80771F70}
 /// @brief Default virtual destructor

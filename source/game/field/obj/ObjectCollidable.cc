@@ -11,7 +11,8 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &params)
-    : ObjectBase(params), m_collision(nullptr) {}
+    : ObjectBase(params),
+      m_collision(nullptr) {}
 
 /// @addr{0x8081F064}
 /// @brief Constructor
@@ -22,7 +23,8 @@ ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &params)
 
 ObjectCollidable::ObjectCollidable(const char *name, const EGG::Vector3f &pos,
         const EGG::Vector3f &rot, const EGG::Vector3f &scale)
-    : ObjectBase(name, pos, rot, scale), m_collision(nullptr) {}
+    : ObjectBase(name, pos, rot, scale),
+      m_collision(nullptr) {}
 
 /// @addr{0x8067E384}
 /// @brief Default virtual destructor that destroys the associated collision object
@@ -47,7 +49,8 @@ void ObjectCollidable::load() {
 }
 
 /// @addr{0x806815A0}
-/// @brief Finds the radius that fits fully in a BoxColUnit.
+/// @copybrief ObjectBase::getCollisionRadius()
+/// @return The collision radius of the object, calculated based on its bounding box.
 /// @details We refer to the collision parameters as a box due to its use of axes.
 /// This does not imply that all collidable objects are boxes!
 f32 ObjectCollidable::getCollisionRadius() const {

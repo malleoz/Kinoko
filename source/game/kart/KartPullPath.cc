@@ -11,7 +11,10 @@ namespace Kinoko::Kart {
 /// @param handle Pointer to the owning @ref KartPullPath subsystem
 /// @param type The type of tracker to use for the pull path
 KartPullPathTracker::KartPullPathTracker(KartPullPath *handle, Type type)
-    : m_type(type), m_currentIdx(0), m_pointInfo(nullptr), m_handle(handle) {}
+    : m_type(type),
+      m_currentIdx(0),
+      m_pointInfo(nullptr),
+      m_handle(handle) {}
 
 /// @addr{0x805930E4}
 /// @brief Default destructor

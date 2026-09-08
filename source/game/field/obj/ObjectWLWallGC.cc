@@ -8,8 +8,10 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectWLWallGC::ObjectWLWallGC(const System::MapdataGeoObj &params)
-    : ObjectKCL(params), m_extendedDuration(static_cast<s32>(params.setting(1))),
-      m_startFrame(static_cast<s32>(params.setting(4))), m_initialPos(pos()) {
+    : ObjectKCL(params),
+      m_extendedDuration(static_cast<s32>(params.setting(1))),
+      m_startFrame(static_cast<s32>(params.setting(4))),
+      m_initialPos(pos()) {
     u32 rate = params.setting(2);
     u16 distance = params.setting(3);
 
@@ -40,6 +42,8 @@ ObjectWLWallGC::ObjectWLWallGC(const System::MapdataGeoObj &params)
 ObjectWLWallGC::~ObjectWLWallGC() = default;
 
 /// @addr{0x8086BF30}
+/// @copybrief ObjectKCL::getUpdatedMatrix()
+/// @param timeOffset The time offset used to calculate the current frame's transformation
 /// @details Linearly interpolates between the piranha's initial position and its extended position
 /// based on the current frame within the movement cycle.
 const EGG::Matrix34f &ObjectWLWallGC::getUpdatedMatrix(u32 timeOffset) {

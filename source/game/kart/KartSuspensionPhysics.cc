@@ -11,7 +11,9 @@ namespace Kinoko::Kart {
 /// @param wheelIdx The index of the wheel
 /// @param bspWheelIdx The index of the wheel in the @ref BSP::wheels array
 WheelPhysics::WheelPhysics(u16 wheelIdx, u16 bspWheelIdx)
-    : m_wheelIdx(wheelIdx), m_bspWheelIdx(bspWheelIdx), m_bspWheel(nullptr) {}
+    : m_wheelIdx(wheelIdx),
+      m_bspWheelIdx(bspWheelIdx),
+      m_bspWheel(nullptr) {}
 
 /// @addr{0x8059A9C4}
 /// @brief Destructor that destroys the underlying @ref CollisionGroup subsystem for this wheel
@@ -131,7 +133,9 @@ void WheelPhysics::calcSuspension(const EGG::Vector3f &forward) {
 /// @param tireType The type of tire
 /// @param bspWheelIdx The index of the wheel in the @ref BSP::wheels array
 KartSuspensionPhysics::KartSuspensionPhysics(u16 wheelIdx, TireType tireType, u16 bspWheelIdx)
-    : m_tirePhysics(nullptr), m_tireType(tireType), m_bspWheelIdx(bspWheelIdx),
+    : m_tirePhysics(nullptr),
+      m_tireType(tireType),
+      m_bspWheelIdx(bspWheelIdx),
       m_wheelIdx(wheelIdx) {}
 
 /// @addr{0x8059AA04}

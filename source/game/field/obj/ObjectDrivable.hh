@@ -13,11 +13,14 @@ public:
     void load() override;
 
     /// @addr{0x80682918}
+    /// @copybrief ObjectBase::getCollisionRadius()
+    /// @return The default collision radius of a drivable object, `5000.0f`.
     [[nodiscard]] f32 getCollisionRadius() const override {
         return 5000.0f;
     }
 
     /// @brief Called once after collision creation
+    /// @copybrief ObjectKCL::initCollision()
     virtual void initCollision() {}
 
     virtual void loadAABB(f32 radius);
@@ -34,7 +37,7 @@ public:
             KCLTypeMask *maskOut) = 0;
 
     /// @brief Checks collision between a point and the object, writing only partial collision info.
-    ///        Additionally pushes the collision entry into the @ref CollisionDirector cache.
+    /// Additionally pushes the collision entry into the @ref CollisionDirector cache.
     /// @param pos The point to check
     /// @param prevPos The previous position of the point, used for calculating collision depth
     /// @param mask The KCL flags to check collision against (other types are ignored)
@@ -57,7 +60,7 @@ public:
             KCLTypeMask *maskOut) = 0;
 
     /// @brief Checks collision between a point and the object, writing out full collision info.
-    ///        Additionally pushes the collision entry into the @ref CollisionDirector cache.
+    /// Additionally pushes the collision entry into the @ref CollisionDirector cache.
     /// @param pos The point to check
     /// @param prevPos The previous position of the point, used for calculating collision depth
     /// @param mask The KCL flags to check collision against (other types are ignored)
@@ -82,7 +85,7 @@ public:
             KCLTypeMask *maskOut, u32 timeOffset) = 0;
 
     /// @brief Checks collision between a sphere and the object, writing partial collision info.
-    ///        Additionally pushes the collision entry into the @ref CollisionDirector cache.
+    /// Additionally pushes the collision entry into the @ref CollisionDirector cache.
     /// @param radius The radius of the sphere to check
     /// @param pos The position of the sphere to check
     /// @param prevPos The previous position of the sphere, used for calculating collision depth
@@ -109,7 +112,7 @@ public:
             KCLTypeMask *maskOut, u32 timeOffset) = 0;
 
     /// @brief Checks collision between a sphere and the object, writing out full collision info.
-    ///        Additionally pushes the collision entry into the @ref CollisionDirector cache.
+    /// Additionally pushes the collision entry into the @ref CollisionDirector cache.
     /// @param radius The radius of the sphere to check
     /// @param pos The position of the sphere to check
     /// @param prevPos The previous position of the sphere, used for calculating collision depth
@@ -140,8 +143,8 @@ public:
             KCLTypeMask *maskOut) = 0;
 
     /// @brief Checks collision between a point and the object by using the collision director's
-    /// local spatial cache, writing only partial collision info.
-    ///        Additionally pushes the collision entry into the @ref CollisionDirector cache.
+    /// local spatial cache, writing only partial collision info. Additionally pushes the collision
+    /// entry into the @ref CollisionDirector cache.
     /// @param pos The point to check
     /// @param prevPos The previous position of the point, used for calculating collision depth
     /// @param mask The KCL flags to check collision against (other types are ignored)
@@ -165,8 +168,8 @@ public:
             KCLTypeMask *maskOut) = 0;
 
     /// @brief Checks collision between a point and the object by using the collision director's
-    /// local spatial cache, writing out full collision info.
-    ///        Additionally pushes the collision entry into the @ref CollisionDirector cache.
+    /// local spatial cache, writing out full collision info. Additionally pushes the collision
+    /// entry into the @ref CollisionDirector cache.
     /// @param pos The point to check
     /// @param prevPos The previous position of the point, used for calculating collision depth
     /// @param mask The KCL flags to check collision against (other types are ignored)

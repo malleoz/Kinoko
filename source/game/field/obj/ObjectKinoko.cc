@@ -6,7 +6,9 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectKinoko::ObjectKinoko(const System::MapdataGeoObj &params)
-    : ObjectKCL(params), m_initPos(pos()), m_initRot(rot()) {
+    : ObjectKCL(params),
+      m_initPos(pos()),
+      m_initRot(rot()) {
     m_type = static_cast<KinokoType>(params.setting(0));
 
     m_restFrame = 0;
@@ -48,8 +50,10 @@ void ObjectKinoko::calc() {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectKinokoUd::ObjectKinokoUd(const System::MapdataGeoObj &params)
-    : ObjectKinoko(params), m_period(std::max<u16>(params.setting(2), 2)),
-      m_waitDuration(params.setting(4)), m_amplitude(params.setting(1)),
+    : ObjectKinoko(params),
+      m_period(std::max<u16>(params.setting(2), 2)),
+      m_waitDuration(params.setting(4)),
+      m_amplitude(params.setting(1)),
       m_angFreq(F_TAU / static_cast<f32>(m_period)) {
     m_waitFrame = 0;
     m_oscFrame = params.setting(3);
@@ -85,7 +89,8 @@ void ObjectKinokoUd::calcOscillation() {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectKinokoBend::ObjectKinokoBend(const System::MapdataGeoObj &params)
-    : ObjectKinoko(params), m_period(std::max<u16>(params.setting(2), 2)),
+    : ObjectKinoko(params),
+      m_period(std::max<u16>(params.setting(2), 2)),
       m_amplitude(static_cast<f32>(params.setting(1)) * DEG2RAD),
       m_angFreq(F_TAU / static_cast<f32>(m_period)) {
     m_currentFrame = params.setting(3);
@@ -113,7 +118,8 @@ void ObjectKinokoBend::calcOscillation() {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectKinokoNm::ObjectKinokoNm(const System::MapdataGeoObj &params)
-    : ObjectKCL(params), m_type(static_cast<KinokoType>(params.setting(0))) {}
+    : ObjectKCL(params),
+      m_type(static_cast<KinokoType>(params.setting(0))) {}
 
 /// @addr{0x80827A9C}
 /// @brief Default virtual destructor

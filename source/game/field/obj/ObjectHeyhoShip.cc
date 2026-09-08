@@ -7,7 +7,8 @@ namespace Kinoko::Field {
 /// @param params The parameters used to initialize the object
 ObjectHeyhoShip::ObjectHeyhoShip(const System::MapdataGeoObj &params)
     : ObjectProjectileLauncher(params),
-      m_yAmplitude(static_cast<f32>(static_cast<s16>(params.setting(1)))), m_frame(0) {
+      m_yAmplitude(static_cast<f32>(static_cast<s16>(params.setting(1)))),
+      m_frame(0) {
     registerManagedObject();
 }
 

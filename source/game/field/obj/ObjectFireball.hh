@@ -26,6 +26,8 @@ public:
     }
 
     /// @addr{0x8076871C}
+    /// @copybrief ObjectBase::getKclName()
+    /// @return The model name of the fireball (`fireBPlane`)
     [[nodiscard]] const char *getKclName() const override {
         return "fireBPlane";
     }

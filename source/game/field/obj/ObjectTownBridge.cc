@@ -8,7 +8,8 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectTownBridge::ObjectTownBridge(const System::MapdataGeoObj &params)
-    : ObjectKCL(params), m_rotateUpwards(rot().y < 0.0f),
+    : ObjectKCL(params),
+      m_rotateUpwards(rot().y < 0.0f),
       m_angVel(static_cast<float>(params.setting(0))),
       m_pivotFrames(static_cast<u32>(params.setting(1))),
       m_raisedFrames(static_cast<u32>(params.setting(2))),

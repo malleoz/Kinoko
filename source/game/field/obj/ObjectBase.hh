@@ -89,37 +89,47 @@ public:
 
     /// @addr{0x80821DB8}
     /// @brief Resizes the BoxColUnit associated with the object
-    /// @details This does not affect the actual collision geometry of the object, only the
-    /// BoxColUnit used for sptially indexed collision queries. This effectively adjusts how close
-    /// the player needs to be to the object before collision checks are performed.
     /// @param radius The new radius of the collision box
     /// @param maxSpeed The maximum speed for the collision box
-    virtual void resize(f32 radius, f32 maxSpeed) {
+    /// @details This function is virtual in the base game, but no derived classes override it, so
+    /// we can devirtualize in Kinoko. This does not affect the actual collision geometry of the
+    /// object, only the BoxColUnit used for sptially indexed collision queries. This effectively
+    /// adjusts how close the player needs to be to the object before collision checks are
+    /// performed.
+    void resize(f32 radius, f32 maxSpeed) {
         m_boxColUnit->resize(radius, maxSpeed);
     }
 
     /// @addr{0x80821DD8}
     /// @brief Unregisters the BoxColUnit associated with the object from the BoxColManager
-    virtual void unregisterCollision() {
+    /// @details This function is virtual in the base game, but no derived classes override it, so
+    /// we can devirtualize in Kinoko.
+    void unregisterCollision() {
         BoxColManager::Instance()->remove(m_boxColUnit);
     }
 
     /// @addr{0x80821DEC}
     /// @brief Skips collision checks for this object in the BoxColManager
-    virtual void disableCollision() const {
+    /// @details This function is virtual in the base game, but no derived classes override it, so
+    /// we can devirtualize in Kinoko.
+    void disableCollision() const {
         m_boxColUnit->m_flag.setBit(eBoxColFlag::Intangible);
     }
 
     /// @addr{0x80821E00}
     /// @brief Re-enables collision checks for this object in the BoxColManager
-    virtual void enableCollision() const {
+    /// @details This function is virtual in the base game, but no derived classes override it, so
+    /// we can devirtualize in Kinoko.
+    void enableCollision() const {
         m_boxColUnit->m_flag.resetBit(eBoxColFlag::Intangible);
     }
 
     /// @addr{0x80680618}
     /// @brief Fetches the @ref BoxColUnit associated with the object
     /// @return The @ref BoxColUnit associated with the object
-    [[nodiscard]] virtual const BoxColUnit *getUnit() const {
+    /// @details This function is virtual in the base game, but no derived classes override it, so
+    /// we can devirtualize in Kinoko.
+    [[nodiscard]] const BoxColUnit *getUnit() const {
         return m_boxColUnit;
     }
 

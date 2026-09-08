@@ -45,11 +45,14 @@ public:
     }
 
     /// @addr{0x806814C4}
+    /// @copybrief ObjectBase::getCollisionRadius()
+    /// @return The collision radius of the flame pole foot, calculated based on its scale.
     [[nodiscard]] f32 getCollisionRadius() const override {
         return 245.0f * static_cast<f32>(m_mapObj->setting(2));
     }
 
     /// @addr{0x8067FBB8}
+    /// @copybrief ObjectKCL::getUpdatedMatrix()
     [[nodiscard]] const EGG::Matrix34f &getUpdatedMatrix(u32 /*timeOffset*/) override {
         calcTransform();
         return transform();
@@ -64,8 +67,6 @@ public:
             KCLTypeMask *maskOut, u32 timeOffset) override;
 
 private:
-    void enterStateStub() {}
-
     /// @addr{0x8067F2DC}
     /// @brief Runs once when the geyser begins to expand
     void enterExpanding() {
@@ -92,8 +93,6 @@ private:
         m_pole->setActive(false);
         m_pole->disableCollision();
     }
-
-    void calcStateStub() {}
 
     /// @addr{0x8067F484}
     /// @brief Runs every frame when the flame pole is raising up
@@ -157,7 +156,7 @@ private:
     /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 6> STATE_ENTRIES = {{
             {StateEntry<ObjectFlamePoleFoot, &ObjectFlamePoleFoot::enterExpanding,
-                    &ObjectFlamePoleFoot::calcStateStub>(0)},
+                    nullptr>(0)},
             {StateEntry<ObjectFlamePoleFoot, &ObjectFlamePoleFoot::enterEruptingUp,
                     &ObjectFlamePoleFoot::calcEruptingUp>(1)},
             {StateEntry<ObjectFlamePoleFoot, &ObjectFlamePoleFoot::enterEruptingStay,
@@ -165,9 +164,9 @@ private:
             {StateEntry<ObjectFlamePoleFoot, &ObjectFlamePoleFoot::enterEruptingDown,
                     &ObjectFlamePoleFoot::calcEruptingDown>(3)},
             {StateEntry<ObjectFlamePoleFoot, &ObjectFlamePoleFoot::enterDormant,
-                    &ObjectFlamePoleFoot::calcStateStub>(4)},
-            {StateEntry<ObjectFlamePoleFoot, &ObjectFlamePoleFoot::enterStateStub,
-                    &ObjectFlamePoleFoot::calcStateStub>(5)},
+                    nullptr>(4)},
+            {StateEntry<ObjectFlamePoleFoot, nullptr,
+                    nullptr>(5)},
     }};
 
     /// @brief Duration for a full lifecycle of erupting, descending, and dormancy

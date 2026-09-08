@@ -40,6 +40,7 @@ public:
     [[nodiscard]] const EGG::Matrix34f &getUpdatedMatrix(u32 timeOffset) override;
 
     /// @addr{0x80687A2C}
+    /// @copydoc ObjectKCL::checkCollision()
     [[nodiscard]] bool checkCollision(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
             KCLTypeMask *maskOut, u32 timeOffset) override {
@@ -50,6 +51,7 @@ public:
     }
 
     /// @addr{0x80687CC0}
+    /// @copydoc ObjectKCL::checkCollisionCached()
     [[nodiscard]] bool checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
             KCLTypeMask *maskOut, u32 timeOffset) override {

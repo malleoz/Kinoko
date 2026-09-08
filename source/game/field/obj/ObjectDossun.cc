@@ -9,7 +9,8 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectDossun::ObjectDossun(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), m_touchingGround(false) {}
+    : ObjectCollidable(params),
+      m_touchingGround(false) {}
 
 /// @addr{0x8075EE68}
 /// @brief Default virtual destructor

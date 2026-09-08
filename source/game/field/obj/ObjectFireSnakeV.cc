@@ -8,8 +8,10 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectFireSnakeV::ObjectFireSnakeV(const System::MapdataGeoObj &params)
-    : StateManager(this, STATE_ENTRIES), ObjectFireSnake(params),
-      m_cycleDuration(params.setting(1)), m_distFromPipe(static_cast<f32>(params.setting(2))),
+    : StateManager(this, STATE_ENTRIES),
+      ObjectFireSnake(params),
+      m_cycleDuration(params.setting(1)),
+      m_distFromPipe(static_cast<f32>(params.setting(2))),
       m_fallSpeed(0.0f) {
     m_delayFrame = params.setting(0);
     m_spawnPos = pos();

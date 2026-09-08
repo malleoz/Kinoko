@@ -9,7 +9,8 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectHeyho::ObjectHeyho(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), StateManager(this, STATE_ENTRIES),
+    : ObjectCollidable(params),
+      StateManager(this, STATE_ENTRIES),
       m_color(static_cast<Color>(params.setting(1))) {
     const auto *rail = RailManager::Instance()->rail(params.pathId());
     ASSERT(rail);

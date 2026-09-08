@@ -228,7 +228,8 @@ private:
 class AnmObjChrRes : public FrameCtrl {
 public:
     AnmObjChrRes(const ResAnmChr &chr)
-        : FrameCtrl(0.0f, chr.frameCount(), GetAnmPlayPolicy(chr.policy())), m_resAnmChr(chr) {}
+        : FrameCtrl(0.0f, chr.frameCount(), GetAnmPlayPolicy(chr.policy())),
+          m_resAnmChr(chr) {}
 
     [[nodiscard]] u16 frameCount() const {
         return m_resAnmChr.frameCount();

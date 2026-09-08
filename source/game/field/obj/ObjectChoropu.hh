@@ -36,7 +36,6 @@ public:
     }
 
 private:
-    void enterStateStub() {}
     void enterDigging();
     void enterPeeking();
 
@@ -49,7 +48,6 @@ private:
         setRot(EGG::Vector3f(rot().x, rot().y, 0.0f));
     }
 
-    void calcStateStub() {}
     void calcDigging();
     void calcPeeking();
     void calcJumping();
@@ -89,11 +87,11 @@ private:
     static constexpr std::array<StateManagerEntry, 5> STATE_ENTRIES = {{
             StateEntry<ObjectChoropu, &ObjectChoropu::enterDigging, &ObjectChoropu::calcDigging>(0),
             StateEntry<ObjectChoropu, &ObjectChoropu::enterPeeking, &ObjectChoropu::calcPeeking>(1),
-            StateEntry<ObjectChoropu, &ObjectChoropu::enterStateStub,
-                    &ObjectChoropu::calcStateStub>(2),
+            StateEntry<ObjectChoropu, nullptr,
+                    nullptr>(2),
             StateEntry<ObjectChoropu, &ObjectChoropu::enterJumping, &ObjectChoropu::calcJumping>(3),
-            StateEntry<ObjectChoropu, &ObjectChoropu::enterStateStub,
-                    &ObjectChoropu::calcStateStub>(4),
+            StateEntry<ObjectChoropu, nullptr,
+                    nullptr>(4),
     }};
 };
 
@@ -141,6 +139,8 @@ public:
     }
 
     /// @addr{0x806BBE4C}
+    /// @copybrief ObjectBase::getName()
+    /// @return The name of the object, `holl`
     [[nodiscard]] const char *getName() const override {
         return "holl";
     }
@@ -153,6 +153,8 @@ public:
     }
 
     /// @addr{0x806BBE58}
+    /// @copybrief ObjectBase::getKclName()
+    /// @return The name of the hole object, `holl`
     [[nodiscard]] const char *getKclName() const override {
         return "holl";
     }

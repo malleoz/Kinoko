@@ -15,14 +15,24 @@ struct StateManagerEntry {
 
 /// @brief Templated helper function to create a StateManagerEntry for an object of type T
 /// @tparam T The type of the object that will use this state entry
-/// @tparam Enter Pointer to the member function of T, called when the state is entered
-/// @tparam Calc Pointer to the member function of T, called every frame while the state is active
+/// @tparam Enter Pointer to the member function of T, called when the state is entered, or
+/// `nullptr` if no work is required on entry
+/// @tparam Calc Pointer to the member function of T, called every frame while the state is active,
+/// or `nullptr` if no work is required
 /// @param id The ID of the state, always maps to the index in the entry table
 /// @return A StateManagerEntry struct initialized with the provided ID and function pointers
-template <typename T, void (T::*Enter)(), void (T::*Calc)()>
+template <typename T, void (T::*Enter)() = nullptr, void (T::*Calc)() = nullptr>
 constexpr StateManagerEntry StateEntry(u16 id) {
-    auto enter = [](void *obj) { (reinterpret_cast<T *>(obj)->*Enter)(); };
-    auto calc = [](void *obj) { (reinterpret_cast<T *>(obj)->*Calc)(); };
+    auto enter = [](void *obj) {
+        if (Enter != nullptr) {
+            (reinterpret_cast<T *>(obj)->*Enter)();
+        }
+    };
+    auto calc = [](void *obj) {
+        if (Calc != nullptr) {
+            (reinterpret_cast<T *>(obj)->*Calc)();
+        }
+    };
     return {id, enter, calc};
 }
 
@@ -49,8 +59,12 @@ protected:
     /// @param entries A span of @ref StateManagerEntry structs that define the set of enter and
     /// calc functions for each state Id
     StateManager(void *obj, const std::span<const StateManagerEntry> &entries)
-        : m_currentStateId(0), m_nextStateId(-1), m_currentFrame(0), m_entryIds(entries.size()),
-          m_entries(entries), m_obj(obj) {
+        : m_currentStateId(0),
+          m_nextStateId(-1),
+          m_currentFrame(0),
+          m_entryIds(entries.size()),
+          m_entries(entries),
+          m_obj(obj) {
         // The base game initializes all entries to 0xffff, possibly to avoid an uninitialized value
         memset(m_entryIds.begin(), 0xff, m_entryIds.size());
 

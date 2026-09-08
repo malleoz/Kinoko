@@ -43,6 +43,8 @@ public:
         return m_leader;
     }
 
+    /// @brief Exposes the follower birds so that @ref ObjectBirdFollower can access them
+    /// @return A const ref to the collection of follower birds.
     [[nodiscard]] const auto &followers() const {
         return m_followers;
     }
@@ -62,6 +64,7 @@ public:
 
     /// @addr{0x8077C504}
     /// @copybrief ObjectBase::calc()
+    /// @details Updates the rail interpolator and sets the leader's position accordingly.
     void calc() override {
         m_railInterpolator->calc();
         setPos(m_railInterpolator->curPos());
@@ -82,7 +85,7 @@ public:
     void createCollision() override {}
 
 protected:
-    ObjectBird *m_bird;
+    ObjectBird *m_bird; ///< The parent @ref ObjectBird instance that this leader belongs to
 };
 
 /// @brief Represents all but one of the birds in an @ref ObjectBird group.
@@ -101,9 +104,9 @@ public:
 private:
     void calcPos();
 
-    const u32 m_idx; ///< Index of this follower in the flock
-    EGG::Vector3f m_velocity;
-    f32 m_baseSpeed;
+    const u32 m_idx;          ///< Index of this follower in the flock
+    EGG::Vector3f m_velocity; ///< The current velocity of the follower bird
+    const f32 m_baseSpeed;    ///< The base speed of the follower bird
 };
 
 } // namespace Kinoko::Field

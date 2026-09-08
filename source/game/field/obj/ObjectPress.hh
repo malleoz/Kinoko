@@ -43,6 +43,8 @@ public:
 
     void createCollision() override;
 
+    /// @copybrief ObjectBase::getCollisionRadius()
+    /// @return The collision radius of the press, `700.0f`.
     [[nodiscard]] f32 getCollisionRadius() const override {
         return 700.0f;
     }
@@ -143,6 +145,8 @@ public:
     ~ObjectPressSenko() override;
 
     /// @addr{0x8076EA28}
+    /// @copybrief ObjectBase::id()
+    /// @return The ID of the press object, `ObjectId::Press`.
     [[nodiscard]] ObjectId id() const override {
         return ObjectId::Press;
     }
@@ -163,6 +167,8 @@ public:
     }
 
     /// @addr{0x8076EA3C}
+    /// @copybrief ObjectBase::getKclName()
+    /// @return The model name of the press (`Press`).
     [[nodiscard]] const char *getKclName() const override {
         return "Press";
     }

@@ -43,6 +43,8 @@ public:
     }
 
     /// @addr{0x806DA7A4}
+    /// @copybrief ObjectBase::getKclName()
+    /// @return The model name of the car variant
     [[nodiscard]] const char *getKclName() const override {
         return m_mdlName;
     }
@@ -51,6 +53,8 @@ public:
     void calcCollisionTransform() override;
 
     /// @addr{0x806D69C0}
+    /// @copybrief ObjectBase::getCollisionRadius()
+    /// @return The collision radius of the vehicle, `600.0f` for cars and `1100.0f` for trucks.
     [[nodiscard]] f32 getCollisionRadius() const override {
         constexpr f32 NORMAL_RADIUS = 600.0f;
         constexpr f32 TRUCK_RADIUS = 1100.0f;
@@ -85,8 +89,6 @@ private:
     /// @brief Rate of speed increase when a vehicle enters and exits the highway
     static constexpr f32 TOLL_BOOTH_ACCEL = 200.0f;
 
-    void enterStateStub() {}
-    void calcStateStub() {}
     void calcSpeedup();
     void calcSlowdown();
 
@@ -111,11 +113,11 @@ private:
 
     /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 3> STATE_ENTRIES = {{
-            {StateEntry<ObjectCarTGE, &ObjectCarTGE::enterStateStub, &ObjectCarTGE::calcStateStub>(
+            {StateEntry<ObjectCarTGE, nullptr, nullptr>(
                     0)},
-            {StateEntry<ObjectCarTGE, &ObjectCarTGE::enterStateStub, &ObjectCarTGE::calcSpeedup>(
+            {StateEntry<ObjectCarTGE, nullptr, &ObjectCarTGE::calcSpeedup>(
                     1)},
-            {StateEntry<ObjectCarTGE, &ObjectCarTGE::enterStateStub, &ObjectCarTGE::calcSlowdown>(
+            {StateEntry<ObjectCarTGE, nullptr, &ObjectCarTGE::calcSlowdown>(
                     2)},
     }};
 };

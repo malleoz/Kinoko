@@ -6,7 +6,8 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectFirebar::ObjectFirebar(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), m_spokes(std::max<u32>(1, params.setting(3))),
+    : ObjectCollidable(params),
+      m_spokes(std::max<u32>(1, params.setting(3))),
       m_angSpeed(static_cast<f32>(static_cast<s16>(params.setting(1)))) {
     size_t fireballCount = std::max<u32>(1, params.setting(0) * m_spokes);
     m_fireballs = owning_span<ObjectFireball *>(fireballCount);

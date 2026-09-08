@@ -52,11 +52,11 @@ public:
     void initProjectile(const EGG::Vector3f &pos) override;
 
     /// @addr{0x806C29FC}
+    /// @brief Callback function use by the @ref ObjectSunDS that wants to throw this projectile.
     void onLaunch() override {
         m_nextStateId = 1;
     }
 
-    void enterStateStub() {}
     void enterDespawned();
 
     /// @addr{0x806C19E8}
@@ -80,7 +80,6 @@ public:
 
     void enterRest();
 
-    void calcStateStub() {}
     void calcFalling();
 
     /// @addr{0x806C1E90}
@@ -129,17 +128,17 @@ private:
     /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 6> STATE_ENTRIES = {{
             {StateEntry<ObjectFireSnake, &ObjectFireSnake::enterDespawned,
-                    &ObjectFireSnake::calcStateStub>(0)},
+                    nullptr>(0)},
             {StateEntry<ObjectFireSnake, &ObjectFireSnake::enterFalling,
                     &ObjectFireSnake::calcFalling>(1)},
             {StateEntry<ObjectFireSnake, &ObjectFireSnake::enterHighBounce,
                     &ObjectFireSnake::calcHighBounce>(2)},
             {StateEntry<ObjectFireSnake, &ObjectFireSnake::enterRest, &ObjectFireSnake::calcRest>(
                     3)},
-            {StateEntry<ObjectFireSnake, &ObjectFireSnake::enterStateStub,
+            {StateEntry<ObjectFireSnake, nullptr,
                     &ObjectFireSnake::calcBounce>(4)},
-            {StateEntry<ObjectFireSnake, &ObjectFireSnake::enterStateStub,
-                    &ObjectFireSnake::calcStateStub>(5)},
+            {StateEntry<ObjectFireSnake, nullptr,
+                    nullptr>(5)},
     }};
 
     static constexpr f32 GRAVITY = 3.0f;          ///< Gravitational constant of acceleration

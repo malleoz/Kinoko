@@ -8,16 +8,17 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectBulldozer::ObjectBulldozer(const System::MapdataGeoObj &params)
-    : ObjectKCL(params), m_initialPos(pos()), m_initialRot(rot()) {
-    m_timeOffset = params.setting(3) * 2;
-    m_periodDenom = std::max<u16>(2, params.setting(2));
-    m_restFrames = params.setting(4);
-    m_amplitude = params.setting(1);
-    m_left = (strcmp(getName(), "bulldozer_left") == 0);
-    m_fullPeriod = m_periodDenom + m_restFrames * 2;
-    m_halfPeriod = m_fullPeriod / 2;
-    m_period = F_TAU / static_cast<f32>(m_periodDenom);
-}
+    : ObjectKCL(params),
+      m_initialPos(pos()),
+      m_initialRot(rot()),
+      m_timeOffset(params.setting(3) * 2),
+      m_periodDenom(std::max<u16>(2, params.setting(2))),
+      m_restFrames(params.setting(4)),
+      m_fullPeriod(m_periodDenom + m_restFrames * 2),
+      m_amplitude(params.setting(1)),
+      m_left(strcmp(getName(), "bulldozer_left") == 0),
+      m_period(F_TAU / static_cast<f32>(m_periodDenom)),
+      m_halfPeriod(m_fullPeriod / 2) {}
 
 /// @addr{0x807FE5F0}
 /// @brief Default virtual destructor
@@ -25,6 +26,7 @@ ObjectBulldozer::~ObjectBulldozer() = default;
 
 /// @addr{0x807FDC50}
 /// @copybrief ObjectBase::calc()
+/// @details Updates the position of the bulldozer based on its oscillation on the current frame.
 void ObjectBulldozer::calc() {
     u32 timer = System::RaceManager::Instance()->timer();
     f32 posOffset = calcPosOffset(m_timeOffset + timer);
@@ -35,6 +37,9 @@ void ObjectBulldozer::calc() {
 }
 
 /// @addr{0x807FE364}
+/// @copybrief ObjectKCL::initCollision()
+/// @details Initializes the collision manager and calculates the midpoint of the bulldozer's
+/// collision bounding box.
 void ObjectBulldozer::initCollision() {
     calcTransform();
 
@@ -53,6 +58,12 @@ void ObjectBulldozer::initCollision() {
 }
 
 /// @addr{0x807FE534}
+/// @copybrief ObjectKCL::getUpdatedMatrix()
+/// @param timeOffset The time offset used to calculate the current frame's transformation
+/// @return Const ref to the updated transformation matrix for the current frame, taking into
+/// account the time offset.
+/// @details Rotation stays constant. The position offset is based off the bulldozer's facing
+/// direction and its oscillation.
 const EGG::Matrix34f &ObjectBulldozer::getUpdatedMatrix(u32 timeOffset) {
     EGG::Vector3f pos = m_initialPos;
     u32 timer = System::RaceManager::Instance()->timer();
@@ -65,22 +76,26 @@ const EGG::Matrix34f &ObjectBulldozer::getUpdatedMatrix(u32 timeOffset) {
 }
 
 /// @addr{0x807FDE5C}
-/// @brief Based off timeOffset, determine the position offset from the bulldozer's initial position
-f32 ObjectBulldozer::calcPosOffset(u32 timeOffset) const {
-    u16 t = timeOffset % m_fullPeriod;
+/// @brief Based off `t`, determine the position offset from the bulldozer's initial position
+/// @param t The frame on which to calculate the position offset
+/// @return The position offset from the bulldozer's initial position on frame `t`.
+/// @details Calculates the position offset of the bulldozer based on its sinusoidal oscillation at
+/// frame `t`.
+f32 ObjectBulldozer::calcPosOffset(u32 t) const {
+    u16 phase = t % m_fullPeriod;
 
-    if (t >= m_halfPeriod - m_restFrames) {
-        if (t < m_halfPeriod) {
-            t = m_periodDenom / 2;
-        } else if (t < m_fullPeriod - m_restFrames) {
-            t -= m_restFrames;
+    if (phase >= m_halfPeriod - m_restFrames) {
+        if (phase < m_halfPeriod) {
+            phase = m_periodDenom / 2;
+        } else if (phase < m_fullPeriod - m_restFrames) {
+            phase -= m_restFrames;
         } else {
-            t = m_periodDenom;
+            phase = m_periodDenom;
         }
     }
 
     return static_cast<f32>(m_amplitude) *
-            (1.0f + EGG::Mathf::cos(m_period * static_cast<f32>(t))) * 0.5f;
+            (1.0f + EGG::Mathf::cos(m_period * static_cast<f32>(phase))) * 0.5f;
 }
 
 } // namespace Kinoko::Field

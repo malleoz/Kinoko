@@ -29,6 +29,7 @@ public:
     void createCollision() override;
 
     /// @addr{0x8080A8D0}
+    /// @copybrief ObjectKCL::colRadiusAdditionalLength()
     [[nodiscard]] f32 colRadiusAdditionalLength() const override {
         return 500.0f;
     }

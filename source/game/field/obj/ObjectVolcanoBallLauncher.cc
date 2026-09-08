@@ -14,7 +14,8 @@ namespace Kinoko::Field {
 /// the velocity specified by param setting 1 and the rail points. Constructs @ref ObjectVolcanoBall
 /// objects which this launcher instance will manage.
 ObjectVolcanoBallLauncher::ObjectVolcanoBallLauncher(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params), m_initDelay(static_cast<f32>(static_cast<s16>(params.setting(1)))),
+    : ObjectCollidable(params),
+      m_initDelay(static_cast<f32>(static_cast<s16>(params.setting(1)))),
       m_cycleDuration(static_cast<f32>(static_cast<s16>(params.setting(2)))) {
     const auto *rail = RailManager::Instance()->rail(params.pathId());
     ASSERT(rail);

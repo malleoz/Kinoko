@@ -99,7 +99,8 @@ f32 ObjectCow::setTarget(const EGG::Vector3f &v) {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 ObjectCowLeader::ObjectCowLeader(const System::MapdataGeoObj &params)
-    : ObjectCow(params), StateManager(this, STATE_ENTRIES) {}
+    : ObjectCow(params),
+      StateManager(this, STATE_ENTRIES) {}
 
 /// @addr{0x806BD1F8}
 /// @brief Default virtual destructor
@@ -225,7 +226,10 @@ void ObjectCowLeader::calcRoam() {
 /// @param initRot The initial rotation for the follower cow
 ObjectCowFollower::ObjectCowFollower(const System::MapdataGeoObj &params, const EGG::Vector3f &pos,
         f32 initRot)
-    : ObjectCow(params), StateManager(this, STATE_ENTRIES), m_posOffset(pos), m_rail(nullptr) {
+    : ObjectCow(params),
+      StateManager(this, STATE_ENTRIES),
+      m_posOffset(pos),
+      m_rail(nullptr) {
     addPos(m_posOffset);
     setRot(EGG::Vector3f(rot().x, initRot, rot().z));
 }

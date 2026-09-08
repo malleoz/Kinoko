@@ -278,7 +278,10 @@ MapdataJugemPoint *RaceManager::jugemPoint() const {
 /// @details Initializes the random number generator with the predefined seed, sets the initial
 /// stage to Intro, and resets the intro and main timers.
 RaceManager::RaceManager()
-    : m_random(RNG_SEED), m_stage(Stage::Intro), m_introTimer(0), m_timer(0) {}
+    : m_random(RNG_SEED),
+      m_stage(Stage::Intro),
+      m_introTimer(0),
+      m_timer(0) {}
 
 /// @addr{0x80532E3C}
 /// @brief Private destructor

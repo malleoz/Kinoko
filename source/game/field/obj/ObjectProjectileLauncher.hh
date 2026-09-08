@@ -26,6 +26,8 @@ public:
     void createCollision() override {}
 
     /// @brief Used by @ref ObjectSniper to check which object index (if any) should be thrown
+    /// @return The index of the rail point from which to launch the projectile, or -1 if no
+    /// projectile should be launched this frame.
     virtual s16 launchPointIdx() = 0;
 };
 
