@@ -50,7 +50,7 @@ public:
     /// @brief Registers a new @ref ObjectDrivable with the director, and adds it to the list of
     /// objects that require per-frame calculations if applicable
     void addObject(ObjectDrivable *obj) {
-        if (obj->loadFlags() & 1) {
+        if (obj->loadFlags().onBit(ObjectBase::eLoadFlags::Calc)) {
             m_calcObjects.push_back(obj);
         }
 

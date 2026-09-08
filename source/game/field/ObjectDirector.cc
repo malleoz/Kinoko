@@ -38,9 +38,7 @@ void ObjectDirector::calc() {
 /// @brief Registers an object to the director, and adds it to the appropriate lists based on its
 /// load flags and collision mode
 void ObjectDirector::addObject(ObjectCollidable *obj) {
-    u32 loadFlags = obj->loadFlags();
-
-    if (loadFlags & 1) {
+    if (obj->loadFlags().onBit(ObjectBase::eLoadFlags::Calc)) {
         m_calcObjects.push_back(obj);
     }
 

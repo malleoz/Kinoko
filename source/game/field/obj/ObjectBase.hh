@@ -31,9 +31,9 @@ public:
 
     /// @brief Describes whether the object needs to be updated every frame
     enum class eLoadFlags {
-        None = 0, ///< No updates required
-        Calc = 1, ///< The state of the object should be recalculated every frame
-        Draw = 2, ///< The object should be re-drawn every frame
+        Calc = 0, ///< The state of the object should be recalculated every frame
+        Draw = 1, ///< The object should be re-drawn every frame
+        Unk = 2,  ///< Unknown, used in @ref ObjectCollidable::loadAABB()
     };
 
     /// @brief A bitfield of @ref eLoadFlags that represents the update requirements of the object
@@ -77,12 +77,12 @@ public:
 
     /// @addr{0x806BF434}
     /// @brief Returns a bitmask indicating which lifecycle hooks should be called for the object
-    /// @return @ref eLoadFlags::None
+    /// @return No flags set
     /// @details In Kinoko, the only effective behavior of this bitmask is to determine whether
     /// calc() should be called. The other bits are unused.
     [[nodiscard]] virtual LoadFlags loadFlags() const {
         // TODO: This references LOD to determine load flags
-        return LoadFlags(eLoadFlags::None);
+        return LoadFlags();
     }
 
     [[nodiscard]] virtual const char *getKclName() const;
