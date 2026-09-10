@@ -14,6 +14,12 @@ ObjectOilSFC::ObjectOilSFC(const System::MapdataGeoObj &params) : ObjectCollidab
 ObjectOilSFC::~ObjectOilSFC() = default;
 
 /// @addr{0x806DD9D8}
+/// @copybrief ObjectCollidable::onCollision()
+/// @param kartObj The kart object involved in the collision
+/// @param reactionOnKart The reaction that should be applied to the kart upon collision
+/// @param hitDepth The depth of the collision along each axis
+/// @return @ref Kart::Reaction::SpinTwice if the player is on the ground, otherwise @ref
+/// Kart::Reaction::None
 /// @details If the player is on the ground, they will lose traction and spin out.
 Kart::Reaction ObjectOilSFC::onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
         Kart::Reaction /*reactionOnObj*/, EGG::Vector3f &hitDepth) {

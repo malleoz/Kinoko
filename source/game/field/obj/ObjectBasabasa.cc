@@ -89,10 +89,6 @@ ObjectBasabasa::ObjectBasabasa(const System::MapdataGeoObj &params)
     s_initialYRange = params.setting(4);
 }
 
-/// @addr{0x806B72F4}
-/// @brief Default virtual destructor
-ObjectBasabasa::~ObjectBasabasa() = default;
-
 /// @addr{0x806B7334}
 /// @copybrief ObjectBase::init()
 /// @details Initializes all bats to be inactive and resets the spawner's cycle timer and active bat

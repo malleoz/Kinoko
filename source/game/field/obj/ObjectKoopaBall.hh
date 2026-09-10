@@ -24,6 +24,7 @@ public:
             Kart::Reaction reactionOnObj, EGG::Vector3f &hitDepth) override;
 
     /// @addr{0x80771F60}
+    /// @copydoc ObjectCollidable::getCollisionTranslation()
     /// @details Extends the collision translation to include the velocity of the koopa ball, so
     /// collision detection happens from further away when the ball is moving towards the player.
     const EGG::Vector3f &getCollisionTranslation() const override {

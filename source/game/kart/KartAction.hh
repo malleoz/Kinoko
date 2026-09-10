@@ -12,7 +12,7 @@ enum class Action {
     ForwardLaunch = 2, ///< The kart launches forward into the air and flips once
     AwayFlipOnce = 3,  ///< The kart launches into the air away from the collision and flips once
     AwayFlipTwice = 4, ///< The kart launches into the air away from the collision and flips twice
-    SidewaysFlipTwice = 5,   ///< The kart launches sideways into the air and flips twice
+    Sideways = 5,      ///< The kart launches sideways into the air and flips once
     LaunchSpinLoseItem = 6,  ///< The kart launches into the air, flips once, and loses its items
     ExplosionLoseItem = 7,   ///< The kart launches high into the air, and loses its items
     HighLaunchLoseItem = 8,  ///< The kart launches high into the air, and loses its items
@@ -143,7 +143,7 @@ private:
     void startSmallLaunch();
     void startActionAwayFlipOnce();
     void startActionAwayFlipTwice();
-    void startActionSidewaysFlipTwice();
+    void startActionSideways();
     void startLargeFlipAction();
 
     /// @addr{0x80568000}
@@ -229,7 +229,7 @@ private:
             {0.96f, 0.96f, 4}, ///< Action::ForwardLaunch
             {0.0f, 0.96f, 4},  ///< Action::AwayFlipOnce
             {0.0f, 0.98f, 4},  ///< Action::AwayFlipTwice
-            {0.0f, 0.96f, 4},  ///< Action::SidewaysFlipTwice
+            {0.0f, 0.96f, 4},  ///< Action::Sideways
             {0.0f, 0.96f, 4},  ///< Action::LaunchSpinLoseItem
             {0.0f, 0.0f, 6},   ///< Action::ExplosionLoseItem
             {0.0f, 0.99f, 6},  ///< Action::HighLaunchLoseItem
@@ -259,24 +259,24 @@ private:
     /// @addr{0x808B4D40}
     /// @brief Function pointers for each action's start function, indexed by the Action enum
     static constexpr std::array<StartActionFunc, MAX_ACTION> ON_START = {{
-            &KartAction::startStub,                    ///< @ref Action::SpinOnce
-            &KartAction::startSpinTwice,               ///< @ref Action::SpinTwice
-            &KartAction::startSmallLaunch,             ///< @ref Action::ForwardLaunch
-            &KartAction::startActionAwayFlipOnce,      ///< @ref Action::AwayFlipOnce
-            &KartAction::startActionAwayFlipTwice,     ///< @ref Action::AwayFlipTwice
-            &KartAction::startActionSidewaysFlipTwice, ///< @ref Action::SidewaysFlipTwice
-            &KartAction::startStub,                    ///< @ref Action::LaunchSpinLoseItem
-            &KartAction::startLargeFlipAction,         ///< @ref Action::ExplosionLoseItem
-            &KartAction::startLargeFlipAction,         ///< @ref Action::HighLaunchLoseItem
-            &KartAction::startFireSpin,                ///< @ref Action::FireSpin
-            &KartAction::startStub,                    ///< Unused in Kinoko
-            &KartAction::startStub,                    ///< Unused in Kinoko
-            &KartAction::startLongPressAction,         ///< @ref Action::LongCrushLoseItem
-            &KartAction::startStub,                    ///< Unused in Kinoko
-            &KartAction::startShortPressAction,        ///< @ref Action::ShortCrushLoseItem
-            &KartAction::startSpinShrinkAction,        ///< @ref Action::SpinShrink
-            &KartAction::startStub,                    ///< @ref Action::CrushRespawn
-            &KartAction::startStub,                    ///< Unused in Kinoko
+            &KartAction::startStub,                ///< @ref Action::SpinOnce
+            &KartAction::startSpinTwice,           ///< @ref Action::SpinTwice
+            &KartAction::startSmallLaunch,         ///< @ref Action::ForwardLaunch
+            &KartAction::startActionAwayFlipOnce,  ///< @ref Action::AwayFlipOnce
+            &KartAction::startActionAwayFlipTwice, ///< @ref Action::AwayFlipTwice
+            &KartAction::startActionSideways,      ///< @ref Action::Sideways
+            &KartAction::startStub,                ///< @ref Action::LaunchSpinLoseItem
+            &KartAction::startLargeFlipAction,     ///< @ref Action::ExplosionLoseItem
+            &KartAction::startLargeFlipAction,     ///< @ref Action::HighLaunchLoseItem
+            &KartAction::startFireSpin,            ///< @ref Action::FireSpin
+            &KartAction::startStub,                ///< Unused in Kinoko
+            &KartAction::startStub,                ///< Unused in Kinoko
+            &KartAction::startLongPressAction,     ///< @ref Action::LongCrushLoseItem
+            &KartAction::startStub,                ///< Unused in Kinoko
+            &KartAction::startShortPressAction,    ///< @ref Action::ShortCrushLoseItem
+            &KartAction::startSpinShrinkAction,    ///< @ref Action::SpinShrink
+            &KartAction::startStub,                ///< @ref Action::CrushRespawn
+            &KartAction::startStub,                ///< Unused in Kinoko
     }};
 
     /// @addr{0x808B4E18}
@@ -287,7 +287,7 @@ private:
             &KartAction::calcLaunchAction,        ///< @ref Action::ForwardLaunch
             &KartAction::calcLaunchAction,        ///< @ref Action::AwayFlipOnce
             &KartAction::calcActionAwayFlipTwice, ///< @ref Action::AwayFlipTwice
-            &KartAction::calcLaunchAction,        ///< @ref Action::SidewaysFlipTwice
+            &KartAction::calcLaunchAction,        ///< @ref Action::Sideways
             &KartAction::calcStub,                ///< @ref Action::LaunchSpinLoseItem
             &KartAction::calcLargeFlipAction,     ///< @ref Action::ExplosionLoseItem
             &KartAction::calcLargeFlipAction,     ///< @ref Action::HighLaunchLoseItem
@@ -310,7 +310,7 @@ private:
             &KartAction::endLaunchAction, ///< @ref Action::ForwardLaunch
             &KartAction::endLaunchAction, ///< @ref Action::AwayFlipOnce
             &KartAction::endLaunchAction, ///< @ref Action::AwayFlipTwice
-            &KartAction::endLaunchAction, ///< @ref Action::SidewaysFlipTwice
+            &KartAction::endLaunchAction, ///< @ref Action::Sideways
             &KartAction::endStub,         ///< @ref Action::LaunchSpinLoseItem
             &KartAction::endStub,         ///< @ref Action::ExplosionLoseItem
             &KartAction::endStub,         ///< @ref Action::HighLaunchLoseItem

@@ -7,8 +7,15 @@ namespace Kinoko::Field {
 /// @brief The base class for a conveyor belt which induces road velocity.
 class ObjectBelt : public ObjectDrivable {
 public:
-    ObjectBelt(const System::MapdataGeoObj &params);
-    ~ObjectBelt() override;
+    /// @addr{0x807FC248}
+    /// @brief Constructor
+    /// @param params The parameters used to initialize the object
+    /// @details Initializes road velocity to `32.0f`.
+    ObjectBelt(const System::MapdataGeoObj &params) : ObjectDrivable(params), m_roadVel(32.0f) {}
+
+    /// @addr{0x807FC5EC}
+    /// @brief Default virtual destructor
+    ~ObjectBelt() override = default;
 
     /// @addr{0x807FD79C}
     /// @copybrief ObjectBase::loadFlags()

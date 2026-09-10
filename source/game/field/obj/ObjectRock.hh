@@ -21,6 +21,7 @@ public:
     }
 
     /// @addr{0x8077036C}
+    /// @copydoc ObjectCollidable::getCollisionTranslation()
     [[nodiscard]] const EGG::Vector3f &getCollisionTranslation() const override {
         return m_colTranslate;
     }

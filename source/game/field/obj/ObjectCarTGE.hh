@@ -16,16 +16,36 @@ class ObjectCarTGE final : public ObjectCollidable, private StateManager {
 public:
     /// @brief The type of vehicle represented by the object
     enum class CarType {
-        Normal = 0,
-        Truck = 1,
-        BombCar = 2, ///< Unused in time trials
+        Normal = 0,  ///< A regular car
+        Truck = 1,   ///< A truck
+        BombCar = 2, ///< Bob-omb car, unused in time trials
     };
 
     ObjectCarTGE(const System::MapdataGeoObj &params);
-    ~ObjectCarTGE() override;
+
+    /// @addr{0x806D691C}
+    /// @brief Virtual destructor that destroys the auxiliary collision object
+    ~ObjectCarTGE() override {
+        EGG::egg_delete(m_auxCollision);
+    }
 
     void init() override;
-    void calc() override;
+
+    /// @addr{0x806D6ECC}
+    /// @copybrief ObjectBase::calc()
+    /// @details Evaluates the car's state machine and rail, updating its @ref m_nextStateId and
+    /// position to reflect the current state of the car.
+    void calc() override {
+        StateManager::calc();
+
+        if (m_railInterpolator->calc() == RailInterpolator::Status::SegmentEnd) {
+            calcStateFromRailPointSetting();
+        }
+
+        calcPos();
+
+        m_hasAuxCollision = false;
+    }
 
     /// @addr{0x806DA7AC}
     /// @copybrief ObjectBase::loadFlags()
@@ -65,21 +85,61 @@ public:
 
     Kart::Reaction onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
             Kart::Reaction reactionOnObj, EGG::Vector3f &hitDepth) override;
-    bool checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &dist) override;
-    [[nodiscard]] const EGG::Vector3f &collisionCenter() const override;
+
+    /// @addr{0x806DA660}
+    /// @brief Checks kart collision against both the primary and auxiliary collision objects
+    /// @param lhs The collision object to check against this car
+    /// @param dist The vector to store the collision depth
+    /// @return `true` if a collision occurred, `false` otherwise
+    bool checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &dist) override {
+        dist = EGG::Vector3f::zero;
+        bool hasCol = lhs->check(*m_collision, dist);
+
+        if (!hasCol) {
+            hasCol = lhs->check(*m_auxCollision, dist);
+            m_hasAuxCollision = hasCol;
+        }
+
+        return hasCol;
+    }
+
+    /// @addr{0x806D7CF8}
+    /// @copydoc ObjectCollidable::collisionCenter()
+    /// @details The center of the car's collision volume is based on its type.
+    [[nodiscard]] const EGG::Vector3f &collisionCenter() const override {
+        static constexpr EGG::Vector3f CENTER_TRUCK = EGG::Vector3f(0.0f, 300.0f, 0.0f);
+        static constexpr EGG::Vector3f CENTER_NORMAL = EGG::Vector3f(0.0f, 100.0f, 0.0f);
+        static constexpr EGG::Vector3f CENTER_DEFAULT = EGG::Vector3f(0.0f, 0.0f, 0.0f);
+
+        switch (m_carType) {
+        case CarType::Truck:
+            return CENTER_TRUCK;
+        case CarType::Normal:
+            return CENTER_NORMAL;
+        default:
+            return CENTER_DEFAULT;
+        }
+    }
 
     /// @beginSetters
+    /// @brief Sets the @ref ObjectHighwayManager associated with this object
+    /// @param highwayMgr The highway manager to oversee this object
     void setHighwayManager(const ObjectHighwayManager *highwayMgr) {
         m_highwayMgr = highwayMgr;
     }
 
     /// @addr{0x806D9A04}
+    /// @brief Resets @ref m_squashed to `false`
+    /// @details This is called by @ref ObjectHighwayManager on all vehicles immediately after a
+    /// squash with any one car occurs, so that it can enforce the squish cooldown for the player.
     void reset() {
         m_squashed = false;
     }
     /// @endSetters
 
     /// @beginGetters
+    /// @brief Checks if this vehicle has squashed the player this frame
+    /// @return `true` if the vehicle has squashed the player, `false` otherwise
     [[nodiscard]] bool squashed() const {
         return m_squashed;
     }
@@ -89,16 +149,58 @@ private:
     /// @brief Rate of speed increase when a vehicle enters and exits the highway
     static constexpr f32 TOLL_BOOTH_ACCEL = 200.0f;
 
-    void calcSpeedup();
-    void calcSlowdown();
+    /// @addr{0x806D7D70}
+    /// @brief Runs once per frame when cars are speeding up
+    /// @details On Moonview Highway, the speed cap (@ref m_highwayVel) is 70. Since this function
+    /// increases speed by 200 units per frame, this means this state is only executed for 1 frame
+    /// when cars get on the highway.
+    void calcSpeedup() {
+        m_currSpeed += TOLL_BOOTH_ACCEL;
+
+        if (m_currSpeed > m_highwayVel) {
+            m_currSpeed = m_highwayVel;
+            m_nextStateId = 0;
+        }
+
+        m_railInterpolator->setCurrVel(m_currSpeed);
+        m_scaledTangentDir = m_railInterpolator->curTangentDir() * m_currSpeed;
+    }
+
+    /// @addr{0x806D7E0C}
+    /// @brief The state when cars are slowing down.
+    /// @details On Moonview Highway, the speed floor m_localVel is 40, which means this state is
+    /// only executed for 1 frame when cars get off the highway.
+    void calcSlowdown() {
+        m_currSpeed -= TOLL_BOOTH_ACCEL;
+
+        if (m_currSpeed < m_localVel) {
+            m_currSpeed = m_localVel;
+            m_nextStateId = 0;
+        }
+
+        m_railInterpolator->setCurrVel(m_currSpeed);
+        m_scaledTangentDir = m_railInterpolator->curTangentDir() * m_currSpeed;
+    }
 
     void calcPos();
-    void calcStateFromRailPointSetting();
+
+    /// @addr{0x806D9504}
+    /// @brief Checks if the car should speed up or slow down based off the rail point's settings
+    void calcStateFromRailPointSetting() {
+        u16 curPointSpeedSetting = m_railInterpolator->curPoint().setting[1];
+        u16 nextPointSpeedSetting = m_railInterpolator->nextPoint().setting[1];
+
+        if (curPointSpeedSetting == 0 && nextPointSpeedSetting == 1) {
+            m_nextStateId = 1;
+        } else if (curPointSpeedSetting == 1 && nextPointSpeedSetting == 0) {
+            m_nextStateId = 2;
+        }
+    }
 
     const ObjectHighwayManager *m_highwayMgr; ///< Manager that handles squish cooldowns
     ObjectCollisionBase *m_auxCollision; ///< Secondary collision cylinder for more accurate shape
-    f32 m_highwayVel;                    ///< Speed while on the highway
-    f32 m_localVel;                      ///< Speed while off the highway
+    const f32 m_highwayVel;              ///< Speed while on the highway
+    const f32 m_localVel;                ///< Speed while off the highway
     char m_carName[32];                  ///< Resource (.brres) name
     char m_mdlName[32];                  ///< Model/KCL name
     CarType m_carType;                   ///< Car, truck, or bomb car
@@ -113,12 +215,9 @@ private:
 
     /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 3> STATE_ENTRIES = {{
-            {StateEntry<ObjectCarTGE, nullptr, nullptr>(
-                    0)},
-            {StateEntry<ObjectCarTGE, nullptr, &ObjectCarTGE::calcSpeedup>(
-                    1)},
-            {StateEntry<ObjectCarTGE, nullptr, &ObjectCarTGE::calcSlowdown>(
-                    2)},
+            {StateEntry<ObjectCarTGE, nullptr, nullptr>(0)},
+            {StateEntry<ObjectCarTGE, nullptr, &ObjectCarTGE::calcSpeedup>(1)},
+            {StateEntry<ObjectCarTGE, nullptr, &ObjectCarTGE::calcSlowdown>(2)},
     }};
 };
 

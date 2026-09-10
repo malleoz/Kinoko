@@ -40,7 +40,7 @@ ObjectHighwayManager::ObjectHighwayManager()
 ObjectHighwayManager::~ObjectHighwayManager() = default;
 
 /// @addr{0x806D50AC}
-/// @brief Iterates all vehicles and resets the suash timer if any vehicle has squashed the player
+/// @brief Iterates all vehicles and resets the squash timer if any vehicle has squashed the player
 void ObjectHighwayManager::calcSquash() {
     constexpr u32 SQUASH_INVULNERABILITY = 200;
 

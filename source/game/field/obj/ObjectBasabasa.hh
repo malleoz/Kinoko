@@ -72,10 +72,8 @@ private:
 
     /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 2> STATE_ENTRIES = {{
-            {StateEntry<ObjectBasabasaDummy, nullptr,
-                    &ObjectBasabasaDummy::calcStateActive>(0)},
-            {StateEntry<ObjectBasabasaDummy, nullptr,
-                    nullptr>(1)},
+            {StateEntry<ObjectBasabasaDummy, nullptr, &ObjectBasabasaDummy::calcStateActive>(0)},
+            {StateEntry<ObjectBasabasaDummy, nullptr, nullptr>(1)},
     }};
 };
 
@@ -89,7 +87,10 @@ class ObjectBasabasa final : public ObjectCollidable {
 
 public:
     ObjectBasabasa(const System::MapdataGeoObj &params);
-    ~ObjectBasabasa() override;
+
+    /// @addr{0x806B72F4}
+    /// @brief Default virtual destructor
+    ~ObjectBasabasa() override = default;
 
     void init() override;
     void calc() override;

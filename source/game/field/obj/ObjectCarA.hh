@@ -12,7 +12,10 @@ namespace Kinoko::Field {
 class ObjectCarA final : public ObjectCollidable, private StateManager {
 public:
     ObjectCarA(const System::MapdataGeoObj &params);
-    ~ObjectCarA() override;
+
+    /// @addr{0x806B78CC}
+    /// @brief Default virtual destructor
+    ~ObjectCarA() override = default;
 
     void init() override;
 

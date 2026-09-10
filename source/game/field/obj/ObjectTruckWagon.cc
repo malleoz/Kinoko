@@ -53,6 +53,11 @@ void ObjectTruckWagonCart::calcCollisionTransform() {
 }
 
 /// @addr{0x806E0650}
+/// @copybrief ObjectCollidable::onCollision()
+/// @param kartObj The kart object involved in the collision
+/// @param reactionOnKart The reaction that should be applied to the kart upon collision
+/// @return @ref Kart::Reaction::Wall if the kart's speed is below 50%, otherwise @ref
+/// Kart::Reaction::Sideways.
 Kart::Reaction ObjectTruckWagonCart::onCollision(Kart::KartObject *kartObj,
         Kart::Reaction reactionOnKart, Kart::Reaction /*reactionOnObj*/,
         EGG::Vector3f & /*hitDepth*/) {

@@ -9,7 +9,10 @@ namespace Kinoko::Field {
 class ObjectBulldozer final : public ObjectKCL {
 public:
     ObjectBulldozer(const System::MapdataGeoObj &params);
-    ~ObjectBulldozer() override;
+
+    /// @addr{0x807FE5F0}
+    /// @brief Default virtual destructor
+    ~ObjectBulldozer() override = default;
 
     void calc() override;
 

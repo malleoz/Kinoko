@@ -35,7 +35,11 @@ void ObjectHeyhoBall::init() {
 }
 
 /// @addr{0x806D0880}
-/// @brief Called when a collision occurs between a kart and this object
+/// @brief copybrief ObjectCollidable::onCollision()
+/// @param hitDepth The depth of the collision between the kart and the object
+/// @return @ref Kart::Reaction::ExplosionLoseItem if the explosion recently occurred, @ref
+/// Kart::Reaction::SpinTwice if the explosion has dissipated a bit, otherwise @ref
+/// Kart::Reaction::Wall if the explosion has not yet occurred.
 /// @details References the explosion intensity to determine what reaction to apply
 Kart::Reaction ObjectHeyhoBall::onCollision(Kart::KartObject * /*kartObj*/,
         Kart::Reaction /*reactionOnKart*/, Kart::Reaction /*reactionOnObj*/,

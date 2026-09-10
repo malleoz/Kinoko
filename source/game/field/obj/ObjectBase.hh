@@ -42,7 +42,15 @@ public:
     ObjectBase(const System::MapdataGeoObj &params);
     ObjectBase(const char *name, const EGG::Vector3f &pos, const EGG::Vector3f &rot,
             const EGG::Vector3f &scale);
-    virtual ~ObjectBase();
+
+    /// @addr{0x8067E3C4}
+    /// @brief Virtual destructor that deletes the @ref Abstract::g3d::ResFile, @ref
+    /// Render::DrawMdl, and @ref RailInterpolator instances associated with the object
+    virtual ~ObjectBase() {
+        EGG::egg_delete(m_resFile);
+        EGG::egg_delete(m_drawMdl);
+        EGG::egg_delete(m_railInterpolator);
+    }
 
     /// @brief Run once during race initialization
     virtual void init() {}

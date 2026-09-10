@@ -6,18 +6,6 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x807FC248}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
-/// @details Initializes road velocity to `32.0f`.
-ObjectBelt::ObjectBelt(const System::MapdataGeoObj &params)
-    : ObjectDrivable(params),
-      m_roadVel(32.0f) {}
-
-/// @addr{0x807FC5EC}
-/// @brief Default virtual destructor
-ObjectBelt::~ObjectBelt() = default;
-
 /// @addr{0x807FC294}
 /// @brief Checks if an object at a given position is colliding with the conveyer and if so, saves
 /// the road velocity to the @ref CollisionInfo

@@ -7,33 +7,10 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x8081EFEC}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
-ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &params)
-    : ObjectBase(params),
-      m_collision(nullptr) {}
-
-/// @addr{0x8081F064}
-/// @brief Constructor
-/// @param name The name of the object
-/// @param pos The initial position of the object
-/// @param rot The initial rotation of the object
-/// @param scale The initial scale of the object
-
-ObjectCollidable::ObjectCollidable(const char *name, const EGG::Vector3f &pos,
-        const EGG::Vector3f &rot, const EGG::Vector3f &scale)
-    : ObjectBase(name, pos, rot, scale),
-      m_collision(nullptr) {}
-
-/// @addr{0x8067E384}
-/// @brief Default virtual destructor that destroys the associated collision object
-ObjectCollidable::~ObjectCollidable() {
-    EGG::egg_delete(m_collision);
-}
-
 /// @addr{0x8081F0A0}
 /// @copybrief ObjectBase::load()
+/// @details This function loads the graphical assets, animations, collision object(s), and rail for
+/// the collidable object. It also registers the object with the @refObjectDirector.
 void ObjectCollidable::load() {
     loadGraphics();
     loadAnims();
@@ -63,8 +40,15 @@ f32 ObjectCollidable::getCollisionRadius() const {
     return std::max(xRadius, zRadius);
 }
 
-/// @brief Runs on collision to conditionally modify the hit reaction applied on the player
 /// @addr{0x8081F66C}
+/// @brief Runs on collision to conditionally modify the hit reaction applied on the player
+/// @param kartObj The kart object involved in the collision
+/// @param reactionOnKart The reaction that should be applied to the kart upon collision
+/// @param reactionOnObj The reaction that should be applied to the object upon collision
+/// @details If the kart is driving under 50% of its base speed, then it changes @ref
+/// Kart::Reaction::SpinTwice to @ref Kart::Reaction::Wall and @ref Kart::Reaction::SpinHitSomeSpeed
+/// to @ref Kart::Reaction::None. Otherwise, if the kart is driving at 50% or more of its base
+/// speed, it changes @ref Kart::Reaction::SpinHitSomeSpeed to @ref Kart::Reaction::SpinTwice.
 void ObjectCollidable::processKartReactions(Kart::KartObject *kartObj,
         Kart::Reaction &reactionOnKart, Kart::Reaction &reactionOnObj) {
     // Process the reaction on kart
@@ -88,6 +72,10 @@ void ObjectCollidable::processKartReactions(Kart::KartObject *kartObj,
 
 /// @addr{0x8081F224}
 /// @copybrief ObjectBase::createCollision()
+/// @details References the object's @ref SObjectCollisionSet::mode to determine what type of object
+/// to create. It is either a sphere, cylinder, or box collision object. In the base game, this
+/// function is a no-op for objects having collision mode 0. To better catch instances where an
+/// object may have overridden this function, we instead #PANIC.
 void ObjectCollidable::createCollision() {
     const auto &flowTable = ObjectDirector::Instance()->flowTable();
     const auto *collisionSet = flowTable.set(flowTable.slot(id()));

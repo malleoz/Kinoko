@@ -108,6 +108,12 @@ void ObjectPylon::calc() {
 }
 
 /// @addr{0x8082DBEC}
+/// @copybrief ObjectCollidable::onCollision()
+/// @param kartObj The kart object involved in the collision
+/// @param hitDepth The depth of the collision along each axis
+/// @return @ref Kart::Reaction::WeakWall if the kart hits the pylon above 70% of its base speed or
+/// if it is hit head-on within a 120 degree cone threshold. Otherwise, returns @ref
+/// Kart::Reaction::None.
 /// @details If the player's speed ratio is above 70%, then the pylon enters the "Hit" state where
 /// it bounces away. Else, it checks to see the angle of impact between the player and the pylon. If
 /// the player's angle falls between 30 and 150 degrees, then the cone will reduce the player's

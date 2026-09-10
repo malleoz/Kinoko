@@ -49,6 +49,10 @@ public:
     }
 
     /// @addr{0x807FED5C}
+    /// @copybrief ObjectCollidable::onCollision()
+    /// @param reactionOnKart The reaction that should be applied to the kart upon collision
+    /// @return @ref Kart::Reaction::Wall if the pillar has not started falling, otherwise @ref
+    /// Kart::Reaction::Sideways.
     Kart::Reaction onCollision(Kart::KartObject * /*kartObj*/, Kart::Reaction reactionOnKart,
             Kart::Reaction /*reactionOnObj*/, EGG::Vector3f & /*hitDepth*/) override {
         auto *raceMgr = System::RaceManager::Instance();

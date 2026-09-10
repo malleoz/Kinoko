@@ -67,10 +67,6 @@ ObjectBirdLeader::ObjectBirdLeader(const System::MapdataGeoObj &params, ObjectBi
     : ObjectCollidable(params),
       m_bird(bird) {}
 
-/// @addr{0x8077CE48}
-/// @brief Default virtual destructor
-ObjectBirdLeader::~ObjectBirdLeader() = default;
-
 /// @addr{0x8077C384}
 /// @copybrief ObjectBase::init()
 /// @details Plays the flying animation whose rate is determined randomly scaled between 0 and the
@@ -117,10 +113,6 @@ ObjectBirdFollower::ObjectBirdFollower(const System::MapdataGeoObj &params, Obje
     : ObjectBirdLeader(params, bird),
       m_idx(idx),
       m_baseSpeed(static_cast<f32>(params.setting(0))) {}
-
-/// @addr{0x8077CE88}
-/// @brief Default virtual destructor
-ObjectBirdFollower::~ObjectBirdFollower() = default;
 
 /// @addr{0x8077C5E0}
 /// @copybrief ObjectBase::init()

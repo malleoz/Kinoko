@@ -34,7 +34,13 @@ public:
 
     void calcCollisionTransform() override;
 
-    /// @addr{0x8068179C}
+    /// @addr{0x806DB168}
+    /// @copybrief ObjectCollidable::onCollision()
+    /// @param reactionOnKart The reaction that should be applied to the kart upon collision
+    /// @param hitDepth The depth of the collision along each axis
+    /// @return @ref Kart::Reaction::FireSpin
+    /// @details This is only called as a result of the player colliding with the fire that the
+    /// statue breathes. Also sets the hit depth to zero.
     Kart::Reaction onCollision(Kart::KartObject * /*kartObj*/, Kart::Reaction reactionOnKart,
             Kart::Reaction /*reactionOnObj*/, EGG::Vector3f &hitDepth) override {
         hitDepth.setZero();

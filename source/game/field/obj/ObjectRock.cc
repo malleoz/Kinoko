@@ -118,6 +118,9 @@ void ObjectRock::checkSphereFull() {
 }
 
 // @addr{0x80770068}
+/// @copybrief ObjectCollidable::onCollision()
+/// @param reactionOnKart The reaction that should be applied to the kart upon collision
+/// @return @ref Kart::Reaction::None if the rock is small, otherwise @ref Kart::Reaction::Sideways.
 /// @details Collision with small rocks breaks the rock without affecting the player.
 Kart::Reaction ObjectRock::onCollision(Kart::KartObject * /*kartObj*/,
         Kart::Reaction reactionOnKart, Kart::Reaction /*reactionOnObj*/,

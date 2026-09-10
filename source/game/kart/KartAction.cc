@@ -65,7 +65,7 @@ bool KartAction::start(Action action) {
         case Action::ForwardLaunch:
         case Action::AwayFlipOnce:
         case Action::AwayFlipTwice:
-        case Action::SidewaysFlipTwice:
+        case Action::Sideways:
         case Action::LaunchSpinLoseItem:
             action = Action::SpinTwice;
             break;
@@ -343,9 +343,9 @@ void KartAction::startActionAwayFlipTwice() {
 
 /// @addr{0x80568FA4}
 /// @brief Starts a small launch action with one flip sideways
-/// @details The kart launches in the air to the side and flips twice. The side the kart flips
+/// @details The kart launches in the air to the side and flips once. The side the kart flips
 /// towards depends on which side of the kart was hit by the colliding object.
-void KartAction::startActionSidewaysFlipTwice() {
+void KartAction::startActionSideways() {
     constexpr f32 EXT_VEL_SCALAR = 13.0f;
     constexpr f32 EXT_VEL_KART = 40.0f;
     constexpr f32 EXT_VEL_BIKE = 45.0f;

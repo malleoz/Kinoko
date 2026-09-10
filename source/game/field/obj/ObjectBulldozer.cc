@@ -20,10 +20,6 @@ ObjectBulldozer::ObjectBulldozer(const System::MapdataGeoObj &params)
       m_period(F_TAU / static_cast<f32>(m_periodDenom)),
       m_halfPeriod(m_fullPeriod / 2) {}
 
-/// @addr{0x807FE5F0}
-/// @brief Default virtual destructor
-ObjectBulldozer::~ObjectBulldozer() = default;
-
 /// @addr{0x807FDC50}
 /// @copybrief ObjectBase::calc()
 /// @details Updates the position of the bulldozer based on its oscillation on the current frame.

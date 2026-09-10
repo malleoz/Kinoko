@@ -16,12 +16,11 @@ ObjectCarA::ObjectCarA(const System::MapdataGeoObj &params)
       m_accel(static_cast<f32>(params.setting(1)) / 10.0f),
       m_stopDuration(static_cast<u32>(params.setting(2))) {}
 
-/// @addr{0x806B78CC}
-/// @brief Default virtual destructor
-ObjectCarA::~ObjectCarA() = default;
-
 /// @addr{0x806B7CE0}
 /// @copybrief ObjectBase::init()
+/// @details Initializes the rail interpolator and sets the car's position to the current position
+/// on the rail. Calculates @ref m_cruiseTime based on the rail length. Initializes the car's
+/// velocity, orientation vectors, and collision radius.
 void ObjectCarA::init() {
     constexpr f32 RADIUS = 400.0f;
 
@@ -46,7 +45,11 @@ void ObjectCarA::init() {
 
 /// @addr{0x806B7BC4}
 /// @copybrief ObjectBase::calcCollisionTransform()
+/// @details Modifies the collision object's transform based on the car's current position, scale,
+/// and orientation with a height offset applied, possibly to account for the tire height.
 void ObjectCarA::calcCollisionTransform() {
+    constexpr f32 HEIGHT_OFFSET = 50.0f;
+
     ObjectCollisionBase *objCol = collision();
     if (!objCol) {
         return;
@@ -56,7 +59,7 @@ void ObjectCarA::calcCollisionTransform() {
 
     EGG::Matrix34f mat;
     SetRotTangentHorizontal(mat, transform().base(2), EGG::Vector3f::ey);
-    mat.setBase(3, transform().base(3) + 50.0f * transform().base(1));
+    mat.setBase(3, transform().base(3) + HEIGHT_OFFSET * transform().base(1));
 
     objCol->transform(mat, scale(),
             -m_railInterpolator->curTangentDir() * m_railInterpolator->getCurrVel());
@@ -67,7 +70,8 @@ void ObjectCarA::calcCollisionTransform() {
 /// @param kartObj The kart object that collided with this car
 /// @param reactionOnKart The reaction that should be applied to the kart
 /// @return The reaction that should be applied to the kart
-/// @details Cars act like walls when the kart is at 50% speed or lower. Otherwise, the 
+/// @details Cars act like walls when the kart is at 50% speed or lower. Otherwise, returns @ref
+/// Action::LaunchAwayFlipOnce.
 Kart::Reaction ObjectCarA::onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
         Kart::Reaction /*reactionOnObj*/, EGG::Vector3f & /*hitDepth*/) {
     return kartObj->speedRatioCapped() < 0.5f ? Kart::Reaction::Wall : reactionOnKart;
@@ -75,6 +79,9 @@ Kart::Reaction ObjectCarA::onCollision(Kart::KartObject *kartObj, Kart::Reaction
 
 /// @addr{0x806B86F0}
 /// @brief Runs once per frame when the car is in the accelerating or decelerating state
+/// @details If the car is accelerating, its velocity is increased by the acceleration value until
+/// it reaches the final speed. If the car is decelerating, its velocity is decreased by the
+/// acceleration value until it reaches zero, with special handling for changing direction.
 void ObjectCarA::calcAccel() {
     if (m_motionState == MotionState::Accelerating) {
         m_currVel += m_accel;

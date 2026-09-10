@@ -25,12 +25,6 @@ public:
         return LoadFlags(eLoadFlags::Calc);
     }
 
-    /// @addr{0x8076F0AC}
-    Kart::Reaction onCollision(Kart::KartObject * /*kartObj*/, Kart::Reaction reactionOnKart,
-            Kart::Reaction /*reactionOnObj*/, EGG::Vector3f & /*hitDepth*/) override {
-        return reactionOnKart;
-    }
-
     /// @addr{0x8076ED70}
     /// @brief Enables a spawner to make the object tangible again
     virtual void enableCollision() {

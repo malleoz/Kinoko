@@ -44,15 +44,6 @@ ObjectBase::ObjectBase(const char *name, const EGG::Vector3f &pos, const EGG::Ve
     m_id = ObjectDirector::Instance()->flowTable().getIdFromName(name);
 }
 
-/// @addr{0x8067E3C4}
-/// @brief Virtual destructor that deletes the @ref Abstract::g3d::ResFile, @ref Render::DrawMdl,
-/// and @ref RailInterpolator instances associated with the object
-ObjectBase::~ObjectBase() {
-    EGG::egg_delete(m_resFile);
-    EGG::egg_delete(m_drawMdl);
-    EGG::egg_delete(m_railInterpolator);
-}
-
 /// @addr{0x80680730}
 /// @brief Fetches the name of the resource file (.brres) associated with the object, if any
 /// @return The name of the resource file, or "-" if none is associated

@@ -37,7 +37,7 @@ enum class Reaction {
     SpinHitSomeSpeed = 22,     ///< Decays to SpinTwice or WallAllSpeed based on the kart's speed
     WeakWall = 23,             ///< The kart's speed drops by 82% due to a weak wall
     Offroad = 24,              ///< The kart will slowdown due to offroad collision
-    SidewaysFlipTwice = 25,    ///< The kart launches sideways and flips twice
+    Sideways = 25,             ///< The kart launches sideways and flips once
     Wall3 = 26,                ///< The kart is colliding with Wall3
     RubberWall = 27,         ///< Elastic collision sending the kart away from the colliding object
     Wall2 = 28,              ///< Unused in Kinoko
@@ -234,12 +234,12 @@ public:
     }
 
     /// @addr{0x805733F4}
-    /// @brief Maps @ref Reaction::SidewaysFlipTwice to @ref Action::SidewaysFlipTwice
+    /// @brief Maps @ref Reaction::Sideways to @ref Action::Sideways
     /// @param idx The index of the colliding object in the @ref Field::ObjectDirector's array of
     /// colliding objects
-    Action handleReactSidewaysFlipTwice(size_t idx) {
+    Action handleReactSideways(size_t idx) {
         action()->setVelocity(objectCollisionKart()->translation(idx));
-        return Action::SidewaysFlipTwice;
+        return Action::Sideways;
     }
 
     /// @addr{0x805736C8}
@@ -408,7 +408,7 @@ private:
             &KartCollide::handleReactNone,                ///< @ref Reaction::SpinHitSomeSpeed
             &KartCollide::handleReactWeakWall,            ///< @ref Reaction::WeakWall
             &KartCollide::handleReactOffroad,             ///< @ref Reaction::Offroad
-            &KartCollide::handleReactSidewaysFlipTwice,   ///< @ref Reaction::SidewaysFlipTwice
+            &KartCollide::handleReactSideways,            ///< @ref Reaction::Sideways
             &KartCollide::handleReactWall3,               ///< @ref Reaction::Wall3
             &KartCollide::handleReactRubberWall,          ///< @ref Reaction::RubberWall
             &KartCollide::handleReactNone,                ///< @ref Reaction::Wall2

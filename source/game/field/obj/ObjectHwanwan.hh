@@ -40,7 +40,12 @@ public:
     void loadRail() override {}
 
     /// @addr{0x806E9CAC}
-    /// @brief Acts as a wall if the player is moving slowly, otherwise flips the player.
+    /// @copybrief ObjectCollidable::onCollision()
+    /// @param kartObj The kart object that collided with this object
+    /// @param reactionOnKart The reaction that should be applied to the kart upon collision
+    /// @return @ref Kart::Reaction::Wall if the player's speed is under 50%, otherwise @ref
+    /// Kart::Reaction::LaunchAwayFlipTwice.
+    /// @details Chain Chomps act like a wall when the kart is driving under 50% of its base speed.
     Kart::Reaction onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
             Kart::Reaction /*reactionOnObj*/, EGG::Vector3f & /*hitDepth*/) override {
         return kartObj->speedRatioCapped() < 0.5f ? Kart::Reaction::Wall : reactionOnKart;
@@ -76,10 +81,8 @@ private:
 
     /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 2> STATE_ENTRIES = {{
-            {StateEntry<ObjectHwanwan, nullptr, &ObjectHwanwan::calcBounce>(
-                    0)},
-            {StateEntry<ObjectHwanwan, nullptr,
-                    nullptr>(1)},
+            {StateEntry<ObjectHwanwan, nullptr, &ObjectHwanwan::calcBounce>(0)},
+            {StateEntry<ObjectHwanwan, nullptr, nullptr>(1)},
     }};
 };
 

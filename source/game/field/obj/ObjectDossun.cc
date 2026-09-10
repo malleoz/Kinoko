@@ -97,10 +97,16 @@ void ObjectDossun::calcCollisionTransform() {
 }
 
 /// @addr{0x8075FF98}
-/// @brief Squishes the player if they are within a certain distance of a falling Thwomp
-/// @details A squish can still technically occur when the Thwomp is touching the ground, but this
-/// is not possible in practice because the player will be pushed away by the Thwomp's collision
-/// before it gets within the squish radius.
+/// @copybrief ObjectCollidable::onCollision()
+/// @param kartObj The kart object that collided with this object
+/// @param reactionOnKart The reaction that should be applied to the kart upon collision
+/// @param hitDepth The depth of the collision between the kart and the object
+/// @return @ref Kart::Rection::LongCrushLoseItem if the player should be crushed, otherwise @ref
+/// Kart::Reaction::Wall.
+/// @details Squishes the player if they are within a certain distance of a falling Thwomp. A squish
+/// can still technically occur when the Thwomp is touching the ground, but this is not possible in
+/// practice because the player will be pushed away by the Thwomp's collision before it gets within
+/// the squish radius.
 Kart::Reaction ObjectDossun::onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
         Kart::Reaction /*reactionOnObj*/, EGG::Vector3f & /*hitDepth*/) {
     constexpr f32 SQUISH_DISTANCE = 375.0f;

@@ -12,10 +12,17 @@ namespace Kinoko::Field {
 /// @addr{0x806D5EE4}
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
+/// @details Pre-computes all floor normals along the rail (this is likely unnecessary for Kinoko).
+/// Determines the @ref m_carType based off the object name and @ref m_mdlName based off the
+/// resource name and car variant. Also determines the @ref m_dummyId based off the car type.
+/// Finally, registers the object with the highway manager if the course is Moonview Highway, so
+/// that the highway manager can enforce squish cooldowns for the player.
 ObjectCarTGE::ObjectCarTGE(const System::MapdataGeoObj &params)
     : ObjectCollidable(params),
       StateManager(this, STATE_ENTRIES),
       m_auxCollision(nullptr),
+      m_highwayVel(static_cast<f32>(params.setting(2))),
+      m_localVel(static_cast<f32>(params.setting(1))),
       m_carName{},
       m_mdlName{},
       m_carType(CarType::Normal),
@@ -25,9 +32,6 @@ ObjectCarTGE::ObjectCarTGE(const System::MapdataGeoObj &params)
       m_up(EGG::Vector3f::zero),
       m_tangent(EGG::Vector3f::zero) {
     u32 carVariant = static_cast<u32>(params.setting(3));
-    m_highwayVel = static_cast<f32>(params.setting(2));
-    m_localVel = static_cast<f32>(params.setting(1));
-
     s16 pathId = params.pathId();
 
     // The base game returns before the StateManager sets its state entries.
@@ -103,14 +107,11 @@ ObjectCarTGE::ObjectCarTGE(const System::MapdataGeoObj &params)
     }
 }
 
-/// @addr{0x806D691C}
-/// @brief Default virtual destructor that destroys the auxiliary collision object
-ObjectCarTGE::~ObjectCarTGE() {
-    EGG::egg_delete(m_auxCollision);
-}
-
 /// @addr{0x806D6B14}
 /// @copybrief ObjectBase::init()
+/// @details Sets the rail interpolator's velocity and @ref m_nextStateId based on whether the car
+/// is starting on the highway or not. Sets the car's position to the current position of the rail
+/// interpolator. Also sets @ref m_hitAngle based on the car type.
 void ObjectCarTGE::init() {
     constexpr f32 HIT_ANGLE_TRUCK = 20.0f;
     constexpr f32 HIT_ANGLE_NORMAL = 40.0f;
@@ -140,24 +141,10 @@ void ObjectCarTGE::init() {
     m_hitAngle = (m_carType == CarType::Truck) ? HIT_ANGLE_TRUCK : HIT_ANGLE_NORMAL;
 }
 
-/// @addr{0x806D6ECC}
-/// @copybrief ObjectBase::calc()
-void ObjectCarTGE::calc() {
-    StateManager::calc();
-
-    if (m_railInterpolator->calc() == RailInterpolator::Status::SegmentEnd) {
-        calcStateFromRailPointSetting();
-    }
-
-    calcPos();
-
-    m_hasAuxCollision = false;
-}
-
 /// @addr{0x806D7AF8}
 /// @copybrief ObjectBase::createCollision()
 /// @details Creates two collision objects, the second being a cylinder scaled based off vehicle
-/// type
+/// type.
 void ObjectCarTGE::createCollision() {
     constexpr f32 TRUCK_RADIUS = 190.0f;
     constexpr f32 TRUCK_HEIGHT = 500.0f;
@@ -178,6 +165,9 @@ void ObjectCarTGE::createCollision() {
 
 /// @addr{0x806D7BF8}
 /// @copybrief ObjectBase::calcCollisionTransform()
+/// @details Refreshes the collision transform to reflect the car's updated position and rotation.
+/// Refreshes the auxiliary transform to reflect the same updates, but flattens the car's forward
+/// direction to world up, thereby removing any pitch or tilt.
 void ObjectCarTGE::calcCollisionTransform() {
     auto *col = collision();
 
@@ -197,6 +187,9 @@ void ObjectCarTGE::calcCollisionTransform() {
 
 /// @addr{0x806D7328}
 /// @brief Causes the player to be hit, squished, or bounce depending on the collision scenario
+/// @param kartObj The kart object that collided with this car
+/// @param reactionOnKart The reaction that should be applied to the kart
+/// @param hitDepth The depth of the collision between the kart and the car
 /// @details Interfaces with the @ref ObjectHighwayManager to enforce a squish cooldown for the
 /// player.
 Kart::Reaction ObjectCarTGE::onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
@@ -229,76 +222,13 @@ Kart::Reaction ObjectCarTGE::onCollision(Kart::KartObject *kartObj, Kart::Reacti
         posDelta.normalise2();
 
         if (v2.dot(posDelta) < EGG::Mathf::CosFIdx(0.7111111f * m_hitAngle) && !m_hasAuxCollision) {
-            reactionOnKart = Kart::Reaction::SidewaysFlipTwice;
+            reactionOnKart = Kart::Reaction::Sideways;
         }
 
         hitDepth.setZero();
     }
 
     return reactionOnKart;
-}
-
-/// @addr{0x806DA660}
-/// @brief Checks kart collision against both the primary and auxiliary collision objects
-bool ObjectCarTGE::checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &dist) {
-    dist = EGG::Vector3f::zero;
-    bool hasCol = lhs->check(*m_collision, dist);
-
-    if (!hasCol) {
-        hasCol = lhs->check(*m_auxCollision, dist);
-        m_hasAuxCollision = hasCol;
-    }
-
-    return hasCol;
-}
-
-/// @addr{0x806D7CF8}
-const EGG::Vector3f &ObjectCarTGE::collisionCenter() const {
-    static constexpr EGG::Vector3f CENTER_TRUCK = EGG::Vector3f(0.0f, 300.0f, 0.0f);
-    static constexpr EGG::Vector3f CENTER_NORMAL = EGG::Vector3f(0.0f, 100.0f, 0.0f);
-    static constexpr EGG::Vector3f CENTER_DEFAULT = EGG::Vector3f(0.0f, 0.0f, 0.0f);
-
-    switch (m_carType) {
-    case CarType::Truck:
-        return CENTER_TRUCK;
-    case CarType::Normal:
-        return CENTER_NORMAL;
-    default:
-        return CENTER_DEFAULT;
-    }
-}
-
-/// @addr{0x806D7D70}
-/// @brief Runs once per frame when cars are speeding up
-/// @details On Moonview Highway, the speed cap (@ref m_highwayVel) is 70. Since this function
-/// increases speed by 200 units per frame, this means this state is only executed for 1 frame
-/// when cars get on the highway.
-void ObjectCarTGE::calcSpeedup() {
-    m_currSpeed += TOLL_BOOTH_ACCEL;
-
-    if (m_currSpeed > m_highwayVel) {
-        m_currSpeed = m_highwayVel;
-        m_nextStateId = 0;
-    }
-
-    m_railInterpolator->setCurrVel(m_currSpeed);
-    m_scaledTangentDir = m_railInterpolator->curTangentDir() * m_currSpeed;
-}
-
-/// @addr{0x806D7E0C}
-/// @brief The state when cars are slowing down.
-/// @details On Moonview Highway, the speed floor m_localVel is 40, which means this state is only
-/// executed for 1 frame when cars get off the highway.
-void ObjectCarTGE::calcSlowdown() {
-    m_currSpeed -= TOLL_BOOTH_ACCEL;
-
-    if (m_currSpeed < m_localVel) {
-        m_currSpeed = m_localVel;
-        m_nextStateId = 0;
-    }
-
-    m_railInterpolator->setCurrVel(m_currSpeed);
-    m_scaledTangentDir = m_railInterpolator->curTangentDir() * m_currSpeed;
 }
 
 /// @addr{0x806D9000}
@@ -331,19 +261,6 @@ void ObjectCarTGE::calcPos() {
 
     m_up = OrthonormalBasis(m_tangent).base(1);
     setMatrixTangentTo(m_up, m_tangent);
-}
-
-/// @addr{0x806D9504}
-/// @brief Checks if the car should speed up or slow down based off the rail point's settings
-void ObjectCarTGE::calcStateFromRailPointSetting() {
-    u16 curPointSpeedSetting = m_railInterpolator->curPoint().setting[1];
-    u16 nextPointSpeedSetting = m_railInterpolator->nextPoint().setting[1];
-
-    if (curPointSpeedSetting == 0 && nextPointSpeedSetting == 1) {
-        m_nextStateId = 1;
-    } else if (curPointSpeedSetting == 1 && nextPointSpeedSetting == 0) {
-        m_nextStateId = 2;
-    }
 }
 
 } // namespace Kinoko::Field

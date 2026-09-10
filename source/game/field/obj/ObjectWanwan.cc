@@ -122,6 +122,11 @@ void ObjectWanwan::calc() {
 }
 
 /// @addr{0x806E526C}
+/// @copybrief ObjectCollidable::onCollision()
+/// @param kartObj The kart object involved in the collision
+/// @param reactionOnKart The reaction that should be applied to the kart upon collision
+/// @return @ref Kart::Reaction::Wall if the kart's speed is below 50% and the Chain Chomp is not
+/// lurching forward, otherwise @ref Kart::Reaction::LaunchAwayFlipTwice.
 /// @details Chain Chomp collisions are treated as wall collisions if the kart is moving at 50%
 /// speed or less and if the Chain Chomp is not lurching forward.
 Kart::Reaction ObjectWanwan::onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,

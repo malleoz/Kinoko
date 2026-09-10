@@ -89,11 +89,8 @@ size_t ObjectDirector::checkKartObjectCollision(Kart::KartObject *kartObj,
                 obj->onCollision(kartObj, reactionOnKart, reactionOnObj, m_hitDepths[count]);
         m_reactions[count] = reaction;
 
-        if (reaction == Kart::Reaction::Wall || reaction == Kart::Reaction::Wall3) {
-            obj->onWallCollision(kartObj, m_hitDepths[count]);
-        } else {
-            obj->onObjectCollision(kartObj);
-        }
+        // We omit the call to @ref ObjectCollidable::onWallCollision() and @ref
+        // ObjectCollidable::onObjectCollision() since they are unused in Kinoko
 
         m_collidingObjects[count] = obj;
         if (m_hitDepths[count].y < 0.0f) {

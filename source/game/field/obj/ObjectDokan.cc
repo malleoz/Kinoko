@@ -30,6 +30,10 @@ void ObjectDokan::calcCollisionTransform() {
 }
 
 /// @addr{0x80778C0C}
+/// @copydoc ObjectCollidable::onCollision()
+/// @param reactionOnKart The reaction that should be applied to the kart upon collision
+/// @param reactionOnObj The reaction that should be applied to the object upon collision
+/// @return For time trials, always returns @ref Kart::Reaction::Wall3.
 Kart::Reaction ObjectDokan::onCollision(Kart::KartObject * /*kartObj*/,
         Kart::Reaction reactionOnKart, Kart::Reaction reactionOnObj, EGG::Vector3f & /*hitDepth*/) {
     if (reactionOnObj == Kart::Reaction::UNK_3 || reactionOnObj == Kart::Reaction::UNK_5) {

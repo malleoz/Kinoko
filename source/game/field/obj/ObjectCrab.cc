@@ -4,19 +4,6 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x8088344C}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
-ObjectCrab::ObjectCrab(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params),
-      m_vel(static_cast<f32>(static_cast<s16>(params.setting(0)))),
-      m_backwards(!!params.setting(1)),
-      m_introCalc(false) {}
-
-/// @addr{0x808837B8}
-/// @brief Default virtual destructor
-ObjectCrab::~ObjectCrab() = default;
-
 /// @addr{0x80883844}
 /// @copybrief ObjectBase::init()
 void ObjectCrab::init() {

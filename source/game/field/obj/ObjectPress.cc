@@ -100,6 +100,11 @@ void ObjectPress::createCollision() {
 }
 
 /// @addr{0x807782D4}
+/// @copybrief ObjectCollidable::onCollision()
+/// @param kartObj The kart object involved in the collision
+/// @param reactionOnKart The reaction that should be applied to the kart upon collision
+/// @return @ref Kart::Reaction::LongCrushLoseItem if the kart should be crushed, otherwise @ref
+/// Kart::Reaction::Wall.
 /// @details Checks if the kart is within the "crush threshold". If so, and the press is lowering,
 /// then the kart will be squished and items will be lost.
 Kart::Reaction ObjectPress::onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,

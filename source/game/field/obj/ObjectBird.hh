@@ -58,7 +58,10 @@ protected:
 class ObjectBirdLeader : public ObjectCollidable {
 public:
     ObjectBirdLeader(const System::MapdataGeoObj &params, ObjectBird *bird);
-    ~ObjectBirdLeader() override;
+
+    /// @addr{0x8077CE48}
+    /// @brief Default virtual destructor
+    ~ObjectBirdLeader() override = default;
 
     void init() override;
 
@@ -96,7 +99,10 @@ protected:
 class ObjectBirdFollower final : public ObjectBirdLeader {
 public:
     ObjectBirdFollower(const System::MapdataGeoObj &params, ObjectBird *bird, u32 idx);
-    ~ObjectBirdFollower() override;
+
+    /// @addr{0x8077CE88}
+    /// @brief Default virtual destructor
+    ~ObjectBirdFollower() override = default;
 
     void init() override;
     void calc() override;

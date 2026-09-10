@@ -7,25 +7,22 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x806BBEC0}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
-ObjectCow::ObjectCow(const System::MapdataGeoObj &params) : ObjectCollidable(params) {
-    m_startFrame = params.setting(2);
-}
-
-/// @addr{0x806BBF24}
-/// @brief Default virtual destructor
-ObjectCow::~ObjectCow() = default;
-
 /// @addr{0x806BC2AC}
+/// @copydoc ObjectCollidable::onCollision()
+/// @param kartObj The kart object that collided with this object
+/// @param reactionOnKart The reaction that should be applied to the kart upon collision
+/// @param hitDepth The depth of the collision between the kart and the object
+/// @return @ref Kart::Reaction::Wall if the kart's speed is below 50%, otherwise @ref
+/// Kart::Reaction::LaunchAwayFlipOnce.
 Kart::Reaction ObjectCow::onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
         Kart::Reaction /*reactionOnObj*/, EGG::Vector3f & /*hitDepth*/) {
     return kartObj->speedRatioCapped() < 0.5f ? Kart::Reaction::Wall : reactionOnKart;
 }
 
 /// @addr{0x806BBF64}
-void ObjectCow::setup() {
+/// @brief copybrief ObjectBase::init()
+/// @details Initializes the cow's position, scale, and rotation based off the object parameters.
+void ObjectCow::init() {
     ASSERT(m_mapObj);
     setScale(m_mapObj->scale());
     setPos(m_mapObj->pos());
@@ -44,6 +41,10 @@ void ObjectCow::setup() {
 }
 
 /// @addr{0x806BC87C}
+/// @brief Calculates the cow's interaction with floors and walls
+/// @details If a collision is detected, the cow's position is adjusted, the floor normal is
+/// updated, and gravity is applied. If no collision is detected, the cow's upward force is set to
+/// zero.
 void ObjectCow::calcFloor() {
     constexpr f32 RADIUS = 50.0f;
     constexpr EGG::Vector3f POS_OFFSET = EGG::Vector3f(0.0f, RADIUS, 0.0f);
@@ -68,6 +69,10 @@ void ObjectCow::calcFloor() {
 }
 
 /// @addr{0x806BC6D8}
+/// @brief Calculates the cow's new position based on its velocity, acceleration, and forces
+/// @details Acceleration is calculated based on the cow's tangent direction, change in tangent
+/// direction, and upward force. The velocity is then updated accordingly, floored at zero. Finally,
+/// the cow's position is adjusted based on the new velocity and @ref m_tangentAccel is cleared.
 void ObjectCow::calcPos() {
     EGG::Vector3f accel =
             m_tangent * m_tangentAccel + (m_tangent - m_prevTangent) * m_xzSpeed + m_upForce;
@@ -84,32 +89,12 @@ void ObjectCow::calcPos() {
     m_tangentAccel = 0.0f;
 }
 
-/// @addr{0x806BCDC4}
-f32 ObjectCow::setTarget(const EGG::Vector3f &v) {
-    m_targetPos = v;
-    EGG::Vector3f posDiff = m_targetPos - pos();
-    f32 dist = posDiff.normalise();
-    m_targetDir = m_targetPos + posDiff * 1000.0f - pos();
-    m_targetDir.normalise2();
-
-    return dist;
-}
-
-/// @addr{0x806BD080}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
-ObjectCowLeader::ObjectCowLeader(const System::MapdataGeoObj &params)
-    : ObjectCow(params),
-      StateManager(this, STATE_ENTRIES) {}
-
-/// @addr{0x806BD1F8}
-/// @brief Default virtual destructor
-ObjectCowLeader::~ObjectCowLeader() = default;
-
 /// @addr{0x806BD264}
 /// @copybrief ObjectBase::init()
+/// @details Initializes the cow leader's rail interpolator, position, target, rail speed, and state
+/// variables.
 void ObjectCowLeader::init() {
-    setup();
+    ObjectCow::init();
     m_railInterpolator->init(0.0f, 0);
     setPos(m_railInterpolator->curPos());
 
@@ -127,6 +112,9 @@ void ObjectCowLeader::init() {
 
 /// @addr{0x806BD388}
 /// @copybrief ObjectBase::calc()
+/// @details If the current frame is greater than or equal to the cow's start frame, evaluate's the
+/// leader's state machine. Updates the cow's position, velocity, gravity, and floor normal.
+/// Interpolates the cow's tangent and up vectors.
 void ObjectCowLeader::calc() {
     u32 t = System::RaceManager::Instance()->timer();
 
@@ -158,6 +146,9 @@ void ObjectCowLeader::calc() {
 }
 
 /// @addr{0x806BD84C}
+/// @brief Calculates the cow's behavior while in the eat state.
+/// @details Manages the transitions between the different eating animation states and updates the
+/// cow's state accordingly.
 void ObjectCowLeader::calcEat() {
     constexpr u16 EAT_ST_FRAMES = 40;
     constexpr u16 EAT_ED_FRAMES = 60;
@@ -184,9 +175,21 @@ void ObjectCowLeader::calcEat() {
 }
 
 /// @addr{0x806BDA70}
+/// @brief Calculates the cow's behavior while in the roam state.
+/// @details If the cow has reached the end of the rail segment, decreases the rail speed by `0.01f`
+/// every frame until it comes to a stop. When it comes to a stop, it either transitions to the wait
+/// state or the eat state based on the current rail point's settings. Otherwise, if the cow has not
+/// reached the end of the rail segment, it increases the rail speed by `0.01f` every frame until
+/// reaching the maximum speed of `4.0f`. Updates the rail to reflect the newly derived rail speed.
+/// If the cow has reached the end of the segment and the current rail point has specific settings,
+/// it sets @ref m_endedRailSegment so that cow will begin coming to a stop on the next frame.
+/// Finally, updates the leader's current position and target based on the rail interpolator.
 void ObjectCowLeader::calcRoam() {
+    constexpr f32 RAIL_ACCEL = 0.1f;
+    constexpr f32 RAIL_MAX_SPEED = 4.0f;
+
     if (m_endedRailSegment) {
-        m_railSpeed -= 0.1f;
+        m_railSpeed -= RAIL_ACCEL;
 
         if (m_railSpeed < 0.0f) {
             m_railSpeed = 0.0f;
@@ -198,10 +201,10 @@ void ObjectCowLeader::calcRoam() {
             }
         }
     } else {
-        if (m_railSpeed < 4.0f) {
-            m_railSpeed += 0.1f;
+        if (m_railSpeed < RAIL_MAX_SPEED) {
+            m_railSpeed += RAIL_ACCEL;
         } else {
-            m_railSpeed = 4.0f;
+            m_railSpeed = RAIL_MAX_SPEED;
         }
     }
 
@@ -219,29 +222,12 @@ void ObjectCowLeader::calcRoam() {
     setTarget(m_railInterpolator->curPos() + m_railInterpolator->curTangentDir() * 10.0f);
 }
 
-/// @addr{0x806BDD48}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
-/// @param pos The initial position offset for the follower cow
-/// @param initRot The initial rotation for the follower cow
-ObjectCowFollower::ObjectCowFollower(const System::MapdataGeoObj &params, const EGG::Vector3f &pos,
-        f32 initRot)
-    : ObjectCow(params),
-      StateManager(this, STATE_ENTRIES),
-      m_posOffset(pos),
-      m_rail(nullptr) {
-    addPos(m_posOffset);
-    setRot(EGG::Vector3f(rot().x, initRot, rot().z));
-}
-
-/// @addr{0x806BDFF4}
-/// @brief Default virtual destructor
-ObjectCowFollower::~ObjectCowFollower() = default;
-
 /// @addr{0x806BE060}
 /// @copybrief ObjectBase::init()
+/// @details Initializes the cow follower by setting its initial position and orientation relative
+/// to the leader's position. Initializes the cow to the waiting state.
 void ObjectCowFollower::init() {
-    setup();
+    ObjectCow::init();
     addPos(m_posOffset);
     EGG::Vector3f local_1c = m_posOffset;
     local_1c.normalise2();
@@ -257,18 +243,14 @@ void ObjectCowFollower::init() {
 
 /// @addr{0x806BE1A8}
 /// @copybrief ObjectBase::calc()
+/// @details If the leader has not started moving yet, then the cow remains in the waiting state and
+/// its target position is set to the opposite side of the leader. Otherwise, evaluates the cow's
+/// state machine. In either case, the cow's position and orientation are updated accordingly.
 void ObjectCowFollower::calc() {
     u32 t = System::RaceManager::Instance()->timer();
 
     if (t < m_startFrame) {
-        if (m_currentFrame > m_waitFrames) {
-            m_nextStateId = 1;
-        }
-
-        if (m_rail->segmentT() > m_railSegThreshold) {
-            m_nextStateId = 2;
-        }
-
+        calcWait();
         setTarget(pos() + m_posOffset * 2.0f);
     } else {
         StateManager::calc();
@@ -298,6 +280,11 @@ void ObjectCowFollower::calc() {
 }
 
 /// @addr{0x806BE62C}
+/// @brief Runs when the cow enters the free roam state
+/// @details The cow's top speed while roaming is a random number in the range `[2.0f, 4.0f]`. The
+/// cow's facing direction is randomly varied in the range `[10.0f, 20.0f]` (in degrees) biased
+/// towards the leader's position. The target position is computed accordingly, based off a distance
+/// that is randomly chosen in the range `[400.0f, 700.0f]`.
 void ObjectCowFollower::enterFreeRoam() {
     constexpr f32 BASE_WALK_DISTANCE = 400.0f;
     constexpr f32 WALK_DISTANCE_VARIANCE = 300.0f;
@@ -324,28 +311,23 @@ void ObjectCowFollower::enterFreeRoam() {
     setTarget(pos() + dir * distance);
 }
 
-/// @addr{0x806BE580}
-void ObjectCowFollower::calcWait() {
-    if (m_currentFrame > m_waitFrames) {
-        m_nextStateId = 1;
-    }
-
-    if (m_rail->segmentT() > m_railSegThreshold) {
-        m_nextStateId = 2;
-    }
-}
-
 /// @addr{0x806BE794}
+/// @brief Calculates the cow's behavior while in the free roam state
+/// @details The cow accelerates towards its target position until it reaches its top speed.
+/// If it gets within @ref DIST_THRESHOLD of the target, it begins stopping. Otherwise, if the
+/// leader has moved past @ref m_railSegThreshold, the follower transitions to the follow state.
 void ObjectCowFollower::calcFreeRoam() {
+    constexpr f32 ACCEL = 0.1f;
+
     if (m_bStopping) {
-        m_tangentAccel = -0.1f;
+        m_tangentAccel = -ACCEL;
 
         if (m_xzSpeed == 0.0f) {
             m_nextStateId = 0;
         }
     } else {
         if (m_xzSpeed < m_topSpeed) {
-            m_tangentAccel = 0.1f;
+            m_tangentAccel = ACCEL;
         }
     }
 
@@ -360,22 +342,28 @@ void ObjectCowFollower::calcFreeRoam() {
 }
 
 /// @addr{0x806BE9CC}
+/// @brief Calculates the cow's behavior while in the follow state
+/// @details The cow accelerates towards the leader until it reaches its top speed.
+/// If it gets within @ref DIST_THRESHOLD of the leader, it begins stopping.
 void ObjectCowFollower::calcFollowLeader() {
+    constexpr f32 ACCEL = 0.1f;
+    constexpr f32 ACCEL_INTERP_RATE = 0.05f;
+
     f32 dist = 0.0f;
 
     if (m_bStopping) {
-        m_tangentAccel = -0.1f;
+        m_tangentAccel = -ACCEL;
 
         if (m_xzSpeed == 0.0f) {
-            m_interpRate = 0.05f;
+            m_interpRate = ACCEL_INTERP_RATE;
             m_nextStateId = 0;
         }
     } else {
         dist = setTarget(m_rail->curPos() + m_posOffset);
 
         if (m_xzSpeed < m_topSpeed) {
-            m_interpRate = 0.05f;
-            m_tangentAccel = 0.1f;
+            m_interpRate = ACCEL_INTERP_RATE;
+            m_tangentAccel = ACCEL;
         }
     }
 
@@ -387,14 +375,18 @@ void ObjectCowFollower::calcFollowLeader() {
 /// @addr{0x806BEB54}
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
+/// @details Loads the leader and follower cows. Computes each follower's initial position and
+/// rotation around the leader. The cows initially form a circular formation around the leader, such
+/// that each cow is equally spaced apart and is facing away from the leader. Finally, pre-computes
+/// all floor normals along the rail so that they can be fetched without having to perform repeat
+/// collision checks.
 ObjectCowHerd::ObjectCowHerd(const System::MapdataGeoObj &params) : ObjectCollidable(params) {
     constexpr f32 FOLLOWER_SPACING = 600.0f;
-
-    u8 followerCount = params.setting(0);
 
     m_leader = EGG::egg_new<ObjectCowLeader>(params);
     m_leader->load();
 
+    u8 followerCount = params.setting(0);
     m_followers = owning_span<ObjectCowFollower *>(followerCount);
 
     for (u32 i = 0; i < followerCount; ++i) {
@@ -412,28 +404,13 @@ ObjectCowHerd::ObjectCowHerd(const System::MapdataGeoObj &params) : ObjectCollid
     rail->checkSphereFull();
 }
 
-/// @addr{0x806BEFEC}
-/// @brief Default virtual destructor
-ObjectCowHerd::~ObjectCowHerd() = default;
-
-/// @addr{0x806BF064}
-/// @copybrief ObjectBase::calc()
-void ObjectCowHerd::calc() {
-    constexpr f32 MAX_DIST = 4000.0f; ///< Distance at which a Cow will return to its leader
-
-    checkIntraCollision();
-
-    for (auto *&follower : m_followers) {
-        EGG::Vector3f posDelta = follower->pos() - m_leader->pos();
-
-        if (posDelta.squaredLength() > MAX_DIST * MAX_DIST) {
-            follower->m_nextStateId = 2;
-        }
-    }
-}
-
 /// @addr{0x806BF114}
 /// @brief Prevents cows from walking into each other.
+/// @details Checks for collisions between all follower cows and between each follower and the
+/// leader cow. Cows are determined to be colliding if the distance between them is less than
+/// `400.0f` units. If a collision is detected, the cows are moved apart. This function performs two
+/// passes of collision checks: one for follower-to-follower collisions and another for
+/// follower-to-leader collisions.
 void ObjectCowHerd::checkIntraCollision() {
     constexpr f32 WIDTH = 400.0f;
 

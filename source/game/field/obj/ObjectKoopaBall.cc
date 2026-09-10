@@ -88,8 +88,12 @@ void ObjectKoopaBall::calc() {
 }
 
 /// @addr{0x80771BF4}
+/// @copybrief ObjectCollidable::onCollision()
+/// @param reactionOnKart The reaction that should be applied to the kart upon collision
+/// @return @ref Kart::Reaction::ExplosionLoseItem if the fireball is exploding, otherwise @ref
+/// Kart::Reaction::Sideways.
 /// @details Throws the player upwards and removes items if the koopa ball is exploding, otherwise
-/// the player will flip over without losing their item.
+/// the player will flip sideways without losing their item.
 Kart::Reaction ObjectKoopaBall::onCollision(Kart::KartObject * /*kartObj*/,
         Kart::Reaction reactionOnKart, Kart::Reaction /*reactionOnObj*/,
         EGG::Vector3f & /*hitDepth*/) {
