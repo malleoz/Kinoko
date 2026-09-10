@@ -5,19 +5,15 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x80764510}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
-ObjectDossun::ObjectDossun(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params),
-      m_touchingGround(false) {}
-
-/// @addr{0x8075EE68}
-/// @brief Default virtual destructor
-ObjectDossun::~ObjectDossun() = default;
-
 /// @addr{0x8075EEA8}
 /// @copybrief ObjectBase::init()
+/// @details Initializes the Thwomp's animation state to @ref AnmState::Still and calls @ref
+/// initState(). Caches the Thwomp's initial vertical position to @ref m_initialPosY and clears @ref
+/// m_vel. Mainly, this function determines the total duration of the Thwomp's stomp cycle based off
+/// of how long it takes the Thwomp to stomp down onto the floor beneath it.
+/// @note Since @ref m_fullDuration computes the expected duration of the stomp animation, Thwomps
+/// will end stomping at this duration, even if the floor beneath it has been lowered. This may
+/// result in Thwomp stomps ending mid-air on some custom tracks.
 void ObjectDossun::init() {
     constexpr f32 BEFORE_FALL_VEL = 30.0f;
 
@@ -78,24 +74,6 @@ void ObjectDossun::init() {
     m_touchingGround = false;
 }
 
-/// @addr{0x807648A4}
-/// @copybrief ObjectBase::calcCollisionTransform()
-/// @details Scales up the height of the Thwomp's transformation matrix
-void ObjectDossun::calcCollisionTransform() {
-    constexpr f32 HEIGHT = 400.0f;
-
-    if (!m_collision) {
-        return;
-    }
-
-    calcTransform();
-
-    EGG::Matrix34f mat = transform();
-    mat[1, 3] += HEIGHT * scale().x;
-
-    collision()->transform(mat, scale());
-}
-
 /// @addr{0x8075FF98}
 /// @copybrief ObjectCollidable::onCollision()
 /// @param kartObj The kart object that collided with this object
@@ -123,19 +101,10 @@ Kart::Reaction ObjectDossun::onCollision(Kart::KartObject *kartObj, Kart::Reacti
     return reactionOnKart;
 }
 
-/// @addr{0x8075F21C}
-void ObjectDossun::initState() {
-    m_stillTimer = static_cast<u32>(m_mapObj->setting(2));
-    if (m_stillTimer == 0) {
-        m_stillTimer = static_cast<u32>(m_mapObj->setting(3));
-    }
-
-    m_groundedTimer = 0;
-    m_beforeFallTimer = 0;
-    m_shakePhase = 0;
-}
-
 /// @addr{0x8075F254}
+/// @brief Updates the Thwomp's animation state related to stomping
+/// @details Calls the appropriate calculation function based on the current animation state. If the
+/// stomp duration reaches zero, transitions the Thwomp to the still state.
 void ObjectDossun::calcStomp() {
     switch (m_anmState) {
     case AnmState::BeforeFall:
@@ -160,6 +129,11 @@ void ObjectDossun::calcStomp() {
 }
 
 /// @addr{0x8075F76C}
+/// @brief Checks for collision with the floor while the Thwomp is falling
+/// @details Uses a sphere radius of size @ref STOMP_RADIUS to check for collisions with the floor.
+/// If a collision occurs, sets @ref m_vel to zero, applies the collision offset to the Thwomp's
+/// position to prevent it from clipping into the floor, calls @ref startGrounded(), and sets @ref
+/// m_touchingGround to true.
 void ObjectDossun::checkFloorCollision() {
     CollisionInfo info;
     EGG::Vector3f colPos = pos() + STOMP_POS_OFFSET;

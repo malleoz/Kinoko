@@ -22,6 +22,9 @@ ObjectCrane::ObjectCrane(const System::MapdataGeoObj &params)
 
 /// @addr{0x807FE7EC}
 /// @copybrief ObjectBase::calc()
+/// @details Updates the crane's position based on its x and y oscillation periods and amplitudes.
+/// Increments the x and y phase counters accordingly. Finally, computes the moving object velocity
+/// based on the change in position this frame.
 void ObjectCrane::calc() {
     const EGG::Vector3f prevPos = pos();
 
