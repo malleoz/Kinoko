@@ -4,6 +4,9 @@
 
 namespace Kinoko::Field {
 
+/// @brief Represents the moving crabs on GBA Shy Guy Beach
+/// @details Crabs move back-and-forth along a rail with constant speed, periodically stopping when
+/// reaching the end of the rail or a rail segment.
 class ObjectCrab final : public ObjectCollidable {
 public:
     /// @addr{0x8088344C}
@@ -32,17 +35,17 @@ public:
 private:
     /// @brief Describes the current behavior of the crab
     enum class State {
-        Walking = 0,
-        Still = 1,
-        Deactivated = 2,
-        Resurfacing = 3,
+        Walking = 0,     ///< The crab is walking sideways
+        Still = 1,       ///< The crab is stationary
+        Deactivated = 2, ///< The crab is despawned after being hit (unused in Kinoko)
+        Resurfacing = 3, ///< The crab is respawning after being hit (unused in Kinoko)
     };
 
     /// @brief Describes the phase of the current state
     enum class StatePhase {
-        Start = 0,
-        Middle = 1,
-        End = 2,
+        Start = 0,  ///< The current state has just started
+        Middle = 1, ///< In the middle of the current state
+        End = 2,    ///< The current state is ending
     };
 
     /// @todo Document this enum
@@ -62,7 +65,9 @@ private:
     bool calcRail();
     StateResult calcState();
 
-    /// @brief Sets rotation, factoring in the crab's backwards setting and rail direction
+    /// @brief Updates the crab's rotation based off the provided rotation
+    /// @param rot The rotation to set for the crab.
+    /// @details Sets rotation by factoring in the crab's backwards setting and rail direction.
     void calcCurRot(const EGG::Vector3f &rot) {
         m_curRot = rot;
         m_curRot = m_backwards ? -m_curRot : m_curRot;
@@ -81,6 +86,7 @@ private:
     StatePhase m_statePhase; ///< Phase of the current state
     bool m_introCalc;        ///< Enforces only one calc call during the race intro timer
 
+    /// @brief The initial rotation of the crab
     static constexpr EGG::Vector3f INIT_ROT = EGG::Vector3f(0.0f, HALF_PI, 0.0f);
 };
 

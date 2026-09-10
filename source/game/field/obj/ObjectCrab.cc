@@ -6,6 +6,10 @@ namespace Kinoko::Field {
 
 /// @addr{0x80883844}
 /// @copybrief ObjectBase::init()
+/// @details Initializes the crab's rotation to @ref INIT_ROT. Updates the rail interpolator's
+/// velocity to @ref m_vel and updates the crab's position to the rail interpolator's position.
+/// Updates the crab's translation based off of @ref m_curRot. Finally, initializes the crab to the
+/// walking state.
 void ObjectCrab::init() {
     m_railInterpolator->init(0.0f, 0);
 
@@ -23,6 +27,10 @@ void ObjectCrab::init() {
 
 /// @addr{0x80883B98}
 /// @copybrief ObjectBase::calc()
+/// @details This class has unique behavior in that it runs the calc function once during race
+/// load-in. This is enforced via @ref m_introCalc. Calls @ref calcRail() to update the rail
+/// interpolator's position and speed. Depending on the current state of the crab's walk, the crab's
+/// position will be set to the rail interpolator's position.
 void ObjectCrab::calc() {
     if (System::RaceManager::Instance()->timer() == 0 && m_introCalc) {
         return;
@@ -61,7 +69,13 @@ void ObjectCrab::calc() {
 }
 
 /// @brief Tries to move the crab along its rail, unless it's still
-/// @return True if the crab is starting to move this frame
+/// @return `false` if the crab is starting to move this frame, `true` if the caller should proceed
+/// with normal calc processing.
+/// @details If the crab is currently still, checks to see if the crab has been still for @ref
+/// m_stillDuration frames. If so, updates the rail interpolator's speed, cleares @ref m_still and
+/// returns false to indicate that we should skip @ref calc() evaluation until the next frame.
+/// Otherwise, updates the rail interpolator. When traversing onto a new rail point, checks if the
+/// point's settings designate that the crab should pause that point for a set number of frames.
 bool ObjectCrab::calcRail() {
     if (m_still) {
         if (m_stillDuration <= ++m_stillFrame) {
@@ -89,10 +103,13 @@ bool ObjectCrab::calcRail() {
 }
 
 /// @brief Manages the crab's still-pause state machine
-/// @details If the crab is not still, then it returns Walking. Otherwise:
-/// - Start phase -> Snaps the crab to the rail, resetting its rotation and advances to Middle
-/// - Middle phase -> Holds until the still duration has elapsed, then advances to End
-/// - End phase -> Resets the state to Walking and returns BeginWalking
+/// @details If the crab is not still, then it returns @ref StateResult::Walking. Otherwise:
+/// - Start phase -> Snaps the crab to the rail, resetting its rotation and advances to @ref
+/// StatePhase::Middle.
+/// - Middle phase -> Holds until the still duration has elapsed, then advances to @ref
+/// StatePhase::End and returns @ref StateResult::Middle.
+/// - End phase -> Resets the state to @ref State::Walking and returns @ref
+/// StateResult::BeginWalking.
 ObjectCrab::StateResult ObjectCrab::calcState() {
     if (m_state != State::Still) {
         return StateResult::Walking;
@@ -118,7 +135,9 @@ ObjectCrab::StateResult ObjectCrab::calcState() {
     return StateResult::BeginWalking;
 }
 
-/// @brief Sets transformation matrix based on the provided rotation and the rail's tangent
+/// @brief Sets the transformation matrix based on the provided rotation and the rail's tangent
+/// @param rot The rotation to apply to the crab's transformation matrix
+/// @details The provided rotation is applied on top of the tangent-facing basis.
 void ObjectCrab::calcTransMat(const EGG::Vector3f &rot) {
     EGG::Matrix34f rotMat;
     rotMat.makeR(rot);
