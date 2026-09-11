@@ -10,7 +10,11 @@ public:
     /// @addr{0x80760188}
     /// @brief Constructor
     /// @param params The parameters used to initialize the object
-    ObjectDossunNormal(const System::MapdataGeoObj &params) : ObjectDossun(params) {}
+    /// @details Caches the Thwomp's "still" duration to @ref m_stillDuration based on param
+    /// setting 4.
+    ObjectDossunNormal(const System::MapdataGeoObj &params)
+        : ObjectDossun(params),
+          m_stillDuration(static_cast<s32>(params.setting(3))) {}
 
     /// @addr{0x80760188}
     /// @brief Default virtual destructor
@@ -32,6 +36,8 @@ public:
 
     /// @addr{0x807602E0}
     /// @copybrief ObjectBase::calc()
+    /// @details Clears the @ref m_touchingGround flag. Then, based on whether the Thwomp is
+    /// currently stomping or not, either calls @ref calcStomp() or @ref calcInactive().
     void calc() override {
         m_touchingGround = false;
 
@@ -48,17 +54,21 @@ public:
     }
 
     /// @addr{0x80760820}
+    /// @copybrief ObjectDossun::startStill()
+    /// @details Calls @ref ObjectDossun::startStill() to initialize the Thwomp at the beginning of
+    /// the still state. Also resets the stomp state to @ref StompState::Inactive and sets the @ref
+    /// m_stillTimer to @ref m_stillDuration.
     void startStill() override {
-        m_anmState = AnmState::Still;
-        m_shakePhase = 0;
-        m_vel = 0.0f;
-        setRot(EGG::Vector3f(rot().x, m_currYaw, rot().z));
+        ObjectDossun::startStill();
         m_stompState = StompState::Inactive;
-        m_stillTimer = static_cast<s32>(m_mapObj->setting(3));
+        m_stillTimer = m_stillDuration;
     }
 
     /// @addr{0x80760964}
     /// @brief Runs once when the Thwomp begins rising before stomping down
+    /// @details Sets the stomp state to @ref StompState::Active. Sets the animation state to @ref
+    /// AnmState::BeforeFall. Initializes @ref m_beforeFallTimer to @ref BEFORE_FALL_DURATION, and
+    /// sets @ref m_stompDuration to @ref m_fullDuration.
     void startBeforeFall() {
         m_stompState = StompState::Active;
         m_anmState = AnmState::BeforeFall;
@@ -69,8 +79,8 @@ public:
 private:
     /// @addr{0x80760490}
     /// @brief Runs once per frame when the Thwomp is not stomping down or resetting
-    /// @details Causes the Thwomp to shake for 30 frames before stomping down with an amplitude of
-    /// `30.0f`.
+    /// @details Causes the Thwomp to shake for 30 frames with an amplitude of `30.0f` before
+    /// stomping down.
     void calcInactive() {
         constexpr s32 SHAKE_DURATION = 30;
         constexpr f32 SHAKE_AMPLITUDE = 30.0f;
@@ -86,6 +96,11 @@ private:
             setPos(EGG::Vector3f(pos().x, posY, pos().z));
         }
     }
+
+    /// @brief Number of frames the Thwomp remains still for
+    /// @details This member does not exist in the base game, but we cache it here to avoid
+    /// repeatedly fetching the param settings.
+    const s32 m_stillDuration;
 };
 
 } // namespace Kinoko::Field

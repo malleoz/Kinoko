@@ -7,11 +7,19 @@ namespace Kinoko::Field {
 /// @brief Individual Thwomps that move along a rail and stomp
 class ObjectDossunSyuukai final : public ObjectDossun {
 public:
-    ObjectDossunSyuukai(const System::MapdataGeoObj &params);
-    ~ObjectDossunSyuukai() override;
+    /// @addr{0x80760B20}
+    /// @brief Constructor
+    /// @param params The parameters used to initialize the object
+    ObjectDossunSyuukai(const System::MapdataGeoObj &params) : ObjectDossun(params) {}
+
+    /// @addr{0x80764B88}
+    /// @brief Default virtual destructor
+    ~ObjectDossunSyuukai() override = default;
 
     /// @addr{0x80760BD4}
     /// @copybrief ObjectBase::init()
+    /// @details Initializes the Thwomp. including setting its @ref m_state to @ref State::Moving,
+    /// caching the Thwomp's initial rotation, and setting the @m_rotating flag.
     void init() override {
         ObjectDossun::init();
 
