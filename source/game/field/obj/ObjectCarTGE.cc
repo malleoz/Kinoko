@@ -127,9 +127,9 @@ void ObjectCarTGE::init() {
     auto *rail = RailManager::Instance()->rail(m_mapObj->pathId());
     u16 speedSetting = rail->points()[idx].setting[1];
     if (speedSetting == 1) {
-        m_railInterpolator->setCurrVel(m_highwayVel);
+        m_railInterpolator->setSpeed(m_highwayVel);
     } else if (speedSetting == 0) {
-        m_railInterpolator->setCurrVel(m_localVel);
+        m_railInterpolator->setSpeed(m_localVel);
     }
 
     calcStateFromRailPointSetting();

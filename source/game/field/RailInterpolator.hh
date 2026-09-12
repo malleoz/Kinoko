@@ -31,7 +31,7 @@ public:
 
     /// @brief Sets the current velocity that will be used for interpolation
     /// @param speed The new velocity to set
-    virtual void setCurrVel(f32 speed) = 0;
+    virtual void setSpeed(f32 speed) = 0;
 
     /// @brief Returns the current velocity being used for interpolation
     /// @return The current velocity
@@ -138,7 +138,7 @@ protected:
     /// point velocities
     void updateVel() {
         f32 t = m_segmentT;
-        setCurrVel((1.0f - t) * m_currPointVel + t * m_nextPointVel);
+        setSpeed((1.0f - t) * m_currPointVel + t * m_nextPointVel);
     }
 
     void calcVelocities();
@@ -164,7 +164,7 @@ protected:
     bool m_usePerPointVelocities;  ///< When true, uses velocities defined at each point in the rail
     EGG::Vector3f m_curPos;        ///< The current position along the rail
     EGG::Vector3f m_curTangentDir; ///< The current tangent direction along the rail
-    f32 m_currSpeed; ///< Current speed either set via @ref setCurrVel or from per-point velocities
+    f32 m_currSpeed; ///< Current speed either set via @ref setSpeed or from per-point velocities
     f32 m_currPointVel;   ///< The velocity at the current point in the rail
     f32 m_nextPointVel;   ///< The velocity at the next point in the rail
     f32 m_currSegmentVel; ///< The velocity along the current segment
@@ -184,7 +184,7 @@ public:
     Status calc() override;
 
     /// @addr{0x806EFFF4}
-    void setCurrVel(f32 speed) override {
+    void setSpeed(f32 speed) override {
         m_currSpeed = speed;
         m_currSegmentVel = m_currSpeed / m_currVel.length();
     }
@@ -227,7 +227,7 @@ public:
     Status calc() override;
 
     /// @addr{0x806EEB94}
-    void setCurrVel(f32 speed) override {
+    void setSpeed(f32 speed) override {
         m_currSpeed = speed;
         s16 idx = m_forward ? m_currPointIdx : m_nextPointIdx;
         m_currSegmentVel = speed * m_transitions[idx].m_lengthInv;

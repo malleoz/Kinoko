@@ -23,7 +23,7 @@ ObjectRock::~ObjectRock() = default;
 /// @copybrief ObjectBase::init()
 void ObjectRock::init() {
     m_railInterpolator->init(0.0f, 0);
-    m_railInterpolator->setCurrVel(m_railSpeed);
+    m_railInterpolator->setSpeed(m_railSpeed);
     m_railInterpolator->calc();
 
     m_state = State::Tangible;

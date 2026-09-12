@@ -67,7 +67,7 @@ private:
     void breakRock() {
         m_state = State::Intangible;
         m_railInterpolator->init(0.0f, 0);
-        m_railInterpolator->setCurrVel(m_railSpeed);
+        m_railInterpolator->setSpeed(m_railSpeed);
         setPos(EGG::Vector3f(pos().x, m_startYPos, pos().z));
         disableCollision();
     }

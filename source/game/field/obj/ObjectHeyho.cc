@@ -200,7 +200,7 @@ void ObjectHeyho::calcMotion() {
             sqVel = 0.001f;
         }
         m_currentVel = EGG::Mathf::sqrt(sqVel);
-        m_railInterpolator->setCurrVel(m_currentVel);
+        m_railInterpolator->setSpeed(m_currentVel);
 
         if (m_railInterpolator->calc() == RailInterpolator::Status::ChangingDirection) {
             // We have an edgecase where the endpoint heights aren't the same

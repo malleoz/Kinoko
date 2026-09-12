@@ -162,7 +162,7 @@ private:
             m_nextStateId = 0;
         }
 
-        m_railInterpolator->setCurrVel(m_currSpeed);
+        m_railInterpolator->setSpeed(m_currSpeed);
         m_scaledTangentDir = m_railInterpolator->curTangentDir() * m_currSpeed;
     }
 
@@ -178,7 +178,7 @@ private:
             m_nextStateId = 0;
         }
 
-        m_railInterpolator->setCurrVel(m_currSpeed);
+        m_railInterpolator->setSpeed(m_currSpeed);
         m_scaledTangentDir = m_railInterpolator->curTangentDir() * m_currSpeed;
     }
 

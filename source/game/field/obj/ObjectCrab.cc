@@ -15,7 +15,7 @@ void ObjectCrab::init() {
 
     calcCurRot(INIT_ROT);
 
-    m_railInterpolator->setCurrVel(m_vel);
+    m_railInterpolator->setSpeed(m_vel);
     setPos(m_railInterpolator->curPos());
     calcTransMat(m_curRot);
 
@@ -79,7 +79,7 @@ void ObjectCrab::calc() {
 bool ObjectCrab::calcRail() {
     if (m_still) {
         if (m_stillDuration <= ++m_stillFrame) {
-            m_railInterpolator->setCurrVel(m_vel);
+            m_railInterpolator->setSpeed(m_vel);
             m_still = false;
             return false;
         }
@@ -92,7 +92,7 @@ bool ObjectCrab::calcRail() {
             status == RailInterpolator::Status::ChangingDirection) {
         u16 duration = m_railInterpolator->curPoint().setting[0];
         if (duration > 0) {
-            m_railInterpolator->setCurrVel(0.0f);
+            m_railInterpolator->setSpeed(0.0f);
             m_stillDuration = duration;
             m_stillFrame = 0;
             m_still = true;

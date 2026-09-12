@@ -19,10 +19,6 @@ ObjectDossunTsuibiHolder::ObjectDossunTsuibiHolder(const System::MapdataGeoObj &
     }
 }
 
-/// @addr{0x80764BC8}
-/// @brief Default virtual destructor
-ObjectDossunTsuibiHolder::~ObjectDossunTsuibiHolder() = default;
-
 /// @addr{0x80761744}
 /// @copybrief ObjectBase::init()
 void ObjectDossunTsuibiHolder::init() {
@@ -34,7 +30,7 @@ void ObjectDossunTsuibiHolder::init() {
     m_initYaw = rot().y;
     m_state = State::Still;
     m_railInterpolator->init(0.0f, 0);
-    m_vel = m_railInterpolator->currVel();
+    m_speed = m_railInterpolator->currVel();
     m_forwardTimer = 0;
     m_movingForward = false;
     m_movingSideways = false;

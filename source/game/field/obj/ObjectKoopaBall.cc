@@ -27,7 +27,7 @@ void ObjectKoopaBall::init() {
     initCooldownTimer();
 
     m_railInterpolator->init(0.0f, 0);
-    m_railInterpolator->setCurrVel(INITIAL_VELOCITY);
+    m_railInterpolator->setSpeed(INITIAL_VELOCITY);
     m_railInterpolator->calc();
 
     m_initPosY = m_railInterpolator->curPos().y;
@@ -173,7 +173,7 @@ void ObjectKoopaBall::calcIntangible() {
     }
 
     m_state = State::Tangible;
-    m_railInterpolator->setCurrVel(INITIAL_VELOCITY);
+    m_railInterpolator->setSpeed(INITIAL_VELOCITY);
     m_angSpeed = INITIAL_ANGULAR_SPEED;
     m_vel.y = INITIAL_Y_VEL;
     m_cooldownTimer = COOLDOWN_FRAMES;

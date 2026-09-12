@@ -14,7 +14,10 @@ class ObjectDossunTsuibi;
 class ObjectDossunTsuibiHolder final : public ObjectCollidable {
 public:
     ObjectDossunTsuibiHolder(const System::MapdataGeoObj &params);
-    ~ObjectDossunTsuibiHolder() override;
+
+    /// @addr{0x80764BC8}
+    /// @brief Default virtual destructor
+    ~ObjectDossunTsuibiHolder() override = default;
 
     void init() override;
     void calc() override;
@@ -41,10 +44,14 @@ public:
     /// @details This is a no-op in the base game.
     void createCollision() override {}
 
-    /// @brief Runs once when the Thwomps enter the Still state at their home position
+    /// @brief Runs once when the Thwomps enter the Still state, where the Thwomps return to their
+    /// home position and remain still
+    /// @details Sets the Thwomp's movement state to @ref State::Backward to indicate the Thwomps
+    /// are moving backwards towards their home. Also updates the rail interpolator's speed to the
+    /// Thwomp's speed.
     void startStill() {
         m_state = State::Backward;
-        m_railInterpolator->setCurrVel(m_vel);
+        m_railInterpolator->setSpeed(m_speed);
     }
 
 private:
@@ -82,7 +89,7 @@ private:
     /// @addr{0x8076321C}
     /// @brief Updates position from the rail every frame while the Thwomps are moving forward
     void calcForwardRail() {
-        m_railInterpolator->setCurrVel(m_forwardVel);
+        m_railInterpolator->setSpeed(m_forwardVel);
 
         if (m_railInterpolator->calc() == RailInterpolator::Status::ChangingDirection) {
             enterStartStomp();
@@ -118,7 +125,7 @@ private:
     bool m_facingBackwards; ///< Set when the Thwomps are facing backwards
     f32 m_lastStompZ;       ///< Z-position of the last stomp
     f32 m_resetZVel;   ///< Speed required to move from m_lastStompZ to the home's Z in 36 frames
-    f32 m_vel;         ///< Rail velocity
+    f32 m_speed;       ///< Speed when moving along the rail
     f32 m_initYaw;     ///< Initial rotation about the Y-axis
     f32 m_resetAngVel; ///< Rotational speed of Thwomps after returning home
     u32 m_backwardsCounter; ///< Ticks up every frame the Thwomps are facing backwards, or are

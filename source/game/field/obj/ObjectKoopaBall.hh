@@ -56,7 +56,7 @@ private:
         constexpr f32 VERTICAL_VELOCITY = 60.0f;
 
         m_vel.y = VERTICAL_VELOCITY;
-        m_railInterpolator->setCurrVel(INITIAL_VELOCITY / INITIAL_ANGULAR_SPEED);
+        m_railInterpolator->setSpeed(INITIAL_VELOCITY / INITIAL_ANGULAR_SPEED);
     }
 
     /// @addr{0x80771B68}

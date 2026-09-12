@@ -69,13 +69,13 @@ private:
     /// @addr{0x806DE1C8}
     /// @brief Runs once when the sun has reached a point along its rail designated as a stop point
     void enterStill() {
-        m_railInterpolator->setCurrVel(0.0f);
+        m_railInterpolator->setSpeed(0.0f);
     }
 
     /// @addr{0x806DE408}
     /// @brief Runs once when the sun begins revolving around the course again
     void enterRevolving() {
-        m_railInterpolator->setCurrVel(m_revolutionSpeed);
+        m_railInterpolator->setSpeed(m_revolutionSpeed);
     }
 
     /// @addr{0x806DE1E4}

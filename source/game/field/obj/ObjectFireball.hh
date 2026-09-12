@@ -6,7 +6,7 @@ namespace Kinoko::Field {
 
 /// @brief An individual fireball within an @ref ObjectFirebar or @ref ObjectFireRing
 /// @details The owning object sets the fireball's distance from the center of the owning object and
-/// sets the angle of the fireball around the owning object's axis of rotation
+/// sets the angle of the fireball around the owning object's axis of rotation.
 class ObjectFireball final : public ObjectCollidable {
 public:
     /// @addr{0x80768650}
@@ -32,25 +32,41 @@ public:
         return "fireBPlane";
     }
 
+    /// @beginSetters
+    /// @brief Sets the distance from the center of the parent object
+    /// @param dist The distance from the center of the parent object
     void setDistance(f32 dist) {
         m_distance = dist;
     }
 
+    /// @brief Sets the angle in degrees of the fireball around the axis of rotation of the parent
+    /// object
+    /// @param angle The angle in degrees of the fireball around the axis of rotation of the parent
+    /// object
     void setAngle(f32 angle) {
         m_angle = angle;
     }
+    /// @endSetters
 
+    /// @beginGetters
+    /// @brief Gets the distance from the center of the parent object
+    /// @return The distance from the center of the parent object
     [[nodiscard]] f32 distance() const {
         return m_distance;
     }
 
+    /// @brief Gets the angle in degrees of the fireball around the axis of rotation of the parent
+    /// object
+    /// @return The angle in degrees of the fireball around the axis of rotation of the parent
+    /// object
     [[nodiscard]] f32 angle() const {
         return m_angle;
     }
+    /// @endGetters
 
 private:
     f32 m_distance; ///< Distance from the center of the parent object
-    f32 m_angle;    ///< Angle of the fireball about the axis of rotation
+    f32 m_angle;    ///< Angle of the fireball about the axis of rotation in degrees
 };
 
 } // namespace Kinoko::Field

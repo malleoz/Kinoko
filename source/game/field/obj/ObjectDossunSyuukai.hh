@@ -31,22 +31,28 @@ public:
     void calc() override;
 
     /// @addr{0x8076139C}
+    /// @copybrief ObjectDossun::startStill()
+    /// @details Calls @ref ObjectDossun::startStill() to initialize the Thwomp at the beginning of
+    /// the still state. Also sets the Thwomp's motion state to @ref State::RotatingBeforeMoving.
     void startStill() override {
         ObjectDossun::startStill();
-        m_state = State::RotatingAfterStomp;
+        m_state = State::RotatingBeforeMoving;
     }
 
 private:
     /// @brief Describes the current motion state of the Thwomp
     enum class State {
-        Moving = 0,              ///< Moving along the rail
-        RotatingBeforeStomp = 1, ///< Still and rotating
-        Stomping = 2,            ///< Stomping down
-        RotatingAfterStomp = 3,  ///< Still and rotating to face rail direction
+        Moving = 0,               ///< Moving along the rail
+        RotatingBeforeStomp = 1,  ///< Stationary and rotating
+        Stomping = 2,             ///< Stomping down
+        RotatingBeforeMoving = 3, ///< Stationary and rotating to face rail direction before moving
     };
 
     /// @addr{0x80760D18}
     /// @brief Runs once per frame while the Thwomp is moving
+    /// @details Updates the rail interpolator and transitions to the @ref
+    /// State::RotatingBeforeStomp state if the end of the segment is reached. Finally, updates the
+    /// Thwomp's position along the rail.
     void calcMoving() {
         if (m_railInterpolator->calc() == RailInterpolator::Status::SegmentEnd) {
             m_state = State::RotatingBeforeStomp;

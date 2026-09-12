@@ -62,7 +62,7 @@ private:
     /// @addr{0x806B8CCC}
     /// @brief Updates the rail and checks if the car is changing direction
     void calcRail() {
-        m_railInterpolator->setCurrVel(m_currVel);
+        m_railInterpolator->setSpeed(m_currVel);
 
         auto status = m_railInterpolator->calc();
         m_changingDir = (status == RailInterpolator::Status::ChangingDirection);

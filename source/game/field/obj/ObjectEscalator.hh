@@ -20,10 +20,15 @@ class ObjectEscalator final : public ObjectKCL {
 
 public:
     ObjectEscalator(const System::MapdataGeoObj &params, bool reverse = false);
-    ~ObjectEscalator() override;
+
+    /// @addr{0x80803D00}
+    /// @brief Default virtual destructor
+    ~ObjectEscalator() override = default;
 
     /// @addr{0x808008FC}
     /// @copybrief ObjectBase::calc()
+    /// @details Calculates the escalator's moving object velocity, updates @ref m_wrappedStepCount,
+    /// and sets the escalator's position accordingly.
     void calc() override {
         s32 t = static_cast<s32>(System::RaceManager::Instance()->timer());
         setMovingObjVel(m_stepDims * calcSpeed(t));
@@ -113,8 +118,7 @@ public:
     /// @copybrief ObjectDrivable::narrScLocal()
     /// @param radius The radius of the sphere to check
     /// @param pos The position of the sphere to check
-    /// @param mask The KCL flags to check collision against (other types are ignored)
-    /// @param timeOffset Optional time delta
+    /// @param mask The KCL flags to check collision against
     void narrScLocal(f32 radius, const EGG::Vector3f &pos, KCLTypeMask mask,
             u32 /*timeOffset*/) override {
         m_objColMgr->narrScLocal(radius, pos, mask);
@@ -200,6 +204,7 @@ public:
 
     /// @addr{0x80803CE0}
     /// @copybrief ObjectKCL::colRadiusAdditionalLength()
+    /// @return The additional length to be added to the escalator's collision radius, `1000.0f`.
     [[nodiscard]] f32 colRadiusAdditionalLength() const override {
         return 1000.0f;
     }
@@ -212,26 +217,64 @@ public:
             KCLTypeMask *maskOut, u32 timeOffset) override;
 
 private:
+    /// @brief Alias for a member function pointer type used for point collision checks.
+    /// @tparam T The type of collision info, either CollisionInfo or CollisionInfoPartial.
     template <typename T>
         requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
     using CheckPointFunc = bool(ObjColMgr::*)(const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info, KCLTypeMask *maskOut);
 
+    /// @brief Alias for a member function pointer type used for sphere collision checks.
+    /// @tparam T The type of collision info, either CollisionInfo or CollisionInfoPartial.
     template <typename T>
         requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
     using CheckSphereFunc = bool(ObjColMgr::*)(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info, KCLTypeMask *maskOut);
 
+    /// @brief Helper function which re-uses some shared code amongst collision check variants
+    /// @tparam T CollisionInfo or CollisionInfoPartial
+    /// @param checkFunc The function to use for the actual collision check
+    /// @param pos The point to check collision against
+    /// @param prevPos The previous position of the kart (used to compute collision depth)
+    /// @param mask The KCL masks to filter collision checks to (ignores other collision types)
+    /// @param info Out param that collision info is saved to (if any)
+    /// @param maskOut Type mask of the KCL the kart is colliding with (if any)
+    /// @return Whether or not a collision occurred
     template <typename T>
         requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
-    [[nodiscard]] bool checkPointImpl(CheckPointFunc<T> checkFunc, const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info, KCLTypeMask *maskOut);
+    bool checkPointImpl(CheckPointFunc<T> checkFunc, const EGG::Vector3f &pos,
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info, KCLTypeMask *maskOut) {
+        if (m_checkColYPosMin > pos.y || pos.y >= m_checkColYPosMax) {
+            return false;
+        }
 
+        return (m_objColMgr->*checkFunc)(pos, prevPos, mask, info, maskOut);
+    }
+
+    /// @brief Helper function which re-uses some shared code amongst collision check variants
+    /// @tparam T CollisionInfo or CollisionInfoPartial
+    /// @param checkFunc The function to use for the actual collision check
+    /// @param radius The radius of the sphere to check collision against
+    /// @param pos The position of the sphere to check collision against
+    /// @param prevPos The previous position of the kart (used to compute collision depth)
+    /// @param mask The KCL masks to filter collision checks to (ignores other collision types)
+    /// @param info Out param that collision info is saved to (if any)
+    /// @param maskOut Type mask of the KCL the kart is colliding with (if any)
+    /// @return Whether or not a collision occurred
     template <typename T>
         requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
-    [[nodiscard]] bool checkSphereImpl(CheckSphereFunc<T> checkFunc, f32 radius,
-            const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info,
-            KCLTypeMask *maskOut, u32 timeOffset);
+    bool checkSphereImpl(CheckSphereFunc<T> checkFunc, f32 radius, const EGG::Vector3f &pos,
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info, KCLTypeMask *maskOut,
+            u32 timeOffset) {
+        if (m_checkColYPosMin > pos.y || pos.y >= m_checkColYPosMax) {
+            return false;
+        }
+
+        calcScale(timeOffset);
+        update(timeOffset);
+
+        return (m_objColMgr->*checkFunc)(radius, pos, prevPos, mask, info, maskOut);
+    }
 
     [[nodiscard]] f32 calcWrappedStepCount(s32 t);
     [[nodiscard]] f32 calcSpeed(s32 t);

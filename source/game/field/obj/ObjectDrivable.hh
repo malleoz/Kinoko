@@ -5,10 +5,19 @@
 
 namespace Kinoko::Field {
 
+/// @brief Represents an object that karts can drive on, such as @ref ObjectAurora.
+/// @details Exposes collision interfaces to allow for objects to define the criteria for when and
+/// how karts react to landing and driving on these objects.
 class ObjectDrivable : public ObjectBase {
 public:
-    ObjectDrivable(const System::MapdataGeoObj &params);
-    ~ObjectDrivable() override;
+    /// @addr{0x8081A6D0}
+    /// @brief Constructor
+    /// @param params The parameters used to initialize the object
+    ObjectDrivable(const System::MapdataGeoObj &params) : ObjectBase(params) {}
+
+    /// @addr{0x8067EB3C}
+    /// @brief Default virtual destructor
+    ~ObjectDrivable() override = default;
 
     void load() override;
 
@@ -19,11 +28,17 @@ public:
         return 5000.0f;
     }
 
-    /// @brief Called once after collision creation
-    /// @copybrief ObjectKCL::initCollision()
+    /// @brief Called once after collision creation to initialize the collision
     virtual void initCollision() {}
 
-    virtual void loadAABB(f32 radius);
+    /// @addr{0x8081A85C}
+    /// @brief Inserts this object into the @ref BoxColManager as a drivable entry
+    /// @param radius The collision radius for the @ref BoxColUnit
+    void loadAABB(f32 radius) {
+        auto *boxColMgr = BoxColManager::Instance();
+        const EGG::Vector3f &pos = getPosition();
+        m_boxColUnit = boxColMgr->insertDrivable(radius, 0.0f, &pos, false, this);
+    }
 
     /// @brief Checks collision between a point and the object, writing only partial collision info
     /// @param pos The point to check

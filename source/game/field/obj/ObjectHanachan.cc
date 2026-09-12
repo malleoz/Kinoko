@@ -206,7 +206,7 @@ void ObjectHanachan::init() {
 /// @brief Runs every frame when the Wiggler is walking along its rail
 void ObjectHanachan::calcWalk() {
     if (m_still) {
-        m_railInterpolator->setCurrVel(0.0f);
+        m_railInterpolator->setSpeed(0.0f);
         m_nextStateId = 1;
     }
 

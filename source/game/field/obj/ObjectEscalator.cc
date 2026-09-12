@@ -8,6 +8,8 @@ namespace Kinoko::Field {
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
 /// @param reverse Whether the escalator should move in reverse
+/// @details Initializes the escalator object with the given parameters and sets up its initial
+/// state, including position, speed, and state durations.
 ObjectEscalator::ObjectEscalator(const System::MapdataGeoObj &params, bool reverse /* = false */)
     : ObjectKCL(params),
       m_initialPos(pos()),
@@ -37,12 +39,13 @@ ObjectEscalator::ObjectEscalator(const System::MapdataGeoObj &params, bool rever
     m_stepDims = mat.ps_multVector(STEP_DIMS);
 }
 
-/// @addr{0x80803D00}
-/// @brief Default virtual destructor
-ObjectEscalator::~ObjectEscalator() = default;
-
 /// @addr{0x808011CC}
 /// @copydoc ObjectKCL::checkCollision()
+/// @details Updates the escalator's transform. If the player is outside of the range `[@ref
+/// m_checkColYPosMin, @ref m_checkColYPosMax]`, then early returns and does not perform any
+/// collision checks. Dispatches to the @ref ObjColMgr to check for collision between the player and
+/// the escalator. If found, sets the moving road velocity and distance to @ref CollisionInfo and
+/// returns `true`, otherwise returns `false`.
 bool ObjectEscalator::checkCollision(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
         u32 timeOffset) {
@@ -78,6 +81,11 @@ bool ObjectEscalator::checkCollision(f32 radius, const EGG::Vector3f &pos,
 
 /// @addr{0x808014AC}
 /// @copydoc ObjectKCL::checkCollisionCached()
+/// @details Updates the escalator's transform. If the player is outside of the range `[@ref
+/// m_checkColYPosMin, @ref m_checkColYPosMax]`, then early returns and does not perform any
+/// collision checks. Dispatches to the @ref ObjColMgr to check for collision between the player and
+/// the escalator using the cached prism data. If found, sets the moving road velocity and distance
+/// to @ref CollisionInfo and returns `true`, otherwise returns `false`.
 bool ObjectEscalator::checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
         u32 timeOffset) {
@@ -111,53 +119,9 @@ bool ObjectEscalator::checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
     return true;
 }
 
-/// @brief Helper function which re-uses some shared code amongst various collision check variants
-/// @tparam T CollisionInfo or CollisionInfoPartial
-/// @param checkFunc The function to use for the actual collision check
-/// @param pos The point to check collision against
-/// @param prevPos The previous position of the kart (used to compute collision depth)
-/// @param mask The KCL masks to filter collision checks to (ignores other collision types)
-/// @param info Out param that collision info is saved to (if any)
-/// @param maskOut Type mask of the KCL the kart is colliding with (if any)
-/// @return Whether or not a collision occurred
-template <typename T>
-    requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
-bool ObjectEscalator::checkPointImpl(CheckPointFunc<T> checkFunc, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info, KCLTypeMask *maskOut) {
-    if (m_checkColYPosMin > pos.y || pos.y >= m_checkColYPosMax) {
-        return false;
-    }
-
-    return (m_objColMgr->*checkFunc)(pos, prevPos, mask, info, maskOut);
-}
-
-/// @brief Helper function which re-uses some shared code amongst various collision check variants
-/// @tparam T CollisionInfo or CollisionInfoPartial
-/// @param checkFunc The function to use for the actual collision check
-/// @param radius The radius of the sphere to check collision against
-/// @param pos The position of the sphere to check collision against
-/// @param prevPos The previous position of the kart (used to compute collision depth)
-/// @param mask The KCL masks to filter collision checks to (ignores other collision types)
-/// @param info Out param that collision info is saved to (if any)
-/// @param maskOut Type mask of the KCL the kart is colliding with (if any)
-/// @return Whether or not a collision occurred
-template <typename T>
-    requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
-bool ObjectEscalator::checkSphereImpl(CheckSphereFunc<T> checkFunc, f32 radius,
-        const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info,
-        KCLTypeMask *maskOut, u32 timeOffset) {
-    if (m_checkColYPosMin > pos.y || pos.y >= m_checkColYPosMax) {
-        return false;
-    }
-
-    calcScale(timeOffset);
-    update(timeOffset);
-
-    return (m_objColMgr->*checkFunc)(radius, pos, prevPos, mask, info, maskOut);
-}
-
 /// @addr{0x80800ABC}
 /// @brief Evaluates a piecewise function to calculate a wrapped step count.
+/// @param t The current frame used to evaluate the wrapped step count.
 /// @details The escalator's geometry repeats every 20 steps / 200 units, so this function computes
 /// a displacement modulo 200. This is the analytical integral of the piecewise-linear speed profile
 /// from
@@ -271,6 +235,7 @@ f32 ObjectEscalator::calcWrappedStepCount(s32 t) {
 
 /// @addr{0x80800FBC}
 /// @brief Calculates the speed of the escalator at a given time t
+/// @param t The current frame used to evaluate the speed.
 /// @details This is the derivative of the position function @ref calcWrappedStepCount() integrates.
 /// @par Piecewise Speed Function
 /// Using the same symbols as @ref calcWrappedStepCount(): \f$v_0, v_1, v_2\f$ are @ref m_speed,

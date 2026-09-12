@@ -33,7 +33,7 @@ ObjectVolcanoBall::~ObjectVolcanoBall() = default;
 /// \f$y\f$ is the current height, and \f$y_{end}\f$ is the end height.
 void ObjectVolcanoBall::calcFalling() {
     f32 sqVel = std::max(0.01f, m_finalVelSq - 2.0f * m_accel * (pos().y - m_endPosY));
-    m_railInterpolator->setCurrVel(EGG::Mathf::sqrt(m_sqVelXZ + sqVel));
+    m_railInterpolator->setSpeed(EGG::Mathf::sqrt(m_sqVelXZ + sqVel));
 
     if (m_railInterpolator->calc() == RailInterpolator::Status::ChangingDirection) {
         m_nextStateId = 2;

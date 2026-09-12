@@ -257,7 +257,7 @@ private:
     /// @brief Initializes the rail and its velocity
     void initRail() {
         m_railInterpolator->init(0.0f, 0);
-        m_railInterpolator->setCurrVel(m_walkSpeed);
+        m_railInterpolator->setSpeed(m_walkSpeed);
     }
 
     /// @addr{0x806CA27C}
@@ -325,7 +325,7 @@ private:
     /// @addr{0x806CBE2C}
     /// @brief Sets the rail interpolator's velocity to the Wiggler's movement speed
     void setRailVel() {
-        m_railInterpolator->setCurrVel(m_walkSpeed);
+        m_railInterpolator->setSpeed(m_walkSpeed);
     }
 
     [[nodiscard]] ObjectHanachanHead *&headPart() {

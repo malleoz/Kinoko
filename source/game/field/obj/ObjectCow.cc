@@ -100,7 +100,7 @@ void ObjectCowLeader::init() {
 
     setTarget(pos() + m_railInterpolator->curTangentDir() * 10.0f);
 
-    m_railInterpolator->setCurrVel(static_cast<f32>(m_mapObj->setting(1)));
+    m_railInterpolator->setSpeed(static_cast<f32>(m_mapObj->setting(1)));
 
     m_railSpeed = 0.0f;
     m_endedRailSegment = false;
@@ -208,7 +208,7 @@ void ObjectCowLeader::calcRoam() {
         }
     }
 
-    m_railInterpolator->setCurrVel(m_railSpeed);
+    m_railInterpolator->setSpeed(m_railSpeed);
 
     auto status = m_railInterpolator->calc();
     const auto &curPoint = m_railInterpolator->curPoint();
