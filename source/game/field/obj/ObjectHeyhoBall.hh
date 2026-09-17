@@ -16,6 +16,9 @@ class ObjectHeyhoBall final : public ObjectProjectile, private StateManager {
 public:
     /// @addr{0x806D02C4}
     /// @copydoc ObjectProjectile::ObjectProjectile(const System::MapdataGeoObj &)
+    /// @details Sets @ref m_airtime from param setting 2 and caches the cannonball's initial
+    /// position to @ref m_initPos. Finally, registers this object to the vector of managed objects
+    /// in @ref ObjectDirector.
     ObjectHeyhoBall(const System::MapdataGeoObj &params)
         : ObjectProjectile(params),
           StateManager(this, STATE_ENTRIES),
@@ -32,6 +35,8 @@ public:
 
     /// @addr{0x806D0780}
     /// @copybrief ObjectBase::calc()
+    /// @details Evaluates the cannonball's state machine and applies new position of the
+    /// cannonball.
     void calc() override {
         StateManager::calc();
         setPos(m_workingPos);
@@ -53,6 +58,7 @@ public:
     /// @addr{0x806D188C}
     /// @brief Callback function use by the @ref ObjectHeyhoShip that wants to throw this
     /// projectile.
+    /// @details Transitions the cannonball to the falling state.
     void onLaunch() override {
         m_nextStateId = 1;
     }
@@ -66,6 +72,8 @@ private:
 
     /// @addr{0x806D0A3C}
     /// @brief Runs once when the cannonball is fired
+    /// @details Initializes the cannonball's @ref Field::BoxColUnit if not already created. Resizes
+    /// the collision unit to a radius of @ref INIT_BLAST_RADIUS.
     void enterFalling() {
         if (!getUnit()) {
             loadAABB(0.0f);
@@ -75,18 +83,15 @@ private:
 
     /// @addr{0x806D0C0C}
     /// @brief Runs once when the cannonball has landed and is blinking before exploding
+    /// @details Snaps the cannonball to @ref m_initPos but offset down by half its @ref BALL_RADIUS
+    /// so that it is halfway clipped through the floor.
     void enterBlinking() {
         m_workingPos = m_initPos + EGG::Vector3f::ey * -BALL_RADIUS;
     }
 
-    /// @addr{0x806D0D84}
-    /// @brief Runs once when the cannonball has started exploding
-    void enterExploding() {
-        m_scaleChangeRate = (1.2f * m_blastRadiusRatio - 1.0f) / 40.0f / 40.0f;
-    }
-
     /// @addr{0x806D0A14}
     /// @brief Runs every frame that the cannonball is not visible
+    /// @details Snaps the cannonball's position to the @ref ObjectHeyhoShip
     void calcIntangible() {
         m_workingPos = m_shipPos;
     }
@@ -95,6 +100,8 @@ private:
 
     /// @addr{0x806D0CD8}
     /// @brief Runs every frame that the cannonball is blinking before exploding
+    /// @details If the cannonball has been in the blinking state for `180` frames, transitions to
+    /// the exploding state.
     void calcBlinking() {
         constexpr u32 REST_FRAMES = 180;
 
@@ -107,6 +114,7 @@ private:
 
     /// @addr{0x806D14D8}
     /// @brief Runs after the explosion has finished to set the final scale of the cannonball
+    /// @details Sets the cannonball's XYZ scale to `{1.001f, 1.001f, 1.001f}`.
     void calcFinishedExplodingScale() {
         constexpr EGG::Vector3f BALL_SCALE = EGG::Vector3f(1.001f, 1.001f, 1.001f);
 
@@ -128,7 +136,6 @@ private:
     EGG::Vector3f m_shipPos;        ///< Position of the ship firing the ball
     const EGG::Vector3f m_initPos;  ///< Target landing position
     EGG::Vector3f m_xzDir;          ///< XZ direction of the cannonball's flight path
-    f32 m_yDist;                    ///< Vertical distance between the ship and the landing position
     f32 m_xzSpeed;                  ///< XZ speed of the cannonball's flight path
     f32 m_initYSpeed;               ///< Initial vertical projectile speed
     f32 m_blastRadiusRatio;         ///< Ratio between the blast radius and the shell's radius
@@ -146,8 +153,7 @@ private:
                     &ObjectHeyhoBall::calcFalling>(1)},
             {StateEntry<ObjectHeyhoBall, &ObjectHeyhoBall::enterBlinking,
                     &ObjectHeyhoBall::calcBlinking>(2)},
-            {StateEntry<ObjectHeyhoBall, &ObjectHeyhoBall::enterExploding,
-                    &ObjectHeyhoBall::calcExploding>(3)},
+            {StateEntry<ObjectHeyhoBall, nullptr, &ObjectHeyhoBall::calcExploding>(3)},
     }};
 };
 

@@ -15,7 +15,7 @@ public:
     /// @brief Default virtual destructor
     ~ObjectProjectile() override = default;
 
-    /// @brief Callback function called by the managing @ref ObjectSniper.
+    /// @brief Init callback function called by the managing @ref ObjectSniper.
     virtual void initProjectile(const EGG::Vector3f &pos) = 0;
 
     /// @brief Callback function use by the @ref ObjectSniper that wants to throw this projectile.
