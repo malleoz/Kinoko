@@ -45,6 +45,7 @@ public:
     }
 
     /// @beginGetters
+
     [[nodiscard]] u16 id() const {
         return m_id;
     }
@@ -73,6 +74,7 @@ public:
     [[nodiscard]] u16 presenceFlag() const {
         return m_presenceFlag;
     }
+    
     /// @endGetters
 
 private:

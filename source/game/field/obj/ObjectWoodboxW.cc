@@ -5,8 +5,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8077DF24}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 ObjectWoodboxW::ObjectWoodboxW(const System::MapdataGeoObj &params)
     : ObjectCollidable(params),
       m_spawnInterval(params.setting(5)) {

@@ -188,6 +188,7 @@ public:
     [[nodiscard]] const u16 *searchBlock(const EGG::Vector3f &pos);
 
     /// @beginGetters
+
     [[nodiscard]] const EGG::BoundBox3f &bbox() const {
         return m_bbox;
     }
@@ -207,6 +208,7 @@ public:
     [[nodiscard]] std::span<const EGG::Vector3f> vertices() const {
         return m_vertices.view();
     }
+    
     /// @endGetters
 
     /// @addr{0x807BDF54}

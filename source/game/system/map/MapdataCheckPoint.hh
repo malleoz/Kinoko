@@ -101,6 +101,7 @@ public:
     }
 
     /// @beginSetters
+
     void setSearched() {
         m_searched = true;
     }
@@ -108,9 +109,11 @@ public:
     void clearSearched() {
         m_searched = false;
     }
+    
     /// @endSetters
 
     /// @beginGetters
+
     [[nodiscard]] bool searched() const {
         return m_searched;
     }
@@ -148,6 +151,7 @@ public:
         ASSERT(i < m_nextPoints.size());
         return m_nextPoints[i].checkpoint;
     }
+
     /// @endGetters
 
     /// @brief Describes the type of checkpoint
@@ -226,9 +230,11 @@ public:
     ~MapdataCheckPointAccessor() override;
 
     /// @beginGetters
+
     [[nodiscard]] s8 lastKcpType() const {
         return m_lastKcpType;
     }
+
     /// @endGetters
 
 private:

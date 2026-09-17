@@ -8,8 +8,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806DFE9C}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 ObjectTruckWagonCart::ObjectTruckWagonCart(const System::MapdataGeoObj &params)
     : ObjectCollidable(params),
       StateManager(this, STATE_ENTRIES),
@@ -218,8 +217,7 @@ void ObjectTruckWagonCart::reset(u32 idx) {
 }
 
 /// @addr{0x806E206C}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 ObjectTruckWagon::ObjectTruckWagon(const System::MapdataGeoObj &params)
     : ObjectCollidable(params),
       m_spawn2Frame(static_cast<s32>(params.setting(1))),

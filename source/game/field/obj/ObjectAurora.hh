@@ -9,8 +9,7 @@ namespace Kinoko::Field {
 class ObjectAurora final : public ObjectDrivable {
 public:
     /// @addr{0x807FAB58}
-    /// @brief Constructor
-    /// @param params The parameters used to initialize the object
+    /// @copydoc ObjectDrivable::ObjectDrivable(const System::MapdataGeoObj &)
     ObjectAurora(const System::MapdataGeoObj &params) : ObjectDrivable(params) {}
 
     /// @addr{0x807FB690}

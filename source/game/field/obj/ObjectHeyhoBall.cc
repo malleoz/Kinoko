@@ -4,21 +4,6 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x806D02C4}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
-ObjectHeyhoBall::ObjectHeyhoBall(const System::MapdataGeoObj &params)
-    : ObjectProjectile(params),
-      StateManager(this, STATE_ENTRIES),
-      m_airtime(static_cast<f32>(params.setting(1))),
-      m_initPos(params.pos()) {
-    registerManagedObject();
-}
-
-/// @addr{0x806D1820}
-/// @brief Default virtual destructor
-ObjectHeyhoBall::~ObjectHeyhoBall() = default;
-
 /// @addr{0x806D05F0}
 /// @copybrief ObjectBase::init()
 void ObjectHeyhoBall::init() {
@@ -86,7 +71,6 @@ void ObjectHeyhoBall::calcFalling() {
 
 /// @addr{0x806D0F24}
 /// @brief Scales the explosion sphere over 46 frames using a capped downward parabola
-///
 void ObjectHeyhoBall::calcExploding() {
     constexpr u32 EXPLODE_FRAMES = 46;
 

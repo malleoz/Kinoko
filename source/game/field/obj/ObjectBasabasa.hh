@@ -9,8 +9,7 @@ namespace Kinoko::Field {
 class ObjectBasabasaDummy final : public ObjectCollidable, private StateManager {
 public:
     /// @addr{0x806B5C84}
-    /// @brief Constructor
-    /// @param params The parameters used to initialize the object
+    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
     /// @details Uses setting 8 to determine if collisions with the bat should result in a larger
     /// bump effect.
     ObjectBasabasaDummy(const System::MapdataGeoObj &params)

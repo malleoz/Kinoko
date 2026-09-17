@@ -37,6 +37,7 @@ public:
     }
 
     /// @beginGetters
+
     [[nodiscard]] f32 multiplier() const {
         return m_multiplier;
     }
@@ -48,6 +49,7 @@ public:
     [[nodiscard]] f32 speedLimit() const {
         return m_speedLimit;
     }
+    
     /// @endGetters
 
 private:

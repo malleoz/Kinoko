@@ -22,6 +22,7 @@ class RailManager {
 
 public:
     /// @beginGetters
+
     /// @brief Fetches the rail at the given index
     /// @param idx The index of the rail to fetch
     /// @return A pointer to the rail at the given index
@@ -37,6 +38,7 @@ public:
         ASSERT(idx < m_rails.size());
         return m_rails[idx];
     }
+    
     /// @endGetters
 
     /// @addr{0x806F09C8}

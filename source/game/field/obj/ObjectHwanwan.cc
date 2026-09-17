@@ -5,8 +5,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806E95B0}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 ObjectHwanwan::ObjectHwanwan(const System::MapdataGeoObj &params)
     : ObjectCollidable(params),
       StateManager(this, STATE_ENTRIES),

@@ -58,13 +58,16 @@ public:
     }
 
     /// @beginSetters
+
     /// @addr{0x8056E424}
     void setLeanAngle(f32 val) {
         m_leanAngle = val;
     }
+    
     /// @endSetters
 
     /// @beginGetters
+
     [[nodiscard]] KartPhysics *physics() const {
         return m_physics;
     }
@@ -72,6 +75,7 @@ public:
     [[nodiscard]] f32 sinkDepth() const {
         return m_sinkDepth;
     }
+
     /// @endGetters
 
 protected:

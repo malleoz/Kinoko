@@ -7,6 +7,9 @@ namespace Kinoko::Field {
 /// @addr{0x806F2FE8}
 /// @brief Constructor
 /// @param linkDistances The distances between consecutive links in the chain
+/// @details Constructs an array of @ref Field::SphereLink objects for each segment in the chain and
+/// initializes their link lengths based on the provided distances, as well as setting the links'
+/// next and prev pointers.
 HanachanChainManager::HanachanChainManager(const std::span<const f32> &linkDistances) {
     size_t count = linkDistances.size() + 1;
 
@@ -25,10 +28,6 @@ HanachanChainManager::HanachanChainManager(const std::span<const f32> &linkDista
     secondToLast.setNext(&last);
     last.setPrev(&secondToLast);
 }
-
-/// @addr{0x806F31F4}
-/// @brief Default destructor
-HanachanChainManager::~HanachanChainManager() = default;
 
 /// @addr{0x806F49BC}
 /// @brief Applies spring force and updates positions for all links in the chain, enforcing
@@ -61,21 +60,6 @@ void HanachanChainManager::calc() {
     }
 }
 
-/// @addr{0x806C7D74}
-/// @brief Constructor
-/// @param name The name of the object
-/// @param pos The initial position of the object
-/// @param rot The initial rotation of the object
-/// @param scale The initial scale of the object
-ObjectHanachanHead::ObjectHanachanHead(const char *name, const EGG::Vector3f &pos,
-        const EGG::Vector3f &rot, const EGG::Vector3f &scale)
-    : ObjectHanachanPart(name, pos, rot, scale),
-      m_lastPos(EGG::Vector3f::zero) {}
-
-/// @addr{0x806CCB94}
-/// @brief Default virtual destructor
-ObjectHanachanHead::~ObjectHanachanHead() = default;
-
 /// @addr{0x806C8450}
 /// @copybrief ObjectBase::calcCollisionTransform()
 /// @details Applies a forward and upwards offset so that the collision sphere sits above and in
@@ -92,32 +76,6 @@ void ObjectHanachanHead::calcCollisionTransform() {
     m_collision->transform(trans, scale(), speed);
     m_lastPos = pos();
 }
-
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
-/// @param mdlName The name of the model corresponding to this body segment
-ObjectHanachanBody::ObjectHanachanBody(const System::MapdataGeoObj &params, const char *mdlName)
-    : ObjectHanachanPart(params),
-      m_mdlName(mdlName),
-      m_lastSegment(false),
-      m_lastPos(EGG::Vector3f::zero) {}
-
-/// @brief Constructor
-/// @param name The name of the object
-/// @param pos The initial position of the object
-/// @param rot The initial rotation of the object
-/// @param scale The initial scale of the object
-/// @param mdlName The name of the model corresponding to this body segment
-ObjectHanachanBody::ObjectHanachanBody(const char *name, const EGG::Vector3f &pos,
-        const EGG::Vector3f &rot, const EGG::Vector3f &scale, const char *mdlName)
-    : ObjectHanachanPart(name, pos, rot, scale),
-      m_mdlName(mdlName),
-      m_lastSegment(false),
-      m_lastPos(EGG::Vector3f::zero) {}
-
-/// @addr{0x806CCAD8}
-/// @brief Default virtual destructor
-ObjectHanachanBody::~ObjectHanachanBody() = default;
 
 /// @addr{0x806C8908}
 /// @copybrief ObjectBase::calcCollisionTransform()
@@ -138,8 +96,12 @@ void ObjectHanachanBody::calcCollisionTransform() {
 }
 
 /// @addr{0x806C8A5C}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @details Constructs the @ref HanachanChainManager using body part distances defined by @ref
+/// BODY_PART_DISTANCES. Initializes @ref m_walkSpeed based on param setting 1. Constructs the head
+/// and body part objects and scales them up to 3x. After loading all objects, resizes all collision
+/// spheres (except the head) to reflect the 3x scale. Finally, caches the distance between each
+/// body part and the head to @ref m_partDisplacement.
 ObjectHanachan::ObjectHanachan(const System::MapdataGeoObj &params)
     : ObjectCollidable(params),
       StateManager(this, STATE_ENTRIES),
@@ -180,12 +142,11 @@ ObjectHanachan::ObjectHanachan(const System::MapdataGeoObj &params)
     }
 }
 
-/// @addr{0x806C9598}
-/// @brief Default virtual destructor
-ObjectHanachan::~ObjectHanachan() = default;
-
 /// @addr{0x806C9630}
 /// @copybrief ObjectBase::init()
+/// @details Initializes the Wiggler's rail, body, and chain. Sets the initial state variables,
+/// including the sway amplitude, misalignment frame, and rail alignment. Marks the last body
+/// segment.
 void ObjectHanachan::init() {
     initRail();
     initBody();
@@ -204,6 +165,11 @@ void ObjectHanachan::init() {
 
 /// @addr{0x806C9D38}
 /// @brief Runs every frame when the Wiggler is walking along its rail
+/// @details If the Wiggler should stop moving (designated by @ref m_still), then it sets the rail
+/// interpolator's speed to zero and transitions to the waiting state. Otherwise, it updates the
+/// rail alignment, clears the chain, calculates the rail alignment motion, and updates the chain.
+/// Otherwise, it applies lateral motion to the Wiggler and enforces stretch constraints of the body
+/// segments. Finally, resets the sway amplitude to @ref INIT_SWAY_AMPLITUDE.
 void ObjectHanachan::calcWalk() {
     if (m_still) {
         m_railInterpolator->setSpeed(0.0f);
@@ -220,20 +186,11 @@ void ObjectHanachan::calcWalk() {
     m_swayAmplitude = INIT_SWAY_AMPLITUDE;
 }
 
-/// @addr{0x806C9F98}
-/// @brief Runs every frame when the Wiggler is standing still
-void ObjectHanachan::calcWait() {
-    if (shouldStartMoving()) {
-        m_nextStateId = 0;
-    }
-
-    clearChain();
-    calcSway();
-    m_chain.calc();
-}
-
 /// @addr{0x806CA2F0}
 /// @brief Updates the transforms of the Wiggler's body parts based on the chain link positions
+/// @details Linearly interpolates the head's forward direction towards the current rail tangent
+/// direction. All other body parts' transforms are updated to reflect the exact direction between
+/// it and the preceding chain link.
 void ObjectHanachan::calcBody() {
     auto *&head = headPart();
     head->calcTransform();
@@ -250,21 +207,17 @@ void ObjectHanachan::calcBody() {
     }
 }
 
-/// @addr{0x806CA72C}
-/// @brief Initializes the positions of the Wiggler's body parts based on the initial rail position
-void ObjectHanachan::initBody() {
-    headPart()->setPos(m_railInterpolator->curPos());
-
-    const EGG::Vector3f &curTanDir = m_railInterpolator->curTangentDir();
-    for (size_t i = 1; i < m_parts.size(); ++i) {
-        m_parts[i]->setPos(m_parts[i - 1]->pos() - curTanDir * BODY_PART_DISTANCES[i - 1]);
-        m_parts[i]->setMatrixTangentTo(EGG::Vector3f::ey, curTanDir);
-    }
-}
-
 /// @addr{0x806CAB5C}
-/// @brief If the wiggler has moved out of alignment of the rail, then applies a lateral adjustment
-/// to the wiggler's body part segments.
+/// @brief Applies a lateral adjustment to the wiggler's body part segments if the Wiggler has moved
+/// out of alignment of the rail.
+/// @details Checks if the Wiggler has become misaligned this frame and caches the current frame to
+/// @ref m_leftMisalignFrame if so. If @ref m_leftMisalignFrame is set and fewer than `80` frames
+/// have elapsed since then, applies a larger lateral motion via @ref calcFastLateralMotion() with a
+/// phase based on the number of frames since the misalignment occurred. Otherwise, applies the
+/// default lateral motion via @ref calcDefaultLateralMotion().
+/// @note In the base game, this function checks for both left and right misalignments of the rail
+/// relative to the Wiggler. However, on Maple Treeway, the Wigglers always move counter-clockwise.
+/// Thus, we only need to implement logic to handle @ref RailAlignment::MisalignedLeft.
 void ObjectHanachan::calcRailAlignmentMotion() {
     constexpr u16 MISALIGNMENT_CORRECTION_DURATION = 80;
 
@@ -284,24 +237,23 @@ void ObjectHanachan::calcRailAlignmentMotion() {
     }
 }
 
-/// @addr{0x806CB67C}
-/// @brief Updates the sway amplitude and calculates the lateral sway motion
-void ObjectHanachan::calcSway() {
-    if (m_swayAmplitude >= 0.0f) {
-        m_swayAmplitude -= 0.25f;
-    } else {
-        m_swayAmplitude += 0.25f;
-    }
-
-    if (EGG::Mathf::abs(m_swayAmplitude) <= 1.0f) {
-        m_swayAmplitude = 0.0f;
-    }
-
-    calcDefaultLateralMotion();
-}
-
 /// @addr{0x806CACD0}
 /// @brief Calculates sinusoidal lateral sway motion for the Wiggler's body parts
+/// @param amplitude The amplitude of the lateral sway
+/// @param period The period of the lateral sway
+/// @param wavelength The wavelength of the lateral sway
+/// @param frame The current frame
+/// @details For each body part \f$i\f$ with displacement \f$d_i\f$ (@ref m_partDisplacement) from
+/// the head, the phase is
+/// \f[ \phi_i(t) = 2\pi \left(\frac{t}{T} - \frac{d_i}{\lambda}\right) \f]
+/// where \f$t\f$ is `frame`, \f$T\f$ is `period`, and \f$\lambda\f$ is `wavelength`. The lateral
+/// offset applied to the part's chain link position is
+/// \f[ \Delta \vec{p}_i(t) = A \sin(\phi_i(t)) \, \hat{r}_i \f]
+/// where \f$A\f$ is `amplitude` and \f$\hat{r}_i\f$ is the part's `right` unit vector. The
+/// corresponding link velocity is the time derivative of this offset,
+/// \f[
+/// \vec{v}_i(t) = \frac{d}{dt} \Delta \vec{p}_i(t) = \frac{2\pi A}{T} \cos(\phi_i(t)) \, \hat{r}_i
+/// \f]
 void ObjectHanachan::calcLateralMotion(f32 amplitude, f32 period, f32 wavelength, s16 frame) {
     f32 velAmplitude = F_TAU * amplitude / period;
 
@@ -320,6 +272,12 @@ void ObjectHanachan::calcLateralMotion(f32 amplitude, f32 period, f32 wavelength
 
 /// @addr{0x806CAFB8}
 /// @brief Calculates whether the Wiggle is misaligned with the rail
+/// @return The current rail alignment of the Wiggler, which can be `RailAlignment::Aligned`,
+/// `RailAlignment::MisalignedLeft`, or `RailAlignment::MisalignedRight`
+/// @details Essentially, this function checks if the rail is straight/unchanged from the Wiggler's
+/// perspective. If the dot product of the XZ components of the current and previous rail tangents
+/// is greater than or equal to `0.9995f`, the rail is considered aligned. Otherwise, the cross
+/// product determines if the misalignment is to the left or right.
 ObjectHanachan::RailAlignment ObjectHanachan::calcRailAlignment() const {
     constexpr f32 EPSILON = 0.9995f;
 

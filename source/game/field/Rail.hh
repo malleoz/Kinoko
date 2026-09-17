@@ -67,6 +67,7 @@ public:
     void checkSphereFull();
 
     /// @beginGetters
+
     [[nodiscard]] u16 pointCount() const {
         return m_pointCount;
     }
@@ -92,6 +93,7 @@ public:
         ASSERT(!m_floorNrms.empty() && idx < m_floorNrms.size());
         return m_floorNrms[idx];
     }
+    
     /// @endGetters
 
 protected:

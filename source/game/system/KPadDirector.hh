@@ -72,6 +72,7 @@ public:
     }
 
     /// @beginGetters
+
     [[nodiscard]] const KPadPlayer &playerInput() const {
         return m_playerInput;
     }
@@ -79,6 +80,7 @@ public:
     [[nodiscard]] KPadHostController *hostController() {
         return m_hostController;
     }
+    
     /// @endGetters
 
     /// @addr{0x8052313C}

@@ -10,8 +10,7 @@ namespace Kinoko::Field {
 class ObjectWoodbox : public ObjectBreakable {
 public:
     /// @addr{0x8077E5E4}
-    /// @brief Constructor
-    /// @param params The parameters used to initialize the object
+    /// @copydoc ObjectBreakable::ObjectBreakable(const System::MapdataGeoObj &)
     ObjectWoodbox(const System::MapdataGeoObj &params) : ObjectBreakable(params) {}
 
     /// @addr{0x8077E620}

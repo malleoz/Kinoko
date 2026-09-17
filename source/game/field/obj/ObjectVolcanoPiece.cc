@@ -5,8 +5,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80817DE8}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
 ObjectVolcanoPiece::ObjectVolcanoPiece(const System::MapdataGeoObj &params)
     : ObjectKCL(params),
       m_initialPos(pos()),

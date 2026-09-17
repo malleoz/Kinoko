@@ -201,6 +201,7 @@ public:
     /// @addr{0x807FEAC0}
     /// @brief Computes the collision transformation matrix for the current frame. The return value
     /// is assigned to the object collision manager.
+    /// @return A const ref to the updated transformation matrix.
     [[nodiscard]] virtual const EGG::Matrix34f &getUpdatedMatrix(u32 /*timeOffset*/) {
         calcTransform();
         return transform();
@@ -208,12 +209,14 @@ public:
 
     /// @addr{0x80687DB0}
     /// @brief Updates the collision manager's scale for the current frame
+    /// @return The current scale of the object in the Y direction.
     [[nodiscard]] virtual f32 getScaleY(u32 /* timeOffset */) const {
         return scale().y;
     }
 
     /// @addr{0x8068143C}
     /// @brief Optional additional length to add when computing the collision radius
+    /// @return The default length, `0.0f`.
     [[nodiscard]] virtual f32 colRadiusAdditionalLength() const {
         return 0.0f;
     }
@@ -227,6 +230,7 @@ public:
     /// @param info Out parameter for retrieving collision information (if any)
     /// @param maskOut The KCL flags that were hit during the collision check (if any)
     /// @param timeOffset The time offset used to calculate the current frame's collision
+    /// @return `true` if a collision was detected, `false` otherwise.
     /// @desync This function can result in physics desynchronizations when racing a ghost.
     /// Since this function is only called when the player/ghost's hitbox is close enough to the
     /// object (as per GJK collision checks), it is possible that the first player hitbox is just
@@ -256,6 +260,7 @@ public:
     /// @param info Out parameter for retrieving collision information (if any)
     /// @param maskOut The KCL flags that were hit during the collision check (if any)
     /// @param timeOffset The time offset used to calculate the current frame's collision
+    /// @return `true` if a collision was detected, `false` otherwise.
     /// @desync This function can result in physics desynchronizations when racing a ghost.
     /// Since this function is only called when the player/ghost's hitbox is close enough to the
     /// object (as per GJK collision checks), it is possible that the first player hitbox is just

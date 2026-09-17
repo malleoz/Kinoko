@@ -71,9 +71,11 @@ public:
     [[nodiscard]] bool isValid(const u8 *rkg) const;
 
     /// @beginGetters
+
     [[nodiscard]] const u8 *buffer() const {
         return m_buffer;
     }
+
     /// @endGetters
 
     /// @brief Parses a value of type `T` from the raw ghost file buffer at the specified offset,
@@ -108,6 +110,7 @@ public:
     void read(EGG::RamStream &stream);
 
     /// @beginGetters
+
     [[nodiscard]] const Timer &lapTimer(size_t i) const {
         ASSERT(i < m_lapTimes.size());
         return m_lapTimes[i];
@@ -136,6 +139,7 @@ public:
     [[nodiscard]] bool driftIsAuto() const {
         return m_driftIsAuto;
     }
+    
     /// @endGetters
 
 private:

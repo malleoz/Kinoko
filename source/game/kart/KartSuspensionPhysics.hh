@@ -33,6 +33,7 @@ public:
     void calcSuspension(const EGG::Vector3f &forward);
 
     /// @beginSetters
+
     void setSuspTravel(f32 suspTravel) {
         m_suspTravel = suspTravel;
     }
@@ -56,9 +57,11 @@ public:
     void setColVel(const EGG::Vector3f &vec) {
         m_colVel = vec;
     }
+    
     /// @endSetters
 
     /// @beginGetters
+
     [[nodiscard]] const EGG::Vector3f &pos() const {
         return m_pos;
     }
@@ -98,6 +101,7 @@ public:
     [[nodiscard]] f32 hasSuspTravel() const {
         return m_hasSuspTravel;
     }
+
     /// @endGetters
 
 private:

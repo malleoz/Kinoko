@@ -99,6 +99,7 @@ public:
             MapdataAreaBase::Type type) const;
 
     /// @beginGetters
+
     /// @addr{0x80518AE0}
     [[nodiscard]] MapdataCannonPoint *getCannonPoint(u16 i) const {
         return i < getCannonPointCount() ? m_cannonPoint->get(i) : nullptr;
@@ -217,6 +218,7 @@ public:
     [[nodiscard]] f32 longitudinalWideOffset() const {
         return m_longitudinalWideOffset;
     }
+    
     /// @endGetters
 
     /// @addr{0x80512694}

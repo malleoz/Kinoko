@@ -8,8 +8,7 @@ namespace Kinoko::Field {
 class ObjectDossunNormal final : public ObjectDossun {
 public:
     /// @addr{0x80760188}
-    /// @brief Constructor
-    /// @param params The parameters used to initialize the object
+    /// @copydoc ObjectDossun::ObjectDossun(const System::MapdataGeoObj &)
     /// @details Caches the Thwomp's "still" duration to @ref m_stillDuration based on param
     /// setting 4.
     ObjectDossunNormal(const System::MapdataGeoObj &params)

@@ -295,15 +295,18 @@ public:
     }
 
     /// @beginSetters
+
     void setTangentOff(const EGG::Vector3f &v) {
         m_tangentOff = v;
     }
     void setMovement(const EGG::Vector3f &v) {
         m_movement = v;
     }
+    
     /// @endSetters
 
     /// @beginGetters
+
     [[nodiscard]] KartPullPath &pullPath() {
         return m_pullPath;
     }
@@ -351,6 +354,7 @@ public:
     [[nodiscard]] f32 colPerpendicularity() const {
         return m_colPerpendicularity;
     }
+
     /// @endGetters
 
 private:

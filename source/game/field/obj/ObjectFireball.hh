@@ -10,8 +10,7 @@ namespace Kinoko::Field {
 class ObjectFireball final : public ObjectCollidable {
 public:
     /// @addr{0x80768650}
-    /// @brief Constructor
-    /// @param params The parameters used to initialize the object
+    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
     ObjectFireball(const System::MapdataGeoObj &params) : ObjectCollidable(params) {}
 
     /// @addr{0x807689AC}
@@ -33,6 +32,7 @@ public:
     }
 
     /// @beginSetters
+
     /// @brief Sets the distance from the center of the parent object
     /// @param dist The distance from the center of the parent object
     void setDistance(f32 dist) {
@@ -46,9 +46,11 @@ public:
     void setAngle(f32 angle) {
         m_angle = angle;
     }
+    
     /// @endSetters
 
     /// @beginGetters
+
     /// @brief Gets the distance from the center of the parent object
     /// @return The distance from the center of the parent object
     [[nodiscard]] f32 distance() const {
@@ -62,6 +64,7 @@ public:
     [[nodiscard]] f32 angle() const {
         return m_angle;
     }
+
     /// @endGetters
 
 private:

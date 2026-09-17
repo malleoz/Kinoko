@@ -45,6 +45,7 @@ public:
     void endShrink(bool inMega);
 
     /// @beginGetters
+
     [[nodiscard]] const EGG::Vector3f &shrinkScale() const {
         return m_shrinkScale;
     }
@@ -52,6 +53,7 @@ public:
     [[nodiscard]] const EGG::Vector3f &pressScale() const {
         return m_pressScale;
     }
+    
     /// @endGetters
 
 private:

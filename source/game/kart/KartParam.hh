@@ -282,6 +282,7 @@ public:
     ~KartParam();
 
     /// @beginSetters
+
     void setTireCount(u16 tireCount) {
         m_tireCount = tireCount;
     }
@@ -289,9 +290,11 @@ public:
     void setSuspCount(u16 suspCount) {
         m_suspCount = suspCount;
     }
+    
     /// @endSetters
 
     /// @beginGetters
+
     /// @addr{0x80591DBC}
     [[nodiscard]] const BSP &bsp() const {
         return m_bsp;
@@ -336,6 +339,7 @@ public:
     [[nodiscard]] u16 tireCount() const {
         return m_tireCount;
     }
+    
     /// @endGetters
 
 private:

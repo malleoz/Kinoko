@@ -37,6 +37,7 @@ public:
     }
 
     /// @beginGetters
+
     /// @brief Gets the index of the first checkpoint in this checkpath
     /// @return The index of the first checkpoint in this checkpath
     [[nodiscard]] u8 start() const {
@@ -64,6 +65,7 @@ public:
     [[nodiscard]] f32 invCount() const {
         return m_invCount;
     }
+    
     /// @endGetters
 
 private:

@@ -4,30 +4,14 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x806C2B70}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
-ObjectFireSnakeV::ObjectFireSnakeV(const System::MapdataGeoObj &params)
-    : StateManager(this, STATE_ENTRIES),
-      ObjectFireSnake(params),
-      m_cycleDuration(params.setting(1)),
-      m_distFromPipe(static_cast<f32>(params.setting(2))),
-      m_fallSpeed(0.0f) {
-    m_delayFrame = params.setting(0);
-    m_spawnPos = pos();
-
-    calcTransform();
-
-    m_initRot = transform().base(0);
-    m_initPos = m_spawnPos + m_initRot * m_distFromPipe;
-}
-
-/// @addr{0x806C3548}
-/// @brief Default virtual destructor
-ObjectFireSnakeV::~ObjectFireSnakeV() = default;
-
 /// @addr{0x806C2DA4}
 /// @brief Updates state lifecycle and children positions once the spawn delay has elapsed
+/// @details Evaluates the fire snake's state machine. If @ref m_cycleDuration frames have elapsed
+/// since the initial delay, the fire snake will spawn by transitioning to the falling state. If the
+/// fire snake is spawned, increments @ref m_age each frame. If the age of the fire snake exceeds
+/// `600` frames and the fire snake is at rest, then despawns the fire snake by transitioning to the
+/// despawned state. Finally, dispatches to @ref calcChildren() to update the state of the child
+/// objects.
 void ObjectFireSnakeV::calcSub() {
     constexpr u16 LIFECYCLE_DURATION = 600;
 
@@ -50,6 +34,9 @@ void ObjectFireSnakeV::calcSub() {
 
 /// @addr{0x806C30F8}
 /// @brief Runs once when the fire snake respawns
+/// @details Calls the base class implementation to handle the fire snake's initial falling
+/// behavior. Disables the fire snake's collision. Resets the fire snake's age, trajectory position,
+/// bounce direction, and fall speed.
 void ObjectFireSnakeV::enterFalling() {
     constexpr f32 FALL_DURATION = 140.0f;
 
@@ -68,9 +55,13 @@ void ObjectFireSnakeV::enterFalling() {
 
 /// @addr{0x806C31F0}
 /// @brief Runs every frame between the fire snake respawning and landing on the ground
+/// @details If the fire snake has been falling for more than 5 frames, re-enabled the fire snake's
+/// collision. Every frame, updates the fire snake's trajectory position based on its bounce
+/// direction and fall speed, and checks for collisions with the floor. If a collision is detected,
+/// adjusts the trajectory position and transitions to the high bounce state.
 void ObjectFireSnakeV::calcFalling() {
     constexpr f32 INITIAL_Y_VELOCITY = 120.0f;
-    constexpr f32 AABB_DELAY_FRAMES = 5;
+    constexpr u32 AABB_DELAY_FRAMES = 5;
 
     if (m_currentFrame > AABB_DELAY_FRAMES && !getUnit()) {
         loadAABB(0.0f);
@@ -98,6 +89,10 @@ void ObjectFireSnakeV::calcFalling() {
 
 /// @addr{0x806C33C4}
 /// @brief Runs every frame during the first bounce
+/// @details Updates the fire snake's trajectory position based on its bounce direction and fall
+/// speed, with an initial upwards velocity of `90.0f`. If @ref COL_CHECK_DELAY_FRAMES have elapsed,
+/// checks for collisions with the floor and transitions to the rest state if a collision is
+/// detected.
 void ObjectFireSnakeV::calcHighBounce() {
     constexpr f32 INITIAL_Y_VELOCITY = 90.0f;
 

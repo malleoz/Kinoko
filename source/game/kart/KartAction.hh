@@ -58,6 +58,7 @@ public:
     void startRotation(size_t idx);
 
     /// @beginSetters
+
     void setHitDepth(const EGG::Vector3f &hitDepth) {
         m_hitDepth = hitDepth;
     }
@@ -65,12 +66,15 @@ public:
     void setVelocity(const EGG::Vector3f &v) {
         m_velocity = v;
     }
+    
     /// @endSetters
 
     /// @beginGetters
+
     [[nodiscard]] const Flags &flags() const {
         return m_flags;
     }
+
     /// @endGetters
 
 private:

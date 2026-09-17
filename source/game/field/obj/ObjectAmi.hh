@@ -10,8 +10,7 @@ namespace Kinoko::Field {
 class ObjectAmi final : public ObjectDrivable {
 public:
     /// @addr{0x80807ED0}
-    /// @brief Constructor
-    /// @param params The parameters used to initialize the object
+    /// @copydoc ObjectDrivable::ObjectDrivable(const System::MapdataGeoObj &)
     ObjectAmi(const System::MapdataGeoObj &params) : ObjectDrivable(params) {}
 
     /// @addr{0x80808860}

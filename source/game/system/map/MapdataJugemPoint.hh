@@ -33,6 +33,7 @@ public:
     }
 
     /// @beginGetters
+
     const EGG::Vector3f &pos() const {
         return m_pos;
     }
@@ -40,6 +41,7 @@ public:
     const EGG::Vector3f &rot() const {
         return m_rot;
     }
+    
     /// @endGetters
 
 private:

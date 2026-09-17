@@ -7,8 +7,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8076F2E0}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 ObjectRock::ObjectRock(const System::MapdataGeoObj &params)
     : ObjectCollidable(params),
       m_cooldownDuration(m_mapObj->setting(1)),

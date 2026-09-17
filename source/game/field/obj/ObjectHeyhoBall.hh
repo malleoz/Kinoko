@@ -7,14 +7,26 @@ namespace Kinoko::Field {
 
 /// @brief The cannonball projectiles on GBA Shy Guy Beach
 /// @details Cannonballs are fired from a @ref ObjectHeyhoShip and have a parabolic flight path.
-/// When they land, they blink for a few seconds before exploding. The explosion can either knock
-/// the player into the air and make them lose their items or just spin them out without losing
-/// items, depending on how much time has elapsed since the explosion. The synchronization between a
-/// cannonball and the ship is managed by @ref ObjectHeyhoShipManager.
+/// When they land, they blink for a few seconds before exploding. Before exploding, they act as
+/// wall collision. The explosion can either knock the player into the air and make them lose their
+/// items or just spin them out without losing items, depending on how much time has elapsed since
+/// the explosion. The synchronization between a cannonball and the ship is managed by @ref
+/// ObjectHeyhoShipManager.
 class ObjectHeyhoBall final : public ObjectProjectile, private StateManager {
 public:
-    ObjectHeyhoBall(const System::MapdataGeoObj &params);
-    ~ObjectHeyhoBall() override;
+    /// @addr{0x806D02C4}
+    /// @copydoc ObjectProjectile::ObjectProjectile(const System::MapdataGeoObj &)
+    ObjectHeyhoBall(const System::MapdataGeoObj &params)
+        : ObjectProjectile(params),
+          StateManager(this, STATE_ENTRIES),
+          m_airtime(static_cast<f32>(params.setting(1))),
+          m_initPos(params.pos()) {
+        registerManagedObject();
+    }
+
+    /// @addr{0x806D1820}
+    /// @brief Default virtual destructor
+    ~ObjectHeyhoBall() override = default;
 
     void init() override;
 
@@ -129,8 +141,7 @@ private:
 
     /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 4> STATE_ENTRIES = {{
-            {StateEntry<ObjectHeyhoBall, nullptr,
-                    &ObjectHeyhoBall::calcIntangible>(0)},
+            {StateEntry<ObjectHeyhoBall, nullptr, &ObjectHeyhoBall::calcIntangible>(0)},
             {StateEntry<ObjectHeyhoBall, &ObjectHeyhoBall::enterFalling,
                     &ObjectHeyhoBall::calcFalling>(1)},
             {StateEntry<ObjectHeyhoBall, &ObjectHeyhoBall::enterBlinking,

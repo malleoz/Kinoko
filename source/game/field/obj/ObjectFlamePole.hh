@@ -26,7 +26,11 @@ public:
 
     /// @addr{0x8067E410}
     /// @copybrief ObjectBase::calc()
+    /// @details If the geyser is erupting, resizes the pole's GJK collision to properly reflect
+    /// that it is now erupting.
     void calc() override {
+        constexpr f32 RADIUS = 70.0f;
+
         if (m_isActive) {
             resize(RADIUS * scale().y, 0.0f);
         }
@@ -47,6 +51,7 @@ public:
     }
 
     /// @brief Enables or disables GJK collision resizing
+    /// @param isSet Whether to enable or disable GJK collision resizing.
     void setActive(bool isSet) {
         m_isActive = isSet;
     }
@@ -55,8 +60,6 @@ public:
 
 private:
     bool m_isActive; ///< Used to toggle collision resizing on and off
-
-    static constexpr f32 RADIUS = 70.0f; ///< Normal radius of the pole
 };
 
 } // namespace Kinoko::Field

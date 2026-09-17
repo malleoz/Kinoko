@@ -48,6 +48,7 @@ public:
     }
 
     /// @beginGetters
+
     [[nodiscard]] int currentCount() const {
         return m_currentCount;
     }
@@ -55,6 +56,7 @@ public:
     [[nodiscard]] ItemId id() const {
         return m_currentId;
     }
+    
     /// @endGetters
 
 private:

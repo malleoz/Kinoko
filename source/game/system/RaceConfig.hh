@@ -64,14 +64,17 @@ public:
     void initGhost();
 
     /// @beginSetters
+
     /// @brief Sets the ghost data for the race
     /// @param rkg Pointer to the raw (possibly uncompressed) ghost `.rkg` file buffer
     void setGhost(const u8 *rkg) {
         m_ghost = RawGhostFile(rkg);
     }
+    
     /// @endSetters
 
     /// @beginGetters
+
     [[nodiscard]] const Scenario &raceScenario() const {
         return m_raceScenario;
     }
@@ -79,6 +82,7 @@ public:
     [[nodiscard]] Scenario &raceScenario() {
         return m_raceScenario;
     }
+
     /// @endGetters
 
     /// @brief Sets the initialization callback for the RaceConfig instance

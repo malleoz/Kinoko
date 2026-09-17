@@ -7,8 +7,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8080B0D8}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectDrivable::ObjectDrivable(const System::MapdataGeoObj &)
 ObjectObakeManager::ObjectObakeManager(const System::MapdataGeoObj &params)
     : ObjectDrivable(params),
       m_blockCache({}),

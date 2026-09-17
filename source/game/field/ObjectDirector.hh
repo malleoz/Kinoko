@@ -47,6 +47,7 @@ public:
             ObjectCollisionConvexHull *convexHull);
 
     /// @beginGetters
+
     [[nodiscard]] const ObjectFlowTable &flowTable() const {
         return m_flowTable;
     }
@@ -83,12 +84,15 @@ public:
     [[nodiscard]] ObjectPsea *psea() const {
         return m_psea;
     }
+
     /// @endGetters
 
     /// @beginGetters
+
     void setPsea(ObjectPsea *psea) {
         m_psea = psea;
     }
+    
     /// @endGetters
 
     [[nodiscard]] f32 distAboveRisingWater(f32 offset) const;

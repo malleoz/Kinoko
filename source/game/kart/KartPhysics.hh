@@ -21,6 +21,7 @@ public:
     void calc(f32 dt, f32 maxSpeed, const EGG::Vector3f &scale, bool air);
 
     /// @beginSetters
+
     void setPos(const EGG::Vector3f &pos) {
         m_pos = pos;
     }
@@ -32,6 +33,7 @@ public:
     void setHalfLength(f32 val) {
         m_halfLength = val;
     }
+    
     /// @endSetters
 
     /// @addr{0x8059FC48}
@@ -114,6 +116,7 @@ public:
     }
 
     /// @beginGetters
+
     [[nodiscard]] KartDynamics *dynamics() {
         return m_dynamics;
     }
@@ -149,6 +152,7 @@ public:
     [[nodiscard]] f32 halfLength() const {
         return m_halfLength;
     }
+
     /// @endGetters
 
     [[nodiscard]] static KartPhysics *Create(const KartParam &param);

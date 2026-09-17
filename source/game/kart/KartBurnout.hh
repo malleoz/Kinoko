@@ -23,9 +23,11 @@ public:
     void calc();
 
     /// @beginGetters
+
     [[nodiscard]] f32 pitch() const {
         return m_yaw;
     }
+    
     /// @endGetters
 
 private:

@@ -4,8 +4,7 @@
 namespace Kinoko::Field {
 
 /// @addr{Inlined in 0x807FED80}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
 ObjectPillarBase::ObjectPillarBase(const System::MapdataGeoObj &params) : ObjectKCL(params) {}
 
 /// @addr{0x807FFAA0}
@@ -13,8 +12,7 @@ ObjectPillarBase::ObjectPillarBase(const System::MapdataGeoObj &params) : Object
 ObjectPillarBase::~ObjectPillarBase() = default;
 
 /// @addr{0x807FEB68}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 ObjectPillarC::ObjectPillarC(const System::MapdataGeoObj &params)
     : ObjectCollidable(params),
       m_fallStart(static_cast<u32>(params.setting(0))) {}
@@ -42,8 +40,7 @@ void ObjectPillarC::calcCollisionTransform() {
 }
 
 /// @addr{0x807FED80}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
 ObjectPillar::ObjectPillar(const System::MapdataGeoObj &params)
     : ObjectKCL(params),
       m_state(State::Upright),

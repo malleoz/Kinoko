@@ -3,8 +3,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x807743A4}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 ObjectPakkunF::ObjectPakkunF(const System::MapdataGeoObj &params)
     : ObjectCollidable(params),
       m_attackFrames(0),

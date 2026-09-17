@@ -36,6 +36,7 @@ public:
     }
 
     /// @beginSetters
+
     void setCannonPointId(u16 val) {
         m_cannonPointId = val;
     }
@@ -55,9 +56,11 @@ public:
     void setTrickableTimer(s16 val) {
         m_trickableTimer = val;
     }
+    
     /// @endSetters
 
     /// @beginGetters
+
     [[nodiscard]] bool isDrifting() const {
         return m_status.onBit(eStatus::DriftManual, eStatus::DriftAuto);
     }
@@ -113,6 +116,7 @@ public:
     [[nodiscard]] const Status &status() const {
         return m_status;
     }
+
     /// @endGetters
 
 private:

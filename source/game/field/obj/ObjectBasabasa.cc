@@ -61,8 +61,7 @@ void ObjectBasabasaDummy::calcStateActive() {
 }
 
 /// @addr{0x806B70D0}
-/// @brief Constructor
-/// @param params The map data parameters used to initialize the object
+/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 /// @details Computes the spacing and number of bats per group. Constructs and loads all underlying
 /// bat objects.
 ObjectBasabasa::ObjectBasabasa(const System::MapdataGeoObj &params)

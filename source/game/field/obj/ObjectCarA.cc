@@ -4,18 +4,6 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x806B7710}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
-/// @details Computes the cruising speed, acceleration, and stop duration based on the provided
-/// parameter settings.
-ObjectCarA::ObjectCarA(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params),
-      StateManager(this, STATE_ENTRIES),
-      m_finalSpeed(static_cast<f32>(params.setting(0))),
-      m_accel(static_cast<f32>(params.setting(1)) / 10.0f),
-      m_stopDuration(static_cast<u32>(params.setting(2))) {}
-
 /// @addr{0x806B7CE0}
 /// @copybrief ObjectBase::init()
 /// @details Initializes the rail interpolator and sets the car's position to the current position

@@ -542,6 +542,7 @@ public:
     }
 
     /// @beginSetters
+
     void setSpeed(f32 val) {
         m_speed = val;
     }
@@ -588,9 +589,11 @@ public:
     void setPadType(PadType type) {
         m_padType = type;
     }
+    
     /// @endSetters
 
     /// @beginGetters
+
     [[nodiscard]] DriftState driftState() const {
         return m_driftState;
     }
@@ -713,6 +716,7 @@ public:
     [[nodiscard]] KartBurnout &burnout() {
         return m_burnout;
     }
+
     /// @endGetters
 
     /// @addr{0x805879A4}
@@ -977,6 +981,7 @@ public:
     void calcWheelieInput();
 
     /// @beginGetters
+    
     /// @addr{0x805896BC}
     /// @copybrief KartMove::leanRot()
     [[nodiscard]] f32 leanRot() const override {
@@ -991,6 +996,7 @@ public:
 
         return m_speedRatioCapped >= WHEELIE_THRESHOLD && m_speed >= 0.0f;
     }
+
     /// @endGetters
 
 private:

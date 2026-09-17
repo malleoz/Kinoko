@@ -163,6 +163,7 @@ public:
     }
 
     /// @beginSetters
+
     /// @brief Sets the position of the object in world space and updates the position matrix flag
     /// @param pos The new position of the object in world space
     void setPos(const EGG::Vector3f &pos) {
@@ -236,9 +237,11 @@ public:
         m_transform = mat;
         m_pos = mat.base(3);
     }
+    
     /// @endSetters
 
     /// @beginGetters
+
     /// @brief Gets the @ref RailInterpolator associated with the object
     /// @return The @RailInterpolator for the object
     [[nodiscard]] const RailInterpolator *railInterpolator() const {
@@ -268,6 +271,7 @@ public:
     [[nodiscard]] const EGG::Matrix34f &transform() const {
         return m_transform;
     }
+
     /// @endGetters
 
 protected:

@@ -11,7 +11,16 @@ namespace Kinoko::Field {
 /// a set velocity, drive at that velocity for a set amount of time, and then decelerate to a stop.
 class ObjectCarA final : public ObjectCollidable, private StateManager {
 public:
-    ObjectCarA(const System::MapdataGeoObj &params);
+    /// @addr{0x806B7710}
+    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @details Computes the cruising speed, acceleration, and stop duration based on the provided
+    /// parameter settings.
+    ObjectCarA(const System::MapdataGeoObj &params)
+        : ObjectCollidable(params),
+          StateManager(this, STATE_ENTRIES),
+          m_finalSpeed(static_cast<f32>(params.setting(0))),
+          m_accel(static_cast<f32>(params.setting(1)) / 10.0f),
+          m_stopDuration(static_cast<u32>(params.setting(2))) {}
 
     /// @addr{0x806B78CC}
     /// @brief Default virtual destructor

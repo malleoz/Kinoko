@@ -40,6 +40,7 @@ public:
     }
 
     /// @beginGetters
+
     [[nodiscard]] ItemInventory &inventory() {
         return m_inventory;
     }
@@ -47,6 +48,7 @@ public:
     [[nodiscard]] const ItemInventory &inventory() const {
         return m_inventory;
     }
+    
     /// @endGetters
 
 private:

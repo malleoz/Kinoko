@@ -10,8 +10,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8075EAFC}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 /// @details Constructs the appropriate Dossun object based on param setting 2 and loads it. It is
 /// either @ref ObjectDossunNormal, @ref ObjectDossunSyuukai, @ref ObjectDossunTsuibiHolder, or @ref
 /// ObjectDossunYokoMove.

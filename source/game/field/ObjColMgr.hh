@@ -88,6 +88,7 @@ public:
             KCLTypeMask *maskOut);
 
     /// @beginSetters
+
     /// @brief Sets the local-to-world transformation matrix
     void setMtx(const EGG::Matrix34f &mtx) {
         m_mtx = mtx;
@@ -105,6 +106,7 @@ public:
     void setMovingObjVel(const EGG::Vector3f &v) {
         m_movingObjVel = v;
     }
+    
     /// @endSetters
 
 private:

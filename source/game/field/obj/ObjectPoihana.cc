@@ -5,8 +5,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80747198}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 ObjectPoihanaBase::ObjectPoihanaBase(const System::MapdataGeoObj &params)
     : StateManager(this, {}),
       ObjectCollidable(params),
@@ -34,8 +33,7 @@ void ObjectPoihanaBase::init() {
 }
 
 /// @addr{0x8074816C}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectPoihanaBase::ObjectPoihanaBase(const System::MapdataGeoObj &)
 ObjectPoihana::ObjectPoihana(const System::MapdataGeoObj &params)
     : StateManager(this, STATE_ENTRIES),
       ObjectPoihanaBase(params) {}

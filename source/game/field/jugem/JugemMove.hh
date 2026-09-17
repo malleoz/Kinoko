@@ -29,6 +29,7 @@ public:
     void setForwardFromKartObjMainRot(bool setCurr);
 
     /// @beginSetters
+
     /// @addr{0x8071EFD8}
     void setAnchorPos(const EGG::Vector3f &v) {
         m_anchorPos = v;
@@ -49,9 +50,11 @@ public:
     void setRising(bool isSet) {
         m_isRising = isSet;
     }
+    
     /// @endSetters
 
     /// @beginGetters
+
     const EGG::Vector3f &transPos() const {
         return m_transPos;
     }
@@ -59,6 +62,7 @@ public:
     const EGG::Matrix34f &transform() const {
         return m_transform;
     }
+
     /// @endGetters
 
 private:

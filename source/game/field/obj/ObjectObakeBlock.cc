@@ -3,8 +3,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8080AD20}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectBase::ObjectBase(const System::MapdataGeoObj &)
 ObjectObakeBlock::ObjectObakeBlock(const System::MapdataGeoObj &params)
     : ObjectBase(params),
       m_initialPos(params.pos()),

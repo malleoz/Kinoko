@@ -33,6 +33,7 @@ public:
     void calc();
 
     /// @beginGetters
+
     /// @addr{0x80590100}
     /// @brief Returns the @ref KartObject for the given player index
     /// @param i The player index
@@ -52,6 +53,7 @@ public:
     [[nodiscard]] static const Abstract::g3d::ResAnmChr *PressScaleUpAnmChr() {
         return s_pressScaleUpAnmChr;
     }
+    
     /// @endGetters
 
     /// @addr{0x8058FAA8}

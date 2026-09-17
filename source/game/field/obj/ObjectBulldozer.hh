@@ -8,7 +8,20 @@ namespace Kinoko::Field {
 /// @details Their oscillation is represented as a sin wave, with two resting periods.
 class ObjectBulldozer final : public ObjectKCL {
 public:
-    ObjectBulldozer(const System::MapdataGeoObj &params);
+    /// @addr{0x807FD938}
+    /// @copydoc ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
+    ObjectBulldozer(const System::MapdataGeoObj &params)
+        : ObjectKCL(params),
+          m_initialPos(pos()),
+          m_initialRot(rot()),
+          m_timeOffset(params.setting(3) * 2),
+          m_periodDenom(std::max<u16>(2, params.setting(2))),
+          m_restFrames(params.setting(4)),
+          m_fullPeriod(m_periodDenom + m_restFrames * 2),
+          m_amplitude(params.setting(1)),
+          m_left(strcmp(getName(), "bulldozer_left") == 0),
+          m_period(F_TAU / static_cast<f32>(m_periodDenom)),
+          m_halfPeriod(m_fullPeriod / 2) {}
 
     /// @addr{0x807FE5F0}
     /// @brief Default virtual destructor

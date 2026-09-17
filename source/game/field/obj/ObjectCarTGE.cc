@@ -10,8 +10,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806D5EE4}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 /// @details Pre-computes all floor normals along the rail (this is likely unnecessary for Kinoko).
 /// Determines the @ref m_carType based off the object name and @ref m_mdlName based off the
 /// resource name and car variant. Also determines the @ref m_dummyId based off the car type.

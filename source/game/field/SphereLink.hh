@@ -47,6 +47,7 @@ public:
     }
 
     /// @beginSetters
+
     void setPrev(SphereLink *prev) {
         m_prev = prev;
     }
@@ -66,9 +67,11 @@ public:
     void addSpringForce(const EGG::Vector3f &force) {
         m_springForce += force;
     }
+    
     /// @endSetters
 
     /// @beginGetters
+
     [[nodiscard]] f32 linkLen() const {
         return m_linkLen;
     }
@@ -80,6 +83,7 @@ public:
     [[nodiscard]] const EGG::Vector3f &up() const {
         return m_smoothedUp;
     }
+
     /// @endGetters
 
     static constexpr EGG::Vector3f GRAVITY = EGG::Vector3f(0.0f, 2.5f, 0.0f);

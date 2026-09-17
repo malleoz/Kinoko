@@ -11,8 +11,7 @@ namespace Kinoko::Field {
 class ObjectProjectileLauncher : public ObjectCollidable {
 public:
     /// @addr{Inlined in 0x806DDDD8} @addr{Inlined in 0x806D18FC}
-    /// @brief Constructor
-    /// @param params The parameters used to initialize the object
+    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
     ObjectProjectileLauncher(const System::MapdataGeoObj &params) : ObjectCollidable(params) {
         registerManagedObject();
     }

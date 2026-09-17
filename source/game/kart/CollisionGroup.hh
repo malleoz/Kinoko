@@ -67,6 +67,7 @@ public:
     }
 
     /// @beginSetters
+
     void setRadius(f32 radius) {
         m_radius = radius;
     }
@@ -88,10 +89,12 @@ public:
         m_lastPos = pos;
     }
 
-    void setLastPos(const EGG::Vector3f &scale, const EGG::Matrix34f &pose);
     /// @endSetters
 
+    void setLastPos(const EGG::Vector3f &scale, const EGG::Matrix34f &pose);
+
     /// @beginGetters
+
     [[nodiscard]] const BSP::Hitbox *bspHitbox() const {
         return m_bspHitbox;
     }
@@ -111,6 +114,7 @@ public:
     [[nodiscard]] f32 radius() const {
         return m_radius;
     }
+
     /// @endGetters
 
 private:
@@ -160,6 +164,7 @@ public:
     }
 
     /// @beginGetters
+
     [[nodiscard]] f32 boundingRadius() const {
         return m_boundingRadius;
     }
@@ -179,6 +184,7 @@ public:
     [[nodiscard]] const CollisionData &collisionData() const {
         return m_collisionData;
     }
+
     /// @endGetters
 
 private:

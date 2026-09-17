@@ -5,8 +5,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80809448}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
 ObjectTownBridge::ObjectTownBridge(const System::MapdataGeoObj &params)
     : ObjectKCL(params),
       m_rotateUpwards(rot().y < 0.0f),

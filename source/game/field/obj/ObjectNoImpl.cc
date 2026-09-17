@@ -4,8 +4,7 @@
 
 namespace Kinoko::Field {
 
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectBase::ObjectBase(const System::MapdataGeoObj &)
 ObjectNoImpl::ObjectNoImpl(const System::MapdataGeoObj &params) : ObjectBase(params) {}
 
 /// @brief Default virtual destructor

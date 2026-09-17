@@ -9,8 +9,7 @@ namespace Kinoko::Field {
 class ObjectBeltCurveA final : public ObjectBelt {
 public:
     /// @addr{0x807FC90C}
-    /// @brief Constructor
-    /// @param params The parameters used to initialize the object
+    /// @copydoc ObjectBelt::ObjectBelt(const System::MapdataGeoObj &)
     ObjectBeltCurveA(const System::MapdataGeoObj &params)
         : ObjectBelt(params),
           m_startForward(params.setting(1) == 1),

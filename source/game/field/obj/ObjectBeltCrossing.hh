@@ -10,8 +10,7 @@ namespace Kinoko::Field {
 class ObjectBeltCrossing final : public ObjectBelt {
 public:
     /// @addr{0x807FC764}
-    /// @brief Constructor
-    /// @param params The parameters used to initialize the object
+    /// @copydoc ObjectBelt::ObjectBelt(const System::MapdataGeoObj &)
     /// @details Initializes road velocity to `28.0f`.
     ObjectBeltCrossing(const System::MapdataGeoObj &params) : ObjectBelt(params) {
         m_roadVel = 28.0f;

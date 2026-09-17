@@ -3,8 +3,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806D18FC}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectProjectileLauncher::ObjectProjectileLauncher(const System::MapdataGeoObj &)
 ObjectHeyhoShip::ObjectHeyhoShip(const System::MapdataGeoObj &params)
     : ObjectProjectileLauncher(params),
       m_yAmplitude(static_cast<f32>(static_cast<s16>(params.setting(1)))),

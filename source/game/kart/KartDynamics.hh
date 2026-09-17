@@ -59,6 +59,7 @@ public:
     }
 
     /// @beginSetters
+
     void setPos(const EGG::Vector3f &pos) {
         m_pos = pos;
     }
@@ -142,9 +143,11 @@ public:
     void setKillExtVelY(bool isSet) {
         m_killExtVelY = isSet;
     }
+    
     /// @endSetters
 
     /// @beginGetters
+
     [[nodiscard]] const EGG::Matrix34f &invInertiaTensor() const {
         return m_invInertiaTensor;
     }
@@ -204,6 +207,7 @@ public:
     [[nodiscard]] f32 headingExtVel() const {
         return m_headingExtVel;
     }
+
     /// @endGetters
 
 protected:

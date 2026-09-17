@@ -3,8 +3,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8080761C}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
 ObjectKinoko::ObjectKinoko(const System::MapdataGeoObj &params)
     : ObjectKCL(params),
       m_initPos(pos()),
@@ -47,8 +46,7 @@ void ObjectKinoko::calc() {
 }
 
 /// @addr{0x80807950}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectKinoko::ObjectKinoko(const System::MapdataGeoObj &)
 ObjectKinokoUd::ObjectKinokoUd(const System::MapdataGeoObj &params)
     : ObjectKinoko(params),
       m_period(std::max<u16>(params.setting(2), 2)),
@@ -86,8 +84,7 @@ void ObjectKinokoUd::calcOscillation() {
 }
 
 /// @addr{0x80807B7C}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectKinoko::ObjectKinoko(const System::MapdataGeoObj &)
 ObjectKinokoBend::ObjectKinokoBend(const System::MapdataGeoObj &params)
     : ObjectKinoko(params),
       m_period(std::max<u16>(params.setting(2), 2)),
@@ -115,8 +112,7 @@ void ObjectKinokoBend::calcOscillation() {
 }
 
 /// @addr{Inlined at 0x80821FE8}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
 ObjectKinokoNm::ObjectKinokoNm(const System::MapdataGeoObj &params)
     : ObjectKCL(params),
       m_type(static_cast<KinokoType>(params.setting(0))) {}

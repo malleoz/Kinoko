@@ -61,6 +61,7 @@ public:
     }
 
     /// @beginGetters
+
     [[nodiscard]] MapdataPointInfo *getPointInfo() const;
 
     [[nodiscard]] Type type() const {
@@ -82,6 +83,7 @@ public:
     [[nodiscard]] s16 index() const {
         return m_index;
     }
+    
     /// @endGetters
 
 protected:

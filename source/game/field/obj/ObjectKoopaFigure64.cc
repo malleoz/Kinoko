@@ -7,8 +7,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806DA914}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 ObjectKoopaFigure64::ObjectKoopaFigure64(const System::MapdataGeoObj &params)
     : ObjectCollidable(params),
       m_isBigStatue(params.setting(1) == 1),

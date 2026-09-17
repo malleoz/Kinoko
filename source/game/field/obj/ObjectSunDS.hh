@@ -14,8 +14,7 @@ namespace Kinoko::Field {
 class ObjectSunDS final : public ObjectProjectileLauncher, private StateManager {
 public:
     /// @addr{0x806DDDD8}
-    /// @brief Constructor
-    /// @param params The parameters used to initialize the object
+    /// @copydoc ObjectProjectileLauncher::ObjectProjectileLauncher(const System::MapdataGeoObj &)
     ObjectSunDS(const System::MapdataGeoObj &params)
         : ObjectProjectileLauncher(params),
           StateManager(this, STATE_ENTRIES),

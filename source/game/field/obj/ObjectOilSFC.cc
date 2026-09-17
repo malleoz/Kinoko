@@ -5,8 +5,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806DD934}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 ObjectOilSFC::ObjectOilSFC(const System::MapdataGeoObj &params) : ObjectCollidable(params) {}
 
 /// @addr{0x806DD998}

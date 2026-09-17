@@ -8,8 +8,7 @@ namespace Kinoko::Field {
 class ObjectDossunYokoMove final : public ObjectDossun {
 public:
     /// @addr{0x80763B60}
-    /// @brief Constructor
-    /// @param params The parameters used to initialize the object
+    /// @copydoc ObjectDossun::ObjectDossun(const System::MapdataGeoObj &)
     ObjectDossunYokoMove(const System::MapdataGeoObj &params) : ObjectDossun(params) {}
 
     /// @addr{0x807645C4}

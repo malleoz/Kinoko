@@ -7,7 +7,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806D2368}
-/// @brief Constructor
+/// @copydoc ObjectSniper::ObjectSniper()
 ObjectHeyhoShipManager::ObjectHeyhoShipManager() {
     auto &managedObjs = ObjectDirector::Instance()->managedObjects();
     size_t count = 0;

@@ -61,6 +61,7 @@ public:
     }
 
     /// @beginGetters
+
     [[nodiscard]] size_t pointCount() const {
         return m_points.size();
     }
@@ -73,6 +74,7 @@ public:
     [[nodiscard]] const owning_span<Point> &points() const {
         return m_points;
     }
+    
     /// @endGetters
 
 private:

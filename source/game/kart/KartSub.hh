@@ -39,9 +39,11 @@ public:
     void calcMovingWater();
 
     /// @beginGetters
+
     [[nodiscard]] f32 suspScale() {
         return m_suspScale;
     }
+    
     /// @endGetters
 
 private:

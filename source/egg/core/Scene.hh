@@ -41,6 +41,7 @@ public:
     virtual void outgoing_childCreate() {}
 
     /// @beginSetters
+
     void setParent(Scene *parent) {
         m_parent = parent;
     }
@@ -56,9 +57,11 @@ public:
     void setSceneMgr(SceneManager *sceneMgr) {
         m_sceneMgr = sceneMgr;
     }
+    
     /// @endSetters
 
     /// @beginGetters
+
     [[nodiscard]] Heap *heap() const {
         return m_heap;
     }
@@ -78,6 +81,7 @@ public:
     [[nodiscard]] SceneManager *sceneMgr() const {
         return m_sceneMgr;
     }
+
     /// @endGetters
 
 protected:

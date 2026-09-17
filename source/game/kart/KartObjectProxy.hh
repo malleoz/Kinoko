@@ -78,12 +78,15 @@ public:
     ~KartObjectProxy();
 
     /// @beginSetters
+
     void setPos(const EGG::Vector3f &pos);
     void setRot(const EGG::Quatf &q);
     void setInertiaScale(const EGG::Vector3f &scale);
+    
     /// @endSetters
 
     /// @beginGetters
+
     [[nodiscard]] KartAction *action();
     [[nodiscard]] const KartAction *action() const;
     [[nodiscard]] KartBody *body();
@@ -173,6 +176,7 @@ public:
     [[nodiscard]] static alloc_list<KartObjectProxy *> &proxyList() {
         return s_proxyList;
     }
+
     /// @endGetters
 
 protected:

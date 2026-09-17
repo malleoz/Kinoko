@@ -171,8 +171,7 @@ private:
 class ObjectChoropuHoll final : public ObjectCollidable {
 public:
     /// @addr{0x806B93CC}
-    /// @brief Constructor
-    /// @param params The parameters used to initialize the object
+    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
     ObjectChoropuHoll(const System::MapdataGeoObj &params) : ObjectCollidable(params) {}
 
     /// @addr{0x806BBE6C}

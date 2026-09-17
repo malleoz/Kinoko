@@ -39,12 +39,15 @@ public:
     void calcCollisionTransform() override {}
 
     /// @beginSetters
+
     void setFallState(FallState state) {
         m_fallState = state;
     }
+    
     /// @endSetters
 
     /// @beginGetters
+
     [[nodiscard]] FallState fallState() const {
         return m_fallState;
     }
@@ -52,6 +55,7 @@ public:
     [[nodiscard]] s32 fallFrame() const {
         return m_fallFrame;
     }
+
     /// @endGetters
 
 private:

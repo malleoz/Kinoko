@@ -20,18 +20,14 @@ namespace Field {
 class ObjectCollidable : public ObjectBase {
 public:
     /// @addr{0x8081EFEC}
-    /// @brief Constructor
-    /// @param params The parameters used to initialize the object
+    /// @copydoc ObjectBase::ObjectBase(const System::MapdataGeoObj &)
     ObjectCollidable(const System::MapdataGeoObj &params)
         : ObjectBase(params),
           m_collision(nullptr) {}
 
     /// @addr{0x8081F064}
-    /// @brief Constructor
-    /// @param name The name of the object
-    /// @param pos The initial position of the object
-    /// @param rot The initial rotation of the object
-    /// @param scale The initial scale of the object
+    /// @copydoc ObjectBase::ObjectBase(const char *, const EGG::Vector3f &, const EGG::Vector3f &,
+    /// const EGG::Vector3f &)
     ObjectCollidable(const char *name, const EGG::Vector3f &pos, const EGG::Vector3f &rot,
             const EGG::Vector3f &scale)
         : ObjectBase(name, pos, rot, scale),
@@ -96,9 +92,10 @@ public:
     }
 
     /// @addr{0x8068173C}
-    /// @brief The translation applied on top of the object's world transform for collision checks
-    /// @return The translation vector applied on top of the object's world transform for collision
+    /// @brief The translation applied on top of the object's world transform for collision
     /// checks
+    /// @return The translation vector applied on top of the object's world transform for
+    /// collision checks
     [[nodiscard]] virtual const EGG::Vector3f &getCollisionTranslation() const {
         return EGG::Vector3f::zero;
     }
@@ -106,8 +103,8 @@ public:
     /// @addr{0x80573518}
     /// @brief Gets a pointer to the GJK collision object
     /// @return A pointer to the @ref ObjectCollisionBase GJK collision object
-    /// @details In the base game, this is a virtual function. Since no derived class overrides this
-    /// function, we can devirtualize for Kinoko.
+    /// @details In the base game, this is a virtual function. Since no derived class
+    /// overrides this function, we can devirtualize for Kinoko.
     [[nodiscard]] ObjectCollisionBase *collision() const {
         return m_collision;
     }

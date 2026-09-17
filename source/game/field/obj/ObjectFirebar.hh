@@ -10,8 +10,7 @@ namespace Kinoko::Field {
 class ObjectFirebar final : public ObjectCollidable {
 public:
     /// @addr{0x807678F4}
-    /// @brief Constructor
-    /// @param params The parameters used to initialize the object
+    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
     /// @details Constructs and loads the required number of @ref ObjectFireball objects based on
     /// the number of spokes (param setting 4) and fireballs per spoke (param setting 1). Computes
     /// and caches the distance from the firebar and angle about the firebar's rotation axis for

@@ -5,8 +5,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8086BC1C}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
 ObjectWLWallGC::ObjectWLWallGC(const System::MapdataGeoObj &params)
     : ObjectKCL(params),
       m_extendedDuration(static_cast<s32>(params.setting(1))),

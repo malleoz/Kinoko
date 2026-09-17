@@ -7,8 +7,7 @@ namespace Kinoko::Field {
 /// @brief Abstract class that represents an object thrown by an @ref ObjectProjectileLauncher.
 class ObjectProjectile : public ObjectCollidable {
 public:
-    /// @brief Constructor
-    /// @param params The parameters used to initialize the object
+    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
     ObjectProjectile(const System::MapdataGeoObj &params)
         : ObjectCollidable(params),
           m_idx(params.setting(0)) {}

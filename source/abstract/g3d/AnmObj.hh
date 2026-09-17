@@ -49,6 +49,7 @@ public:
     }
 
     /// @beginGetters
+
     [[nodiscard]] f32 frame() const {
         return m_frame;
     }
@@ -60,9 +61,11 @@ public:
     [[nodiscard]] PlayPolicyFunc playPolicy() const {
         return m_playPolicy;
     }
+
     /// @endGetters
 
     /// @beginSetters
+
     void setFrame(f32 frame) {
         m_frame = m_playPolicy(m_startFrame, m_endFrame, frame);
     }
@@ -75,6 +78,7 @@ public:
         ASSERT(func);
         m_playPolicy = func;
     }
+    
     /// @endSetters
 
 private:

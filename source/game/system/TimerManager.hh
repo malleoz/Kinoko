@@ -179,16 +179,20 @@ public:
     }
 
     /// @beginGetters
+
     [[nodiscard]] const Timer &currentTimer() const {
         return m_currentTimer;
     }
+
     /// @endGetters
 
     /// @beginSetters
+
     /// @brief Called when the countdown has ended
     void setStarted(bool isSet) {
         m_started = isSet;
     }
+    
     /// @endSetters
 
 private:

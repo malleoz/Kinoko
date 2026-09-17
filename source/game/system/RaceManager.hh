@@ -42,6 +42,7 @@ public:
         [[nodiscard]] Timer getLapSplit(size_t idx) const;
 
         /// @beginGetters
+
         [[nodiscard]] u16 checkpointId() const {
             return m_checkpointId;
         }
@@ -74,6 +75,7 @@ public:
         [[nodiscard]] const KPad *inputs() const {
             return m_inputs;
         }
+
         /// @endGetters
 
     private:
@@ -157,6 +159,7 @@ public:
     [[nodiscard]] MapdataJugemPoint *jugemPoint() const;
 
     /// @beginGetters
+
     /// @addr{0x80533090}
     /// @brief Returns the frames remaining for the @ref Stage::Countdown phase of the race
     /// @return The number of frames remaining for the countdown phase
@@ -183,6 +186,7 @@ public:
     [[nodiscard]] u32 timer() const {
         return m_timer;
     }
+    
     /// @endGetters
 
     /// @addr{0x80532084}

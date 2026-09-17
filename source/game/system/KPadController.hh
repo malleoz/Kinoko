@@ -281,13 +281,16 @@ public:
     }
 
     /// @beginSetters
+
     /// @addr{0x8051F37C}
     void setDriftIsAuto(bool driftIsAuto) {
         m_driftIsAuto = driftIsAuto;
     }
+    
     /// @endSetters
 
     /// @beginGetters
+
     /// @addr{0x8051CE7C}
     /// @brief Returns the source of the control input.
     /// @return The source of the control input.
@@ -302,6 +305,7 @@ public:
     [[nodiscard]] bool driftIsAuto() const {
         return m_driftIsAuto;
     }
+
     /// @endGetters
 
 protected:
@@ -464,6 +468,7 @@ public:
     }
 
     /// @beginGetters
+
     [[nodiscard]] const RaceInputState &currentState() const {
         return m_currentInputState;
     }
@@ -475,6 +480,7 @@ public:
     [[nodiscard]] bool driftIsAuto() const {
         return m_controller->driftIsAuto();
     }
+
     /// @endGetters
 
 protected:

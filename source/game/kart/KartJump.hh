@@ -72,6 +72,7 @@ public:
     void setAngle(const EGG::Vector3f &left);
 
     /// @beginGetters
+
     [[nodiscard]] bool isBoostRampEnabled() const {
         return m_boostRampTrick;
     }
@@ -85,6 +86,7 @@ public:
     [[nodiscard]] s16 trickDelay() const {
         return m_trickDelay;
     }
+    
     /// @endGetters
 
 protected:

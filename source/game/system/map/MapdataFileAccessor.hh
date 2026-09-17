@@ -50,9 +50,11 @@ public:
     }
 
     /// @beginGetters
+
     [[nodiscard]] u32 version() const {
         return m_version;
     }
+    
     /// @endGetters
 
 private:

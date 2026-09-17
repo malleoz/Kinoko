@@ -5,8 +5,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8081A980}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectDrivable::ObjectDrivable(const System::MapdataGeoObj &)
 ObjectKCL::ObjectKCL(const System::MapdataGeoObj &params)
     : ObjectDrivable(params),
       m_lastMtxUpdateFrame(-2000),

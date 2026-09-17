@@ -14,8 +14,7 @@ class RailInterpolator;
 class ObjectCow : public ObjectCollidable {
 public:
     /// @addr{0x806BBEC0}
-    /// @brief Constructor
-    /// @param params The parameters used to initialize the object
+    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
     /// @details Sets @ref m_startFrame based off param setting 3.
     ObjectCow(const System::MapdataGeoObj &params)
         : ObjectCollidable(params),

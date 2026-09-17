@@ -129,6 +129,7 @@ public:
             CollisionInfo *info, KCLTypeMask *maskOut);
 
     /// @beginSetters
+
     /// @brief Points to the @ref NoBounceWallColInfo struct that should be used to accumulate soft
     /// wall collision info on subsequent queries
     void setNoBounceWallInfo(NoBounceWallColInfo *info) {
@@ -149,9 +150,11 @@ public:
     void setLocalMtx(EGG::Matrix34f *mtx) {
         m_localMtx = mtx;
     }
+    
     /// @endSetters
 
     /// @beginGetters
+
     [[nodiscard]] const KColData *data() const {
         return m_data;
     }
@@ -159,6 +162,7 @@ public:
     [[nodiscard]] NoBounceWallColInfo *noBounceWallInfo() const {
         return m_noBounceWallInfo;
     }
+
     /// @endGetters
 
     /// @brief Loads a particular section of a .szs file

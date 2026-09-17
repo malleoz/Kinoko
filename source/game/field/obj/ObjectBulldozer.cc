@@ -4,22 +4,6 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x807FD938}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
-ObjectBulldozer::ObjectBulldozer(const System::MapdataGeoObj &params)
-    : ObjectKCL(params),
-      m_initialPos(pos()),
-      m_initialRot(rot()),
-      m_timeOffset(params.setting(3) * 2),
-      m_periodDenom(std::max<u16>(2, params.setting(2))),
-      m_restFrames(params.setting(4)),
-      m_fullPeriod(m_periodDenom + m_restFrames * 2),
-      m_amplitude(params.setting(1)),
-      m_left(strcmp(getName(), "bulldozer_left") == 0),
-      m_period(F_TAU / static_cast<f32>(m_periodDenom)),
-      m_halfPeriod(m_fullPeriod / 2) {}
-
 /// @addr{0x807FDC50}
 /// @copybrief ObjectBase::calc()
 /// @details Updates the position of the bulldozer based on its oscillation on the current frame.

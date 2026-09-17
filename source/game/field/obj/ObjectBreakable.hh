@@ -10,8 +10,7 @@ namespace Kinoko::Field {
 class ObjectBreakable : public ObjectCollidable {
 public:
     /// @addr{0x8076EBE0}
-    /// @brief Constructor
-    /// @param params The parameters used to initialize the object
+    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
     ObjectBreakable(const System::MapdataGeoObj &params) : ObjectCollidable(params), m_state(0) {}
 
     /// @addr{0x8076EC28}

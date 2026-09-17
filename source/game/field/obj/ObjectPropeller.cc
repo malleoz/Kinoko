@@ -5,8 +5,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80764CC8}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
+/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 ObjectPropeller::ObjectPropeller(const System::MapdataGeoObj &params)
     : ObjectCollidable(params),
       m_angle(0.0f) {

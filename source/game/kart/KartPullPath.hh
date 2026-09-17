@@ -44,6 +44,7 @@ public:
     }
 
     /// @beginSetters
+
     void setCurrentIdx(s16 idx) {
         m_currentIdx = idx;
     }
@@ -55,6 +56,7 @@ public:
         m_pointInfo = info;
         m_currentIdx = 0;
     }
+    
     /// @endSetters
 
 private:
@@ -132,6 +134,7 @@ public:
     }
 
     /// @beginGetters
+
     [[nodiscard]] s16 incomingIdx() const {
         return m_incomingIdx;
     }
@@ -151,6 +154,7 @@ public:
     [[nodiscard]] f32 roadSpeedDecay() const {
         return m_roadSpeedDecay;
     }
+
     /// @endGetters
 
 private:

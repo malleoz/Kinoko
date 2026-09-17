@@ -17,6 +17,7 @@ public:
     const EGG::Vector3f &getSupport(const EGG::Vector3f &v) const override;
 
     /// @beginGetters
+
     /// @addr{0x807F957C}
     [[nodiscard]] f32 getBoundingRadius() const override {
         return m_scaledRadius;
@@ -26,13 +27,16 @@ public:
     [[nodiscard]] f32 initRadius() const {
         return m_initRadius;
     }
+
     /// @endGetters
 
     /// @beginSetters
+
     /// @addr{0x8080C414}
     void setBoundingRadius(f32 val) {
         m_scaledRadius = val;
     }
+    
     /// @endSetters
 
 protected:

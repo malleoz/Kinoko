@@ -146,9 +146,11 @@ public:
     bool findClosestCollisionEntry(KCLTypeMask *typeMask, KCLTypeMask type);
 
     /// @beginGetters
+
     [[nodiscard]] const CollisionEntry *closestCollisionEntry() const {
         return m_closestCollisionEntry;
     }
+    
     /// @endGetters
 
     /// @addr{0x8078DFE8}

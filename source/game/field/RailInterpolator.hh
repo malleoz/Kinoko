@@ -57,6 +57,7 @@ public:
     [[nodiscard]] virtual f32 getCurrSegmentLength() const = 0;
 
     /// @beginSetters
+
     /// @brief Sets whether to use per-point velocities for interpolation
     /// @param isSet True to use per-point velocities, false to use a constant velocity
     void setPerPointVelocities(bool isSet) {
@@ -67,6 +68,7 @@ public:
     void setT(f32 t) {
         m_segmentT = t;
     }
+    
     /// @endSetters
 
     /// @addr{0x806ED204}
@@ -78,6 +80,7 @@ public:
     }
 
     /// @beginGetters
+
     [[nodiscard]] const EGG::Vector3f &floorNrm(size_t idx) const;
     [[nodiscard]] f32 railLength() const;
 
@@ -130,6 +133,7 @@ public:
     [[nodiscard]] s16 nextPointIdx() const {
         return m_nextPointIdx;
     }
+
     /// @endGetters
 
 protected:

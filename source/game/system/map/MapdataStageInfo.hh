@@ -33,6 +33,7 @@ public:
     void read(EGG::Stream & /*stream*/) {}
 
     /// @beginGetters
+
     [[nodiscard]] u8 polePosition() const {
         return m_rawData->polePosition;
     }
@@ -40,6 +41,7 @@ public:
     [[nodiscard]] u8 translationMode() const {
         return m_rawData->translationMode;
     }
+    
     /// @endGetters
 
 private:

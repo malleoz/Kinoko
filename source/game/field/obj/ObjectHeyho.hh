@@ -13,12 +13,18 @@ namespace Kinoko::Field {
 class ObjectHeyho final : public ObjectCollidable, private StateManager {
 public:
     ObjectHeyho(const System::MapdataGeoObj &params);
-    ~ObjectHeyho() override;
+
+    /// @addr{0x806CEB24}
+    /// @brief Default virtual destructor
+    ~ObjectHeyho() override = default;
 
     void init() override;
 
     /// @addr{0x806CEDF8}
     /// @copybrief ObjectBase::calc()
+    /// @details Checks if the Shy Guy should transition to the next state. Updates the Shy Guy's
+    /// position along the rail. Evaluates the Shy Guy's state machine. Finally, interpolates the
+    /// Shy Guy's transform based off the current floor normal.
     void calc() override {
         calcStateTransition();
         calcMotion();
@@ -50,17 +56,20 @@ private:
 
     /// @brief The color of the Shy Guy
     enum class Color {
-        Red = 0,
-        Yellow = 1,
-        Green = 2,
+        Red = 0,    ///< Red Shy Guy that performs a 720
+        Yellow = 1, ///< Yellow Shy Guy that performs a 180
+        Green = 2,  ///< Green Shy Guy that performs a 180
     };
 
     /// @brief Sets the specified animation (move or jump)
+    /// @param anim The animation to set
     void changeAnimation(Animation anim) {
         m_drawMdl->anmMgr()->playAnim(0.0f, 1.0f, static_cast<size_t>(anim));
         m_currentAnim = anim;
     }
 
+    /// @brief Runs when the Shy Guy enters the jump state
+    /// @details Resets the spin frame counter for mid-air spinning
     void enterJump() {
         m_spinFrame = 0;
     }
@@ -68,12 +77,31 @@ private:
     void calcMove();
     void calcJump();
 
-    void calcStateTransition();
+    /// @addr{0x806CFD48}
+    /// @brief Updates the @ref StateManager based off the current and next rail point settings
+    /// @details If the current or next rail point's second setting is 0, then the Shy Guy
+    /// transitions to the move state. Otherwise, it transitions to the jump state.
+    /// @note Contrary to the other classes that inherit from @ref StateManager, this class directly
+    /// sets @ref m_currentStateId rather than queuing the transition via @ref m_nextStateId.
+    void calcStateTransition() {
+        if (m_railInterpolator->curPoint().setting[1] == 0 ||
+                m_railInterpolator->nextPoint().setting[1] == 0) {
+            if (m_currentStateId != 0) {
+                m_currentStateId = 0;
+            }
+        } else {
+            if (m_currentStateId != 1) {
+                m_currentStateId = 1;
+            }
+        }
+    }
+
     void calcMotion();
 
     /// @addr{0x806CFFB0}
-    /// @brief Updates the smoothed up vector, normalises the forward direction vector, and updates
-    /// the transform matrix accordingly
+    /// @brief Interpolates the Shy Guy's orientation to reflect the current floor normal
+    /// @details Interpolates the smoothed up vector, normalises the forward direction vector, and
+    /// updates the transform matrix accordingly.
     void calcInterp() {
         m_up = Interpolate(0.2f, m_up, m_floorNrm);
         m_up.normalise2();
@@ -85,7 +113,7 @@ private:
     f32 m_apex;               ///< Highest Y position between the rail endpoints
     EGG::Vector3f m_midpoint; ///< Middle point (and lowest Y position) of the rai
     EGG::Vector3f m_initVel;  ///< Initial velocity vector
-    f32 m_currentVel;         ///< Current speed along the rail
+    f32 m_currentSpeed;         ///< Current speed along the rail
     f32 m_accel;              ///< Gravity based off apex, midpoint, and max velocity
     f32 m_maxVelSq;           ///< Square of the maximum velocity specified by param setting 1
     EGG::Vector3f m_up;       ///< Smoothed up vector
@@ -94,8 +122,8 @@ private:
     bool m_floorCollision;    ///< Whether the Shy Guy is currently colliding with the floor
     Animation m_currentAnim;  ///< Currently playing animation
     bool m_freeFall;          ///< Shy Guy has left the rail due to asymmetric endpoint heights
-    f32 m_launchVel;          ///< Speed at moment of leaving the rail, used to snap back on landing
-    s16 m_spinFrame;          ///< Frame counter that ticks up while the Shy Guy is spinning mid-air
+    f32 m_launchVel; ///< Speed at moment of rail direction change, used to snap back on landing
+    s16 m_spinFrame; ///< Frame counter that ticks up while the Shy Guy is spinning mid-air
 
     /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 2> STATE_ENTRIES = {{

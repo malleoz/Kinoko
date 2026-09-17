@@ -122,6 +122,7 @@ public:
     }
 
     /// @beginSetters
+
     /// @brief Sets the @ref ObjectHighwayManager associated with this object
     /// @param highwayMgr The highway manager to oversee this object
     void setHighwayManager(const ObjectHighwayManager *highwayMgr) {
@@ -135,14 +136,17 @@ public:
     void reset() {
         m_squashed = false;
     }
+    
     /// @endSetters
 
     /// @beginGetters
+
     /// @brief Checks if this vehicle has squashed the player this frame
     /// @return `true` if the vehicle has squashed the player, `false` otherwise
     [[nodiscard]] bool squashed() const {
         return m_squashed;
     }
+
     /// @endGetters
 
 private:

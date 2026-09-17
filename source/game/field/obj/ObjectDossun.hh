@@ -16,8 +16,7 @@ class ObjectDossun : public ObjectCollidable {
 
 public:
     /// @addr{0x80764510}
-    /// @brief Constructor
-    /// @param params The parameters used to initialize the object
+    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
     ObjectDossun(const System::MapdataGeoObj &params)
         : ObjectCollidable(params),
           m_touchingGround(false) {}
