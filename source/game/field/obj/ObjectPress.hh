@@ -138,7 +138,7 @@ private:
 };
 
 /// @brief The stompers on the left and right side of the first TF factory room
-/// @details These stompers don't stomp down until @ref ObjectItemboxPress tells them to.
+/// @details These stompers don't stomp down until @ref ObjectItemboxBlock tells them to.
 class ObjectPressSenko final : public ObjectPress {
 public:
     ObjectPressSenko(const System::MapdataGeoObj &params);
@@ -181,7 +181,7 @@ public:
         }
     }
 
-    /// @brief Interface for @ref ObjectItemboxPress to tell the stomper to begin stomping
+    /// @brief Interface for @ref ObjectItemboxBlock to tell the stomper to begin stomping
     void beginStomp() {
         m_startingWindup = true;
     }

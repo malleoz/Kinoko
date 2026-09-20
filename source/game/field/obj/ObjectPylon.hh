@@ -17,7 +17,7 @@ namespace Kinoko::Field {
 /// racing one). Player cones are only tangible to the player, and ghost cones are only tangible to
 /// the ghost.
 /// @desync It is possible for ghost playbacks to desync due to the pylon's handling of collision
-/// checks against neighboring pylons.
+/// checks against neighboring pylons. See @ref checkIntraCollision() for more info.
 class ObjectPylon final : public ObjectCollidable {
 public:
     ObjectPylon(const System::MapdataGeoObj &params);
