@@ -49,7 +49,7 @@ void ObjectFireSnake::initProjectile(const EGG::Vector3f &pos) {
     xzDist.y = 0.0f;
     f32 dist = xzDist.length();
 
-    m_fallDir = RotateXZByYaw(F_PI / 2.0f, m_xzSunDist);
+    m_fallDir = RotateXZByYaw(HALF_PI, m_xzSunDist);
     m_xzFallSpeed = dist * EGG::Mathf::sqrt(GRAVITY * 0.5f / (m_spawnPos.y - m_initPos.y));
     m_fallDuration = static_cast<u16>(dist / m_xzFallSpeed);
 }

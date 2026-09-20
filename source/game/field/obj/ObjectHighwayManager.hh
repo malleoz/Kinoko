@@ -12,16 +12,23 @@ class ObjectCarTGE;
 class ObjectHighwayManager final : public ObjectCollidable {
 public:
     ObjectHighwayManager();
-    ~ObjectHighwayManager() override;
+
+    /// @addr{0x806D2FE8}
+    /// @brief Default virtual destructor
+    ~ObjectHighwayManager() override = default;
 
     /// @addr{0x806D332C}
     /// @copybrief ObjectBase::init()
+    /// @details Initializes @ref m_squashTimer to @ref SQUASH_MAX so that the player is initially
+    /// vulnerable to being squashed.
     void init() override {
         m_squashTimer = SQUASH_MAX;
     }
 
     /// @addr{0x806D345C}
     /// @copybrief ObjectBase::calc()
+    /// @details Simply calls @ref calcSquash() to check if any managed @ref ObjectCarTGE has
+    /// squashed the player this frame.
     void calc() override {
         calcSquash();
     }
@@ -48,15 +55,22 @@ public:
     /// @details Does nothing since this is just a watcher class
     void loadRail() override {}
 
+    /// @beginGetters
+
+    /// @brief Gets the number of frames since the last squash occurred from any managed car/truck
+    /// object
+    /// @return The number of frames since the last squash occurred.
     [[nodiscard]] u32 squashTimer() const {
         return m_squashTimer;
     }
+
+    /// @endGetters
 
 private:
     void calcSquash();
 
     owning_span<ObjectCarTGE *> m_cars; ///< Pointers to all car objects
-    u32 m_squashTimer;                  ///< Normally an array, one for each player
+    u32 m_squashTimer;                  ///< Frames since last squash
 
     static constexpr u32 SQUASH_MAX = 600; ///< Squash timer cap
 };

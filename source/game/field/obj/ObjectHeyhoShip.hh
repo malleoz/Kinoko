@@ -28,6 +28,8 @@ public:
 
     /// @addr{0x806D19D8}
     /// @copybrief ObjectBase::init()
+    /// @details Initializes the rail interpolator and sets the ship's position and orientation
+    /// based on the current rail tangent. Also initializes @ref m_framesSinceLastLaunch to `1000`.
     void init() override {
         m_railInterpolator->init(0.0f, 0);
         m_railInterpolator->setPerPointVelocities(true);
@@ -36,7 +38,7 @@ public:
         const EGG::Vector3f &railTan = m_railInterpolator->curTangentDir();
         EGG::Vector3f tangent = EGG::Vector3f(railTan.x, 0.0f, railTan.z);
         tangent.normalise2();
-        tangent = RotateXZByYaw(F_PI / 2.0f, tangent);
+        tangent = RotateXZByYaw(HALF_PI, tangent);
 
         if (EGG::Mathf::abs(tangent.y) > 0.1f) {
             tangent.y = 0.01f;
@@ -54,6 +56,9 @@ public:
 
     /// @addr{0x806D1B9C}
     /// @copybrief ObjectBase::calc()
+    /// @details Updates the rail interpolator. If the ship has reached the end of a rail segment,
+    /// resets @ref m_framesSinceLastLaunch to zero; otherwise, increments it. Finally, updates the
+    /// ship's position along the rail while bobbing up and down.
     void calc() override {
         if (m_railInterpolator->calc() == RailInterpolator::Status::SegmentEnd) {
             m_framesSinceLastLaunch = 0;
@@ -92,6 +97,8 @@ public:
 
     /// @addr{0x806D1D10}
     /// @brief Updates the ship's position along the rail and applies a bobbing effect
+    /// @details Moves the ship to the current position along the rail. The ship's vertical
+    /// oscillation is a sine wave with amplitude @ref m_yAmplitude and a period of `100.0f` frames.
     void calcPos() {
         constexpr f32 PERIOD = 100.0f;
 

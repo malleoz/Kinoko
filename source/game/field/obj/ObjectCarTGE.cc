@@ -189,8 +189,15 @@ void ObjectCarTGE::calcCollisionTransform() {
 /// @param kartObj The kart object that collided with this car
 /// @param reactionOnKart The reaction that should be applied to the kart
 /// @param hitDepth The depth of the collision between the kart and the car
-/// @details Interfaces with the @ref ObjectHighwayManager to enforce a squish cooldown for the
-/// player.
+/// @return The reaction that should be applied to the kart after the collision.
+/// @details If the kart collided with the primary collision shape of the car with a vertical hit
+/// depth of the kart is above `0.9f`, then causes the kart to bounce off the car/truck like a jump
+/// pad (@ref Kart::Reaction::UntrickableJumpPad). Otherwise, if the @ref ObjectHighwayMgr indicates
+/// that the player is still within the squash invulnerability period, returns @ref
+/// Kart::Reaction::None as a result of fetching the reaction for @ref m_dummyId. Otherwise, sets
+/// the @ref m_squashed flag and returns either @ref Kart::Reaction::Sideways or @ref
+/// Kart::Reaction::ShortCrushLoseItem depending on the direction of the collision relative to the
+/// car's orientation.
 Kart::Reaction ObjectCarTGE::onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
         Kart::Reaction /*reactionOnObj*/, EGG::Vector3f &hitDepth) {
     constexpr u32 SQUASH_INVULNERABILITY = 200;

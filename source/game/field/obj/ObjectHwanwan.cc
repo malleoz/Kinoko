@@ -4,19 +4,11 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x806E95B0}
-/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
-ObjectHwanwan::ObjectHwanwan(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params),
-      StateManager(this, STATE_ENTRIES),
-      m_initPos(pos()) {}
-
-/// @addr{0x806EC6E0}
-/// @brief Default virtual destructor
-ObjectHwanwan::~ObjectHwanwan() = default;
-
 /// @addr{0x806E9724}
 /// @copybrief ObjectBase::init()
+/// @details Initializes the Chain Chomp's position such that the bottom of its spherical body is at
+/// the initial position. Resets velocity and orientation vectors. Updates the Chain Chomp's
+/// transform and initializes it to the bouncing/walking state.
 void ObjectHwanwan::init() {
     m_workPos = m_initPos + EGG::Vector3f::ey * DIAMETER;
     m_extVel.setZero();
@@ -34,6 +26,10 @@ void ObjectHwanwan::init() {
 
 /// @addr{0x806E9A78}
 /// @copybrief ObjectBase::calc()
+/// @details Evaluates the Chain Chomp's state machine. Applies a downward gravitational force of
+/// `2.5f` every frame, updating its velocity and position accordingly. Calls @ref
+/// checkFloorCollision() to see if the Chain Chomp should bounce. Finally, it updates the Chain
+/// Chomp's transform to reflect its updated position and orientation.
 void ObjectHwanwan::calc() {
     constexpr EGG::Vector3f GRAVITY = EGG::Vector3f(0.0f, 2.5f, 0.0f);
 
@@ -53,8 +49,10 @@ void ObjectHwanwan::calc() {
 
 /// @addr{0x806EA784}
 /// @brief Checks for a collision between the Chain Chomp and the floor
-/// @details If a collision is detected, the Chain Chomp's position is offset to be on the floor,
-/// the target up vector is set to the floor's normal, and the external velocity is reset to zero.
+/// @details If a collision is detected and the Chain Chomp's Y-position is within `300.0f` frames
+/// of the rail height, sets @ref m_touchingGround to `true`, offsets the Chain Chomp's position to
+/// be on the floor, sets @ref m_targetUp to the floor's normal, and resets the external velocity to
+/// zero.
 void ObjectHwanwan::checkFloorCollision() {
     constexpr f32 RADIUS = DIAMETER * 0.5f;
 
@@ -82,33 +80,14 @@ void ObjectHwanwan::checkFloorCollision() {
     m_extVel.y = 0.0f;
 }
 
-/// @addr{0x806EAAE8}
-/// @brief Smoothly interpolates the Chain Chomp's up vector towards the target up vector
-void ObjectHwanwan::calcUp() {
-    m_up = Interpolate(0.1f, m_up, m_targetUp);
-    if (m_up.squaredLength() > std::numeric_limits<f32>::epsilon()) {
-        m_up.normalise2();
-    } else {
-        m_up = EGG::Vector3f::ey;
-    }
-}
-
-/// @addr{0x806C5354}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
-ObjectHwanwanManager::ObjectHwanwanManager(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params) {
-    m_hwanwan = EGG::egg_new<ObjectHwanwan>(params);
-    m_hwanwan->setScale(2.0f);
-    m_hwanwan->load();
-}
-
-/// @addr{0x806C56DC}
-/// @brief Default virtual destructor
-ObjectHwanwanManager::~ObjectHwanwanManager() = default;
-
 /// @addr{0x806C571C}
 /// @copybrief ObjectBase::init()
+/// @details Initializes the rail interpolator to the beginning of the rail. Sets the Chain Chomp's
+/// position and tangent to match the rail's initial position and orientation, and calls @ref
+/// ObjectHwanwan::calc() twice to update its state accordingly. Finally, sets the rail
+/// interpolator's speed based off param setting 1.
+/// @note It is not clear why @ref ObjectHwanwan::calc() is called twice, but this must be done in
+/// Kinoko to match the base game's behavior.
 void ObjectHwanwanManager::init() {
     m_railInterpolator->init(0.0f, 0);
     m_hwanwan->m_tangent = m_railInterpolator->curTangentDir();
@@ -122,22 +101,6 @@ void ObjectHwanwanManager::init() {
 
     ASSERT(m_mapObj);
     m_railInterpolator->setSpeed(static_cast<f32>(m_mapObj->setting(0)));
-}
-
-/// @addr{0x806C5DE0}
-/// @brief Updates the Chain Chomp's state based on the current rail segment
-/// @details In practice, for Nintendo tracks, this does nothing. Rail point setting 2, which
-/// represents the Chain Chomp entering a roll animation is only ever set to 2 in the Rainbow Road
-/// tournament.
-void ObjectHwanwanManager::calcState() {
-    if (m_railInterpolator->calc() == RailInterpolator::Status::SegmentEnd &&
-            m_railInterpolator->curPoint().setting[1] == 1 && m_hwanwan->m_currentStateId != 2) {
-        m_hwanwan->m_nextStateId = 1;
-    }
-
-    if (m_hwanwan->m_currentStateId == 1 && m_hwanwan->m_currentFrame >= 60) {
-        m_hwanwan->m_nextStateId = 0;
-    }
 }
 
 } // namespace Kinoko::Field

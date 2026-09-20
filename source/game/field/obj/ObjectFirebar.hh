@@ -36,7 +36,7 @@ public:
         mat.makeR(rot());
         m_axis = mat.base(2);
         m_axis.normalise();
-        m_initDir = m_axis.cross(RotateAxisAngle(F_PI / 2.0f, EGG::Vector3f::ex, m_axis));
+        m_initDir = m_axis.cross(RotateAxisAngle(HALF_PI, EGG::Vector3f::ex, m_axis));
         m_initDir.normalise();
     }
 

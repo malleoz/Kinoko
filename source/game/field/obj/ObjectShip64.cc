@@ -37,7 +37,7 @@ void ObjectShip64::calcCollisionTransform() {
     v = mat.base(0);
     v.normalise();
 
-    mat.setAxisRotation(F_PI / 2.0f, v);
+    mat.setAxisRotation(HALF_PI, v);
     mat.setBase(3, v);
     m_paddleWheelCollision->transform(mat, scale());
 }

@@ -143,7 +143,7 @@ public:
     void setKillExtVelY(bool isSet) {
         m_killExtVelY = isSet;
     }
-    
+
     /// @endSetters
 
     /// @beginGetters
@@ -230,7 +230,7 @@ protected:
     EGG::Vector3f m_totalTorque;       ///< Torque from linear motion and rotation.
     EGG::Quatf m_stuntRot;             ///< Rotation from trick animations. Copied from KartPhysics.
     EGG::Quatf m_extraRot;             ///< Rotation from automatic drifts and actions.
-    f32 m_gravity;                     ///< Usually -1.3f, also affected by KartMove::calcDive.
+    f32 m_gravity;                     ///< Usually -1.3f, also affected by @ref KartMove::calcDive.
     EGG::Vector3f m_intVel;            ///< What you typically consider to be the vehicle's speed.
     EGG::Vector3f m_up;                ///< The unit vector pointing up from the vehicle.
     f32 m_stabilizationFactor;         ///< Scalar for damping the main rotation.

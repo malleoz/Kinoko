@@ -9,13 +9,24 @@
 namespace Kinoko::Field {
 
 /// @brief Represents the walking Chain Chomps on DS Peach Gardens
+/// @details Chain Chomps move along a rail and bounce upwards whenever they collide with the
+/// floor.
 class ObjectHwanwan final : public ObjectCollidable, private StateManager {
     /// @brief Grants the manager class access to the Chain Chomp's state
     friend class ObjectHwanwanManager;
 
 public:
-    ObjectHwanwan(const System::MapdataGeoObj &params);
-    ~ObjectHwanwan() override;
+    /// @addr{0x806E95B0}
+    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @details Caches the Chain Chomp's initial position to @ref m_initPos.
+    ObjectHwanwan(const System::MapdataGeoObj &params)
+        : ObjectCollidable(params),
+          StateManager(this, STATE_ENTRIES),
+          m_initPos(pos()) {}
+
+    /// @addr{0x806EC6E0}
+    /// @brief Default virtual destructor
+    ~ObjectHwanwan() override = default;
 
     void init() override;
     void calc() override;
@@ -54,7 +65,9 @@ public:
 private:
     /// @addr{0x806E9E10}
     /// @brief Runs every frame that the Chain Chomp is walking/bouncing along the rail
-    /// @details For all intents and purposes, this is run every frame. The only time this is not
+    /// @details If the Chain Chomp is touching the ground this frame, induces an upwards bounce
+    /// velocity of `12.0f`.
+    /// @note For all intents and purposes, this is run every frame. The only time this is not
     /// run is when the Chain Chomp enters a "roll" state. This state is only ever used in the
     /// Rainbow Road tournament, when a Chain Chomp falls off the higher path by the split path
     /// section after the cannon.
@@ -65,10 +78,23 @@ private:
     }
 
     void checkFloorCollision();
-    void calcUp();
+
+    /// @addr{0x806EAAE8}
+    /// @brief Smoothly interpolates the Chain Chomp's up vector towards the target up vector
+    /// @details Uses an interpolation rate of `0.1f`.
+    void calcUp() {
+        constexpr f32 INTERP_RATE = 0.1f;
+
+        m_up = Interpolate(INTERP_RATE, m_up, m_targetUp);
+        if (m_up.squaredLength() > std::numeric_limits<f32>::epsilon()) {
+            m_up.normalise2();
+        } else {
+            m_up = EGG::Vector3f::ey;
+        }
+    }
 
     const EGG::Vector3f m_initPos; ///< Spawn position
-    EGG::Vector3f m_workPos;       ///< Current position
+    EGG::Vector3f m_workPos;       ///< Staged position for this frame
     EGG::Vector3f m_extVel;        ///< External velocity (gravity and bounce velocity)
     EGG::Vector3f m_bounceVel;     ///< Upwards velocity impulse when Chain Chomp contacts the floor
     EGG::Vector3f m_tangent;       ///< Forward direction along the rail
@@ -86,15 +112,32 @@ private:
     }};
 };
 
+/// @brief Manager class for @ref ObjectHwanwan
+/// @details For Kinoko, this is effectively a very simple wrapper over a single @ref ObjectHwanwan.
+/// However, in the base game, this manager class is responsible for managing a trail of item boxes
+/// behind the Chain Chomp.
 class ObjectHwanwanManager final : public ObjectCollidable {
 public:
-    ObjectHwanwanManager(const System::MapdataGeoObj &params);
-    ~ObjectHwanwanManager() override;
+    /// @addr{0x806C5354}
+    /// @brief Constructor
+    /// @param params The parameters used to initialize the object
+    /// @details Constructs the underlying @ref ObjectHwanwan obhect, doubles its scale, and loads
+    /// it.
+    ObjectHwanwanManager(const System::MapdataGeoObj &params) : ObjectCollidable(params) {
+        m_hwanwan = EGG::egg_new<ObjectHwanwan>(params);
+        m_hwanwan->setScale(2.0f);
+        m_hwanwan->load();
+    }
+
+    /// @addr{0x806C56DC}
+    /// @brief Default virtual destructor
+    ~ObjectHwanwanManager() override = default;
 
     void init() override;
 
     /// @addr{0x806C5AC4}
     /// @copybrief ObjectBase::calc()
+    /// @details Updates the Chain Chomp's state and position along the rail every frame.
     void calc() override {
         calcState();
         calcPosAndTangent();
@@ -118,7 +161,28 @@ public:
     void createCollision() override {}
 
 private:
-    void calcState();
+    /// @addr{0x806C5DE0}
+    /// @brief Updates the Chain Chomp's state based on the current rail segment
+    /// @details If the Chain Chomp has reached the end of the current rail segment and the next
+    /// rail point's second setting is set to 1, then transitions to @ref ObjectHwanwan to the
+    /// rolling state. Otherwise, if the @ref ObjectHwanwan is in the rolling state and has been
+    /// rolling for 60 frames, it transitions back to the idle state.
+    /// @note In practice, for Nintendo tracks, this does nothing. Rail point setting 2, which
+    /// represents the Chain Chomp entering a roll animation is only ever set to 2 in the Rainbow
+    /// Road tournament.
+    void calcState() {
+        constexpr f32 ROLL_DURATION = 60.0f;
+
+        if (m_railInterpolator->calc() == RailInterpolator::Status::SegmentEnd &&
+                m_railInterpolator->curPoint().setting[1] == 1 &&
+                m_hwanwan->m_currentStateId != 2) {
+            m_hwanwan->m_nextStateId = 1;
+        }
+
+        if (m_hwanwan->m_currentStateId == 1 && m_hwanwan->m_currentFrame >= ROLL_DURATION) {
+            m_hwanwan->m_nextStateId = 0;
+        }
+    }
 
     /// @addr{0x806C6148}
     /// @brief Updates the Chain Chomp's position and tangent
