@@ -7,7 +7,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8067E6F4}
-/// @copydoc ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
+/// @copybrief ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
 /// @details Increments the static @ref s_flamePoleCount. @ref m_maxScale is initialized based on
 /// the third param setting. If it is `0`, then the scale is instead computed as `3 +
 /// (s_flamePoleCount % 3)`. Constructs and loads the associated @ref ObjectFlamePole object.

@@ -9,7 +9,14 @@ namespace Kinoko::Field {
 class ObjectBulldozer final : public ObjectKCL {
 public:
     /// @addr{0x807FD938}
-    /// @copydoc ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
+    /// @copybrief ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
+    /// @details Caches the object's initial position and rotation to @ref m_initialPos and @ref
+    /// m_initialRot respetviely. Computes @ref m_timeOffset by doubling param setting 4. Computes
+    /// @ref m_periodDenom as the max of `2` and param setting 3. Sets @ref m_restFrames based on
+    /// param setting 5. Computes @ref m_fullPeriod by summing @ref m_periodDenom and twice @ref
+    /// m_restFrames. Sets @ref m_amplitude based on param setting 2. Determines @ref m_left by
+    /// comparing the object's name to `bulldozer_left`. Computes @ref m_period as `@ref F_TAU /
+    /// @ref m_periodDenom` and @ref m_halfPeriod as half of @ref m_fullPeriod.
     ObjectBulldozer(const System::MapdataGeoObj &params)
         : ObjectKCL(params),
           m_initialPos(pos()),

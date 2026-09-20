@@ -4,32 +4,8 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x8081A980}
-/// @copydoc ObjectDrivable::ObjectDrivable(const System::MapdataGeoObj &)
-ObjectKCL::ObjectKCL(const System::MapdataGeoObj &params)
-    : ObjectDrivable(params),
-      m_lastMtxUpdateFrame(-2000),
-      m_lastScaleUpdateFrame(-2000) {}
-
-/// @addr{0x8067EAFC}
-/// @brief Default virtual destructor that destroys the associated collision manager
-ObjectKCL::~ObjectKCL() {
-    EGG::egg_delete(m_objColMgr);
-}
-
-/// @addr{0x8081AA58}
-/// @copybrief ObjectBase::createCollision()
-/// @details Loads the KCL file for the object and creates an @ref ObjColMgr to interface with it
-void ObjectKCL::createCollision() {
-    char filepath[128];
-    snprintf(filepath, sizeof(filepath), "%s.kcl", getKclName());
-
-    auto *resMgr = System::ResourceManager::Instance();
-    m_objColMgr =
-            EGG::egg_new<ObjColMgr>(resMgr->getFile(filepath, System::ArchiveId::Course).data());
-}
-
 /// @addr{0x8081AB4C}
+/// @copybrief ObjectDrivable::initCollision()
 /// @details Saves the initial transformation matrix to the @ref ObjColMgr and computes the KCL's
 /// bounding box midpoint and half-width.
 void ObjectKCL::initCollision() {
@@ -55,6 +31,11 @@ void ObjectKCL::initCollision() {
 /// @addr{0x8081AD6C}
 /// @brief Advances the collision manager's transform to reflect the current frame
 /// @param timeOffset The time offset used to calculate the current frame's transformation
+/// @details If the collision manager's transform has already been updated for the current frame,
+/// this function does nothing. Otherwise, it computes the updated transformation matrix and sets
+/// it in the collision manager. If `timeOffset` is 0, then computes the transformation via @ref
+/// calcTransform(), otherwise calls @ref getUpdatedMatrix(). Finally, updates @ref
+/// m_lastMtxUpdateFrame.
 void ObjectKCL::update(u32 timeOffset) {
     u32 time = System::RaceManager::Instance()->timer() - timeOffset;
     if (m_lastMtxUpdateFrame == static_cast<s32>(time)) {
@@ -81,18 +62,17 @@ void ObjectKCL::update(u32 timeOffset) {
 /// @addr{0x8081AF28}
 /// @brief Updates the collision manager's scale to reflect the current frame
 /// @param timeOffset The time offset used to calculate the current frame's transformation
+/// @details If the collision manager's scale has already been updated for the current frame,
+/// this function does nothing. Otherwise, it computes the updated scale and sets it in the
+/// collision manager. If `timeOffset` is 0, then uses the default scale via @ref scale().y,
+/// otherwise calls @ref getScaleY(timeOffset). Finally, updates @ref m_lastScaleUpdateFrame.
 void ObjectKCL::calcScale(u32 timeOffset) {
     u32 time = System::RaceManager::Instance()->timer() - timeOffset;
     if (m_lastScaleUpdateFrame == static_cast<s32>(time)) {
         return;
     }
 
-    if (time == 0) {
-        m_objColMgr->setScale(scale().y);
-    } else {
-        m_objColMgr->setScale(getScaleY(timeOffset));
-    }
-
+    m_objColMgr->setScale(time == 0 ? scale().y : getScaleY(timeOffset));
     m_lastScaleUpdateFrame = time;
 }
 

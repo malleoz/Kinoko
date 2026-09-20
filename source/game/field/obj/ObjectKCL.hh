@@ -6,22 +6,51 @@
 namespace Kinoko::Field {
 
 /// @brief %Abstract class that represents a drivable object with KCL collision data
+/// @details Rather than representing an object's collision with @ref ObjectCollisionBase and
+/// leveraging the GJK algorithm for collision detection, classes inheriting from @ref ObjectKCL use
+/// KCL files to define their collision geometry. Derived classes can define their own collision
+/// behavior and interactions with the KCL data.
 class ObjectKCL : public ObjectDrivable {
 public:
-    ObjectKCL(const System::MapdataGeoObj &params);
-    ~ObjectKCL() override;
+    /// @addr{0x8081A980}
+    /// @copydoc ObjectDrivable::ObjectDrivable(const System::MapdataGeoObj &)
+    /// @details Initializes @ref m_lastMtxUpdateFrame and @ref m_lastScaleUpdateFrame to `-2000` so
+    /// that the collision manager will be updated on the first frame.
+    ObjectKCL(const System::MapdataGeoObj &params)
+        : ObjectDrivable(params),
+          m_lastMtxUpdateFrame(-2000),
+          m_lastScaleUpdateFrame(-2000) {}
 
-    void createCollision() override;
+    /// @addr{0x8067EAFC}
+    /// @brief Virtual destructor that destroys the associated collision manager
+    ~ObjectKCL() override {
+        EGG::egg_delete(m_objColMgr);
+    }
+
+    /// @addr{0x8081AA58}
+    /// @copybrief ObjectBase::createCollision()
+    /// @details Loads the KCL file for the object and creates an @ref ObjColMgr to interface with
+    /// it.
+    void createCollision() override {
+        char filepath[128];
+        snprintf(filepath, sizeof(filepath), "%s.kcl", getKclName());
+
+        auto *resMgr = System::ResourceManager::Instance();
+        m_objColMgr = EGG::egg_new<ObjColMgr>(
+                resMgr->getFile(filepath, System::ArchiveId::Course).data());
+    }
 
     /// @addr{0x80681490}
     /// @copybrief ObjectBase::calcCollisionTransform()
+    /// @details Dispatches to @ref ObjectKCL::update() to update the collision manager's transform
+    /// for the current frame.
     void calcCollisionTransform() override {
         update(0);
     }
 
     /// @addr{0x80681448}
     /// @copydoc ObjectBase::getPosition()
-    /// @details Computed as the midpoint of the KCL's bounding box
+    /// @details Computed as the midpoint of the KCL's bounding box.
     [[nodiscard]] const EGG::Vector3f &getPosition() const override {
         return m_kclMidpoint;
     }
@@ -30,8 +59,9 @@ public:
     /// @copybrief ObjectBase::getCollisionRadius()
     /// @return The collision radius of the KCL object, calculated based on its bounding box and an
     /// optional additional length.
-    /// @details Computed as the sum of half the KCL width and an optional additional length
-    f32 getCollisionRadius() const override {
+    /// @details Computed as the sum of half the KCL width (@ref m_bboxHalfSideLength) and an
+    /// optional additional length (@ref ObjectKCL::colRadiusAdditionalLength()).
+    [[nodiscard]] f32 getCollisionRadius() const override {
         return m_bboxHalfSideLength + colRadiusAdditionalLength();
     }
 
@@ -208,7 +238,7 @@ public:
     }
 
     /// @addr{0x80687DB0}
-    /// @brief Updates the collision manager's scale for the current frame
+    /// @brief Gets the collision manager's scale for the current frame
     /// @return The current scale of the object in the Y direction.
     [[nodiscard]] virtual f32 getScaleY(u32 /* timeOffset */) const {
         return scale().y;

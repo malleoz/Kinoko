@@ -5,7 +5,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8086BC1C}
-/// @copydoc ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
+/// @copybrief ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
 ObjectWLWallGC::ObjectWLWallGC(const System::MapdataGeoObj &params)
     : ObjectKCL(params),
       m_extendedDuration(static_cast<s32>(params.setting(1))),

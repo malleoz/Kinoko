@@ -4,7 +4,7 @@
 namespace Kinoko::Field {
 
 /// @addr{Inlined in 0x807FED80}
-/// @copydoc ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
+/// @copybrief ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
 ObjectPillarBase::ObjectPillarBase(const System::MapdataGeoObj &params) : ObjectKCL(params) {}
 
 /// @addr{0x807FFAA0}
@@ -40,7 +40,7 @@ void ObjectPillarC::calcCollisionTransform() {
 }
 
 /// @addr{0x807FED80}
-/// @copydoc ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
+/// @copybrief ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
 ObjectPillar::ObjectPillar(const System::MapdataGeoObj &params)
     : ObjectKCL(params),
       m_state(State::Upright),

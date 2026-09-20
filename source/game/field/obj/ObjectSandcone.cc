@@ -5,7 +5,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80686F84}
-/// @copydoc ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
+/// @copybrief ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
 ObjectSandcone::ObjectSandcone(const System::MapdataGeoObj &params)
     : ObjectKCL(params),
       m_flowRate(static_cast<f32>(params.setting(0)) / 100.0f),

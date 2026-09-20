@@ -10,12 +10,15 @@ namespace Kinoko::Field {
 class ObjectCrane final : public ObjectKCL {
 public:
     /// @addr{0x807FE658}
-    /// @copydoc ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
-    /// @details Sets the initial x-axis phase based off param setting 4 and sets the y-axis phase
-    /// to zero.
+    /// @copybrief ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
+    /// @details Caches the object's initial position to @ref m_initPos. Sets @ref m_xPeriod and
+    /// @ref m_yPeriod as the maxiumum between `2` and param setting 2 and param setting 5
+    /// respectively. Sets @ref m_xAmplitude and @ref m_yAmplitude based on param setting 3 and
+    /// param setting 6 respectively. Computes @ref m_xFreq and @ref m_yFreq based on the periods.
+    /// Sets the initial x-axis phase based off param setting 4 and sets the y-axis phase to zero.
     ObjectCrane(const System::MapdataGeoObj &params)
         : ObjectKCL(params),
-          m_startPos(pos()),
+          m_initPos(pos()),
           m_xPeriod(std::max<u16>(2, params.setting(1))),
           m_yPeriod(std::max<u16>(2, params.setting(4))),
           m_xAmplitude(params.setting(2)),
@@ -45,7 +48,7 @@ public:
         EGG::Vector3f scaledY = EGG::Vector3f::ey * yDelta * static_cast<f32>(m_yAmplitude);
 
         calcTransform();
-        setPos(m_startPos + transform().multVector33(scaledX + scaledY));
+        setPos(m_initPos + transform().multVector33(scaledX + scaledY));
 
         if (m_yt++ > m_yPeriod) {
             m_yt = 0;
@@ -73,15 +76,15 @@ public:
     }
 
 private:
-    const EGG::Vector3f m_startPos; ///< Initial starting position
-    u16 m_xt;                       ///< Current time along the x-axis period
-    u16 m_yt;                       ///< Current time along the y-axis period
-    const u16 m_xPeriod;            ///< Framecount of a full oscillation on x-axis
-    const u16 m_yPeriod;            ///< Framecount of a full oscillation on y-axis
-    const u16 m_xAmplitude;         ///< Max x-position delta from starting position
-    const u16 m_yAmplitude;         ///< Max y-position delta from starting position
-    const f32 m_xFreq;              ///< 2pi / m_xPeriod
-    const f32 m_yFreq;              ///< 2pi / m_yPeriod
+    const EGG::Vector3f m_initPos; ///< Initial starting position
+    u16 m_xt;                      ///< Current time along the x-axis period
+    u16 m_yt;                      ///< Current time along the y-axis period
+    const u16 m_xPeriod;           ///< Framecount of a full oscillation on x-axis
+    const u16 m_yPeriod;           ///< Framecount of a full oscillation on y-axis
+    const u16 m_xAmplitude;        ///< Max x-position delta from starting position
+    const u16 m_yAmplitude;        ///< Max y-position delta from starting position
+    const f32 m_xFreq;             ///< 2pi / m_xPeriod
+    const f32 m_yFreq;             ///< 2pi / m_yPeriod
 };
 
 } // namespace Kinoko::Field

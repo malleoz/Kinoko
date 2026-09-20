@@ -6,27 +6,23 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x80770384}
-/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
-ObjectKoopaBall::ObjectKoopaBall(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params),
-      m_vel(EGG::Vector3f::zero) {}
-
-/// @addr{0x80771F70}
-/// @brief Default virtual destructor
-ObjectKoopaBall::~ObjectKoopaBall() {
-    EGG::egg_delete(m_bombCoreDrawMdl);
-}
-
 /// @addr{0x807703D0}
 /// @copybrief ObjectBase::init()
-/// @details Initializes the rail velocity, position, and collision scale
+/// @details Initializes the fireball's state to @ref State::Intangible. Initializes the cooldown
+/// timer to `221` frames. Initializes the rail interpolator to the beginning of the rail, sets its
+/// speed to @ref INITIAL_SPEED, and advances the fireball's position using the rail interpolator.
+/// Caches the object's initial orientation and vertical position along the rail to @ref m_initPosY
+/// and sets the object's position and transform accordingly. Initializes @ref m_angleRad to zero,
+/// @ref m_angSpeed to @ref INITIAL_ANGULAR_SPEED, and the vertical component of @ref m_vel to @ref
+/// INITIAL_Y_SPEED. Constructs the @ref Render::DrawMdl for the bomb animation and caches the
+/// animation's framecount to @ref m_animDuration. Initializes @ref m_explodeTimer to `-1`. Finally,
+/// resizes the object's @ref BoxColUnit radius to @ref RADIUS_AABB.
 void ObjectKoopaBall::init() {
     m_state = State::Intangible;
     initCooldownTimer();
 
     m_railInterpolator->init(0.0f, 0);
-    m_railInterpolator->setSpeed(INITIAL_VELOCITY);
+    m_railInterpolator->setSpeed(INITIAL_SPEED);
     m_railInterpolator->calc();
 
     m_initPosY = m_railInterpolator->curPos().y;
@@ -39,7 +35,7 @@ void ObjectKoopaBall::init() {
 
     m_angleRad = 0.0f;
     m_angSpeed = INITIAL_ANGULAR_SPEED;
-    m_vel.y = INITIAL_Y_VEL;
+    m_vel.y = INITIAL_Y_SPEED;
 
     m_bombCoreDrawMdl = EGG::egg_new<Render::DrawMdl>();
 
@@ -51,11 +47,8 @@ void ObjectKoopaBall::init() {
     m_bombCoreDrawMdl->linkAnims(0, &resFile, "bombCore", Render::AnmType::Chr);
     auto *anmMgr = m_bombCoreDrawMdl->anmMgr();
     anmMgr->playAnim(0.0f, 1.0f, 0);
-    m_animFramecount = anmMgr->activeAnim(Render::AnmType::Chr)->frameCount();
+    m_animDuration = anmMgr->activeAnim(Render::AnmType::Chr)->frameCount();
     m_explodeTimer = -1;
-
-    EGG::Matrix34f mat;
-    mat.makeR(rot());
 
     resize(RADIUS_AABB, 0.0f);
 }
@@ -101,8 +94,9 @@ Kart::Reaction ObjectKoopaBall::onCollision(Kart::KartObject * /*kartObj*/,
 
 /// @addr{0x80770F4C}
 /// @brief Runs every frame that the fireball can collide with karts
-/// @details Updates the position based off the rail interpolator. Checks if the explosion should
-/// start. Checks for floor collision, updates the rotation, then sets the transformation matrix.
+/// @details Updates the fireball's position based off the rail interpolator. If the fireball
+/// reached the end of the rail, the fireball will begin to explode. Checks for floor collision,
+/// updates the rotation, then sets the transformation matrix.
 void ObjectKoopaBall::calcTangible() {
     constexpr f32 GRAVITY = 2.0f;
 
@@ -115,7 +109,7 @@ void ObjectKoopaBall::calcTangible() {
     case RailInterpolator::Status::ChangingDirection: {
         m_state = State::Exploding;
         setExplosionScale();
-        m_explodeTimer = m_animFramecount;
+        m_explodeTimer = m_animDuration;
     } break;
     default:
         break;
@@ -131,10 +125,9 @@ void ObjectKoopaBall::calcTangible() {
 
 /// @addr{0x80771324}
 /// @brief Runs every frame that the fireball is exploding
-/// @details If the explosion still has EXPLOSION_EXPAND_FRAME frames remaining, the scale of the
-/// fireball will increase. Once there are only EXPLODE_COLLISION_DURATION frames remaining for the
-/// explosion, then collision is disabled. Once the explosion has finished, the scale, position, and
-/// collision are reset.
+/// @details If the explosion still has `30` frames remaining, the scale of the fireball will
+/// increase. Once there are only `20` frames remaining for the explosion, then collision is
+/// disabled. Once the explosion has finished, the scale, position, and collision are reset.
 void ObjectKoopaBall::calcExploding() {
     constexpr s32 EXPLODE_COLLISION_DURATION = 20;
     constexpr s32 EXPLOSION_EXPAND_FRAME = 30;
@@ -160,38 +153,11 @@ void ObjectKoopaBall::calcExploding() {
     }
 }
 
-/// @addr{0x80771248}
-/// @brief Runs every frame that the fireball is intangible
-/// @details Once the cooldown timer has expired, the fireball will become tangible and reinitialize
-/// its velocity, angular speed, and cooldown timer.
-void ObjectKoopaBall::calcIntangible() {
-    constexpr s32 COOLDOWN_FRAMES = 210;
-
-    if (m_cooldownTimer >= 0) {
-        return;
-    }
-
-    m_state = State::Tangible;
-    m_railInterpolator->setSpeed(INITIAL_VELOCITY);
-    m_angSpeed = INITIAL_ANGULAR_SPEED;
-    m_vel.y = INITIAL_Y_VEL;
-    m_cooldownTimer = COOLDOWN_FRAMES;
-}
-
-/// @addr{0x8077151C}
-/// @brief Updates the ball's angular rotation and transformation matrix
-void ObjectKoopaBall::calcRot() {
-    m_angleRad += -m_angSpeed * DEG2RAD;
-
-    EGG::Matrix34f mat = EGG::Matrix34f::ident;
-    mat.makeR(EGG::Vector3f(m_angleRad, 0.0f, 0.0f));
-    mat = transform().multiplyTo(mat);
-    mat.setBase(3, pos());
-    setTransform(mat);
-}
-
 /// @addr{0x80771624}
 /// @brief Checks if the fireball is colliding with the floor and bounces it upwards if so
+/// @details If a floor collision occurred, causes an inelastic collision by multiplying the
+/// vertical velocity by `-0.4f`. Clamps the fireball's @ref m_angSpeed to maximum of `10.0f`.
+/// Finally, updates the fireball's position accordingly.
 void ObjectKoopaBall::checkSphereFull() {
     constexpr EGG::Vector3f POS_OFFSET = EGG::Vector3f(0.0f, -900.0f, 0.0f);
     constexpr f32 RADIUS = 100.0f;

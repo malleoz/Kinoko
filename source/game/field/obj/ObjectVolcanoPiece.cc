@@ -5,7 +5,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80817DE8}
-/// @copydoc ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
+/// @copybrief ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
 ObjectVolcanoPiece::ObjectVolcanoPiece(const System::MapdataGeoObj &params)
     : ObjectKCL(params),
       m_initialPos(pos()),

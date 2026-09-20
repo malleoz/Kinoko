@@ -5,7 +5,7 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80809448}
-/// @copydoc ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
+/// @copybrief ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
 ObjectTownBridge::ObjectTownBridge(const System::MapdataGeoObj &params)
     : ObjectKCL(params),
       m_rotateUpwards(rot().y < 0.0f),
