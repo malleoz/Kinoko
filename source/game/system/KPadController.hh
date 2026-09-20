@@ -5,6 +5,7 @@
 #include <egg/math/Vector.hh>
 
 #include <algorithm>
+#include <cstring>
 
 namespace Kinoko::System {
 
