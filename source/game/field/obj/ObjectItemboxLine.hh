@@ -12,7 +12,8 @@ namespace Kinoko::Field {
 class ObjectItemboxLine final : public ObjectCollidable {
 public:
     /// @addr{0x8076D044}
-    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
     /// @details To prevent frequent dereferencing of the map object, for Kinoko we cache the time
     /// between stomps to @ref m_spawnCooldownDuration based on param setting 6. Constructs and
     /// loads the @ref ObjectPressSenko object that represents the left/right stompers. Finally,

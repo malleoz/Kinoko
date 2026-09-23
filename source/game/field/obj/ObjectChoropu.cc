@@ -8,7 +8,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806B96A0}
-/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @param params The parameters used to initialize the object
 /// @details Initializes @ref m_startFrameOffset based off param setting 2, @ref m_idleDuration
 /// based off param setting 1, and @ref m_isStationary based off the object's name. If the mole
 /// moves along a rail, precomputes all floor normals along the rail to align the mole's orientation

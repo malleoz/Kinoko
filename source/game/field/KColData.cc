@@ -642,8 +642,8 @@ bool KColData::checkPointCollision(const KCollisionPrism &prism, f32 *distOut,
     return true;
 }
 
-/// @brief Iterates the local data block to check for directional collision
 /// @addr{0x807C0884}
+/// @brief Iterates the local data block to check for directional collision
 /// @param distOut If colliding, returns the distance between the player and the tri
 /// @param fnrmOut If colliding, returns the floor normal of the triangle
 /// @param attributeOut If colliding, returns the KCL attributes for that triangle

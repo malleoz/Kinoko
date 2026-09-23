@@ -373,7 +373,8 @@ void ObjectCowFollower::calcFollowLeader() {
 }
 
 /// @addr{0x806BEB54}
-/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @param params The parameters used to initialize the object
 /// @details Loads the leader and follower cows. Computes each follower's initial position and
 /// rotation around the leader. The cows initially form a circular formation around the leader, such
 /// that each cow is equally spaced apart and is facing away from the leader. Finally, pre-computes

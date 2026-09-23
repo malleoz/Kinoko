@@ -8,8 +8,9 @@ namespace Kinoko::Field {
 class ObjectBelt : public ObjectDrivable {
 public:
     /// @addr{0x807FC248}
-    /// @copydoc ObjectDrivable::ObjectDrivable(const System::MapdataGeoObj &)
-    /// @details Initializes road velocity to `32.0f`.
+    /// @copybrief ObjectDrivable::ObjectDrivable(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
+    /// @details Initializes @ref m_roadVel to `32.0f`.
     ObjectBelt(const System::MapdataGeoObj &params) : ObjectDrivable(params), m_roadVel(32.0f) {}
 
     /// @addr{0x807FC5EC}

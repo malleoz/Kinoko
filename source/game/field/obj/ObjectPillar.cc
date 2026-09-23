@@ -3,26 +3,10 @@
 
 namespace Kinoko::Field {
 
-/// @addr{Inlined in 0x807FED80}
-/// @copybrief ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
-ObjectPillarBase::ObjectPillarBase(const System::MapdataGeoObj &params) : ObjectKCL(params) {}
-
-/// @addr{0x807FFAA0}
-/// @brief Default virtual destructor
-ObjectPillarBase::~ObjectPillarBase() = default;
-
-/// @addr{0x807FEB68}
-/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
-ObjectPillarC::ObjectPillarC(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params),
-      m_fallStart(static_cast<u32>(params.setting(0))) {}
-
-/// @addr{0x807FFAE0}
-/// @brief Default virtual destructor
-ObjectPillarC::~ObjectPillarC() = default;
-
 /// @addr{0x807FEC30}
 /// @copybrief ObjectBase::calcCollisionTransform()
+/// @details Extends the falling pillar's collision transform upwards and in the direction of its
+/// fall.
 void ObjectPillarC::calcCollisionTransform() {
     constexpr f32 HEIGHT = 1900.0f;
 
@@ -39,35 +23,13 @@ void ObjectPillarC::calcCollisionTransform() {
     m_collision->transform(transform().multiplyTo(mat), scale(), speed);
 }
 
-/// @addr{0x807FED80}
-/// @copybrief ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
-ObjectPillar::ObjectPillar(const System::MapdataGeoObj &params)
-    : ObjectKCL(params),
-      m_state(State::Upright),
-      m_fallStart(static_cast<u32>(params.setting(0))),
-      m_targetRotation(F_PI * static_cast<f32>(params.setting(1)) / 180.0f),
-      m_initRot(rot().x),
-      m_currRot(EGG::Vector3f::zero) {
-    m_base = EGG::egg_new<ObjectPillarBase>(params);
-    m_collidable = EGG::egg_new<ObjectPillarC>(params);
-
-    m_base->load();
-    m_collidable->load();
-
-    m_groundFrame = std::numeric_limits<s32>::max();
-}
-
-/// @addr{0x807FFA34}
-/// @brief Default virtual destructor
-ObjectPillar::~ObjectPillar() = default;
-
 /// @addr{0x807FF17C}
 /// @copybrief ObjectBase::calc()
-/// @details Checks the current time to update the pillar's fall state and rotation. If the pillar
-/// is upright, then the @ref ObjectPillarC collision is enabled. If the pillar is falling, then the
-/// rotation is updated and the collision transform is updated. If the pillar has finished falling,
-/// then the @ref ObjectPillarC collision is disabled and the @ref ObjectPillar collision is
-/// enabled.
+/// @details Checks the current race duration to update the pillar's fall state and rotation. If the
+/// pillar is upright, then the @ref ObjectPillarC collision is enabled. If the pillar is falling,
+/// then the rotation is updated and the collision transform is updated. If the pillar has finished
+/// falling, then the @ref ObjectPillarC collision is disabled and the @ref ObjectPillar collision
+/// is enabled.
 void ObjectPillar::calc() {
     u32 time = System::RaceManager::Instance()->timer();
 
@@ -78,7 +40,7 @@ void ObjectPillar::calc() {
         m_state = State::Break;
     } else if (m_state == State::Break) {
         f32 rot = calcRot(static_cast<s32>(time));
-        if (rot < m_targetRotation) {
+        if (rot < m_targetRot) {
             setTransform(getUpdatedMatrix(0));
             m_collidable->setTransform(transform());
 
@@ -96,27 +58,6 @@ void ObjectPillar::calc() {
     } else {
         m_state = State::Ground;
     }
-}
-
-/// @addr{0x807FF83C}
-/// @copybrief ObjectKCL::getUpdatedMatrix()
-/// @param timeOffset The time offset used to calculate the current frame's transformation
-const EGG::Matrix34f &ObjectPillar::getUpdatedMatrix(u32 timeOffset) {
-    f32 rot = calcRot(System::RaceManager::Instance()->timer() - timeOffset);
-    m_workMat.makeRT(EGG::Vector3f(rot, m_currRot.y, m_currRot.z), pos());
-    return m_workMat;
-}
-
-/// @addr{0x807FF90C}
-f32 ObjectPillar::calcRot(s32 frame) const {
-    constexpr f32 STEP = 1e-7f;
-
-    if (m_groundFrame < frame) {
-        return m_targetRotation;
-    }
-
-    frame -= m_fallStart;
-    return std::min(m_targetRotation, m_initRot + STEP * static_cast<f32>(frame * frame * frame));
 }
 
 } // namespace Kinoko::Field

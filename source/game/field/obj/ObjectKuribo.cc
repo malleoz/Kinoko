@@ -4,20 +4,13 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x806DB184}
-/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
-ObjectKuribo::ObjectKuribo(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params),
-      StateManager(this, STATE_ENTRIES),
-      m_accel(static_cast<f32>(params.setting(1)) / 100.0f),
-      m_animRate(static_cast<f32>(params.setting(2)) / 100.0f) {}
-
-/// @addr{0x806DB3A0}
-/// @brief Default virtual destructor
-ObjectKuribo::~ObjectKuribo() = default;
-
 /// @addr{0x806DB40C}
 /// @copybrief ObjectBase::init()
+/// @details Updates the Goomba's transformation. Caches the Goomba's forward direction to @ref
+/// m_forward. Initializes the rail interpolator the start of the rail and zeroes its speed. Sets
+/// @ref m_currSpeed, @ref m_animTimer, and @ref m_currFrame to zero. Plays the `walk_l`
+/// animation and caches its framecount to @ref m_animDuration. Finally, initializes the Goomba to
+/// the walking state.
 void ObjectKuribo::init() {
     calcTransform();
     m_forward = transform().base(2);
@@ -35,35 +28,16 @@ void ObjectKuribo::init() {
     m_nextStateId = 1;
 }
 
-/// @addr{0x806dd278}
-/// @copybrief ObjectBase::loadAnims()
-void ObjectKuribo::loadAnims() {
-    std::array<const char *, 2> names = {{
-            "walk_l",
-            "walk_r",
-    }};
-
-    std::array<Render::AnmType, 2> types = {{
-            Render::AnmType::Chr,
-            Render::AnmType::Chr,
-    }};
-
-    linkAnims(names, types);
-}
-
-/// @addr{0x806DC220}
-/// @brief Called when the Goomba is changing direction
-void ObjectKuribo::calcReroute() {
-    if (m_railInterpolator->curPoint().setting[0] < m_currentFrame) {
-        m_nextStateId = 1;
-    }
-
-    checkSphereFull();
-    calcRot();
-    calcMatFromRotAndForward();
-}
-
 /// @addr{0x806DCDDC}
+/// @brief Handles the Goomba's walking animation and movement along the rail
+/// @details This class defines during which intervals of the animation the Goomba should actually
+/// move, so that the Goomba's movement matches up with its animation. If it's determined that the
+/// Goomba should move, its @ref m_currSpeed is computed based on @ref m_accel and clamped to a
+/// minimum value of `10.0f`. If the Goomba should not move, it decelerates to a speed of `0.0f`.
+/// Sets the rail interpolator's speed and sets the Goomba's position accordingly. If the Goomba has
+/// reached the end of the rail, transitions the Goomba to the idle state and zeroes its speed.
+/// Finally, performs a collision check with the floor, updates the Goombas rotation, and updates
+/// its transform accordingly.
 void ObjectKuribo::calcAnim() {
     bool shouldMove;
 
@@ -93,26 +67,18 @@ void ObjectKuribo::calcAnim() {
     calcMatFromRotAndForward();
 }
 
-/// @addr{0x806DCC9C}
-/// @brief Smoothly interpolates the Goomba's up vector to match the floor normal beneath it
-void ObjectKuribo::calcRot() {
-    m_rot = Interpolate(0.1f, m_rot, m_floorNrm);
-
-    if (m_rot.squaredLength() > std::numeric_limits<f32>::epsilon()) {
-        m_rot.normalise2();
-    } else {
-        m_rot = EGG::Vector3f::ey;
-    }
-}
-
 /// @addr{0x806DCB58}
 /// @brief Checks for floor collision beneath the Goomba
+/// @details If the Goomba is walking, applies a downward gravitational force of `2.0f` every frame.
+/// If the Goomba has collided with the floor, updates the Goomba's position accordingly and caches
+/// the colliding floor's normal to @ref m_floorNrm.
 void ObjectKuribo::checkSphereFull() {
     constexpr f32 RADIUS = 50.0f;
+    constexpr f32 GRAVITY = 2.0f;
 
     // Apply gravity if we're not changing direction
     if (m_currentStateId != 0) {
-        subPos(EGG::Vector3f(0.0f, 2.0f, 0.0f));
+        subPos(EGG::Vector3f(0.0f, GRAVITY, 0.0f));
     }
 
     CollisionInfo colInfo;

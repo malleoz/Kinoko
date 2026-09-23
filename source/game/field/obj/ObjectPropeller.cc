@@ -4,22 +4,6 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x80764CC8}
-/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
-ObjectPropeller::ObjectPropeller(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params),
-      m_angle(0.0f) {
-    m_blades.fill(nullptr);
-}
-
-/// @addr{0x80764E34}
-/// @brief Virtual destructor that deletes each of the propeller's blades
-ObjectPropeller::~ObjectPropeller() {
-    for (auto *&blade : m_blades) {
-        EGG::egg_delete(blade);
-    }
-}
-
 /// @addr{0x807655B4}
 /// @copybrief ObjectBase::createCollision()
 /// @details Creates cylindrical collision for the shell and each of the 3 blades
@@ -39,7 +23,8 @@ void ObjectPropeller::createCollision() {
 
 /// @addr{0x80765738}
 /// @copybrief ObjectBase::calcCollisionTransform()
-/// @details Rotates the transformation matrix of each blade around the propeller's center point
+/// @details Rotates the transformation matrix of each blade around the propeller's center point,
+/// such that the blades are spaced evenly at 120-degree intervals.
 void ObjectPropeller::calcCollisionTransform() {
     constexpr f32 BLADE_LENGTH = 250.0f;
 
@@ -71,24 +56,11 @@ f32 ObjectPropeller::getCollisionRadius() const {
     return 5.0f * std::max(z, x);
 }
 
-/// @addr{0x80765A54}
-/// @details Checks collision against each of the 3 blades and sums the resulting distance vectors
-bool ObjectPropeller::checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &dist) {
-    EGG::Vector3f dist0 = EGG::Vector3f::zero;
-    EGG::Vector3f dist1 = EGG::Vector3f::zero;
-    EGG::Vector3f dist2 = EGG::Vector3f::zero;
-
-    bool hasCol = lhs->check(*m_blades[0], dist0);
-    hasCol = hasCol || lhs->check(*m_blades[1], dist1);
-    hasCol = hasCol || lhs->check(*m_blades[2], dist2);
-
-    dist = dist0 + dist1 + dist2;
-
-    return hasCol;
-}
-
 /// @addr{0x80765068}
 /// @brief Calculates the propeller's rotation angle and updates its transformation matrix
+/// @details @ref m_angle increments by half of @ref m_angVel. @ref m_curRot is computed by rotating
+/// around @ref m_axis by @ref m_angle degrees. Finally, sets the transformation matrix to reflect
+/// the updated rotation.
 void ObjectPropeller::calcAngleAndRot() {
     m_angle += m_angVel * 0.5f;
     m_curRot = EGG::Matrix34f::ident;

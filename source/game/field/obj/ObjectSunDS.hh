@@ -54,7 +54,7 @@ public:
 
     /// @addr{0x806DE598}
     /// @copydoc ObjectProjectileLauncher::launchPointIdx()
-    [[nodiscard]] s16 launchPointIdx() override {
+    [[nodiscard]] s16 launchPointIdx() const override {
         constexpr u16 THROW_DELAY = 30;
 
         if (m_currentStateId != 0 || THROW_DELAY != m_currentFrame) {

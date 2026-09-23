@@ -8,8 +8,12 @@ namespace Kinoko::Field {
 /// not have collision or does not pertain to Time Trial mode
 class ObjectNoImpl final : public ObjectBase {
 public:
-    ObjectNoImpl(const System::MapdataGeoObj &params);
-    ~ObjectNoImpl() override;
+    /// @copybrief ObjectBase::ObjectBase(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
+    ObjectNoImpl(const System::MapdataGeoObj &params) : ObjectBase(params) {}
+
+    /// @brief Default virtual destructor
+    ~ObjectNoImpl() override = default;
 
     void load() override;
 

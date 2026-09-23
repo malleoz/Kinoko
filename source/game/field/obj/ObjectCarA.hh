@@ -12,7 +12,8 @@ namespace Kinoko::Field {
 class ObjectCarA final : public ObjectCollidable, private StateManager {
 public:
     /// @addr{0x806B7710}
-    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
     /// @details Computes the cruising speed, acceleration, and stop duration based on the provided
     /// parameter settings.
     ObjectCarA(const System::MapdataGeoObj &params)

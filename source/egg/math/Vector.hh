@@ -341,8 +341,8 @@ struct Vector3f {
         return diff.ps_dot();
     }
 
-    /// @brief Calculates the orthogonal vector, based on the plane defined by this vector and rhs.
     /// @addr{0x805AE9EC}
+    /// @brief Calculates the orthogonal vector, based on the plane defined by this vector and rhs.
     [[nodiscard]] constexpr Vector3f perpInPlane(const EGG::Vector3f &rhs, bool normalise) const {
         if (Mathf::abs(dot(rhs)) == 1.0f) {
             return EGG::Vector3f::zero;

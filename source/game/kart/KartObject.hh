@@ -10,8 +10,8 @@ public:
     KartObject(KartParam *param);
     virtual ~KartObject();
 
-    /// @brief Creates a KartBody object based on the type of vehicle (kart or bike)
     /// @addr{0x8058E5F8}
+    /// @brief Creates a KartBody object based on the type of vehicle (kart or bike)
     /// @details For the base class, this creates a @ref KartBodyKart.
     [[nodiscard]] virtual KartBody *createBody(KartPhysics *physics) {
         return EGG::egg_new<KartBodyKart>(physics);

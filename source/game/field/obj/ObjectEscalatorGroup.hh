@@ -14,7 +14,8 @@ class ObjectEscalator;
 class ObjectEscalatorGroup final : public ObjectCollidable {
 public:
     /// @addr{0x8080178C}
-    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
     /// @details Applies a vertical and forward offset to represent the true center of the escalator
     /// group. Additionally adds a 75% scale to expand the collision radius of the group. Creates
     /// and loads the left and right escalator and positions them relative to the group.

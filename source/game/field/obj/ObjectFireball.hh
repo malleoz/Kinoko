@@ -10,7 +10,8 @@ namespace Kinoko::Field {
 class ObjectFireball final : public ObjectCollidable {
 public:
     /// @addr{0x80768650}
-    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
     ObjectFireball(const System::MapdataGeoObj &params) : ObjectCollidable(params) {}
 
     /// @addr{0x807689AC}

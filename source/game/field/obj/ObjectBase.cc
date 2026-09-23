@@ -9,6 +9,13 @@ namespace Kinoko::Field {
 /// @addr{0x8081F828}
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
+/// @details Initializes the draw model, resource file, and rail interpolator to `nullptr`. Sets the
+/// object's @ref m_id based on the ID from the provided parameters. Caches a pointer to the
+/// provided params and stores it in @ref m_mapObj for later access. Fetches the object's @ref
+/// m_pos, @ref m_scale, and @ref m_rot from the provided parameters. Sets @ref m_rotUpdated to
+/// `true` to indicate @ref m_rot is up-to-date. Initializes @ref m_transform to the identity
+/// matrix. Finally, sets the position, rotation, and scale flags in @ref m_flags so that the
+/// object's transformation matrix is updated on the next @ref calcTransform() call.
 ObjectBase::ObjectBase(const System::MapdataGeoObj &params)
     : m_drawMdl(nullptr),
       m_resFile(nullptr),
@@ -29,6 +36,12 @@ ObjectBase::ObjectBase(const System::MapdataGeoObj &params)
 /// @param pos The initial position of the object
 /// @param rot The initial rotation of the object
 /// @param scale The initial scale of the object
+/// @details Initializes the draw model, resource file, and rail interpolator to `nullptr`. Sets
+/// @ref m_pos, @ref m_scale, and @ref m_rot based on the provided parameters. Sets @ref
+/// m_rotUpdated to `true` to indicate @ref m_rot is up-to-date. Initializes @ref m_transform to the
+/// identity matrix. Sets the position, rotation, and scale flags in @ref m_flags so that the
+/// object's transformation matrix is updated on the next @ref calcTransform() call. Finally, sets
+/// the object's @ref m_id based on the ID fetched from the provided name.
 ObjectBase::ObjectBase(const char *name, const EGG::Vector3f &pos, const EGG::Vector3f &rot,
         const EGG::Vector3f &scale)
     : m_drawMdl(nullptr),

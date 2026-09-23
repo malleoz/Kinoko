@@ -821,8 +821,8 @@ void KartCollide::processCannon(Field::KCLTypeMask *maskOut) {
     }
 }
 
-/// @brief Applies external and angular velocity based on the collision with the floor
 /// @addr{0x805B7928}
+/// @brief Applies external and angular velocity based on the collision with the floor
 /// @param down Always 0.1f
 /// @param rate Downward velocity? Related to suspension stiffness
 /// @param hitboxGroup Used to retrieve CollisionData reference

@@ -6,7 +6,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806C0F30}
-/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @param params The parameters used to initialize the object
 /// @details Registers the fire snake as a managed object, assuming that a @ref
 /// ObjectProjectileLauncher has already been registered as a managed object. This effectively
 /// enabled DS Desert Hills fire snakes to be registered as managed objects due to the existence of

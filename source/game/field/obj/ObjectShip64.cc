@@ -3,7 +3,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x80765C94}
-/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @param params The parameters used to initialize the object
 ObjectShip64::ObjectShip64(const System::MapdataGeoObj &params) : ObjectCollidable(params) {}
 
 /// @addr{0x80765DB0}

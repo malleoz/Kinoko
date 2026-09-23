@@ -20,8 +20,18 @@ namespace Kinoko::Field {
 /// checks against neighboring pylons. See @ref checkIntraCollision() for more info.
 class ObjectPylon final : public ObjectCollidable {
 public:
-    ObjectPylon(const System::MapdataGeoObj &params);
-    ~ObjectPylon() override;
+    /// @addr{0x8082CAD8}
+    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
+    ObjectPylon(const System::MapdataGeoObj &params)
+        : ObjectCollidable(params),
+          m_initPos(pos()),
+          m_initScale(scale()),
+          m_initRot(rot()) {}
+
+    /// @addr{0x8082E500}
+    /// @brief Default virtual destructor
+    ~ObjectPylon() = default;
 
     void init() override;
     void calc() override;

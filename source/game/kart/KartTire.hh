@@ -21,8 +21,8 @@ public:
         EGG::egg_delete(m_wheelPhysics);
     }
 
-    /// @brief Creates the underlying @ref WheelPhysics subsystem
     /// @addr{0x8059AB14}
+    /// @brief Creates the underlying @ref WheelPhysics subsystem
     virtual void createPhysics(u16 tireIdx) {
         m_wheelPhysics = EGG::egg_new<WheelPhysics>(tireIdx, 1);
     }
@@ -45,7 +45,7 @@ public:
     [[nodiscard]] WheelPhysics *wheelPhysics() {
         return m_wheelPhysics;
     }
-    
+
     /// @endGetters
 
 protected:

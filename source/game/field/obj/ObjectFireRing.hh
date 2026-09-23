@@ -12,7 +12,8 @@ namespace Kinoko::Field {
 class ObjectFireRing final : public ObjectCollidable {
 public:
     /// @addr{0x80767FF4}
-    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
     /// Constructs and loads the required number of @ref ObjectFireball objects based on
     /// param setting 1. Computes and caches the distance from the fire ring and angle about the
     /// ring's rotation axis for each @ref ObjectFireball. Finally, Computes the axis of rotation

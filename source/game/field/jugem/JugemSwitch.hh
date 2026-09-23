@@ -19,8 +19,8 @@ public:
         return m_isOn;
     }
 
-    /// @brief Initializes the internal state of the switch
     /// @addr{0x80725A4C}
+    /// @brief Initializes the internal state of the switch
     virtual void init() {
         m_isOn = false;
     }

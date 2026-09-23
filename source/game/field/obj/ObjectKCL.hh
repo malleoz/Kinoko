@@ -13,7 +13,8 @@ namespace Kinoko::Field {
 class ObjectKCL : public ObjectDrivable {
 public:
     /// @addr{0x8081A980}
-    /// @copydoc ObjectDrivable::ObjectDrivable(const System::MapdataGeoObj &)
+    /// @copybrief ObjectDrivable::ObjectDrivable(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
     /// @details Initializes @ref m_lastMtxUpdateFrame and @ref m_lastScaleUpdateFrame to `-2000` so
     /// that the collision manager will be updated on the first frame.
     ObjectKCL(const System::MapdataGeoObj &params)

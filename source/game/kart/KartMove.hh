@@ -60,8 +60,8 @@ public:
     /// @brief Clears some of the kart's movement state when starting an @ref Action
     virtual void clear();
 
-    /// @brief Gets the lean rotation of the vehicle
     /// @addr{0x8058974C}
+    /// @brief Gets the lean rotation of the vehicle
     /// @details For karts, this is always 0.0f since they cannot lean.
     [[nodiscard]] virtual f32 leanRot() const {
         return 0.0f;
@@ -274,8 +274,8 @@ public:
 
     virtual void calcMtCharge();
 
-    /// @brief Clears boost and offroad invinsibility when the kart goes out of bounds
     /// @addr{0x80583658}
+    /// @brief Clears boost and offroad invinsibility when the kart goes out of bounds
     virtual void initOob() {
         clearBoost();
         clearJumpPad();

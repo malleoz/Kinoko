@@ -5,22 +5,13 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x80777564}
-/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
-ObjectPress::ObjectPress(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params),
-      m_loweringVelocity(0.0f),
-      m_initialRaisedDuration(static_cast<u32>(m_mapObj->setting(1))),
-      m_raisedDuration(static_cast<u32>(m_mapObj->setting(2))) {}
-
-/// @addr{0x807775FC}
-/// @brief Default virtual destructor
-ObjectPress::~ObjectPress() = default;
-
 /// @addr{0x8077763C}
 /// @copybrief ObjectBase::init()
-/// @details Performs a floor collision check to find the lowered position and to laterally adjust
-/// the stomper's position to avoid the stomper partially clipping into the floor.
+/// @details Repeatedly performs floor collision checks to find the lowered position and to
+/// laterally adjust the stomper's position to avoid the stomper partially clipping into the floor.
+/// Each collision check lowers the stomper's position by `100.0f` units until a collision occurs.
+/// @note If the press is positioned such that there is no floor beneath it, then this function will
+/// be stuck in an infinite loop, causing the race to never start.
 void ObjectPress::init() {
     constexpr f32 FLOOR_CHECK_SPEED = 100.0f;
     constexpr f32 HEIGHT = 20.0f;
@@ -49,6 +40,7 @@ void ObjectPress::init() {
 
 /// @addr{0x8077788C}
 /// @copybrief ObjectBase::calc()
+/// @details Calls the appropriate calculation function based on the press's current state.
 void ObjectPress::calc() {
     m_startedLowered = false;
 
@@ -104,8 +96,8 @@ void ObjectPress::createCollision() {
 /// @param reactionOnKart The reaction that should be applied to the kart upon collision
 /// @return @ref Kart::Reaction::LongCrushLoseItem if the kart should be crushed, otherwise @ref
 /// Kart::Reaction::Wall.
-/// @details Checks if the kart is within the "crush threshold". If so, and the press is lowering,
-/// then the kart will be squished and items will be lost.
+/// @details Checks if the kart is within `430.0f` units of the press's position. If so, and the
+/// press is lowering, then the kart will be squished and items will be lost.
 Kart::Reaction ObjectPress::onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
         Kart::Reaction /*reactionOnObj*/, EGG::Vector3f & /*hitDepth*/) {
     constexpr f32 CRUSH_THRESHOLD = 430.0f;
@@ -126,7 +118,7 @@ Kart::Reaction ObjectPress::onCollision(Kart::KartObject *kartObj, Kart::Reactio
 
 /// @addr{0x80777BC0}
 /// @brief Runs every frame that the press is in contact with the floor
-/// @details Plays a press and unpress animation. When the press animatiosn finish, the press will
+/// @details Plays a press and unpress animation. When the press animation finishes, the press will
 /// transition to the raising state.
 void ObjectPress::calcLowered() {
     if (--m_anmTimer > 0) {
@@ -142,7 +134,9 @@ void ObjectPress::calcLowered() {
 
 /// @addr{0x80777CB0}
 /// @brief Runs every frame that the press is rising back up to the raised position
-/// @details When the press reaches the raised position, it will transition to the raised state.
+/// @details The press raises up with a speed of `10.0f` units per frame. When the press reaches the
+/// raised position, it will transition to the raised state by setting @ref m_state to @ref
+/// State::Raised and resetting @ref m_raisedTimer to @ref m_raisedDuration.
 void ObjectPress::calcRaising() {
     constexpr f32 SPEED = 10.0f;
 
@@ -159,6 +153,12 @@ void ObjectPress::calcRaising() {
 
 /// @addr{0x80777D10}
 /// @brief Runs while the press is lowering to check if it has hit the floor
+/// @details Performs a spherical collision check with a radius of `10.0f` units and a vertical
+/// offset of `10.0f` units. If no collision occurs, this function returns early. Otherwise, resets
+/// @ref m_loweringSpeed to zero and offsets the press's position upwards to prevent clipping into
+/// the floor. The press animation is played and the animation duration is cached to @ref
+/// m_anmTimer. Finally, @ref m_state is set to @ref State::Lowered, @ref m_startingRise is set to
+/// `false`, and @ref m_startedLowered` is set to `true`.
 void ObjectPress::checkCollisionLowering() {
     constexpr f32 RADIUS = 10.0f;
     constexpr EGG::Vector3f HITBOX_OFFSET = EGG::Vector3f(0.0f, RADIUS, 0.0f);
@@ -170,7 +170,7 @@ void ObjectPress::checkCollisionLowering() {
         return;
     }
 
-    m_loweringVelocity = 0.0f;
+    m_loweringSpeed = 0.0f;
     addPos(info.tangentOff);
 
     auto *anmMgr = m_drawMdl->anmMgr();
@@ -181,15 +181,5 @@ void ObjectPress::checkCollisionLowering() {
     m_anmTimer = anmMgr->activeAnim(Render::AnmType::Chr)->frameCount() / ANM_RATE;
     m_startedLowered = true;
 }
-
-/// @addr{0x8076E7AC}
-/// @copydoc ObjectPress::ObjectPress(const System::MapdataGeoObj &)
-ObjectPressSenko::ObjectPressSenko(const System::MapdataGeoObj &params)
-    : ObjectPress(params),
-      m_startingWindup(false) {}
-
-/// @addr{0x8076E818}
-/// @brief Default virtual destructor
-ObjectPressSenko::~ObjectPressSenko() = default;
 
 } // namespace Kinoko::Field

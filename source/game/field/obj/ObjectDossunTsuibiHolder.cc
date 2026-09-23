@@ -5,7 +5,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x807614D0}
-/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @param params The parameters used to initialize the object
 ObjectDossunTsuibiHolder::ObjectDossunTsuibiHolder(const System::MapdataGeoObj &params)
     : ObjectCollidable(params),
       m_stillTimer(static_cast<u32>(params.setting(2))),

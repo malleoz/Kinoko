@@ -9,7 +9,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806E4224}
-/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @param params The parameters used to initialize the object
 /// @details Constructs the wooden stake object to which the Chain Chomp is attached. Computes the
 /// number of chains based off the chain length defined by param setting 1. Sets a course-specific
 /// wander constraint point.

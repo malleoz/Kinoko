@@ -11,7 +11,8 @@ namespace Kinoko::Field {
 class ObjectDrivable : public ObjectBase {
 public:
     /// @addr{0x8081A6D0}
-    /// @copydoc ObjectBase::ObjectBase(const System::MapdataGeoObj &)
+    /// @copybrief ObjectBase::ObjectBase(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
     ObjectDrivable(const System::MapdataGeoObj &params) : ObjectBase(params) {}
 
     /// @addr{0x8067EB3C}

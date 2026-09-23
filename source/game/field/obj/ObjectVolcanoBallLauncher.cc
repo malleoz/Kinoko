@@ -8,7 +8,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806E3458}
-/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @param params The parameters used to initialize the object
 /// @details Solves the kinematic equation to determine the time it takes a fireball to land, using
 /// the velocity specified by param setting 1 and the rail points. Constructs @ref ObjectVolcanoBall
 /// objects which this launcher instance will manage.

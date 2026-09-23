@@ -13,7 +13,8 @@ class ObjectPressSenko;
 class ObjectItemboxBlock final : public ObjectCollidable {
 public:
     /// @addr{0x8076D9E4}
-    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
     ObjectItemboxBlock(const System::MapdataGeoObj &params) : ObjectCollidable(params) {}
 
     /// @addr{0x8076DA48}

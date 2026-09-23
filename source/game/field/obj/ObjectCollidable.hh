@@ -16,25 +16,33 @@ enum class Reaction;
 namespace Field {
 
 /// @brief %Abstract base class for all objects that can collide with karts
+/// @param params The parameters used to initialize the object
 /// @details Declares virtual methods for collision checks and collision callbacks.
 class ObjectCollidable : public ObjectBase {
 public:
     /// @addr{0x8081EFEC}
-    /// @copydoc ObjectBase::ObjectBase(const System::MapdataGeoObj &)
+    /// @copybrief ObjectBase::ObjectBase(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
+    /// @details Initializes @ref m_collision to `nullptr`.
     ObjectCollidable(const System::MapdataGeoObj &params)
         : ObjectBase(params),
           m_collision(nullptr) {}
 
     /// @addr{0x8081F064}
-    /// @copydoc ObjectBase::ObjectBase(const char *, const EGG::Vector3f &, const EGG::Vector3f &,
-    /// const EGG::Vector3f &)
+    /// @copybrief ObjectBase::ObjectBase(const char *, const EGG::Vector3f &, const EGG::Vector3f
+    /// &, const EGG::Vector3f &)
+    /// @param name The name of the object
+    /// @param pos The initial position of the object
+    /// @param rot The initial rotation of the object
+    /// @param scale The initial scale of the object
+    /// @details Initializes @ref m_collision to `nullptr`.
     ObjectCollidable(const char *name, const EGG::Vector3f &pos, const EGG::Vector3f &rot,
             const EGG::Vector3f &scale)
         : ObjectBase(name, pos, rot, scale),
           m_collision(nullptr) {}
 
     /// @addr{0x8067E384}
-    /// @brief Default virtual destructor that destroys the associated collision object
+    /// @brief Virtual destructor that destroys the associated collision object
     ~ObjectCollidable() override {
         EGG::egg_delete(m_collision);
     }

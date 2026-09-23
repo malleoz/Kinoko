@@ -9,7 +9,8 @@ namespace Kinoko::Field {
 class ObjectParasolR final : public ObjectCollidable {
 public:
     /// @addr{0x8077902C}
-    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
     ObjectParasolR(const System::MapdataGeoObj &params) : ObjectCollidable(params) {}
 
     /// @addr{0x80779EFC}

@@ -6,7 +6,8 @@
 namespace Kinoko::Field {
 
 /// @addr{0x806CE828}
-/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @param params The parameters used to initialize the object
 /// @details Initializes the Shy Guy's color based on param setting 2. Initializes the Shy Guy's
 /// maximum velocity based on param setting 1. Calculates the apex and midpoint of the Shy Guy's
 /// route, and derives the necessary acceleration for the Shy Guy.

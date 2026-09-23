@@ -10,7 +10,8 @@ namespace Kinoko::Field {
 class ObjectCrab final : public ObjectCollidable {
 public:
     /// @addr{0x8088344C}
-    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
     ObjectCrab(const System::MapdataGeoObj &params)
         : ObjectCollidable(params),
           m_vel(static_cast<f32>(static_cast<s16>(params.setting(0)))),

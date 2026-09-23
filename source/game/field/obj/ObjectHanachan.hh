@@ -57,7 +57,7 @@ public:
         ASSERT(idx < m_links.size());
         m_links[idx].addSpringForce(v);
     }
-    
+
     /// @endSetters
 
     /// @beginGetters
@@ -101,11 +101,16 @@ class ObjectHanachanPart : public ObjectCollidable {
     friend class ObjectHanachan;
 
 public:
-    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
     ObjectHanachanPart(const System::MapdataGeoObj &params) : ObjectCollidable(params) {}
 
-    /// @copydoc ObjectCollidable::ObjectCollidable(const char *, const EGG::Vector3f &,
+    /// @copybrief ObjectCollidable::ObjectCollidable(const char *, const EGG::Vector3f &,
     /// const EGG::Vector3f &, const EGG::Vector3f &)
+    /// @param name The name of the object
+    /// @param pos The position of the object
+    /// @param rot The rotation of the object
+    /// @param scale The scale of the object
     ObjectHanachanPart(const char *name, const EGG::Vector3f &pos, const EGG::Vector3f &rot,
             const EGG::Vector3f &scale)
         : ObjectCollidable(name, pos, rot, scale) {}
@@ -467,7 +472,7 @@ private:
     [[nodiscard]] std::span<ObjectHanachanPart *> bodyParts() {
         return std::span(m_parts.begin() + 1, m_parts.size() - 1);
     }
-    
+
     /// @endGetters
 
     static constexpr size_t PART_COUNT = 7;

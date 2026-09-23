@@ -81,7 +81,7 @@ public:
     /// be launched
     /// @return The index of the rail point from which to launch the cannonball, or -1 if no
     /// cannonball should be launched this frame.
-    [[nodiscard]] s16 launchPointIdx() override {
+    [[nodiscard]] s16 launchPointIdx() const override {
         return m_framesSinceLastLaunch == 0 ? m_railInterpolator->curPointIdx() : -1;
     }
 

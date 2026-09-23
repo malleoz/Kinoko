@@ -4,22 +4,13 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x80747198}
-/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
-ObjectPoihanaBase::ObjectPoihanaBase(const System::MapdataGeoObj &params)
-    : StateManager(this, {}),
-      ObjectCollidable(params),
-      m_walkState(WalkState::NeedTarget),
-      m_heightOffset(0.0f),
-      m_radius(150.0f),
-      m_targetPos(EGG::Vector3f::zero) {}
-
-/// @addr{0x80747208}
-/// @brief Default virtual destructor
-ObjectPoihanaBase::~ObjectPoihanaBase() = default;
-
 /// @addr{0x80747248}
 /// @copybrief ObjectBase::init()
+/// @details Initializes @ref m_workMat to the identity matrix. Sets @ref m_accel, @ref m_extVel,
+/// and @ref m_vel to the zero vector. Initializes @ref m_up and @ref m_floorNrm to the default up
+/// vector and @ref m_forward to the default forward vector. Initializes @ref m_walkState to @ref
+/// WalkState::NeedTarget so that the Cataquack will fetch its first walking target. Finally,
+/// initializes the position component of @ref m_workMat to the Cataquack's initial position.
 void ObjectPoihanaBase::init() {
     m_workMat = EGG::Matrix34f::ident;
     m_accel.setZero();
@@ -32,44 +23,31 @@ void ObjectPoihanaBase::init() {
     m_workMat.setBase(3, pos());
 }
 
-/// @addr{0x8074816C}
-/// @copydoc ObjectPoihanaBase::ObjectPoihanaBase(const System::MapdataGeoObj &)
-ObjectPoihana::ObjectPoihana(const System::MapdataGeoObj &params)
-    : StateManager(this, STATE_ENTRIES),
-      ObjectPoihanaBase(params) {}
-
-/// @addr{0x807488BC}
-/// @brief Default virtual destructor
-ObjectPoihana::~ObjectPoihana() = default;
-
 /// @addr{0x80748958}
 /// @copybrief ObjectBase::init()
+/// @details Calls the base class initialization. Caches the Cataquack's initial position to @ref
+/// m_initPos. Sets the initial @ref m_dir to the default forward vector. Clears @ref m_targetVel.
+/// Initializes @ref m_accel with a downward gravitational force of `1.2f`. Sets the Cataquack's
+/// @ref m_radius to `100.0f` and its @ref m_heightOffset to `-160.0f. Finally, transitions the
+/// Cataquack to the walk state.
 void ObjectPoihana::init() {
+    constexpr f32 GRAVITY = -1.2f;
+
     ObjectPoihanaBase::init();
 
     m_initPos = curPos();
     m_dir = EGG::Vector3f::ez;
     m_targetVel.setZero();
-    m_accel = EGG::Vector3f(0.0f, -1.2f, 0.0f);
+    m_accel = EGG::Vector3f(0.0f, GRAVITY, 0.0f);
     m_radius = 100.0f;
     m_heightOffset = -160.0f;
     m_nextStateId = 0;
 }
 
-/// @addr{0x80747530}
-/// @brief Interpolates the up vector between itself and the floor normal using the provided
-/// interpolation factor
-void ObjectPoihana::calcUp(f32 t) {
-    m_up = Interpolate(t, m_up, m_floorNrm);
-    if (m_up.squaredLength() > std::numeric_limits<f32>::epsilon()) {
-        m_up.normalise2();
-    } else {
-        m_up = EGG::Vector3f::ey;
-    }
-}
-
 /// @addr{0x807475DC}
-/// @brief Forms an orthonormal basis from the up and forward vectors, and updates the current
+/// @brief Re-orientates the Cataquack so that its side and forward vectors are orthogonal to its up
+/// vector
+/// @details Forms an orthonormal basis from the up and forward vectors, and updates the current
 /// transformation matrix accordingly
 void ObjectPoihana::calcOrthonormalBasis() {
     EGG::Vector3f side = m_up.cross(m_forward);
@@ -79,16 +57,22 @@ void ObjectPoihana::calcOrthonormalBasis() {
         side = EGG::Vector3f::ex;
     }
 
-    EGG::Vector3f up = side.cross(m_up);
-    up.normalise2();
+    EGG::Vector3f forward = side.cross(m_up);
+    forward.normalise2();
 
     m_workMat.setBase(0, side);
     m_workMat.setBase(1, m_up);
-    m_workMat.setBase(2, up);
+    m_workMat.setBase(2, forward);
 }
 
 /// @addr{0x80747788}
-/// @brief Checks for floor collision and updates the transformation matrix and velocity accordingly
+/// @brief Checks for floor and wall collision and updates the transformation matrix and velocity
+/// accordingly
+/// @details If a floor or wall collision occurs, offsets the Cataquack's position outside of the
+/// floor or wall. If the collision was with a wall, applies an additional force to @ref m_extVel to
+/// push the Cataquack further away from the wall. If the collision was with a floor, clears @ref
+/// m_extVel and caches the floor normal to @ref m_floorNrm so that the Cataquack can re-orient
+/// itself.
 void ObjectPoihana::calcCollision() {
     CollisionInfo info;
     EGG::Vector3f pos = collisionPos();
@@ -136,6 +120,13 @@ void ObjectPoihana::calcCollision() {
  *    The factor 3 provides another decorrelated component for distance.
  * 7. Build the final target position around the initial spawn. \n
  *    \f$ \mathbf{target} = \mathbf{initPos} + \mathbf{d}\cdot\mathrm{dist} \f$
+ *
+ * If the Cataquack has a target position, it walks towards the target with a speed of `7.0f`. Once
+ * it walks within `200.0f` units of the target position, it will fetch a new target position next
+ * frame.
+ *
+ * Finally, updates the Cataquack's up and forward vectors, and interpolates its @ref m_vel towards
+ * @ref m_targetVel.
  **/
 void ObjectPoihana::calcStep() {
     constexpr f32 COARSE_SCALAR = 0.1f;
@@ -148,6 +139,8 @@ void ObjectPoihana::calcStep() {
     constexpr f32 RAND_POS_MIN = 1000.0f;
     constexpr f32 RAND_POS_RANGE = RAND_POS_MAX - RAND_POS_MIN;
     constexpr f32 TARGET_DIST_THRESHOLD = 200.0f;
+    constexpr f32 UP_INTERP_RATE = 0.1f;
+    constexpr f32 VEL_INTERP_RATE = 0.05f;
 
     if (m_walkState == WalkState::NeedTarget) {
         // psuedo-random number generator based on current position of the Poihana
@@ -171,38 +164,25 @@ void ObjectPoihana::calcStep() {
     }
 
     if (m_walkState == WalkState::HasTarget) {
-        EGG::Vector3f delta = m_targetPos - curPos();
-        delta.y = 0.0f;
+        EGG::Vector3f dir = m_targetPos - curPos();
+        dir.y = 0.0f;
 
         f32 len = 0.0f;
-        if (delta.squaredLength() > std::numeric_limits<f32>::epsilon()) {
-            len = delta.normalise();
+        if (dir.squaredLength() > std::numeric_limits<f32>::epsilon()) {
+            len = dir.normalise();
         }
 
-        m_targetVel = delta * SPEED;
+        m_targetVel = dir * SPEED;
 
         if (len < TARGET_DIST_THRESHOLD) {
             m_walkState = WalkState::NeedTarget;
         }
     }
 
-    calcUp(0.1f);
+    calcUp(UP_INTERP_RATE);
     calcForward();
 
-    m_vel = Interpolate(0.05f, m_vel, m_targetVel);
-}
-
-/// @addr{0x807496C4}
-/// @brief Calculates the smoothed forward vector based on @ref m_dir and the previous forward
-void ObjectPoihana::calcForward() {
-    EGG::Vector3f forward = Interpolate(0.1f, m_workMat.base(2), m_dir);
-    if (forward.squaredLength() > std::numeric_limits<f32>::epsilon()) {
-        forward.normalise2();
-    } else {
-        forward = EGG::Vector3f::ez;
-    }
-
-    m_forward = forward;
+    m_vel = Interpolate(VEL_INTERP_RATE, m_vel, m_targetVel);
 }
 
 } // namespace Kinoko::Field

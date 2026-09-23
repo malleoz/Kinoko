@@ -7,18 +7,6 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x8082CAD8}
-/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
-ObjectPylon::ObjectPylon(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params),
-      m_initPos(pos()),
-      m_initScale(scale()),
-      m_initRot(rot()) {}
-
-/// @addr{0x8082E500}
-/// @brief Default virtual destructor
-ObjectPylon::~ObjectPylon() = default;
-
 /// @addr{0x8082CD60}
 /// @copybrief ObjectBase::init()
 /// @details Checks for floor and wall collision to make sure the pylon is not clipping. Assigns

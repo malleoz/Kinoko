@@ -14,8 +14,34 @@ namespace Kinoko::Field {
 /// uses the cache to find the blocks that require collision checks.
 class ObjectObakeManager final : public ObjectDrivable {
 public:
-    ObjectObakeManager(const System::MapdataGeoObj &params);
-    ~ObjectObakeManager() override;
+    /// @addr{0x8080B0D8}
+    /// @copybrief ObjectDrivable::ObjectDrivable(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
+    ObjectObakeManager(const System::MapdataGeoObj &params)
+        : ObjectDrivable(params),
+          m_blockCache({}),
+          m_blocks(MAX_BLOCKS),
+          m_fallingBlocks(MAX_BLOCKS) {
+        static constexpr f32 BLOCK_WIDTH = 195.00002f;
+        static constexpr f32 BLOCK_HEIGHT = 130.0f;
+
+        m_colBox = EGG::egg_new<ObjectCollisionBox>(BLOCK_WIDTH, BLOCK_HEIGHT, BLOCK_WIDTH,
+                EGG::Vector3f::zero);
+        m_colSphere = EGG::egg_new<ObjectCollisionSphere>(1.0f, EGG::Vector3f::zero);
+
+        addBlock(params);
+    }
+
+    /// @addr{0x8080BEA4}
+    /// @brief Virtual destructor that destroys the associated collision objects and blocks
+    ~ObjectObakeManager() override {
+        EGG::egg_delete(m_colBox);
+        EGG::egg_delete(m_colSphere);
+
+        for (auto *&block : m_blocks) {
+            EGG::egg_delete(block);
+        }
+    }
 
     void calc() override;
 
@@ -174,6 +200,7 @@ public:
     /// @addr{0x8080B244}
     /// @brief Public interface that adds a new block to the manager and caches it for collision
     /// checks
+    /// @param params The parameters used to initialize the new block
     void addBlock(const System::MapdataGeoObj &params) {
         auto *block = EGG::egg_new<ObjectObakeBlock>(params);
         m_blocks.push_back(block);
@@ -206,6 +233,8 @@ private:
             KCLTypeMask *maskOut);
 
     /// @brief Helper function to return the spatial index of a given block
+    /// @param pos The position of the block to compute the spatial index for
+    /// @return A pair of integers representing the (x, z) indices in the spatial grid
     [[nodiscard]] std::pair<s32, s32> static SpatialIndex(const EGG::Vector3f &pos) {
         constexpr f32 ORIGIN_OFFSET_X = -30647.498f;
         constexpr f32 ORIGIN_OFFSET_Z = -21092.5f;

@@ -13,7 +13,8 @@ namespace Kinoko::Field {
 class ObjectDokan final : public ObjectCollidable {
 public:
     /// @addr{0x807787F0}
-    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
     ObjectDokan(const System::MapdataGeoObj &params) : ObjectCollidable(params) {}
 
     /// @addr{0x80778FEC}

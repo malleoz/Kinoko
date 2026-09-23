@@ -280,8 +280,8 @@ public:
         return ret;
     }
 
-    /// @brief Multiplies a 3x3 matrix by a vector.
     /// @addr{0x8059A4F8}
+    /// @brief Multiplies a 3x3 matrix by a vector.
     [[nodiscard]] constexpr Vector3f multVector33(const Vector3f &vec) const {
         Vector3f ret;
 

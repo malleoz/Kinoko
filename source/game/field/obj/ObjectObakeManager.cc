@@ -6,34 +6,6 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x8080B0D8}
-/// @copydoc ObjectDrivable::ObjectDrivable(const System::MapdataGeoObj &)
-ObjectObakeManager::ObjectObakeManager(const System::MapdataGeoObj &params)
-    : ObjectDrivable(params),
-      m_blockCache({}),
-      m_blocks(MAX_BLOCKS),
-      m_fallingBlocks(MAX_BLOCKS) {
-    static constexpr f32 BLOCK_WIDTH = 195.00002f;
-    static constexpr f32 BLOCK_HEIGHT = 130.0f;
-
-    m_colBox = EGG::egg_new<ObjectCollisionBox>(BLOCK_WIDTH, BLOCK_HEIGHT, BLOCK_WIDTH,
-            EGG::Vector3f::zero);
-    m_colSphere = EGG::egg_new<ObjectCollisionSphere>(1.0f, EGG::Vector3f::zero);
-
-    addBlock(params);
-}
-
-/// @addr{0x8080BEA4}
-/// @brief Default virtual destructor that destroys the associated collision objects and blocks
-ObjectObakeManager::~ObjectObakeManager() {
-    EGG::egg_delete(m_colBox);
-    EGG::egg_delete(m_colSphere);
-
-    for (auto *&block : m_blocks) {
-        EGG::egg_delete(block);
-    }
-}
-
 /// @addr{0x8080BB28}
 /// @copybrief ObjectBase::calc()
 /// @details Checks if any blocks should start falling and updates the state of any falling blocks.
@@ -152,8 +124,8 @@ bool ObjectObakeManager::checkSpherePartialImpl(f32 radius, const EGG::Vector3f 
 }
 
 /// @addr{0x8080C41C}
-/// @brief Checks collision between a sphere and the cached blocks, writing partial collision info
-///        Additionally pushes the collision entry into the @ref CollisionDirector cache.
+/// @brief Checks collision between a sphere and the cached blocks, writing partial collision
+/// info. Additionally pushes the collision entry into the @ref CollisionDirector cache.
 /// @param radius The radius of the sphere to check
 /// @param pos The position of the sphere to check
 /// @param mask The KCL flags to check collision against (other types are ignored)
@@ -348,8 +320,8 @@ bool ObjectObakeManager::checkSphereFullImpl(f32 radius, const EGG::Vector3f &po
 }
 
 /// @addr{0x8080D12C}
-/// @brief Checks collision between a sphere and the cached blocks, writing full collision info
-///        Additionally pushes the collision entry into the @ref CollisionDirector cache.
+/// @brief Checks collision between a sphere and the cached blocks, writing full collision info.
+/// Additionally pushes the collision entry into the @ref CollisionDirector cache.
 /// @param radius The radius of the sphere to check
 /// @param pos The position of the sphere to check
 /// @param mask The KCL flags to check collision against (other types are ignored)

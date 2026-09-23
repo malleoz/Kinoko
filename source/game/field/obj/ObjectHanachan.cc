@@ -96,7 +96,8 @@ void ObjectHanachanBody::calcCollisionTransform() {
 }
 
 /// @addr{0x806C8A5C}
-/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @param params The parameters used to initialize the object
 /// @details Constructs the @ref HanachanChainManager using body part distances defined by @ref
 /// BODY_PART_DISTANCES. Initializes @ref m_walkSpeed based on param setting 1. Constructs the head
 /// and body part objects and scales them up to 3x. After loading all objects, resizes all collision

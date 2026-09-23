@@ -17,7 +17,8 @@ class ObjectHwanwan final : public ObjectCollidable, private StateManager {
 
 public:
     /// @addr{0x806E95B0}
-    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
     /// @details Caches the Chain Chomp's initial position to @ref m_initPos.
     ObjectHwanwan(const System::MapdataGeoObj &params)
         : ObjectCollidable(params),

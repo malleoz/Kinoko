@@ -4,7 +4,8 @@
 
 namespace Kinoko::Field {
 
-/// @brief This is just to help with readability. The rMR piranhas are really just pipes.
+/// @brief Typedef for the N64 Mario Raceway piranha plants.
+/// @details This is just to help with readability. The rMR piranhas are really just pipes.
 typedef ObjectDokan ObjectPuchiPakkun;
 
 } // namespace Kinoko::Field

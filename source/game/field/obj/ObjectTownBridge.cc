@@ -18,7 +18,7 @@ ObjectTownBridge::ObjectTownBridge(const System::MapdataGeoObj &params)
 }
 
 /// @addr{0x8080ACE0}
-/// @brief Default virtual destructor that deletes all underlying object collision managers
+/// @brief Virtual destructor that deletes all underlying object collision managers
 ObjectTownBridge::~ObjectTownBridge() {
     // Whichever ObjColMgr is active will be destroyed naturally as part of ObjectKCL's destructor.
     // We need to destroy the other ones to avoid leaking. The base game does not bother doing this.
@@ -80,8 +80,8 @@ void ObjectTownBridge::createCollision() {
     m_raisedColMgr = m_objColMgr;
 }
 
-/// @brief Calculates the current angle of the bridge based on the current frame and state
 /// @addr{0x80809CDC}
+/// @brief Calculates the current angle of the bridge based on the current frame and state
 f32 ObjectTownBridge::calcBridgeAngle(u32 t) const {
     State state = calcState(t);
     u32 animFrame = t % m_fullAnimFrames;

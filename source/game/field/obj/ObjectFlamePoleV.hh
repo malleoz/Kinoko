@@ -11,7 +11,8 @@ namespace Kinoko::Field {
 class ObjectFlamePoleV final : public ObjectCollidable, private StateManager {
 public:
     /// @addr{0x806C3AA4}
-    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
     /// @details Computes @ref m_initDelay based on param setting 2, @ref m_cycleDuration based on
     /// param setting 1, and @ref m_dormantFrames as `200` plus param setting 4. Sets @ref
     /// m_scaleFactor based on param setting 3, defaulting to `5.0f` if the setting is `0`. Caches

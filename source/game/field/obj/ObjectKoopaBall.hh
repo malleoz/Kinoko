@@ -12,9 +12,10 @@ namespace Kinoko::Field {
 class ObjectKoopaBall final : public ObjectCollidable {
 public:
     /// @addr{0x80770384}
-    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
     /// @details Initializes the fireball's velocity to zero.
-    ObjectKoopaBall(const System::MapdataGeoObj &params) : ObjectCollidable(params), {
+    ObjectKoopaBall(const System::MapdataGeoObj &params) : ObjectCollidable(params) {
         m_vel = EGG::Vector3f::zero;
     }
 
@@ -133,7 +134,7 @@ private:
     s32 m_cooldownTimer;                ///< Frames until koopa will start to shoot the fireball
     Render::DrawMdl *m_bombCoreDrawMdl; ///< DrawMdl for the bomb animation
     s32 m_explodeTimer;                 ///< Remaining explosion duration
-    u32 m_animDuration;               ///< Explosion animation duration defined in bombCore.brres
+    u32 m_animDuration;                 ///< Explosion animation duration defined in bombCore.brres
     f32 m_angleRad;                     ///< Total angle of rotation in radians
     f32 m_curScale;                     ///< Current scale of the fireball
 

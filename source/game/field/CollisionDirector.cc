@@ -296,8 +296,8 @@ bool CollisionDirector::checkSphereCachedFullPush(f32 radius, const EGG::Vector3
     return colliding;
 }
 
-/// @brief Called when we find a piece of collision we are touching and want to save it temporarily.
 /// @addr{0x807BDA9C}
+/// @brief Called when we find a piece of collision we are touching and want to save it temporarily.
 /// @param dist Distance from player to the KCL triangle center
 /// @param typeMask Updated to include kclTypeBit
 /// @param kclTypeBit The base type of the tri we are colliding with
@@ -312,8 +312,8 @@ void CollisionDirector::pushCollisionEntry(f32 dist, KCLTypeMask *typeMask, KCLT
     m_entries[m_collisionEntryCount++] = CollisionEntry(kclTypeBit, attribute, dist);
 }
 
-/// @brief Finds the closest KCL triangle out of the list of tris we are colliding with
 /// @addr{0x807BD96C}
+/// @brief Finds the closest KCL triangle out of the list of tris we are colliding with
 /// @param type Filters the result for particular KCL types
 /// @return Whether there was a collision entry for the provided type
 bool CollisionDirector::findClosestCollisionEntry(KCLTypeMask * /*typeMask*/, KCLTypeMask type) {

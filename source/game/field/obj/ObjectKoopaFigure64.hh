@@ -6,11 +6,22 @@ namespace Kinoko::Field {
 
 /// @brief The Bowser statues on N64 Bowser's Castle.
 /// @details The big statue by the first turn has collision while the mini ones do not.
-/// The big statue will shoot fire for a set duration, then stop for a cooldown period.
+/// The big statue will breathe fire for a set duration, then stop for a cooldown period.
 class ObjectKoopaFigure64 final : public ObjectCollidable {
 public:
-    ObjectKoopaFigure64(const System::MapdataGeoObj &params);
-    ~ObjectKoopaFigure64() override;
+    /// @addr{0x806DA914}
+    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
+    /// @details Determines if the statue is large based on param setting 2. Initializes @ref
+    /// m_startDelay based on param setting 3.
+    ObjectKoopaFigure64(const System::MapdataGeoObj &params)
+        : ObjectCollidable(params),
+          m_isBigStatue(params.setting(1) == 1),
+          m_startDelay(static_cast<u32>(params.setting(2))) {}
+
+    /// @addr{0x806DB114}
+    /// @brief Default virtual destructor
+    ~ObjectKoopaFigure64() override = default;
 
     void init() override;
     void calc() override;

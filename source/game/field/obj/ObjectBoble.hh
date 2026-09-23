@@ -8,7 +8,8 @@ namespace Kinoko::Field {
 class ObjectBoble final : public ObjectCollidable {
 public:
     /// @addr{0x8075DB3C}
-    /// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
     ObjectBoble(const System::MapdataGeoObj &params) : ObjectCollidable(params) {}
 
     /// @addr{0x8075E74C}

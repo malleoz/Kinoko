@@ -5,33 +5,29 @@
 namespace Kinoko::Field {
 
 /// @addr{0x8082C234}
-/// @copydoc ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @details Calculates @ref m_initPosY based off hard-coded offsets. Initializes @ref m_frame to
+/// zero. Finally, assigns this instance to the @ref ObjectDirector.
 ObjectPsea::ObjectPsea(const System::MapdataGeoObj &params)
     : ObjectCollidable(params),
-      m_period(F_TAU / static_cast<f32>(CYCLE_DURATION)) {
-    constexpr EGG::Vector3f POS_OFFSET = EGG::Vector3f(0.0f, 6.75f, 0.0f) * 96.0f;
-    constexpr EGG::Vector3f EXTRA_OFFSET = EGG::Vector3f(0.0f, 1.0f, 0.0f);
-
+      m_initPosY(calcInitPosY()) {
     m_frame = 0;
-    m_initPosY = (pos() + POS_OFFSET + EXTRA_OFFSET).y;
 
     auto *objDir = ObjectDirector::Instance();
     ASSERT(!objDir->psea());
     objDir->setPsea(this);
 }
 
-/// @addr{0x8082C890}
-/// @brief Default virtual destructor
-ObjectPsea::~ObjectPsea() = default;
-
 /// @addr{0x8082C634}
 /// @copybrief ObjectBase::calc()
-/// @details Computes the position of the rising water using a sine wave.
+/// @details Computes the position of the rising water using a sine wave with a period of @ref
+/// PERIOD. Increments @ref m_frame, wrapping around to 0 after it exceeds @ref CYCLE_DURATION.
+/// Finally, updates the Y-position of the rising water based on the computed sine value.
 void ObjectPsea::calc() {
     constexpr f32 POS_OFFSET = 9590.399f;
     constexpr f32 AMPLITUDE = 140.0f;
 
-    f32 sin = EGG::Mathf::sin(m_period * static_cast<f32>(m_frame));
+    f32 sin = EGG::Mathf::sin(PERIOD * static_cast<f32>(m_frame));
 
     if (CYCLE_DURATION < m_frame++) {
         m_frame = 0;
