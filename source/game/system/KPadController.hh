@@ -17,7 +17,7 @@ namespace Kinoko::System {
 }
 
 /// @brief Generates an array of the 15 discrete stick values in the range `[-1.0f, 1.0f]`
-/// @return
+/// @return An array of the 15 discrete stick values
 [[nodiscard]] consteval std::array<f32, 15> StickStates() {
     std::array<f32, 15> states{};
     for (size_t i = 0; i < states.size(); ++i) {
@@ -287,7 +287,7 @@ public:
     void setDriftIsAuto(bool driftIsAuto) {
         m_driftIsAuto = driftIsAuto;
     }
-    
+
     /// @endSetters
 
     /// @beginGetters

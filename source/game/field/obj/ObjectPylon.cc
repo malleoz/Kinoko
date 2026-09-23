@@ -12,7 +12,8 @@ namespace Kinoko::Field {
 /// @details Checks for floor and wall collision to make sure the pylon is not clipping. Assigns
 /// neighbors based off adjacency in the managed object array.
 /// @warning The base game does not apply any ObjectId check when assigning neighbors. Therefore,
-/// all managed objects for the race MUST be pylons.
+/// all managed objects for the race MUST be pylons, otherwise an unsafe `reinterpret_cast` will
+/// occur.
 void ObjectPylon::init() {
     constexpr f32 NEIGHBOR_SQUARE_RADIUS = 2400.0f;
 
@@ -70,6 +71,7 @@ void ObjectPylon::init() {
 
 /// @addr{0x8082D044}
 /// @copybrief ObjectBase::calc()
+/// @details Calls the appropriate calculation function based on the cone's current @ref m_state.
 void ObjectPylon::calc() {
     switch (m_state) {
     case State::Hit:
@@ -85,9 +87,7 @@ void ObjectPylon::calc() {
         calcComeBack();
         break;
     case State::Moving:
-        if (System::RaceManager::Instance()->timer() - m_stateStartFrame > STATE_COOLDOWN_FRAMES) {
-            m_state = State::Idle;
-        }
+        calcMoving();
         break;
     default:
         break;
@@ -99,12 +99,13 @@ void ObjectPylon::calc() {
 /// @param kartObj The kart object involved in the collision
 /// @param hitDepth The depth of the collision along each axis
 /// @return @ref Kart::Reaction::WeakWall if the kart hits the pylon above 70% of its base speed or
-/// if it is hit head-on within a 120 degree cone threshold. Otherwise, returns @ref
+/// if it is hit head-on within a 120 degree arc threshold. Otherwise, returns @ref
 /// Kart::Reaction::None.
 /// @details If the player's speed ratio is above 70%, then the pylon enters the "Hit" state where
-/// it bounces away. Else, it checks to see the angle of impact between the player and the pylon. If
-/// the player's angle falls between 30 and 150 degrees, then the cone will reduce the player's
-/// speed down to 82%.
+/// it bounces away. If the pylon is already in the hit state, then returns @ref
+/// Kart::Reaction::None so that the pylon does not affect the kart as it flies off. Else, it checks
+/// to see the angle of impact between the player and the pylon. If the player's angle falls between
+/// 30 and 150 degrees, then the cone will reduce the player's speed down to 82%.
 Kart::Reaction ObjectPylon::onCollision(Kart::KartObject *kartObj,
         Kart::Reaction /*reactionOnKart*/, Kart::Reaction /*reactionOnObj*/,
         EGG::Vector3f &hitDepth) {
@@ -163,10 +164,11 @@ Kart::Reaction ObjectPylon::onCollision(Kart::KartObject *kartObj,
 
 /// @addr{0x8082E100}
 /// @brief Checks collision against floors, walls, and other pylons to prevent clipping
+/// @param hitDepth The depth of the kart collision along each axis
 /// @desync This function can cause time trial desyncs. Higher in the callstack is
-/// ObjectDirector::checkKartObjectCollision, which iterates over each object in the spatial cache.
-/// For each object, it updates the AABB and checks for collision. If there was a collision, it
-/// calls OnCollision which will in turn call this function. This function will then update its
+/// @ref ObjectDirector::checkKartObjectCollision, which iterates over each object in the spatial
+/// cache. For each object, it updates the AABB and checks for collision. If there was a collision,
+/// it calls OnCollision which will in turn call this function. This function will then update its
 /// position if it finds itself to be colliding with any of its neighbors. However, it is not
 /// guaranteed that its neighbors have had their AABBs updated yet for this frame, as they may not
 /// be processed until a later iteration in checkKartObjectCollision. This means that player
@@ -214,6 +216,9 @@ void ObjectPylon::checkIntraCollision(const EGG::Vector3f &hitDepth) {
 
 /// @addr{0x8082E3F0}
 /// @brief Runs once when the pylon starting flying after collision from the player
+/// @param velFactor Scales down the pylon's velocity depending on the speed of the kart colliding
+/// with it
+/// @param hitDepth The depth of the kart collision along each axis
 void ObjectPylon::startHit(f32 velFactor, EGG::Vector3f &hitDepth) {
     constexpr f32 ANG_VEL_SCALAR = 0.5f;
     constexpr f32 VEL_SCALAR = 100.0f;

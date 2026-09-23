@@ -8,9 +8,9 @@ namespace Kinoko::Field {
 
 /// @brief The traffic cones on Daisy Circuit
 /// @details Pylons are restricted to a 1200 unit radius around their initial position. If the
-/// player hits a pylon at 70% of the kart's max speed, then the pylon will fly off. Otherwise, the
-/// pylon will apply a slowing effect on the player if the player is colliding at a direct enough
-/// angle. Performs collision checks against floors, walls, and other pylons to prevent clipping.
+/// player hits a pylon at 70% of the kart's max speed, then the pylon will fly off. Otherwise if
+/// the player is colliding at a direct enough angle, the pylon will apply a slowing effect on the
+/// player. Performs collision checks against floors, walls, and other pylons to prevent clipping.
 /// When a pylon starts flying off, it will bounce 4 times before shrinking and becoming intangible.
 /// After a cooldown, it will spawn mid-air and fall down to the ground. Since pylons can be moved
 /// by the player, the game has to define distinct cones for both the player and the ghost (if
@@ -23,6 +23,8 @@ public:
     /// @addr{0x8082CAD8}
     /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
     /// @param params The parameters used to initialize the object
+    /// @details Caches the cone's initial position, scale, and rotation to @ref m_initPos, @ref
+    /// m_initScale, and @ref m_initRot.
     ObjectPylon(const System::MapdataGeoObj &params)
         : ObjectCollidable(params),
           m_initPos(pos()),
@@ -65,7 +67,9 @@ private:
     void calcHiding();
 
     /// @brief Runs every frame that the pylon is intangible
-    /// @details Once 900 frames have elapsed, the pylon will transition to the ComeBack state.
+    /// @details Once 900 frames have elapsed, the pylon will transition to the respawning state by
+    /// setting @ref m_state to @ref State::ComeBack, setting @ref m_stateStartFrame to the current
+    /// race time, and resetting the cone's rotation to @ref m_initRot.
     void calcHide() {
         constexpr u32 HIDE_DURATION = 900;
 
@@ -78,6 +82,15 @@ private:
     }
 
     void calcComeBack();
+
+    /// @brief Runs every frame that the pylon is being pushed by the player
+    /// @details If 5 frames have elapsed since the cone started moving, transitions the cone back
+    /// to the @ref State::Idle state.
+    void calcMoving() {
+        if (System::RaceManager::Instance()->timer() - m_stateStartFrame > STATE_COOLDOWN_FRAMES) {
+            m_state = State::Idle;
+        }
+    }
 
     State m_state;                            ///< Current motion and tangibility state
     std::array<ObjectPylon *, 2> m_neighbors; ///< Pointers to the two closest neighboring pylons
