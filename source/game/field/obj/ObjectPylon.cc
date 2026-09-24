@@ -14,6 +14,10 @@ namespace Kinoko::Field {
 /// @warning The base game does not apply any ObjectId check when assigning neighbors. Therefore,
 /// all managed objects for the race MUST be pylons, otherwise an unsafe `reinterpret_cast` will
 /// occur.
+/// @note If the cone's initial position is ~20 or more units above the floor (assuming a scale of
+/// `{1.0f, 1.0f, 1.0f`}), then the cone will be positioned above the floor without actually making
+/// contact. Touching the cone will result in it snapping to the ground, but it will hover above the
+/// floor again when it respawns.
 void ObjectPylon::init() {
     constexpr f32 NEIGHBOR_SQUARE_RADIUS = 2400.0f;
 
@@ -165,6 +169,13 @@ Kart::Reaction ObjectPylon::onCollision(Kart::KartObject *kartObj,
 /// @addr{0x8082E100}
 /// @brief Checks collision against floors, walls, and other pylons to prevent clipping
 /// @param hitDepth The depth of the kart collision along each axis
+/// @details First subtracts the hit depth from the pylon's current position to push it out of the
+/// collision. It then checks to see if any neighbors collide with the new position of this pylon,
+/// and if so, adjusts THIS pylon's position accordingly. Checks if the pylon has moved outside of
+/// its allowed travel radius of size @ref TRAVEL_RADIUS units, and if so, clamps it back within the
+/// radius. Next, applies a downward velocity of `20.0f` units per frame. With the resulting
+/// position, performs a collision check against floors and walls, offsetting the pylon on top of
+/// the floor if a collision occurs.
 /// @desync This function can cause time trial desyncs. Higher in the callstack is
 /// @ref ObjectDirector::checkKartObjectCollision, which iterates over each object in the spatial
 /// cache. For each object, it updates the AABB and checks for collision. If there was a collision,
@@ -215,32 +226,40 @@ void ObjectPylon::checkIntraCollision(const EGG::Vector3f &hitDepth) {
 }
 
 /// @addr{0x8082E3F0}
-/// @brief Runs once when the pylon starting flying after collision from the player
+/// @brief Runs once when the pylon starts flying after a fast collision with the player
 /// @param velFactor Scales down the pylon's velocity depending on the speed of the kart colliding
 /// with it
 /// @param hitDepth The depth of the kart collision along each axis
+/// @details Sets the pylon's @ref m_state to @ref State::Hit. Sets the velocity's direction
+/// opposite that of the hit depth, with the Y-component set to zero. Computes @ref m_angVel by
+/// multiplying the velocity direction with the provided `velFactor` and a constant `0.5f` scalar.
+/// Sets the Y-component of @ref m_vel to `0.85f`. Scales the entire velocity vector by `velFactor *
+/// 100.0f`. Finally, normalizes the provided `hitDepth`.
 void ObjectPylon::startHit(f32 velFactor, EGG::Vector3f &hitDepth) {
     constexpr f32 ANG_VEL_SCALAR = 0.5f;
     constexpr f32 VEL_SCALAR = 100.0f;
+    constexpr f32 INIT_Y_VEL = 0.85f;
 
     m_state = State::Hit;
     m_vel = EGG::Vector3f(-hitDepth.x, 0.0f, -hitDepth.z);
     m_vel.normalise2();
     m_angVel = m_vel * velFactor * ANG_VEL_SCALAR;
-    m_vel.y = 0.85f;
+    m_vel.y = INIT_Y_VEL;
     m_vel *= velFactor * VEL_SCALAR;
     hitDepth.normalise2();
 }
 
 /// @brief Runs every frame when the pylon is flying after being hit by the player
-/// @details Applies gravity to velocity and offsets position accordingly. For the first 5 frames of
-/// the Hit state, this function only performs collision checks against KCL_TYPE_OBJECT_WALL. On
-/// subsequent frames it checks both walls and floors. When a collision occurs, the cone is
-/// redirected away from direction of impact. If the collision was with the floor, then a velocity
-/// dampener is applied to reduce the pylon's flying speed by 25%. If 4 collisions have occured,
-/// then the pylon transitions to the Hiding state. If the square of the pylon's velocity is less
-/// than 0.5, the pylon's y-axis position is negative, or if 300 frames have elapsed while in the
-/// Hit state, then the pylon will transition to the Hiding state.
+/// @details Applies a downward gravitational force of `3.0f` to @ref m_vel. If the square of the
+/// pylon's velocity is less than `0.5f`, the pylon's y-axis position is negative, or 300 frames
+/// have elapsed while in the Hit state, then the pylon will transition to the Hiding state and the
+/// function returns early. For the first 5 frames of the Hit state, this function only performs
+/// collision checks against KCL_TYPE_OBJECT_WALL. On subsequent frames it checks both walls and
+/// floors. When a collision occurs, the cone is redirected away from direction of impact. If the
+/// collision was with the floor, then a velocity dampener reduces the pylon's flying speed by 25%.
+/// If 4 collisions have occured, then the pylon transitions to the Hiding state. Regardless of
+/// whether a collision occured, the pylon's position is updated to reflect its new @ref m_vel and
+/// its rotation is updated based on @ref m_angVel.
 void ObjectPylon::calcHit() {
     constexpr f32 GRAVITY = 3.0f;
     constexpr f32 SQ_VEL_MIN = 0.5f;
@@ -300,8 +319,10 @@ void ObjectPylon::calcHit() {
     }
 }
 
-/// @brief Runs every frame that the pylon is shrinking after flying and bouncing
+/// @brief Runs every frame that the pylon is shrinking after bouncing
 /// @details The pylon shrinks over a duration of 10 frames where the scale is one over the frame.
+/// Its rotation continues to be updated based on @ref m_angVel. The pylon's collision is disabled
+/// during this state.
 void ObjectPylon::calcHiding() {
     constexpr u32 HIDING_DURATION = 10;
 
@@ -322,8 +343,27 @@ void ObjectPylon::calcHiding() {
 }
 
 /// @brief Runs every frame that the pylon is respawning after being intangible
-/// @details The pylon falls for at least 10 frames. Once 10 frames have passed and the pylon has
-/// hit the ground, the pylon will transition to the Idle state.
+/// @details First, the pylon's collision is re-enabled.
+///
+/// If the pylon has been spawning for 10 frames, then the pylon transitions to the @ref State::Idle
+/// state. In doing so, it resets @ref m_stateStartFrame to the current race framecount.
+/// Additionally, the pylon's position is reset to its initial position with a downward offset of
+/// `10.0f` to ensure that a floor collision check will succeed even if the pylon is initialized
+/// slightly above the floor. Performs a floor and wall collision check with a radius of `120.0f`
+/// times the pylon's scale. If a collision occurred, offsets the pylon's position to push it out of
+/// the colliding wall/floor, and if the collision was with the floor, aligns the pylon's tangent to
+/// the floor normal.
+///
+/// If the pylon is still in the come back state (i.e., has not been spawning for 10 frames), it
+/// continues to fall towards the floor from an initial height of `100.0f` frames above the pylon's
+/// initial position. As it falls, it performs floor and wall collision checks to ensure it does not
+/// clip through the environment.
+///
+/// Regardless of whether or not the come back state duration has elapsed, @ref m_numBounces, @ref
+/// m_vel, and @ref m_angVel are reset to zero, and the pylon's scale and rotation are reset to
+/// their initial values.
+/// @note If the cone's initial position is 20 or more units above the floor (assuming a scale of
+/// `{1.0f, 1.0f, 1.0f`}), then the cone will land above the floor without actually contacting it.
 void ObjectPylon::calcComeBack() {
     constexpr u32 COME_BACK_DURATION = 10;
     constexpr f32 COME_BACK_VEL = 10.0f;
@@ -358,7 +398,6 @@ void ObjectPylon::calcComeBack() {
 
             if (mask & KCL_TYPE_FLOOR) {
                 setMatrixTangentTo(info.floorNrm, EGG::Vector3f::ez);
-                m_state = State::Idle;
             }
         }
     } else {

@@ -74,7 +74,7 @@ void ObjectKoopaBall::calc() {
 
     --m_cooldownTimer;
 
-    EGG::Vector3f railVel = m_railInterpolator->curTangentDir() * m_railInterpolator->getCurrVel();
+    EGG::Vector3f railVel = m_railInterpolator->curTangentDir() * m_railInterpolator->getCurrSpeed();
     m_vel.x = railVel.x;
     m_vel.z = railVel.z;
 }

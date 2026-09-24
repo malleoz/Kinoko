@@ -50,7 +50,7 @@ void ObjectCarA::calcCollisionTransform() {
     mat.setBase(3, transform().base(3) + HEIGHT_OFFSET * transform().base(1));
 
     objCol->transform(mat, scale(),
-            -m_railInterpolator->curTangentDir() * m_railInterpolator->getCurrVel());
+            -m_railInterpolator->curTangentDir() * m_railInterpolator->getCurrSpeed());
 }
 
 /// @addr{0x806B7E60}

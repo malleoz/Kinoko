@@ -62,7 +62,7 @@ private:
     /// @addr{0x806BBA7C}
     /// @brief Calculates the total length of the dirt trail behind the monty moles on MMM
     void calcGround() {
-        m_groundLength += m_railInterpolator->getCurrVel();
+        m_groundLength += m_railInterpolator->getCurrSpeed();
         if (m_groundLength > MAX_GROUND_LEN) {
             m_groundLength = MAX_GROUND_LEN - 1.0f;
         }

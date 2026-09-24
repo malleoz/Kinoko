@@ -35,7 +35,7 @@ public:
 
     /// @brief Returns the current velocity being used for interpolation
     /// @return The current velocity
-    virtual f32 getCurrVel() = 0;
+    virtual f32 getCurrSpeed() = 0;
 
     /// @brief Fetches the position and tangent direction along the rail at a specific t distance
     /// *behind* the current position
@@ -194,7 +194,7 @@ public:
     }
 
     /// @addr{0x806F0944}
-    [[nodiscard]] f32 getCurrVel() override {
+    [[nodiscard]] f32 getCurrSpeed() override {
         return m_currSpeed;
     }
 
@@ -238,7 +238,7 @@ public:
     }
 
     /// @addr{0x806EF93C}
-    [[nodiscard]] f32 getCurrVel() override {
+    [[nodiscard]] f32 getCurrSpeed() override {
         return m_velocity;
     }
 

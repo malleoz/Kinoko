@@ -326,7 +326,7 @@ void *MEMiExpHeapHead::allocUsedBlockFromFreeBlock(MEMiExpBlockHead *block, void
     return address;
 }
 
-// @addr{0x80198B40}
+/// @addr{0x80198B40}
 bool MEMiExpHeapHead::recycleRegion(const Region &initialRegion) {
     MEMiExpBlockHead *block = nullptr;
     Region region = initialRegion;
