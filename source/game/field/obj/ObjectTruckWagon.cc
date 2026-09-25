@@ -7,35 +7,6 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x806DFE9C}
-/// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
-/// @param params The parameters used to initialize the object
-ObjectTruckWagonCart::ObjectTruckWagonCart(const System::MapdataGeoObj &params)
-    : ObjectCollidable(params),
-      StateManager(this, STATE_ENTRIES),
-      m_active(true),
-      m_vel(EGG::Vector3f::zero),
-      m_lastVel(EGG::Vector3f::zero),
-      m_up(EGG::Vector3f::zero),
-      m_tangent(EGG::Vector3f::zero),
-      m_pitch(0.0f) {}
-
-/// @addr{0x806E00F4}
-/// @brief Default virtual destructor
-ObjectTruckWagonCart::~ObjectTruckWagonCart() = default;
-
-/// @addr{0x806E03E8}
-/// @copybrief ObjectBase::calc()
-void ObjectTruckWagonCart::calc() {
-    if (!m_active) {
-        return;
-    }
-
-    calcRailAndVel();
-    StateManager::calc();
-    calcTransform();
-}
-
 /// @addr{0x806E2624}
 /// @copybrief ObjectBase::calcCollisionTransform()
 void ObjectTruckWagonCart::calcCollisionTransform() {
@@ -165,35 +136,6 @@ void ObjectTruckWagonCart::calcSuspended() {
     m_lastVel = m_vel;
 }
 
-/// @addr{0x806E1DD0}
-void ObjectTruckWagonCart::checkRailPointState() {
-    if (m_currentStateId == 1) {
-        return;
-    }
-
-    u16 setting = m_railInterpolator->curPoint().setting[1];
-    if (setting <= 2) {
-        m_nextStateId = setting;
-    }
-}
-
-/// @addr{0x806E1E34}
-void ObjectTruckWagonCart::calcRailAndVel() {
-    switch (m_railInterpolator->calc()) {
-    case RailInterpolator::Status::SegmentEnd:
-        checkRailPointState();
-        break;
-    case RailInterpolator::Status::ChangingDirection:
-        deactivate();
-        break;
-    default:
-        break;
-    }
-
-    m_vel.x = m_railInterpolator->currVel() * m_railInterpolator->curTangentDir().x;
-    m_vel.z = m_railInterpolator->currVel() * m_railInterpolator->curTangentDir().z;
-}
-
 /// @addr{0x806E01C0}
 void ObjectTruckWagonCart::reset(u32 idx) {
     m_railInterpolator->init(0.0f, idx);
@@ -245,10 +187,6 @@ ObjectTruckWagon::ObjectTruckWagon(const System::MapdataGeoObj &params)
         rail->checkSphereFull();
     }
 }
-
-/// @addr{0x806E21EC}
-/// @brief Default virtual destructor
-ObjectTruckWagon::~ObjectTruckWagon() = default;
 
 /// @addr{0x806E222C}
 /// @copybrief ObjectBase::init()

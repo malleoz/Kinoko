@@ -105,20 +105,21 @@ void ObjectRock::calcTangibleSub() {
 /// @addr{0x8076FA60}
 /// @brief Checks for collisions with the floor and applies a bounce effect if a collision occurs
 /// @details Offsets the rock's position downward so that the collision check occurs with the
-/// bottommost part of the rock. If a floor collision occurs,
+/// bottommost part of the rock. If a floor collision occurs, bounces the rock upwards with a 70%
+/// dampener applied to its velocity, increases the rock's @ref m_angSpd (with a minimum value based
+/// on the rail's speed), and updates the rock's position accordingly,
 void ObjectRock::checkSphereFull() {
     constexpr f32 RADIUS = 50.0f;
 
     CollisionInfo info;
 
-    EGG::Vector3f offset(0.0f, -(scale().x * 240.0f - RADIUS), 0.0f);
+    EGG::Vector3f offset(0.0f, -(scale().x * ROCK_RADIUS - RADIUS), 0.0f);
     EGG::Vector3f colPos = pos() + offset;
 
     if (CollisionDirector::Instance()->checkSphereFull(RADIUS, colPos, EGG::Vector3f::inf,
                 KCL_TYPE_FLOOR, &info, nullptr, 0)) {
         m_vel.y *= -0.3f;
-        m_angSpd = std::max(360.0f * static_cast<f32>(m_mapObj->setting(2)) /
-                        (480.0f * scale().x * F_PI),
+        m_angSpd = std::max(360.0f * m_railSpeed / ((2.0f * ROCK_RADIUS) * scale().x * F_PI),
                 m_angSpd + 1.0f);
         addPos(info.tangentOff);
     }

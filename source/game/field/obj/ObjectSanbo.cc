@@ -4,19 +4,11 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x80779F3C}
-/// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
-/// @param params The parameters used to initialize the object
-ObjectSanbo::ObjectSanbo(const System::MapdataGeoObj &params) : ObjectCollidable(params) {
-    m_yVel = 0.0f;
-}
-
-/// @addr{0x8077A1A8}
-/// @brief Default virtual destructor
-ObjectSanbo::~ObjectSanbo() = default;
-
 /// @addr{0x8077A1E8}
 /// @copybrief ObjectBase::init()
+/// @details Initializes @ref m_up to the default up vector. Computes the forward direction of the
+/// Pokey based on its initial rotation. Sets @ref m_standstill to false. Finally, initializes the
+/// rail interpolator to the start of the rail.
 void ObjectSanbo::init() {
     m_up = EGG::Vector3f::ey;
     EGG::Matrix34f rotMat;
@@ -31,7 +23,8 @@ void ObjectSanbo::init() {
 /// @brief Runs every frame to update the Pokey's position
 /// @details If the Pokey is at a stand-still, decrements the stand-still timer until it reaches
 /// zero, at which point the Pokey will start walking again. If the Pokey is moving, then it updates
-/// the rail position, applies gravity, and checks for floor collision.
+/// the Pokeys position along the rail, applies a downward gravitational force of `2.0f`, and checks
+/// for floor collision.
 void ObjectSanbo::calcMove() {
     constexpr f32 GRAVITY = 2.0f;
 
@@ -58,6 +51,10 @@ void ObjectSanbo::calcMove() {
 
 /// @addr{0x8077A8B8}
 /// @brief Handles collision between the pokie and the floor (including sandcones)
+/// @details If a collision with a floor occurs, resets @ref m_yVel to zero, updates the Pokey's
+/// position so that it sits on top of the floor, and nudges @ref m_up towards the colliding floor's
+/// normal vector. Finally, updates the Pokey's transformation matrix to reflect the current @ref
+/// m_up and @ref m_tangent.
 void ObjectSanbo::checkSphere() {
     constexpr f32 RADIUS = 10.0f;
     constexpr EGG::Vector3f POS_OFFSET = EGG::Vector3f(0.0f, RADIUS, 0.0f);

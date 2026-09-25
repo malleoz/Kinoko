@@ -5,16 +5,21 @@
 
 namespace Kinoko::Field {
 
-/// @brief Handles the synchronization between the @ref ObjectSunDS and @ref ObjectFireSnake
+/// @brief Handles the synchronization between a @ref ObjectSunDS and its @ref ObjectFireSnake
 /// projectiles.
-/// @warning It is expected that all @ref ObjectFireSnake projectiles and @ref ObjectSunDS are
-/// already constructed and registered to the @ref ObjectDirector's array of managed objects.
-/// Otherwise, they will not be visible to this manager.
+/// @warning It is expected that all @ref ObjectFireSnake projectiles and the @ref ObjectSunDS
+/// object are already constructed and registered to the @ref ObjectDirector array of managed
+/// objects. Otherwise, they will not be visible to this manager.
 class ObjectSunManager final : public ObjectSniper {
 public:
     /// @addr{0x806DE624}
-    /// @brief Constructor that creates pointers to all existing @ref ObjectFireSnake projectiles
+    /// @brief Constructor that caches pointers to all existing @ref ObjectFireSnake projectiles
     /// and the @ref ObjectSunDS launcher.
+    /// @details Iterates the @ref ObjectDirector vector of managed objects to find the count of
+    /// @ref ObjectFireSnake objects in order to properly size @ref m_projectiles. Then populates
+    /// @ref m_projectiles with pointers to each of the @ref ObjectFireSnake objects and also caches
+    /// a pointer to the @ref ObjectSunDS and saves it to @ref m_launcher. Finally, creates @ref
+    /// m_pointIdxs based on how many nodes exist in the rail.
     ObjectSunManager() {
         auto &managedObjs = ObjectDirector::Instance()->managedObjects();
 

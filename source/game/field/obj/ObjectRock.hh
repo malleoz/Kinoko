@@ -20,8 +20,8 @@ public:
     ObjectRock(const System::MapdataGeoObj &params)
         : ObjectCollidable(params),
           m_cooldownDuration(params.setting(1)),
-          m_railSpeed(static_cast<f32>(param.setting(2))),
-          m_bounceFactor(static_cast<f32>(param.setting(3))) {}
+          m_railSpeed(static_cast<f32>(params.setting(2))),
+          m_bounceFactor(static_cast<f32>(params.setting(3))) {}
 
     /// @addr{0x8076F344}
     /// @brief Default virtual destructor
@@ -107,6 +107,7 @@ private:
     const f32 m_bounceFactor; ///< Scales initial y position, gravity, and floor bounce dampening
 
     static constexpr f32 INITIAL_ANGULAR_SPEED = 3.0f; ///< The initial angular velocity of the rock
+    static constexpr f32 ROCK_RADIUS = 240.0f;         ///< Radius of the rock
 };
 
 } // namespace Kinoko::Field

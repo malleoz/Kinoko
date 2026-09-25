@@ -14,8 +14,44 @@ namespace Kinoko::Field {
 /// updated, or vice versa.
 class ObjectTownBridge final : public ObjectKCL {
 public:
-    ObjectTownBridge(const System::MapdataGeoObj &params);
-    ~ObjectTownBridge() override;
+    /// @addr{0x80809448}
+    /// @copybrief ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
+    /// @details Sets @ref m_rotateUpwards based on whether the drawbridge is oriented upright. Sets
+    /// @ref m_raisedAngle based on param setting 1, @ref m_pivotFrames based on param setting 2,
+    /// @ref m_raisedFrames based on param setting 3, and @ref m_loweredFrames based on param
+    /// setting 4. Computes @ref m_fullAnimFrames by doubling @ref m_pivotFrames and summing with
+    /// @ref m_loweredFrames and @ref m_raisedFrames. Finally, initializes @ref m_state to @ref
+    /// State::Raising.
+    ObjectTownBridge(const System::MapdataGeoObj &params)
+        : ObjectKCL(params),
+          m_rotateUpwards(rot().y < 0.0f),
+          m_raisedAngle(static_cast<float>(params.setting(0))),
+          m_pivotFrames(static_cast<u32>(params.setting(1))),
+          m_raisedFrames(static_cast<u32>(params.setting(2))),
+          m_loweredFrames(static_cast<u32>(params.setting(3))),
+          m_fullAnimFrames(m_pivotFrames * 2 + (m_loweredFrames + m_raisedFrames)) {
+        m_state = State::Raising;
+    }
+
+    /// @addr{0x8080ACE0}
+    /// @brief Virtual destructor that deletes all underlying object collision managers
+    ~ObjectTownBridge() override {
+        // Whichever ObjColMgr is active will be destroyed naturally as part of ObjectKCL's
+        // destructor. We need to destroy the other ones to avoid leaking. The base game does not
+        // bother doing this.
+        if (m_flatColMgr != m_objColMgr) {
+            EGG::egg_delete(m_flatColMgr);
+        }
+
+        if (m_midColMgr != m_objColMgr) {
+            EGG::egg_delete(m_midColMgr);
+        }
+
+        if (m_raisedColMgr != m_objColMgr) {
+            EGG::egg_delete(m_raisedColMgr);
+        }
+    }
 
     void calc() override;
 
@@ -30,6 +66,7 @@ public:
 
     /// @addr{0x8080A8D0}
     /// @copybrief ObjectKCL::colRadiusAdditionalLength()
+    /// @return The additional length to be added to the drawbridge's collision radius, `500.0f`.
     [[nodiscard]] f32 colRadiusAdditionalLength() const override {
         return 500.0f;
     }
@@ -47,10 +84,10 @@ private:
     [[nodiscard]] State calcState(u32 t) const;
 
     const bool m_rotateUpwards; ///< Normally true, otherwise the bridge will open downwards
-    const f32 m_angVel;         ///< Speed of the bridge's movement
-    const u32 m_pivotFrames;    ///< # of frames the bridge pivots up or down
-    const u32 m_raisedFrames;   ///< # of frames the bridge remains raised
-    const u32 m_loweredFrames;  ///< # of frames the bridge remains lowered
+    const f32 m_raisedAngle;    ///< Angle of inclination when the drawbridge is raised
+    const u32 m_pivotFrames;    ///< Number of frames the bridge pivots up or down
+    const u32 m_raisedFrames;   ///< Number of frames the bridge remains raised
+    const u32 m_loweredFrames;  ///< Number of frames the bridge remains lowered
     const u32 m_fullAnimFrames; ///< The full duration of a bridge raise/lower loop
     State m_state;              ///< The current motion/angle state of the bridge
     ObjColMgr *m_raisedColMgr;  ///< Collision manager when the bridge angle is > 30 degrees

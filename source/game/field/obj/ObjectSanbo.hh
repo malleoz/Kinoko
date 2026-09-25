@@ -10,13 +10,23 @@ namespace Kinoko::Field {
 /// inside the sandcones.
 class ObjectSanbo final : public ObjectCollidable {
 public:
-    ObjectSanbo(const System::MapdataGeoObj &params);
-    ~ObjectSanbo() override;
+    /// @addr{0x80779F3C}
+    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
+    /// @details Sets @ref m_yVel to zero.
+    ObjectSanbo(const System::MapdataGeoObj &params) : ObjectCollidable(params) {
+        m_yVel = 0.0f;
+    }
+
+    /// @addr{0x8077A1A8}
+    /// @brief Default virtual destructor
+    ~ObjectSanbo() override = default;
 
     void init() override;
 
     /// @addr{0x8077A36C}
     /// @copybrief ObjectBase::calc()
+    /// @details Simply calls @ref calcMove() to update the Pokey's position.
     void calc() override {
         calcMove();
     }

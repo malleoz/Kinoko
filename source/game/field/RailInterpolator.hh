@@ -114,7 +114,7 @@ public:
         return m_curTangentDir;
     }
 
-    [[nodiscard]] f32 currVel() const {
+    [[nodiscard]] f32 currSpeed() const {
         return m_currSpeed;
     }
 
