@@ -27,10 +27,10 @@ void ObjectCrab::init() {
 
 /// @addr{0x80883B98}
 /// @copybrief ObjectBase::calc()
-/// @details This class has unique behavior in that it runs the calc function once during race
-/// load-in. This is enforced via @ref m_introCalc. Calls @ref calcRail() to update the rail
-/// interpolator's position and speed. Depending on the current state of the crab's walk, the crab's
-/// position will be set to the rail interpolator's position.
+/// @details This class has unique behavior in that it runs the calc function only once during race
+/// load-in, enforced via @ref m_introCalc. Calls @ref calcRail() to update the rail interpolator's
+/// position and speed. Depending on the current state of the crab's walk, the crab's position will
+/// be set to the rail interpolator's position.
 void ObjectCrab::calc() {
     if (System::RaceManager::Instance()->timer() == 0 && m_introCalc) {
         return;
@@ -68,7 +68,7 @@ void ObjectCrab::calc() {
     }
 }
 
-/// @brief Tries to move the crab along its rail, unless it's still
+/// @brief Tries to move the crab along its rail, unless @ref m_still is `true`
 /// @return `false` if the crab is starting to move this frame, `true` if the caller should proceed
 /// with normal calc processing.
 /// @details If the crab is currently still, checks to see if the crab has been still for @ref

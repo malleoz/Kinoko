@@ -88,12 +88,14 @@ public:
         return m_points[idx].pos;
     }
 
-    /// @brief Returns the up vector of the point at the given index
+    /// @brief Gets the up vector of the point at the given index
+    /// @pre Assumes @ref checkSphereFull() has been called in order to allocate the array of floor
+    /// normals and set each element.
     [[nodiscard]] const EGG::Vector3f &floorNrm(u16 idx) const {
         ASSERT(!m_floorNrms.empty() && idx < m_floorNrms.size());
         return m_floorNrms[idx];
     }
-    
+
     /// @endGetters
 
 protected:

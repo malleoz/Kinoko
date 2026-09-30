@@ -78,8 +78,8 @@ public:
 private:
     /// @addr{0x80760490}
     /// @brief Runs once per frame when the Thwomp is not stomping down or resetting
-    /// @details Causes the Thwomp to shake for 30 frames with an amplitude of `30.0f` before
-    /// stomping down.
+    /// @details Causes the Thwomp to shake for 30 frames in a sinusoidal motion with an amplitude
+    /// of `30.0f` before stomping down.
     void calcInactive() {
         constexpr s32 SHAKE_DURATION = 30;
         constexpr f32 SHAKE_AMPLITUDE = 30.0f;
@@ -97,7 +97,7 @@ private:
     }
 
     /// @brief Number of frames the Thwomp remains still for
-    /// @details This member does not exist in the base game, but we cache it here to avoid
+    /// @details This member does not exist in the base game, but we cache it in Kinoko to avoid
     /// repeatedly fetching the param settings.
     const s32 m_stillDuration;
 };

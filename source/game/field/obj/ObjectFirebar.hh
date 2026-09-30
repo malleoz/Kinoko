@@ -13,10 +13,10 @@ public:
     /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
     /// @param params The parameters used to initialize the object
     /// @details Constructs and loads the required number of @ref ObjectFireball objects based on
-    /// the number of spokes (param setting 4) and fireballs per spoke (param setting 1). Computes
-    /// and caches the distance from the firebar and angle about the firebar's rotation axis for
-    /// each @ref ObjectFireball. Finally, Computes the axis of rotation for the firebar and its
-    /// initial tangent direction.
+    /// the number of spokes (param setting 4) and fireballs per spoke (param setting 1). Sets @ref
+    /// m_angSpeed based on param setting 2. For each @ref ObjectFireball, computes and caches the
+    /// distance from the firebar and angle about the firebar's rotation axis. Finally, Computes the
+    /// axis of rotation for the firebar and its initial tangent direction.
     ObjectFirebar(const System::MapdataGeoObj &params)
         : ObjectCollidable(params),
           m_spokes(std::max<u32>(1, params.setting(3))),
@@ -74,14 +74,14 @@ public:
 
     /// @addr{0x807687D8}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x808CE358}
     /// @copybrief ObjectBase::getKclName()
-    /// @return The model name of the firebar (`WLfirebarGC` or `koopaFirebar`)
+    /// @return The model name of the firebar, `WLfirebarGC` or `koopaFirebar`
     [[nodiscard]] const char *getKclName() const override {
         return id() == ObjectId::WLFirebarGC ? "WLfirebarGC" : "koopaFirebar";
     }

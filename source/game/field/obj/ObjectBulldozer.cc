@@ -7,6 +7,8 @@ namespace Kinoko::Field {
 /// @addr{0x807FDC50}
 /// @copybrief ObjectBase::calc()
 /// @details Updates the position of the bulldozer based on its oscillation on the current frame.
+/// The direction of oscillation is flipped depending on whether @ref m_left is `true`. Finally,
+/// sets moving object velocity based on the change in position this frame.
 void ObjectBulldozer::calc() {
     u32 timer = System::RaceManager::Instance()->timer();
     f32 posOffset = calcPosOffset(m_timeOffset + timer);
@@ -18,8 +20,13 @@ void ObjectBulldozer::calc() {
 
 /// @addr{0x807FE364}
 /// @copybrief ObjectKCL::initCollision()
-/// @details Initializes the collision manager and calculates the midpoint of the bulldozer's
-/// collision bounding box.
+/// @details Updates the bulldozer's transformation matrix. Sets the @ref ObjColMgr transformation
+/// matrix based off the transform. Calls the base class @ref ObjectKCL::initCollision(). Finally,
+/// computes @ref m_kclMidpoint based on the updated collision manager's KCL bounds.
+/// @todo The @ref ObjColMgr matrices are immediately overwritten in the call to @ref
+/// ObjectKCL::initCollision(). The @ref m_kclMidpoint assignment is also redundant, since the scale
+/// is always based on `getScaleY(0)`. We can likely clean this function up for Kinoko to improve
+/// performance slightly.
 void ObjectBulldozer::initCollision() {
     calcTransform();
 
@@ -43,7 +50,7 @@ void ObjectBulldozer::initCollision() {
 /// @return Const ref to the updated transformation matrix for the current frame, taking into
 /// account the time offset.
 /// @details Rotation stays constant. The position offset is based off the bulldozer's facing
-/// direction and its oscillation.
+/// direction and its oscillation, computed via @ref calcPosOffset().
 const EGG::Matrix34f &ObjectBulldozer::getUpdatedMatrix(u32 timeOffset) {
     EGG::Vector3f pos = m_initialPos;
     u32 timer = System::RaceManager::Instance()->timer();
@@ -56,11 +63,12 @@ const EGG::Matrix34f &ObjectBulldozer::getUpdatedMatrix(u32 timeOffset) {
 }
 
 /// @addr{0x807FDE5C}
-/// @brief Based off `t`, determine the position offset from the bulldozer's initial position
-/// @param t The frame on which to calculate the position offset
+/// @brief Determine the position offset from the bulldozer's initial position on the provided frame
+/// @param t The frame during which to calculate the position offset
 /// @return The position offset from the bulldozer's initial position on frame `t`.
-/// @details Calculates the position offset of the bulldozer based on its sinusoidal oscillation at
-/// frame `t`.
+/// @details Maps `t` to the frame within the bulldozer's oscillation period. Adjusts the resulting
+/// frame based on where it falls relative to the two resting periods. This is then passed into a
+/// `cosine` function with a period of @ref m_period and an amplitude of @ref m_amplitude.
 f32 ObjectBulldozer::calcPosOffset(u32 t) const {
     u16 phase = t % m_fullPeriod;
 

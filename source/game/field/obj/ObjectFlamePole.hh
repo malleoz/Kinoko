@@ -4,8 +4,8 @@
 
 namespace Kinoko::Field {
 
-/// @brief A flamepole that erupts from a geyser on Bowser's Castle.
-/// @details Though this object does not have any logic to oscillate its position, @ref
+/// @brief A flamepole that erupts from a geyser (@ref ObjectFlamePoleFoot) on Bowser's Castle.
+/// @details Though this object does not directly have logic to oscillate its position, @ref
 /// ObjectFlamePoleFoot dynamically adjusts the pole's Y-scale. The pole will then resize its
 /// GJK collision to reflect the scale change.
 class ObjectFlamePole final : public ObjectCollidable {
@@ -16,6 +16,7 @@ public:
     /// @param pos The initial position of the flame pole
     /// @param rot The initial rotation of the flame pole
     /// @param scale The initial scale of the flame pole
+    /// @details Constructs an @ref ObjectCollidable for the object named `FlamePoleEff`.
     ObjectFlamePole(const System::MapdataGeoObj &params, const EGG::Vector3f &pos,
             const EGG::Vector3f &rot, const EGG::Vector3f &scale)
         : ObjectCollidable("FlamePoleEff", pos, rot, scale) {}
@@ -26,8 +27,9 @@ public:
 
     /// @addr{0x8067E410}
     /// @copybrief ObjectBase::calc()
-    /// @details If the geyser is erupting, resizes the pole's GJK collision to properly reflect
-    /// that it is now erupting.
+    /// @details If the geyser is erupting (identified via @ref m_isActive), resizes the pole's GJK
+    /// collision to properly reflect that it is now erupting. The radius is computed as `70.0f`
+    /// times the flamepole's Y-scale.
     void calc() override {
         constexpr f32 RADIUS = 70.0f;
 
@@ -38,14 +40,14 @@ public:
 
     /// @addr{0x80681820}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @copybrief ObjectBase::getResources()
     /// @details Returns the resource name for the flame pole.
-    /// @return The resource name for the flame pole (`FlamePole`).
+    /// @return The resource name for the flame pole, `FlamePole`.
     [[nodiscard]] const char *getResources() const override {
         return "FlamePole";
     }

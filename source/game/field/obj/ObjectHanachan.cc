@@ -7,7 +7,7 @@ namespace Kinoko::Field {
 /// @addr{0x806F2FE8}
 /// @brief Constructor
 /// @param linkDistances The distances between consecutive links in the chain
-/// @details Constructs an array of @ref Field::SphereLink objects for each segment in the chain and
+/// @details Constructs an array of @ref SphereLink objects for each segment in the chain and
 /// initializes their link lengths based on the provided distances, as well as setting the links'
 /// next and prev pointers.
 HanachanChainManager::HanachanChainManager(const std::span<const f32> &linkDistances) {
@@ -63,7 +63,8 @@ void HanachanChainManager::calc() {
 /// @addr{0x806C8450}
 /// @copybrief ObjectBase::calcCollisionTransform()
 /// @details Applies a forward and upwards offset so that the collision sphere sits above and in
-/// front of the head's origin.
+/// front of the head's origin. Updates the @ref ObjColMgr transformation matrix accordingly.
+/// Finally, caches the head's position to @ref m_lastPos.
 void ObjectHanachanHead::calcCollisionTransform() {
     calcTransform();
 

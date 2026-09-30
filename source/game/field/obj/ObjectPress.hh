@@ -34,7 +34,7 @@ public:
 
     /// @addr{0x807787E8}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
@@ -181,7 +181,7 @@ public:
 
     /// @addr{0x8076EA20}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }

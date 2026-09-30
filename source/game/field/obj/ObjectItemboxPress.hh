@@ -56,7 +56,7 @@ public:
 
     /// @addr{0x8076E9C4}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
@@ -64,14 +64,14 @@ public:
     /// @addr{0x8076E9CC}
     /// @copybrief ObjectBase::getResources()
     /// @details Returns the resource name for the itembox.
-    /// @return The resource name for the itembox (`itembox`).
+    /// @return The resource name for the itembox, `itembox`.
     [[nodiscard]] const char *getResources() const override {
         return "itembox";
     }
 
     /// @addr{0x8076E9D8}
     /// @copybrief ObjectBase::getKclName()
-    /// @return The model name of the itembox (`itembox`).
+    /// @return The model name of the itembox, `itembox`.
     [[nodiscard]] const char *getKclName() const override {
         return "itembox";
     }

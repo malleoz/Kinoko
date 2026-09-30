@@ -9,7 +9,12 @@ namespace Kinoko::Field {
 class ObjectBeltCurveA final : public ObjectBelt {
 public:
     /// @addr{0x807FC90C}
-    /// @copydoc ObjectBelt::ObjectBelt(const System::MapdataGeoObj &)
+    /// @copybrief ObjectBelt::ObjectBelt(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
+    /// @details Sets @ref m_startForward to `true` if param setting 2 is `1`, `false` otherwise.
+    /// Sets @ref m_dirChange1Frame and @ref m_dirChange2Frame based on the number of seconds
+    /// specified by param settings 3 and 4 respectively. Finally, initialized @ref m_initRt with a
+    /// yaw of 90 degrees.
     ObjectBeltCurveA(const System::MapdataGeoObj &params)
         : ObjectBelt(params),
           m_startForward(params.setting(1) == 1),
@@ -28,15 +33,15 @@ public:
             u32 timeOffset) const override;
 
     /// @addr{0x807FCCA4}
-    /// @brief Determines whether or not the conveyer belt is moving based on its variant
+    /// @copybrief ObjectBelt::isMoving()
     /// @param variant The variant of the conveyer belt
-    /// @return Whether or not the conveyer belt is moving at the given position and variant
+    /// @return `true` if the variant is 4 or 5, `false` otherwise (does not occur in the base game)
     [[nodiscard]] bool isMoving(u32 variant, const EGG::Vector3f & /*pos*/) const override {
         return variant == 4 || variant == 5;
     }
 
 private:
-    [[nodiscard]] f32 calcDirSwitchSpeed(u32 t) const;
+    [[nodiscard]] f32 calcAngularSpeed(u32 t) const;
     [[nodiscard]] bool isMovingForward(u32 t) const;
 
     const bool m_startForward;   ///< Whether the belts start moving forward or backward

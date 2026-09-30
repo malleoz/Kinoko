@@ -22,6 +22,7 @@ Kart::Reaction ObjectCow::onCollision(Kart::KartObject *kartObj, Kart::Reaction 
 /// @addr{0x806BBF64}
 /// @brief copybrief ObjectBase::init()
 /// @details Initializes the cow's position, scale, and rotation based off the object parameters.
+/// Sets @ref m_interpRate to `0.05f`.
 void ObjectCow::init() {
     ASSERT(m_mapObj);
     setScale(m_mapObj->scale());
@@ -43,8 +44,8 @@ void ObjectCow::init() {
 /// @addr{0x806BC87C}
 /// @brief Calculates the cow's interaction with floors and walls
 /// @details If a collision is detected, the cow's position is adjusted, the floor normal is
-/// updated, and gravity is applied. If no collision is detected, the cow's upward force is set to
-/// zero.
+/// updated, and @ref m_upForce is set to counteract gravity. If no collision is detected, the cow's
+/// upward force is set to zero so that gravity will take effect.
 void ObjectCow::calcFloor() {
     constexpr f32 RADIUS = 50.0f;
     constexpr EGG::Vector3f POS_OFFSET = EGG::Vector3f(0.0f, RADIUS, 0.0f);
@@ -71,8 +72,10 @@ void ObjectCow::calcFloor() {
 /// @addr{0x806BC6D8}
 /// @brief Calculates the cow's new position based on its velocity, acceleration, and forces
 /// @details Acceleration is calculated based on the cow's tangent direction, change in tangent
-/// direction, and upward force. The velocity is then updated accordingly, floored at zero. Finally,
-/// the cow's position is adjusted based on the new velocity and @ref m_tangentAccel is cleared.
+/// direction, and upward force. Acceleration is then added to @ref m_velocity, and @ref
+/// GRAVITY_FORCE is subtracted from @ref m_velocity. Zeroes out @ref m_velocity and @ref m_xzSpeed
+/// if the cow is moving away from the tangent direction. Finally, the cow's position is adjusted
+/// based on the new velocity and @ref m_tangentAccel is cleared.
 void ObjectCow::calcPos() {
     EGG::Vector3f accel =
             m_tangent * m_tangentAccel + (m_tangent - m_prevTangent) * m_xzSpeed + m_upForce;
@@ -89,16 +92,49 @@ void ObjectCow::calcPos() {
     m_tangentAccel = 0.0f;
 }
 
+/// @addr{0x806BC124}
+/// @brief Interpolates the cow's orientation vectors towards their target directions
+/// @details Caches the previous frame's tangent to @ref m_prevTangent. Interpolates @ref m_tangent
+/// towards @ref m_targetDir with an interpolation rate of @ref m_interpRate. Interpolates @ref m_up
+/// towards @ref m_floorNrm with a fixed interpolation rate of `0.1f`. Updates the cow's
+/// transformation matrix to align with the new orientation vectors.
+void ObjectCow::interpOrientation() {
+    constexpr f32 UP_INTERP_RATE = 0.1f;
+
+    m_prevTangent = m_tangent;
+    m_tangent = Interpolate(m_interpRate, m_tangent, m_targetDir);
+
+    if (m_tangent.squaredLength() > std::numeric_limits<f32>::epsilon()) {
+        m_tangent.normalise2();
+    } else {
+        m_tangent = EGG::Vector3f::ez;
+    }
+
+    m_up = Interpolate(UP_INTERP_RATE, m_up, m_floorNrm);
+
+    if (m_up.squaredLength() > std::numeric_limits<f32>::epsilon()) {
+        m_up.normalise2();
+    } else {
+        m_up = EGG::Vector3f::ey;
+    }
+
+    setMatrixTangentTo(m_up, m_tangent);
+}
+
 /// @addr{0x806BD264}
 /// @copybrief ObjectBase::init()
-/// @details Initializes the cow leader's rail interpolator, position, target, rail speed, and state
-/// variables.
+/// @details Initializes the cow leader's rail interpolator to the start of the rail. Sets the cow's
+/// position to the rail interpolator's current position. Sets the cow's target position to `10.0f`
+/// units forward in the direction of the rail's tangent. Sets the rail speed based on param
+/// setting 2. Initializes the cow's internal state and transitions the cow to the roam state.
 void ObjectCowLeader::init() {
+    constexpr f32 TARGET_DISTANCE = 10.0f;
+
     ObjectCow::init();
     m_railInterpolator->init(0.0f, 0);
     setPos(m_railInterpolator->curPos());
 
-    setTarget(pos() + m_railInterpolator->curTangentDir() * 10.0f);
+    setTarget(pos() + m_railInterpolator->curTangentDir() * TARGET_DISTANCE);
 
     m_railInterpolator->setSpeed(static_cast<f32>(m_mapObj->setting(1)));
 
@@ -114,7 +150,7 @@ void ObjectCowLeader::init() {
 /// @copybrief ObjectBase::calc()
 /// @details If the current frame is greater than or equal to the cow's start frame, evaluate's the
 /// leader's state machine. Updates the cow's position, velocity, gravity, and floor normal.
-/// Interpolates the cow's tangent and up vectors.
+/// Interpolates the cow's orientation vectors and updates its transformation matrix accordingly.
 void ObjectCowLeader::calc() {
     u32 t = System::RaceManager::Instance()->timer();
 
@@ -124,25 +160,7 @@ void ObjectCowLeader::calc() {
 
     calcPos();
     calcFloor();
-
-    m_prevTangent = m_tangent;
-    m_tangent = Interpolate(m_interpRate, m_tangent, m_targetDir);
-
-    if (m_tangent.squaredLength() > std::numeric_limits<f32>::epsilon()) {
-        m_tangent.normalise2();
-    } else {
-        m_tangent = EGG::Vector3f::ez;
-    }
-
-    m_up = Interpolate(0.1f, m_up, m_floorNrm);
-
-    if (m_up.squaredLength() > std::numeric_limits<f32>::epsilon()) {
-        m_up.normalise2();
-    } else {
-        m_up = EGG::Vector3f::ey;
-    }
-
-    setMatrixTangentTo(m_up, m_tangent);
+    interpOrientation();
 }
 
 /// @addr{0x806BD84C}
@@ -225,7 +243,7 @@ void ObjectCowLeader::calcRoam() {
 /// @addr{0x806BE060}
 /// @copybrief ObjectBase::init()
 /// @details Initializes the cow follower by setting its initial position and orientation relative
-/// to the leader's position. Initializes the cow to the waiting state.
+/// to the leader's position offset by @ref m_posOffset. Initializes the cow to the waiting state.
 void ObjectCowFollower::init() {
     ObjectCow::init();
     addPos(m_posOffset);
@@ -258,25 +276,7 @@ void ObjectCowFollower::calc() {
 
     calcPos();
     calcFloor();
-
-    m_prevTangent = m_tangent;
-    m_tangent = Interpolate(m_interpRate, m_tangent, m_targetDir);
-
-    if (m_tangent.squaredLength() > std::numeric_limits<f32>::epsilon()) {
-        m_tangent.normalise2();
-    } else {
-        m_tangent = EGG::Vector3f::ez;
-    }
-
-    m_up = Interpolate(0.1f, m_up, m_floorNrm);
-
-    if (m_up.squaredLength() > std::numeric_limits<f32>::epsilon()) {
-        m_up.normalise2();
-    } else {
-        m_up = EGG::Vector3f::ey;
-    }
-
-    setMatrixTangentTo(m_up, m_tangent);
+    interpOrientation();
 }
 
 /// @addr{0x806BE62C}
@@ -331,8 +331,8 @@ void ObjectCowFollower::calcFreeRoam() {
         }
     }
 
-    EGG::Vector3f local_28 = m_targetPos - pos();
-    if (local_28.x * local_28.x + local_28.z * local_28.z < DIST_THRESHOLD * DIST_THRESHOLD) {
+    EGG::Vector3f dist = m_targetPos - pos();
+    if (dist.x * dist.x + dist.z * dist.z < DIST_THRESHOLD * DIST_THRESHOLD) {
         m_bStopping = true;
     }
 

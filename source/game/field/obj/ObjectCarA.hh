@@ -14,8 +14,8 @@ public:
     /// @addr{0x806B7710}
     /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
     /// @param params The parameters used to initialize the object
-    /// @details Computes the cruising speed, acceleration, and stop duration based on the provided
-    /// parameter settings.
+    /// @details Computes @ref m_finalSpeed based on param setting 1, @ref m_accel based on param
+    /// setting 2 divided by `10.0f`, and @ref m_stopDuration based on param setting 3.
     ObjectCarA(const System::MapdataGeoObj &params)
         : ObjectCollidable(params),
           StateManager(this, STATE_ENTRIES),
@@ -31,8 +31,8 @@ public:
 
     /// @addr{0x806B82CC}
     /// @copybrief ObjectBase::calc()
-    /// @details Runs the car's state machine, updates its rail, and updates its position along the
-    /// rail.
+    /// @details Evaluates the car's state machine, updates its rail, and updates its position along
+    /// the rail.
     void calc() override {
         StateManager::calc();
         calcRail();
@@ -41,14 +41,15 @@ public:
 
     /// @addr{0x806B8F44}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806B7B44}
     /// @copybrief ObjectBase::createCollision()
-    /// @details Creates a cylindrical collision object for the car.
+    /// @details Creates a cylindrical collision object for the car with radius `210.0f` and height
+    /// `200.0f`.
     void createCollision() override {
         constexpr f32 RADIUS = 210.0f;
         constexpr f32 HEIGHT = 200.0f;
@@ -71,6 +72,8 @@ private:
 
     /// @addr{0x806B8CCC}
     /// @brief Updates the rail and checks if the car is changing direction
+    /// @details Sets the rail interpolator's speed to the car's @ref m_currVel. Updates the rail
+    /// interpolator. If the car is changing direction, sets @ref m_changingDir to `true`.
     void calcRail() {
         m_railInterpolator->setSpeed(m_currVel);
 
@@ -80,8 +83,13 @@ private:
 
     /// @addr{0x806B8D3C}
     /// @brief Helper function that updates the car's position based on the rail interpolator
+    /// @details Interpolates @ref m_currUp towards world up. Updates the car's transformation
+    /// matrix accordingly, and updates the car's position to the rail interpolator's current
+    /// position.
     void calcPos() {
-        m_currUp = Interpolate(0.1f, m_currUp, EGG::Vector3f::ey);
+        constexpr f32 INTERP_RATE = 0.1f;
+
+        m_currUp = Interpolate(INTERP_RATE, m_currUp, EGG::Vector3f::ey);
         m_currUp.normalise2();
         setMatrixTangentTo(m_currUp, m_currTangent);
         setPos(m_railInterpolator->curPos());
@@ -89,22 +97,23 @@ private:
 
     /// @addr{0x806B84FC}
     /// @brief Runs once when the car has entered the stop state
-    /// @details Sets the car's velocity to 0.
+    /// @details Sets the car's @ref m_currVel to zero.
     void enterStop() {
         m_currVel = 0.0f;
     }
 
     /// @addr{0x806B8838}
     /// @brief Runs once when the car has entered the cruising state
-    /// @details Sets the car's velocity to the target cruising velocity.
+    /// @details Sets the car's @ref m_currVel to @ref m_finalSpeed.
     void enterCruising() {
         m_currVel = m_finalSpeed;
     }
 
     /// @addr{0x806B8588}
     /// @brief Runs once per frame when the car is in the stop state
-    /// @details Checks if the stop time has elapsed and transitions to the accelerating state if
-    /// necessary.
+    /// @details Checks if @ref m_stopDuration frames have elapsed and transitions to the
+    /// accelerating state if so, setting @ref m_motionState to @ref MotionState::Accelerating in
+    /// the process.
     void calcStop() {
         if (m_currentFrame > m_stopDuration) {
             m_motionState = MotionState::Accelerating;
@@ -116,8 +125,8 @@ private:
 
     /// @addr{0x806B8844}
     /// @brief Runs once per frame when the car is in the cruising state
-    /// @details Checks if the cruising time has elapsed and transitions to the decelerating state
-    /// if necessary.
+    /// @details Checks if @ref m_cruiseTime frames have elapsed and transitions to the decelerating
+    /// state if so, setting @ref m_motionState to @ref MotionState::Decelerating in the process.
     void calcCruising() {
         // We might've had decimals, better to undershoot the cruising time and handle it in decel
         if (static_cast<f32>(m_currentFrame) > m_cruiseTime - 1.0f) {
@@ -130,11 +139,11 @@ private:
     const f32 m_accel;           ///< Acceleration and deceleration rate
     const u32 m_stopDuration;    ///< How long to spend at 0 velocity before accelerating.
     f32 m_cruiseTime;            ///< How long to spend at cruising speed before decelerating.
-    EGG::Vector3f m_currTangent; ///< It's EGG::Vector3f::ey unless it flies up in the air.
-    EGG::Vector3f m_currUp;      ///< It's EGG::Vector3f::ey unless it flies up in the air.
-    f32 m_currVel;               ///< Current velocity of the car this frame
-    MotionState m_motionState;   ///< The current motion state of the car
-    bool m_changingDir;          ///< Triggers the deceleration-to-stop logic
+    EGG::Vector3f m_currTangent; ///< The current forward vector of the car
+    EGG::Vector3f m_currUp; ///< Smoothed up vector (always @ref EGG::Vector3f::ey in time trials)
+    f32 m_currVel;          ///< Current velocity of the car this frame
+    MotionState m_motionState; ///< The current motion state of the car
+    bool m_changingDir;        ///< Triggers the deceleration-to-stop logic
 
     /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 3> STATE_ENTRIES = {{

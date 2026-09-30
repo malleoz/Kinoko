@@ -7,25 +7,42 @@
 namespace Kinoko::Field {
 
 /// @brief Helper function which contains frequently re-used code. Behavior branches depending on
-/// whether it is a push (push entry in the CollisionDirector).
+/// whether it is a full or partial check (call CollisionInfo::updateFloor) or push (push entry in
+/// the @ref CollisionDirector).
+/// @tparam T The collision info object type, either @ref CollisionInfoPartial or @ref
+/// CollisionInfo.
 /// @param radius The radius of the collision sphere
 /// @param pos The current position of the object
-/// @param flags The collision flags
+/// @param mask The collision flags
 /// @param info Pointer to the collision info structure
 /// @param maskOut Pointer to the output collision flags
 /// @param timeOffset The time offset for the collision calculation
 /// @param push Whether to push a collision entry
 /// @return Whether a collision was detected
-bool ObjectAurora::checkSpherePartialImpl(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f & /*prevPos*/, KCLTypeMask flags, CollisionInfoPartial *info,
-        KCLTypeMask *maskOut, u32 timeOffset, bool push) {
-    EGG::Vector3f vel = pos - ObjectBase::pos();
-
-    if (vel.z < 0.0f || vel.z > COLLISION_SIZE.z || EGG::Mathf::abs(vel.x) > COLLISION_SIZE.x) {
+/// @details If `mask` does not include `KCL_TYPE_FLOOR`, the function will immediately return
+/// `false` without performing further collision checks. This check normally occurs after checking
+/// the kart's position relative to the wavy road, but we take creative liberty to move this check
+/// earlier as a slight performance improvement. If the kart's relative X or Z position are outside
+/// the bounds of the wavy road's collision, early returns `false`. Calls @ref calcCollision() with
+/// the current race framecount to determine if the kart collided with the wavy road, returning
+/// `false` if not. If a collision occurred, updates collision info accordingly based on whether
+/// `info` was provided, whether `info` is @ref CollisionInfo or @ref CollisionInfoPartial, whether
+/// `maskOut` was provided, and whether `push` is `true`. If the kart's relative Z position is on
+/// the last 16% of the wavy road, then treats the collision as #COL_TYPE_BOOST_RAMP, otherwise
+/// treats it as trickable #COL_TYPE_ROAD2.
+template <typename T>
+    requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
+bool ObjectAurora::checkSphereImpl(f32 radius, const EGG::Vector3f &pos,
+        const EGG::Vector3f & /*prevPos*/, KCLTypeMask mask, T *info, KCLTypeMask *maskOut,
+        u32 timeOffset, bool push) {
+    if (!(mask & KCL_TYPE_FLOOR)) {
         return false;
     }
 
-    if (!(flags & KCL_TYPE_FLOOR)) {
+    EGG::Vector3f relPos = pos - ObjectBase::pos();
+
+    if (relPos.z < 0.0f || relPos.z > COLLISION_SIZE.z ||
+            EGG::Mathf::abs(relPos.x) > COLLISION_SIZE.x) {
         return false;
     }
 
@@ -34,13 +51,17 @@ bool ObjectAurora::checkSpherePartialImpl(f32 radius, const EGG::Vector3f &pos,
     EGG::Vector3f fnrm;
     f32 dist;
 
-    if (!calcCollision(radius, vel, t, bbox, fnrm, dist)) {
+    if (!calcCollision(radius, relPos, t, bbox, fnrm, dist)) {
         return false;
     }
 
     if (info) {
         info->bbox.min = info->bbox.min.minimize(bbox);
         info->bbox.max = info->bbox.max.maximize(bbox);
+
+        if constexpr (std::is_same_v<T, CollisionInfo>) {
+            info->updateFloor(dist, fnrm);
+        }
     }
 
     if (maskOut) {
@@ -52,10 +73,10 @@ bool ObjectAurora::checkSpherePartialImpl(f32 radius, const EGG::Vector3f &pos,
             colDirector->setCurrentCollisionVariant(7);
             colDirector->setCurrentCollisionTrickable(true);
         } else {
-            *maskOut |= KCL_TYPE_BIT(COL_TYPE_ROTATING_ROAD);
+            *maskOut |= KCL_TYPE_BIT(COL_TYPE_ROAD2);
         }
 
-        if (vel.z > COLLISION_SIZE.z - 600.0f * 4.0f) {
+        if (relPos.z > COLLISION_SIZE.z - 600.0f * 4.0f) {
             if (push) {
                 colDirector->pushCollisionEntry(dist, maskOut, KCL_TYPE_BIT(COL_TYPE_BOOST_RAMP),
                         COL_TYPE_BOOST_RAMP);
@@ -66,122 +87,32 @@ bool ObjectAurora::checkSpherePartialImpl(f32 radius, const EGG::Vector3f &pos,
     }
 
     return true;
-}
-
-/// @brief Helper function which contains frequently re-used code. Behavior branches depending on
-/// whether it is a push (push entry in the CollisionDirector).
-/// @param radius The radius of the collision sphere
-/// @param pos The current position of the object
-/// @param flags The collision flags
-/// @param info Pointer to the collision info structure
-/// @param maskOut Pointer to the output collision flags
-/// @param timeOffset The time offset for the collision calculation
-/// @param push Whether to push a collision entry
-/// @return Whether a collision was detected
-bool ObjectAurora::checkSphereFullImpl(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f & /*prevPos*/, KCLTypeMask flags, CollisionInfo *info,
-        KCLTypeMask *maskOut, u32 timeOffset, bool push) {
-    EGG::Vector3f vel = pos - ObjectBase::pos();
-
-    if (vel.z < 0.0f || vel.z > COLLISION_SIZE.z || EGG::Mathf::abs(vel.x) > COLLISION_SIZE.x) {
-        return false;
-    }
-
-    if (!(flags & KCL_TYPE_FLOOR)) {
-        return false;
-    }
-
-    u32 t = timeOffset + System::RaceManager::Instance()->timer();
-    EGG::Vector3f bbox;
-    EGG::Vector3f fnrm;
-    f32 dist;
-
-    if (!calcCollision(radius, vel, t, bbox, fnrm, dist)) {
-        return false;
-    }
-
-    if (info) {
-        info->bbox.min = info->bbox.min.minimize(bbox);
-        info->bbox.max = info->bbox.max.maximize(bbox);
-
-        info->updateFloor(dist, fnrm);
-    }
-
-    if (maskOut) {
-        auto *colDirector = CollisionDirector::Instance();
-
-        if (push) {
-            colDirector->pushCollisionEntry(dist, maskOut, KCL_TYPE_BIT(COL_TYPE_ROAD2),
-                    COL_TYPE_ROAD2);
-            colDirector->setCurrentCollisionVariant(7);
-            colDirector->setCurrentCollisionTrickable(true);
-        } else {
-            *maskOut |= KCL_TYPE_BIT(COL_TYPE_ROTATING_ROAD);
-        }
-
-        if (vel.z > COLLISION_SIZE.z - 600.0f * 4.0f) {
-            if (push) {
-                colDirector->pushCollisionEntry(dist, maskOut, KCL_TYPE_BIT(COL_TYPE_BOOST_RAMP),
-                        COL_TYPE_BOOST_RAMP);
-            } else {
-                *maskOut |= KCL_TYPE_BIT(COL_TYPE_ROAD2) | KCL_TYPE_BIT(COL_TYPE_BOOST_RAMP);
-            }
-        }
-    }
-
-    return true;
-}
-
-/// @addr{0x807FAF10}
-/// @brief Based off the provided phase and time, calculates the wavy road's surface height for use
-/// in collision checks
-/// @param phase The phase of the wavy road
-/// @param t The current time
-/// @return The calculated road height
-f32 ObjectAurora::CalcRoadHeight(f32 phase, u32 t) {
-    f32 velPeriod = (F_PI * (2.0f * phase)) / COLLISION_SIZE.z;
-
-    f32 result = EGG::Mathf::SinFIdx(
-            RAD2FIDX * (velPeriod * TemporalSin(t) + F_PI * static_cast<f32>(t) / 50.0f));
-
-    return velPeriod * 80.0f * result;
-}
-
-/// @addr{0x807FAFFC}
-/// @brief Computes a sine wave as a function of time
-/// @param t The current time
-/// @return The calculated sine wave value
-f32 ObjectAurora::TemporalSin(f32 t) {
-    constexpr f32 PHASE_SHIFT_SECONDS = 30.0f;
-    constexpr f32 INITIAL_FREQUENCY = 1.0f;
-    constexpr f32 MAX_FREQUENCY = 4.0f;
-
-    f32 minsNormalized = (static_cast<f32>(t) / 60.0f - PHASE_SHIFT_SECONDS) / 60.0f;
-    return std::min(INITIAL_FREQUENCY + minsNormalized * minsNormalized, MAX_FREQUENCY);
 }
 
 /// @addr{0x807FB060}
 /// @brief Calculates the sin-like collision of the wavy road.
 /// @param radius The radius of the collision sphere
-/// @param vel The current velocity of the object
+/// @param relPos The position of the object relative to the wavy road
 /// @param time The current framecount
-/// @param pos The current position of the object (output)
-/// @param fnrm The surface normal at the collision point (output)
-/// @param dist The distance to the collision surface (output)
+/// @param bbox Out parameter for retrieving the bounding box of the collision (if any)
+/// @param fnrm Out parameter for retrieving the floor normal of the collision (if any)
+/// @param dist Out parameter for retrieving the depth of the collision (if any)
 /// @return Whether a collision was detected
-/// @details It seems to be modeled as a quadratic chirp with a starting frequency of 1 and a max
-/// frequency of 4. The minimum frequency of 1 occurs 30s into the race, and the maximum frequency
-/// occurs 2min 13s into the race. The "observed" frequency is dependent on the player's velocity
-/// towards the wavy road as well.
-bool ObjectAurora::calcCollision(f32 radius, const EGG::Vector3f &vel, u32 time, EGG::Vector3f &pos,
-        EGG::Vector3f &fnrm, f32 &dist) {
+/// @details Computes the Y position of the kart relative to the wavy road's height at time `time`.
+/// If the kart is above the wavy road or `600.0f` units below the wavy road, then returns `false`.
+/// Otherwise, a collision is occurring. If the kart is more than `300.0f` units below the wavy
+/// road, then dampens the collision depth to 20% to avoid excessive upwards snapping of the kart's
+/// position. Finally, sets `fnrm` to the world up vector, sets `dist` to the Y-axis collision
+/// depth, and sets `bbox` to `dist` in the direction of world up.
+bool ObjectAurora::calcCollision(f32 radius, const EGG::Vector3f &relPos, u32 time,
+        EGG::Vector3f &bbox, EGG::Vector3f &fnrm, f32 &dist) {
     constexpr f32 COLLISION_DISTANCE_THRESHOLD = 600.0f;
     constexpr f32 UPWARP_THRESHOLD = 300.0f;
     constexpr f32 UPWARP_DIST_SCALAR = 0.2f;
 
-    f32 result = radius - (vel.y - CalcRoadHeight(vel.z, time));
+    f32 result = radius - (relPos.y - CalcRoadHeight(relPos.z, time));
 
-    // We're not colliding if we're 600 units away or if the road is now behind us.
+    // We're not colliding if we're 600 units below or if the road is below us.
     if (result <= 0.0f || result >= COLLISION_DISTANCE_THRESHOLD) {
         return false;
     }
@@ -192,10 +123,19 @@ bool ObjectAurora::calcCollision(f32 radius, const EGG::Vector3f &vel, u32 time,
     }
 
     fnrm = EGG::Vector3f::ey;
-    pos = fnrm * result;
+    bbox = fnrm * result;
     dist = result;
 
     return true;
 }
+
+// Explicit instantiation, since callers of checkSphereImpl() live in the header and would
+// otherwise be unable to see this definition when the class's vtable is emitted.
+template bool ObjectAurora::checkSphereImpl<CollisionInfo>(f32 radius, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
+        u32 timeOffset, bool push);
+template bool ObjectAurora::checkSphereImpl<CollisionInfoPartial>(f32 radius,
+        const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask mask,
+        CollisionInfoPartial *info, KCLTypeMask *maskOut, u32 timeOffset, bool push);
 
 } // namespace Kinoko::Field

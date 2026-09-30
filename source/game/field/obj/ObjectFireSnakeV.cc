@@ -36,10 +36,9 @@ void ObjectFireSnakeV::calcSub() {
 /// @brief Runs once when the fire snake respawns
 /// @details Calls the base class implementation to handle the fire snake's initial falling
 /// behavior. Disables the fire snake's collision. Resets the fire snake's age, trajectory position,
-/// bounce direction, and fall speed.
+/// and bounce direction. In the base game, this function also calculates @ref m_fallSpeed, but its
+/// value remains constant and can be determined at the time of construction.
 void ObjectFireSnakeV::enterFalling() {
-    constexpr f32 FALL_DURATION = 140.0f;
-
     ObjectFireSnake::enterFalling();
 
     if (getUnit()) {
@@ -50,7 +49,6 @@ void ObjectFireSnakeV::enterFalling() {
     m_trajectoryPos = m_spawnPos;
     m_bounceDir = m_initRot;
     m_initPos = m_spawnPos + m_initRot * m_distFromPipe;
-    m_fallSpeed = m_distFromPipe / FALL_DURATION;
 }
 
 /// @addr{0x806C31F0}

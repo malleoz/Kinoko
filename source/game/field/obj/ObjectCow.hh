@@ -10,7 +10,7 @@ namespace Kinoko::Field {
 class RailInterpolator;
 
 /// @brief Represents a cow on Moo Moo Meadows
-/// @details The base class shared between @ref ObjectCowLeader and @ref ObjectCowFollower
+/// @details The base class shared between @ref ObjectCowLeader and @ref ObjectCowFollower.
 class ObjectCow : public ObjectCollidable {
 public:
     /// @addr{0x806BBEC0}
@@ -34,6 +34,7 @@ protected:
     virtual void calcFloor();
 
     void calcPos();
+    void interpOrientation();
 
     /// @addr{0x806BCDC4}
     /// @brief Sets the target position and direction for the cow
@@ -68,14 +69,14 @@ protected:
 
 /// @brief A cow who its own rail and whose position is not influenced by the path of the others.
 /// @details Walks from rail segmment waypoint to waypoint, stopping to eat grass along the way. The
-/// time it spends eating grass is a random number between 120 and 240 frames.
+/// time it spends eating grass is a random number of frames in the range `[120, 240]`.
 class ObjectCowLeader final : public ObjectCow, private StateManager {
     /// @brief Grants the herd class access to the leader's state
     friend class ObjectCowHerd;
 
 public:
     /// @addr{0x806BD080}
-    /// @brief Constructor
+    /// @copybrief ObjectCow::ObjectCow()
     /// @param params The parameters used to initialize the object
     ObjectCowLeader(const System::MapdataGeoObj &params)
         : ObjectCow(params),
@@ -90,7 +91,7 @@ public:
 
     /// @addr{0x806BF42C}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
@@ -104,9 +105,9 @@ private:
     };
 
     /// @addr{0x806BDCD8}
-    /// @brief Calculates the cow's velocity, gravity, and floor normal.
-    /// @details Clears the leader's upwards velocity. Applies gravity to the cow's @ref m_upForce.
-    /// Finally, computes @ref m_floorNrm to reflect the next rail point's floor normal.
+    /// @copybrief ObjectCow::calcFloor()
+    /// @details Clears the leader's upwards velocity. Sets@ref m_upForce to @ref GRAVITY_FORCE.
+    /// Finally, sets @ref m_floorNrm to the next rail point's floor normal.
     void calcFloor() override {
         m_velocity.y = 0.0f;
         m_upForce = GRAVITY_FORCE;
@@ -118,7 +119,9 @@ private:
     /// @details Sets the cow's target position based on the current rail interpolator's position
     /// and tangent direction.
     void enterWait() {
-        setTarget(m_railInterpolator->curPos() + m_railInterpolator->curTangentDir() * 10.0f);
+        constexpr f32 DISTANCE = 10.0f;
+
+        setTarget(m_railInterpolator->curPos() + m_railInterpolator->curTangentDir() * DISTANCE);
     }
 
     /// @addr{0x806BD7D8}
@@ -126,15 +129,18 @@ private:
     /// @details Initializes the cow's eating animation and sets the duration by generating a random
     /// number in the range `[120, 240]`.
     void enterEat() {
+        constexpr u32 BASE_EAT_FRAMES = 120;
+        constexpr u32 EAT_FRAMES_RANGE = 240 - BASE_EAT_FRAMES;
+
         m_eatAnmType = EatAnmType::EatST;
-        u32 rand = System::RaceManager::Instance()->random().getU32(120);
-        m_eatFrames = rand + 120;
+        u32 rand = System::RaceManager::Instance()->random().getU32(EAT_FRAMES_RANGE);
+        m_eatFrames = rand + BASE_EAT_FRAMES;
     }
 
     /// @addr{0x806BDA1C}
     /// @brief Called when the cow enters the roaming state.
-    /// @details Resets the flag indicating whether the cow has reached the end of its current rail
-    /// segment.
+    /// @details Resets @ref m_endedRailSegment to `false` to indicate that the cow has reached the
+    /// end of its current rail segment.
     void enterRoam() {
         m_endedRailSegment = false;
     }
@@ -198,7 +204,7 @@ public:
 
     /// @addr{0x806BF424}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
@@ -211,7 +217,9 @@ public:
 private:
     /// @addr{0x806BE4E8}
     /// @brief Called when the cow enters the wait state.
-    /// @details Sets the cow's wait duration and rail segment threshold using random values.
+    /// @details Sets the cow's wait duration and rail segment threshold using random values. @ref
+    /// m_waitFrames will be set in the range `[100, 160]` and @ref m_railSegThreshold will be set
+    /// in the range `[0.2f, 1.0f]`.
     void enterWait() {
         constexpr u32 BASE_WAIT_FRAMES = 100;
         constexpr u32 WAIT_FRAMES_VARIANCE = 60;
@@ -239,8 +247,8 @@ private:
 
     /// @addr{0x806BE580}
     /// @brief Called every frame while the cow is in the wait state.
-    /// @details Transitions the cow to the free roam state once the state duration is exceeded or
-    /// the cow reaches @ref m_railSegThreshold.
+    /// @details Transitions the cow to the free roam state once @ref m_waitFrames frames elapse or
+    /// the cow reaches @ref m_railSegThreshold along the rail segment.
     void calcWait() {
         if (m_currentFrame > m_waitFrames) {
             m_nextStateId = 1;
@@ -301,8 +309,8 @@ public:
 
     /// @addr{0x806BF064}
     /// @copybrief ObjectBase::calc()
-    /// @details Checks for collisions between the cows in the herd. If a follower strays too far
-    /// from the leader, it will transition to the follow state.
+    /// @details Checks for collisions between the cows in the herd. If a follower strays `4000.0f`
+    /// units away from the leader, it will transition to the follow state.
     void calc() override {
         constexpr f32 MAX_DIST = 4000.0f; // Distance at which a cow will return to its leader
 
@@ -319,7 +327,7 @@ public:
 
     /// @addr{0x806BF42C}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }

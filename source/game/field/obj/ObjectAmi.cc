@@ -79,23 +79,31 @@ bool ObjectAmi::checkSphereFullPushImpl(f32 radius, const EGG::Vector3f &pos,
 /// @brief Helper function which contains frequently re-used code. Behavior branches depending on
 /// whether it is a full or partial check (call CollisionInfo::updateFloor) or push (push entry in
 /// the CollisionDirector).
-/// @tparam T The CollisionInfo object type, either CollisionInfoPartial or CollisionInfo.
+/// @tparam T The collision info object type, either @ref CollisionInfoPartial or @ref
+/// CollisionInfo.
 /// @param radius The radius of the sphere to check
 /// @param pos The current position of the sphere to check
-/// @param flags The KCL flags to check collision against (other types are ignored)
+/// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving partial collision information (if any)
-/// @param pFlagsOut The KCL flags that were hit during the collision check (if any)
+/// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @param timeOffset Optional time delta
 /// @param push Whether to push a collision entry
 /// @return Whether a collision was detected
-/// @param push Whether to push a collision entry
+/// @details If `mask` does not include `KCL_TYPE_FLOOR`, the function will immediately return
+/// `false` without performing further collision checks. This check normally occurs after checking
+/// the kart's position relative to the net, but we take creative liberty to move this check earlier
+/// as a slight performance improvement. If the kart's Z position is outside the net's bounds, early
+/// returns `false` without performing a collision check. Calls @ref checkCollision() using the
+/// computed relative position. If a collision did not occur, returns `false`. Otherwise, updates
+/// collision information accordingly, depending on whether `info` was provided, the type of
+/// collision info object, whether `maskOut` was provided, and whethera `push` is requested.
 template <typename T>
     requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
 bool ObjectAmi::checkSphereImpl(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f & /*prevPos*/, KCLTypeMask flags, T *info, KCLTypeMask *pFlagsOut,
+        const EGG::Vector3f & /*prevPos*/, KCLTypeMask mask, T *info, KCLTypeMask *maskOut,
         u32 timeOffset, bool push) {
     // We check flags first to avoid unnecessary position posDelta computation.
-    if (!(flags & KCL_TYPE_FLOOR)) {
+    if (!(mask & KCL_TYPE_FLOOR)) {
         return false;
     }
 
@@ -124,19 +132,19 @@ bool ObjectAmi::checkSphereImpl(f32 radius, const EGG::Vector3f &pos,
         }
     }
 
-    if (pFlagsOut) {
+    if (maskOut) {
         if (push) {
             auto *colDirector = CollisionDirector::Instance();
-            colDirector->pushCollisionEntry(dist, pFlagsOut, KCL_TYPE_BIT(COL_TYPE_ROTATING_ROAD),
+            colDirector->pushCollisionEntry(dist, maskOut, KCL_TYPE_BIT(COL_TYPE_ROTATING_ROAD),
                     COL_TYPE_ROTATING_ROAD);
             colDirector->setCurrentCollisionVariant(0);
             colDirector->setCurrentCollisionTrickable(true);
         } else {
-            *pFlagsOut |= KCL_TYPE_BIT(COL_TYPE_ROTATING_ROAD);
+            *maskOut |= KCL_TYPE_BIT(COL_TYPE_ROTATING_ROAD);
         }
 
         if (posDelta.z > DIMS.z) {
-            *pFlagsOut |= KCL_TYPE_BIT(COL_TYPE_BOOST_RAMP);
+            *maskOut |= KCL_TYPE_BIT(COL_TYPE_BOOST_RAMP);
         }
     }
 
@@ -152,6 +160,13 @@ bool ObjectAmi::checkSphereImpl(f32 radius, const EGG::Vector3f &pos,
 /// @param bbox Out parameter for retrieving the bounding box of the collision (if any)
 /// @param fnrm Out parameter for retrieving the floor normal of the collision (if any)
 /// @param dist Out parameter for retrieving the depth of the collision (if any)
+/// @return `true` if a collision with the net was detected, `false` otherwise.
+/// @details If the kart's relative position along the Y-axis is above the net's surface or is
+/// `600.0f` units below the net, no collision is detected. Otherwise, the kart is considered to be
+/// colliding with the net. If the kart is more than `300.0f` units below the net, the collision
+/// depth is reduced to 20% of its original value to prevent excessive position snapping for the
+/// kart. Sets `fnrm` to the floor normal of the net's surface, `dist` based on the collision depth,
+/// and `bbox` based on `fnrm * dist`.
 bool ObjectAmi::checkCollision(f32 radius, const EGG::Vector3f &posDelta, u32 time,
         EGG::Vector3f &bbox, EGG::Vector3f &fnrm, f32 &dist) {
     constexpr EGG::Vector3f FLOOR_NORMAL = EGG::Vector3f(0.0f, 1.5f, -0.5f);

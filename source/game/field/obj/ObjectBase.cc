@@ -88,6 +88,9 @@ void ObjectBase::loadGraphics() {
 
 /// @addr{0x80820980}
 /// @brief Loads the rail interpolator for the object
+/// @details The associated rail is identified based on @ref System::MapdataGeoObj::pathId(). If the
+/// path's @ref System::MapdataPointInfo setting 1 is set to zero, then constructs a @ref
+/// RailLinearInterpolator; otherwise, constructs a @ref RailSmoothInterpolator.
 void ObjectBase::loadRail() {
     if (!m_mapObj) {
         return;
@@ -110,7 +113,7 @@ void ObjectBase::loadRail() {
 }
 
 /// @addr{0x80680784}
-/// @brief Fetches the name of the object
+/// @brief Fetches the name of the object from the @ref ObjectFlowTable
 /// @return The name of the object
 [[nodiscard]] const char *ObjectBase::getName() const {
     const auto &flowTable = ObjectDirector::Instance()->flowTable();
@@ -120,7 +123,8 @@ void ObjectBase::loadRail() {
 }
 
 /// @addr{0x806806DC}
-/// @brief Fetches the name of the KCL resource associated with the object
+/// @brief Fetches the name of the KCL resource associated with the object from the @ref
+/// ObjectFlowTable
 /// @return The name of the KCL resource associated with the object
 const char *ObjectBase::getKclName() const {
     const auto &flowTable = ObjectDirector::Instance()->flowTable();

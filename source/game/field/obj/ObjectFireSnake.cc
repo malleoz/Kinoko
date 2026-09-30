@@ -8,9 +8,10 @@ namespace Kinoko::Field {
 /// @addr{0x806C0F30}
 /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 /// @param params The parameters used to initialize the object
-/// @details Registers the fire snake as a managed object, assuming that a @ref
-/// ObjectProjectileLauncher has already been registered as a managed object. This effectively
-/// enabled DS Desert Hills fire snakes to be registered as managed objects due to the existence of
+/// @details Caches the firesnake's initial position to @ref m_initPos, and sets the firesnake's
+/// lifetime based on param setting 2. Registers the fire snake as a managed object, assuming that a
+/// @ref ObjectProjectileLauncher has already been registered as a managed object. This effectively
+/// enables DS Desert Hills fire snakes to be registered as managed objects due to the existence of
 /// @ref ObjectSunDS, whereas Grumble Volcano fire snakes will not be registered as managed objects.
 /// Also constructs two @ref ObjectFireSnakeKid follower objects. Their scale is set relative to the
 /// fire snake's scale.
@@ -23,7 +24,7 @@ ObjectFireSnake::ObjectFireSnake(const System::MapdataGeoObj &params)
         registerManagedObject();
     }
 
-    for (u32 i = 0; i < 2; ++i) {
+    for (size_t i = 0; i < m_kids.size(); ++i) {
         auto *&kid = m_kids[i];
         kid = EGG::egg_new<ObjectFireSnakeKid>(params);
         kid->load();
@@ -37,8 +38,9 @@ ObjectFireSnake::ObjectFireSnake(const System::MapdataGeoObj &params)
 /// @addr{0x806C23C8}
 /// @brief Callback function called by the managing @ref ObjectSunDS.
 /// @param pos The initial spawn position for the fire snake
-/// @details Calculates the XZ distance between the spawn position and the initial landing position,
-/// and sets up the fall direction, speed, and duration accordingly.
+/// @details Sets @ref m_spawnPos based on the provided `pos`. Calculates the XZ distance between
+/// the spawn position and the initial landing position, and sets up the fall direction, speed, and
+/// duration accordingly.
 void ObjectFireSnake::initProjectile(const EGG::Vector3f &pos) {
     m_spawnPos = pos;
 
@@ -59,17 +61,17 @@ void ObjectFireSnake::initProjectile(const EGG::Vector3f &pos) {
 /// @brief Runs once after landing from a jump
 /// @details If the fire snake strays farther than `1000.0f` units away from its initial landing
 /// position, adjusts @ref m_bounceDir to point back towards the initial landing position.
-/// Otherwise, applies a random fluctuation to the bounce direction in the range `[0.0f, 45.0f]`
-/// with a 50% random chance of flipping the resulting direction.
+/// Otherwise, applies a random fluctuation to the bounce direction in the range `[-45.0f, 45.0f]`
+/// degrees, with a 50% random chance of flipping the resulting direction.
 void ObjectFireSnake::enterRest() {
-    constexpr f32 XZ_RANGE = 1000.0f * 1000.0f;
+    constexpr f32 XZ_DIST_SQ = 1000.0f * 1000.0f;
 
     // If it strays too far from original position, start bouncing the opposite direction
-    if (m_trajectoryPos.sqDistance(m_initPos) >= XZ_RANGE) {
+    if (m_trajectoryPos.sqDistance(m_initPos) >= XZ_DIST_SQ) {
         m_bounceDir = m_initPos - m_trajectoryPos;
         m_bounceDir.normalise2();
     } else {
-        // 45 degree random fluctuation, with a 50% chance to flip direction
+        // 90 degree random fluctuation, with a 50% chance to flip direction
         auto &rand = System::RaceManager::Instance()->random();
         f32 angle = rand.getF32(90.0f) - 45.0f;
 
@@ -119,9 +121,9 @@ void ObjectFireSnake::calcFalling() {
 
 /// @addr{0x806C2138}
 /// @brief Runs every frame while the fire snake is in between jumps
-/// @details If the fire snake has been resting for at least @ref REST_DURATION frames, it
-/// transitions to the bouncing state. Updates the fire snake's transform and interpolates its
-/// transform's tangent towards the bounce direction.
+/// @details If the fire snake has been resting for at least `30` frames, it transitions to the
+/// bouncing state. Regardless, updates the fire snake's transform and interpolates its transform's
+/// tangent towards the bounce direction.
 void ObjectFireSnake::calcRest() {
     constexpr u32 REST_DURATION = 30;
     constexpr f32 TANGENT_INTERP_FACTOR = 0.3f;
@@ -139,10 +141,12 @@ void ObjectFireSnake::calcRest() {
 }
 
 /// @addr{0x806C2530}
-/// @brief Runs every frame. Updates the children positions and enables/disables their collision
+/// @brief Runs every frame. Updates the children's positions and enables/disables their collision
 /// @details Children's positions are set based off previous transform matrices of the parent. The
 /// first child takes on the matrix from 10 frames ago, and the second child takes on the matrix
-/// from 20 frames ago.
+/// from 20 frames ago. The first child's collision is loaded once 10 frames have elapsed and the
+/// second child's collision is loaded once 20 frames have elapsed. If the firesnake has despawned
+/// this frame, then both children's collision is disabled.
 void ObjectFireSnake::calcChildren() {
     // Shift all matrices up by one index
     for (size_t i = m_prevTransforms.size() - 1; i > 0; --i) {
@@ -179,9 +183,9 @@ void ObjectFireSnake::calcChildren() {
 /// @brief Helper function since high and regular bounce functions only vary by initial velocity.
 /// @param initialVel The initial upwards velocity for the bounce.
 /// @details Updates the trajectory position based on the initial velocity and the bounce direction.
-/// If at least 10 frames have passed, collision checks are performed to determine if the fire snake
+/// If at least 10 frames have passed, a collision check is performed to determine if the fire snake
 /// has hit a floor or wall. If so, the fire snake enters the rest state. Finally, updates the fire
-/// snake to @ref m_trajectoryPos.
+/// snake's position to @ref m_trajectoryPos.
 void ObjectFireSnake::calcBounce(f32 initialVel) {
     // Collision checks only occur after 10 frames in the bounce state.
     constexpr u32 BOUNCE_COL_CHECK_DELAY = 10;

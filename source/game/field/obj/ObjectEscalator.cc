@@ -15,18 +15,13 @@ ObjectEscalator::ObjectEscalator(const System::MapdataGeoObj &params, bool rever
       m_initialPos(pos()),
       m_stillFrames(
               {static_cast<s32>(params.setting(2)) * 60, static_cast<s32>(params.setting(4)) * 60}),
-      m_speed({(reverse ? -1.0f : 1.0f) *
-                      (0.15f * static_cast<f32>(static_cast<s16>(params.setting(1))) / 100.0f),
-              (reverse ? -1.0f : 1.0f) *
-                      (0.15f * static_cast<f32>(static_cast<s16>(params.setting(3))) / 100.0f),
-              (reverse ? -1.0f : 1.0f) *
-                      (0.15f * static_cast<f32>(static_cast<s16>(params.setting(5))) / 100.0f)}),
+      m_speed(InitSpeed(params, reverse)),
       m_checkColYPosMax(m_initialPos.y + MAX_HEIGHT_OFFSET),
       m_checkColYPosMin(m_initialPos.y + MIN_HEIGHT_OFFSET),
       m_stopFrames({static_cast<f32>(m_stillFrames[0]) - REVERSE_FRAMES_F32,
               static_cast<f32>(m_stillFrames[1]) - REVERSE_FRAMES_F32}),
-      m_startFrames({static_cast<f32>(m_stillFrames[0]) + STANDSTILL_FRAMES,
-              static_cast<f32>(m_stillFrames[1]) + STANDSTILL_FRAMES}),
+      m_startFrames({static_cast<f32>(m_stillFrames[0]) + STILL_FRAMES,
+              static_cast<f32>(m_stillFrames[1]) + STILL_FRAMES}),
       m_fullSpeedFrames(
               {REVERSE_FRAMES_F32 + m_startFrames[0], REVERSE_FRAMES_F32 + m_startFrames[1]}),
       m_midDuration(m_stopFrames[1] - m_fullSpeedFrames[0]) {
@@ -41,11 +36,12 @@ ObjectEscalator::ObjectEscalator(const System::MapdataGeoObj &params, bool rever
 
 /// @addr{0x808011CC}
 /// @copydoc ObjectKCL::checkCollision()
-/// @details Updates the escalator's transform. If the player is outside of the range `[@ref
-/// m_checkColYPosMin, @ref m_checkColYPosMax]`, then early returns and does not perform any
-/// collision checks. Dispatches to the @ref ObjColMgr to check for collision between the player and
-/// the escalator. If found, sets the moving road velocity and distance to @ref CollisionInfo and
-/// returns `true`, otherwise returns `false`.
+/// @details Updates the escalator's @ref ObjColMgr transform. If the player is outside of the range
+/// `[@ref m_checkColYPosMin, @ref m_checkColYPosMax]`, then early returns `false` and does not
+/// perform any collision checks. Dispatches to the @ref ObjColMgr to check for collision between
+/// the player and the escalator. If a collision occurred with #COL_TYPE_MOVING_ROAD, sets the
+/// moving road velocity and distance to `info` and returns `true`, otherwise returns
+/// `false`.
 bool ObjectEscalator::checkCollision(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
         u32 timeOffset) {
@@ -84,8 +80,9 @@ bool ObjectEscalator::checkCollision(f32 radius, const EGG::Vector3f &pos,
 /// @details Updates the escalator's transform. If the player is outside of the range `[@ref
 /// m_checkColYPosMin, @ref m_checkColYPosMax]`, then early returns and does not perform any
 /// collision checks. Dispatches to the @ref ObjColMgr to check for collision between the player and
-/// the escalator using the cached prism data. If found, sets the moving road velocity and distance
-/// to @ref CollisionInfo and returns `true`, otherwise returns `false`.
+/// the escalator using the cached prism data. If a collision occurred with #COL_TYPE_MOVING_ROAD,
+/// sets the moving road velocity and distance to `info` and returns `true`, otherwise
+/// returns `false`.
 bool ObjectEscalator::checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
         u32 timeOffset) {
@@ -122,6 +119,7 @@ bool ObjectEscalator::checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
 /// @addr{0x80800ABC}
 /// @brief Evaluates a piecewise function to calculate a wrapped step count.
 /// @param t The current frame used to evaluate the wrapped step count.
+/// @return The wrapped step count of the escalator at the given frame `t`.
 /// @details The escalator's geometry repeats every 20 steps / 200 units, so this function computes
 /// a displacement modulo 200. This is the analytical integral of the piecewise-linear speed profile
 /// from
@@ -236,6 +234,7 @@ f32 ObjectEscalator::calcWrappedStepCount(s32 t) {
 /// @addr{0x80800FBC}
 /// @brief Calculates the speed of the escalator at a given time t
 /// @param t The current frame used to evaluate the speed.
+/// @return The speed of the escalator at the given frame `t`.
 /// @details This is the derivative of the position function @ref calcWrappedStepCount() integrates.
 /// @par Piecewise Speed Function
 /// Using the same symbols as @ref calcWrappedStepCount(): \f$v_0, v_1, v_2\f$ are @ref m_speed,

@@ -27,6 +27,8 @@ public:
 
     /// @addr{0x8077EBB8}
     /// @copybrief ObjectBase::calcCollisionTransform()
+    /// @details Sets the collision transform by offsetting the box's position upwards by half its
+    /// width.
     void calcCollisionTransform() override {
         constexpr f32 HALF_SIZE = 100.0f;
         constexpr EGG::Vector3f POS_OFFSET = EGG::Vector3f(0.0f, HALF_SIZE, 0.0f);

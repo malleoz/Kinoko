@@ -589,7 +589,7 @@ public:
     void setPadType(PadType type) {
         m_padType = type;
     }
-    
+
     /// @endSetters
 
     /// @beginGetters
@@ -804,7 +804,7 @@ protected:
     f32 m_kclWheelSpeedFactor; ///< The slowest speed multiplier of each wheel's floor collision
     f32 m_kclWheelRotFactor;   ///< The slowest rotation multiplier of each wheel's floor collision
     u16 m_floorCollisionCount; ///< The number of tires colliding with the floor
-    s32 m_hopStickX;           ///< The direction of an active hop (-1, 0, or 1)
+    s32 m_hopStickX;           ///< The direction of an active hop (-1 for right, 0, or 1 for left)
     s32 m_hopFrame;            ///< A timer that prevents subsequent hops until reset
     EGG::Vector3f m_hopUp;     ///< The up vector when beginning a drift hop
     EGG::Vector3f m_hopDir;    ///< The direction vector when beginning a drift hop
@@ -981,7 +981,7 @@ public:
     void calcWheelieInput();
 
     /// @beginGetters
-    
+
     /// @addr{0x805896BC}
     /// @copybrief KartMove::leanRot()
     [[nodiscard]] f32 leanRot() const override {

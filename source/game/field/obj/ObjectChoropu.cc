@@ -91,9 +91,10 @@ void ObjectChoropu::init() {
 
 /// @addr{0x806B9E60}
 /// @copybrief ObjectBase::calc()
-/// @details If the mole hasn't spawned yet, then returns early. If the mole moves along a rail,
-/// then calculates @ref m_railMat. Evaluates the mole's state machine. Finally, resets the X and Z
-/// component of the hole scale to `1.0f`.
+/// @details If the mole hasn't spawned yet (which is the case when the race duration is below `@ref
+/// m_startFrameOffset + 300`), then returns early. If the mole moves along a rail, then calculates
+/// @ref m_railMat. Evaluates the mole's state machine. Finally, resets the X and Z component of the
+/// hole scale to `1.0f`.
 void ObjectChoropu::calc() {
     constexpr u32 START_DELAY = 300;
 
@@ -256,7 +257,7 @@ void ObjectChoropu::calcJumping() {
 /// @brief Calculates the position and orientation of the dirt trail behind the monty moles on MMM
 /// @details Dirt objects that lie beyond the dirt trail length have their collision disabled. As
 /// the monty mole moves and the dirt trail length increases, the dirt objects are repositioned and
-/// additional dirt objects will have their collision enabled.
+/// re-scaled and additional dirt objects will have their collision enabled.
 void ObjectChoropu::calcGroundObjs() {
     size_t idx =
             std::min(static_cast<size_t>(m_groundLength / m_groundHeight) + 1, m_groundObjs.size());

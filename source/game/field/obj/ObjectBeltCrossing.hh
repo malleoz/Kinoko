@@ -10,7 +10,8 @@ namespace Kinoko::Field {
 class ObjectBeltCrossing final : public ObjectBelt {
 public:
     /// @addr{0x807FC764}
-    /// @copydoc ObjectBelt::ObjectBelt(const System::MapdataGeoObj &)
+    /// @copybrief ObjectBelt::ObjectBelt(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
     /// @details Initializes road velocity to `28.0f`.
     ObjectBeltCrossing(const System::MapdataGeoObj &params) : ObjectBelt(params) {
         m_roadVel = 28.0f;
@@ -24,6 +25,8 @@ public:
     /// @brief Calculates the conveyer belt's velocity at a given position based on its variant
     /// @param variant The variant of the conveyer belt
     /// @return The velocity of the conveyer belt at the given position and variant
+    /// @details The magnitude of velocity is @ref m_roadVel. The direction is determined by the
+    /// variant, with variant 0 moving to the west and variant 1 moving to the east.
     [[nodiscard]] EGG::Vector3f calcRoadVelocity(u32 variant, const EGG::Vector3f & /*pos*/,
             u32 /*timeOffset*/) const override {
         switch (variant) {
@@ -37,9 +40,9 @@ public:
     }
 
     /// @addr{0x807FC874}
-    /// @brief Determines whether or not the conveyer belt is moving based on its variant
+    /// @copybrief ObjectBelt::isMoving()
     /// @param variant The variant of the conveyer belt
-    /// @return Whether or not the conveyer belt is moving at the given position and variant
+    /// @return `true` if the variant is 0 or 1, `false` otherwise (does not occur in the base game)
     [[nodiscard]] bool isMoving(u32 variant, const EGG::Vector3f & /*pos*/) const override {
         return variant == 0 || variant == 1;
     }

@@ -20,7 +20,7 @@ public:
 
     /// @addr{0x80808858}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
@@ -189,24 +189,36 @@ private:
             EGG::Vector3f &bbox, EGG::Vector3f &fnrm, f32 &dist);
 
     /// @addr{0x80808220}
-    /// @brief Based off the provided phase and time, calculates the net surface height for use in
-    /// collision checks
-    [[nodiscard]] static f32 calcNetHeight(f32 phase, u32 t) {
+    /// @brief Based off the provided Z-axis position offset and time, calculates the net surface
+    /// height for use in collision checks
+    /// @param relPosZ The kart's position along the Z-axis relative to the middle of the net
+    /// @param t The current time used to calculate the net height
+    /// @return The net surface height at the given Z-axis position and time
+    /// @details The net height is computed based on a spatial sine wave along the Z-axis and a
+    /// temporal sine wave over time.
+    [[nodiscard]] static f32 calcNetHeight(f32 relPosZ, u32 t) {
         constexpr f32 Z_SLOPE = 910.0f;
 
-        f32 zPhase = F_PI * (2.0f * phase) / DIMS.z;
+        f32 zPhase = F_PI * (2.0f * relPosZ) / DIMS.z;
         return SpatialSin(zPhase) * TemporalSin(t) - Z_SLOPE * zPhase;
     }
 
     /// @addr{0x80808578}
     /// @brief Computes a spatial sine wave as a function of the z-axis phase.
-    /// @details The behavior is such that the net bounce is the most extreme when in the middle of
-    /// the net and dampened as you approach the beginning or end along the z-axis.
+    /// @param phase The phase along the z-axis used to calculate the spatial sine wave.
+    /// @return The value of the spatial sine wave at the given phase.
+    /// @details The sine wave has an amplitude of `550.0f`. The overall behavior is such that the
+    /// net bounce is the most extreme when in the middle of the net and dampened as you approach
+    /// the beginning or end along the z-axis.
     [[nodiscard]] static f32 SpatialSin(f32 phase) {
-        return 550.0f * EGG::Mathf::SinFIdx(RAD2FIDX * (phase * 0.5f));
+        constexpr f32 AMPLITUDE = 550.0f;
+
+        return AMPLITUDE * EGG::Mathf::SinFIdx(RAD2FIDX * (phase * 0.5f));
     }
 
-    /// @brief Computes a sine wave as a function of time.
+    /// @brief Computes a temporal sine wave as a function of time.
+    /// @param t The current time used to calculate the temporal sine wave.
+    /// @return The value of the temporal sine wave at the given time.
     /// @details This computes the up/down motion of the net, with a period of 70 frames.
     [[nodiscard]] static f32 TemporalSin(u32 t) {
         return EGG::Mathf::SinFIdx(RAD2FIDX * (F_PI * static_cast<f32>(t) / 35.0f));

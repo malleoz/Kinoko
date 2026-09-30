@@ -10,7 +10,7 @@ namespace Kinoko::Field {
 /// @addr{0x8081F0A0}
 /// @copybrief ObjectBase::load()
 /// @details This function loads the graphical assets, animations, collision object(s), and rail for
-/// the collidable object. It also registers the object with the @refObjectDirector.
+/// the collidable object. It also registers the object with the @ref ObjectDirector.
 void ObjectCollidable::load() {
     loadGraphics();
     loadAnims();
@@ -73,9 +73,9 @@ void ObjectCollidable::processKartReactions(Kart::KartObject *kartObj,
 /// @addr{0x8081F224}
 /// @copybrief ObjectBase::createCollision()
 /// @details References the object's @ref SObjectCollisionSet::mode to determine what type of object
-/// to create. It is either a sphere, cylinder, or box collision object. In the base game, this
-/// function is a no-op for objects having collision mode 0. To better catch instances where an
-/// object may have overridden this function, we instead #PANIC.
+/// to create. It is either a sphere, cylinder, or box collision object.
+/// @note In the base game, this function is a no-op for objects having collision mode 0. To better
+/// catch instances where an object may have overridden this function, we instead #PANIC.
 void ObjectCollidable::createCollision() {
     const auto &flowTable = ObjectDirector::Instance()->flowTable();
     const auto *collisionSet = flowTable.set(flowTable.slot(id()));

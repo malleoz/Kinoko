@@ -11,6 +11,7 @@ class ObjectCrane final : public ObjectKCL {
 public:
     /// @addr{0x807FE658}
     /// @copybrief ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
+    /// @param params The parameters used to initialize the object
     /// @details Caches the object's initial position to @ref m_initPos. Sets @ref m_xPeriod and
     /// @ref m_yPeriod as the maxiumum between `2` and param setting 2 and param setting 5
     /// respectively. Sets @ref m_xAmplitude and @ref m_yAmplitude based on param setting 3 and
@@ -63,14 +64,14 @@ public:
 
     /// @addr{0x807FEB20}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x807FEAF0}
     /// @copybrief ObjectKCL::colRadiusAdditionalLength()
-    /// @return The x-axis amplitude of the crane's oscillation
+    /// @return The x-axis amplitude of the crane's oscillation, @ref m_xAmplitude
     [[nodiscard]] f32 colRadiusAdditionalLength() const override {
         return m_xAmplitude;
     }

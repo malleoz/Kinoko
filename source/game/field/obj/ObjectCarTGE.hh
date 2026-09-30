@@ -8,10 +8,10 @@ namespace Kinoko::Field {
 class ObjectHighwayManager;
 
 /// @brief Represents a vehicle (car, truck, or bomb car) on Moonview Highway
-/// @details Interfaces with a @ref ObjectHighwayManager to enforce a squish cooldown for the
-/// player. Bomb cars are not present in Time Trial mode and are thus not implemented in Kinoko.
-/// Each vehicle has two GJK collision primitives in order for the collision detection to better
-/// reflect the shape of the vehicle.
+/// @details Interfaces with @ref ObjectHighwayManager to enforce a squish cooldown for the player.
+/// Bomb cars are not present in Time Trial mode and are thus not implemented in Kinoko. Each
+/// vehicle has two GJK collision primitives in order for the collision detection to better reflect
+/// the shape of the vehicle.
 class ObjectCarTGE final : public ObjectCollidable, private StateManager {
 public:
     /// @brief The type of vehicle represented by the object
@@ -33,13 +33,15 @@ public:
 
     /// @addr{0x806D6ECC}
     /// @copybrief ObjectBase::calc()
-    /// @details Evaluates the car's state machine and rail, updating its @ref m_nextStateId and
-    /// position to reflect the current state of the car.
+    /// @details Evaluates the car's state machine and updates the rail interpolator. Calls @ref
+    /// calcState() to determine if the car should transition to a different state. Updates the
+    /// car's position along the rail via @ref calcPos(). Finally, resets @ref m_hasAuxCollision to
+    /// `false`.
     void calc() override {
         StateManager::calc();
 
         if (m_railInterpolator->calc() == RailInterpolator::Status::SegmentEnd) {
-            calcStateFromRailPointSetting();
+            calcState();
         }
 
         calcPos();
@@ -49,7 +51,7 @@ public:
 
     /// @addr{0x806DA7AC}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
@@ -57,14 +59,14 @@ public:
     /// @addr{0x806D68B0}
     /// @copybrief ObjectBase::getResources()
     /// @details Returns the resource name of the car variant
-    /// @return The resource name of the car variant
+    /// @return The resource name of the car variant, @ref m_carName
     [[nodiscard]] const char *getResources() const override {
         return m_carName;
     }
 
     /// @addr{0x806DA7A4}
     /// @copybrief ObjectBase::getKclName()
-    /// @return The model name of the car variant
+    /// @return The model name of the car variant, @ref m_mdlName
     [[nodiscard]] const char *getKclName() const override {
         return m_mdlName;
     }
@@ -105,7 +107,8 @@ public:
 
     /// @addr{0x806D7CF8}
     /// @copydoc ObjectCollidable::collisionCenter()
-    /// @details The center of the car's collision volume is based on its type.
+    /// @details The center of the car's collision volume is based on its type. Normal cars have an
+    /// upwards offset of `100.0f` units, whereas trucks have an upwards offset of `300.0f` units.
     [[nodiscard]] const EGG::Vector3f &collisionCenter() const override {
         static constexpr EGG::Vector3f CENTER_TRUCK = EGG::Vector3f(0.0f, 300.0f, 0.0f);
         static constexpr EGG::Vector3f CENTER_NORMAL = EGG::Vector3f(0.0f, 100.0f, 0.0f);
@@ -136,7 +139,7 @@ public:
     void reset() {
         m_squashed = false;
     }
-    
+
     /// @endSetters
 
     /// @beginGetters
@@ -154,43 +157,51 @@ private:
     static constexpr f32 TOLL_BOOTH_ACCEL = 200.0f;
 
     /// @addr{0x806D7D70}
-    /// @brief Runs once per frame when cars are speeding up
-    /// @details On Moonview Highway, the speed cap (@ref m_highwayVel) is 70. Since this function
-    /// increases speed by 200 units per frame, this means this state is only executed for 1 frame
-    /// when cars get on the highway.
+    /// @brief Runs once per frame when cars are speeding up when getting on the highway
+    /// @details Increases @ref m_currSpeed by @ref TOLL_BOOTH_ACCEL. Once @ref m_currSpeed reaches
+    /// @ref m_highwaySpeed, it's clamped to @ref m_highwaySpeed and transitions to the cruising
+    /// state. Regardless, sets the rail interpolator's speed to the updated @ref m_currSpeed and
+    /// sets @ref m_vel by scaling the rail interpolator's current tangent direction by @ref
+    /// m_currSpeed.
     void calcSpeedup() {
         m_currSpeed += TOLL_BOOTH_ACCEL;
 
-        if (m_currSpeed > m_highwayVel) {
-            m_currSpeed = m_highwayVel;
+        if (m_currSpeed > m_highwaySpeed) {
+            m_currSpeed = m_highwaySpeed;
             m_nextStateId = 0;
         }
 
         m_railInterpolator->setSpeed(m_currSpeed);
-        m_scaledTangentDir = m_railInterpolator->curTangentDir() * m_currSpeed;
+        m_vel = m_railInterpolator->curTangentDir() * m_currSpeed;
     }
 
     /// @addr{0x806D7E0C}
-    /// @brief The state when cars are slowing down.
-    /// @details On Moonview Highway, the speed floor m_localVel is 40, which means this state is
-    /// only executed for 1 frame when cars get off the highway.
+    /// @brief Runs every frame when the car is slowing down after getting off the highway
+    /// @details Decreases @ref m_currSpeed by @ref TOLL_BOOTH_ACCEL. Once @ref m_currSpeed reaches
+    /// @ref m_localSpeed, it's clamped to @ref m_localSpeed and transitions to the cruising state.
+    /// Regardless, sets the rail interpolator's speed to the updated @ref m_currSpeed and sets @ref
+    /// m_vel by scaling the rail interpolator's current tangent direction by @ref m_currSpeed.
     void calcSlowdown() {
         m_currSpeed -= TOLL_BOOTH_ACCEL;
 
-        if (m_currSpeed < m_localVel) {
-            m_currSpeed = m_localVel;
+        if (m_currSpeed < m_localSpeed) {
+            m_currSpeed = m_localSpeed;
             m_nextStateId = 0;
         }
 
         m_railInterpolator->setSpeed(m_currSpeed);
-        m_scaledTangentDir = m_railInterpolator->curTangentDir() * m_currSpeed;
+        m_vel = m_railInterpolator->curTangentDir() * m_currSpeed;
     }
 
     void calcPos();
 
     /// @addr{0x806D9504}
     /// @brief Checks if the car should speed up or slow down based off the rail point's settings
-    void calcStateFromRailPointSetting() {
+    /// @details For each point along the rail, setting 2 is used to specify whether it is a highway
+    /// point (1) or a local road point (0). Based on the current and next rail point settings,
+    /// transitions the car to the appropriate state (or does nothing if the road type has not
+    /// changed).
+    void calcState() {
         u16 curPointSpeedSetting = m_railInterpolator->curPoint().setting[1];
         u16 nextPointSpeedSetting = m_railInterpolator->nextPoint().setting[1];
 
@@ -203,13 +214,13 @@ private:
 
     const ObjectHighwayManager *m_highwayMgr; ///< Manager that handles squish cooldowns
     ObjectCollisionBase *m_auxCollision; ///< Secondary collision cylinder for more accurate shape
-    const f32 m_highwayVel;              ///< Speed while on the highway
-    const f32 m_localVel;                ///< Speed while off the highway
+    const f32 m_highwaySpeed;            ///< Speed while on the highway
+    const f32 m_localSpeed;              ///< Speed while off the highway
     char m_carName[32];                  ///< Resource (.brres) name
     char m_mdlName[32];                  ///< Model/KCL name
     CarType m_carType;                   ///< Car, truck, or bomb car
     ObjectId m_dummyId;                  ///< Dummy id (CarBody or KartTruck) used for hit reaction
-    EGG::Vector3f m_scaledTangentDir;    ///< %Rail tangent scaled by current speed
+    EGG::Vector3f m_vel;                 ///< %Rail tangent scaled by current speed
     f32 m_currSpeed;                     ///< Current speed of the vehicle along the rail
     EGG::Vector3f m_up;                  ///< Smoothed up vector
     EGG::Vector3f m_tangent;             ///< Smoothed forward direction along the rail

@@ -21,7 +21,7 @@ public:
 
     /// @addr{0x806C2B60}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
@@ -77,7 +77,7 @@ public:
 
     /// @addr{0x806C2A5C}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
@@ -157,7 +157,6 @@ protected:
     EGG::Vector3f m_trajectoryPos; ///< True position used for physics, not affected by spiral fall
     EGG::Vector3f m_bounceDir;     ///< Direction of current bounce
     u16 m_age;                     ///< How long the firesnake has been spawned
-    u16 m_delayFrame;              ///< Initial delay before state lifecycle starts
 
 private:
     void calcBounce(f32 initialVel);

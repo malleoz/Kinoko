@@ -11,8 +11,8 @@ public:
     /// @addr{0x806B5C84}
     /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
     /// @param params The parameters used to initialize the object
-    /// @details Uses setting 8 to determine if collisions with the bat should result in a larger
-    /// bump effect.
+    /// @details Uses param setting 8 to determine if collisions with the bat should result in a
+    /// larger bump effect.
     ObjectBasabasaDummy(const System::MapdataGeoObj &params)
         : ObjectCollidable(params),
           StateManager(this, STATE_ENTRIES),
@@ -28,7 +28,7 @@ public:
 
     /// @addr{0x806B602C}
     /// @copybrief ObjectBase::calc()
-    /// @details Per-frame calculating are managed entirely by the @ref StateManager
+    /// @details Simply evaluates the bat's state machine.
     void calc() override {
         StateManager::calc();
     }
@@ -115,13 +115,13 @@ public:
 
     /// @brief Exposes the range of initial X positions so the dummy can access it
     /// @return The range of initial X positions for the bats
-    [[nodiscard]] static f32 initialXRange() {
+    [[nodiscard]] static f32 InitialXRange() {
         return s_initialXRange;
     }
 
     /// @brief Exposes the range of initial Y positions so the dummy can access it
     /// @return The range of initial Y positions for the bats
-    [[nodiscard]] static f32 initialYRange() {
+    [[nodiscard]] static f32 InitialYRange() {
         return s_initialYRange;
     }
 

@@ -11,9 +11,9 @@ namespace Kinoko::Field {
 class ObjectChoropuGround;
 class ObjectChoropuHoll;
 
-/// @brief Represents the MMM and rPG monty moles.
-/// @details Each mole has an associated "holl" [sic]. Moles which move around (MMM) also have an
-/// associated "ground" (the dirt trail).
+/// @brief Represents the Moo Moo Meadows and DS Peach Gardens monty moles.
+/// @details Each mole has an associated @ref ObjectChoropuHoll that it pops out from. Moles which
+/// move around (MMM) also have an associated @ref ObjectChoropuGround (the dirt trail).
 class ObjectChoropu final : public ObjectCollidable, private StateManager {
 public:
     ObjectChoropu(const System::MapdataGeoObj &params);
@@ -27,7 +27,7 @@ public:
 
     /// @addr{0x806BBE34}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
@@ -48,6 +48,8 @@ private:
 
     /// @addr{0x806BB39C}
     /// @brief Runs once when the mole jumps out of its hole
+    /// @details Enables collision for the mole. Sets its position based on whether it
+    /// is stationary or on a rail, and sets its roll to zero.
     void enterJumping() {
         enableCollision();
 
@@ -61,6 +63,10 @@ private:
 
     /// @addr{0x806BBA7C}
     /// @brief Calculates the total length of the dirt trail behind the monty moles on MMM
+    /// @details The ground length increases based off how fast the mole is traveling, which is
+    /// represented by the rail interpolator's current speed. If @ref m_groundLength exceeds @ref
+    /// MAX_GROUND_LEN, it is clamped to one unit below the maximum. Finally, calls @ref
+    /// calcGroundObjs() to update the position of the dirt trail objects.
     void calcGround() {
         m_groundLength += m_railInterpolator->getCurrSpeed();
         if (m_groundLength > MAX_GROUND_LEN) {
@@ -74,6 +80,10 @@ private:
 
     /// @addr{0x806B46F8}
     /// @brief Calculates position and rotation along the bezier curve of the rail at a given t
+    /// @param t The parameter along the bezier curve of the rail at which to calculate the pose of
+    /// the mole.
+    /// @return The interpolated rotation and translation matrix at the given `t` along the bezier
+    /// curve.
     [[nodiscard]] EGG::Matrix34f calcInterpolatedPose(f32 t) const {
         EGG::Vector3f curDir;
         EGG::Vector3f curTanDir;
@@ -84,7 +94,8 @@ private:
     }
 
     /// @addr{0x806BBB14}
-    /// @brief Calculates the current height of the mole in its parabolic jump curve
+    /// @brief Calculates the current height offset of the mole in its parabolic jump curve
+    /// @return The height offset of the mole in its parabolic jump curve.
     /// @details Follows a parabolic trajectory defined by
     /// \f$ y = -1.35t^2 + 65.0t \f$
     /// where \f$t\f$ is the current frame of the jump.
@@ -132,7 +143,7 @@ public:
 
     /// @addr{0x806BBEB0}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
@@ -151,6 +162,9 @@ public:
 
     /// @addr{0x806B9274}
     /// @brief Sets the ground object's transformation matrix based off of the provided pose
+    /// @param height The height to scale the ground segment to
+    /// @param mat The transformation matrix to base the ground segment's position and orientation
+    /// on
     void calcPosAndMat(f32 height, const EGG::Matrix34f &mat) {
         EGG::Matrix34f matTemp;
         SetRotTangentHorizontal(matTemp, mat.base(2), EGG::Vector3f::ey);
@@ -159,9 +173,15 @@ public:
         setTransform(matTemp);
     }
 
+    /// @beginGetters
+
+    /// @brief Gets the current height of the dirt trail segment
+    /// @return The current height of the dirt trail segment
     [[nodiscard]] f32 height() const {
         return m_height;
     }
+
+    /// @endGetters
 
 private:
     f32 m_height; ///< Height of the dirt trail segment. Used to space out segments.
@@ -181,6 +201,7 @@ public:
 
     /// @addr{0x806B94A0}
     /// @copybrief ObjectBase::init()
+    /// @details Resizes the hole object's @ref BoxColUnit to have a radius of @ref RADIUS.
     void init() override {
         resize(RADIUS, 0.0f);
     }
@@ -194,7 +215,7 @@ public:
 
     /// @addr{0x806BBE64}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
@@ -208,6 +229,7 @@ public:
 
     /// @addr{0x806B9428}
     /// @copybrief ObjectBase::createCollision()
+    /// @details Create a stationary collision sphere with radius @ref RADIUS.
     void createCollision() override {
         m_collision = EGG::egg_new<ObjectCollisionSphere>(RADIUS, EGG::Vector3f::zero);
     }

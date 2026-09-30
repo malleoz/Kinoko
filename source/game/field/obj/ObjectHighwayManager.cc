@@ -10,9 +10,9 @@ namespace Kinoko::Field {
 /// @pre All @ref ObjectCarTGE objects must be constructed and registered to the vector of managed
 /// objects in @ref ObjectDirector. Otherwise, their squash cooldowns will act independently of
 /// other cars.
-/// @details Counts the number of managed cars and trucks and sizes @ref m_cars accordingly. For
-/// each of these managed cars/trucks, caches a pointer to that object and sets its highway manager
-/// to this instance.
+/// @details Constructs the object named `HighwayManager`. Counts the number of managed cars and
+/// trucks and sizes @ref m_cars accordingly. For each of these managed cars/trucks, caches a
+/// pointer to that object and sets its highway manager to this instance.
 ObjectHighwayManager::ObjectHighwayManager()
     : ObjectCollidable("HighwayManager", EGG::Vector3f::zero, EGG::Vector3f::ez,
               EGG::Vector3f::unit) {

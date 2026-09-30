@@ -12,17 +12,17 @@ class ObjectFireSnakeV final : public ObjectFireSnake {
 public:
     /// @addr{0x806C2B70}
     /// @copydoc ObjectFireSnake::ObjectFireSnake(const System::MapdataGeoObj &)
-    /// @details Sets @ref m_cycleDuration based on param setting 2, @ref m_distFromPipe based on
-    /// param setting 3, and @ref m_delayFrame from param setting 1. Sets @ref m_spawnPos to the
+    /// @details Sets @ref m_delayFrame from param setting 1, @ref m_cycleDuration based on param
+    /// setting 2, and @ref m_distFromPipe based on param setting 3. Sets @ref m_spawnPos to the
     /// object's position. Updates the fire snake's transform and calculates its initial rotation
     /// and landing position.
     ObjectFireSnakeV(const System::MapdataGeoObj &params)
         : StateManager(this, STATE_ENTRIES),
           ObjectFireSnake(params),
+          m_delayFrame(params.setting(0)),
           m_cycleDuration(params.setting(1)),
           m_distFromPipe(static_cast<f32>(params.setting(2))),
-          m_fallSpeed(0.0f) {
-        m_delayFrame = params.setting(0);
+          m_fallSpeed(m_distFromPipe / SPAWN_FALL_DURATION) {
         m_spawnPos = pos();
 
         calcTransform();
@@ -40,7 +40,7 @@ public:
     /// @details The fire snake starts despawned. Even though @ref m_nextStateId is set to the
     /// falling state, the state machine will not actually run in @ref calcSub() until @ref
     /// m_delayFrame frames have elapsed. Sets @ref m_trajectoryPos to the fire snake's spawn
-    /// position and initializes the @ref m_bounceDir of the fire snake.
+    /// position and sets @ref m_bounceDir to @ref m_initRot.
     void init() override {
         m_nextStateId = 1;
         ObjectFireSnake::enterDespawned();
@@ -113,15 +113,19 @@ private:
             {StateEntry<ObjectFireSnakeV, nullptr, nullptr>(5)},
     }};
 
+    const u16 m_delayFrame;    ///< Initial delay before state lifecycle starts
     const u16 m_cycleDuration; ///< Number of frames between two fire snake spawns
     const f32 m_distFromPipe;  ///< Distance from spawn position to the landing position
-    f32 m_fallSpeed;           ///< XZ speed of the fire snake after spawning and before landing
+    const f32 m_fallSpeed;     ///< XZ speed of the fire snake after spawning and before landing
 
     static constexpr f32 RADIUS = 130.0f; ///< Collision radius of the fire snake
     static constexpr f32 GRAVITY = 3.0f;  ///< Gravity applied during spawn and the first bounce
 
     /// @brief How many frames the snake falls before starting to check against floor collision
     static constexpr u32 COL_CHECK_DELAY_FRAMES = 10;
+
+    /// @brief How many frames the fire snake falls when spawning from the pipe
+    static constexpr f32 SPAWN_FALL_DURATION = 140.0f;
 };
 
 } // namespace Kinoko::Field

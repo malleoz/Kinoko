@@ -1,15 +1,19 @@
 #pragma once
 
+#include "game/field/CollisionDirector.hh"
 #include "game/field/obj/ObjectCollidable.hh"
+
+#include "game/kart/KartCollide.hh"
 
 namespace Kinoko::Field {
 
 /// @brief Represents a pipe, like on SNES Mario Circuit 3
 /// @details Pipes act like walls in time trials.
-/// @note An interesting oddity of pipe behavior is that they stay at he param's position until they
-/// are sent airborne regardless of whether or not they are colliding with the floor. Once they fly
-/// airbone due to a kart colliding with the pipe while in a Mega Mushroom or Start, they will fly
-/// up and fall downward until they collide with a floor.
+/// @note An interesting oddity of pipe behavior is that they stay at the initial position defined
+/// by the @ref System::MapdataGeoObj params until they are sent airborne, regardless of whether or
+/// not they are colliding with the floor. Once they fly airbone due to a collision with a kart in a
+/// Mega Mushroom or Star, they will fly up and fall downward below their initial position until
+/// they collide with a floor.
 class ObjectDokan final : public ObjectCollidable {
 public:
     /// @addr{0x807787F0}
@@ -23,7 +27,7 @@ public:
 
     /// @addr{0x80778830}
     /// @copybrief ObjectBase::init()
-    /// @details Sets @ref m_isAirborne to `false`, ensuring the pipe starts on the ground.
+    /// @details Sets @ref m_isAirborne to `false`.
     void init() override {
         m_isAirborne = false;
     }
@@ -45,7 +49,7 @@ public:
 
     /// @addr{0x80778FE4}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
@@ -67,14 +71,25 @@ public:
         }
     }
 
-    Kart::Reaction onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
-            Kart::Reaction reactionOnObj, EGG::Vector3f &hitDepth) override;
+    /// @addr{0x80778C0C}
+    /// @copybrief ObjectCollidable::onCollision()
+    /// @param reactionOnKart The reaction that should be applied to the kart upon collision
+    /// @param reactionOnObj The reaction that should be applied to the object upon collision
+    /// @return For time trials, always returns @ref Kart::Reaction::Wall3.
+    Kart::Reaction onCollision(Kart::KartObject * /*kartObj*/, Kart::Reaction reactionOnKart,
+            Kart::Reaction reactionOnObj, EGG::Vector3f & /*hitDepth*/) override {
+        if (reactionOnObj == Kart::Reaction::UNK_3 || reactionOnObj == Kart::Reaction::UNK_5) {
+            tryStartAirborne();
+        }
+
+        return reactionOnKart;
+    }
 
 private:
     /// @addr{0x8077894C}
     /// @brief Applies gravity to velocity and updates position accordingly
     /// @details Gravity applies a `2.0f` unit downward acceleration to the pipe's velocity each
-    /// frame.
+    /// frame. Updates position accordingly.
     void calcPos() {
         constexpr f32 GRAVITY = 2.0f;
 
@@ -82,7 +97,35 @@ private:
         addPos(m_velocity);
     }
 
-    void calcFloor();
+    /// @addr{0x807789BC}
+    /// @brief Performs a collision check against the floor to stop the pipe if it's falling
+    /// @details If the pipe is colliding with the floor, then flips the direction of the pipe's
+    /// velocity and dampens it by a factor of `0.2f`. If the pipe's velocity `2.0f`, then @ref
+    /// m_isAirborne is reset to `false`.
+    void calcFloor() {
+        constexpr f32 PIPE_RADIUS = 100.0f;
+        constexpr f32 PIPE_SQRT_RADIUS = 10.0f;
+        constexpr f32 DAMPEN_FACTOR = 0.2f;
+
+        CollisionInfo colInfo;
+        EGG::Vector3f colPos = pos();
+        colPos.y += PIPE_RADIUS;
+        KCLTypeMask typeMask;
+
+        if (!CollisionDirector::Instance()->checkSphereFull(PIPE_RADIUS, colPos, EGG::Vector3f::inf,
+                    KCL_TYPE_64EBDFFF, &colInfo, &typeMask, 0)) {
+            return;
+        }
+
+        addPos(EGG::Vector3f(0.0f, colInfo.tangentOff.y, 0.0f));
+
+        if (typeMask & KCL_TYPE_FLOOR) {
+            m_velocity.y *= -DAMPEN_FACTOR;
+            if (m_velocity.length() < DAMPEN_FACTOR * PIPE_SQRT_RADIUS) {
+                m_isAirborne = false;
+            }
+        }
+    }
 
     /// @addr{0x80778BA0}
     /// @brief If the pipe is not already airborne, induces upwards velocity

@@ -108,6 +108,8 @@ public:
         return EGG::Vector3f::zero;
     }
 
+    /// @beginGetters
+
     /// @addr{0x80573518}
     /// @brief Gets a pointer to the GJK collision object
     /// @return A pointer to the @ref ObjectCollisionBase GJK collision object
@@ -117,12 +119,14 @@ public:
         return m_collision;
     }
 
+    /// @endGetters
+
 protected:
     void createCollision() override;
 
     /// @addr{0x806816B8}
     /// @brief Defines a local center for the GJK collision object
-    /// @return The local center of the GJK collision object
+    /// @return The local center of the GJK collision object, defaulted to @ref EGG::Vector3f::zero.
     [[nodiscard]] virtual const EGG::Vector3f &collisionCenter() const {
         return EGG::Vector3f::zero;
     }

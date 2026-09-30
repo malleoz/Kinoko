@@ -69,7 +69,7 @@ public:
 
     /// @addr{0x80807DAC}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
@@ -77,7 +77,7 @@ public:
     /// @addr{0x80807D8C}
     /// @copybrief ObjectBase::getKclName()
     /// @details Loads the KCL for the corresponding light or dark variant
-    /// @return The model name of the mushroom (`kinoko_r` for light, `kinoko_d_r` for dark)
+    /// @return The model name of the mushroom, `kinoko_r` for light, `kinoko_d_r` for dark.
     [[nodiscard]] const char *getKclName() const override {
         return m_type == KinokoType::Light ? "kinoko_r" : "kinoko_d_r";
     }
@@ -143,7 +143,7 @@ public:
     /// @copybrief ObjectBase::getKclName()
     /// @details The base game does check for the light type, however since m_type never gets set
     /// it'll always be 0 which means it always returns "kinoko_r"
-    /// @return The model name of the mushroom (`kinoko_r`)
+    /// @return The model name of the mushroom, `kinoko_r`
     [[nodiscard]] const char *getKclName() const override {
         return "kinoko_r";
     }
@@ -221,7 +221,7 @@ public:
 
     /// @addr{0x80827A74}
     /// @copybrief ObjectBase::getKclName()
-    /// @return The model name of the mushroom (`kinoko_g` for light, `kinoko_d_g` for dark)
+    /// @return The model name of the mushroom, `kinoko_g` for light, `kinoko_d_g` for dark.
     [[nodiscard]] const char *getKclName() const override {
         return m_type == KinokoType::Light ? "kinoko_g" : "kinoko_d_g";
     }

@@ -8,8 +8,10 @@ namespace Kinoko::Field {
 /// @brief The individual minecarts that spawn from the @ref ObjectTruckWagon spawner
 /// @details Carts are toggled active or inactive by the @ref ObjectTruckWagon spawner object. When
 /// they are active, they move along a rail. In the base game, they start by rolling along the
-/// ground. Once they reach the fork at the end of the mine, they get picked up and move along the
-/// rail while suspended mid-air.
+/// ground. When they are between rail nodes 3 and 4, they diverge from the rail's vertical position
+/// in order to simulate falling near the spawner on Wario's Gold Mine. Once they reach the fork at
+/// the end of the mine on Wario's Gold Mine, they get picked up and move along the rail while
+/// suspended mid-air.
 class ObjectTruckWagonCart final : public ObjectCollidable, private StateManager {
 public:
     /// @addr{0x806DFE9C}
@@ -55,7 +57,7 @@ public:
 
     /// @addr{0x806E2744}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
@@ -151,7 +153,8 @@ private:
     /// @details Evaluates the rail interpolator for the current frame. If the minecart has reached
     /// the end of a rail segment, calls @ref checkRailPointState() to see if the mincart should
     /// transition from/to the rolling/suspended state. Otherwise, if the minecart has reached the
-    /// end of the rail, calls @ref deactivate() to despawn the minecart. Regardless, updates @ref m_vel to reflect the rail's current velocity
+    /// end of the rail, calls @ref deactivate() to despawn the minecart. Regardless, updates @ref
+    /// m_vel to reflect the rail's current velocity
     void calcRailAndVel() {
         switch (m_railInterpolator->calc()) {
         case RailInterpolator::Status::SegmentEnd:
@@ -188,7 +191,7 @@ private:
 
 /// @brief The "spawner" for minecarts on Wario's Gold Mine.
 /// @details Each cycle represents two minecart spawns. The first cart spawns at the start of the
-/// cycle, the second cart spawns at @ref m_spawn2Frame, and the cycle ends at @ref m_cycleDuration.
+/// cycle, the second cart spawns at @ref m_spawn2Frame, and the cycle ends at @ref m_spawn1Frame.
 /// @ref m_curCartIdx keeps track of which ObjectTruckWagonCart object is spawning next.
 class ObjectTruckWagon final : public ObjectCollidable {
 public:
@@ -227,10 +230,10 @@ public:
 
 private:
     owning_span<ObjectTruckWagonCart *> m_carts; ///< Pointers to each cart that spawns
-    const s32 m_spawn2Frame;   ///< Frame that the second minecart in a cycle spawns
-    const s32 m_cycleDuration; ///< Total duration of a cycle
-    s32 m_cycleFrame;          ///< Current frame modulo cycle duration
-    s32 m_curCartIdx;          ///< Index into @ref m_carts representing the next cart to spawn
+    const s32 m_spawn2Frame; ///< Frame delay before the second minecart in a cycle spawns
+    const s32 m_spawn1Frame; ///< Frame delay before the first minecart spawns, ending the cycle
+    s32 m_cycleFrame;        ///< Current frame modulo cycle duration
+    s32 m_curCartIdx;        ///< Index into @ref m_carts representing the next cart to spawn
 };
 
 } // namespace Kinoko::Field

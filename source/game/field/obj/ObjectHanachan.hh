@@ -20,7 +20,7 @@ public:
     ~HanachanChainManager() = default;
 
     /// @addr{0x806F3370}
-    /// @brief Initializes all SphereLink objects in the chain
+    /// @brief Initializes all @ref SphereLink objects in the chain
     void init() {
         for (auto &link : m_links) {
             link.init();
@@ -121,14 +121,14 @@ public:
 
     /// @addr{0x806CCAD0}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806CCB88}
     /// @copybrief ObjectBase::getKclName()
-    /// @return The model name of the Wiggler head (`hanachan`)
+    /// @return The model name of the Wiggler head, `hanachan`
     [[nodiscard]] const char *getKclName() const override {
         return "hanachan";
     }
@@ -174,8 +174,8 @@ public:
 
     /// @addr{0x806C818C}
     /// @copybrief ObjectBase::createCollision()
-    /// @details Creates a collision sphere for the head segment with a radius of `150` units,
-    /// centered at the collision center.
+    /// @details Creates a collision sphere for the head segment with a radius of `150.0f` units,
+    /// centered at @ref collisionCenter().
     void createCollision() override {
         m_collision = EGG::egg_new<ObjectCollisionSphere>(150.0f, collisionCenter());
     }
@@ -224,8 +224,8 @@ public:
 
     /// @addr{0x806CCB80}
     /// @copybrief ObjectBase::getKclName()
-    /// @return The model name of the Wiggler body segment (`hanachan_body1`, `hanachan_body2`,
-    /// `hanachan_body3`, or `hanachan_body4`)
+    /// @return The model name of the Wiggler body segment, `hanachan_body1`, `hanachan_body2`,
+    /// `hanachan_body3`, or `hanachan_body4`.
     [[nodiscard]] const char *getKclName() const override {
         return m_mdlName;
     }
@@ -271,7 +271,7 @@ public:
 
     /// @addr{0x806CC9FC}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }

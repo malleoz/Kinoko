@@ -15,9 +15,10 @@ public:
     /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
     /// @param params The parameters used to initialize the object
     /// Constructs and loads the required number of @ref ObjectFireball objects based on
-    /// param setting 1. Computes and caches the distance from the fire ring and angle about the
-    /// ring's rotation axis for each @ref ObjectFireball. Finally, Computes the axis of rotation
-    /// for the fire ring and its initial tangent direction.
+    /// param setting 1, sets @ref m_angSpeed based on param setting 2, and @ref m_pulseAmplitude
+    /// based on param setting 3 times `0.1f`. For each @ref ObjectFireball, computes and caches the
+    /// distance from the fire ring and angle about the ring's rotation axis. Finally, Computes the
+    /// axis of rotation for the fire ring and its initial tangent direction.
     ObjectFireRing(const System::MapdataGeoObj &params)
         : ObjectCollidable(params),
           m_fireballs(std::max<u32>(1, params.setting(0))),
@@ -78,7 +79,7 @@ public:
 
     /// @addr{0x80768740}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }

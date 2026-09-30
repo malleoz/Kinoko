@@ -8,6 +8,10 @@
 namespace Kinoko::Field {
 
 /// @brief Lava eruptions without any hump (@ref ObjectFlamePoleFoot) like on N64 Bowser's Castle
+/// @details Flamepoles have an initial delay framecount defined by @ref m_initDelay, an overall
+/// cycle duration of @ref m_cycleDuration, lay dormant for @ref m_dormantFrames, erupt for @ref
+/// ERUPT_FRAMES, and fall for @ref FALL_FRAMES. Their maximum height varies depending on whether
+/// this object's name is `FlamePole_v` or `FlamePole_v_big`.
 class ObjectFlamePoleV final : public ObjectCollidable, private StateManager {
 public:
     /// @addr{0x806C3AA4}
@@ -98,7 +102,7 @@ public:
 
     /// @addr{0x806C4898}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
@@ -106,14 +110,14 @@ public:
     /// @addr{0x806C488C}
     /// @copybrief ObjectBase::getResources()
     /// @details Returns the resource name for the vertical flame pole.
-    /// @return The resource name for the vertical flame pole (`FlamePole_v`).
+    /// @return The resource name for the vertical flame pole, `FlamePole_v`.
     [[nodiscard]] const char *getResources() const override {
         return "FlamePole_v";
     }
 
     /// @addr{0x806C4880}
     /// @copybrief ObjectBase::getKclName()
-    /// @return The model name of the vertical flame pole (`FlamePoleEff`)
+    /// @return The model name of the vertical flame pole, `FlamePoleEff`
     [[nodiscard]] const char *getKclName() const override {
         return "FlamePoleEff";
     }
@@ -230,12 +234,11 @@ private:
     /// @addr{0x806B5A0C}
     /// @brief Computes @ref m_initEruptingVel and @ref m_eruptionDecel such that it takes @ref
     /// ERUPT_FRAMES frames to reach an eruption of @ref m_maxOffsetY height
-    /// @details Derived from the kinematic equations \f$y(t) = v_0 t - \frac12 a t^2\f$ and
-    ///          \f$v(t) = v_0 - a t\f$. At the peak, \f$v(t) = 0\f$, so \f$a = v_0 / t\f$,
-    ///          which reduces the displacement equation to \f$y(t) = \frac12 v_0 t\f$.
-    ///          Solving for \f$v_0\f$ with \f$y(t) = \text{maxHeight}\f$ gives
-    ///          \f$v_0 = 2 \cdot \text{maxHeight} / t\f$, and substituting back into
-    ///          \f$a = v_0 / t\f$ gives \f$a = v_0^2 / (2 \cdot \text{maxHeight})\f$.
+    /// @details Derived from the kinematic equations \f$y(t) = v_0 t - \frac12 a t^2\f$ and \f$v(t)
+    /// = v_0 - a t\f$. At the peak, \f$v(t) = 0\f$, so \f$a = v_0 / t\f$, which reduces the
+    /// displacement equation to \f$y(t) = \frac12 v_0 t\f$. Solving for \f$v_0\f$ with \f$y(t) =
+    /// \text{maxHeight}\f$ gives \f$v_0 = 2 \cdot \text{maxHeight} / t\f$, and substituting back
+    /// into \f$a = v_0 / t\f$ gives \f$a = v_0^2 / (2 \cdot \text{maxHeight})\f$.
     void InitEruptionKinematics() {
         f32 doublePeak = 2.0f * m_maxOffsetY;
         m_initEruptingVel = doublePeak / ERUPT_FRAMES;
@@ -258,8 +261,8 @@ private:
     /// @brief Duration of the erupted state, cached in Kinoko to avoid recomputation in @ref
     /// calcErupted()
     /// @details Rathern than populating this duration directly from a param setting, the base game
-    /// instead derives the erupted duration by "filling in the gap" between all other state
-    /// durations and the total @ref m_cycleDuration.
+    /// instead derives the erupted duration by filling in the gap between all other state durations
+    /// and the total @ref m_cycleDuration.
     const u32 m_eruptedDuration;
 
     static constexpr f32 ERUPT_FRAMES = 60.0f;        ///< Frames it takes to raise to max height

@@ -20,14 +20,14 @@ public:
 
     /// @addr{0x80768728}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x8076871C}
     /// @copybrief ObjectBase::getKclName()
-    /// @return The model name of the fireball (`fireBPlane`)
+    /// @return The model name of the fireball, `fireBPlane`
     [[nodiscard]] const char *getKclName() const override {
         return "fireBPlane";
     }
@@ -40,14 +40,12 @@ public:
         m_distance = dist;
     }
 
-    /// @brief Sets the angle in degrees of the fireball around the axis of rotation of the parent
-    /// object
-    /// @param angle The angle in degrees of the fireball around the axis of rotation of the parent
-    /// object
+    /// @brief Sets the angle of the fireball around the axis of rotation of the parent object
+    /// @param angle The fireball's angle in degrees around the parent object's axis of rotation
     void setAngle(f32 angle) {
         m_angle = angle;
     }
-    
+
     /// @endSetters
 
     /// @beginGetters
@@ -58,10 +56,8 @@ public:
         return m_distance;
     }
 
-    /// @brief Gets the angle in degrees of the fireball around the axis of rotation of the parent
-    /// object
-    /// @return The angle in degrees of the fireball around the axis of rotation of the parent
-    /// object
+    /// @brief Gets the angle of the fireball around the axis of rotation of the parent object
+    /// @return The fireball's angle in degrees around the parent's axis of rotation
     [[nodiscard]] f32 angle() const {
         return m_angle;
     }

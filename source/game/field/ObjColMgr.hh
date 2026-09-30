@@ -9,7 +9,7 @@ namespace Kinoko::Field {
 /// order to allow for dynamically sized objects. Parses tris from an object's KCL file so that
 /// collision queries can be performed against the object's KCL tris. Queries can be performed for
 /// both a point and a sphere. Some queries will cache the result in the @ref CollisionDirector
-/// collision entry cache. This class also stores a KCL scale factor so that object collision
+/// collision entry cache. This class also stores a KCL scale factor so that the object collision
 /// queries can map local space collision info to world space in order to compensate for dynamically
 /// sized objects (such as the Bowser's Castle geysers, represented by @ref ObjectFlamePoleFoot).
 class ObjColMgr {

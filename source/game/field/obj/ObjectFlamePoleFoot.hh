@@ -14,8 +14,8 @@ class ObjectFlamePole;
  * @return An array containing the start frames for each of the six states
  * @relates ObjectFlamePoleFoot
  * @details We extract this logic to a helper function in Kinoko since the frame boundaries can be
- *determined at compile-time. Let \f$t\f$ be @ref m_cycleFrame and \f$s_i\f$ be @ref STATE_STARTS
- *"STATE_STARTS[i]". Then
+ * determined at compile-time. Let \f$t\f$ be @ref m_cycleFrame and \f$s_i\f$ be @ref STATE_STARTS
+ * "STATE_STARTS[i]". Then
  * \f[
  * \text{stateId}(t) =
  * \begin{cases}
@@ -78,7 +78,7 @@ public:
     ObjectFlamePoleFoot(const System::MapdataGeoObj &params);
 
     /// @addr{0x8067EBE0}
-    /// @brief Default virtual destructor
+    /// @brief Virtual destructor that clears @ref s_flamePoleCount.
     ~ObjectFlamePoleFoot() override {
         s_flamePoleCount = 0;
     }
@@ -103,7 +103,7 @@ public:
 
     /// @addr{0x80681590}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }

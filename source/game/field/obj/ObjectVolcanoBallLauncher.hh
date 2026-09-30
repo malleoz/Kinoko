@@ -13,14 +13,17 @@ class ObjectVolcanoBall;
 class ObjectVolcanoBallLauncher final : public ObjectCollidable {
 public:
     ObjectVolcanoBallLauncher(const System::MapdataGeoObj &params);
-    ~ObjectVolcanoBallLauncher() override;
+
+    /// @addr{0x806E384C}
+    /// @brief Default virtual destructor
+    ~ObjectVolcanoBallLauncher() override = default;
 
     void init() override;
     void calc() override;
 
     /// @addr{0x806E3A74}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     };

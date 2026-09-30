@@ -27,7 +27,7 @@ typedef bool (
 /// so that collision queries can be performed against the course KCL tris. Queries can be performed
 /// for both a point and a sphere. Some queries will cache the result in the @ref
 /// CollisionDirector's collision entry cache. This class also stores a KCL scale factor that is
-/// passed into queries so that object collision queries that are forwarded to @ref CourseColMgr can
+/// passed into queries so that the object collision queries that are forwarded to @ref CourseColMgr can
 /// compensate for dynamically sized objects (such as the Bowser's Castle geysers, represented by
 /// @ref ObjectFlamePoleFoot).
 class CourseColMgr : EGG::Disposer {

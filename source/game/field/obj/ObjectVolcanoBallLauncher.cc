@@ -10,9 +10,11 @@ namespace Kinoko::Field {
 /// @addr{0x806E3458}
 /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 /// @param params The parameters used to initialize the object
-/// @details Solves the kinematic equation to determine the time it takes a fireball to land, using
-/// the velocity specified by param setting 1 and the rail points. Constructs @ref ObjectVolcanoBall
-/// objects which this launcher instance will manage.
+/// @details Sets @ref m_initDelay based on param setting 2 and @ref m_cycleDuration based on param
+/// setting 3. Solves the kinematic equation to determine the time it takes a fireball to land,
+/// using the velocity specified by param setting 1 and the change in height between the first rail
+/// point and the highest rail point. Constructs and loads @ref ObjectVolcanoBall objects which this
+/// launcher instance will manage. Finally, initializes the launcher to inactive.
 ObjectVolcanoBallLauncher::ObjectVolcanoBallLauncher(const System::MapdataGeoObj &params)
     : ObjectCollidable(params),
       m_initDelay(static_cast<f32>(static_cast<s16>(params.setting(1)))),
@@ -57,10 +59,6 @@ ObjectVolcanoBallLauncher::ObjectVolcanoBallLauncher(const System::MapdataGeoObj
     m_active = false;
 }
 
-/// @addr{0x806E384C}
-/// @brief Default virtual destructor
-ObjectVolcanoBallLauncher::~ObjectVolcanoBallLauncher() = default;
-
 /// @addr{0x806E388C}
 /// @copybrief ObjectBase::init()
 /// @details Initializes all managed fireballs and sets the index of the next fireball to be
@@ -76,7 +74,10 @@ void ObjectVolcanoBallLauncher::init() {
 
 /// @addr{0x806E3920}
 /// @copybrief ObjectBase::calc()
-/// @details Launches fireballs according to the current race timer.
+/// @details If the launcher is inactive, then checks to see if @ref m_initDelay frames have elapsed
+/// in the race. If so, transitions the first fireball to the falling state and sets @ref m_active
+/// to `true`. Otherwise if the launcher is already active, then checks to see if the cycle duration
+/// has elapsed and launches the next fireball accordingly.
 void ObjectVolcanoBallLauncher::calc() {
     u32 t = System::RaceManager::Instance()->timer();
 

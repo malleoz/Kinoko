@@ -38,43 +38,20 @@ public:
 
     /// @addr{0x807FE5E8}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x807FE4FC}
     /// @copybrief ObjectKCL::colRadiusAdditionalLength()
-    /// @return The amplitude of the bulldozer's oscillation.
+    /// @return The amplitude of the bulldozer's oscillation, @ref m_amplitude.
     [[nodiscard]] f32 colRadiusAdditionalLength() const override {
         return static_cast<f32>(m_amplitude);
     }
 
     void initCollision() override;
-
     [[nodiscard]] const EGG::Matrix34f &getUpdatedMatrix(u32 timeOffset) override;
-
-    /// @addr{0x807FE03C}
-    /// @copydoc ObjectKCL::checkCollision()
-    [[nodiscard]] bool checkCollision(f32 radius, const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override {
-        update(timeOffset);
-        calcScale(timeOffset);
-
-        return m_objColMgr->checkSphereFullPush(radius, pos, prevPos, mask, info, maskOut);
-    }
-
-    /// @addr{0x807FE2CC}
-    /// @copydoc ObjectKCL::checkCollisionCached()
-    [[nodiscard]] bool checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override {
-        update(timeOffset);
-        calcScale(timeOffset);
-
-        return m_objColMgr->checkSphereCachedFullPush(radius, pos, prevPos, mask, info, maskOut);
-    }
 
     [[nodiscard]] f32 calcPosOffset(u32 t) const;
 

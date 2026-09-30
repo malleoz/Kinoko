@@ -14,16 +14,16 @@ namespace Kinoko::Field {
 /// @details Objects maintain position, rotation, and scale vectors. Position and scale are combined
 /// into a 3x4 transformation matrix via calcTransform(). Each object manages its own BoxColUnit (if
 /// it has collision) and optional rail interpolator. The class provides lifecycle hooks
-/// (init/calc/load/createCollision) implemented by subclasses and virtual methods for
-/// collision/resource management.
+/// (@ref init() / @ref calc() / @ref load() / @ref createCollision()) implemented by subclasses and
+/// virtual methods for collision/resource management.
 class ObjectBase {
 public:
     /// @brief Tracks what properties have changed and require recalculation in the transform matrix
     enum class eFlags {
-        Position = 0,
-        Rotation = 1,
-        Matrix = 2,
-        Scale = 3,
+        Position = 0, ///< The object's position has changed
+        Rotation = 1, ///< The object's rotation has changed
+        Matrix = 2,   ///< The object's transformation matrix has changed
+        Scale = 3,    ///< The object's scale has changed
     };
 
     /// @brief A bitfield of @ref eFlags that represents the state of the object
@@ -55,22 +55,24 @@ public:
     /// @brief Run once during race initialization
     virtual void init() {}
 
-    /// @brief Runs once per frame if the calc flag is set in loadFlags()
+    /// @brief Runs once per frame if the calc flag is set in @ref loadFlags()
     virtual void calc() {}
 
     /// @addr{0x808217B8}
     /// @brief Updates the object's model
+    /// @details The base implementation simply calls @ref calcTransform().
     virtual void calcModel() {
         calcTransform();
     }
 
-    /// @brief Loads resources, collision, and registers the object to the ObjectDirector
+    /// @brief Loads resources, collision, and registers the object to the @ref ObjectDirector
     virtual void load() = 0;
 
     [[nodiscard]] virtual const char *getResources() const;
     virtual void loadGraphics();
 
-    /// @brief Links associated animations from the object's resource file to the DrawMdl, if any
+    /// @brief Links associated animations from the object's resource file to the @ref
+    /// Render::DrawMdl, if any
     virtual void loadAnims() {}
 
     /// @brief Creates a collision object that inherits from @ref ObjectCollisionBase
@@ -157,7 +159,7 @@ public:
 
     /// @addr{0x80572574}
     /// @brief Fetches the unique identifier of the object
-    /// @return The unique identifier of the object
+    /// @return The unique identifier of the object, @ref m_id
     [[nodiscard]] virtual ObjectId id() const {
         return m_id;
     }
@@ -237,13 +239,13 @@ public:
         m_transform = mat;
         m_pos = mat.base(3);
     }
-    
+
     /// @endSetters
 
     /// @beginGetters
 
     /// @brief Gets the @ref RailInterpolator associated with the object
-    /// @return The @RailInterpolator for the object
+    /// @return The @ref RailInterpolator for the object
     [[nodiscard]] const RailInterpolator *railInterpolator() const {
         return m_railInterpolator;
     }
@@ -327,7 +329,7 @@ private:
     Flags m_flags;              ///< The properties of the transform matrix to be recalculated
     EGG::Vector3f m_pos;        ///< The position of the object
     EGG::Vector3f m_scale;      ///< The scale of the object
-    EGG::Vector3f m_rot;        ///< The rotation of the object
+    EGG::Vector3f m_rot;        ///< The rotation of the object (in radians)
     bool m_rotUpdated;          ///< Whether @ref m_rot is up-to-date
     EGG::Matrix34f m_transform; ///< The 3x4 matrix representing the object's position and rotation
 };

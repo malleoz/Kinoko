@@ -19,7 +19,7 @@ public:
 
     /// @addr{0x807FD79C}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
@@ -42,6 +42,7 @@ public:
 
     /// @addr{0x807FD750}
     /// @copybrief ObjectDrivable::checkPointPartial()
+    /// @return `false`, as this class only implements full push collision checks
     [[nodiscard]] bool checkPointPartial(const EGG::Vector3f & /*pos*/,
             const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/,
             CollisionInfoPartial * /*info*/, KCLTypeMask * /*maskOut*/) override {
@@ -50,6 +51,7 @@ public:
 
     /// @addr{0x807FD758}
     /// @copybrief ObjectDrivable::checkPointPartialPush()
+    /// @return `false`, as this class only implements full push collision checks
     [[nodiscard]] bool checkPointPartialPush(const EGG::Vector3f & /*pos*/,
             const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/,
             CollisionInfoPartial * /*info*/, KCLTypeMask * /*maskOut*/) override {
@@ -58,6 +60,7 @@ public:
 
     /// @addr{0x807FD760}
     /// @copybrief ObjectDrivable::checkPointFull()
+    /// @return `false`, as this class only implements full push collision checks
     [[nodiscard]] bool checkPointFull(const EGG::Vector3f & /*pos*/,
             const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/, CollisionInfo * /*info*/,
             KCLTypeMask * /*maskOut*/) override {
@@ -65,7 +68,7 @@ public:
     }
 
     /// @addr{0x807FD768}
-    /// @copybrief ObjectDrivable::checkPointFullPush()
+    /// @copydoc ObjectDrivable::checkPointFullPush()
     [[nodiscard]] bool checkPointFullPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
             KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override {
         return calcCollision(pos, prevPos, mask, info, maskOut, 0);
@@ -73,6 +76,7 @@ public:
 
     /// @addr{0x807FD728}
     /// @copybrief ObjectDrivable::checkSpherePartial()
+    /// @return `false`, as this class only implements full push collision checks
     [[nodiscard]] bool checkSpherePartial(f32 /*radius*/, const EGG::Vector3f & /*pos*/,
             const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/,
             CollisionInfoPartial * /*info*/, KCLTypeMask * /*maskOut*/,
@@ -82,6 +86,7 @@ public:
 
     /// @addr{0x807FD730}
     /// @copybrief ObjectDrivable::checkSpherePartialPush()
+    /// @return `false`, as this class only implements full push collision checks
     [[nodiscard]] bool checkSpherePartialPush(f32 /*radius*/, const EGG::Vector3f & /*pos*/,
             const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/,
             CollisionInfoPartial * /*info*/, KCLTypeMask * /*maskOut*/,
@@ -91,6 +96,7 @@ public:
 
     /// @addr{0x807FD738}
     /// @copybrief ObjectDrivable::checkSphereFull()
+    /// @return `false`, as this class only implements full push collision checks
     [[nodiscard]] bool checkSphereFull(f32 /*radius*/, const EGG::Vector3f & /*pos*/,
             const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/, CollisionInfo * /*info*/,
             KCLTypeMask * /*maskOut*/, u32 /*timeOffset*/) override {
@@ -98,14 +104,7 @@ public:
     }
 
     /// @addr{0x807FD740}
-    /// @copybrief ObjectDrivable::checkSphereFullPush()
-    /// @param pos The position of the sphere to check
-    /// @param prevPos The previous position of the sphere, used for calculating collision depth
-    /// @param mask The KCL flags to check collision against (other types are ignored)
-    /// @param info Out parameter for retrieving collision information (if any)
-    /// @param maskOut The KCL flags that were hit during the collision check (if any)
-    /// @param timeOffset Optional time delta
-    /// @return Whether a collision was detected
+    /// @copydoc ObjectDrivable::checkSphereFullPush()
     [[nodiscard]] bool checkSphereFullPush(f32 /*radius*/, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
             KCLTypeMask *maskOut, u32 timeOffset) override {
@@ -114,6 +113,7 @@ public:
 
     /// @addr{0x807FD6F4}
     /// @copybrief ObjectDrivable::checkPointCachedPartial()
+    /// @return `false`, as this class only implements full push collision checks
     [[nodiscard]] bool checkPointCachedPartial(const EGG::Vector3f & /*pos*/,
             const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/,
             CollisionInfoPartial * /*info*/, KCLTypeMask * /*maskOut*/) override {
@@ -122,6 +122,7 @@ public:
 
     /// @addr{0x807FD6FC}
     /// @copybrief ObjectDrivable::checkPointCachedPartialPush()
+    /// @return `false`, as this class only implements full push collision checks
     [[nodiscard]] bool checkPointCachedPartialPush(const EGG::Vector3f & /*pos*/,
             const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/,
             CollisionInfoPartial * /*info*/, KCLTypeMask * /*maskOut*/) override {
@@ -130,6 +131,7 @@ public:
 
     /// @addr{0x807FD704}
     /// @copybrief ObjectDrivable::checkPointCachedFull()
+    /// @return `false`, as this class only implements full push collision checks
     [[nodiscard]] bool checkPointCachedFull(const EGG::Vector3f & /*pos*/,
             const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/, CollisionInfo * /*info*/,
             KCLTypeMask * /*maskOut*/) override {
@@ -146,6 +148,7 @@ public:
 
     /// @addr{0x807FD6CC}
     /// @copybrief ObjectDrivable::checkSphereCachedPartial()
+    /// @return `false`, as this class only implements full push collision checks
     [[nodiscard]] bool checkSphereCachedPartial(f32 /*radius*/, const EGG::Vector3f & /*pos*/,
             const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/,
             CollisionInfoPartial * /*info*/, KCLTypeMask * /*maskOut*/,
@@ -155,6 +158,7 @@ public:
 
     /// @addr{0x807FD6D4}
     /// @copybrief ObjectDrivable::checkSphereCachedPartialPush()
+    /// @return `false`, as this class only implements full push collision checks
     [[nodiscard]] bool checkSphereCachedPartialPush(f32 /*radius*/, const EGG::Vector3f & /*pos*/,
             const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/,
             CollisionInfoPartial * /*info*/, KCLTypeMask * /*maskOut*/,
@@ -164,6 +168,7 @@ public:
 
     /// @addr{0x807FD6DC}
     /// @copybrief ObjectDrivable::checkSphereCachedFull()
+    /// @return `false`, as this class only implements full push collision checks
     [[nodiscard]] bool checkSphereCachedFull(f32 /*radius*/, const EGG::Vector3f & /*pos*/,
             const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/, CollisionInfo * /*info*/,
             KCLTypeMask * /*maskOut*/, u32 /*timeOffset*/) override {
@@ -171,14 +176,7 @@ public:
     }
 
     /// @addr{0x807FD6E4}
-    /// @copybrief ObjectDrivable::checkSphereCachedFullPush()
-    /// @param pos The position of the sphere to check
-    /// @param prevPos The previous position of the sphere, used for calculating collision depth
-    /// @param mask The KCL flags to check collision against (other types are ignored)
-    /// @param info Out parameter for retrieving collision information (if any)
-    /// @param maskOut The KCL flags that were hit during the collision check (if any)
-    /// @param timeOffset Optional time delta
-    /// @return Whether a collision was detected
+    /// @copydoc ObjectDrivable::checkSphereCachedFullPush()
     [[nodiscard]] bool checkSphereCachedFullPush(f32 /*radius*/, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
             KCLTypeMask *maskOut, u32 timeOffset) override {

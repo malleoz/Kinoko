@@ -18,6 +18,7 @@ public:
     /// @addr{0x80764510}
     /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
     /// @param params The parameters used to initialize the object
+    /// @details Initializes @ref m_touchingGround to `false`.
     ObjectDossun(const System::MapdataGeoObj &params)
         : ObjectCollidable(params),
           m_touchingGround(false) {}
@@ -29,7 +30,7 @@ public:
     void init() override;
 
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }

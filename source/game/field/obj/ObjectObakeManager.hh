@@ -15,8 +15,12 @@ namespace Kinoko::Field {
 class ObjectObakeManager final : public ObjectDrivable {
 public:
     /// @addr{0x8080B0D8}
-    /// @copybrief ObjectDrivable::ObjectDrivable(const System::MapdataGeoObj &)
+    /// @copybrief Constructor that is called when the first @ref ObjectObakeBlock is added
     /// @param params The parameters used to initialize the object
+    /// @details Sizes @ref m_blocks and @ref m_fallingBlocks to hold up to @ref MAX_BLOCKS
+    /// elements. Creates @ref m_colBox with a length and width of `195.00002f` and a height of
+    /// `130.0f`. Creates @ref m_colSphere with a radius of `1.0f` and a center at the origin.
+    /// Finally, adds the block defined by the `params` to the manager.
     ObjectObakeManager(const System::MapdataGeoObj &params)
         : ObjectDrivable(params),
           m_blockCache({}),
@@ -46,9 +50,6 @@ public:
     void calc() override;
 
     /// @addr{0x8080BE9C}
-    /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
-    /// calculated every frame
     /// @copybrief ObjectBase::loadFlags()
     /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
     /// calculated every frame
@@ -198,8 +199,8 @@ public:
     }
 
     /// @addr{0x8080B244}
-    /// @brief Public interface that adds a new block to the manager and caches it for collision
-    /// checks
+    /// @brief Public interface that adds a new block to the existing manager and places the block
+    /// in the spatial cache for collision checks
     /// @param params The parameters used to initialize the new block
     void addBlock(const System::MapdataGeoObj &params) {
         auto *block = EGG::egg_new<ObjectObakeBlock>(params);
@@ -212,12 +213,6 @@ private:
     static constexpr size_t CACHE_SIZE_X = 122;        ///< Width of the spatial cache
     static constexpr size_t CACHE_SIZE_Z = 116;        ///< Depth of the spatial cache
     static constexpr f32 WALL_BOUNDING_RADIUS = 85.0f; ///< Radius of a block's wall collision
-
-    /// @brief Scale of a block's wall collision
-    static constexpr EGG::Vector3f WALL_SCALE = EGG::Vector3f(1.0f, 1.1f, 1.0f);
-
-    /// @brief Scale of a block's road collision
-    static constexpr EGG::Vector3f ROAD_SCALE = EGG::Vector3f(1.0f, 0.95f, 1.0f);
 
     [[nodiscard]] bool checkSpherePartialImpl(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
@@ -255,6 +250,12 @@ private:
 
     fixed_vector<ObjectObakeBlock *> m_blocks;        ///< Owning vector of all blocks
     fixed_vector<ObjectObakeBlock *> m_fallingBlocks; ///< Pointers to all actively falling blocks
+
+    /// @brief Scale of a block's wall collision
+    static constexpr EGG::Vector3f WALL_SCALE = EGG::Vector3f(1.0f, 1.1f, 1.0f);
+
+    /// @brief Scale of a block's road collision
+    static constexpr EGG::Vector3f ROAD_SCALE = EGG::Vector3f(1.0f, 0.95f, 1.0f);
 
     static constexpr size_t MAX_BLOCKS = 656; ///< Allocated size of m_blocks and m_calcBlocks
 };

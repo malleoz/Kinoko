@@ -27,8 +27,9 @@ public:
 
     /// @addr{0x808008FC}
     /// @copybrief ObjectBase::calc()
-    /// @details Calculates the escalator's moving object velocity, updates @ref m_wrappedStepCount,
-    /// and sets the escalator's position accordingly.
+    /// @details Calculates the escalator's moving object velocity, updates @ref m_wrappedStepCount
+    /// by calling @ref calcWrappedStepCount() with the current race framecount, and sets the
+    /// escalator's position accordingly.
     void calc() override {
         s32 t = static_cast<s32>(System::RaceManager::Instance()->timer());
         setMovingObjVel(m_stepDims * calcSpeed(t));
@@ -39,14 +40,14 @@ public:
 
     /// @addr{0x80803CF0}
     /// @copybrief ObjectBase::id()
-    /// @return The ID of the escalator object, `ObjectId::Escalator`.
+    /// @return The ID of the escalator object, `@ref ObjectId::Escalator`.
     [[nodiscard]] ObjectId id() const override {
         return ObjectId::Escalator;
     }
 
     /// @addr{0x80803CF8}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
@@ -240,6 +241,8 @@ private:
     /// @param info Out param that collision info is saved to (if any)
     /// @param maskOut Type mask of the KCL the kart is colliding with (if any)
     /// @return Whether or not a collision occurred
+    /// @details Early returns false if the kart's Y position is outside of the range `[@ref
+    /// m_checkColYPosMin, @ref m_checkColYPosMax]`.
     template <typename T>
         requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
     bool checkPointImpl(CheckPointFunc<T> checkFunc, const EGG::Vector3f &pos,
@@ -261,6 +264,9 @@ private:
     /// @param info Out param that collision info is saved to (if any)
     /// @param maskOut Type mask of the KCL the kart is colliding with (if any)
     /// @return Whether or not a collision occurred
+    /// @details Early returns false if the kart's Y position is outside of the range `[@ref
+    /// m_checkColYPosMin, @ref m_checkColYPosMax]`. Also updates the escalator's scale and the @ref
+    /// ObjColMgr transform before the collision check.
     template <typename T>
         requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
     bool checkSphereImpl(CheckSphereFunc<T> checkFunc, f32 radius, const EGG::Vector3f &pos,
@@ -294,14 +300,26 @@ private:
     const std::array<f32, 2> m_fullSpeedFrames; ///< When escalator reaches max speed
     const f32 m_midDuration; /// Duration of full speed in between the dir changes
 
-    /// @brief Height in units of a single step
-    static constexpr f32 STEP_HEIGHT = 10.0f;
+    /// @brief Helper function to compute the speeds of the escalator at each stage of its movement
+    /// @param params The parameters used to initialize the object
+    /// @param reverse Whether the escalator should move in reverse
+    /// @return An array containing the speeds of the escalator at each stage of its movement
+    [[nodiscard]] std::array<f32, 3> static InitSpeed(const System::MapdataGeoObj &params,
+            bool reverse) {
+        f32 sign = reverse ? -1.0f : 1.0f;
+        f32 speed1 =
+                sign * (0.15f * static_cast<f32>(static_cast<s16>(params.setting(1))) / 100.0f);
+        f32 speed2 =
+                sign * (0.15f * static_cast<f32>(static_cast<s16>(params.setting(3))) / 100.0f);
+        f32 speed3 =
+                sign * (0.15f * static_cast<f32>(static_cast<s16>(params.setting(5))) / 100.0f);
 
-    /// @brief Frames from full speed to still or vice versa
-    static constexpr f32 REVERSE_FRAMES_F32 = 240.0f;
+        return {speed1, speed2, speed3};
+    }
 
-    /// @brief Frames the escalator waits before speeding up
-    static constexpr f32 STANDSTILL_FRAMES = 50.0f;
+    static constexpr f32 STEP_HEIGHT = 10.0f;         ///< Height in units of a single step
+    static constexpr f32 REVERSE_FRAMES_F32 = 240.0f; ///< from full speed to still or vice versa
+    static constexpr f32 STILL_FRAMES = 50.0f; ///< Frames the escalator waits before speeding up
 
     /// @brief Maximum height offset to still perform collision checks
     static constexpr f32 MAX_HEIGHT_OFFSET = STEP_HEIGHT * (17.5f * STEP_HEIGHT);

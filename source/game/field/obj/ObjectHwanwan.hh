@@ -34,14 +34,14 @@ public:
 
     /// @addr{0x806EC7B8}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
 
     /// @addr{0x806EC7AC}
     /// @copybrief ObjectBase::getKclName()
-    /// @return The model name of the Chain Chomp (`wanwan`)
+    /// @return The model name of the Chain Chomp, `wanwan`
     [[nodiscard]] const char *getKclName() const override {
         return "wanwan";
     }
@@ -146,7 +146,7 @@ public:
 
     /// @addr{0x806C69B8}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }

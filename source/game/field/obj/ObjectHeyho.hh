@@ -39,9 +39,6 @@ public:
     /// @copybrief ObjectBase::loadFlags()
     /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
     /// calculated every frame
-    /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
-    /// calculated every frame
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags().setBit(eLoadFlags::Calc, eLoadFlags::Draw);
     }
@@ -113,7 +110,7 @@ private:
     f32 m_apex;               ///< Highest Y position between the rail endpoints
     EGG::Vector3f m_midpoint; ///< Middle point (and lowest Y position) of the rai
     EGG::Vector3f m_initVel;  ///< Initial velocity vector
-    f32 m_currentSpeed;         ///< Current speed along the rail
+    f32 m_currentSpeed;       ///< Current speed along the rail
     f32 m_accel;              ///< Gravity based off apex, midpoint, and max velocity
     f32 m_maxVelSq;           ///< Square of the maximum velocity specified by param setting 1
     EGG::Vector3f m_up;       ///< Smoothed up vector

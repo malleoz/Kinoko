@@ -12,7 +12,7 @@ namespace Kinoko::Field {
 /// @addr{0x8075EAFC}
 /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 /// @param params The parameters used to initialize the object
-/// @details Constructs the appropriate Dossun object based on param setting 2 and loads it. It is
+/// @details Constructs the appropriate Thwomp object based on param setting 2 and loads it. It is
 /// either @ref ObjectDossunNormal, @ref ObjectDossunSyuukai, @ref ObjectDossunTsuibiHolder, or @ref
 /// ObjectDossunYokoMove.
 ObjectDossunc::ObjectDossunc(const System::MapdataGeoObj &params) : ObjectCollidable(params) {

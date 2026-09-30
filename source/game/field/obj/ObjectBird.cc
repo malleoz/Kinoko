@@ -9,8 +9,8 @@ namespace Kinoko::Field {
 /// @addr{0x8077BD80}
 /// @brief Constructor
 /// @param params The parameters used to initialize the object
-/// @details Creates the leader and the follower birds based on the provided parameters. If no
-/// follower count is specified, defaults to 5.
+/// @details Creates and loads one leader and a number of follower birds based on param setting 2,
+/// defaulting to 5 followers if the setting is zero.
 ObjectBird::ObjectBird(const System::MapdataGeoObj &params) : ObjectCollidable(params) {
     m_leader = EGG::egg_new<ObjectBirdLeader>(params, this);
     m_leader->load();
@@ -29,15 +29,11 @@ ObjectBird::ObjectBird(const System::MapdataGeoObj &params) : ObjectCollidable(p
     }
 }
 
-/// @addr{0x8077CDC8}
-/// @brief Default virtual destructor
-ObjectBird::~ObjectBird() = default;
-
 /// @addr{0x8077BFC8}
 /// @copybrief ObjectBase::calc()
-/// @details Ensures that follower birds maintain a minimum spacing between each other to avoid
-/// collisions. Since this class is registered to the @ref ObjectDirector after the followers, all
-/// position fetches reflect their current position this frame.
+/// @details Ensures that follower birds maintain a minimum spacing of `300.0f` units between each
+/// other to avoid colliding. Since this class is loaded to the @ref ObjectDirector after the
+/// followers, all position fetches reflect their current position this frame.
 void ObjectBird::calc() {
     constexpr f32 MIN_SPACING = 300.0f;
 
@@ -59,14 +55,6 @@ void ObjectBird::calc() {
     }
 }
 
-/// @addr{0x8077C2F4}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
-/// @param bird The parent @ref ObjectBird instance that this leader belongs to
-ObjectBirdLeader::ObjectBirdLeader(const System::MapdataGeoObj &params, ObjectBird *bird)
-    : ObjectCollidable(params),
-      m_bird(bird) {}
-
 /// @addr{0x8077C384}
 /// @copybrief ObjectBase::init()
 /// @details Plays the flying animation whose rate is determined randomly scaled between 0 and the
@@ -86,33 +74,6 @@ void ObjectBirdLeader::init() {
     setPos(m_railInterpolator->curPos());
     m_railInterpolator->setSpeed(static_cast<f32>(m_mapObj->setting(0)));
 }
-
-/// @addr{0x8077CC78}
-/// @copybrief ObjectBase::loadAnims()
-/// @details Loads the flying animation for the bird leader.
-void ObjectBirdLeader::loadAnims() {
-    std::array<const char *, 1> names = {{
-            "flying",
-    }};
-
-    std::array<Render::AnmType, 1> types = {{
-            Render::AnmType::Chr,
-    }};
-
-    linkAnims(names, types);
-}
-
-/// @addr{0x8077C580}
-/// @brief Constructor
-/// @param params The parameters used to initialize the object
-/// @param bird The parent @ref ObjectBird instance that this follower belongs to
-/// @param idx The index of this follower in the flock
-/// @details Sets the bird's base speed based off object setting 1
-ObjectBirdFollower::ObjectBirdFollower(const System::MapdataGeoObj &params, ObjectBird *bird,
-        u32 idx)
-    : ObjectBirdLeader(params, bird),
-      m_idx(idx),
-      m_baseSpeed(static_cast<f32>(params.setting(0))) {}
 
 /// @addr{0x8077C5E0}
 /// @copybrief ObjectBase::init()
@@ -161,19 +122,21 @@ void ObjectBirdFollower::calc() {
 /// @addr{0x8077C8F4}
 /// @brief Calculates the new position of the follower bird based on its velocity and the positions
 /// of the other birds in the flock.
+/// @details Steers the bird towards the average position of the rest of the flock (the leader and
+/// every other follower, excluding itself). The birds speed is capped at `@ref m_baseSpeed * 1.2f`.
 void ObjectBirdFollower::calcPos() {
     constexpr f32 MAX_SPEED_FACTOR = 1.2f;
 
-    EGG::Vector3f leaderPos = m_bird->leader()->pos();
+    EGG::Vector3f sumPos = m_bird->leader()->pos();
     const auto &follower = m_bird->followers();
 
     for (u32 i = 0; i < follower.size(); ++i) {
         if (i != m_idx) {
-            leaderPos += follower[i]->pos();
+            sumPos += follower[i]->pos();
         }
     }
 
-    EGG::Vector3f posDelta = leaderPos * (1.0f / static_cast<f32>(follower.size())) - pos();
+    EGG::Vector3f posDelta = sumPos * (1.0f / static_cast<f32>(follower.size())) - pos();
     posDelta.normalise();
     posDelta *= 0.5f;
 

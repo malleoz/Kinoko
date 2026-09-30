@@ -17,7 +17,7 @@ public:
 
     /// @addr{0x80763C14}
     /// @copybrief ObjectBase::init()
-    /// @details Initializes the rail interpolator.
+    /// @details Initializes the rail interpolator to the start of the rail.
     void init() override {
         m_railInterpolator->init(0.0f, 0);
     }

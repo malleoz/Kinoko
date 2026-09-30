@@ -12,38 +12,36 @@ namespace Kinoko::Field {
 /// @addr{0x806D5EE4}
 /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 /// @param params The parameters used to initialize the object
-/// @details Pre-computes all floor normals along the rail (this is likely unnecessary for Kinoko).
-/// Determines the @ref m_carType based off the object name and @ref m_mdlName based off the
-/// resource name and car variant. Also determines the @ref m_dummyId based off the car type.
-/// Finally, registers the object with the highway manager if the course is Moonview Highway, so
-/// that the highway manager can enforce squish cooldowns for the player.
+/// @details Pre-computes all floor normals along the rail. Determines @ref m_carName and @ref
+/// m_carType based off the object name and @ref m_mdlName based off the resource name and the car
+/// color specified by param setting 4 (0 = blue, 1 = red, 2 = yellow). Also determines the @ref
+/// m_dummyId based off the car type. Finally, registers the object with the highway manager if the
+/// course is Moonview Highway, so that the highway manager can enforce squish cooldowns for the
+/// player.
+/// @note In the base game, the constructor may return early if the object does not have a valid
+/// rail ID. This same failsafe is present in @ref init(). However, there is no such `nullptr` check
+/// in @ref calc(). Furthermore, the object will never finish being initialized; since @ref init()
+/// returns early, the model name for the car's shadow is never set, so `UpdateShadow()` will
+/// attempt to dereference `nullptr` since the shadow could not be loaded. As a result, we do not
+/// bother implementing this failsafe in Kinoko, since it is not actually an effective failsafe.
 ObjectCarTGE::ObjectCarTGE(const System::MapdataGeoObj &params)
     : ObjectCollidable(params),
       StateManager(this, STATE_ENTRIES),
       m_auxCollision(nullptr),
-      m_highwayVel(static_cast<f32>(params.setting(2))),
-      m_localVel(static_cast<f32>(params.setting(1))),
+      m_highwaySpeed(static_cast<f32>(params.setting(2))),
+      m_localSpeed(static_cast<f32>(params.setting(1))),
       m_carName{},
       m_mdlName{},
       m_carType(CarType::Normal),
       m_dummyId(ObjectId::None),
-      m_scaledTangentDir(EGG::Vector3f::zero),
+      m_vel(EGG::Vector3f::zero),
       m_currSpeed(0.0f),
       m_up(EGG::Vector3f::zero),
       m_tangent(EGG::Vector3f::zero) {
-    u32 carVariant = static_cast<u32>(params.setting(3));
+    u32 color = static_cast<u32>(params.setting(3));
     s16 pathId = params.pathId();
 
-    // The base game returns before the StateManager sets its state entries.
-    // Since we handle this in the template specialization's constructor in Kinoko,
-    // we need to reset the StateManager parameters back to their default values before returning.
-    if (pathId == -1) {
-        m_nextStateId = -1;
-        m_currentStateId = 0;
-        m_currentFrame = 0;
-
-        return;
-    }
+    ASSERT(pathId > -1);
 
     // The base game preemptively calculates collision for all points along the rail.
     RailManager::Instance()->rail(pathId)->checkSphereFull();
@@ -62,7 +60,7 @@ ObjectCarTGE::ObjectCarTGE(const System::MapdataGeoObj &params)
 
     const auto *resourceName = getResources();
 
-    switch (carVariant) {
+    switch (color) {
     case 0: {
         if (strcmp(resourceName, "K_truck") == 0) {
             snprintf(m_mdlName, sizeof(m_mdlName), "%s_b", "K_truck");
@@ -109,35 +107,35 @@ ObjectCarTGE::ObjectCarTGE(const System::MapdataGeoObj &params)
 
 /// @addr{0x806D6B14}
 /// @copybrief ObjectBase::init()
-/// @details Sets the rail interpolator's velocity and @ref m_nextStateId based on whether the car
-/// is starting on the highway or not. Sets the car's position to the current position of the rail
-/// interpolator. Also sets @ref m_hitAngle based on the car type.
+/// @details Initializes the rail interpolator to the node index specified by param setting 1. Sets
+/// the rail interpolator's speed based on whether the car is starting on the highway or not. Calls
+/// @ref calcState() to determine whether the car should be in the cruising, speedup, or
+/// slowdown state. Sets the car's position to the current position of the rail interpolator. Sets
+/// @ref m_currSpeed based off the rail interpolator's speed and sets @ref m_vel by scaling the rail
+/// interpolator's tangent direction by @ref m_currSpeed. Finally, sets @ref m_hitAngle based on the
+/// car type.
 void ObjectCarTGE::init() {
     constexpr f32 HIT_ANGLE_TRUCK = 20.0f;
     constexpr f32 HIT_ANGLE_NORMAL = 40.0f;
 
     ASSERT(m_mapObj);
-    if (m_mapObj->pathId() == -1) {
-        return;
-    }
-
     u16 idx = m_mapObj->setting(0);
     m_railInterpolator->init(0.0f, idx);
 
     auto *rail = RailManager::Instance()->rail(m_mapObj->pathId());
     u16 speedSetting = rail->points()[idx].setting[1];
     if (speedSetting == 1) {
-        m_railInterpolator->setSpeed(m_highwayVel);
+        m_railInterpolator->setSpeed(m_highwaySpeed);
     } else if (speedSetting == 0) {
-        m_railInterpolator->setSpeed(m_localVel);
+        m_railInterpolator->setSpeed(m_localSpeed);
     }
 
-    calcStateFromRailPointSetting();
+    calcState();
 
     m_squashed = false;
     setPos(m_railInterpolator->curPos());
     m_currSpeed = m_railInterpolator->speed();
-    m_scaledTangentDir = m_railInterpolator->curTangentDir() * m_currSpeed;
+    m_vel = m_railInterpolator->curTangentDir() * m_currSpeed;
     m_hitAngle = (m_carType == CarType::Truck) ? HIT_ANGLE_TRUCK : HIT_ANGLE_NORMAL;
 }
 
@@ -176,13 +174,13 @@ void ObjectCarTGE::calcCollisionTransform() {
     }
 
     calcTransform();
-    col->transform(transform(), scale(), m_scaledTangentDir);
+    col->transform(transform(), scale(), m_vel);
     calcTransform();
     EGG::Matrix34f mat;
     SetRotTangentHorizontal(mat, transform().base(2), EGG::Vector3f::ey);
     calcTransform();
     mat.setBase(3, transform().base(3));
-    m_auxCollision->transform(mat, scale(), m_scaledTangentDir);
+    m_auxCollision->transform(mat, scale(), m_vel);
 }
 
 /// @addr{0x806D7328}
@@ -240,11 +238,15 @@ Kart::Reaction ObjectCarTGE::onCollision(Kart::KartObject *kartObj, Kart::Reacti
 
 /// @addr{0x806D9000}
 /// @brief Calculates the position and orientation of the car along the rail
-/// @details Computes position and orientation by computing a cubic bezier along the rail to find
-/// the position of the rear of the car.
+/// @details Derives position and orientation by computing a cubic bezier along the rail to find
+/// the position of the rear of the car. Interpolates the X and Z components of @ref m_tangent
+/// towards the true direction of motion, while the Y component is directly taken from the
+/// car's travel direction. Finally, sets @ref m_up based on the orthonormal basis derived from @ref
+/// m_tangent, and updates the car's transformation matrix based on @ref m_up and @ref m_tangent.
 void ObjectCarTGE::calcPos() {
     constexpr f32 NORMAL_SPEED = 1500.0f;
     constexpr f32 TRUCK_SPEED = 1600.0f;
+    constexpr f32 TANGENT_INTERP_RATE = 0.1f;
 
     f32 speed = (m_carType == CarType::Truck) ? TRUCK_SPEED : NORMAL_SPEED;
     f32 t = speed * scale().z * 0.5f;
@@ -256,7 +258,7 @@ void ObjectCarTGE::calcPos() {
     const EGG::Vector3f curPos = m_railInterpolator->curPos();
     EGG::Vector3f posDelta = curPos - rearPos;
     posDelta.normalise2();
-    m_tangent += 0.1f * (posDelta - m_tangent);
+    m_tangent += TANGENT_INTERP_RATE * (posDelta - m_tangent);
     m_tangent.y = posDelta.y;
     m_tangent.normalise2();
 

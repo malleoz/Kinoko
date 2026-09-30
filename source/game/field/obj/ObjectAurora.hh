@@ -19,7 +19,7 @@ public:
 
     /// @addr{0x807FB688}
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }
@@ -179,12 +179,13 @@ private:
     [[nodiscard]] bool checkSpherePartialImpl(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
             KCLTypeMask *maskOut, u32 timeOffset) {
-        return checkSpherePartialImpl(radius, pos, prevPos, mask, info, maskOut, timeOffset, false);
+        return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, timeOffset, false);
     }
 
     /// @addr{0x807FB8B0}
     /// @brief Private function that checks collision between a sphere and the object, writing
-    /// partial collision info
+    /// partial collision info. Additionally pushes the collision entry into the @ref
+    /// CollisionDirector cache.
     /// @param radius The radius of the sphere to check
     /// @param pos The position of the sphere to check
     /// @param prevPos The previous position of the sphere, used for calculating collision depth
@@ -196,7 +197,7 @@ private:
     [[nodiscard]] bool checkSpherePartialPushImpl(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
             KCLTypeMask *maskOut, u32 timeOffset) {
-        return checkSpherePartialImpl(radius, pos, prevPos, mask, info, maskOut, timeOffset, true);
+        return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, timeOffset, true);
     }
 
     /// @addr{0x807FBAC0}
@@ -213,7 +214,7 @@ private:
     [[nodiscard]] bool checkSphereFullImpl(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
             KCLTypeMask *maskOut, u32 timeOffset) {
-        return checkSphereFullImpl(radius, pos, prevPos, mask, info, maskOut, timeOffset, false);
+        return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, timeOffset, false);
     }
 
     /// @addr{0x807FBE6C}
@@ -231,22 +232,51 @@ private:
     [[nodiscard]] bool checkSphereFullPushImpl(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
             KCLTypeMask *maskOut, u32 timeOffset) {
-        return checkSphereFullImpl(radius, pos, prevPos, mask, info, maskOut, timeOffset, true);
+        return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, timeOffset, true);
     }
 
-    [[nodiscard]] bool checkSpherePartialImpl(f32 radius, const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut, u32 timeOffset, bool push);
+    template <typename T>
+        requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
+    [[nodiscard]] bool checkSphereImpl(f32 radius, const EGG::Vector3f &pos,
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info, KCLTypeMask *maskOut,
+            u32 timeOffset, bool push);
 
-    [[nodiscard]] bool checkSphereFullImpl(f32 radius, const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut, u32 timeOffset, bool push);
+    /// @addr{0x807FAF10}
+    /// @brief Based off the provided relPosZ and time, calculates the wavy road's surface height
+    /// for use in collision checks
+    /// @param relPosZ The Z position of the object relative to the wavy road
+    /// @param t The current time
+    /// @return The calculated road height
+    /// @details Over time, @ref TemporalFrequency() results in more oscillations occurring in the
+    /// same length of the road.
+    [[nodiscard]] static f32 CalcRoadHeight(f32 relPosZ, u32 t) {
+        constexpr f32 AMPLITUDE = 80.0f;
 
-    [[nodiscard]] static f32 CalcRoadHeight(f32 phase, u32 t);
-    [[nodiscard]] static f32 TemporalSin(f32 t);
+        f32 phase = (F_PI * (2.0f * relPosZ)) / COLLISION_SIZE.z;
+        f32 result = EGG::Mathf::SinFIdx(
+                RAD2FIDX * (phase * TemporalFrequency(t) + F_PI * static_cast<f32>(t) / 50.0f));
+
+        return phase * AMPLITUDE * result;
+    }
+
+    /// @addr{0x807FAFFC}
+    /// @brief Computes the phase's frequency multiplier as a function of time
+    /// @param t The current time
+    /// @return The calculated frequency multiplier
+    /// @details At `t=0`, the frequency is `1.25f`. It decreases to the minimum frequency of `1.0f`
+    /// at 30 seconds. Afterwards, it grows quadratically over time until it reaches the maximum
+    /// frequency of `4.0f` after 2 minutes and 14 seconds have elapsed in the race.
+    [[nodiscard]] static f32 TemporalFrequency(f32 t) {
+        constexpr f32 PHASE_SHIFT_SECONDS = 30.0f;
+        constexpr f32 INITIAL_FREQUENCY = 1.0f;
+        constexpr f32 MAX_FREQUENCY = 4.0f;
+
+        f32 minsNormalized = (static_cast<f32>(t) / 60.0f - PHASE_SHIFT_SECONDS) / 60.0f;
+        return std::min(INITIAL_FREQUENCY + minsNormalized * minsNormalized, MAX_FREQUENCY);
+    }
 
     [[nodiscard]] bool calcCollision(f32 radius, const EGG::Vector3f &vel, u32 time,
-            EGG::Vector3f &pos, EGG::Vector3f &fnrm, f32 &dist);
+            EGG::Vector3f &bbox, EGG::Vector3f &fnrm, f32 &dist);
 
     /// @brief The size of the collision bounding box for the object
     static constexpr EGG::Vector3f COLLISION_SIZE = EGG::Vector3f(2000.0f, 2000.0f, 15000.0f);

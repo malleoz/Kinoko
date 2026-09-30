@@ -29,7 +29,7 @@ public:
     /// @addr{0x806C0854}
     /// @details The game defines this in a GeoObjectSmoke base class, but we don't implement it.
     /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that object is calculated every frame.
+    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
     [[nodiscard]] LoadFlags loadFlags() const override {
         return LoadFlags(eLoadFlags::Calc);
     }

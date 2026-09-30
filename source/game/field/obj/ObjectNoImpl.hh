@@ -2,6 +2,8 @@
 
 #include "game/field/obj/ObjectBase.hh"
 
+#include "game/field/ObjectDirector.hh"
+
 namespace Kinoko::Field {
 
 /// @brief Represents an object that is explicitly not implemented in Kinoko because it either does
@@ -15,7 +17,11 @@ public:
     /// @brief Default virtual destructor
     ~ObjectNoImpl() override = default;
 
-    void load() override;
+    /// @copybrief ObjectBase::load()
+    /// @details Registers the object to the ObjectDirector without any implementation.
+    void load() override {
+        ObjectDirector::Instance()->addObjectNoImpl(this);
+    }
 
     /// @copybrief ObjectBase::createCollision()
     /// @details no-op since these objects are not implemented.

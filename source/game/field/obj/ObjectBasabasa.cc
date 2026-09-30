@@ -10,17 +10,17 @@ namespace Kinoko::Field {
 
 /// @addr{0x806B5E80}
 /// @copybrief ObjectBase::init()
-/// @details Fetches the bat's initial position by advancing RNG
+/// @details Fetches the bat's initial position by advancing RNG.
 void ObjectBasabasaDummy::init() {
     m_railInterpolator->init(0.0f, 0);
     setPos(m_railInterpolator->curPos());
 
     auto &rng = System::RaceManager::Instance()->random();
     rng.next();
-    f32 y = rng.getF32(ObjectBasabasa::initialYRange());
-    f32 x = rng.getF32(ObjectBasabasa::initialXRange());
+    f32 y = rng.getF32(ObjectBasabasa::InitialYRange());
+    f32 x = rng.getF32(ObjectBasabasa::InitialXRange());
 
-    m_initialPos = EGG::Vector3f(x - ObjectBasabasa::initialXRange() * 0.5f, y, 0.0f);
+    m_initialPos = EGG::Vector3f(x - ObjectBasabasa::InitialXRange() * 0.5f, y, 0.0f);
 
     m_nextStateId = 0;
 }
@@ -42,6 +42,10 @@ Kart::Reaction ObjectBasabasaDummy::onCollision(Kart::KartObject * /*kartObj*/,
 
 /// @addr{0x806B6100}
 /// @brief While spawned, calculates the bat's position based off the rail interpolator
+/// @details If the bat is inactive (despawned), then early returns. Updates the bat's rail
+/// interpolator. If the bat has reached the end of the rail, sets @ref m_active to `false` and
+/// disables its collision. Otherwise, updates its position and transformation based on the rail
+/// interpolator and initial position.
 void ObjectBasabasaDummy::calcStateActive() {
     if (!m_active) {
         return;
@@ -63,8 +67,14 @@ void ObjectBasabasaDummy::calcStateActive() {
 /// @addr{0x806B70D0}
 /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 /// @param params The parameters used to initialize the object
-/// @details Computes the spacing and number of bats per group. Constructs and loads all underlying
-/// bat objects.
+/// @details Sets @ref m_initialTimer based on param setting 2, @ref m_batsPerGroup based on param
+/// setting 3, and @ref m_startFrame based on param setting 7. Computes @ref m_batSpacing based on
+/// param setting 6 divided by param setting 1 divided by @ref m_batsPerGroup. Computes the number
+/// of bat groups based on the rail length and initial timer. Based on the number of groups and @ref
+/// m_batsPerGroup, constructs and loads the underlying @ref ObjectBasabasaDummy objects. Finally,
+/// sets @ref s_initialXRange and @ref s_initialYRange based on param settings 4 and 5 respectively.
+/// @warning If param setting 1 or param setting 3 is zero, this will cause division by zero when
+/// computing @ref m_batSpacing and crash the game.
 ObjectBasabasa::ObjectBasabasa(const System::MapdataGeoObj &params)
     : ObjectCollidable(params),
       m_initialTimer(params.setting(1)),
@@ -91,8 +101,8 @@ ObjectBasabasa::ObjectBasabasa(const System::MapdataGeoObj &params)
 
 /// @addr{0x806B7334}
 /// @copybrief ObjectBase::init()
-/// @details Initializes all bats to be inactive and resets the spawner's cycle timer and active bat
-/// count.
+/// @details Initializes all bats to be inactive with disabled collision and resets the spawner's
+/// cycle timer and active bat count.
 void ObjectBasabasa::init() {
     for (auto *&bat : m_bats) {
         if (bat->active()) {
