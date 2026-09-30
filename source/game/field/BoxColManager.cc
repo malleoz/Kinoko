@@ -4,16 +4,14 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x80786ED0}
-/// @brief Constructor
-BoxColUnit::BoxColUnit() : m_pos(nullptr), m_radius(0.0f), m_range(0.0f), m_userData(nullptr) {}
-
-/// @addr{0x80786EF4}
-/// @brief Default destructor
-BoxColUnit::~BoxColUnit() = default;
-
 /// @addr{0x80786F34}
 /// @brief Initializes the collision unit with the given parameters
+/// @param radius The radius of the unit
+/// @param maxSpeed The maximum speed of the unit
+/// @param pos The world position of the unit
+/// @param flag The collision flags for the unit
+/// @param userData User-defined data associated with the unit (either @ref ObjectCollidable or @ref
+/// ObjectDrivable)
 void BoxColUnit::init(f32 radius, f32 maxSpeed, const EGG::Vector3f *pos, const BoxColFlag &flag,
         void *userData) {
     m_pos = pos;
@@ -34,19 +32,9 @@ void BoxColUnit::reinsert() {
 
 /// @addr{0x80786FA8}
 /// @brief Searches for collisions involving this unit with the specified flags
+/// @param flag The collision flag to filter which units to consider during the search
 void BoxColUnit::search(const BoxColFlag &flag) {
     BoxColManager::Instance()->search(this, flag);
-}
-
-/// @addr{0x8078597C}
-/// @brief Clears the result cache and resets the iterator indices
-void BoxColManager::clear() {
-    m_nextObjectID = MAX_UNIT_COUNT;
-    m_nextDrivableID = MAX_UNIT_COUNT;
-    m_maxID = 0;
-    m_cacheUnit = nullptr;
-    m_cacheRadius = -1.0f;
-    m_cacheFlag.makeAllZero();
 }
 
 /// @addr{0x807859B0}
@@ -145,6 +133,7 @@ void BoxColManager::calc() {
 /// @addr{0x80786DBC}
 /// @brief Reinserts an existing collision unit into the spatial index, updating its position and
 /// other properties as necessary
+/// @param unit The collision unit to reinsert into the spatial index
 /// @unused
 void BoxColManager::reinsertUnit(BoxColUnit *unit) {
     f32 radius = unit->m_radius;
@@ -159,6 +148,7 @@ void BoxColManager::reinsertUnit(BoxColUnit *unit) {
 
 /// @addr{0x80786578}
 /// @brief Removes a collision unit from the spatial index and updates the relevant data structures
+/// @param unit The collision unit to remove from the spatial index
 void BoxColManager::remove(BoxColUnit *&unit) {
     if (!unit || unit->m_flag.offBit(eBoxColFlag::Active)) {
         return;
@@ -217,6 +207,9 @@ void BoxColManager::remove(BoxColUnit *&unit) {
 /// @addr{0x80786E60}
 /// @brief Checks if a sphere is within the spatial cache based on its radius and position, only if
 /// all bits in the provided flag mask were set in the cached query
+/// @param radius The radius of the sphere to check
+/// @param pos The center position of the sphere
+/// @param flag The collision flags that must be enabled from the cached query
 bool BoxColManager::isSphereInSpatialCache(f32 radius, const EGG::Vector3f &pos,
         const BoxColFlag &flag) const {
     if (m_cacheRadius == -1.0f) {
@@ -252,15 +245,6 @@ BoxColManager::BoxColManager() {
     BoxColFlag flags;
     insert(1.0f, 0.0f, &upperBound, flags, nullptr)->m_flag.setBit(eBoxColFlag::Intangible);
     insert(1.0f, 0.0f, &lowerBound, flags, nullptr)->m_flag.setBit(eBoxColFlag::Intangible);
-}
-
-/// @addr{0x807854E4}
-/// @brief Private destructor
-BoxColManager::~BoxColManager() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("BoxColManager instance not explicitly handled!");
-    }
 }
 
 /// @addr{0x80786134}
@@ -376,6 +360,8 @@ BoxColUnit *BoxColManager::insert(f32 radius, f32 maxSpeed, const EGG::Vector3f 
 /// @addr{0x807868C0}
 /// @brief Searches for collision units that intersect with the specified unit and match the given
 /// flag
+/// @param unit The collision unit to check for intersections with other units in the spatial index
+/// @param flag The collision flag to filter which units to consider during the search
 /// @details First, if the collision unit is not active, the search is aborted. This function then
 /// computes the X and Z-axis bounds of the provided BoxColUnit. It then calculates the range of
 /// m_lowPoints in the spatial index to consider for potential collisions. Iterating across the
@@ -468,6 +454,9 @@ void BoxColManager::searchImpl(BoxColUnit *unit, const BoxColFlag &flag) {
 
 /// @addr{0x80786C60}
 /// @brief Searches for collision units intersecting with a sphere having a given center and radius
+/// @param radius The radius of the sphere to check for collisions
+/// @param pos The center position of the sphere
+/// @param flag The collision flag to filter which units to consider during the search
 /// @details Computes the X and Z-axis bounds of the provided sphere. It then calculates the range
 /// of m_lowPoints in the spatial index to consider for potential collisions. Iterating across the
 /// m_lowPoints, it checks for intersections with the sphere and filters them based on the provided

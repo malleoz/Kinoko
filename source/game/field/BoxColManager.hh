@@ -41,24 +41,32 @@ typedef EGG::TBitFlag<u32, eBoxColFlag> BoxColFlag;
 /// @details Used by the @ref BoxColManager which spatially indexes these units to allow for more
 /// efficient collision checks.
 struct BoxColUnit {
-    BoxColUnit();
-    ~BoxColUnit();
+    /// @addr{0x80786ED0}
+    /// @brief Constructor
+    /// @details Initializes @ref m_pos and @ref m_userData to `nullptr` and sets @ref m_radius and
+    /// @ref m_range to zero.
+    BoxColUnit() : m_pos(nullptr), m_radius(0.0f), m_range(0.0f), m_userData(nullptr) {}
+
+    /// @addr{0x80786EF4}
+    /// @brief Default destructor
+    ~BoxColUnit() = default;
 
     void init(f32 radius, f32 maxSpeed, const EGG::Vector3f *pos, const BoxColFlag &flag,
             void *userData);
 
     /// @addr{0x80786F6C}
-    /// @brief Marks the collision unit as inactive by resetting its Active flag
+    /// @brief Marks the collision unit as inactive by resetting the @ref eBoxColFlag::Active bit in
+    /// @ref m_flag.
     void makeInactive() {
         m_flag.resetBit(eBoxColFlag::Active);
     }
 
     /// @addr{0x80786F7C}
     /// @brief Updates the radius and range of the unit
-    /// @details This effectively adjusts how close the player needs to be to the object before
-    /// collision checks are performed.
     /// @param radius The new radius of the collision box
     /// @param maxSpeed The maximum speed for the collision box
+    /// @details This effectively adjusts how close the player needs to be to the object before
+    /// collision checks are performed.
     void resize(f32 radius, f32 maxSpeed) {
         m_radius = radius;
         m_range = radius + maxSpeed;
@@ -111,12 +119,23 @@ class BoxColManager : EGG::Disposer {
     friend class Host::Context;
 
 public:
-    void clear();
+    /// @addr{0x8078597C}
+    /// @brief Clears the result cache and resets the iterator indices
+    void clear() {
+        m_nextObjectID = MAX_UNIT_COUNT;
+        m_nextDrivableID = MAX_UNIT_COUNT;
+        m_maxID = 0;
+        m_cacheUnit = nullptr;
+        m_cacheRadius = -1.0f;
+        m_cacheFlag.makeAllZero();
+    }
+
     void calc();
 
     /// @addr{0x80785E5C}
     /// @brief Retrieves the next collidable object in the iteration sequence
-    /// @return A pointer to the next @ref ObjectCollidable, or nullptr if there are no more objects
+    /// @return A pointer to the next @ref ObjectCollidable, or `nullptr` if there are no more
+    /// objects
     [[nodiscard]] ObjectCollidable *getNextObject() {
         return reinterpret_cast<ObjectCollidable *>(
                 getNextImpl(m_nextObjectID, eBoxColFlag::Object));
@@ -124,7 +143,7 @@ public:
 
     /// @addr{0x80785EC4}
     /// @brief Retrieves the next drivable object in the iteration sequence
-    /// @return A pointer to the next @ref ObjectDrivable, or nullptr if there are no more objects
+    /// @return A pointer to the next @ref ObjectDrivable, or `nullptr` if there are no more objects
     [[nodiscard]] ObjectDrivable *getNextDrivable() {
         return reinterpret_cast<ObjectDrivable *>(
                 getNextImpl(m_nextDrivableID, eBoxColFlag::Drivable));
@@ -255,9 +274,20 @@ private:
     EGG_NEW_DELETE_FRIEND
 
     BoxColManager();
-    ~BoxColManager() override;
+
+    /// @addr{0x807854E4}
+    /// @brief Private destructor
+    ~BoxColManager() override {
+        if (s_instance) {
+            s_instance = nullptr;
+            WARN("BoxColManager instance not explicitly handled!");
+        }
+    }
 
     /// @brief Helper function since the getters share all code except the flag
+    /// @param id Output param that stores the unit pool index of the next matching collision unit
+    /// having the specified flag
+    /// @param flag The collision flag to filter which units to consider during the search
     [[nodiscard]] void *getNextImpl(s32 &id, const BoxColFlag &flag) {
         if (id == MAX_UNIT_COUNT) {
             return nullptr;
@@ -271,6 +301,9 @@ private:
 
     /// @addr{Inlined}
     /// @brief Finds the next collision unit in the spatial index that matches the specified flag
+    /// @param iter Output parameter that stores the index into @ref m_units for the next matching
+    /// collision unit (unmodified if no unit is found)
+    /// @param flag The collision flag to filter which units to consider during the search
     void iterate(s32 &iter, const BoxColFlag &flag) {
         while (++iter < m_maxID) {
             if (m_units[iter]->m_flag.on(flag)) {

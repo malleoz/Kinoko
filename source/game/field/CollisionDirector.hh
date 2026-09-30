@@ -59,6 +59,8 @@ public:
         CollisionAttribute attribute; ///< The full 16-bit attribute field
         f32 dist;                     ///< Distance between the tri and the colliding body
 
+        /// @beginGetters
+
         /// @brief Returns the base type of the tri (bits 0-4)
         [[nodiscard]] u16 baseType() const {
             return attribute & 0x1F;
@@ -74,11 +76,17 @@ public:
             return (attribute >> 11) & 3;
         }
 
+        /// @endGetters
+
+        /// @beginSetters
+
         /// @brief Updates the variant bits in the collision attribute field
         void setVariant(u16 variant) {
             u16 current = static_cast<u16>(attribute);
             attribute = static_cast<CollisionAttribute>((current & ~0xE0) | ((variant & 7) << 5));
         }
+
+        /// @endSetters
     };
 
     /// @addr{0x8078E4F0}
@@ -150,7 +158,7 @@ public:
     [[nodiscard]] const CollisionEntry *closestCollisionEntry() const {
         return m_closestCollisionEntry;
     }
-    
+
     /// @endGetters
 
     /// @addr{0x8078DFE8}
