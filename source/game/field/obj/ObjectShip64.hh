@@ -56,14 +56,14 @@ public:
     /// @addr{0x80766BB4}
     /// @copybrief ObjectBase::getResources()
     /// @details Returns the resource name for the ship.
-    /// @return The resource name for the ship (`DKShip64`).
+    /// @return The resource name for the ship, `DKShip64`.
     [[nodiscard]] const char *getResources() const override {
         return "DKShip64";
     }
 
     /// @addr{0x80766BC0}
     /// @copybrief ObjectBase::getKclName()
-    /// @return The model name of the ship (`DKShip64`).
+    /// @return The model name of the ship, `DKShip64`.
     [[nodiscard]] const char *getKclName() const override {
         return "DKShip64";
     }

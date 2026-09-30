@@ -1,7 +1,5 @@
 #pragma once
 
-#include "game/field/obj/ObjectBase.hh"
-
 #include "game/field/ObjectDirector.hh"
 
 namespace Kinoko::Field {

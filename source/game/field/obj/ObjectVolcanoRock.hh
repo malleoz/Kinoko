@@ -58,7 +58,7 @@ public:
 
     /// @addr{0x8081A668}
     /// @copybrief ObjectBase::getKclName()
-    /// @return The model name of the volcano rock (`VolcanoRock1` or `VolcanoRock2`).
+    /// @return The model name of the volcano rock, `VolcanoRock1` or `VolcanoRock2`.
     [[nodiscard]] const char *getKclName() const override {
         return m_variant ? "VolcanoRock2" : "VolcanoRock1";
     }

@@ -214,18 +214,43 @@ private:
     static constexpr size_t CACHE_SIZE_Z = 116;        ///< Depth of the spatial cache
     static constexpr f32 WALL_BOUNDING_RADIUS = 85.0f; ///< Radius of a block's wall collision
 
+    /// @addr{0x8080BEE4}
+    /// @copydoc ObjectDrivable::checkSpherePartial()
     [[nodiscard]] bool checkSpherePartialImpl(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut);
+            KCLTypeMask *maskOut) {
+        return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, false);
+    }
+
+    /// @addr{0x8080C41C}
+    /// @copydoc ObjectDrivable::checkSpherePartialPush()
     [[nodiscard]] bool checkSpherePartialPushImpl(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut);
+            KCLTypeMask *maskOut) {
+        return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, true);
+    }
+
+    /// @addr{0x8080C980}
+    /// @copydoc ObjectDrivable::checkSphereFull()
     [[nodiscard]] bool checkSphereFullImpl(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut);
+            KCLTypeMask *maskOut) {
+        return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, false);
+    }
+
+    /// @addr{0x8080D12C}
+    /// @copydoc ObjectDrivable::checkSphereFullPush()
     [[nodiscard]] bool checkSphereFullPushImpl(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut);
+            KCLTypeMask *maskOut) {
+        return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, true);
+    }
+
+    template <typename T>
+        requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
+    [[nodiscard]] bool checkSphereImpl(f32 radius, const EGG::Vector3f &pos,
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info, KCLTypeMask *maskOut,
+            bool push);
 
     /// @brief Helper function to return the spatial index of a given block
     /// @param pos The position of the block to compute the spatial index for

@@ -29,215 +29,25 @@ void ObjectObakeManager::calc() {
     }
 }
 
-/// @addr{0x8080BEE4}
-/// @brief Checks collision between a sphere and the cached blocks, writing partial collision info
+/// @brief Helper function shared by the four checkSphere*Impl() overrides
+/// @tparam T The collision info object type, either @ref CollisionInfoPartial or @ref
+/// CollisionInfo.
 /// @param radius The radius of the sphere to check
 /// @param pos The position of the sphere to check
 /// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
+/// @param push Whether to push a collision entry into the @ref CollisionDirector cache
 /// @return Whether a collision was detected
 /// @details Checks all cells in a 3x3 grid around the sphere's position for potential collisions.
 /// Two independent collision checks occur: one for the blocks' wall collision and one for the
-/// blocks' road collision (when a player is driving on top of a block).
-bool ObjectObakeManager::checkSpherePartialImpl(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f & /*prevPos*/, KCLTypeMask mask, CollisionInfoPartial *info,
-        KCLTypeMask *maskOut) {
-    bool collision = false;
-    auto [spatialX, spatialZ] = SpatialIndex(pos);
-
-    EGG::Matrix34f t;
-    t.makeT(pos);
-    m_colSphere->transform(t, EGG::Vector3f(radius, radius, radius), EGG::Vector3f::zero);
-
-    for (s32 i = spatialZ - 1; i <= spatialZ + 1; ++i) {
-        for (s32 j = spatialX - 1; j <= spatialX + 1; ++j) {
-            // Make sure we're in bounds of the cache
-            if (j < 0 || static_cast<size_t>(j) >= CACHE_SIZE_X || i < 0 ||
-                    static_cast<size_t>(i) >= CACHE_SIZE_Z) {
-                continue;
-            }
-
-            auto *block = m_blockCache[i][j];
-            if (!block) {
-                continue;
-            }
-
-            if (mask & KCL_TYPE_BIT(COL_TYPE_SPECIAL_WALL)) {
-                t.makeT(block->pos());
-                m_colBox->setBoundingRadius(WALL_BOUNDING_RADIUS);
-                m_colBox->transform(t, WALL_SCALE, EGG::Vector3f::zero);
-
-                EGG::Vector3f dist;
-                bool collided = m_colSphere->check(*m_colBox, dist);
-
-                if (collided) {
-                    EGG::Vector3f distNrm = dist;
-                    distNrm.normalise();
-
-                    if (0.0f > distNrm.y || distNrm.y > 0.9f) {
-                        collided = false;
-                    } else {
-                        if (info) {
-                            info->update(dist);
-                        }
-
-                        if (maskOut) {
-                            *maskOut |= KCL_TYPE_BIT(COL_TYPE_SPECIAL_WALL);
-                        }
-                    }
-                }
-
-                collision |= collided;
-            }
-
-            if (mask & KCL_TYPE_BIT(COL_TYPE_ROAD)) {
-                t.makeT(block->pos());
-                m_colBox->transform(t, ROAD_SCALE, EGG::Vector3f::zero);
-
-                EGG::Vector3f dist;
-                bool collided = m_colSphere->check(*m_colBox, dist);
-
-                if (collided) {
-                    EGG::Vector3f distNrm = dist;
-                    distNrm.normalise();
-
-                    if (0.9f >= distNrm.y) {
-                        collided = false;
-                    } else {
-                        if (info) {
-                            info->update(dist);
-                        }
-
-                        if (maskOut) {
-                            *maskOut |= KCL_TYPE_BIT(COL_TYPE_ROAD);
-                        }
-                    }
-                }
-
-                collision |= collided;
-            }
-        }
-    }
-
-    return collision;
-}
-
-/// @addr{0x8080C41C}
-/// @brief Checks collision between a sphere and the cached blocks, writing partial collision
-/// info. Additionally pushes the collision entry into the @ref CollisionDirector cache.
-/// @param radius The radius of the sphere to check
-/// @param pos The position of the sphere to check
-/// @param mask The KCL flags to check collision against (other types are ignored)
-/// @param info Out parameter for retrieving collision information (if any)
-/// @param maskOut The KCL flags that were hit during the collision check (if any)
-/// @return Whether a collision was detected
-/// @details Checks all cells in a 3x3 grid around the sphere's position for potential collisions.
-/// Two independent collision checks occur: one for the blocks' wall collision and one for the
-/// blocks' road collision (when a player is driving on top of a block).
-bool ObjectObakeManager::checkSpherePartialPushImpl(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f & /*prevPos*/, KCLTypeMask mask, CollisionInfoPartial *info,
-        KCLTypeMask *maskOut) {
-    bool collision = false;
-    auto [spatialX, spatialZ] = SpatialIndex(pos);
-
-    EGG::Matrix34f t;
-    t.makeT(pos);
-
-    m_colSphere->transform(t, EGG::Vector3f(radius, radius, radius), EGG::Vector3f::zero);
-
-    for (s32 i = spatialZ - 1; i <= spatialZ + 1; ++i) {
-        for (s32 j = spatialX - 1; j <= spatialX + 1; ++j) {
-            // Make sure we're in bounds of the cache
-            if (j < 0 || static_cast<size_t>(j) >= CACHE_SIZE_X || i < 0 ||
-                    static_cast<size_t>(i) >= CACHE_SIZE_Z) {
-                continue;
-            }
-
-            auto *block = m_blockCache[i][j];
-            if (!block) {
-                continue;
-            }
-
-            if (mask & KCL_TYPE_BIT(COL_TYPE_SPECIAL_WALL)) {
-                t.makeT(block->pos());
-                m_colBox->setBoundingRadius(WALL_BOUNDING_RADIUS);
-                m_colBox->transform(t, WALL_SCALE, EGG::Vector3f::zero);
-
-                EGG::Vector3f dist;
-                bool collided = m_colSphere->check(*m_colBox, dist);
-
-                if (collided) {
-                    EGG::Vector3f distNrm = dist;
-                    distNrm.normalise();
-
-                    if (0.0f > distNrm.y || distNrm.y > 0.9f) {
-                        collided = false;
-                    } else {
-                        if (info) {
-                            info->update(dist);
-                        }
-
-                        if (maskOut) {
-                            auto *colDir = CollisionDirector::Instance();
-                            colDir->pushCollisionEntry(dist.length(), maskOut,
-                                    KCL_TYPE_BIT(COL_TYPE_SPECIAL_WALL), COL_TYPE_SPECIAL_WALL);
-                            colDir->setCurrentCollisionVariant(2);
-                        }
-                    }
-                }
-
-                collision |= collided;
-            }
-
-            if (mask & KCL_TYPE_BIT(COL_TYPE_ROAD)) {
-                t.makeT(block->pos());
-                m_colBox->transform(t, ROAD_SCALE, EGG::Vector3f::zero);
-
-                EGG::Vector3f dist;
-                bool collided = m_colSphere->check(*m_colBox, dist);
-
-                if (collided) {
-                    EGG::Vector3f distNrm = dist;
-                    distNrm.normalise();
-
-                    if (0.9f >= distNrm.y) {
-                        collided = false;
-                    } else {
-                        if (info) {
-                            info->update(dist);
-                        }
-
-                        if (maskOut) {
-                            auto *colDir = CollisionDirector::Instance();
-                            colDir->pushCollisionEntry(dist.length(), maskOut,
-                                    KCL_TYPE_BIT(COL_TYPE_ROAD), COL_TYPE_ROAD);
-                        }
-                    }
-                }
-
-                collision |= collided;
-            }
-        }
-    }
-
-    return collision;
-}
-
-/// @addr{0x8080C980}
-/// @brief Checks collision between a sphere and the cached blocks, writing full collision info
-/// @param radius The radius of the sphere to check
-/// @param pos The position of the sphere to check
-/// @param mask The KCL flags to check collision against (other types are ignored)
-/// @param info Out parameter for retrieving collision information (if any)
-/// @param maskOut The KCL flags that were hit during the collision check (if any)
-/// @return Whether a collision was detected
-/// @details Checks all cells in a 3x3 grid around the sphere's position for potential collisions.
-/// Two independent collision checks occur: one for the blocks' wall collision and one for the
-/// blocks' road collision (when a player is driving on top of a block).
-bool ObjectObakeManager::checkSphereFullImpl(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f & /*prevPos*/, KCLTypeMask mask, CollisionInfo *info,
-        KCLTypeMask *maskOut) {
+/// blocks' road collision (when a player is driving on top of a block). Updates `info` and
+/// `maskOut` accordingly.
+template <typename T>
+    requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
+bool ObjectObakeManager::checkSphereImpl(f32 radius, const EGG::Vector3f &pos,
+        const EGG::Vector3f & /*prevPos*/, KCLTypeMask mask, T *info, KCLTypeMask *maskOut,
+        bool push) {
     bool collision = false;
     auto [spatialX, spatialZ] = SpatialIndex(pos);
 
@@ -275,11 +85,22 @@ bool ObjectObakeManager::checkSphereFullImpl(f32 radius, const EGG::Vector3f &po
                         collided = false;
                     } else {
                         if (info) {
-                            info->update(dist.length(), dist, distNrm, KCL_TYPE_WALL);
+                            if constexpr (std::is_same_v<T, CollisionInfo>) {
+                                info->update(dist.length(), dist, distNrm, KCL_TYPE_WALL);
+                            } else {
+                                info->update(dist);
+                            }
                         }
 
                         if (maskOut) {
-                            *maskOut |= KCL_TYPE_BIT(COL_TYPE_SPECIAL_WALL);
+                            if (push) {
+                                auto *colDir = CollisionDirector::Instance();
+                                colDir->pushCollisionEntry(dist.length(), maskOut,
+                                        KCL_TYPE_BIT(COL_TYPE_SPECIAL_WALL), COL_TYPE_SPECIAL_WALL);
+                                colDir->setCurrentCollisionVariant(2);
+                            } else {
+                                *maskOut |= KCL_TYPE_BIT(COL_TYPE_SPECIAL_WALL);
+                            }
                         }
                     }
                 }
@@ -302,11 +123,21 @@ bool ObjectObakeManager::checkSphereFullImpl(f32 radius, const EGG::Vector3f &po
                         collided = false;
                     } else {
                         if (info) {
-                            info->update(dist.length(), dist, distNrm, KCL_TYPE_FLOOR);
+                            if constexpr (std::is_same_v<T, CollisionInfo>) {
+                                info->update(dist.length(), dist, distNrm, KCL_TYPE_FLOOR);
+                            } else {
+                                info->update(dist);
+                            }
                         }
 
                         if (maskOut) {
-                            *maskOut |= KCL_TYPE_BIT(COL_TYPE_ROAD);
+                            if (push) {
+                                auto *colDir = CollisionDirector::Instance();
+                                colDir->pushCollisionEntry(dist.length(), maskOut,
+                                        KCL_TYPE_BIT(COL_TYPE_ROAD), COL_TYPE_ROAD);
+                            } else {
+                                *maskOut |= KCL_TYPE_BIT(COL_TYPE_ROAD);
+                            }
                         }
                     }
                 }
@@ -319,105 +150,13 @@ bool ObjectObakeManager::checkSphereFullImpl(f32 radius, const EGG::Vector3f &po
     return collision;
 }
 
-/// @addr{0x8080D12C}
-/// @brief Checks collision between a sphere and the cached blocks, writing full collision info.
-/// Additionally pushes the collision entry into the @ref CollisionDirector cache.
-/// @param radius The radius of the sphere to check
-/// @param pos The position of the sphere to check
-/// @param mask The KCL flags to check collision against (other types are ignored)
-/// @param info Out parameter for retrieving collision information (if any)
-/// @param maskOut The KCL flags that were hit during the collision check (if any)
-/// @return Whether a collision was detected
-/// @details Checks all cells in a 3x3 grid around the sphere's position for potential collisions.
-/// Two independent collision checks occur: one for the blocks' wall collision and one for the
-/// blocks' road collision (when a player is driving on top of a block).
-bool ObjectObakeManager::checkSphereFullPushImpl(f32 radius, const EGG::Vector3f &pos,
-        const EGG::Vector3f & /*prevPos*/, KCLTypeMask mask, CollisionInfo *info,
-        KCLTypeMask *maskOut) {
-    bool collision = false;
-    auto [spatialX, spatialZ] = SpatialIndex(pos);
-
-    EGG::Matrix34f t;
-    t.makeT(pos);
-    m_colSphere->transform(t, EGG::Vector3f(radius, radius, radius), EGG::Vector3f::zero);
-
-    for (s32 i = spatialZ - 1; i <= spatialZ + 1; ++i) {
-        for (s32 j = spatialX - 1; j <= spatialX + 1; ++j) {
-            // Make sure we're in bounds of the cache
-            if (j < 0 || static_cast<size_t>(j) >= CACHE_SIZE_X || i < 0 ||
-                    static_cast<size_t>(i) >= CACHE_SIZE_Z) {
-                continue;
-            }
-
-            auto *block = m_blockCache[i][j];
-            if (!block) {
-                continue;
-            }
-
-            // Bonking on top of block
-            if (mask & KCL_TYPE_BIT(COL_TYPE_SPECIAL_WALL)) {
-                t.makeT(block->pos());
-                m_colBox->setBoundingRadius(WALL_BOUNDING_RADIUS);
-                m_colBox->transform(t, WALL_SCALE, EGG::Vector3f::zero);
-
-                EGG::Vector3f dist;
-                bool collided = m_colSphere->check(*m_colBox, dist);
-
-                if (collided) {
-                    EGG::Vector3f distNrm = dist;
-                    distNrm.normalise();
-
-                    if (0.0f > distNrm.y || distNrm.y > 0.9f) {
-                        collided = false;
-                    } else {
-                        if (info) {
-                            info->update(dist.length(), dist, distNrm, KCL_TYPE_WALL);
-                        }
-
-                        if (maskOut) {
-                            auto *colDir = CollisionDirector::Instance();
-                            colDir->pushCollisionEntry(dist.length(), maskOut,
-                                    KCL_TYPE_BIT(COL_TYPE_SPECIAL_WALL), COL_TYPE_SPECIAL_WALL);
-                            colDir->setCurrentCollisionVariant(2);
-                        }
-                    }
-                }
-
-                collision |= collided;
-            }
-
-            if (mask & KCL_TYPE_BIT(COL_TYPE_ROAD)) {
-                t.makeT(block->pos());
-                m_colBox->transform(t, ROAD_SCALE, EGG::Vector3f::zero);
-
-                EGG::Vector3f dist;
-                bool collided = m_colSphere->check(*m_colBox, dist);
-
-                if (collided) {
-                    EGG::Vector3f distNrm = dist;
-                    distNrm.normalise();
-
-                    if (0.9f >= distNrm.y) {
-                        collided = false;
-                    } else {
-                        if (info) {
-                            info->update(dist.length(), dist, distNrm, KCL_TYPE_FLOOR);
-                        }
-
-                        if (maskOut) {
-                            auto *colDir = CollisionDirector::Instance();
-                            colDir->pushCollisionEntry(dist.length(), maskOut,
-                                    KCL_TYPE_BIT(COL_TYPE_ROAD), COL_TYPE_ROAD);
-                        }
-                    }
-                }
-
-                collision |= collided;
-            }
-        }
-    }
-
-    return collision;
-}
+// Explicit instantiation, since callers of checkSphereImpl() live in the header and would
+// otherwise be unable to see this definition when the class's vtable is emitted.
+template bool ObjectObakeManager::checkSphereImpl<CollisionInfo>(f32 radius,
+        const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask mask,
+        CollisionInfo *info, KCLTypeMask *maskOut, bool push);
+template bool ObjectObakeManager::checkSphereImpl<CollisionInfoPartial>(f32 radius,
+        const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask mask,
+        CollisionInfoPartial *info, KCLTypeMask *maskOut, bool push);
 
 } // namespace Kinoko::Field

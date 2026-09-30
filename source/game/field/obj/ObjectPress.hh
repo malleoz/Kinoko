@@ -189,14 +189,14 @@ public:
     /// @addr{0x8076EA30}
     /// @copybrief ObjectBase::getResources()
     /// @details Returns the resource name for the press.
-    /// @return The resource name for the press (`Press`).
+    /// @return The resource name for the press, `Press`.
     [[nodiscard]] const char *getResources() const override {
         return "Press";
     }
 
     /// @addr{0x8076EA3C}
     /// @copybrief ObjectBase::getKclName()
-    /// @return The model name of the press (`Press`).
+    /// @return The model name of the press, `Press`.
     [[nodiscard]] const char *getKclName() const override {
         return "Press";
     }

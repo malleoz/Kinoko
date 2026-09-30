@@ -14,7 +14,7 @@ namespace Kinoko::Field {
 class ObjectSniper : public ObjectCollidable {
 public:
     /// @addr{0x806DDA84}
-    /// @brief Constructor
+    /// @brief Constructor that creates the object named `MapObjSniper`
     ObjectSniper()
         : ObjectCollidable("MapObjSniper", EGG::Vector3f::zero, EGG::Vector3f::ez,
                   EGG::Vector3f::unit) {}

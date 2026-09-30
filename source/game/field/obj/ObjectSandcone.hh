@@ -61,6 +61,7 @@ public:
     /// @addr{0x80687800}
     /// @copybrief ObjectKCL::getUpdatedMatrix()
     /// @param timeOffset The time offset used to calculate the current frame's transformation
+    /// @return A const ref to the updated transformation matrix.
     /// @details Based off the current race timer, raises the sandcone's height gradually until it
     /// reaches the final height. The sandcone's height increases by @ref m_flowRate every frame
     /// until the sandcone has been flowing for @ref m_duration frames.

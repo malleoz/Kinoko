@@ -64,7 +64,7 @@ public:
 
     /// @addr{0x806E2618}
     /// @copybrief ObjectBase::getKclName()
-    /// @return The model name of the truck wagon (`TruckWagon`).
+    /// @return The model name of the truck wagon, `TruckWagon`.
     [[nodiscard]] const char *getKclName() const override {
         return "TruckWagon";
     }

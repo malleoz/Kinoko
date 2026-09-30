@@ -32,14 +32,14 @@ public:
     /// @addr{0x806E9554}
     /// @copybrief ObjectBase::getResources()
     /// @details Returns the resource name for the Chain Chomp.
-    /// @return The resource name for the Chain Chomp (`wanwan`).
+    /// @return The resource name for the Chain Chomp, `wanwan`.
     [[nodiscard]] const char *getResources() const override {
         return "wanwan";
     }
 
     /// @addr{0x806E9548}
     /// @copybrief ObjectBase::getKclName()
-    /// @return The model name of the stake (`pile`).
+    /// @return The model name of the stake, `pile`.
     [[nodiscard]] const char *getKclName() const override {
         return "pile";
     }

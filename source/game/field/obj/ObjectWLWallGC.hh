@@ -83,6 +83,7 @@ public:
     /// @addr{0x8086BF30}
     /// @copybrief ObjectKCL::getUpdatedMatrix()
     /// @param timeOffset The time offset used to calculate the current frame's transformation
+    /// @return A const ref to the updated transformation matrix.
     /// @details Linearly interpolates between the piranha's initial position and its extended
     /// position based on the current frame within the movement cycle. Updates the translation of
     /// @ref m_rtMat accordingly. The interpolation factor \f$t\f$ is computed as:

@@ -38,7 +38,9 @@ public:
     }
 
     /// @addr{0x8077036C}
-    /// @copydoc ObjectCollidable::getCollisionTranslation()
+    /// @copybrief ObjectCollidable::getCollisionTranslation()
+    /// @return @ref m_vel, so that it is applied on top of the object's world transform for
+    /// collision checks
     [[nodiscard]] const EGG::Vector3f &getCollisionTranslation() const override {
         return m_vel;
     }
