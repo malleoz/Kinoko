@@ -248,8 +248,8 @@ bool KColData::checkSphereSingle(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flag
 /// @param prevPos The previous position of the sphere
 /// @param typeMask The KCL types to filter the collision query to
 /// @param radius The radius of the sphere
-void KColData::lookupSphereCached(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-        u32 typeMask, f32 radius) {
+void KColData::lookupSphereCached(f32 radius, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, u32 typeMask) {
     EGG::Sphere3f sphere1(pos, radius);
     EGG::Sphere3f sphere2(m_cachedPos, m_cachedRadius);
 

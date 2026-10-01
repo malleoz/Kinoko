@@ -15,6 +15,11 @@ struct CollisionInfoPartial {
     EGG::BoundBox3f bbox;     ///< Bounding box of "push out" vectors
     EGG::Vector3f tangentOff; ///< The net "push out" vector
 
+    /// @brief Initializes @ref bbox to zero
+    void reset() {
+        bbox.setZero();
+    }
+
     /// @brief Expands the bounding box to include the provided position vector
     void update(const EGG::Vector3f &offset) {
         bbox.min = bbox.min.minimize(offset);
@@ -182,8 +187,8 @@ public:
         m_typeMask = typeMask;
     }
 
-    void lookupSphereCached(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, u32 typeMask,
-            f32 radius);
+    void lookupSphereCached(f32 radius, const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
+            u32 typeMask);
 
     [[nodiscard]] const u16 *searchBlock(const EGG::Vector3f &pos);
 
@@ -208,7 +213,7 @@ public:
     [[nodiscard]] std::span<const EGG::Vector3f> vertices() const {
         return m_vertices.view();
     }
-    
+
     /// @endGetters
 
     /// @addr{0x807BDF54}

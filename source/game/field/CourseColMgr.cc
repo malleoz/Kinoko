@@ -17,7 +17,7 @@ namespace Kinoko::Field {
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::checkPointPartial(f32 scale, KColData *data, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevpos, KCLTypeMask mask, CollisionInfoPartial *info,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
         KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
@@ -26,7 +26,7 @@ bool CourseColMgr::checkPointPartial(f32 scale, KColData *data, const EGG::Vecto
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupPoint(pos * invScale, prevpos * invScale, mask);
+    data->lookupPoint(pos * invScale, prevPos * invScale, mask);
 
     if (info) {
         return doCheckWithPartialInfo(data, &KColData::checkPointCollision, info, maskOut);
@@ -47,7 +47,7 @@ bool CourseColMgr::checkPointPartial(f32 scale, KColData *data, const EGG::Vecto
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::checkPointPartialPush(f32 scale, KColData *data, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevpos, KCLTypeMask mask, CollisionInfoPartial *info,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
         KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
@@ -56,7 +56,7 @@ bool CourseColMgr::checkPointPartialPush(f32 scale, KColData *data, const EGG::V
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupPoint(pos * invScale, prevpos * invScale, mask);
+    data->lookupPoint(pos * invScale, prevPos * invScale, mask);
 
     if (info) {
         return doCheckWithPartialInfoPush(data, &KColData::checkPointCollision, info, maskOut);
@@ -75,7 +75,7 @@ bool CourseColMgr::checkPointPartialPush(f32 scale, KColData *data, const EGG::V
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::checkPointFull(f32 scale, KColData *data, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevpos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
     }
@@ -83,7 +83,7 @@ bool CourseColMgr::checkPointFull(f32 scale, KColData *data, const EGG::Vector3f
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupPoint(pos * invScale, prevpos * invScale, mask);
+    data->lookupPoint(pos * invScale, prevPos * invScale, mask);
 
     if (info) {
         return doCheckWithFullInfo(data, &KColData::checkPointCollision, info, maskOut);
@@ -103,7 +103,7 @@ bool CourseColMgr::checkPointFull(f32 scale, KColData *data, const EGG::Vector3f
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::checkPointFullPush(f32 scale, KColData *data, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevpos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
     }
@@ -111,7 +111,7 @@ bool CourseColMgr::checkPointFullPush(f32 scale, KColData *data, const EGG::Vect
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupPoint(pos * invScale, prevpos * invScale, mask);
+    data->lookupPoint(pos * invScale, prevPos * invScale, mask);
 
     if (info) {
         return doCheckWithFullInfoPush(data, &KColData::checkPointCollision, info, maskOut);
@@ -131,7 +131,7 @@ bool CourseColMgr::checkPointFullPush(f32 scale, KColData *data, const EGG::Vect
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::checkSpherePartial(f32 scale, f32 radius, KColData *data,
-        const EGG::Vector3f &pos, const EGG::Vector3f &prevpos, KCLTypeMask mask,
+        const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask mask,
         CollisionInfoPartial *info, KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
@@ -140,7 +140,7 @@ bool CourseColMgr::checkSpherePartial(f32 scale, f32 radius, KColData *data,
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupSphere(radius * invScale, pos * invScale, prevpos * invScale, mask);
+    data->lookupSphere(radius * invScale, pos * invScale, prevPos * invScale, mask);
 
     if (info) {
         return doCheckWithPartialInfo(data, &KColData::checkSphereCollision, info, maskOut);
@@ -161,7 +161,7 @@ bool CourseColMgr::checkSpherePartial(f32 scale, f32 radius, KColData *data,
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::checkSpherePartialPush(f32 scale, f32 radius, KColData *data,
-        const EGG::Vector3f &pos, const EGG::Vector3f &prevpos, KCLTypeMask mask,
+        const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask mask,
         CollisionInfoPartial *info, KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
@@ -170,7 +170,7 @@ bool CourseColMgr::checkSpherePartialPush(f32 scale, f32 radius, KColData *data,
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupSphere(radius * invScale, pos * invScale, prevpos * invScale, mask);
+    data->lookupSphere(radius * invScale, pos * invScale, prevPos * invScale, mask);
 
     if (info) {
         return doCheckWithPartialInfoPush(data, &KColData::checkSphereCollision, info, maskOut);
@@ -190,7 +190,7 @@ bool CourseColMgr::checkSpherePartialPush(f32 scale, f32 radius, KColData *data,
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::checkSphereFull(f32 scale, f32 radius, KColData *data, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevpos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
     }
@@ -198,7 +198,7 @@ bool CourseColMgr::checkSphereFull(f32 scale, f32 radius, KColData *data, const 
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupSphere(radius * invScale, pos * invScale, prevpos * invScale, mask);
+    data->lookupSphere(radius * invScale, pos * invScale, prevPos * invScale, mask);
 
     if (info) {
         return doCheckWithFullInfo(data, &KColData::checkSphereCollision, info, maskOut);
@@ -219,7 +219,7 @@ bool CourseColMgr::checkSphereFull(f32 scale, f32 radius, KColData *data, const 
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::checkSphereFullPush(f32 scale, f32 radius, KColData *data,
-        const EGG::Vector3f &pos, const EGG::Vector3f &prevpos, KCLTypeMask mask,
+        const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask mask,
         CollisionInfo *info, KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
@@ -228,7 +228,7 @@ bool CourseColMgr::checkSphereFullPush(f32 scale, f32 radius, KColData *data,
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupSphere(radius * invScale, pos * invScale, prevpos * invScale, mask);
+    data->lookupSphere(radius * invScale, pos * invScale, prevPos * invScale, mask);
 
     if (info) {
         return doCheckWithFullInfoPush(data, &KColData::checkSphereCollision, info, maskOut);
@@ -248,7 +248,7 @@ bool CourseColMgr::checkSphereFullPush(f32 scale, f32 radius, KColData *data,
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::checkPointCachedPartial(f32 scale, KColData *data, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevpos, KCLTypeMask mask, CollisionInfoPartial *info,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
         KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
@@ -257,7 +257,7 @@ bool CourseColMgr::checkPointCachedPartial(f32 scale, KColData *data, const EGG:
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupPoint(pos * invScale, prevpos * invScale, mask);
+    data->lookupPoint(pos * invScale, prevPos * invScale, mask);
 
     if (info) {
         return doCheckWithPartialInfo(data, &KColData::checkPointCollision, info, maskOut);
@@ -278,7 +278,7 @@ bool CourseColMgr::checkPointCachedPartial(f32 scale, KColData *data, const EGG:
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::checkPointCachedPartialPush(f32 scale, KColData *data, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevpos, KCLTypeMask mask, CollisionInfoPartial *info,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
         KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
@@ -291,7 +291,7 @@ bool CourseColMgr::checkPointCachedPartialPush(f32 scale, KColData *data, const 
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupPoint(pos * invScale, prevpos * invScale, mask);
+    data->lookupPoint(pos * invScale, prevPos * invScale, mask);
 
     if (info) {
         return doCheckWithPartialInfoPush(data, &KColData::checkPointCollision, info, maskOut);
@@ -311,7 +311,7 @@ bool CourseColMgr::checkPointCachedPartialPush(f32 scale, KColData *data, const 
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::checkPointCachedFull(f32 scale, KColData *data, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevpos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
     }
@@ -323,7 +323,7 @@ bool CourseColMgr::checkPointCachedFull(f32 scale, KColData *data, const EGG::Ve
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupPoint(pos * invScale, prevpos * invScale, mask);
+    data->lookupPoint(pos * invScale, prevPos * invScale, mask);
 
     if (info) {
         return doCheckWithFullInfo(data, &KColData::checkPointCollision, info, maskOut);
@@ -344,7 +344,7 @@ bool CourseColMgr::checkPointCachedFull(f32 scale, KColData *data, const EGG::Ve
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
 bool CourseColMgr::checkPointCachedFullPush(f32 scale, KColData *data, const EGG::Vector3f &pos,
-        const EGG::Vector3f &prevpos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
     if (!data) {
         data = m_data;
     }
@@ -356,7 +356,7 @@ bool CourseColMgr::checkPointCachedFullPush(f32 scale, KColData *data, const EGG
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupPoint(pos * invScale, prevpos * invScale, mask);
+    data->lookupPoint(pos * invScale, prevPos * invScale, mask);
 
     if (info) {
         return doCheckWithFullInfoPush(data, &KColData::checkPointCollision, info, maskOut);
@@ -390,7 +390,7 @@ bool CourseColMgr::checkSphereCachedPartial(f32 scale, f32 radius, KColData *dat
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupSphereCached(pos * invScale, prevPos * invScale, mask, radius * invScale);
+    data->lookupSphereCached(radius * invScale, pos * invScale, prevPos * invScale, mask);
 
     if (info) {
         return doCheckWithPartialInfo(data, &KColData::checkSphereCollision, info, maskOut);
@@ -426,7 +426,7 @@ bool CourseColMgr::checkSphereCachedPartialPush(f32 scale, f32 radius, KColData 
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupSphereCached(pos * invScale, prevPos * invScale, mask, radius * invScale);
+    data->lookupSphereCached(radius * invScale, pos * invScale, prevPos * invScale, mask);
 
     if (info) {
         return doCheckWithPartialInfoPush(data, &KColData::checkSphereCollision, info, maskOut);
@@ -461,7 +461,7 @@ bool CourseColMgr::checkSphereCachedFull(f32 scale, f32 radius, KColData *data,
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupSphereCached(pos * invScale, prevPos * invScale, mask, radius * invScale);
+    data->lookupSphereCached(radius * invScale, pos * invScale, prevPos * invScale, mask);
 
     if (info) {
         return doCheckWithFullInfo(data, &KColData::checkSphereCollision, info, maskOut);
@@ -478,7 +478,7 @@ bool CourseColMgr::checkSphereCachedFull(f32 scale, f32 radius, KColData *data,
 /// @param radius The radius of the sphere to check
 /// @param data Pointer to the parsed tri data to perform the lookup on
 /// @param pos The position of the sphere to check
-/// @param prevpos The previous position of the sphere, used for calculating collision depth
+/// @param prevPos The previous position of the sphere, used for calculating collision depth
 /// @param mask The KCL flags to check collision against (other types are ignored)
 /// @param info Out parameter for retrieving collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
@@ -497,7 +497,7 @@ bool CourseColMgr::checkSphereCachedFullPush(f32 scale, f32 radius, KColData *da
     m_kclScale = scale;
 
     f32 invScale = 1.0f / scale;
-    data->lookupSphereCached(pos * invScale, prevPos * invScale, mask, radius * invScale);
+    data->lookupSphereCached(radius * invScale, pos * invScale, prevPos * invScale, mask);
 
     if (info) {
         return doCheckWithFullInfoPush(data, &KColData::checkSphereCollision, info, maskOut);
