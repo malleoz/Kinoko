@@ -14,8 +14,26 @@ namespace Kinoko::Field {
 /// sized objects (such as the Bowser's Castle geysers, represented by @ref ObjectFlamePoleFoot).
 class ObjColMgr {
 public:
-    ObjColMgr(const void *file);
-    ~ObjColMgr();
+    /// @addr{0x807C4CE8}
+    /// @brief Constructor that parses the KCL data from the provided file pointer
+    /// @param file Pointer to the .kcl file in memory
+    /// @details Initializes the transformation matrix to the identity matrix, sets @ref m_kclScale
+    /// to `1.0f`, and zeroes @ref m_movingObjVel. Finally, it parses the KCL data from the provided
+    /// file pointer to @ref m_data.
+    ObjColMgr(const void *file)
+        : m_mtx(EGG::Matrix34f::ident),
+          m_mtxInv(EGG::Matrix34f::ident),
+          m_kclScale(1.0f),
+          m_movingObjVel(EGG::Vector3f::zero) {
+        m_data = EGG::egg_new<KColData>(file);
+    }
+
+    /// @addr{0x807C4D6C}
+    /// @brief Destructor that destroys the associated KCL data
+    ~ObjColMgr() {
+        ASSERT(m_data);
+        EGG::egg_delete(m_data);
+    }
 
     /// @addr{0x807C4DC8}
     /// @brief Narrows the spatial cache of the @ref CourseColMgr to only include KCL tris defined
@@ -106,7 +124,7 @@ public:
     void setMovingObjVel(const EGG::Vector3f &v) {
         m_movingObjVel = v;
     }
-    
+
     /// @endSetters
 
 private:

@@ -230,7 +230,7 @@ void KartCollide::calcBodyCollision(f32 totalScale, f32 sinkDepth, const EGG::Qu
     bool bVar1 = false;
 
     for (u16 hitboxIdx = 0; hitboxIdx < hitboxGroup->hitboxCount(); ++hitboxIdx) {
-        Field::KCLTypeMask flags = KCL_TYPE_DRIVER_SOLID_SURFACE;
+        Field::KCLTypeMask flags = KCL_TYPE_BODY_COLLIDABLE;
         Hitbox &hitbox = hitboxGroup->hitbox(hitboxIdx);
 
         if (hitbox.bspHitbox()->wallsOnly != 0) {
@@ -956,7 +956,7 @@ bool KartCollide::accumulateBodyCollision(CollisionData &collisionData, const Hi
         if (mask & KCL_TYPE_ANY_INVISIBLE_WALL) {
             collisionData.bInvisibleWall = true;
 
-            if (!(mask & KCL_TYPE_4010D000)) {
+            if (!(mask & KCL_TYPE_VISIBLE_WALL)) {
                 collisionData.bInvisibleWallOnly = true;
 
                 if (mask & KCL_TYPE_BIT(COL_TYPE_HALFPIPE_INVISIBLE_WALL)) {

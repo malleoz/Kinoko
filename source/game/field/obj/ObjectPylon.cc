@@ -34,7 +34,7 @@ void ObjectPylon::init() {
     EGG::Vector3f prevPos = pos() + EGG::Vector3f::ey * (RADIUS + FALL_VEL);
 
     bool hasCol = CollisionDirector::Instance()->checkSphereFull(RADIUS, colPos, prevPos,
-            KCL_TYPE_6CEBDFFF, &info, &mask, 0);
+            KCL_TYPE_OBJECT_COLLIDABLE_MODIFIABLE, &info, &mask, 0);
 
     if (hasCol) {
         addPos(info.tangentOff);
@@ -215,7 +215,7 @@ void ObjectPylon::checkIntraCollision(const EGG::Vector3f &hitDepth) {
     EGG::Vector3f colPos = pos() + EGG::Vector3f::ey * RADIUS;
 
     bool hasCol = CollisionDirector::Instance()->checkSphereFullPush(RADIUS, colPos, pos(),
-            KCL_TYPE_60E8DFFF, &info, &mask, 0);
+            KCL_TYPE_OBJECT_SOLID_SURFACE, &info, &mask, 0);
     if (hasCol) {
         addPos(info.tangentOff);
 
@@ -391,7 +391,7 @@ void ObjectPylon::calcComeBack() {
         EGG::Vector3f prevPos = pos() + EGG::Vector3f::ey * (RADIUS + COME_BACK_VEL) * scale().x;
 
         bool hasCol = CollisionDirector::Instance()->checkSphereFullPush(RADIUS * scale().x, colPos,
-                prevPos, KCL_TYPE_60E8DFFF, &info, &mask, 0);
+                prevPos, KCL_TYPE_OBJECT_SOLID_SURFACE, &info, &mask, 0);
 
         if (hasCol) {
             addPos(info.tangentOff);
@@ -415,7 +415,7 @@ void ObjectPylon::calcComeBack() {
         EGG::Vector3f prevPos = pos() + EGG::Vector3f::ey * (RADIUS + COME_BACK_VEL) * scale().x;
 
         bool hasCol = CollisionDirector::Instance()->checkSphereFull(RADIUS * scale().x, colPos,
-                prevPos, KCL_TYPE_60E8DFFF, &info, nullptr, 0);
+                prevPos, KCL_TYPE_OBJECT_SOLID_SURFACE, &info, nullptr, 0);
 
         if (hasCol) {
             addPos(info.tangentOff);

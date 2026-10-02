@@ -112,7 +112,7 @@ bool KartReject::calcRejection() {
                 pos() + (-posOffset * scale().y) * mainRot().rotateVector(EGG::Vector3f::ey);
 
         auto *colDir = Field::CollisionDirector::Instance();
-        if (!colDir->checkSphereFullPush(radius, lowerPos, upperPos, KCL_TYPE_B0E82DFF, &colInfo,
+        if (!colDir->checkSphereFullPush(radius, lowerPos, upperPos, KCL_TYPE_REJECTABLE, &colInfo,
                     &mask, 0)) {
             if (i == 0) {
                 posOffset = 0.0f;

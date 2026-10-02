@@ -2,24 +2,6 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x807C4CE8}
-/// @brief Constructor that parses the KCL data from the provided file pointer
-/// @param file Pointer to the .kcl file in memory
-ObjColMgr::ObjColMgr(const void *file)
-    : m_mtx(EGG::Matrix34f::ident),
-      m_mtxInv(EGG::Matrix34f::ident),
-      m_kclScale(1.0f),
-      m_movingObjVel(EGG::Vector3f::zero) {
-    m_data = EGG::egg_new<KColData>(file);
-}
-
-/// @addr{0x807C4D6C}
-/// @brief Destructor that destroys the associated KCL data
-ObjColMgr::~ObjColMgr() {
-    ASSERT(m_data);
-    EGG::egg_delete(m_data);
-}
-
 /// @addr{0x807C4EAC}
 /// @brief Checks collision between a point and course KCL tris, writing only partial collision info
 /// @param pos The point to check
@@ -49,7 +31,9 @@ bool ObjColMgr::checkPointPartial(const EGG::Vector3f &pos, const EGG::Vector3f 
             tempInfo.bbox.max = m_mtx.ps_multVector33(tempInfo.bbox.max);
 
             EGG::Vector3f min = tempInfo.bbox.min;
-            tempInfo.updateBBox(tempInfo.bbox.max);
+            tempInfo.bbox.min = min.minimize(tempInfo.bbox.max);
+            tempInfo.bbox.max = min.maximize(tempInfo.bbox.max);
+
             info->bbox.min = info->bbox.min.minimize(tempInfo.bbox.min);
             info->bbox.max = info->bbox.max.maximize(tempInfo.bbox.max);
 
@@ -93,7 +77,9 @@ bool ObjColMgr::checkPointPartialPush(const EGG::Vector3f &pos, const EGG::Vecto
             tempInfo.bbox.max = m_mtx.ps_multVector33(tempInfo.bbox.max);
 
             EGG::Vector3f min = tempInfo.bbox.min;
-            tempInfo.updateBBox(tempInfo.bbox.max);
+            tempInfo.bbox.min = min.minimize(tempInfo.bbox.max);
+            tempInfo.bbox.max = min.maximize(tempInfo.bbox.max);
+
             info->bbox.min = info->bbox.min.minimize(tempInfo.bbox.min);
             info->bbox.max = info->bbox.max.maximize(tempInfo.bbox.max);
 
@@ -213,7 +199,9 @@ bool ObjColMgr::checkSpherePartial(f32 radius, const EGG::Vector3f &pos,
             tempInfo.bbox.max = m_mtx.ps_multVector33(tempInfo.bbox.max);
 
             EGG::Vector3f min = tempInfo.bbox.min;
-            tempInfo.updateBBox(tempInfo.bbox.max);
+            tempInfo.bbox.min = min.minimize(tempInfo.bbox.max);
+            tempInfo.bbox.max = min.maximize(tempInfo.bbox.max);
+
             info->bbox.min = info->bbox.min.minimize(tempInfo.bbox.min);
             info->bbox.max = info->bbox.max.maximize(tempInfo.bbox.max);
 
@@ -259,7 +247,9 @@ bool ObjColMgr::checkSpherePartialPush(f32 radius, const EGG::Vector3f &pos,
             tempInfo.bbox.max = m_mtx.ps_multVector33(tempInfo.bbox.max);
 
             EGG::Vector3f min = tempInfo.bbox.min;
-            tempInfo.updateBBox(tempInfo.bbox.max);
+            tempInfo.bbox.min = min.minimize(tempInfo.bbox.max);
+            tempInfo.bbox.max = min.maximize(tempInfo.bbox.max);
+
             info->bbox.min = info->bbox.min.minimize(tempInfo.bbox.min);
             info->bbox.max = info->bbox.max.maximize(tempInfo.bbox.max);
 
@@ -384,7 +374,9 @@ bool ObjColMgr::checkPointCachedPartial(const EGG::Vector3f &pos, const EGG::Vec
             tempInfo.bbox.max = m_mtx.ps_multVector33(tempInfo.bbox.max);
 
             EGG::Vector3f min = tempInfo.bbox.min;
-            tempInfo.updateBBox(tempInfo.bbox.max);
+            tempInfo.bbox.min = min.minimize(tempInfo.bbox.max);
+            tempInfo.bbox.max = min.maximize(tempInfo.bbox.max);
+
             info->bbox.min = info->bbox.min.minimize(tempInfo.bbox.min);
             info->bbox.max = info->bbox.max.maximize(tempInfo.bbox.max);
 
@@ -433,7 +425,9 @@ bool ObjColMgr::checkPointCachedPartialPush(const EGG::Vector3f &pos, const EGG:
             tempInfo.bbox.max = m_mtx.ps_multVector33(tempInfo.bbox.max);
 
             EGG::Vector3f min = tempInfo.bbox.min;
-            tempInfo.updateBBox(tempInfo.bbox.max);
+            tempInfo.bbox.min = min.minimize(tempInfo.bbox.max);
+            tempInfo.bbox.max = min.maximize(tempInfo.bbox.max);
+
             info->bbox.min = info->bbox.min.minimize(tempInfo.bbox.min);
             info->bbox.max = info->bbox.max.maximize(tempInfo.bbox.max);
 
@@ -568,7 +562,9 @@ bool ObjColMgr::checkSphereCachedPartial(f32 radius, const EGG::Vector3f &pos,
             tempInfo.bbox.max = m_mtx.ps_multVector33(tempInfo.bbox.max);
 
             EGG::Vector3f min = tempInfo.bbox.min;
-            tempInfo.updateBBox(tempInfo.bbox.max);
+            tempInfo.bbox.min = min.minimize(tempInfo.bbox.max);
+            tempInfo.bbox.max = min.maximize(tempInfo.bbox.max);
+
             info->bbox.min = info->bbox.min.minimize(tempInfo.bbox.min);
             info->bbox.max = info->bbox.max.maximize(tempInfo.bbox.max);
 
@@ -619,7 +615,9 @@ bool ObjColMgr::checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &po
             tempInfo.bbox.max = m_mtx.ps_multVector33(tempInfo.bbox.max);
 
             EGG::Vector3f min = tempInfo.bbox.min;
-            tempInfo.updateBBox(tempInfo.bbox.max);
+            tempInfo.bbox.min = min.minimize(tempInfo.bbox.max);
+            tempInfo.bbox.max = min.maximize(tempInfo.bbox.max);
+
             info->bbox.min = info->bbox.min.minimize(tempInfo.bbox.min);
             info->bbox.max = info->bbox.max.maximize(tempInfo.bbox.max);
 
