@@ -95,8 +95,7 @@ bool ObjectTuribashi::checkSphereImpl(f32 radius, const EGG::Vector3f &pos,
 
     if (info) {
         EGG::Vector3f scaledY = EGG::Vector3f::ey * dist;
-        info->bbox.min = info->bbox.min.minimize(scaledY);
-        info->bbox.max = info->bbox.max.maximize(scaledY);
+        info->updateBBox(scaledY);
 
         if constexpr (std::is_same_v<T, CollisionInfo>) {
             info->updateFloor(dist, EGG::Vector3f(sinfidx, cosfidx, 0.0f));

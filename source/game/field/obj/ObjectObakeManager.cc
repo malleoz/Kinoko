@@ -88,7 +88,7 @@ bool ObjectObakeManager::checkSphereImpl(f32 radius, const EGG::Vector3f &pos,
                             if constexpr (std::is_same_v<T, CollisionInfo>) {
                                 info->update(dist.length(), dist, distNrm, KCL_TYPE_WALL);
                             } else {
-                                info->update(dist);
+                                info->updateBBox(dist);
                             }
                         }
 
@@ -126,7 +126,7 @@ bool ObjectObakeManager::checkSphereImpl(f32 radius, const EGG::Vector3f &pos,
                             if constexpr (std::is_same_v<T, CollisionInfo>) {
                                 info->update(dist.length(), dist, distNrm, KCL_TYPE_FLOOR);
                             } else {
-                                info->update(dist);
+                                info->updateBBox(dist);
                             }
                         }
 

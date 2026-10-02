@@ -140,8 +140,7 @@ bool CourseColMgr::doCheckWithInfo(KColData *data, CollisionCheckFunc collisionC
                 fnrm = m_localMtx->multVector33(fnrm);
             }
             EGG::Vector3f offset = fnrm * dist;
-            m_noBounceWallInfo->bbox.min = m_noBounceWallInfo->bbox.min.minimize(offset);
-            m_noBounceWallInfo->bbox.max = m_noBounceWallInfo->bbox.max.maximize(offset);
+            m_noBounceWallInfo->updateBBox(offset);
             if (m_noBounceWallInfo->dist < dist) {
                 m_noBounceWallInfo->dist = dist;
                 m_noBounceWallInfo->fnrm = fnrm;

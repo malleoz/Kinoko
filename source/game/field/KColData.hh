@@ -21,7 +21,8 @@ struct CollisionInfoPartial {
     }
 
     /// @brief Expands the bounding box to include the provided position vector
-    void update(const EGG::Vector3f &offset) {
+    /// @param offset The position offset to include in the bounding box
+    void updateBBox(const EGG::Vector3f &offset) {
         bbox.min = bbox.min.minimize(offset);
         bbox.max = bbox.max.maximize(offset);
     }
@@ -41,6 +42,13 @@ struct CollisionInfo {
     f32 wallDist;               ///< Distance from the colliding wall tri
     f32 movingFloorDist;        ///< Distance from the colliding moving floor tri
     f32 perpendicularity;       ///< Measures how much two colliding wall normals diverge
+
+    /// @brief Expands the bounding box to include the provided position vector
+    /// @param offset The position offset to include in the bounding box
+    void updateBBox(const EGG::Vector3f &offset) {
+        bbox.min = bbox.min.minimize(offset);
+        bbox.max = bbox.max.maximize(offset);
+    }
 
     /// @brief Updates the floor collision info if the provided distance is closer than the
     /// currently tracked floor collision
@@ -93,26 +101,20 @@ public:
         /// @brief Non-initializing default constructor
         KCollisionPrism() = default;
 
-        /// @brief Initializing constructor
-        /// @param height The height of the tri
-        /// @param posIndex Index of the first vertex's index in @ref KColData::m_vertices
-        /// @param faceNormIndex Index of the face normal in @ref KColData::m_nrms
-        /// @param edge1NormIndex  Index of the first edge's normal in @ref KColData::m_nrms
-        /// @param edge2NormIndex  Index of the second edge's normal in @ref KColData::m_nrms
-        /// @param edge3NormIndex  Index of the third edge's normal in @ref KColData::m_nrms
-        /// @param attribute  KCL attribute of the tri
-        KCollisionPrism(f32 height, u16 posIndex, u16 faceNormIndex, u16 edge1NormIndex,
-                u16 edge2NormIndex, u16 edge3NormIndex, u16 attribute)
-            : height(height),
-              pos_i(posIndex),
-              fnrm_i(faceNormIndex),
-              enrm1_i(edge1NormIndex),
-              enrm2_i(edge2NormIndex),
-              enrm3_i(edge3NormIndex),
-              attribute(attribute) {}
-
         /// @brief Default destructor
         ~KCollisionPrism() = default;
+
+        /// @brief Initializes the prism by reading its data from the provided stream
+        /// @param stream The stream from which to read the prism data
+        void read(EGG::RamStream &stream) {
+            height = stream.read_f32();
+            pos_i = stream.read_u16();
+            fnrm_i = stream.read_u16();
+            enrm1_i = stream.read_u16();
+            enrm2_i = stream.read_u16();
+            enrm3_i = stream.read_u16();
+            attribute = stream.read_u16();
+        }
 
         f32 height;    ///< The height of the tri
         u16 pos_i;     ///< Index of the first vertex's index in @ref m_vertices
@@ -125,12 +127,11 @@ public:
     STATIC_ASSERT(sizeof(KCollisionPrism) == 0x10);
 
     KColData(const void *file);
-    ~KColData();
+
+    /// @brief Default destructor
+    ~KColData() = default;
 
     void narrowScopeLocal(const EGG::Vector3f &pos, f32 radius, KCLTypeMask mask);
-    void narrowPolygon_EachBlock(const u16 *prismArray);
-
-    void computeBBox();
 
     /// @addr{0x807C1F80}
     /// @brief Checks for a collision at a specific point. If the previous position is valid, then
@@ -139,6 +140,7 @@ public:
     /// @param distOut Output parameter for the distance to the collision point
     /// @param fnrmOut Output parameter for the face normal at the collision point
     /// @param flagsOut Output parameter for the collision flags
+    /// @return `true` if a collision was detected, `false` otherwise
     [[nodiscard]] bool checkPointCollision(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsOut) {
         return checkPoint(distOut, fnrmOut, flagsOut, std::isfinite(m_prevPos.y));
     }
@@ -150,13 +152,12 @@ public:
     /// @param distOut Output parameter for the distance to the collision point
     /// @param fnrmOut Output parameter for the face normal at the collision point
     /// @param flagsOut Output parameter for the collision flags
+    /// @return `true` if a collision was detected, `false` otherwise
     [[nodiscard]] bool checkSphereCollision(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsOut) {
-        return std::isfinite(m_prevPos.y) ? checkSphereMovement(distOut, fnrmOut, flagsOut) :
-                                            checkSphere(distOut, fnrmOut, flagsOut);
+        return std::isfinite(m_prevPos.y) ?
+                checkSphereImpl<CollisionCheckType::Movement>(distOut, fnrmOut, flagsOut) :
+                checkSphereImpl<CollisionCheckType::Plane>(distOut, fnrmOut, flagsOut);
     }
-
-    [[nodiscard]] bool checkSphere(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsOut);
-    [[nodiscard]] bool checkSphereSingle(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsOut);
 
     /// @addr{0x807C1B0C}
     /// @brief Sets members in preparation of a subsequent point collision check call
@@ -190,71 +191,63 @@ public:
     void lookupSphereCached(f32 radius, const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
             u32 typeMask);
 
-    [[nodiscard]] const u16 *searchBlock(const EGG::Vector3f &pos);
-
     /// @beginGetters
 
+    /// @brief Gets the bounding box containing all KCL tris
+    /// @return The bounding box encompassing all KCL triangles
     [[nodiscard]] const EGG::BoundBox3f &bbox() const {
         return m_bbox;
     }
 
+    /// @brief Gets the index of the prism stored in @ref m_prismCache at the specified index `idx`
+    /// @param idx The index in the cache to retrieve the prism index from
+    /// @return The prism index stored at the specified cache index
     [[nodiscard]] u16 prismCache(u32 idx) const {
         return m_prismCache[idx];
     }
 
+    /// @brief Gets a read-only span of all prisms in the KCL data
+    /// @return A read-only span of all prisms in the KCL data
     [[nodiscard]] std::span<const KCollisionPrism> prisms() const {
         return m_prisms.view();
     }
 
+    /// @brief Gets a read-only span of all normal vectors in the KCL data
+    /// @return A read-only span of all normal vectors in the KCL data
     [[nodiscard]] std::span<const EGG::Vector3f> nrms() const {
         return m_nrms.view();
     }
 
+    /// @brief Gets a read-only span of all vertex positions in the KCL data
+    /// @return A read-only span of all vertex positions in the KCL data
     [[nodiscard]] std::span<const EGG::Vector3f> vertices() const {
         return m_vertices.view();
     }
 
     /// @endGetters
 
-    /// @addr{0x807BDF54}
-    /// @brief Computes a prism vertex based off of the triangle's normal vectors
-    /// @param height The height of the prism
-    /// @param vertex1 The first vertex of the triangle
-    /// @param fnrm The face normal of the triangle
-    /// @param enrm3 The edge normal opposite to the third vertex
-    /// @param enrm The edge normal opposite to the second vertex
-    /// @details @par Triangle Vertices Formula
-    /// Given a triangle with vertices \f$\vec{A}, \vec{B}, \vec{C}\f$, face normal \f$\hat{f}\f$,
-    /// and height \f$h\f$, label the edge normals by: \f{aligned}{\hat{en}_1 := e_{AB}, \,\,
-    /// \hat{en}_2:= e_{AC}, \,\,\hat{en}_3:=e_{BC}}\f} We can recover \f$\vec{B},
-    /// \vec{C}\f$ via: \f{aligned}{ \vec{B} = \vec{A} + \dfrac{h}{(\hat{en}_2 \times \hat{f})
-    /// \cdot
-    /// \hat{en}_3}\left(\hat{en}_2 \times \hat{f}\right), \, \, \vec{C} = \vec{A} +
-    /// \dfrac{h}{(\hat{en}_1 \times \hat{f}) \cdot \hat{en}_3}(\hat{en}_1 \times \hat{f}) \, .
-    /// }\f}
-    [[nodiscard]] EGG::Vector3f GetVertex(f32 height, const EGG::Vector3f &vertex1,
-            const EGG::Vector3f &fnrm, const EGG::Vector3f &enrm3, const EGG::Vector3f &enrm) {
-        EGG::Vector3f cross = fnrm.cross(enrm);
-        f32 dp = cross.ps_dot(enrm3);
-        cross *= (height / dp);
-
-        return cross + vertex1;
-    }
-
 private:
     void preloadPrisms();
     void preloadNormals();
     void preloadVertices();
+    void computeBBox();
+
+    void narrowPolygon_EachBlock(const u16 *prismArray);
+    [[nodiscard]] const u16 *searchBlock(const EGG::Vector3f &pos);
+    [[nodiscard]] bool checkSphereSingle(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsOut);
+
+    template <CollisionCheckType Type>
+        requires(Type == CollisionCheckType::Plane || Type == CollisionCheckType::Movement)
+    [[nodiscard]] bool checkSphereImpl(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsOut);
 
     template <CollisionCheckType Type>
     [[nodiscard]] bool checkSphereCollision(const KCollisionPrism &prism, f32 *distOut,
             EGG::Vector3f *fnrmOut, u16 *flagsOut);
 
-    [[nodiscard]] bool checkPointCollision(const KCollisionPrism &prism, f32 *distOut,
-            EGG::Vector3f *fnrmOut, u16 *flagsOut, bool movement);
-    [[nodiscard]] bool checkSphereMovement(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *attributeOut);
     [[nodiscard]] bool checkPoint(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *attributeOut,
             bool movement);
+    [[nodiscard]] bool checkPointCollision(const KCollisionPrism &prism, f32 *distOut,
+            EGG::Vector3f *fnrmOut, u16 *flagsOut, bool movement);
 
     const void *m_posData;      ///< Pointer to the KCL file section containing vertex positions
     const void *m_nrmData;      ///< Pointer to the KCL file section containing normal vectors
@@ -262,20 +255,20 @@ private:
     const void *m_blockData;    ///< Pointer to the KCL file section containing the octree
     f32 m_prismThickness;       ///< The depth of all prisms along their normal vector
     EGG::Vector3f m_areaMinPos; ///< Smallest possible coordinate in the octree
-    u32 m_areaXWidthMask;       ///< The x dimension of the octree's bounding box. @see searchBlock.
-    u32 m_areaYWidthMask;       ///< The y dimension of the octree's bounding box. @see searchBlock.
-    u32 m_areaZWidthMask;       ///< The z dimension of the octree's bounding box. @see searchBlock.
-    u32 m_blockWidthShift;      ///< Used to initialize octree navigation. @see searchBlock.
-    u32 m_areaXBlocksShift;     ///< Used to initialize octree navigation. @see searchBlock.
-    u32 m_areaXYBlocksShift;    ///< Used to initialize octree navigation. @see searchBlock.
-    f32 m_sphereRadius;         ///< Clamps the sphere we check collision against. @see searchBlock.
-    EGG::Vector3f m_pos;        ///< The point's/sphere's position for collision queries
-    EGG::Vector3f m_prevPos;    ///< The point's/sphere's previous position for collision queries
-    EGG::Vector3f m_movement;   ///< The difference between @ref m_pos and @ref m_prevPos
-    f32 m_radius;               ///< The radius of the sphere to query collisions for
-    KCLTypeMask m_typeMask;     ///< The KCL types to filter the collision query to
-    const u16 *m_prismIter;     ///< Iterator pointing to the current prism in the octree traversal
-    EGG::BoundBox3f m_bbox;     ///< The 3-dimensional bounding box of all prisms in the KCL file
+    u32 m_areaXWidthMask;     ///< The x dimension of the octree's bounding box. @see searchBlock()
+    u32 m_areaYWidthMask;     ///< The y dimension of the octree's bounding box. @see searchBlock()
+    u32 m_areaZWidthMask;     ///< The z dimension of the octree's bounding box. @see searchBlock()
+    u32 m_blockWidthShift;    ///< Used to initialize octree navigation. @see searchBlock()
+    u32 m_areaXBlocksShift;   ///< Used to initialize octree navigation. @see searchBlock()
+    u32 m_areaXYBlocksShift;  ///< Used to initialize octree navigation. @see searchBlock()
+    f32 m_sphereRadius;       ///< Clamps the sphere we check collision against. @see searchBlock()
+    EGG::Vector3f m_pos;      ///< The point's/sphere's position for collision queries
+    EGG::Vector3f m_prevPos;  ///< The point's/sphere's previous position for collision queries
+    EGG::Vector3f m_movement; ///< The difference between @ref m_pos and @ref m_prevPos
+    f32 m_radius;             ///< The radius of the sphere to query collisions for
+    KCLTypeMask m_typeMask;   ///< The KCL types to filter the collision query to
+    const u16 *m_prismIter;   ///< Iterator pointing to the current prism in the octree traversal
+    EGG::BoundBox3f m_bbox;   ///< The 3-dimensional bounding box of all prisms in the KCL file
     std::array<u16, 256> m_prismCache; ///< Cache of prism indices to avoid expensive octree lookups
     u16 *m_prismCacheIter;     ///< Pointer to the current prism index in the cache traversal
     EGG::Vector3f m_cachedPos; ///< Position of the point/sphere corresponding to the current cache
@@ -295,6 +288,32 @@ private:
     /// @details Optimizes for time by avoiding unnecessary byteswapping. The Wii doesn't have this
     /// problem because big endian is always assumed.
     owning_span<EGG::Vector3f> m_vertices;
+
+    /// @addr{0x807BDF54}
+    /// @brief Computes a prism vertex based off of the triangle's normal vectors
+    /// @param height The height of the prism
+    /// @param vertex1 The first vertex of the triangle
+    /// @param fnrm The face normal of the triangle
+    /// @param enrm3 The edge normal opposite to the third vertex
+    /// @param enrm The edge normal opposite to the second vertex
+    /// @return The computed vertex position based on the given parameters
+    /// @details @par Triangle Vertices Formula
+    /// Given a triangle with vertices \f$\vec{A}, \vec{B}, \vec{C}\f$, face normal \f$\hat{f}\f$,
+    /// and height \f$h\f$, label the edge normals by: \f{aligned}{\hat{en}_1 := e_{AB}, \,\,
+    /// \hat{en}_2:= e_{AC}, \,\,\hat{en}_3:=e_{BC}}\f} We can recover \f$\vec{B},
+    /// \vec{C}\f$ via: \f{aligned}{ \vec{B} = \vec{A} + \dfrac{h}{(\hat{en}_2 \times \hat{f})
+    /// \cdot
+    /// \hat{en}_3}\left(\hat{en}_2 \times \hat{f}\right), \, \, \vec{C} = \vec{A} +
+    /// \dfrac{h}{(\hat{en}_1 \times \hat{f}) \cdot \hat{en}_3}(\hat{en}_1 \times \hat{f}) \, .
+    /// }\f}
+    [[nodiscard]] EGG::Vector3f GetVertex(f32 height, const EGG::Vector3f &vertex1,
+            const EGG::Vector3f &fnrm, const EGG::Vector3f &enrm3, const EGG::Vector3f &enrm) {
+        EGG::Vector3f cross = fnrm.cross(enrm);
+        f32 dp = cross.ps_dot(enrm3);
+        cross *= (height / dp);
+
+        return cross + vertex1;
+    }
 };
 
 } // namespace Kinoko::Field

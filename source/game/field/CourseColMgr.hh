@@ -45,6 +45,13 @@ public:
         EGG::Vector3f tangentOff; ///< The net "push out" vector
         f32 dist;                 ///< Depth of collision into the tri
         EGG::Vector3f fnrm;       ///< Face normal of the colliding tri
+
+        /// @brief Expands the bounding box to include the provided position vector
+        /// @param offset The position offset to include in the bounding box
+        void updateBBox(const EGG::Vector3f &offset) {
+            bbox.min = bbox.min.minimize(offset);
+            bbox.max = bbox.max.maximize(offset);
+        }
     };
     STATIC_ASSERT(sizeof(NoBounceWallColInfo) == 0x34);
 

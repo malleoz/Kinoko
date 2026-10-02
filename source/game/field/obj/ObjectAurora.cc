@@ -56,8 +56,7 @@ bool ObjectAurora::checkSphereImpl(f32 radius, const EGG::Vector3f &pos,
     }
 
     if (info) {
-        info->bbox.min = info->bbox.min.minimize(bbox);
-        info->bbox.max = info->bbox.max.maximize(bbox);
+        info->updateBBox(bbox);
 
         if constexpr (std::is_same_v<T, CollisionInfo>) {
             info->updateFloor(dist, fnrm);
