@@ -26,6 +26,22 @@ struct CollisionInfoPartial {
         bbox.min = bbox.min.minimize(offset);
         bbox.max = bbox.max.maximize(offset);
     }
+
+    /// @brief Maps the provided collision info from local to world space
+    /// @param rhs The partial collision info accumulated from local space
+    /// @param mtx The local-to-world transformation matrix
+    /// @details Also updates the provided collision info's bbox to world space.
+    void transformInfo(CollisionInfoPartial &rhs, const EGG::Matrix34f &mtx) {
+        rhs.bbox.min = mtx.ps_multVector33(rhs.bbox.min);
+        rhs.bbox.max = mtx.ps_multVector33(rhs.bbox.max);
+
+        EGG::Vector3f min = rhs.bbox.min;
+        rhs.bbox.min = min.minimize(rhs.bbox.max);
+        rhs.bbox.max = min.maximize(rhs.bbox.max);
+
+        bbox.min = bbox.min.minimize(rhs.bbox.min);
+        bbox.max = bbox.max.maximize(rhs.bbox.max);
+    }
 };
 
 /// @brief Stores information pertaining to a collision
