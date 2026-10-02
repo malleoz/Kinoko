@@ -27,10 +27,10 @@ public:
 
     /// @addr{0x8077E49C}
     /// @copybrief ObjectBase::calc()
-    /// @details Does nothing if the box has been broken (does not occur in time trials). Otherwise,
-    /// calls @ref calcPosition() to update the box's position along the rail.
+    /// @details Does nothing if the box is inactive. Otherwise, calls @ref calcPosition() to
+    /// update the box's position along the rail.
     void calc() override {
-        if (m_state == State::Broken) {
+        if (m_state == State::Inactive) {
             return;
         }
 
