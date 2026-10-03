@@ -87,9 +87,9 @@ public:
     }
 
 private:
-    owning_span<ObjectFireball *> m_fireballs; ///< Array of pointers to underlying fireballs
     const u32 m_spokes;                        ///< The number of fireball "segments"
     const f32 m_angSpeed;                      ///< Angular speed of the fireballs (per second)
+    owning_span<ObjectFireball *> m_fireballs; ///< Array of pointers to underlying fireballs
     f32 m_currAngle;                           ///< Current angle of rotation modulo 360
     EGG::Vector3f m_axis;                      ///< Axis of rotation
     EGG::Vector3f m_initDir;                   ///< Initial tangent direction

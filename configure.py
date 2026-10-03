@@ -48,6 +48,7 @@ common_ccflags = [
     '-Wno-delete-non-virtual-dtor',
     '-Wno-packed-bitfield-compat',
     '-Wsuggest-override',
+    '-Wreorder',
 ]
 
 target_cflags = [
