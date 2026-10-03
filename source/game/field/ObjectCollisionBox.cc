@@ -9,6 +9,9 @@ namespace Kinoko::Field {
 /// @param y Half-height of the box along the Y-axis
 /// @param z Half-depth of the box along the Z-axis
 /// @param center Center point of the box
+/// @details Adjusts the box dimensions by subtracting the bounding radius to ensure the convex hull
+/// accurately represents the box. Computes the eight vertices of the box based on the adjusted
+/// dimensions and center point.
 ObjectCollisionBox::ObjectCollisionBox(f32 x, f32 y, f32 z, const EGG::Vector3f &center)
     : ObjectCollisionConvexHull(8),
       m_dimensions(x, y, z),
@@ -50,11 +53,13 @@ ObjectCollisionBox::ObjectCollisionBox(f32 x, f32 y, f32 z, const EGG::Vector3f 
     m_points[7].z = m_center.z - scaledDims.z;
 }
 
-/// @addr{0x808342F0}
-/// @brief Default virtual destructor
-ObjectCollisionBox::~ObjectCollisionBox() = default;
-
 /// @addr{0x80833B00}
+/// @copybrief ObjectCollisionBase::transform(const EGG::Matrix34f &, const EGG::Vector3f &)
+/// @param mat The transformation matrix to apply to the collision object
+/// @param scale The scale to apply to the collision object
+/// @details Recomputes the local positions of the eight vertices of the box based on the provided
+/// `scale`. Dispatches to @ref ObjectCollisionConvexHull::transform(const EGG::Matrix34f &, const
+/// EGG::Vector3f &) to update the world positions of the vertices.
 void ObjectCollisionBox::transform(const EGG::Matrix34f &mat, const EGG::Vector3f &scale) {
     f32 radius = getBoundingRadius();
     m_scale = scale;
@@ -97,6 +102,16 @@ void ObjectCollisionBox::transform(const EGG::Matrix34f &mat, const EGG::Vector3
 }
 
 /// @addr{0x80833EEC}
+/// @copybrief ObjectCollisionBase::transform(const EGG::Matrix34f &, const EGG::Vector3f &, const
+/// EGG::Vector3f &)
+/// @param mat The transformation matrix to apply to the collision object
+/// @param scale The scale to apply to the collision object
+/// @param speed The object's movement velocity to cache
+/// @details Recomputes the local positions of the eight vertices of the box based on the provided
+/// `scale`. Dispatches to @ref ObjectCollisionConvexHull::transform(const EGG::Matrix34f &, const
+/// EGG::Vector3f &, const
+/// EGG::Vector3f &) to update the world positions of the vertices and the object's movement
+/// velocity.
 void ObjectCollisionBox::transform(const EGG::Matrix34f &mat, const EGG::Vector3f &scale,
         const EGG::Vector3f &speed) {
     f32 radius = getBoundingRadius();

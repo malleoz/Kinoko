@@ -2,25 +2,11 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x808364E0}
-/// @brief Constructor that creates a convex hull with the provided points
-/// @param points Span of points defining the convex hull
-/// @details The base game has the possibility to only provide a count to allocate space.
-/// To account for this, we split the base game's constructor into two overloads.
-/// This overload enables conversion from std::array into a span, which initializes the points.
-ObjectCollisionConvexHull::ObjectCollisionConvexHull(const std::span<const EGG::Vector3f> &points)
-    : m_points(points),
-      m_initRadius(70.0f),
-      m_worldPoints(points.size()),
-      m_scaledRadius(70.0f) {
-    ASSERT(points.size() < 0x100);
-}
-
-/// @addr{0x808365A8}
-/// @brief Default virtual destructor
-ObjectCollisionConvexHull::~ObjectCollisionConvexHull() = default;
-
 /// @addr{0x808366D0}
+/// @copydoc ObjectCollisionBase::transform(const EGG::Matrix34f &, const EGG::Vector3f &)
+/// @details Transforms the convex hull's vertices into world space using the provided
+/// transformation matrix and scale vector. If the scale is not `1.0f`, a temporary scaling matrix
+/// is applied before the transformation.
 void ObjectCollisionConvexHull::transform(const EGG::Matrix34f &mat, const EGG::Vector3f &scale) {
     if (scale.x != 1.0f) {
         EGG::Matrix34f temp;
@@ -38,6 +24,11 @@ void ObjectCollisionConvexHull::transform(const EGG::Matrix34f &mat, const EGG::
 }
 
 /// @addr{0x808367C4}
+/// @copydoc ObjectCollisionBase::transform(const EGG::Matrix34f &, const EGG::Vector3f &, const
+/// EGG::Vector3f &)
+/// @details Sets @ref m_velocity to the provided `speed`. Transforms the convex hull's vertices
+/// into world space using the provided transformation matrix and scale vector. If the scale is not
+/// `0.0f`, a temporary scaling matrix is applied before the transformation.
 void ObjectCollisionConvexHull::transform(const EGG::Matrix34f &mat, const EGG::Vector3f &scale,
         const EGG::Vector3f &speed) {
     m_velocity = speed;
@@ -58,6 +49,9 @@ void ObjectCollisionConvexHull::transform(const EGG::Matrix34f &mat, const EGG::
 }
 
 /// @addr{0x80836628}
+/// @copydoc ObjectCollisionBase::getSupport()
+/// @details Finds the vertex of the convex hull that has the greatest dot product with the given
+/// direction `v`.
 const EGG::Vector3f &ObjectCollisionConvexHull::getSupport(const EGG::Vector3f &v) const {
     const EGG::Vector3f *result = &m_worldPoints[0];
     f32 maxDot = v.dot(*result);
@@ -73,21 +67,6 @@ const EGG::Vector3f &ObjectCollisionConvexHull::getSupport(const EGG::Vector3f &
     }
 
     return *result;
-}
-
-/// @addr{0x808364E0}
-/// @brief Protected destructor that allocates space for a convex hull with the provided point count
-/// @param count Number of points to allocate space for the convex hull
-/// @details The base game has the possibility to only provide a count to allocate space.
-/// To account for this, we split the base game's constructor into two overloads.
-/// This overload enables avoiding immediate point initialization, which is useful for inheritance.
-ObjectCollisionConvexHull::ObjectCollisionConvexHull(size_t count) : m_initRadius(70.0f) {
-    ASSERT(count < 0x100);
-
-    m_scaledRadius = 70.0f;
-
-    m_points = owning_span<EGG::Vector3f>(count);
-    m_worldPoints = owning_span<EGG::Vector3f>(count);
 }
 
 } // namespace Kinoko::Field

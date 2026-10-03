@@ -10,6 +10,9 @@ namespace Kinoko::Field {
 /// @param info Out parameter for retrieving collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
+/// @details Converts the point's current and previous positions from world space to local space. If
+/// `info` was provided, then it will be populated with collision information if a collision is
+/// detected.
 template <typename T>
 bool ObjColMgr::checkPointImpl(CourseColCheckPointFunc<T> fn, const EGG::Vector3f &pos,
         const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info, KCLTypeMask *maskOut) {
@@ -49,6 +52,9 @@ bool ObjColMgr::checkPointImpl(CourseColCheckPointFunc<T> fn, const EGG::Vector3
 /// @param info Out parameter for retrieving collision information (if any)
 /// @param maskOut The KCL flags that were hit during the collision check (if any)
 /// @return Whether a collision was detected
+/// @details Converts the point's current and previous positions from world space to local space. If
+/// `info` was provided, then it will be populated with collision information if a collision is
+/// detected.
 template <typename T>
 bool ObjColMgr::checkSphereImpl(CourseColCheckSphereFunc<T> fn, f32 radius,
         const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info,

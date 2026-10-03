@@ -2,15 +2,13 @@
 
 namespace Kinoko::Field {
 
-/// @brief Default constructor
-ObjectCollisionBase::ObjectCollisionBase() = default;
-
-/// @brief Default virtual destructor
-ObjectCollisionBase::~ObjectCollisionBase() = default;
-
 /// @addr{0x80834348}
-/// @brief Checks for a collision between the provided object
+/// @brief Checks for a collision between this object and the provided object using the GJK
+/// algorithm
+/// @param rhs The other collision object to check against
 /// @param distance Out parameter for the distance vector between the two objects
+/// @return `true` if a collision is detected, `false` otherwise
+/// @todo Add details section
 bool ObjectCollisionBase::check(const ObjectCollisionBase &rhs, EGG::Vector3f &distance) const {
     // std::sqrt(std::numeric_limits<f32>::max());
     constexpr f32 INITIAL_MAX_VALUE = std::bit_cast<f32>(0x5f7fffff);
@@ -90,7 +88,11 @@ bool ObjectCollisionBase::check(const ObjectCollisionBase &rhs, EGG::Vector3f &d
 /// @addr{0x808350E4}
 /// @brief Fallback used near convergence to exhaustively find the subset of the candidate simplex
 /// whose closest point to the origin (among subsets where that point actually lies within the
-/// subset) has the smallest squared length.
+/// subset) has the smallest squared length
+/// @param state The current state of the GJK algorithm
+/// @param v Reference to the vector to store the nearest point to the origin within the enclosing
+/// simplex
+/// @todo Add details section
 void ObjectCollisionBase::findNearestEnclosingSimplex(GJKState &state, EGG::Vector3f &v) const {
     f32 min = std::numeric_limits<f32>::max();
 
@@ -113,10 +115,14 @@ void ObjectCollisionBase::findNearestEnclosingSimplex(GJKState &state, EGG::Vect
 }
 
 /// @addr{0x80835304}
-/// @brief Selects which subset of the simplex (including the newly added vertex from @ref
-/// calcSimplex) is nearest the origin, updating `state.m_flags` accordingly and saving the
-/// nearest point to the provided `v`.
-/// @return false if no valid subset was found, meaning the current simplex encloses the origin.
+/// @brief Selects which subset of the simplex is nearest the origin, updating @ref
+/// GJKState::m_flags accordingly and saving the nearest point to the provided `v`.
+/// @param state The current state of the GJK algorithm
+/// @param v Reference to the vector to store the nearest point to the origin within the nearest
+/// simplex
+/// @return `true` if a valid nearest simplex was found, `false` if no valid subset was found,
+/// meaning the current simplex encloses the origin.
+/// @todo Add details section
 bool ObjectCollisionBase::getNearestSimplex(GJKState &state, EGG::Vector3f &v) const {
     calcSimplex(state);
 
@@ -141,9 +147,14 @@ bool ObjectCollisionBase::getNearestSimplex(GJKState &state, EGG::Vector3f &v) c
 }
 
 /// @addr{0x80835650}
-/// @brief Computes the points on each of the two shapes (via barycentric interpolation of
-/// @ref GJKState::m_support1 / @ref GJKState::m_support2 using the weights for simplex subset
-/// `idx`) corresponding to the simplex point nearest the origin.
+/// @brief Computes the points on each of the two shapes corresponding to the simplex point nearest
+/// the origin.
+/// @param state The current state of the GJK algorithm
+/// @param idx The index of the simplex subset to use for barycentric interpolation
+/// @param v0 Reference to the vector to store the nearest point on the first shape
+/// @param v1 Reference to the vector to store the nearest point on the second shape
+/// @details This is done by performing barycentric interpolation of `@ref GJKState::m_support1 /
+/// @ref GJKState::m_support2` using the weights for simplex subset `idx`
 void ObjectCollisionBase::getNearestPoint(GJKState &state, u32 idx, EGG::Vector3f &v0,
         EGG::Vector3f &v1) const {
     v0.setZero();
@@ -165,7 +176,10 @@ void ObjectCollisionBase::getNearestPoint(GJKState &state, u32 idx, EGG::Vector3
 }
 
 /// @addr{0x808357E4} @addr{0x808359A4}
-/// @brief Tests whether simplex subset \p idx is a valid nearest simplex
+/// @brief Tests whether simplex subset `idx` is a valid nearest simplex
+/// @param state The current state of the GJK algorithm
+/// @param idx The index of the simplex subset to test for validity
+/// @return `true` if the simplex subset `idx` is valid, `false` otherwise
 /// @details Every vertex it includes must have a positive barycentric weight (@ref
 /// GJKState::m_scales), and every vertex excluded from it (but present in @ref
 /// GJKState::m_candidateMask) must not gain a positive weight if it were added back in.
@@ -188,8 +202,12 @@ bool ObjectCollisionBase::isValidSimplex(const GJKState &state, u32 idx) const {
 }
 
 /// @addr{0x80835F34}
-/// @brief Computes the point on the simplex itself (via barycentric interpolation of
-/// @ref GJKState::m_minDiffPts using the weights for simplex subset `idx`) nearest the origin.
+/// @brief Computes the point on the simplex nearest the origin
+/// @param state The current state of the GJK algorithm
+/// @param idx The index of the simplex subset to compute the nearest point for
+/// @param v The vector to store the computed nearest point
+/// @details Performs barycentric interpolation of @ref GJKState::m_minDiffPts using the weights for
+/// simplex subset `idx`.
 void ObjectCollisionBase::getNearestPoint(const GJKState &state, u32 idx, EGG::Vector3f &v) const {
     v.setZero();
 
@@ -209,7 +227,9 @@ void ObjectCollisionBase::getNearestPoint(const GJKState &state, u32 idx, EGG::V
 
 /// @addr{0x80835A8C}
 /// @brief Computes the barycentric weights for every subset of the simplex (including the newly
-/// added vertex) and caches them in @ref GJKState::m_scales.
+/// added vertex) and caches them in @ref GJKState::m_scales
+/// @param state The current state of the GJK algorithm
+/// @todo Add details section
 void ObjectCollisionBase::calcSimplex(GJKState &state) const {
     const u32 idx = state.m_idx;
 

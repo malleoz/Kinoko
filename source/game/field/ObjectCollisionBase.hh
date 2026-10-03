@@ -28,6 +28,8 @@ namespace Kinoko::Field {
 /// @todo Give a more detailed explanation on the significance of flags, mask, and m_candidateMask
 struct GJKState {
     /// @brief Default constructor
+    /// @details Zero-initializes @ref m_flags, @ref m_idx, @ref m_mask, @ref m_candidateMask, and
+    /// @ref m_scales.
     GJKState() : m_flags(0), m_idx(0), m_mask(0), m_candidateMask(0), m_scales{{}} {}
 
     /// @brief Default destructor
@@ -48,16 +50,18 @@ struct GJKState {
 /// algorithm. Exposes a pure virtual interface so that derived classes can implement their own
 /// transformation, radius, and support point calculations.
 ///
-/// \copydetails GJKState
-/// @todo Document members
+/// @copydetails GJKState
 class ObjectCollisionBase {
     /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
     /// state on context switch
     friend class Host::Context;
 
 public:
-    ObjectCollisionBase();
-    virtual ~ObjectCollisionBase();
+    /// @brief Default constructor
+    ObjectCollisionBase() = default;
+
+    /// @brief Default virtual destructor
+    virtual ~ObjectCollisionBase() = default;
 
     /// @brief Transforms the collision object by a given matrix and scale
     /// @param mat The transformation matrix to apply to the collision object
@@ -75,17 +79,25 @@ public:
     /// @brief Returns the support point of the collision object in a given direction, i.e. the
     /// object's vertex with the greatest dot product with `v`
     /// @param v The direction to search in
+    /// @return The support point of the collision object in the given direction
     virtual const EGG::Vector3f &getSupport(const EGG::Vector3f &v) const = 0;
 
-    /// @brief Returns the radius of the sphere bounding the collision object in world space
+    /// @brief Gets the radius of the sphere bounding the collision object in world space
+    /// @return The radius of the bounding sphere in world space
     virtual f32 getBoundingRadius() const = 0;
 
     [[nodiscard]] bool check(const ObjectCollisionBase &rhs, EGG::Vector3f &distance) const;
 
+    /// @beginGetters
+
     /// @addr{0x80573520}
+    /// @brief Gets the current velocity of the associated object
+    /// @return The current velocity of the associated object
     [[nodiscard]] const EGG::Vector3f &velocity() const {
         return m_velocity;
     }
+
+    /// @endGetters
 
 protected:
     EGG::Vector3f m_velocity; ///< Velocity of the associated object
@@ -94,7 +106,10 @@ private:
     /// @addr{0x8083504C}
     /// @brief Checks whether the origin's projection onto the affine hull of simplex `idx` lies
     /// within that simplex, i.e. all of its barycentric weights (@ref GJKState::m_scales) are
-    /// positive.
+    /// positive
+    /// @param state The current state of the GJK algorithm
+    /// @param idx The index of the simplex to check
+    /// @return `true` if the origin's projection lies within the simplex, `false` otherwise
     [[nodiscard]] bool enclosesOrigin(const GJKState &state, u32 idx) const {
         u32 mask = 1;
         for (u8 i = 0; i < 4; ++i, mask *= 2) {
@@ -114,6 +129,9 @@ private:
     /// @addr{0x808358CC}
     /// @brief Catches scenarios where the newly computed support point `v` is identical to a point
     /// already in the simplex, which would cause the algorithm to loop infinitely.
+    /// @param state The current state of the GJK algorithm
+    /// @param v The support point to check against the simplex
+    /// @return `true` if the support point is already in the simplex, `false` otherwise
     [[nodiscard]] bool inSimplex(const GJKState &state, const EGG::Vector3f &v) const {
         for (u32 i = 0, mask = 1; i < 4; ++i, mask *= 2) {
             if ((state.m_candidateMask & mask) && state.m_minDiffPts[i] == v) {
