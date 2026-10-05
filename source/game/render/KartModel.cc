@@ -6,22 +6,13 @@
 
 namespace Kinoko::Render {
 
-/// @brief Constructor
-KartModel::KartModel() {
-    m_isLeaningLeft = false;
-    m_isLeaningRight = false;
-    m_leanWobble = 0.0f;
-    m_leanAmplitude = 1.0f;
-    m_bodyLeanAngle = 0.0f;
-    m_bodyLeanStep = 0.0f;
-    m_prevBurnoutPitch = 0.0f;
-}
-
-/// @brief Default virtual destructor
-KartModel::~KartModel() = default;
-
 /// @addr{0x807CB198}
 /// @brief Calculates the leaning state of the kart based on input and drift status
+/// @details This function only has an effect if the kart is currently drifting or the player is
+/// turning while in a stand-still mini-turbo (SSMT). If the player is turning while in a SSMT, then
+/// @ref m_isLeaningLeft or @ref m_isLeaningRight will be set depending on the direction of the
+/// turn. Otherwise if the kart is drifting, then @ref m_isLeaningLeft or @ref m_isLeaningRight will
+/// be set based on the drift direction.
 void KartModel::calcLeaning() {
     m_isLeaningRight = false;
     m_isLeaningLeft = false;
@@ -45,7 +36,20 @@ void KartModel::calcLeaning() {
 
 /// @addr{0x807CD32C}
 /// @brief Calculates the vehicle's lean wobble and angle and applies it to @ref Kart::KartBody
-/// @details This is a virtual function in the basegame, but since it is not overridden by any
+/// @details If the kart is in a burnout, then @ref m_leanWobble increments based on the change in
+/// burnout rotation (@ref Kart::KartBurnout::m_yaw) from the previous frame. Otherwise if the kart
+/// is not in a burnout, then @ref m_leanWobble decays by 10% each frame. Afterwards, @ref
+/// m_leanWobble is nudged based on the stick input, unless the kart is frozen in ice while
+/// respawning on N64 Sherbet Land. @ref m_leanAmplitude is similarly updated towards the stick
+/// input, except its blend rate is dampened if the player is in a cannon. @ref m_leanWobble is then
+/// gradually nudged to stay within `[-m_leanAmplitude, m_leanAmplitude]`. Calculates @ref
+/// m_bodyLeanAngle by moving it towards a target lean angle by at most @ref m_bodyLeanStep per
+/// frame. The target angle is based on `-m_leanWobble` scaled based on the vehicle type (5 degrees
+/// for inside drifting bikes, 20 degrees for outside drifting bikes, 15 degrees for karts, and 15
+/// degrees when not drifting). A further nudge is applied if actively leaning left or right (5
+/// degrees for inside drifting bikes, 10 degrees for all other bikes, and 5 degrees for karts).
+/// Finally, applies this result to the kart's body via @ref Kart::KartBody::setLeanAngle().
+/// @note This is a virtual function in the basegame, but since it is not overridden by any
 /// derived class, we can devirtualize in Kinoko.
 void KartModel::calcLeanAngle() {
     const auto &status = KartObjectProxy::status();
@@ -53,15 +57,15 @@ void KartModel::calcLeanAngle() {
     if (status.onBit(Kart::eStatus::Burnout)) {
         m_leanAmplitude = 1.0f;
 
-        f32 pitch = move()->burnout().pitch();
-        f32 fVar2 = pitch + 75.0f * (pitch - m_prevBurnoutPitch);
-        f32 fVar4 = std::min(0.2f, 0.04f * EGG::Mathf::abs(fVar2));
-        fVar4 = fVar2 > 0.0f ? fVar4 : -fVar4;
+        f32 yaw = move()->burnout().yaw();
+        f32 fVar2 = yaw + 75.0f * (yaw - m_prevBurnoutYaw);
+        f32 wobbleDelta = std::min(0.2f, 0.04f * EGG::Mathf::abs(fVar2));
+        wobbleDelta = fVar2 > 0.0f ? wobbleDelta : -wobbleDelta;
 
-        m_prevBurnoutPitch = pitch;
-        m_leanWobble += fVar4;
+        m_prevBurnoutYaw = yaw;
+        m_leanWobble += wobbleDelta;
     } else {
-        m_prevBurnoutPitch = 0.0f;
+        m_prevBurnoutYaw = 0.0f;
         m_leanWobble *= 0.9f;
     }
 
@@ -72,7 +76,7 @@ void KartModel::calcLeanAngle() {
     bool isInCannon = status.onBit(Kart::eStatus::InCannon);
     f32 fVar2 = isInCannon ? 0.02f : 0.1f;
 
-    f32 local_f31 = m_leanWobble;
+    f32 prevLeanWobble = m_leanWobble;
     if (xStick <= 0.2f) {
         if (xStick < -0.2f) {
             m_leanWobble -= fVar2;
@@ -90,7 +94,7 @@ void KartModel::calcLeanAngle() {
 
     m_leanAmplitude += fVar2 * (xStick - m_leanAmplitude);
 
-    if (local_f31 < -m_leanAmplitude || m_leanAmplitude < local_f31) {
+    if (prevLeanWobble < -m_leanAmplitude || m_leanAmplitude < prevLeanWobble) {
         if (-m_leanAmplitude <= m_leanWobble) {
             if (m_leanAmplitude < m_leanWobble) {
                 m_leanWobble -= 0.1f;
@@ -116,31 +120,29 @@ void KartModel::calcLeanAngle() {
         dVar13 = 15.0f;
     }
 
-    f32 dVar12 = 0.0f;
+    f32 targetBodyLeanAngle = 0.0f;
     m_bodyLeanStep = dVar13 * 0.1f;
 
     if (isBike()) {
-        dVar12 = -m_leanWobble * dVar13;
+        targetBodyLeanAngle = -m_leanWobble * dVar13;
 
         if (m_isLeaningLeft) {
-            dVar12 += m_isInsideDrift ? 5.0f : 10.0f;
+            targetBodyLeanAngle += m_isInsideDrift ? 5.0f : 10.0f;
         } else if (m_isLeaningRight) {
-            dVar12 -= m_isInsideDrift ? 5.0f : 10.0f;
+            targetBodyLeanAngle -= m_isInsideDrift ? 5.0f : 10.0f;
         }
     } else {
         if (!m_isLeaningLeft && m_isLeaningRight) {
-            dVar12 -= 5.0f;
+            targetBodyLeanAngle -= 5.0f;
         } else {
-            dVar12 += 5.0f;
+            targetBodyLeanAngle += 5.0f;
         }
     }
 
-    if (dVar12 <= m_bodyLeanAngle) {
-        m_bodyLeanAngle -= m_bodyLeanStep;
-        m_bodyLeanAngle = std::max(m_bodyLeanAngle, dVar12);
+    if (targetBodyLeanAngle <= m_bodyLeanAngle) {
+        m_bodyLeanAngle = std::max(m_bodyLeanAngle - m_bodyLeanStep, targetBodyLeanAngle);
     } else {
-        m_bodyLeanAngle += m_bodyLeanStep;
-        m_bodyLeanAngle = std::min(m_bodyLeanAngle, dVar12);
+        m_bodyLeanAngle = std::min(m_bodyLeanAngle + m_bodyLeanStep, targetBodyLeanAngle);
     }
 
     body()->setLeanAngle(m_bodyLeanAngle);

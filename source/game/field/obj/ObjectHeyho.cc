@@ -218,7 +218,7 @@ void ObjectHeyho::calcMotion() {
         m_currentSpeed = EGG::Mathf::sqrt(sqVel);
         m_railInterpolator->setSpeed(m_currentSpeed);
 
-        if (m_railInterpolator->calc() == RailInterpolator::Status::ChangingDirection) {
+        if (m_railInterpolator->calc() == RailInterpolator::Status::RailEnd) {
             // We have an edgecase where the endpoint heights aren't the same
             // While the current velocity reaches 0 at the apex, it's higher on the other side
             // To counter this, the object goes off the rail and into free fall until we land

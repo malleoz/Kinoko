@@ -46,6 +46,7 @@ ObjectBase::ObjectBase(const char *name, const EGG::Vector3f &pos, const EGG::Ve
         const EGG::Vector3f &scale)
     : m_drawMdl(nullptr),
       m_resFile(nullptr),
+      m_id(ObjectDirector::Instance()->flowTable().getIdFromName(name)),
       m_railInterpolator(nullptr),
       m_mapObj(nullptr),
       m_pos(pos),
@@ -54,7 +55,6 @@ ObjectBase::ObjectBase(const char *name, const EGG::Vector3f &pos, const EGG::Ve
       m_rotUpdated(true),
       m_transform(EGG::Matrix34f::ident) {
     m_flags.setBit(eFlags::Position, eFlags::Rotation, eFlags::Scale);
-    m_id = ObjectDirector::Instance()->flowTable().getIdFromName(name);
 }
 
 /// @addr{0x80680730}

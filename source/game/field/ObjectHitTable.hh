@@ -8,12 +8,12 @@
 
 namespace Kinoko::Field {
 
-/// @brief Parses the `ObjHitTableKart.bin` and `ObjHitTableKartObj.bin` tables which map an @ref
+/// @brief Parses the `GeoHitTableKart.bin` and `GeoHitTableKartObj.bin` tables which map an @ref
 /// ObjectId to the associated reaction when hit by a kart and vice versa
-/// @details The file contains a header and two data sections. The header contains the number of
-/// objects stored in the table and the number of 2-byte fields in the first data section (excluding
-/// the @ref ObjectId field). The first data section contains an @ref ObjectId, followed by the
-/// number of 2-byte fields specified in the header. In the base game, there are four fields:
+/// @details These files contain a header and two data sections. The header contains the number of
+/// objects stored in the table and the size of each entry in the first data section (excluding
+/// the 2 byte @ref ObjectId field). The first data section contains an @ref ObjectId, followed by
+/// four fields:
 /// * Interaction type without any power-up status
 /// * Interaction type with a Star
 /// * Interaction type with a Mega Mushroom
@@ -27,8 +27,12 @@ public:
     /// @brief Constructor that obtains a pointer to the provided filename (either
     /// `GeoHitTableKart.bin` or `GeoHitTableKartObj.bin`), parses the count, parses the reactions,
     /// and obtains a pointer to the second data section
-    /// @param filename The name of the file to parse (either `ObjHitTableKart.bin` or
-    /// `ObjHitTableKartObj.bin`)
+    /// @param filename The name of the file to parse (either `GeoHitTableKart.bin` or
+    /// `GeoHitTableKartObj.bin`)
+    /// @details Reads the number of entries in the first data section to @ref m_count and the size
+    /// of each entry to @ref m_fieldCount. Initializes @ref m_reactions to a size of @ref m_count
+    /// and reads in all the reactions for interactions without any power-up. Finally, sets up the
+    /// pointer to the second data section.
     ObjectHitTable(const char *filename) {
         std::span<const u8> file =
                 System::ResourceManager::Instance()->getFile(filename, System::ArchiveId::Core);
@@ -52,12 +56,22 @@ public:
     /// @brief Default destructor
     ~ObjectHitTable() = default;
 
+    /// @beginGetters
+
+    /// @brief Gets the reaction for the specified entry in the first data section
+    /// @param i The index of the entry to get the reaction for
+    /// @return The @ref Kart::Reaction for the specified entry
     [[nodiscard]] Kart::Reaction reaction(s16 i) const {
         ASSERT(i != -1);
         ASSERT(i < m_count);
         return static_cast<Kart::Reaction>(m_reactions[i]);
     }
 
+    /// @brief Uses the lookup table in the second data section to find the index in the first data
+    /// section corresponding to the provided @ref ObjectId
+    /// @param id The @ref ObjectId to get the index for
+    /// @return The index in the first data section corresponding to the provided @ref ObjectId, or
+    /// -1 if not found
     [[nodiscard]] s16 slot(ObjectId id) const {
         constexpr size_t SLOT_COUNT = 0x2f4;
 
@@ -65,13 +79,11 @@ public:
         return i < SLOT_COUNT ? parse<s16>(m_slots[i]) : -1;
     }
 
-private:
-    /// @brief Endian-corrected number of entries in the first data section
-    s16 m_count;
+    /// @endGetters
 
-    /// @brief Number of 2-byte fields in the first data section (excluding the @ref
-    /// ObjectId field)
-    s16 m_fieldCount;
+private:
+    s16 m_count;      ///< Endian-corrected number of entries in the first data section
+    s16 m_fieldCount; ///< Number of fields in the first data section (excluding the @ref ObjectId)
 
     /// @brief Array of interaction types for each entry in the first data section, indexed by the
     /// entry's position in the first data section

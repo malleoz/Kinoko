@@ -35,7 +35,7 @@ public:
             point = -1;
         }
 
-        auto *launcherRail = RailManager::Instance()->rail(launcherRailInterp->railIdx());
+        const auto *launcherRail = launcherRailInterp->rail();
 
         for (size_t i = 0; i < m_projectiles.size(); ++i) {
             auto *obj = m_projectiles[i];

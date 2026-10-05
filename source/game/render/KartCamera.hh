@@ -12,6 +12,7 @@ class KartCameraState {
 
 public:
     /// @brief Constructor
+    /// @details Zero-intiailzies all members.
     KartCameraState() {
         m_pos.setZero();
         m_bigAirHeight = 0.0f;
@@ -27,6 +28,7 @@ public:
 
     /// @addr{0x805A1C3C}
     /// @brief Initializes the camera state to default values
+    /// @details Resets @ref m_dist and @ref m_bigAirFallPitch to zero.
     void init() {
         m_dist = 0.0f;
         m_bigAirFallPitch = 0.0f;
@@ -45,8 +47,8 @@ private:
 /// @brief Manager class for the forward and backwards cameras.
 /// @details Responsible for setting the camera state and performing camera collision checks.
 /// @note The camera physics need to be implemented in Kinoko because the camera performs collision
-/// checks during the race, which can result in an @ref Field::ObjColMgr transformation matrix
-/// update. This can cause desyncs on DS Delfino Square if not implemented.
+/// checks during the race via @ref calcCollision(), which can result in an @ref Field::ObjColMgr
+/// transformation matrix update. This can cause desyncs on DS Delfino Square if not implemented.
 /// @warning Kinoko assumes the use of the 16:9 camera. It is possible for a time trial
 /// desync to occur due to the difference in camera distance between 4:3 and 16:9. This
 /// varying distance can cause an ObjectKCL transformation matrix to be updated for one
@@ -61,6 +63,9 @@ class KartCamera {
 public:
     /// @addr{0x805A2034}
     /// @brief Initializes the camera with the default parameters and position
+    /// @details Gets the camera parameters from the first kart object (since we assume only one
+    /// player in Kinoko) and stores the pointer to @ref m_camParams. Then calls @ref initPos() to
+    /// initialize the camera's position.
     void init() {
         auto *param = Kart::KartObjectManager::Instance()->object(0)->param();
         m_camParams = &param->camera();
@@ -72,6 +77,7 @@ public:
 
     /// @brief Creates the singleton instance of the @ref KartCamera
     /// @return A pointer to the newly created @ref KartCamera instance
+    /// @pre The singleton instance must not already exist.
     static KartCamera *CreateInstance() {
         ASSERT(!s_instance);
         s_instance = EGG::egg_new<KartCamera>();
@@ -79,6 +85,7 @@ public:
     }
 
     /// @brief Destroys the singleton instance of the @ref KartCamera
+    /// @pre The singleton instance must exist.
     static void DestroyInstance() {
         ASSERT(s_instance);
         auto *instance = s_instance;
@@ -95,8 +102,15 @@ public:
 private:
     EGG_NEW_DELETE_FRIEND
 
-    KartCamera();
-    ~KartCamera();
+    /// @addr{0x805A1D10}
+    /// @brief Private constructor
+    /// @details Sets @ref m_hopPosY and @ref m_forward to zero and initializes @ref m_camParams to
+    /// `nullptr`.
+    KartCamera() : m_hopPosY(0), m_forward(EGG::Vector3f::zero), m_camParams(nullptr) {}
+
+    /// @addr{0x805A8F7C}
+    /// @brief Private default destructor
+    ~KartCamera() = default;
 
     /// @addr{0x805A2B84}
     /// @brief Interpolates the camera's orientation based on the kart's smoothed forward vector
@@ -133,7 +147,10 @@ private:
     KartCameraState m_forwardCamera;                     ///< Forward camera state
     KartCameraState m_backwardCamera;                    ///< Rear camera state
 
-    static KartCamera *s_instance; ///< Singleton instance of the KartCamera
+    /// @brief Singleton instance of the @ref KartCamera
+    /// @note In the base game, there is a @ref KartCamera instance for each player. Since we only
+    /// implement one player for Kinoko, this can effectively become a singleton.
+    static KartCamera *s_instance;
 };
 
 } // namespace Kinoko::Render

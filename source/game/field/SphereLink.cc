@@ -4,16 +4,13 @@
 
 namespace Kinoko::Field {
 
-/// @brief Constructor
-SphereLink::SphereLink() : m_prev(nullptr), m_next(nullptr) {}
-
-/// @brief Default destructor
-SphereLink::~SphereLink() = default;
-
 /// @addr{0x806F2074}
 /// @brief Calculates the spring force between this link and its neighbors
-/// @details Applies a spring damper force which will pull this link back towards its previous link
-/// when it is stretched too far away.
+/// @pre This link must not be the leader (i.e., it must have a @ref m_prev link)
+/// @details If there is slack in the chain, then this function early returns. Applies a spring
+/// damper force which will pull this link back towards its previous link when it is stretched too
+/// far away. Subtracts the resulting increase in force from the previous (forward) link's spring
+/// force so that the previous link experiences an equal and opposite reaction.
 void SphereLink::calcStiffness() {
     constexpr f32 STIFFNESS = 0.15f;
 
@@ -40,6 +37,11 @@ void SphereLink::calcStiffness() {
 
 /// @addr{0x806F1A54}
 /// @brief Calculates the spring force between this link and its neighbors
+/// @details If this is the leader link, the function early returns since we do not want to apply
+/// any spring forces to it. If this is the last link in the chain, it only applies the spring force
+/// from the previous (forward) link. Otherwise, links in the middle of the chain call @ref
+/// calcSpring() and @ref calcStiffness() to enforce the spring constraints between this link and
+/// its neighbors.
 void SphereLink::calc() {
     if (isLeader()) {
         return;
@@ -50,7 +52,7 @@ void SphereLink::calc() {
         f32 dist = dir.normalise();
 
         if (dist > m_prev->m_linkLen) {
-            m_springForce += dir * 2.0f;
+            m_springForce += dir * SPRING_FORCE_MAGNITUDE;
         }
 
         calcStiffness();
@@ -64,6 +66,10 @@ void SphereLink::calc() {
 /// @brief Enforces positional constraints to keep this link within a certain distance of its
 /// previous link
 /// @param scale A multiplier for the link length (always 1.0f)
+/// @pre This link must not be the leader link.
+/// @details This is called after all links have had their spring forces calculated and positions
+/// updated accordingly. With the positions updated, this function ensures that this link remains
+/// within the allowed distance from its previous link.
 void SphereLink::calcConstraints(f32 scale) {
     constexpr f32 MIN_PITCH_ANGLE = DEG2FIDX * -75.0f;
     STATIC_ASSERT(MIN_PITCH_ANGLE == -53.333336f);
@@ -109,6 +115,11 @@ void SphereLink::calcConstraints(f32 scale) {
 
 /// @addr{0x806F2A38}
 /// @brief Checks for floor collisions, updates position accordingly, and updates the up vector
+/// @details Performs a sphere collision check with a radius of `55.0f` and a position offset by
+/// `55.0f` towards the link's up vector. If a collision is detected, the link's position and
+/// velocity are updated accordingly and @ref m_springForce is set to @ref GRAVITY in order to
+/// cancel out the effect of gravity. Regardless of whether a collision occurs, the link's up vector
+/// is interpolated towards the floor normal.
 void SphereLink::checkCollision() {
     constexpr f32 RADIUS = 55.0f;
 
@@ -148,6 +159,11 @@ void SphereLink::checkCollision() {
 
 /// @addr{0x806F1C58}
 /// @brief Calculates the spring force between this link and its neighbors
+/// @pre This link must have both a previous and a next link (i.e., it must not be the leader or the
+/// last link in the chain).
+/// @details If this link is further away than its allowed link length from either its previous or
+/// next link, a spring force of magnitude @ref SPRING_FORCE_MAGNITUDE is applied to bring it back
+/// within the allowed distance.
 void SphereLink::calcSpring() {
     ASSERT(m_prev && m_next);
 
@@ -155,14 +171,14 @@ void SphereLink::calcSpring() {
     f32 dist = dir.normalise();
 
     if (dist > m_prev->m_linkLen) {
-        m_springForce += dir * 2.0f;
+        m_springForce += dir * SPRING_FORCE_MAGNITUDE;
     }
 
     dir = m_next->m_pos - m_pos;
     f32 nextDist = dir.normalise();
 
     if (nextDist > m_linkLen) {
-        m_springForce += dir * 2.0f;
+        m_springForce += dir * SPRING_FORCE_MAGNITUDE;
     }
 }
 

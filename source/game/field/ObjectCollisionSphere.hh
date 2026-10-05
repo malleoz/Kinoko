@@ -11,6 +11,8 @@ public:
     /// @brief Constructor
     /// @param radius Radius of the sphere
     /// @param center Center position of the sphere in local space
+    /// @details Sets @ref m_radius and @ref m_scaledRadius to the provided `radius` and @ref m_pos,
+    /// @ref m_scaledPos, and @ref m_worldPos to the provided `center` position.
     ObjectCollisionSphere(f32 radius, const EGG::Vector3f &center)
         : m_hasTranslation(false),
           m_radius(radius),
@@ -24,6 +26,9 @@ public:
     ~ObjectCollisionSphere() override = default;
 
     /// @addr{0x80836998}
+    /// @copydoc ObjectCollisionBase::transform(const EGG::Matrix34f &, const EGG::Vector3f &)
+    /// @details Transforms the sphere's position and radius according to the provided `mat` and
+    /// `scale`.
     void transform(const EGG::Matrix34f &mat, const EGG::Vector3f &scale) override {
         m_hasTranslation = false;
 
@@ -36,6 +41,11 @@ public:
     }
 
     /// @addr{0x80836A50}
+    /// @copydoc ObjectCollisionBase::transform(const EGG::Matrix34f &, const EGG::Vector3f &, const
+    /// EGG::Vector3f &)
+    /// @details Transforms the sphere's position and radius according to the provided `mat` and
+    /// `scale`. Sets @ref m_velocity based on the provided `speed`. Finally, updates the sphere's
+    /// @ref m_center to reflect its new position in world space offset by the velocity.
     void transform(const EGG::Matrix34f &mat, const EGG::Vector3f &scale,
             const EGG::Vector3f &speed) override {
         m_hasTranslation = true;
@@ -52,6 +62,10 @@ public:
     }
 
     /// @addr{0x80836920}
+    /// @copydoc ObjectCollisionBase::getSupport()
+    /// @details If the object has no translation (velocity), it returns @ref m_worldPos. Otherwise,
+    /// it returns the point between @ref m_worldPos and @ref m_center that is furthest along the
+    /// direction of `v`.
     [[nodiscard]] const EGG::Vector3f &getSupport(const EGG::Vector3f &v) const override {
         if (!m_hasTranslation) {
             return m_worldPos;
@@ -61,6 +75,7 @@ public:
     }
 
     /// @addr{0x80836B54}
+    /// @copydoc ObjectCollisionBase::getBoundingRadius()
     f32 getBoundingRadius() const override {
         return m_scaledRadius;
     }

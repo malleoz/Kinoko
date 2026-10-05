@@ -166,7 +166,7 @@ void ObjectDossunTsuibiHolder::calcStomp() {
 /// and sets @ref m_facingBackwards to `false`. Finally, re-initializes the rail interpolator to the
 /// start of the rail.
 void ObjectDossunTsuibiHolder::calcBackwards() {
-    if (m_railInterpolator->calc() == RailInterpolator::Status::ChangingDirection) {
+    if (m_railInterpolator->calc() == RailInterpolator::Status::RailEnd) {
         m_resetZVel = (m_lastStompZ - m_railInterpolator->curPos().z) /
                 static_cast<f32>(HOME_RESET_FRAMES);
 

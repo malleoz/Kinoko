@@ -290,6 +290,7 @@ public:
     /// @addr{0x8078DFE8}
     /// @brief Creates the singleton instance of the @ref CollisionDirector
     /// @return A pointer to the newly created @ref CollisionDirector instance
+    /// @pre Assumes that no singleton instance of @ref CollisionDirector has been created yet.
     static CollisionDirector *CreateInstance() {
         ASSERT(!s_instance);
         s_instance = EGG::egg_new<CollisionDirector>();
@@ -298,6 +299,7 @@ public:
 
     /// @addr{0x8078E124}
     /// @brief Destroys the singleton instance of the @ref CollisionDirector
+    /// @pre Assumes that a singleton instance of @ref CollisionDirector has already been created.
     static void DestroyInstance() {
         ASSERT(s_instance);
         auto *instance = s_instance;

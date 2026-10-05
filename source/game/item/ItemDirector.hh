@@ -44,6 +44,7 @@ public:
     /// @brief Fetches the @ref KartItem object for the given player index
     /// @param idx The index of the player to retrieve the @ref KartItem for
     /// @return A reference to the @ref KartItem object for that player
+    /// @pre The index must be within the valid range of player indices.
     [[nodiscard]] KartItem &kartItem(size_t idx) {
         ASSERT(idx < m_karts.size());
         return m_karts[idx];
@@ -52,13 +53,16 @@ public:
     /// @brief Fetches the @ref ItemInventory object for the given player index
     /// @param idx The index of the player to retrieve the @ref ItemInventory for
     /// @return A const reference to the @ref ItemInventory object for that player
-    [[nodiscard]] const ItemInventory &itemInventory(s16 idx) const {
+    /// @pre The index must be within the valid range of player indices.
+    [[nodiscard]] const ItemInventory &itemInventory(size_t idx) const {
+        ASSERT(idx < m_karts.size());
         return m_karts[idx].inventory();
     }
 
     /// @addr{0x80799138}
     /// @brief Creates the singleton instance of @ref ItemDirector
     /// @return A pointer to the newly created singleton instance of @ref ItemDirector
+    /// @pre The singleton instance of @ref ItemDirector must not already exist.
     static ItemDirector *CreateInstance() {
         ASSERT(!s_instance);
         s_instance = EGG::egg_new<ItemDirector>();
@@ -67,6 +71,7 @@ public:
 
     /// @addr{0x80799188}
     /// @brief Destroys the singleton instance of the @ref ItemDirector
+    /// @pre The singleton instance of @ref ItemDirector must already exist.
     static void DestroyInstance() {
         ASSERT(s_instance);
         auto *instance = s_instance;
@@ -84,12 +89,32 @@ public:
 private:
     EGG_NEW_DELETE_FRIEND
 
-    ItemDirector();
-    ~ItemDirector() override;
+    /// @addr{0x807992D8}
+    /// @brief Private constructor that constructs and initializes the array of @ref KartItem
+    /// objects based on the number of players in the race
+    ItemDirector() {
+        size_t playerCount = System::RaceConfig::Instance()->raceScenario().playerCount;
+        m_karts = owning_span<KartItem>(playerCount);
+
+        for (size_t i = 0; i < playerCount; ++i) {
+            m_karts[i].init(i);
+        }
+    }
+
+    /// @addr{0x80798F9C}
+    /// @brief Private virtual destructor
+    ~ItemDirector() override {
+        if (s_instance) {
+            s_instance = nullptr;
+            WARN("ItemDirector instance not explicitly handled!");
+        }
+    }
 
     owning_span<KartItem> m_karts; ///< Array of @ref KartItem objects, indexed by player id
 
-    static ItemDirector *s_instance; ///< @addr{0x809C3618}
+    /// @addr{0x809C3618}
+    /// @brief Singleton instance of the @ref ItemDirector
+    static ItemDirector *s_instance;
 };
 
 } // namespace Item

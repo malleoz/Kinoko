@@ -6,18 +6,11 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x8081E0CC}
-/// @brief Constructor
-ObjectCollisionKart::ObjectCollisionKart() : m_kartObject(nullptr) {}
-
-/// @addr{0x8081E0E4}
-/// @brief Destructor that destroys the convex hull associated with the @ref Kart::KartObject
-ObjectCollisionKart::~ObjectCollisionKart() {
-    EGG::egg_delete(m_hull);
-}
-
 /// @addr{0x8081D090}
 /// @brief Initializes the convex hull based on the provided player index's vehicle
+/// @param idx The index of the player to construct the convex hull for
+/// @details Constructs a @ref ObjectCollisionConvexHull based on the vertices for the vehicle used
+/// by the player
 void ObjectCollisionKart::init(u32 idx) {
     if (m_kartObject) {
         return;
@@ -32,8 +25,13 @@ void ObjectCollisionKart::init(u32 idx) {
 
 /// @addr{0x8081E170}
 /// @brief Checks for collisions between the KartObject and other objects based off the provided
-/// transformation matrix and velocity vector
+/// pose matrix and velocity vector
+/// @param mat The pose of the @ref Kart::KartObject
+/// @param v The velocity vector of the @ref Kart::KartObject
 /// @return The number of object collisions detected
+/// @details Re-orientates and rescales the convex hull based on `mat` and the kart's scale. Sets
+/// the hull's bounding radius based on the kart's current scale. Finally, dispatches to @ref
+/// ObjectDirector::checkKartObjectCollision() to check for collisions.
 size_t ObjectCollisionKart::checkCollision(const EGG::Matrix34f &mat, const EGG::Vector3f &v) {
     if (!m_hull) {
         return 0;
@@ -47,14 +45,18 @@ size_t ObjectCollisionKart::checkCollision(const EGG::Matrix34f &mat, const EGG:
 }
 
 /// @addr{0x80572544}
-/// @brief Returns the normalized hit depth vector for a given object collision
-EGG::Vector3f ObjectCollisionKart::GetHitDirection(u16 objKartHit) {
-    EGG::Vector3f hitDepth = ObjectDirector::Instance()->hitDepth(objKartHit);
+/// @brief Gets the normalized hit depth vector for a given object collision
+/// @param idx The index of the object collision to retrieve the hit direction for
+/// @return The normalized hit depth vector for the specified object collision
+EGG::Vector3f ObjectCollisionKart::GetHitDirection(u16 idx) {
+    EGG::Vector3f hitDepth = ObjectDirector::Instance()->hitDepth(idx);
     hitDepth.normalise();
     return hitDepth;
 }
 
 /// @brief Helper function to map between a vehicle and its set of convex hull vertices
+/// @param vehicle The vehicle to fetch the vertices for
+/// @return A read-only span on the vertices associated for the provided `vehicle`
 constexpr std::span<const EGG::Vector3f> ObjectCollisionKart::GetVehicleVertices(Vehicle vehicle) {
     static constexpr std::array<EGG::Vector3f, 2> VERT_STANDARD_KART_S = {{
             {0.0f, 35.0f, -40.0f},
@@ -387,7 +389,10 @@ constexpr std::span<const EGG::Vector3f> ObjectCollisionKart::GetVehicleVertices
 }
 
 /// @addr{0x80573464}
-/// @brief Returns the translation vector of the object collision at the given index, if it exists
+/// @brief Gets the translation/velocity vector of the object collision at the given index
+/// @param idx The index of the object collision to retrieve the translation vector for
+/// @return The translation vector of the specified object collision, or the zero vector if it does
+/// not exist
 const EGG::Vector3f &ObjectCollisionKart::translation(size_t idx) {
     const auto *objCol = ObjectDirector::Instance()->collidingObject(idx)->collision();
     return objCol ? objCol->velocity() : EGG::Vector3f::zero;

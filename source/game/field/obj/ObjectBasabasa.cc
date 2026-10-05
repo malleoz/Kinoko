@@ -51,7 +51,7 @@ void ObjectBasabasaDummy::calcStateActive() {
         return;
     }
 
-    if (m_railInterpolator->calc() == RailInterpolator::Status::ChangingDirection) {
+    if (m_railInterpolator->calc() == RailInterpolator::Status::RailEnd) {
         m_active = false;
         unregisterCollision();
     } else {

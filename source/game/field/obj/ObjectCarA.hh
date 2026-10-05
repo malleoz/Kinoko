@@ -78,7 +78,7 @@ private:
         m_railInterpolator->setSpeed(m_currVel);
 
         auto status = m_railInterpolator->calc();
-        m_changingDir = (status == RailInterpolator::Status::ChangingDirection);
+        m_changingDir = (status == RailInterpolator::Status::RailEnd);
     }
 
     /// @addr{0x806B8D3C}

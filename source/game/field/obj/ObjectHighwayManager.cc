@@ -30,7 +30,7 @@ ObjectHighwayManager::ObjectHighwayManager()
     m_cars = owning_span<ObjectCarTGE *>(carCount);
     size_t idx = 0;
 
-    for (auto *&obj : objDir->managedObjects()) {
+    for (auto *const &obj : objDir->managedObjects()) {
         const char *objName = obj->getName();
 
         if ((strcmp(objName, "car_body") == 0) || (strcmp(objName, "kart_truck") == 0)) {

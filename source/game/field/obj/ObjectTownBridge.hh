@@ -12,6 +12,9 @@ namespace Kinoko::Field {
 /// changes, then it's possible for the player's collision checks to update the bridge collision's
 /// AABB at a point in the frame when the ghost's collision check would not have had the AABB
 /// updated, or vice versa.
+/// @note Due to the same reason mentioned in the desync section above, the behavior of this class
+/// is the sole reason that we need to implement both the Lakitu (@ref JugemUnit) and the camera
+/// (@ref KartCamera).
 class ObjectTownBridge final : public ObjectKCL {
 public:
     /// @addr{0x80809448}

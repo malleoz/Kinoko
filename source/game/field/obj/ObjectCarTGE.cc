@@ -249,11 +249,11 @@ void ObjectCarTGE::calcPos() {
     constexpr f32 TANGENT_INTERP_RATE = 0.1f;
 
     f32 speed = (m_carType == CarType::Truck) ? TRUCK_SPEED : NORMAL_SPEED;
-    f32 t = speed * scale().z * 0.5f;
+    f32 dist = speed * scale().z * 0.5f;
 
     EGG::Vector3f rearPos;
     EGG::Vector3f rearTangentDir;
-    m_railInterpolator->evalPositionAndTangentBehind(t, rearPos, rearTangentDir);
+    m_railInterpolator->evalPositionAndTangentBehind(dist, rearPos, rearTangentDir);
 
     const EGG::Vector3f curPos = m_railInterpolator->curPos();
     EGG::Vector3f posDelta = curPos - rearPos;
@@ -263,9 +263,9 @@ void ObjectCarTGE::calcPos() {
     m_tangent.normalise2();
 
     if (m_tangent.y > -0.05f) {
-        setPos(curPos - m_tangent * t * 0.5f);
+        setPos(curPos - m_tangent * dist * 0.5f);
     } else {
-        setPos(curPos - m_tangent * t * 0.5f - EGG::Vector3f::ey * 5.0f);
+        setPos(curPos - m_tangent * dist * 0.5f - EGG::Vector3f::ey * 5.0f);
     }
 
     m_up = OrthonormalBasis(m_tangent).base(1);

@@ -320,7 +320,7 @@ protected:
 
     Render::DrawMdl *m_drawMdl;           ///< The draw model associated with the object
     Abstract::g3d::ResFile *m_resFile;    ///< The resource file associated with the object
-    ObjectId m_id;                        ///< The ID of the object
+    const ObjectId m_id;                  ///< The ID of the object
     RailInterpolator *m_railInterpolator; ///< The rail interpolator associated with the object
     BoxColUnit *m_boxColUnit;             ///< The box collision unit associated with the object
     const System::MapdataGeoObj *const m_mapObj; ///< The KMP object associated with the object

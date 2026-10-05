@@ -160,7 +160,7 @@ private:
         case RailInterpolator::Status::SegmentEnd:
             checkRailPointState();
             break;
-        case RailInterpolator::Status::ChangingDirection:
+        case RailInterpolator::Status::RailEnd:
             deactivate();
             break;
         default:

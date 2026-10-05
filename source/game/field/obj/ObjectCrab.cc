@@ -89,7 +89,7 @@ bool ObjectCrab::calcRail() {
 
     auto status = m_railInterpolator->calc();
     if (status == RailInterpolator::Status::SegmentEnd ||
-            status == RailInterpolator::Status::ChangingDirection) {
+            status == RailInterpolator::Status::RailEnd) {
         u16 duration = m_railInterpolator->curPoint().setting[0];
         if (duration > 0) {
             m_railInterpolator->setSpeed(0.0f);

@@ -91,7 +91,7 @@ private:
     void calcForwardRail() {
         m_railInterpolator->setSpeed(m_forwardVel);
 
-        if (m_railInterpolator->calc() == RailInterpolator::Status::ChangingDirection) {
+        if (m_railInterpolator->calc() == RailInterpolator::Status::RailEnd) {
             enterStartStomp();
         }
 

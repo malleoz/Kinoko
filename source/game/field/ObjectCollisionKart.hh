@@ -19,14 +19,21 @@ namespace Field {
 /// other objects via @ref ObjectDirector.
 class ObjectCollisionKart {
 public:
-    ObjectCollisionKart();
-    ~ObjectCollisionKart();
+    /// @addr{0x8081E0CC}
+    /// @brief Constructor
+    ObjectCollisionKart() : m_kartObject(nullptr) {}
+
+    /// @addr{0x8081E0E4}
+    /// @brief Destructor that destroys the convex hull associated with the @ref Kart::KartObject
+    ~ObjectCollisionKart() {
+        EGG::egg_delete(m_hull);
+    }
 
     void init(u32 idx);
 
     size_t checkCollision(const EGG::Matrix34f &mat, const EGG::Vector3f &v);
 
-    [[nodiscard]] static EGG::Vector3f GetHitDirection(u16 objKartHit);
+    [[nodiscard]] static EGG::Vector3f GetHitDirection(u16 idx);
     [[nodiscard]] static constexpr std::span<const EGG::Vector3f> GetVehicleVertices(
             Vehicle vehicle);
     [[nodiscard]] static const EGG::Vector3f &translation(size_t idx);

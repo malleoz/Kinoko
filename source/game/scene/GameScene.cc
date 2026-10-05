@@ -2,11 +2,12 @@
 
 #include "game/system/ResourceManager.hh"
 
-#include "game/render/KartCamera.hh"
 namespace Kinoko::Scene {
 
 /// @addr{0x8051A1E0}
 /// @brief Constructor
+/// @details Sets the @ref m_heap name to `"DefaultGameSceneHeap"` for logging purposes and
+/// initializes @ref m_nextSceneId to -1.
 GameScene::GameScene() {
     m_heap->setName("DefaultGameSceneHeap");
     m_nextSceneId = -1;
@@ -24,7 +25,7 @@ GameScene::GameScene() {
 }
 
 /// @addr{0x8051A3C0}
-/// @brief Virtual destructor
+/// @brief Virtual destructor that also destroys all underlying resources.
 GameScene::~GameScene() {
     m_resources.clear();
 
@@ -44,24 +45,6 @@ GameScene::~GameScene() {
     }
 #endif // BUILD_DEBUG
 }
-
-/// @addr{0x805A1A8C}
-/// @brief Initializes the camera
-void GameScene::initCamera() {
-    Render::KartCamera::Instance()->init();
-}
-
-/// @addr{0x805A1AF0}
-/// @brief Every frame, updates the cameras' positions and orientations
-void GameScene::calcCamera() {
-    Render::KartCamera::Instance()->calc();
-}
-
-/// @addr{Inlined in 0x8051AA58}
-/// @brief Constructor
-GameScene::Resource::Resource(System::MultiDvdArchive *archive, s32 id)
-    : archive(archive),
-      id(id) {}
 
 /// @addr{0x8051AAE8}
 /// @brief Decrements the refcounter for each managed archive and clears the resource list

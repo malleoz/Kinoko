@@ -8,7 +8,7 @@
 
 namespace Kinoko::Field {
 
-/// @brief Maps to SObjectCollisionSet::mode. Determines what type of collision an object has.
+/// @brief Maps to @ref SObjectCollisionSet::mode. Determines what type of collision an object has.
 /// @note In the base game, the @ref ObjectDirector will construct @ref ObjectKCL objects for course
 /// objects having a collision mode of @ref CollisionMode::Ground. However, since @ref
 /// ObjectDirector::createObject() is implemented in Kinoko as a switch statement, we add an
@@ -23,14 +23,14 @@ enum class CollisionMode {
     Original = 5, ///< Unused
 };
 
-/// @brief Structure of the ObjFlow.bin table entries
+/// @brief Structure of the `ObjFlow.bin` table entries
 /// @details Defines the associated @ref ObjectId, the name of the object, the name of the resource
 /// file(s) to load for this object, and the collision mode and parameters.
 struct SObjectCollisionSet {
     u16 id;              ///< Maps to the @ref ObjectId of the object
     char name[32];       ///< The name of the object, used to fetch the associated @ref ObjectId
     char resources[64];  ///< The name of the resource file(s) to load for this object
-    u8 _62[0x6a - 0x62]; ///< Omitted for the purposes of Kinoko
+    u8 _62[0x6a - 0x62]; ///< Unused in Kinoko
     s16 mode;            ///< The collision mode of the object, maps to @ref CollisionMode
 
     /// @brief Collision parameters, interpreted based on @ref mode
@@ -51,22 +51,24 @@ struct SObjectCollisionSet {
             s16 z; ///< The half-width of the box along the z-axis
         } box;
     } params;
-    u8 _72[0x74 - 0x72]; ///< Omitted for the purposes of Kinoko
+    u8 _72[0x74 - 0x72]; ///< Unused in Kinoko
 };
 STATIC_ASSERT(sizeof(SObjectCollisionSet) == 0x74);
 
-/// @brief Parses the ObjFlow.bin table which maps an @ref ObjectId to the associated collision
+/// @brief Parses the `ObjFlow.bin` table which maps an @ref ObjectId to the associated collision
 /// parameters and resource file(s)
 /// @details This file contains a header and two data sections. The header contains the number of
 /// objects stored in the table. The first data section is an array of @ref SObjectCollisionSet.
-/// Following this section is a lookup table which maps an ObjectId to the index of the
-/// corresponding @ref SObjectCollisionSet in the first data section.
+/// The second section is a lookup table which maps an ObjectId to the index of the corresponding
+/// @ref SObjectCollisionSet in the first data section.
 class ObjectFlowTable {
 public:
     /// @addr{0x8082C10C}
     /// @brief Constructor that obtains a pointer to the provided filename (`ObjFlow.bin`), parses
     /// the count, and obtains pointers to the two data sections
     /// @param filename The name of the file to parse (`ObjFlow.bin`)
+    /// @details Loads the file and reads the @ref m_count from the header. Sets @ref m_sets and
+    /// @ref m_slots to point to the respective data sections.
     ObjectFlowTable(const char *filename) {
         const SFile *file = reinterpret_cast<const SFile *>(System::ResourceManager::Instance()
                         ->getFile(filename, System::ArchiveId::Core)
@@ -101,6 +103,9 @@ public:
     /// @addr{0x8082C178}
     /// @brief Iterates the @ref SObjectCollisionSet entries and returns the @ref ObjectId of the
     /// entry with a matching name
+    /// @param name The name of the object to look up
+    /// @return The @ref ObjectId corresponding to the provided name, or @ref ObjectId::None if not
+    /// found
     [[nodiscard]] ObjectId getIdFromName(const char *name) const {
         for (s16 i = 0; i < m_count; ++i) {
             const auto *curSet = set(i);
@@ -115,7 +120,7 @@ public:
     }
 
 private:
-    /// @brief Represents the header and beginning of the first data section of ObjFlow.bin
+    /// @brief Represents the header and beginning of the first data section of `ObjFlow.bin`
     struct SFile {
         s16 count; ///< The number of @ref SObjectCollisionSet entries in the first data section
         SObjectCollisionSet sets[]; ///< The first data section
@@ -124,11 +129,11 @@ private:
     /// @brief Endian-corrected number of @ref SObjectCollisionSet entries in the first data section
     s16 m_count;
 
-    /// @brief Pointer to the start of the first data section of ObjFlow.bin, which is an array of
+    /// @brief Pointer to the start of the first data section of `ObjFlow.bin`, which is an array of
     /// @ref SObjectCollisionSet
     const SObjectCollisionSet *m_sets;
 
-    /// @brief Pointer to the start of the second data section of ObjFlow.bin, which is a lookup
+    /// @brief Pointer to the start of the second data section of `ObjFlow.bin`, which is a lookup
     /// table mapping @ref ObjectId to the index of the corresponding @ref SObjectCollisionSet
     const s16 *m_slots;
 };

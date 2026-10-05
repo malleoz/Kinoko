@@ -17,6 +17,7 @@ public:
 
     /// @addr{0x807BC940}
     /// @brief Adds the specified @ref ItemId to the player's inventory
+    /// @param id The @ref ItemId to add to the player's inventory
     /// @details For the purposes of Kinoko, we simplify logic in this function to just assign a
     /// count of 3 for the triple mushroom item.
     void setItem(ItemId id) {
@@ -27,7 +28,9 @@ public:
     }
 
     /// @addr{0x807BC97C}
-    /// @brief Updates the count to reflect using an item, clearing the id if the count reaches 0
+    /// @brief Updates the count to reflect using an item, clearing the id if @ref m_currentCount
+    /// reaches 0
+    /// @param count The number of uses of the item to consume
     void useItem(int count) {
         m_currentCount -= count;
         if (m_currentCount > 0) {
@@ -39,8 +42,8 @@ public:
 
     /// @addr{0x807BC9C0}
     /// @brief Clears the item slot and resets the count to 0
-    /// @details This is called when the player either uses up the item in their slot, fall
-    /// out-of-bounds, or when they hit an object whose reaction causes the player to lose their
+    /// @details This is called when the player either uses up the item in their slot, falls
+    /// out-of-bounds, or when hits an object whose reaction causes the player to lose their
     /// item.
     void clear() {
         m_currentId = ItemId::NONE;
@@ -49,14 +52,18 @@ public:
 
     /// @beginGetters
 
+    /// @brief Gets the number of uses remaining for the current item
+    /// @return The number of uses remaining for the current item
     [[nodiscard]] int currentCount() const {
         return m_currentCount;
     }
 
+    /// @brief Gets the current item id in the slot
+    /// @return The @ref ItemId for the current item
     [[nodiscard]] ItemId id() const {
         return m_currentId;
     }
-    
+
     /// @endGetters
 
 private:

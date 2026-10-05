@@ -4,33 +4,21 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x806EC9A4}
-/// @brief Constructor that initializes the rail with the provided index and map data point info
-/// @param idx The index of the rail
-/// @param info Pointer to the map data point info containing the rail's points and settings
-Rail::Rail(u16 idx, System::MapdataPointInfo *info)
-    : m_pointCount(info->pointCount()),
-      m_isOscillating(info->setting(1) == 1),
-      m_idx(idx) {
-    m_points = info->points();
-    m_hasCheckedCol = false;
-}
-
-/// @addr{0x806ECC40}
-/// @brief Default destructor
-Rail::~Rail() = default;
-
 /// @addr{0x806ECCC0}
 /// @brief Checks for collision with the course geometry at each point in the rail and stores the
-/// up vector of the colliding floor triangle, or EGG::Vector3f::ey if no collision was found
+/// up vector of the colliding floor triangle, or @ref EGG::Vector3f::ey if no collision was found
+/// @details If collision has already been checked (indicated via @ref m_hasCheckedCol), then this
+/// function early returns. For each point along the rail, checks for #KCL_TYPE_FLOOR collision and
+/// sets @ref m_floorNrms accordingly. Finally, sets @ref m_hasCheckedCol to prevent redundant
+/// collision checks.
 void Rail::checkSphereFull() {
     if (m_hasCheckedCol) {
         return;
     }
 
-    m_floorNrms = owning_span<EGG::Vector3f>(m_pointCount);
+    m_floorNrms = owning_span<EGG::Vector3f>(m_points.size());
 
-    for (size_t i = 0; i < m_pointCount; ++i) {
+    for (size_t i = 0; i < m_points.size(); ++i) {
         CollisionInfo info;
         info.bbox.setZero();
 
@@ -50,13 +38,17 @@ void Rail::checkSphereFull() {
 }
 
 /// @addr{0x806EF9B4}
-/// @brief Calculates each edge/transition's direction and length and computes the total rail length
+/// @brief Constructor
+/// @param idx The index of the rail
+/// @param info Pointer to the map data point information
+/// @details Initializes the rail line by calculating the direction and length between
+/// points and the resulting total path length.
 RailLine::RailLine(u16 idx, System::MapdataPointInfo *info) : Rail(idx, info) {
-    u16 transCount = m_isOscillating ? m_pointCount - 1 : m_pointCount;
+    u16 transCount = m_isOscillating ? m_points.size() - 1 : m_points.size();
     m_transitions = owning_span<RailLineTransition>(transCount);
     m_pathLength = 0.0f;
 
-    for (u16 i = 0; i < m_pointCount - 1; ++i) {
+    for (u16 i = 0; i < m_points.size() - 1; ++i) {
         auto &transition = m_transitions[i];
         transition.m_dir = m_points[i + 1].pos - m_points[i].pos;
         transition.m_length = transition.m_dir.normalise();
@@ -73,13 +65,13 @@ RailLine::RailLine(u16 idx, System::MapdataPointInfo *info) : Rail(idx, info) {
     }
 }
 
-/// @addr{0x806EFD6C}
-RailLine::~RailLine() = default;
-
 /// @addr{0x806ED57C}
-/// @brief Calculates each spline's control points and length and computes the total rail length
+/// @brief Constructor
+/// @param idx The index of the rail
+/// @param info Pointer to the map data point information
+/// @details Calculates each spline's control points and length and computes the total rail length
 RailSpline::RailSpline(u16 idx, System::MapdataPointInfo *info) : Rail(idx, info) {
-    u16 transitionCount = m_isOscillating ? m_pointCount - 1 : m_pointCount;
+    u16 transitionCount = m_isOscillating ? m_points.size() - 1 : m_points.size();
     m_transitions = owning_span<RailSplineTransition>(transitionCount);
     invalidateTransitions(false);
 
@@ -90,11 +82,9 @@ RailSpline::RailSpline(u16 idx, System::MapdataPointInfo *info) : Rail(idx, info
     }
 }
 
-/// @addr{0x806ED828}
-RailSpline::~RailSpline() = default;
-
 /// @addr{0x806EDA04}
 /// @brief Computes the control points and lengths of each spline in the rail
+/// @param lastOnly If `true`, only the last transition is recalculated
 void RailSpline::invalidateTransitions(bool lastOnly) {
     size_t count = ESTIMATOR_SAMPLE_COUNT * m_transitions.size() + 1;
     m_pathPercentages = owning_span<f32>(count);
@@ -169,7 +159,14 @@ void RailSpline::invalidateTransitions(bool lastOnly) {
 
 /// @addr{0x806EE56C}
 /// @brief Approximates the length of a cubic bezier curve by sampling points along the curve
+/// @param transition The RailSplineTransition object representing the cubic bezier curve to
+/// estimate the length of
 /// @param count The number of samples to take along the curve (always @ref ESTIMATOR_SAMPLE_COUNT)
+/// @return The estimated length of the cubic bezier curve
+/// @details Computes the cubic bezier curve at `count` parameter values spaced evenly by @ref
+/// ESTIMATOR_STEP. Sums the distances between consecutive sample points, accumulating the length up
+/// to the sample point to @ref m_pathPercentages. After summing, divides each @ref
+/// m_pathPercentages by the total length to normalize them. Finally, returns the estimated length.
 f32 RailSpline::estimateLength(const RailSplineTransition &transition, s32 count) {
     std::array<EGG::Vector3f, ESTIMATOR_SAMPLE_COUNT + 1> waypoints;
 

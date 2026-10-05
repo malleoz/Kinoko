@@ -75,14 +75,14 @@ class KartObjectProxy {
 
 public:
     KartObjectProxy();
-    ~KartObjectProxy();
+    virtual ~KartObjectProxy();
 
     /// @beginSetters
 
     void setPos(const EGG::Vector3f &pos);
     void setRot(const EGG::Quatf &q);
     void setInertiaScale(const EGG::Vector3f &scale);
-    
+
     /// @endSetters
 
     /// @beginGetters

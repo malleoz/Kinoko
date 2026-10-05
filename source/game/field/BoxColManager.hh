@@ -249,6 +249,7 @@ public:
     /// @addr{0x807855DC}
     /// @brief Creates the singleton instance of the @ref BoxColManager
     /// @return A pointer to the newly created @ref BoxColManager instance
+    /// @pre Assumes that no singleton instance of @ref BoxColManager has been created yet.
     static BoxColManager *CreateInstance() {
         ASSERT(!s_instance);
         s_instance = EGG::egg_new<BoxColManager>();
@@ -257,6 +258,7 @@ public:
 
     /// @addr{0x8078562C}
     /// @brief Destroys the singleton instance of the @ref BoxColManager
+    /// @pre Assumes that a singleton instance of @ref BoxColManager has already been created.
     static void DestroyInstance() {
         ASSERT(s_instance);
         auto *instance = s_instance;

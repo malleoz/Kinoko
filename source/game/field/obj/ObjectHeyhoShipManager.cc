@@ -8,19 +8,19 @@ namespace Kinoko::Field {
 
 /// @addr{0x806D2368}
 /// @copydoc ObjectSniper::ObjectSniper()
+/// @pre All @ref ObjectHeyhoBall objects must be constructed and registered to the vector of
+/// managed objects in @ref ObjectDirector.
 /// @details Computes the number of registered/managed @ref ObjectHeyhoBall cannonballs and sizes
 /// @ref m_projectiles accordingly. For each registered @ref ObjectHeyhoBall, caches it to @ref
 /// m_projectiles with a `reinterpret_cast` to @ref ObjectProjectile and caches the @ref
 /// ObjectHeyhoShip to @ref m_launcher. Finally, creates a @ref owning_span for all point indices to
 /// track which rail points are associated with which cannonballs.
-/// @pre All @ref ObjectHeyhoBall objects must be constructed and registered to the vector of
-/// managed objects in @ref ObjectDirector.
 /// @note If for any reason there are two registered @ref ObjectHeyhoShip objects, only the last one
 /// encountered will be cached to @ref m_launcher.
 ObjectHeyhoShipManager::ObjectHeyhoShipManager() {
-    auto &managedObjs = ObjectDirector::Instance()->managedObjects();
+    auto managedObjs = ObjectDirector::Instance()->managedObjects();
     size_t count = 0;
-    for (auto *&obj : managedObjs) {
+    for (auto *const &obj : managedObjs) {
         if (strcmp(obj->getName(), "HeyhoBallGBA") == 0) {
             ++count;
         }
@@ -28,7 +28,7 @@ ObjectHeyhoShipManager::ObjectHeyhoShipManager() {
 
     m_projectiles = owning_span<ObjectProjectile *>(count);
     size_t curIdx = 0;
-    for (auto *&obj : managedObjs) {
+    for (auto *const &obj : managedObjs) {
         if (strcmp(obj->getName(), "HeyhoBallGBA") == 0) {
             m_projectiles[curIdx++] = reinterpret_cast<ObjectProjectile *>(obj);
         } else if (strcmp(obj->getName(), "HeyhoShipGBA") == 0) {
@@ -63,7 +63,7 @@ void ObjectHeyhoShipManager::init() {
     }
 
     auto *ship = reinterpret_cast<ObjectHeyhoShip *>(m_launcher);
-    auto *launcherRail = RailManager::Instance()->rail(launcherRailInterp->railIdx());
+    const auto *launcherRail = launcherRailInterp->rail();
     for (auto *&obj : m_projectiles) {
         const s16 idx = obj->idx();
         const auto &dir = ship->initRailDir(idx);

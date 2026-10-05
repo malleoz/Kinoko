@@ -69,7 +69,7 @@ void ObjectRock::calcTangible() {
     constexpr f32 GRAVITY = 2.0f;
 
     auto railStatus = m_railInterpolator->calc();
-    if (railStatus == RailInterpolator::Status::ChangingDirection) {
+    if (railStatus == RailInterpolator::Status::RailEnd) {
         breakRock();
     }
 

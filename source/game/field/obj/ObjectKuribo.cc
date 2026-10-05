@@ -57,7 +57,7 @@ void ObjectKuribo::calcAnim() {
     const auto &curPos = m_railInterpolator->curPos();
     setPos(EGG::Vector3f(curPos.x, pos().y, curPos.z));
 
-    if (m_railInterpolator->calc() == RailInterpolator::Status::ChangingDirection) {
+    if (m_railInterpolator->calc() == RailInterpolator::Status::RailEnd) {
         m_nextStateId = 0;
         m_currSpeed = 0.0f;
     }

@@ -1,6 +1,5 @@
 #include "ObjectDirector.hh"
 
-#include "game/field/ObjectDrivableDirector.hh"
 #include "game/field/obj/ObjectRegistry.hh"
 
 #include "game/system/CourseMap.hh"
@@ -8,44 +7,23 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x8082A2B4}
-/// @brief Initializes all objects, including those in @ref ObjectDrivableDirector
-void ObjectDirector::init() {
-    for (auto *&obj : m_objects) {
-        obj->init();
-        obj->calcModel();
-    }
-
-    ObjectDrivableDirector::Instance()->init();
-}
-
-/// @addr{0x8082A8F4}
-/// @brief Runs per-frame calculations for all objects, including those in @ref
-/// ObjectDrivableDirector
-void ObjectDirector::calc() {
-    for (auto *&obj : m_calcObjects) {
-        obj->calc();
-    }
-
-    for (auto *&obj : m_calcObjects) {
-        obj->calcModel();
-    }
-
-    ObjectDrivableDirector::Instance()->calc();
-}
-
 /// @addr{0x8082B0E8}
 /// @brief Registers an object to the director, and adds it to the appropriate lists based on its
 /// load flags and collision mode
+/// @param obj The @ref ObjectCollidable to add to the director
+/// @details If the object's load flags have @ref ObjectBase::eLoadFlags::Calc set, then adds `obj`
+/// to @ref m_calcObjects. If the object has a valid collision mode, then adds `obj` to @ref
+/// m_collisionObjects. Finally, adds `obj` to @ref m_objects.
+/// @bug In the base game, @ref ObjectHighwayManager will erroneously access slot -1 in the flow
+/// table; the arbitrary read in the base game produces a `mode` of zero, so the object is not added
+/// to @ref m_collisionObjects. To match the base game behavior here, we add a `nullptr` check
+/// instead.
 void ObjectDirector::addObject(ObjectCollidable *obj) {
     if (obj->loadFlags().onBit(ObjectBase::eLoadFlags::Calc)) {
         m_calcObjects.push_back(obj);
     }
 
     const auto *set = m_flowTable.set(m_flowTable.slot(obj->id()));
-
-    // In the base game, it's possible an object here will access slot -1 (e.g. Moonview Highway
-    // cars). We add a nullptr check here to prevent this.
     if (set && set->mode != 0) {
         if (obj->collision()) {
             m_collisionObjects.push_back(obj);
@@ -56,11 +34,20 @@ void ObjectDirector::addObject(ObjectCollidable *obj) {
 }
 
 /// @addr{0x8082AB04}
-/// @brief Checks for collisions between a kart and all objects in the director
-/// @details When a collision occurs, fetches the reaction to apply on the kart and processes it.
-/// Depending on the behavior of the colliding object, the reaction may be modified. Caches the
-/// modified reaction so it can be fetched later.
+/// @brief Performs collision checks between a kart and all objects having a tangible @ref
+/// BoxColUnit
+/// @param kartObj The kart to check for collisions against
+/// @param convexHull The convex hull representing the kart's collision shape
 /// @return The number of collisions detected
+/// @pre Requires that @ref BoxColManager::search() has been called prior to invoking this function.
+/// @details Iterates the list of nearby objects via @ref BoxColManager::getNextObject(). Skips
+/// objects which do not have a GJK collision object (@ref ObjectCollisionBase). Updates the
+/// object's GJK collision transform and dispatches to @ref ObjectCollidable::checkCollision() to
+/// perform the GJK collision check.
+///
+/// When a collision occurs, fetches the reaction to apply on the kart and processes it. Depending
+/// on the behavior of the colliding object, the reaction may be modified. Caches the modified
+/// reaction so it can be fetched later.
 size_t ObjectDirector::checkKartObjectCollision(Kart::KartObject *kartObj,
         ObjectCollisionConvexHull *convexHull) {
     size_t count = 0;
@@ -104,7 +91,9 @@ size_t ObjectDirector::checkKartObjectCollision(Kart::KartObject *kartObj,
 }
 
 /// @addr{0x8082B3EC}
-/// @brief Returns the vertical distance between the kart and the rising water object, if present
+/// @brief Gets the vertical distance between the kart and the rising water object
+/// @return The vertical distance between the kart and the @ref ObjectPsea
+/// @pre Requires that @ref m_psea was previously set via @ref setPsea().
 f32 ObjectDirector::distAboveRisingWater(f32 offset) const {
     ASSERT(m_psea);
     return offset - m_psea->pos().y;
@@ -112,36 +101,23 @@ f32 ObjectDirector::distAboveRisingWater(f32 offset) const {
 
 /// @addr{0x8082B400}
 /// @brief Returns the height of the kill plane for the rising water object, if present
+/// @return The height of the kill plane for @ref ObjectPsea
+/// @pre Requires that @ref m_psea was previously set via @ref setPsea().
+/// @details The kill plane height is a fixed `260.0f` units below the height of the @ref
+/// ObjectPsea object.
 f32 ObjectDirector::risingWaterKillPlaneHeight() const {
     ASSERT(m_psea);
     return m_psea->pos().y - 260.0f;
 }
 
-/// @addr{0x8082A784}
-/// @brief Creates the singleton instances of @ref ObjectDirector and @ref
-/// ObjectDrivableDirector. Also creates all objects in the course.
-/// @return A pointer to the newly created singleton instance of @ref ObjectDirector
-ObjectDirector *ObjectDirector::CreateInstance() {
-    ASSERT(!s_instance);
-    s_instance = EGG::egg_new<ObjectDirector>();
-    ObjectDrivableDirector::CreateInstance();
-    s_instance->createObjects();
-    return s_instance;
-}
-
-/// @addr{0x8082A824}
-/// @brief Destroys the singleton instances of @ref ObjectDirector and @ref
-/// ObjectDrivableDirector
-void ObjectDirector::DestroyInstance() {
-    ASSERT(s_instance);
-    auto *instance = s_instance;
-    s_instance = nullptr;
-    EGG::egg_delete(instance);
-    ObjectDrivableDirector::DestroyInstance();
-}
-
 /// @addr{0x8082A38C}
 /// @brief Private constructor
+/// @details Constructs @ref m_flowTable from `ObjFlow.bin`, @ref m_hitTableKart from
+/// `GeoHitTableKart.bin`, and @ref m_hitTableKartObject from `GeoHitTableKartObj.bin`. Initializes
+/// other member variables to their default states. Initializes @ref m_objects, @ref m_calcObjects,
+/// and @ref m_collisionObjects to have a maximum size of @ref MAX_UNIT_COUNT. Initializes @ref
+/// m_managedObjects to have a maximum size of @ref MAX_MANAGED_OBJECTS. Finally, initializes @ref
+/// m_psea to `nullptr`.
 ObjectDirector::ObjectDirector()
     : m_flowTable("ObjFlow.bin"),
       m_hitTableKart("GeoHitTableKart.bin"),
@@ -152,24 +128,11 @@ ObjectDirector::ObjectDirector()
       m_psea(nullptr),
       m_managedObjects(MAX_MANAGED_OBJECTS) {}
 
-/// @addr{0x8082A694}
-/// @brief Private destructor
-ObjectDirector::~ObjectDirector() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("ObjectDirector instance not explicitly handled!");
-    }
-
-    for (auto *&obj : m_objects) {
-        EGG::egg_delete(obj);
-    }
-}
-
 /// @addr{0x80826E8C}
-/// @brief Constructs all objects defined in course.kmp
-/// @details After construction, calls load() on each object, which will load resources, create
-/// collision, and register the object to the appropriate director. Also constructs special manager
-/// classes depending on what course and objects are present.
+/// @brief Constructs all objects defined in `course.kmp`
+/// @details After construction, calls @ref ObjectBase::load() on each object, which will load
+/// resources, create collision, and register the object to the appropriate director. Also
+/// constructs special manager classes depending on what course and objects are present.
 void ObjectDirector::createObjects() {
     const auto *courseMap = System::CourseMap::Instance();
     size_t objectCount = courseMap->getGeoObjCount();
@@ -242,6 +205,8 @@ void ObjectDirector::createObjects() {
 
 /// @addr{0x80821E14}
 /// @brief Factory function that constructs an object based on its ID
+/// @param params The parameters used to initialize the object
+/// @return A pointer to the newly constructed object
 /// @details Some objects are primitive types that do not require a subclass, and some are not
 /// implemented as they do not affect time trial physics.
 ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
@@ -410,13 +375,6 @@ ObjectBase *ObjectDirector::createObject(const System::MapdataGeoObj &params) {
     }
 }
 
-/// @desync @ref ObjectDirector::s_wanwanMaxPitch is used to describe the maximum pitch of the Chain
-/// Chomp. In the base game, this value is statically initialized to -30.0f and is only overwritten
-/// if you load GCN Mario Circuit, at which point it is changed to -20.0f. If you then load into
-/// Mario Circuit Wii, it will continue to be set to the overwritten value of -20.0f. This means
-/// that the Chain Chomp's behavior will desync if GCN Mario Circuit is loaded before playing Mario
-/// Circuit Wii. To compensate for this, we always set the max pitch in @ref
-/// ObjectDirector::createObjects().
 f32 ObjectDirector::s_wanwanMaxPitch;
 
 ObjectDirector *ObjectDirector::s_instance = nullptr;

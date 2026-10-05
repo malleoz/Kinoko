@@ -6,18 +6,16 @@
 
 namespace Kinoko::Item {
 
-/// @addr{0x8079754C}
-/// @brief Constructor
-KartItem::KartItem() {
-    m_flags.makeAllZero();
-}
-
-/// @addr{0x8079951C}
-/// @brief Default destructor
-KartItem::~KartItem() = default;
-
 /// @addr{0x80797928}
 /// @brief Calculates item activation based on the controller input state
+/// @details If the player is pressing the item button and was not pressing it on the previous
+/// frame, then sets the @ref eFlags::ItemButtonActivation flag. If the @ref eFlags::Lockout flag
+/// was set, checks if the flag should be cleared (e.g. after a respawn or after landing from a
+/// cannon). If @ref eFlags::Lockout was not set this frame, then checks to see if the flag should
+/// be set (e.g. starting a respawn or entering a cannon). Otherwise, checks to see if the player
+/// can use an item this frame, requiring that @ref eFlags::ItemButtonActivation is set, we are past
+/// the race countdown, the kart is not in action or burnout, and the inventory is not empty. If
+/// those conditions are met, then calls @ref useMushroom().
 void KartItem::calc() {
     bool prevButton = m_flags.onBit(eFlags::ItemButtonHold);
     m_flags.resetBit(eFlags::ItemButtonHold, eFlags::ItemButtonActivation);

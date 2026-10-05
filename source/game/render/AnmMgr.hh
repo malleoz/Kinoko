@@ -21,22 +21,28 @@ enum class AnmType : s32 {
 /// @brief Wrapper/interface that represents a CHR0 animation bound to a model
 class AnmNodeChr {
 public:
-    AnmNodeChr(Abstract::g3d::AnmObjChrRes anmObjChrRes) : m_anmObjChrRes(anmObjChrRes) {}
+    /// @brief Constructor
+    /// @param anmObjChrRes The CHR0 animation resource to be wrapped by this node
+    /// @details For Kinoko, we can safely move the resource into the node, transferring ownership.
+    AnmNodeChr(Abstract::g3d::AnmObjChrRes &&anmObjChrRes)
+        : m_anmObjChrRes(std::move(anmObjChrRes)) {}
 
     /// @addr{0x8055AE90}
-    /// @brief Returns the total number of frames in the animation
+    /// @brief Gets the total number of frames in the animation
+    /// @return The total number of frames in the animation
     [[nodiscard]] f32 frameCount() const {
         return static_cast<f32>(m_anmObjChrRes.frameCount());
     }
 
     /// @addr{0x8055ADFC}
-    /// @brief Returns the current frame of the animation
+    /// @brief Gets the current frame of the animation
+    /// @return The current frame of the animation
     [[nodiscard]] f32 frame() const {
         return m_anmObjChrRes.frame();
     }
 
 private:
-    Abstract::g3d::AnmObjChrRes m_anmObjChrRes; ///< The underlying resource object
+    const Abstract::g3d::AnmObjChrRes m_anmObjChrRes; ///< The underlying resource object
 };
 
 /// @brief Manager class for handling different types of animations bound to a model
@@ -78,15 +84,15 @@ public:
     /// @addr{0x80557340}
     /// @brief Retrieves the actively playing animation of the specified type
     /// @param anmType The type of the animation to retrieve
-    /// @return A pointer to the actively playing animation of the specified type, or nullptr if
+    /// @return A pointer to the actively playing animation of the specified type, or `nullptr` if
     /// none is active
     [[nodiscard]] const AnmNodeChr *activeAnim(AnmType anmType) const {
         return m_activeAnims[static_cast<size_t>(anmType)];
     }
 
 private:
-    [[maybe_unused]] DrawMdl *m_parent; ///< The model to which this animation manager is tied
-    alloc_list<AnmNodeChr> m_anmList;   ///< A list of all animations registered with the manager
+    [[maybe_unused]] const DrawMdl *m_parent; ///< The model to which this animation manager is tied
+    alloc_list<AnmNodeChr> m_anmList; ///< A list of all animations registered with the manager
 
     /// @brief The currently active animations for each animation type
     /// @details In the base game, the array is of length 4, which implies that it does not track

@@ -36,14 +36,6 @@ void KartCamera::calc() {
     calcCollision(m_backwardCamera, true);
 }
 
-/// @addr{0x805A1D10}
-/// @brief Private constructor
-KartCamera::KartCamera() : m_hopPosY(0), m_forward(EGG::Vector3f::zero), m_camParams(nullptr) {}
-
-/// @addr{0x805A8F7C}
-/// @brief Private destructor
-KartCamera::~KartCamera() = default;
-
 /// @addr{0x805A3070}
 /// @brief Calculates the camera's yaw offset resulting from the kart performing a manual drift
 /// @param proxy Pointer to the kart object proxy
@@ -207,6 +199,9 @@ void KartCamera::initPos() {
 /// @brief Performs collision checks for the specified camera state
 /// @param state The camera state to check for collisions
 /// @param isBackwards Whether the camera is the rear camera
+/// @note This function is the reason that @ref KartCamera needs to be implemented in Kinoko. This
+/// function can result in an @ref Field::ObjColMgr transformation matrix update. This can cause
+/// desyncs from the DS Delfino Square drawbridge (@ref ObjectTownBridge) if not implemented.
 void KartCamera::calcCollision(KartCameraState &state, bool isBackwards) const {
     constexpr f32 FRONT_RADIUS = 80.0f;
     constexpr f32 BACK_RADIUS = 140.0f;

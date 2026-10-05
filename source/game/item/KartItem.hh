@@ -9,10 +9,18 @@ namespace Kinoko::Item {
 /// @brief State management for a kart's item usage
 /// @details Checks controller inputs to see if the user is attempting to use an item. Checks
 /// whether the user is able to use an item (countdown, burnout, in cannon, etc).
-class KartItem : Kart::KartObjectProxy {
+class KartItem final : Kart::KartObjectProxy {
 public:
-    KartItem();
-    ~KartItem();
+    /// @addr{0x8079754C}
+    /// @brief Constructor
+    /// @details Initializes @ref m_flags to all zeroes.
+    KartItem() {
+        m_flags.makeAllZero();
+    }
+
+    /// @addr{0x8079951C}
+    /// @brief Default virtual destructor
+    ~KartItem() override = default;
 
     /// @addr{0x807976E0}
     /// @brief Initializes the @ref Kart::KartObjectProxy accessor pointer
@@ -41,14 +49,18 @@ public:
 
     /// @beginGetters
 
+    /// @brief Fetches the current item inventory for the kart
+    /// @return A reference to the current item inventory for the kart
     [[nodiscard]] ItemInventory &inventory() {
         return m_inventory;
     }
 
+    /// @brief Fetches the current item inventory for the kart (const version)
+    /// @return A const reference to the current item inventory for the kart
     [[nodiscard]] const ItemInventory &inventory() const {
         return m_inventory;
     }
-    
+
     /// @endGetters
 
 private:

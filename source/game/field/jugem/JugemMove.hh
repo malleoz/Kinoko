@@ -7,8 +7,14 @@ namespace Kinoko::Field {
 /// @brief Manages state information related to Lakitu movement
 class JugemMove {
 public:
-    JugemMove(const Kart::KartObject *kartObj);
-    ~JugemMove();
+    /// @addr{0x8071E9B4}
+    /// @brief Constructor
+    /// @param kartObj Pointer to the kart object associated with this instance
+    JugemMove(const Kart::KartObject *kartObj) : m_kartObj(kartObj) {}
+
+    /// @addr{0x8071EA80}
+    /// @brief Default destructor
+    ~JugemMove() = default;
 
     void init();
     void calc();
@@ -16,7 +22,7 @@ public:
     /// @addr{0x8071EFA8}
     /// @brief Sets Lakitu's position and optionally sets the transformed position
     /// @param pos The new position to set
-    /// @param transPos If true, also sets the transformed position to the same value
+    /// @param transPos If `true`, also sets the transformed position to the same value
     void setPos(const EGG::Vector3f &pos, bool transPos) {
         m_pos = pos;
 
@@ -31,34 +37,48 @@ public:
     /// @beginSetters
 
     /// @addr{0x8071EFD8}
+    /// @brief Sets the anchor position that Lakitu is trying to move towards
+    /// @param v The new anchor position to set
     void setAnchorPos(const EGG::Vector3f &v) {
         m_anchorPos = v;
     }
 
+    /// @brief Sets Lakitu's velocity when rising back up
+    /// @param v The rising velocity to set
     void setRiseVel(const EGG::Vector3f &v) {
         m_riseVel = v;
     }
 
+    /// @brief Sets whether Lakitu is either away or descending
+    /// @param isSet `true` if Lakitu is away or descending, `false` otherwise
     void setAwayOrDescending(bool isSet) {
         m_isAwayOrDescending = isSet;
     }
 
+    /// @brief Sets whether Lakitu is descending from the sky
+    /// @param isSet `true` if Lakitu is descending, `false` otherwise
     void setDescending(bool isSet) {
         m_isDescending = isSet;
     }
 
+    /// @brief Sets whether Lakitu is rising up into the sky
+    /// @param isSet `true` if Lakitu is rising, `false` otherwise
     void setRising(bool isSet) {
         m_isRising = isSet;
     }
-    
+
     /// @endSetters
 
     /// @beginGetters
 
+    /// @brief Returns Lakitu's transformed position
+    /// @return The transformed position of Lakitu in world space
     const EGG::Vector3f &transPos() const {
         return m_transPos;
     }
 
+    /// @brief Returns Lakitu's transformation matrix
+    /// @return The combined lean and rotation matrices representing Lakitu's orientation
     const EGG::Matrix34f &transform() const {
         return m_transform;
     }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "game/field/RailInterpolator.hh"
+#include "game/field/Rail.hh"
 
 namespace Kinoko {
 
@@ -38,7 +38,7 @@ public:
         ASSERT(idx < m_rails.size());
         return m_rails[idx];
     }
-    
+
     /// @endGetters
 
     /// @addr{0x806F09C8}

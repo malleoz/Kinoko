@@ -136,16 +136,26 @@ private:
 class JugemUnit : private StateManager {
 public:
     JugemUnit(const Kart::KartObject *kartObj);
-    ~JugemUnit();
+
+    /// @addr{0x80721D2C}
+    /// @brief Virtual destructor that destroys the switch, movement, and interpolation controllers
+    ~JugemUnit() override {
+        EGG::egg_delete(m_switchReverse);
+        EGG::egg_delete(m_move);
+        EGG::egg_delete(m_interp);
+    }
 
     /// @addr{0x80721EC0}
     /// @brief Creates the switches for the Lakitu
+    /// @details For the purposes of syncing time trials in Kinoko, we only have to implement the
+    /// reverse switch.
     void createSwitchRace() {
         m_switchReverse = EGG::egg_new<JugemSwitchReverse>();
     }
 
     /// @addr{0x80722100}
     /// @brief Initializes the internal state of the Lakitu unit
+    /// @details Resets @ref m_pos to zero and initializes the movement controller.
     void init() {
         m_pos.setZero();
         m_move->init();
@@ -177,6 +187,7 @@ private:
 
     /// @addr{0x80723458}
     /// @brief Runs once when the Lakitu begins ascending and leaving the player
+    /// @details Sets @ref m_state to @ref State::Away and resets @ref m_ascendTimer to zero.
     void enterIdle() {
         m_state = State::Away;
         m_ascendTimer = 0;
@@ -186,6 +197,8 @@ private:
 
     /// @addr{0x807234A4}
     /// @brief Runs every frame when the Lakitu is idle and not visible, checking for switch toggles
+    /// @details If the reverse switch is toggled on, the Lakitu will transition to the reverse
+    /// state.
     void calcIdle() {
         if (m_switchReverse && m_switchReverse->isOn()) {
             m_nextStateId = 1;
@@ -196,6 +209,8 @@ private:
 
     /// @addr{0x80722ED8}
     /// @brief Evaluates the switches for the Lakitu unit, checking if it should be toggled on/off
+    /// @details For the purposes of syncing time trials in Kinoko, we only need to evaluate the
+    /// reverse switch.
     void calcSwitches() {
         if (m_switchReverse) {
             m_switchReverse->calc();
@@ -205,6 +220,7 @@ private:
     /// @addr{0x80722F6C}
     /// @brief Updates the Lakitu's position based on the provided transformation matrix, while
     /// keeping the y-coordinate fixed to the player's position
+    /// @param mat The transformation matrix used to update the Lakitu's position
     void setPosFromTransform(const EGG::Matrix34f &mat) {
         m_pos = mat.base(3);
         m_pos.y = m_kartObj->pos().y;

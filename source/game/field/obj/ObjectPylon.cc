@@ -45,16 +45,16 @@ void ObjectPylon::init() {
     }
 
     auto *objDir = ObjectDirector::Instance();
-    auto &managedObjs = objDir->managedObjects();
+    auto managedObjs = objDir->managedObjects();
 
-    for (auto *&obj : managedObjs) {
+    for (auto *const &obj : managedObjs) {
         if ((obj->pos() - pos()).length() >= NEIGHBOR_SQUARE_RADIUS) {
             continue;
         }
 
         // The base game assumes that each managed object is pylon.
         ASSERT(obj->id() == ObjectId::Pylon);
-        auto *&pylon = reinterpret_cast<ObjectPylon *&>(obj);
+        auto *const &pylon = reinterpret_cast<ObjectPylon *const &>(obj);
         for (auto *&neighbor : m_neighbors) {
             if (!neighbor) {
                 neighbor = pylon;

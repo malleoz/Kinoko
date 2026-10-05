@@ -8,6 +8,9 @@ namespace Kinoko::Field {
 
 /// @addr{0x80721514}
 /// @brief Constructs the movement and interpolation controllers for the Lakitu unit
+/// @param kartObj Pointer to the player's kart object
+/// @details Saves a pointer to the @ref Kart::KartObject to @ref m_kartObj. Initializes @ref
+/// m_switchReverse to `nullptr`. Constructs @ref m_move and @ref m_interp with two keyframes.
 JugemUnit::JugemUnit(const Kart::KartObject *kartObj)
     : StateManager(this, STATE_ENTRIES),
       m_kartObj(kartObj),
@@ -16,16 +19,11 @@ JugemUnit::JugemUnit(const Kart::KartObject *kartObj)
     m_interp = EGG::egg_new<JugemInterp>(2);
 }
 
-/// @addr{0x80721D2C}
-JugemUnit::~JugemUnit() {
-    EGG::egg_delete(m_switchReverse);
-    EGG::egg_delete(m_move);
-    EGG::egg_delete(m_interp);
-}
-
 /// @addr{0x80724794}
 /// @brief Runs once when the reverse switch is toggled and the Lakitu begins descending
-/// @details Initializes the interpolation sequence, movement controller, and position.
+/// @details Sets @ref m_state to @ref State::Descending. Initializes the interpolator's keyframes
+/// and the movement controller. Sets the initial position of the Lakitu based on a local offset
+/// `2000.0f` units above the player.
 void JugemUnit::enterReverse() {
     constexpr EGG::Vector3f INIT_POS_OFFSET = EGG::Vector3f(0.0f, 2000.0f, 0.0f);
 
@@ -116,6 +114,8 @@ void JugemUnit::calcReverse() {
 
 /// @addr{0x807230D4}
 /// @brief Transforms a vector from Lakitu's local space to world space, keeping the y-axis upright
+/// @param v The vector in Lakitu's local space to be transformed to world space.
+/// @return The transformed vector in world space.
 EGG::Vector3f JugemUnit::transformLocalToWorldUpright(const EGG::Vector3f &v) const {
     const EGG::Vector3f &intVelDir = m_kartObj->move()->intVelDir();
     const EGG::Quatf &mainRot = m_kartObj->mainRot();

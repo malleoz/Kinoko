@@ -21,11 +21,11 @@ public:
     /// a pointer to the @ref ObjectSunDS and saves it to @ref m_launcher. Finally, creates @ref
     /// m_pointIdxs based on how many nodes exist in the rail.
     ObjectSunManager() {
-        auto &managedObjs = ObjectDirector::Instance()->managedObjects();
+        auto managedObjs = ObjectDirector::Instance()->managedObjects();
 
         size_t count = 0;
 
-        for (auto *&obj : managedObjs) {
+        for (auto *const &obj : managedObjs) {
             if (strcmp(obj->getName(), "FireSnake") == 0) {
                 ++count;
             }
@@ -35,7 +35,7 @@ public:
 
         size_t curIdx = 0;
 
-        for (auto *&obj : managedObjs) {
+        for (auto *const &obj : managedObjs) {
             if (strcmp(obj->getName(), "FireSnake") == 0) {
                 m_projectiles[curIdx++] = reinterpret_cast<ObjectProjectile *>(obj);
             } else if (strcmp(obj->getName(), "sunDS") == 0) {

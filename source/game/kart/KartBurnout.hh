@@ -24,10 +24,10 @@ public:
 
     /// @beginGetters
 
-    [[nodiscard]] f32 pitch() const {
+    [[nodiscard]] f32 yaw() const {
         return m_yaw;
     }
-    
+
     /// @endGetters
 
 private:

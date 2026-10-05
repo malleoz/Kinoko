@@ -36,6 +36,7 @@ public:
     /// @addr{0x8071E270}
     /// @brief Creates the singleton instance of @ref JugemDirector
     /// @return A pointer to the newly created singleton instance of @ref JugemDirector
+    /// @pre The singleton instance must not already exist.
     static JugemDirector *CreateInstance() {
         ASSERT(!s_instance);
         s_instance = EGG::egg_new<JugemDirector>();
@@ -44,6 +45,7 @@ public:
 
     /// @addr{0x8071E2FC}
     /// @brief Destroys the singleton instance of @ref JugemDirector
+    /// @pre The singleton instance must exist already.
     static void DestroyInstance() {
         ASSERT(s_instance);
         auto *instance = s_instance;
@@ -61,14 +63,24 @@ public:
 private:
     EGG_NEW_DELETE_FRIEND
 
-    JugemDirector();
-    ~JugemDirector();
+    /// @addr{0x8071E330}
+    /// @brief Private constructor
+    /// @details Initializes @ref m_unit to `nullptr`.
+    JugemDirector() : m_unit(nullptr) {}
+
+    /// @addr{0x8071E390}
+    /// @brief Private virtual destructor that destroys the underlying @ref JugemUnit
+    ~JugemDirector() override {
+        EGG::egg_delete(m_unit);
+    }
 
     void createUnits();
 
     JugemUnit *m_unit; ///< Pointer to the @ref JugemUnit for the player
 
-    static JugemDirector *s_instance; ///< @addr{0x809C28B8}
+    /// @addr{0x809C28B8}
+    /// @brief The pointer to the singleton instance of the class
+    static JugemDirector *s_instance;
 };
 
 } // namespace Kinoko::Field

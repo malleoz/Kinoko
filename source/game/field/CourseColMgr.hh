@@ -422,6 +422,7 @@ public:
     /// @addr{0x807C2824}
     /// @brief Creates a singleton instance of the @ref CourseColMgr
     /// @return A pointer to the newly created @ref CourseColMgr instance
+    /// @pre Assumes that no singleton instance of @ref CourseColMgr has been created yet.
     static CourseColMgr *CreateInstance() {
         ASSERT(!s_instance);
         s_instance = EGG::egg_new<CourseColMgr>();
@@ -430,6 +431,7 @@ public:
 
     /// @addr{0x807C2884}
     /// @brief Destroys the singleton instance of the @ref CourseColMgr
+    /// @pre Assumes that a singleton instance of @ref CourseColMgr has already been created.
     static void DestroyInstance() {
         ASSERT(s_instance);
         auto *instance = s_instance;

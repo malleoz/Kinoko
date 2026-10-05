@@ -2,15 +2,6 @@
 
 namespace Kinoko::Field {
 
-/// @addr{0x8071E9B4}
-/// @brief Constructor
-/// @param kartObj Pointer to the kart object associated with this instance
-JugemMove::JugemMove(const Kart::KartObject *kartObj) : m_kartObj(kartObj) {}
-
-/// @addr{0x8071EA80}
-/// @brief Default destructor
-JugemMove::~JugemMove() = default;
-
 /// @addr{0x8071EB6C}
 /// @brief Initializes the internal state, including all matrices, vectors, and interpolation rates
 void JugemMove::init() {
@@ -37,6 +28,9 @@ void JugemMove::init() {
 
 /// @addr{0x8071F404}
 /// @brief Calculates Lakitu's position, orientation, and oscillation based on the kart's position
+/// @details If the Lakitu is descending from the sky, it will accelerate towards the anchor point
+/// with a speed cap of `25.0f`. Otherwise, the Lakitu's velocity will change based on how far the
+/// Lakitu is from the current @ref m_anchorPos.
 void JugemMove::calc() {
     constexpr EGG::Vector3f POS_OFFSET = EGG::Vector3f(0.0f, 40.0f, 0.0f);
 
@@ -121,9 +115,9 @@ void JugemMove::calc() {
 
 /// @addr{0x8071F0CC}
 /// @brief Updates the Lakitu's forward direction based on the kart's position delta
+/// @param setCurr If true, snaps the current facing direction to the target facing direction
 /// @details Recalculates Lakitu's target facing direction and interpolation rate based on the
 /// kart's position delta and optionally snaps the Lakitu's current facing direction to the target.
-/// @param setCurr If true, snaps the current facing direction to the target facing direction
 void JugemMove::setForwardFromKartObjPosDelta(bool setCurr) {
     constexpr f32 FAST_INTERP_DIST = 250.0f;
     constexpr f32 SLOW_INTERP_RATE = 0.03f;
@@ -147,9 +141,9 @@ void JugemMove::setForwardFromKartObjPosDelta(bool setCurr) {
 
 /// @addr{0x8071F204}
 /// @brief Updates the Lakitu's forward direction based on the kart's main rotation
+/// @param setCurr If true snaps the current facing direction to the target facing direction
 /// @details Recalculates Lakitu's target facing direction based on the kart's main rotation and
 /// optionally snaps the Lakitu's current facing direction to the target.
-/// @param setCurr If true snaps the current facing direction to the target facing direction
 void JugemMove::setForwardFromKartObjMainRot(bool setCurr) {
     EGG::Vector3f forward = m_kartObj->mainRot().rotateVector(EGG::Vector3f::ez);
     forward.y = 0.0f;
@@ -169,6 +163,7 @@ void JugemMove::setForwardFromKartObjMainRot(bool setCurr) {
 
 /// @addr{0x80720024}
 /// @brief Calculates an orthonormal basis matrix based on the Lakitu's current facing direction
+/// @return The orthonormal basis matrix representing Lakitu's orientation
 /// @details Also interpolates the Lakitu's current facing direction towards the target facing
 /// direction.
 EGG::Matrix34f JugemMove::calcOrthonormalBasis() {
@@ -199,6 +194,7 @@ EGG::Matrix34f JugemMove::calcOrthonormalBasis() {
 /// @addr{0x807201B0}
 /// @brief Advances a step in the oscillation cycle and returns the resulting position offset
 /// @param mat The orthonormal basis matrix to apply to the oscillation offset
+/// @return The position offset resulting from the Lakitu's current oscillation
 EGG::Vector3f JugemMove::calcOscillation(const EGG::Matrix34f &mat) {
     constexpr f32 PHASE_X_STEP = 0.04f;
     constexpr f32 PHASE_Y_STEP = 0.08f;
@@ -226,6 +222,7 @@ EGG::Vector3f JugemMove::calcOscillation(const EGG::Matrix34f &mat) {
 /// @addr{0x807202BC}
 /// @brief Calculates a rotation basis matrix to tilt the Lakitu when the player accelerates or
 /// turns sharply
+/// @return The rotation basis matrix representing the tilt of the Lakitu
 EGG::Matrix34f JugemMove::calcLeanBasis() {
     constexpr EGG::Vector3f LEAN_UP_BASE = EGG::Vector3f(0.0f, 100.0f, 0.0f);
 

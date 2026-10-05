@@ -106,7 +106,7 @@ void ObjectKoopaBall::calcTangible() {
     case RailInterpolator::Status::SegmentEnd:
         calcSlowdown();
         break;
-    case RailInterpolator::Status::ChangingDirection: {
+    case RailInterpolator::Status::RailEnd: {
         m_state = State::Exploding;
         setExplosionScale();
         m_explodeTimer = m_animDuration;
