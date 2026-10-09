@@ -13,17 +13,25 @@ public:
     struct SData {
         EGG::Vector3f pos; ///< Position of the starting point
         EGG::Vector3f rot; ///< Rotation of the starting point
-        // Pre Revision 1830: End of structure
+        // Pre Revision 1831: End of structure
         s16 playerIndex; ///< Index of the player starting at this point
     };
 
-    MapdataStartPoint(const SData *data);
+    /// @brief Constructor
+    /// @param data Pointer to the raw starting point data
+    /// @details Creates a @ref EGG::RamStream from the raw starting point data and reads the data
+    /// into the member variables.
+    MapdataStartPoint(const SData *data) : m_rawData(data) {
+        EGG::RamStream stream = EGG::RamStream(data, sizeof(SData));
+        read(stream);
+    }
 
     /// @brief Default destructor
     ~MapdataStartPoint() = default;
 
     void read(EGG::Stream &stream);
-    void findKartStartPoint(EGG::Vector3f &pos, EGG::Vector3f &rot, u8 placement, u8 playerCount);
+    void findKartStartPoint(EGG::Vector3f &pos, EGG::Vector3f &rot, u8 placement,
+            u8 playerCount) const;
 
 private:
     [[maybe_unused]] const SData *const m_rawData; ///< Pointer to the raw starting point data
@@ -32,12 +40,14 @@ private:
     s16 m_playerIndex;                             ///< Index of the player starting at this point
 };
 
-/// @brief Provides access to entries in the KTPT section of the course KMP
+/// @brief Provides access to entries in the `KTPT` section of the course KMP
 class MapdataStartPointAccessor
     : public MapdataAccessorBase<MapdataStartPoint, MapdataStartPoint::SData> {
 public:
     MapdataStartPointAccessor(const MapSectionHeader *header);
-    ~MapdataStartPointAccessor() override;
+
+    /// @brief Default virtual destructor
+    ~MapdataStartPointAccessor() override = default;
 };
 
 } // namespace Kinoko::System

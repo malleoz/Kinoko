@@ -188,6 +188,15 @@ STATIC_ASSERT(KCL_TYPE_NON_DIRECTIONAL == 0xE0F8BDFF);
     (KCL_TYPE_VEHICLE_COLLIDEABLE | KCL_TYPE_BIT(COL_TYPE_CANNON_TRIGGER))
 STATIC_ASSERT(KCL_TYPE_BODY_COLLIDABLE == 0xEAFABDFF);
 
+/// @brief Represents the collision types that a kart body hitbox flagged "walls only" can collide
+/// with
+/// @details Value: 0x4A109000
+#define KCL_TYPE_BODY_WALLS_ONLY_COLLIDABLE \
+    (KCL_TYPE_BIT(COL_TYPE_WALL) | KCL_TYPE_BIT(COL_TYPE_WALL_2) | \
+            KCL_TYPE_BIT(COL_TYPE_PLAYER_WALL) | KCL_TYPE_BIT(COL_TYPE_SPECIAL_WALL) | \
+            KCL_TYPE_BIT(COL_TYPE_WEAK_WALL) | KCL_TYPE_BIT(COL_TYPE_ITEM_STATE_MODIFIER))
+STATIC_ASSERT(KCL_TYPE_BODY_WALLS_ONLY_COLLIDABLE == 0x4A109000);
+
 /// @brief Represents KCL types for which @ref Kart::KartReject can apply a rejection
 /// @details Value: 0xB0E82DFF
 #define KCL_TYPE_REJECTABLE \

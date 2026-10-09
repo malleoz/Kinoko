@@ -4,16 +4,11 @@
 
 namespace Kinoko::Kart {
 
-/// @addr{inlined in 0x80577FC4}
-/// @brief Default constructor
-KartBurnout::KartBurnout() = default;
-
-/// @addr{0x805781DC}
-/// @brief Default destructor
-KartBurnout::~KartBurnout() = default;
-
 /// @addr{0x80589118}
 /// @brief Calculates the burnout rotation and checks if the burnout has ended
+/// @details If the burnout is not active, this function early returns. Otherwise, updates the
+/// kart's rotation via @ref calcRotation(). If the burnout duration has ended, then calls @ref
+/// deactivate().
 void KartBurnout::calc() {
     constexpr u32 BURNOUT_DURATION = 120;
 
@@ -30,8 +25,8 @@ void KartBurnout::calc() {
 
 /// @addr{0x80589308}
 /// @brief Calculates the rotation of the kart during a burnout
-/// @details After 30 frames, applies a dampening effect to the rotation, reducing the amplitude of
-/// the rotation over time.
+/// @details The kart's rotation follows a simple sine wave. After 30 frames, applies a dampening
+/// effect to the rotation, reducing the amplitude of the rotation over time.
 void KartBurnout::calcRotation() {
     constexpr u16 PHASE_INCREMENT = 800;
     constexpr f32 PHASE_TO_FIDX = 1.0f / 256.0f;

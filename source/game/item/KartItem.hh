@@ -50,13 +50,13 @@ public:
     /// @beginGetters
 
     /// @brief Fetches the current item inventory for the kart
-    /// @return A reference to the current item inventory for the kart
+    /// @return A reference to the current item inventory for the kart, @ref m_inventory
     [[nodiscard]] ItemInventory &inventory() {
         return m_inventory;
     }
 
     /// @brief Fetches the current item inventory for the kart (const version)
-    /// @return A const reference to the current item inventory for the kart
+    /// @return A const reference to the current item inventory for the kart, @ref m_inventory
     [[nodiscard]] const ItemInventory &inventory() const {
         return m_inventory;
     }

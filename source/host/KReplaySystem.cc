@@ -9,8 +9,11 @@
 namespace Kinoko {
 
 /// @brief Executes a run.
-/// @details A run consists of replaying a ghost.
 /// @return Whether the run was successful or not.
+/// @details A run consists of replaying the set of provided ghosts and/or directories.
+/// @note We intentionally do not short circuit when a replay fails; all provided ghosts and
+/// directories will be replayed so that the user can see the replay results for all provided ghost
+/// files.
 bool KReplaySystem::run() {
     bool success = true;
 
@@ -88,27 +91,10 @@ void KReplaySystem::parseOptions(int argc, char **argv) {
     }
 }
 
-/// @brief Default private constructor
-KReplaySystem::KReplaySystem()
-    : m_progressInterval(0),
-      m_replaysPlayed(0),
-      m_replaysSynced(0),
-      m_currentGhost(nullptr) {}
-
-/// @brief Default virtual destructor
-KReplaySystem::~KReplaySystem() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("KReplaySystem instance not explicitly handled!");
-    }
-
-    EGG::egg_delete(m_sceneMgr);
-    EGG::egg_delete(m_currentGhost);
-    EGG::egg_free(const_cast<u8 *>(m_currentRawGhost.data()));
-}
-
 /// @brief Determines whether or not the ghost simulation should end.
-/// @return Whether the ghost should end or not.
+/// @return `true` if the ghost should end or not, `false` if not
+/// @details The simulation ends if the race has been finished or if 10 minutes have elapsed in the
+/// race.
 bool KReplaySystem::calcEnd() const {
     constexpr u16 MAX_MINUTE_COUNT = 10;
 
@@ -149,8 +135,9 @@ bool KReplaySystem::runDirectory(const std::filesystem::path &dirPath) {
 /// @brief Runs a replay for the ghost file at the path specified
 /// @param ghostPath The path to the ghost file to be replayed
 /// @return `true` if the replay synchronizes successfully or is not a ghost file, `false` otherwise
-/// @details Based off of the @ref m_progressInterval, conditionally reports the current
-/// synchronization status of all ghost playbacks thus far.
+/// @details Responsible for setting up and tearing down the @ref EGG::Scene for the race. Based off
+/// of the @ref m_progressInterval, conditionally reports the current synchronization status of all
+/// ghost playbacks thus far.
 bool KReplaySystem::runGhost(const std::filesystem::path &ghostPath) {
     if (!ghostPath.has_extension()) {
         return true;
@@ -207,6 +194,7 @@ bool KReplaySystem::runGhost(const std::filesystem::path &ghostPath) {
 /// @brief Loads data from the provided filepath and constructs a @ref System::GhostFile that parses
 /// the data
 /// @param ghostPath The path to the ghost file to be loaded
+/// @details Constructs a @ref System::GhostFile from the provided ghost file.
 void KReplaySystem::loadGhost(const std::filesystem::path &ghostPath) {
     m_currentGhostPath = ghostPath;
     m_currentRawGhost = Abstract::File::Load(m_currentGhostPath);
@@ -277,7 +265,8 @@ s32 KReplaySystem::getDesyncingTimerIdx() const {
 
 /// @brief Gets the desyncing timer according to the index.
 /// @param i Index to the desyncing timer. Cannot be -1.
-/// @return The pair of timers. The first is the correct one, and the second is the incorrect one.
+/// @return The pair of timers. The first is the expected value, and the second is the
+/// observed/incorrect one.
 KReplaySystem::DesyncingTimerPair KReplaySystem::getDesyncingTimer(s32 i) const {
     auto cond = i <=> 0;
     ASSERT(cond != std::strong_ordering::less);

@@ -117,13 +117,13 @@ public:
     /// @beginGetters
 
     /// @brief Gets the block's current fall state
-    /// @return The current fall state of the block
+    /// @return The current fall state of the block, @ref m_fallState
     [[nodiscard]] FallState fallState() const {
         return m_fallState;
     }
 
-    /// @brief Gets the frame the block starts falling
-    /// @return The frame the block starts falling, or 0 if it never falls
+    /// @brief Gets the frame the block starts falling, or if the block never falls
+    /// @return The value of @ref m_fallFrame
     [[nodiscard]] s32 fallFrame() const {
         return m_fallFrame;
     }

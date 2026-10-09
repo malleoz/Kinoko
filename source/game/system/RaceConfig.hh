@@ -55,6 +55,7 @@ public:
 
     /// @addr{0x8052DD40}
     /// @brief Initializes the @ref Scenario data for the race
+    /// @details Simply calls @ref Scenario::init() on @ref m_raceScenario.
     void init() {
         m_raceScenario.init();
     }
@@ -67,19 +68,25 @@ public:
 
     /// @brief Sets the ghost data for the race
     /// @param rkg Pointer to the raw (possibly uncompressed) ghost `.rkg` file buffer
+    /// @details Creates a @ref RawGhostFile instance from the provided raw ghost file buffer and
+    /// stores it in @ref m_ghost.
     void setGhost(const u8 *rkg) {
         m_ghost = RawGhostFile(rkg);
     }
-    
+
     /// @endSetters
 
     /// @beginGetters
 
-    [[nodiscard]] const Scenario &raceScenario() const {
+    /// @brief Gets the current race scenario
+    /// @return A non-const ref to the current race scenario, @ref m_raceScenario
+    [[nodiscard]] Scenario &raceScenario() {
         return m_raceScenario;
     }
 
-    [[nodiscard]] Scenario &raceScenario() {
+    /// @brief Gets the current race scenario
+    /// @return A const ref to the current race scenario, @ref m_raceScenario
+    [[nodiscard]] const Scenario &raceScenario() const {
         return m_raceScenario;
     }
 
@@ -96,6 +103,7 @@ public:
     /// @addr{0x8052FE58}
     /// @brief Creates the singleton instance of the @ref RaceConfig
     /// @return A pointer to the newly created @ref RaceConfig instance
+    /// @pre The singleton instance of the RaceConfig must not already exist.
     static RaceConfig *CreateInstance() {
         ASSERT(!s_instance);
         s_instance = EGG::egg_new<RaceConfig>();
@@ -104,6 +112,7 @@ public:
 
     /// @addr{0x8052FFE8}
     /// @brief Destroys the singleton instance of the @ref RaceConfig
+    /// @pre The singleton instance of the RaceConfig must already exist.
     static void DestroyInstance() {
         ASSERT(s_instance);
         auto *instance = s_instance;
@@ -120,17 +129,29 @@ public:
 private:
     EGG_NEW_DELETE_FRIEND
 
-    RaceConfig();
-    ~RaceConfig() override;
+    /// @addr{0x8053015C}
+    /// @brief Private default constructor
+    RaceConfig() = default;
+
+    /// @addr{0x80530038}
+    /// @brief Private virtual destructor
+    ~RaceConfig() override {
+        if (s_instance) {
+            s_instance = nullptr;
+            WARN("RaceConfig instance not explicitly handled!");
+        }
+    }
 
     Scenario m_raceScenario; ///< The race scenario containing course and player information
     RawGhostFile m_ghost;    ///< The ghost data for the race
 
-    static RaceConfig *s_instance; ///< @addr{0x809BD728}
+    /// @addr{0x809BD728}
+    /// @brief The singleton instance of the @ref RaceConfig
+    static RaceConfig *s_instance;
 
-    /// @brief Host-agnostic way of initializing RaceConfig
+    /// @brief Host-agnostic way of initializing @ref RaceConfig
     /// @details The type of the first player *must* be set to either Local or Ghost.
-    /// - If the type is Ghost, m_ghost must be set to a decompressed ghost file.
+    /// - If the type is Ghost, @ref m_ghost must be set to a decompressed ghost file.
     /// - If the type is Local, the race scenario's course and the first player's @ref Character,
     /// @ref Vehicle, and @ref Player::driftIsAuto must be set.
     static InitCallback s_onInitCallback;

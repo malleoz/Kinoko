@@ -4,7 +4,9 @@ namespace Kinoko::System {
 
 /// @addr{0x805127EC}
 /// @brief Initializes the course map by loading the course KMP file and parsing its sections
-/// @details Also computes the starting position spacing.
+/// @details Sorts the @ref m_area entries by priority. Also computes the starting position spacing,
+/// represented by @ref m_skewAngle, @ref m_longitudinalOffset, @ref m_longitudinalWideOffset, @ref
+/// m_lateralSpacing, and @ref m_longitudinalSpacing.
 void CourseMap::init() {
     std::span<const u8> buffer = LoadFile("course.kmp");
     m_header = EGG::egg_new<MapdataFileAccessor>(
@@ -33,7 +35,7 @@ void CourseMap::init() {
     ASSERT(m_area);
     m_area->sort();
 
-    MapdataStageInfo *stageInfo = getStageInfo();
+    const MapdataStageInfo *stageInfo = getStageInfo();
     constexpr u8 TRANSLATION_MODE_NARROW = 1;
     if (stageInfo && stageInfo->translationMode() == TRANSLATION_MODE_NARROW) {
         m_skewAngle = 25.0f;
@@ -206,18 +208,6 @@ s16 CourseMap::getCurrentAreaID(s16 i, const EGG::Vector3f &pos, MapdataAreaBase
 
     return -1;
 }
-
-/// @addr{0x8051276C}
-/// @brief Private constructor
-CourseMap::CourseMap()
-    : m_header(nullptr),
-      m_startPoint(nullptr),
-      m_stageInfo(nullptr),
-      m_skewAngle(0.0f),
-      m_lateralSpacing(0.0f),
-      m_longitudinalSpacing(0.0f),
-      m_longitudinalOffset(0.0f),
-      m_longitudinalWideOffset(0.0f) {}
 
 /// @addr{0x805127AC}
 /// @brief Private destructor that destroys the accessors to the `course.kmp` sections

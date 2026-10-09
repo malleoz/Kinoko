@@ -18,6 +18,10 @@ enum class EOption {
 
 namespace Option {
 
+/// @brief Maps the provided `arg` to a @ref EOption
+/// @param arg The command-line argument to check
+/// @return The corresponding @ref EOption if the argument is recognized, or `std::nullopt`
+/// otherwise.
 [[nodiscard]] inline std::optional<EOption> CheckFlag(const char *arg) {
     ASSERT(arg);
     if (arg[0] != '-') {

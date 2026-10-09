@@ -21,10 +21,15 @@ public:
 
     /// @brief Constructor
     /// @param data Pointer to the raw stage information data
+    /// @details Creates a @ref EGG::RamStream from the raw stage data and reads the data into the
+    /// member variables.
     MapdataStageInfo(const SData *data) : m_rawData(data) {
         EGG::RamStream stream = EGG::RamStream(data, sizeof(SData));
         read(stream);
     }
+
+    /// @brief Default destructor
+    ~MapdataStageInfo() = default;
 
     /// @brief Reads the stage information data from the given stream
     /// @details We skip implementing this function and opt to instead pull data directly from the
@@ -34,21 +39,25 @@ public:
 
     /// @beginGetters
 
+    /// @brief Gets the pole position side
+    /// @return The pole position side, @ref SData::polePosition.
     [[nodiscard]] u8 polePosition() const {
         return m_rawData->polePosition;
     }
 
+    /// @brief Gets the translation mode
+    /// @return The translation mode, @ref SData::translationMode.
     [[nodiscard]] u8 translationMode() const {
         return m_rawData->translationMode;
     }
-    
+
     /// @endGetters
 
 private:
     const SData *const m_rawData; ///< Pointer to the raw stage information data
 };
 
-/// @brief Provides access to entries in the STGI section of the course KMP
+/// @brief Provides access to entries in the `STGI` section of the course KMP
 class MapdataStageInfoAccessor
     : public MapdataAccessorBase<MapdataStageInfo, MapdataStageInfo::SData> {
 public:

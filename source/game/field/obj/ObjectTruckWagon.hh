@@ -100,7 +100,7 @@ public:
     /// @beginGetters
 
     /// @brief Whether the minecart is currently tangible
-    /// @return `true` if the minecart has spawned, `false` if it is intangible
+    /// @return The value of @ref m_active
     [[nodiscard]] bool isActive() const {
         return m_active;
     }

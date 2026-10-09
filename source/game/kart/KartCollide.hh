@@ -68,8 +68,17 @@ public:
     /// currently colliding with
     typedef EGG::TBitFlag<u32, eSurfaceFlags> SurfaceFlags;
 
-    KartCollide();
-    ~KartCollide();
+    /// @addr{0x8056E56C}
+    /// @brief Constructor
+    /// @details Initialiezs @ref m_boundingRadius to `100.0f` and zeroes all @ref m_surfaceFlags.
+    KartCollide() {
+        m_boundingRadius = 100.0f;
+        m_surfaceFlags.makeAllZero();
+    }
+
+    /// @addr{0x80573FF0}
+    /// @brief Default virtual destructor
+    ~KartCollide() override = default;
 
     void init();
     void setHitboxLastPos();
@@ -82,7 +91,7 @@ public:
     void calcBodyCollision(f32 totalScale, f32 sinkDepth, const EGG::Quatf &rot,
             const EGG::Vector3f &scale);
     void calcFloorEffect();
-    void calcLeanCollision(Field::KCLTypeMask *mask, const EGG::Vector3f &pos, bool twoPoint);
+    void calcLeanCollision(Field::KCLTypeMask *maskOut, const EGG::Vector3f &pos, bool twoPoint);
     void calcTriggers(Field::KCLTypeMask *mask);
     void calcFallBoundary(Field::KCLTypeMask *mask, bool shortBoundary);
     void calcBeforeRespawnAndShrink();
@@ -98,10 +107,15 @@ public:
 
     /// @addr{0x8056E8D4}
     /// @brief Processes moving water and floor collision effects
+    /// @param collisionData The struct to accumulate collsion information
+    /// @param hitbox The hitbox being processed
+    /// @param colInfo Collision information for the current frame
+    /// @param mask The collision type mask from the preceding collision check
+    /// @details Simply calls @ref processMovingWater() and @ref processFloor().
     void processWheel(CollisionData &collisionData, Hitbox &hitbox, Field::CollisionInfo *colInfo,
-            Field::KCLTypeMask *maskOut) {
-        processMovingWater(collisionData, maskOut);
-        processFloor(collisionData, hitbox, colInfo, maskOut, true);
+            Field::KCLTypeMask *mask) {
+        processMovingWater(collisionData, mask);
+        processFloor(collisionData, hitbox, colInfo, mask, true);
     }
 
     void processBody(CollisionData &collisionData, Hitbox &hitbox, Field::CollisionInfo *colInfo,
@@ -109,7 +123,7 @@ public:
     void processMovingWater(CollisionData &collisionData, Field::KCLTypeMask *maskOut);
     [[nodiscard]] bool processWall(CollisionData &collisionData, Field::KCLTypeMask *maskOut);
     void processFloor(CollisionData &collisionData, Hitbox &hitbox, Field::CollisionInfo *colInfo,
-            Field::KCLTypeMask *maskOut, bool wheel);
+            Field::KCLTypeMask *mask, bool wheel);
     void processCannon(Field::KCLTypeMask *maskOut);
 
     void applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitboxGroup,
@@ -124,6 +138,8 @@ public:
 
     /// @addr{0x805713D8}
     /// @brief Sets the floor moment scalar to a small value
+    /// @details This function reduces the influence of the floor moment on the kart's movement by
+    /// setting @ref m_floorMomentScalar to `0.01f`.
     void applyWeakFloorMomentScalar() {
         m_floorMomentScalar = 0.01f;
     }
@@ -136,12 +152,17 @@ public:
 
     /// @addr{0x8056E564}
     /// @brief Handles the case where a kart collides with an object that has no reaction
+    /// @return @ref Action::None
     Action handleReactNone(size_t /*idx*/) {
         return Action::None;
     }
 
     /// @addr{0x8057363C}
     /// @brief Adds the wall's hit direction to the total wall normal
+    /// @param idx The index of the wall collision in @ref Field::ObjectDirector::m_hitDepths
+    /// @return @ref Action::None
+    /// @details Adds the collision's hit depth to @ref m_totalReactionWallNrm and sets @ref
+    /// eSurfaceFlags::ObjectWall in @ref m_surfaceFlags.
     Action handleReactWall(size_t idx) {
         m_totalReactionWallNrm += Field::ObjectCollisionKart::GetHitDirection(idx);
         m_surfaceFlags.setBit(eSurfaceFlags::ObjectWall);
@@ -151,54 +172,66 @@ public:
 
     /// @addr{0x805733CC}
     /// @brief Maps @ref Reaction::SpinOnce to @ref Action::SpinOnce
+    /// @return @ref Action::SpinOnce
     Action handleReactSpinOnce(size_t /*idx*/) {
         return Action::SpinOnce;
     }
 
     /// @addr{0x805733D4}
     /// @brief Maps @ref Reaction::SpinTwice to @ref Action::SpinTwice
+    /// @return @ref Action::SpinTwice
     Action handleReactSpinTwice(size_t /*idx*/) {
         return Action::SpinTwice;
     }
 
     /// @addr{0x805735AC}
     /// @brief Maps @ref Reaction::FireSpin to @ref Action::FireSpin
+    /// @return @ref Action::FireSpin
     Action handleReactFireSpin(size_t /*idx*/) {
         return Action::FireSpin;
     }
 
     /// @addr{0x805733C4}
     /// @brief Maps @ref Reaction::SmallLaunch to @ref Action::ForwardLaunch
+    /// @return @ref Action::ForwardLaunch
     Action handleReactSmallLaunch(size_t /*idx*/) {
         return Action::ForwardLaunch;
     }
 
     /// @addr{0x805733DC}
     /// @brief Maps @ref Reaction::LaunchAwayFlipOnce to @ref Action::AwayFlipOnce
+    /// @return @ref Action::AwayFlipOnce
     Action handleReactLaunchAwayFlipOnce(size_t /*idx*/) {
         return Action::AwayFlipOnce;
     }
 
     /// @addr{0x8057353C}
     /// @brief Maps @ref Reaction::LaunchSpinLoseItem to @ref Action::LaunchSpinLoseItem
+    /// @return @ref Action::LaunchSpinLoseItem
     Action handleReactLaunchSpinLoseItem(size_t /*idx*/) {
         return Action::LaunchSpinLoseItem;
     }
 
     /// @addr{0x805733EC}
     /// @brief Maps @ref Reaction::LaunchAwayFlipTwice to @ref Action::AwayFlipTwice
+    /// @return @ref Action::AwayFlipTwice
     Action handleReactLaunchAwayFlipTwice(size_t /*idx*/) {
         return Action::AwayFlipTwice;
     }
 
     /// @addr{0x805735B4}
     /// @brief Maps @ref Reaction::LongCrushLoseItem to @ref Action::LongCrushLoseItem
+    /// @return @ref Action::LongCrushLoseItem
     Action handleReactLongCrushLoseItem(size_t /*idx*/) {
         return Action::LongCrushLoseItem;
     }
 
     /// @addr{0x805737B8}
     /// @brief Applies a small force to the kart away from the colliding object
+    /// @param idx The index of the wall collision in @ref Field::ObjectDirector::m_hitDepths
+    /// @return @ref Action::None
+    /// @details Applies the collision's hit depth as a `30.0f` unit force on the kart via @ref
+    /// KartMove::applyForce().
     Action handleReactSmallBump(size_t idx) {
         move()->applyForce(30.0f, objectCollisionKart()->GetHitDirection(idx), false);
         return Action::None;
@@ -206,18 +239,23 @@ public:
 
     /// @addr{0x805735BC}
     /// @brief Maps @ref Reaction::SpinShrink to @ref Action::SpinShrink if no cooldown
+    /// @return @ref Action::SpinShrink if `@ref m_shrinkTimer <= 0`, otherwise @ref Action::None
     Action handleReactSpinShrink(size_t /*idx*/) {
         return m_shrinkTimer <= 0 ? Action::SpinShrink : Action::None;
     }
 
     /// @addr{0x805733E4}
     /// @brief Maps @ref Reaction::HighLaunchLoseItem to @ref Action::HighLaunchLoseItem
+    /// @return @ref Action::HighLaunchLoseItem
     Action handleReactHighLaunchLoseItem(size_t /*idx*/) {
         return Action::HighLaunchLoseItem;
     }
 
     /// @addr{0x80573754}
     /// @brief Reduces the kart's speed by 18% due to a weak wall collision
+    /// @return @ref Action::None
+    /// @details Multiplies the kart's current speed by `0.82f` and applies it via @ref
+    /// KartMove::setSpeed().
     Action handleReactWeakWall(size_t /*idx*/) {
         constexpr f32 WEAK_WALL_SPEED_SCALAR = 0.82f;
 
@@ -227,6 +265,9 @@ public:
 
     /// @addr{0x80573790}
     /// @brief Sets the appropriate status bits to reflect colliding with offroad KCL
+    /// @return @ref Action::None
+    /// @details Sets @ref eStatus::CollidingOffroad in the kart's @ref Status and sets @ref
+    /// eSurfaceFlags::Offroad in @ref m_surfaceFlags.
     Action handleReactOffroad(size_t /*idx*/) {
         status().setBit(eStatus::CollidingOffroad);
         m_surfaceFlags.setBit(eSurfaceFlags::Offroad);
@@ -237,6 +278,8 @@ public:
     /// @brief Maps @ref Reaction::Sideways to @ref Action::Sideways
     /// @param idx The index of the colliding object in the @ref Field::ObjectDirector's array of
     /// colliding objects
+    /// @return @ref Action::Sideways
+    /// @details Also sets the action velocity to the colliding object's velocity vector.
     Action handleReactSideways(size_t idx) {
         action()->setVelocity(objectCollisionKart()->translation(idx));
         return Action::Sideways;
@@ -244,6 +287,10 @@ public:
 
     /// @addr{0x805736C8}
     /// @brief Adds the wall's hit direction to the total wall normal
+    /// @param idx The index of the wall collision in @ref Field::ObjectDirector::m_hitDepths
+    /// @return @ref Action::None
+    /// @details Updates @ref m_totalReactionWallNrm with the hit direction and sets @ref
+    /// eSurfaceFlags::ObjectWall3 in @ref m_surfaceFlags.
     Action handleReactWall3(size_t idx) {
         m_totalReactionWallNrm += Field::ObjectCollisionKart::GetHitDirection(idx);
         m_surfaceFlags.setBit(eSurfaceFlags::ObjectWall3);
@@ -255,6 +302,10 @@ public:
 
     /// @addr{0x805735EC}
     /// @brief Handles the case where a kart collides with an untrickable jump pad
+    /// @return @ref Action::None
+    /// @details Sets the pad type to @ref KartMove::ePadType::JumpPad via @ref
+    /// KartMove::setPadType() and the jump pad variant to 0 via @ref
+    /// KartState::setJumpPadVariant().
     Action handleReactUntrickableJumpPad(size_t /*idx*/) {
         move()->setPadType(KartMove::PadType(KartMove::ePadType::JumpPad));
         state()->setJumpPadVariant(0);
@@ -264,18 +315,21 @@ public:
 
     /// @addr{0x805735D4}
     /// @brief Maps @ref Reaction::ShortCrushLoseItem to @ref Action::ShortCrushLoseItem
+    /// @return @ref Action::ShortCrushLoseItem
     Action handleReactShortCrushLoseItem(size_t /*idx*/) {
         return Action::ShortCrushLoseItem;
     }
 
     /// @addr{0x805735DC}
     /// @brief Maps @ref Reaction::CrushRespawn to @ref Action::CrushRespawn
+    /// @return @ref Action::CrushRespawn
     Action handleReactCrushRespawn(size_t /*idx*/) {
         return Action::CrushRespawn;
     }
 
     /// @addr{0x805735E4}
     /// @brief Maps @ref Reaction::ExplosionLoseItem to @ref Action::ExplosionLoseItem
+    /// @return @ref Action::ExplosionLoseItem
     Action handleReactExplosionLoseItem(size_t /*idx*/) {
         return Action::ExplosionLoseItem;
     }
@@ -296,61 +350,95 @@ public:
 
     /// @beginSetters
 
+    /// @brief Sets the tangent offset vector for the kart
+    /// @param v The tangent offset vector
     void setTangentOff(const EGG::Vector3f &v) {
         m_tangentOff = v;
     }
+
+    /// @brief Sets the movement vector for the kart
+    /// @param v The movement vector
     void setMovement(const EGG::Vector3f &v) {
         m_movement = v;
     }
-    
+
     /// @endSetters
 
     /// @beginGetters
 
+    /// @brief Gets the @ref KartPullPath instance associated with this kart
+    /// @return Ref to the @ref KartPullPath instance associated with this kart, @ref m_pullPath
     [[nodiscard]] KartPullPath &pullPath() {
         return m_pullPath;
     }
 
+    /// @brief Gets the @ref KartPullPath instance associated with this kart
+    /// @return Const ref to the @ref KartPullPath instance associated with this kart, @ref
+    /// m_pullPath
     [[nodiscard]] const KartPullPath &pullPath() const {
         return m_pullPath;
     }
 
+    /// @brief Gets the bounding radius of the kart
+    /// @return The bounding radius of the kart, @ref m_boundingRadius
     [[nodiscard]] f32 boundingRadius() const {
         return m_boundingRadius;
     }
 
+    /// @brief Gets the floor moment rate of the kart
+    /// @return The floor moment rate of the kart, @ref m_floorMomentScalar
     [[nodiscard]] f32 floorMomentRate() const {
         return m_floorMomentScalar;
     }
 
+    /// @brief Gets the surface flags of the kart
+    /// @return Const ref to the surface flags of the kart, @ref m_surfaceFlags
     [[nodiscard]] const SurfaceFlags &surfaceFlags() const {
         return m_surfaceFlags;
     }
 
+    /// @brief Gets the accumulated collision hit depths vector
+    /// @return Const ref to the accumulated collision hit depths vector, @ref m_tangentOff
     [[nodiscard]] const EGG::Vector3f &tangentOff() const {
         return m_tangentOff;
     }
 
+    /// @brief Gets the movement vector of the kart
+    /// @return Const ref to the movement vector of the kart, @ref m_movement
     [[nodiscard]] const EGG::Vector3f &movement() const {
         return m_movement;
     }
 
+    /// @brief Gets the sum of the hitbox bottom heights for soft wall collisions
+    /// @return The sum of the hitbox bottom heights for soft wall collisions, @ref
+    /// m_sumSoftwallBottomHeight
     [[nodiscard]] f32 sumHitboxBottomHeightSoftWall() const {
         return m_sumSoftwallBottomHeight;
     }
 
+    /// @brief Gets the number of soft wall collisions the kart has experienced
+    /// @return The number of soft wall collisions the kart has experienced, @ref
+    /// m_numSoftWallCollisions
     [[nodiscard]] u16 numSoftWallCollisions() const {
         return m_numSoftWallCollisions;
     }
 
+    /// @brief Gets the sum of the hitbox bottom heights for floor-only collisions
+    /// @return The sum of the hitbox bottom heights for floor-only collisions, @ref
+    /// m_sumFloorBottomHeight
     [[nodiscard]] f32 sumHitboxBottomHeightFloorOnly() const {
         return m_sumFloorBottomHeight;
     }
 
+    /// @brief Gets the number of floor-only collisions the kart has experienced
+    /// @return The number of floor-only collisions the kart has experienced, @ref
+    /// m_numFloorOnlyCollisions
     [[nodiscard]] u16 numFloorOnlyCollisions() const {
         return m_numFloorOnlyCollisions;
     }
 
+    /// @brief Gets the perpendicularity of the collision
+    /// @return The perpendicularity of the collision, @ref m_colPerpendicularity
     [[nodiscard]] f32 colPerpendicularity() const {
         return m_colPerpendicularity;
     }

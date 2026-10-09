@@ -6,7 +6,7 @@
 
 namespace Kinoko::System {
 
-/// @brief Describes a KMP object in a course
+/// @brief Describes a `KMP object` in a course
 class MapdataGeoObj {
 public:
     /// @brief Represents the raw data structure of a KMP object
@@ -22,6 +22,8 @@ public:
 
     /// @brief Constructor
     /// @param data Pointer to the raw KMP object data
+    /// @details Creates a @ref EGG::RamStream from the raw object data and reads the data into the
+    /// member variables.
     MapdataGeoObj(const SData *data) : m_rawData(data) {
         EGG::RamStream stream = EGG::RamStream(data, sizeof(SData));
         read(stream);
@@ -46,35 +48,51 @@ public:
 
     /// @beginGetters
 
+    /// @brief Gets the ID of the object
+    /// @return The ID of the object
     [[nodiscard]] u16 id() const {
         return m_id;
     }
 
+    /// @brief Gets the position of the object
+    /// @return The position of the object
     [[nodiscard]] const EGG::Vector3f &pos() const {
         return m_pos;
     }
 
+    /// @brief Gets the rotation of the object
+    /// @return The rotation of the object
     [[nodiscard]] const EGG::Vector3f &rot() const {
         return m_rot;
     }
 
+    /// @brief Gets the scale of the object
+    /// @return The scale of the object
     [[nodiscard]] const EGG::Vector3f &scale() const {
         return m_scale;
     }
 
+    /// @brief Gets the path ID of the object
+    /// @return The path ID of the object
     [[nodiscard]] s16 pathId() const {
         return m_pathId;
     }
 
+    /// @brief Gets the setting of the object at the specified index
+    /// @param idx The index of the setting to retrieve
+    /// @return The setting of the object at the specified index
+    /// @pre `idx` must be less than the number of settings (8).
     [[nodiscard]] u16 setting(size_t idx) const {
         ASSERT(idx < m_settings.size());
         return m_settings[idx];
     }
 
+    /// @brief Gets the presence flag of the object
+    /// @return The presence flag of the object
     [[nodiscard]] u16 presenceFlag() const {
         return m_presenceFlag;
     }
-    
+
     /// @endGetters
 
 private:
@@ -88,7 +106,7 @@ private:
     u16 m_presenceFlag; ///< Controls whether the object is loaded depending on number of players
 };
 
-/// @brief Provides access to entries in the GOBJ section of the course KMP
+/// @brief Provides access to entries in the `GOBJ` section of the course KMP
 class MapdataGeoObjAccessor : public MapdataAccessorBase<MapdataGeoObj, MapdataGeoObj::SData> {
 public:
     /// @brief Constructor

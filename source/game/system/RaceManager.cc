@@ -7,6 +7,14 @@ namespace Kinoko::System {
 
 /// @addr{0x80533ED8}
 /// @brief Constructor
+/// @details Sets @ref m_checkPointId, @ref m_raceCompletion, and @ref
+/// m_checkpointStartLapCompletion to zero. Sets @ref m_checkpointFactor to `-1.0f` and @ref
+/// m_lapCompletion to `0.999999f`. Sets @ref m_maxKcp based on the last key checkpoint's ID. Sets
+/// @ref m_currentLap to zero, @ref m_maxLap to 1, and @ref m_drivingWrongWay to `false`. Finally,
+/// gets a point to the player's @ref KPadPlayer instance, storing it to @ref m_inputs.
+/// @note The base game implements a failsafe for setting @ref m_maxKcp to `-1` if the course `KMP`
+/// file does not have any checkpoints or checkpaths. However, it is not yet known what the overall
+/// effect this has on the behavior of the race.
 RaceManager::Player::Player() {
     m_checkpointId = 0;
     m_raceCompletion = 0.0f;
@@ -32,6 +40,9 @@ RaceManager::Player::Player() {
 /// @brief Initializes the player instance
 /// @details Sets up the player's starting checkpoint and respawn information based on the @ref
 /// CourseMap.
+/// @note The base game implements a failsafe for setting @ref m_jugemId to zero if the course `KMP`
+/// file does not have any checkpoints or checkpaths. However, it is not yet known what the overall
+/// effect this has on the behavior of the race.
 void RaceManager::Player::init() {
     auto *courseMap = CourseMap::Instance();
 
@@ -91,6 +102,7 @@ void RaceManager::Player::calc() {
 /// @brief Gets the lap split, which is the difference between the given lap and the previous one.
 /// @param lap One-indexed lap.
 /// @return The split timer.
+/// @pre The lap index must be within the valid range of lap timers (1, 2, or 3).
 Timer RaceManager::Player::getLapSplit(size_t lap) const {
     ASSERT(lap <= m_lapTimers.size());
 
@@ -168,7 +180,7 @@ MapdataCheckPoint *RaceManager::Player::calcCheckpoint(u16 checkpointId, f32 dis
 /// @addr{0x80534D6C}
 /// @brief Decreases the player's lap by one
 /// @details This occurs when the player has driven backwards across the finish line, or if the 95%
-/// Rule has been violated. @see RaceManager::Player::calcCheckpoint
+/// Rule has been violated. @see RaceManager::Player::calcCheckpoint()
 void RaceManager::Player::decrementLap() {
     auto *courseMap = CourseMap::Instance();
     if (courseMap->getCheckPointCount() > 0 && courseMap->getCheckPathCount() > 0) {
@@ -208,21 +220,17 @@ void RaceManager::Player::incrementLap() {
     }
 }
 
-/// @addr{0x805347F4}
-void RaceManager::Player::endRace(const Timer &finishTime) {
-    m_raceTimer = finishTime;
-    RaceManager::Instance()->endPlayerRace(0);
-}
-
 /// @addr{0x805362DC}
 /// @brief Fetches the starting position and rotation for the player
+/// @param pos Out parameter that will be set to the starting position of the player's kart
+/// @param angles Out parameter that will be set to the starting rotation of the player's kart
 /// @todo When expanding to other gamemodes, we will need to pass the player index
 void RaceManager::findKartStartPoint(EGG::Vector3f &pos, EGG::Vector3f &angles) {
     u32 placement = 1;
     u32 playerCount = 1;
     u32 startPointIdx = 0;
 
-    MapdataStartPoint *kartpoint = CourseMap::Instance()->getStartPoint(startPointIdx);
+    const MapdataStartPoint *kartpoint = CourseMap::Instance()->getStartPoint(startPointIdx);
 
     if (kartpoint) {
         kartpoint->findKartStartPoint(pos, angles, placement - 1, playerCount);
@@ -268,28 +276,9 @@ void RaceManager::calc() {
 /// @brief Retrieves the respawn point associated with the player's current respawn ID
 /// @return A pointer to the corresponding @ref MapdataJugemPoint, or `nullptr` if no valid respawn
 /// point exists.
-MapdataJugemPoint *RaceManager::jugemPoint() const {
+const MapdataJugemPoint *RaceManager::jugemPoint() const {
     s8 jugemId = std::max<s8>(m_player.jugemId(), 0);
     return System::CourseMap::Instance()->getJugemPoint(static_cast<u16>(jugemId));
-}
-
-/// @addr{0x805327A0}
-/// @brief Private constructor
-/// @details Initializes the random number generator with the predefined seed, sets the initial
-/// stage to Intro, and resets the intro and main timers.
-RaceManager::RaceManager()
-    : m_random(RNG_SEED),
-      m_stage(Stage::Intro),
-      m_introTimer(0),
-      m_timer(0) {}
-
-/// @addr{0x80532E3C}
-/// @brief Private destructor
-RaceManager::~RaceManager() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("RaceManager instance not explicitly handled!");
-    }
 }
 
 RaceManager *RaceManager::s_instance = nullptr;

@@ -59,7 +59,7 @@ public:
 
     /// @brief Gets the number of frames since the last squash occurred from any managed car/truck
     /// object
-    /// @return The number of frames since the last squash occurred.
+    /// @return The number of frames since the last squash occurred, @ref m_squashTimer
     [[nodiscard]] u32 squashTimer() const {
         return m_squashTimer;
     }

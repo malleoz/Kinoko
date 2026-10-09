@@ -15,7 +15,6 @@ class Context;
 
 namespace System {
 
-/// @addr{0x809BD730}
 /// @brief Acts as the interface between the physics engine and CourseMap. Also manages the timers
 /// that track the stages of a race.
 /// @details The physics engine leverages this class in order to determine what stage of the race
@@ -43,35 +42,52 @@ public:
 
         /// @beginGetters
 
+        /// @brief Gets the current checkpoint ID
+        /// @return The ID of the current checkpoint, @ref m_checkpointId
         [[nodiscard]] u16 checkpointId() const {
             return m_checkpointId;
         }
 
+        /// @brief Gets the player's overall race completion percentage
+        /// @return The player's progress through the race, @ref m_raceCompletion
         [[nodiscard]] f32 raceCompletion() const {
             return m_raceCompletion;
         }
 
+        /// @brief Gets the current respawn point ID
+        /// @return The ID of the current respawn point, @ref m_jugemId
         [[nodiscard]] s8 jugemId() const {
             return m_jugemId;
         }
 
+        /// @brief Checks if the player is driving the wrong way
+        /// @return `true` if the player is driving the wrong way, `false` otherwise
         [[nodiscard]] bool drivingWrongWay() const {
             return m_drivingWrongWay;
         }
 
+        /// @brief Gets the player's lap timers
+        /// @return A const ref to the array of lap timers, @ref m_lapTimers
         [[nodiscard]] const std::array<Timer, 3> &lapTimers() const {
             return m_lapTimers;
         }
 
+        /// @brief Gets a specific lap timer by index
+        /// @param idx The index of the lap timer
+        /// @return A const ref to the lap timer at the specified index in @ref m_lapTimers
         [[nodiscard]] const Timer &lapTimer(size_t idx) const {
             ASSERT(idx < m_lapTimers.size());
             return m_lapTimers[idx];
         }
 
+        /// @brief Gets the overall race timer
+        /// @return A const ref to the overall race timer, @ref m_raceTimer
         [[nodiscard]] const Timer &raceTimer() const {
             return m_raceTimer;
         }
 
+        /// @brief Gets the player's @ref KPad
+        /// @return A const pointer to the player's @ref KPad, @ref m_inputs
         [[nodiscard]] const KPad *inputs() const {
             return m_inputs;
         }
@@ -100,7 +116,16 @@ public:
 
         void decrementLap();
         void incrementLap();
-        void endRace(const Timer &finishTime);
+
+        /// @addr{0x805347F4}
+        /// @brief Ends the race for the player and records the finish time
+        /// @param finishTime The time at which the player finished the race
+        /// @details Saves the timer to @ref m_raceTimer and calls @ref
+        /// RaceManager::endPlayerRace().
+        void endRace(const Timer &finishTime) {
+            m_raceTimer = finishTime;
+            RaceManager::Instance()->endPlayerRace(0);
+        }
 
         u16 m_checkpointId;                 ///< The ID of the current checkpoint the player is in
         f32 m_raceCompletion;               ///< Represents the player's progress through the race
@@ -117,7 +142,7 @@ public:
         const KPad *m_inputs;               ///< Pointer to the player's input state manager
     };
 
-    /// @brief Describes the different "phases"" of the race
+    /// @brief Describes the different "phases" of the race
     enum class Stage {
         Intro = 0,        ///< Fade-in and camera pan
         Countdown = 1,    ///< Countdown before the race starts
@@ -156,42 +181,53 @@ public:
                 static_cast<std::underlying_type_t<Stage>>(stage);
     }
 
-    [[nodiscard]] MapdataJugemPoint *jugemPoint() const;
+    [[nodiscard]] const MapdataJugemPoint *jugemPoint() const;
 
     /// @beginGetters
 
     /// @addr{0x80533090}
-    /// @brief Returns the frames remaining for the @ref Stage::Countdown phase of the race
+    /// @brief Gets the frames remaining for the @ref Stage::Countdown phase of the race
     /// @return The number of frames remaining for the countdown phase
     [[nodiscard]] int getCountdownTimer() const {
         return STAGE_COUNTDOWN_DURATION - m_timer;
     }
 
+    /// @brief Gets the random number generator instance
+    /// @return A reference to the random number generator instance, @ref m_random
     [[nodiscard]] Random &random() {
         return m_random;
     }
 
+    /// @brief Gets the player instance
+    /// @return A const ref to the player instance, @ref m_player
     [[nodiscard]] const Player &player() const {
         return m_player;
     }
 
+    /// @brief Gets the timer manager instance
+    /// @return A const ref to the timer manager instance, @ref m_timerManager
     [[nodiscard]] const TimerManager &timerManager() const {
         return m_timerManager;
     }
 
+    /// @brief Gets the current race stage
+    /// @return The current race stage, @ref m_stage
     [[nodiscard]] Stage stage() const {
         return m_stage;
     }
 
+    /// @brief Gets the current value of the race timer
+    /// @return The current value of the race timer, @ref m_timer
     [[nodiscard]] u32 timer() const {
         return m_timer;
     }
-    
+
     /// @endGetters
 
     /// @addr{0x80532084}
     /// @brief Creates the singleton instance of the @ref RaceManager
     /// @return A pointer to the newly created @ref RaceManager instance
+    /// @pre The singleton instance of the @ref RaceManager must not already exist.
     static RaceManager *CreateInstance() {
         ASSERT(!s_instance);
         s_instance = EGG::egg_new<RaceManager>();
@@ -200,6 +236,7 @@ public:
 
     /// @addr{0x805320D4}
     /// @brief Destroys the singleton instance of the @ref RaceManager
+    /// @pre The singleton instance of the @ref RaceManager must already exist.
     static void DestroyInstance() {
         ASSERT(s_instance);
         auto *instance = s_instance;
@@ -216,8 +253,20 @@ public:
 private:
     EGG_NEW_DELETE_FRIEND
 
-    RaceManager();
-    ~RaceManager() override;
+    /// @addr{0x805327A0}
+    /// @brief Private constructor
+    /// @details Initializes the random number generator with the predefined seed, sets the initial
+    /// stage to Intro, and resets the intro and main timers.
+    RaceManager() : m_random(RNG_SEED), m_stage(Stage::Intro), m_introTimer(0), m_timer(0) {}
+
+    /// @addr{0x80532E3C}
+    /// @brief Private virtual destructor
+    ~RaceManager() override {
+        if (s_instance) {
+            s_instance = nullptr;
+            WARN("RaceManager instance not explicitly handled!");
+        }
+    }
 
     Random m_random;             ///< The state of the random number generator
     Player m_player;             ///< The player object representing the local player
@@ -229,7 +278,9 @@ private:
     static constexpr u16 STAGE_COUNTDOWN_DURATION = 240; ///< Duration of the countdown in frames
     static constexpr u32 RNG_SEED = 0x74A1B095; ///< Initial value used for RNG (see @ref Random)
 
-    static RaceManager *s_instance; ///< @addr{0x809BD730}
+    /// @addr{0x809BD730}
+    /// @brief The singleton instance of the @ref RaceManager
+    static RaceManager *s_instance;
 };
 
 } // namespace System

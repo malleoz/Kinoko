@@ -2,27 +2,12 @@
 
 #include <egg/core/Decomp.hh>
 
-#include <cstring>
-
 namespace Kinoko::System {
 
-/// @brief Constructor that initializes the raw ghost file buffer to zero
-RawGhostFile::RawGhostFile() {
-    memset(m_buffer, 0, sizeof(m_buffer));
-}
-
-/// @brief Constructor that initializes the raw ghost file buffer with the provided binary data
+/// @brief Initializes the raw ghost file
 /// @param rkg Pointer to the binary data from a ghost file
-RawGhostFile::RawGhostFile(const u8 *rkg) {
-    init(rkg);
-}
-
-/// @brief Default destructor
-RawGhostFile::~RawGhostFile() = default;
-
-/// @brief Validates the provided raw ghost file buffer, decompresses it if necessary, and copies it
-/// into the buffer
-/// @param rkg Pointer to the binary data from a ghost file
+/// @details Validates the provided raw ghost file buffer, decompresses it if necessary, and copies
+/// it into the buffer.
 void RawGhostFile::init(const u8 *rkg) {
     if (!isValid(rkg)) {
         PANIC("Invalid RKG header");
@@ -38,10 +23,14 @@ void RawGhostFile::init(const u8 *rkg) {
 }
 
 /// @addr{0x8051D1B4}
-/// @brief Decompresses the input data section of the raw ghost file if it is compressed
+/// @brief Decompresses the input data section of the raw ghost file
 /// @param rkg Pointer to the binary data from a ghost file
 /// @return `true` if decompression was successful, `false` otherwise
 /// @pre The raw ghost file buffer must contain a YAZ1 compressed input data section
+/// @details Copies the provided `rkg` data into the @ref m_buffer. Clears the buffer's compressed
+/// flag since the resulting input data section will now be uncompressed. Gets the size of the
+/// uncompressed input data section, decodes it into the buffer, and updates the input data section
+/// length in the @ref m_buffer accordingly.
 bool RawGhostFile::decompress(const u8 *rkg) {
     memcpy(m_buffer, rkg, RKG_HEADER_SIZE);
 
@@ -114,19 +103,6 @@ bool RawGhostFile::isValid(const u8 *rkg) const {
 
     return true;
 }
-
-/// @addr{0x8051C398}
-/// @brief Constructor
-/// @param raw The raw ghost file to parse and initialize the `GhostFile` instance from
-GhostFile::GhostFile(const RawGhostFile &raw) : m_inputs(raw.buffer() + RKG_HEADER_SIZE) {
-    u8 *streamPtr = const_cast<u8 *>(raw.buffer());
-    EGG::RamStream stream(streamPtr, RKG_HEADER_SIZE);
-    read(stream);
-}
-
-/// @addr{0x8051CF90}
-/// @brief Default destructor
-GhostFile::~GhostFile() = default;
 
 /// @addr{0x8051C530}
 /// @brief Reads and parses the ghost file data from the provided @ref EGG::RamStream

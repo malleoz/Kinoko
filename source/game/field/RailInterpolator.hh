@@ -101,7 +101,7 @@ public:
     /// @addr{0806ED24C}
     /// @brief Gets the up vector of the point at the given index
     /// @param idx The index of the point whose up vector is being retrieved
-    /// @return The up vector of the specified point
+    /// @return The up vector of the specified rail point
     [[nodiscard]] const EGG::Vector3f &floorNrm(size_t idx) const {
         return m_rail->floorNrm(idx);
     }
@@ -130,61 +130,61 @@ public:
     }
 
     /// @brief Gets the underlying rail that this class interpolates along
-    /// @return A const pointer to the underlying rail
+    /// @return A const pointer to the underlying rail, @ref m_rail
     [[nodiscard]] const Rail *rail() const {
         return m_rail;
     }
 
     /// @brief Gets the number of points along the rail
-    /// @return The number of points along the rail
+    /// @return The number of points along the rail, @ref m_pointCount
     [[nodiscard]] u16 pointCount() const {
         return m_pointCount;
     }
 
     /// @brief Gets the default speed of the rail interpolator
-    /// @return The default speed of the rail interpolator
+    /// @return The default speed of the rail interpolator, @ref m_baseSpeed
     [[nodiscard]] f32 speed() const {
         return m_baseSpeed;
     }
 
     /// @brief Gets the current position of the rail interpolator
-    /// @return The current position of the rail interpolator
+    /// @return The current position of the rail interpolator, @ref m_curPos
     [[nodiscard]] const EGG::Vector3f &curPos() const {
         return m_curPos;
     }
 
     /// @brief Gets the current tangent direction of the rail interpolator
-    /// @return The current tangent direction of the rail interpolator
+    /// @return The current tangent direction of the rail interpolator, @ref m_curTangentDir
     [[nodiscard]] const EGG::Vector3f &curTangentDir() const {
         return m_curTangentDir;
     }
 
     /// @brief Gets the current speed of the rail interpolator
-    /// @return The current speed of the rail interpolator
+    /// @return The current speed of the rail interpolator, @ref m_currSpeed
     [[nodiscard]] f32 currSpeed() const {
         return m_currSpeed;
     }
 
     /// @brief Gets the normalized position along the current segment
-    /// @return The normalized position along the current segment [0.0, 1.0]
+    /// @return The normalized position along the current segment [0.0, 1.0], @ref m_segmentT
     [[nodiscard]] f32 segmentT() const {
         return m_segmentT;
     }
 
     /// @brief Checks if the movement direction is forward
-    /// @return `true` if the movement direction is forward, `false` otherwise
+    /// @return The value of @ref m_forward
     [[nodiscard]] bool isMovementDirectionForward() const {
         return m_forward;
     }
 
     /// @brief Gets the index of the current point
-    /// @return The index of the current point within the rail's points
+    /// @return The index of the current point within the rail's points, @ref m_currPointIdx
     [[nodiscard]] s16 curPointIdx() const {
         return m_currPointIdx;
     }
 
     /// @brief Gets the index of the next point
-    /// @return The index of the next point within the rail's points
+    /// @return The index of the next point within the rail's points, @ref m_nextPointIdx
     [[nodiscard]] s16 nextPointIdx() const {
         return m_nextPointIdx;
     }

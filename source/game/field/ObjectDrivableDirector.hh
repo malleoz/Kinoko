@@ -203,7 +203,7 @@ public:
     /// @beginGetters
 
     /// @brief Gets the SNES Ghost Valley 2 block manager object
-    /// @return A pointer to the @ref ObjectObakeManager instance
+    /// @return A pointer to the @ref ObjectObakeManager instance, @ref m_obakeManager
     [[nodiscard]] ObjectObakeManager *obakeManager() const {
         return m_obakeManager;
     }

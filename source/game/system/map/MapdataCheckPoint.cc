@@ -9,6 +9,9 @@ namespace Kinoko::System {
 /// @addr{0x805154E4}
 /// @brief Constructor
 /// @param data Pointer to the raw checkpoint data
+/// @details Parses the raw checkpoint data from the provided `SData` pointer. Afterwards, it
+/// calculates @ref m_midpoint based on @ref m_left and @ref m_right. Finally, calculates @ref m_dir
+/// based on the direction from @ref m_left to @ref m_right.
 MapdataCheckPoint::MapdataCheckPoint(const SData *data)
     : m_rawData(data),
       m_nextCount(0),
@@ -21,15 +24,15 @@ MapdataCheckPoint::MapdataCheckPoint(const SData *data)
 }
 
 /// @addr{0x80515624}
-/// @brief Calculates @ref m_nextPoints and @ref m_prevPoints from @ref m_nextId and @ref m_prevId
-/// @details Also calculates the quadrilaterals for the next checkpoints, filling the fields of @ref
-/// LinkedCheckpoint for each.
+/// @brief Initializes @ref m_nextPoints and @ref m_prevPoints from @ref m_nextId and @ref m_prevId
+/// @details Also calculates the quadrilaterals for each of the next checkpoints in @ref
+/// m_nextPoints.
 void MapdataCheckPoint::initCheckpointLinks(MapdataCheckPointAccessor &accessor, int id) {
     m_id = id;
     const auto *checkPathAccessor = CourseMap::Instance()->checkPath();
 
-    // Calculate the quadrilateral's `m_prevPoints`. If the check point is the first in its group,
-    // it has multiple previous checkpoints defined by its preceding checkpaths
+    // Calculate the quadrilateral's @ref m_prevPoints. If the check point is the first in its
+    // group, it has multiple previous checkpoints defined by its preceding checkpaths
     if (m_prevId == 0xFF) {
         MapdataCheckPath *checkpath = checkPathAccessor->findCheckpathForCheckpoint(id);
         if (checkpath) {
@@ -49,8 +52,8 @@ void MapdataCheckPoint::initCheckpointLinks(MapdataCheckPointAccessor &accessor,
         ++m_prevCount;
     }
 
-    // Calculate the quadrilateral's `m_nextPoints`. If the checkpoint is the last in its group, it
-    // can have multiple quadrilaterals (and nextCheckpoint) which are determined by its next
+    // Calculate the quadrilateral's @ref m_nextPoints. If the checkpoint is the last in its group,
+    // it can have multiple quadrilaterals (and nextCheckpoint) which are determined by its next
     // path(s)
     if (m_nextId == 0xFF) {
         MapdataCheckPath *checkpath = checkPathAccessor->findCheckpathForCheckpoint(id);
@@ -94,6 +97,12 @@ void MapdataCheckPoint::initCheckpointLinks(MapdataCheckPointAccessor &accessor,
 /// @param pos The position to check
 /// @param distanceRatio Reference to store the computed distance ratio
 /// @return The sector occupancy status of the position
+/// @details Iterates each checkpoint in @ref m_nextPoints and calls @ref
+/// checkSectorAndDistanceRatio() for each. If it returned @ref SectorOccupancy::InsideSector, the
+/// iteration stops and that value is returned. Otherwise, if it returned @ref
+/// SectorOccupancy::BetweenSides, the iteration continues and that status is noted. If no
+/// checkpoint returns @ref SectorOccupancy::InsideSector, the final return value will reflect
+/// whether any checkpoint was between sides or all were outside.
 MapdataCheckPoint::SectorOccupancy MapdataCheckPoint::checkSectorAndDistanceRatio(
         const EGG::Vector3f &pos, f32 &distanceRatio) const {
     bool betweenSides = false;
@@ -124,7 +133,11 @@ MapdataCheckPoint::SectorOccupancy MapdataCheckPoint::checkSectorAndDistanceRati
 /// @param prevPos The previous position, likely not located in the checkpoint.
 /// @param pos The current position, likely located in the checkpoint.
 /// @return The earliest subdivision that crosses into the checkpoint, in the range [1, 17].
-/// @details This assumes the player is entering the checkpoint as intended, and not from the side.
+/// @details Computes the player's displacement per millisecond based on the provided `pos` and
+/// `prevPos`. Computes the relative position between the checkpoint's @ref m_midpoint and `prevPos`
+/// advanced by one millisecond. Iterates one millisecond at a time adding the per-millisecond
+/// displacement until the player crosses the checkpoint.
+/// @note This assumes the player is entering the checkpoint as intended, and not from the side.
 u16 MapdataCheckPoint::getEntryOffsetMs(const EGG::Vector2f &prevPos,
         const EGG::Vector2f &pos) const {
     constexpr f32 REFRESH_PERIOD = 1000.0f / 59.94f;
@@ -150,7 +163,9 @@ u16 MapdataCheckPoint::getEntryOffsetMs(const EGG::Vector2f &prevPos,
 /// @param next The linked checkpoint to check against
 /// @param p0 The XZ vector from the next checkpoint's left boundary to the player
 /// @param p1 The XZ vector from this checkpoint right boundary to the player
-/// @return Whether the player is between the two sides of the checkpoint quad.
+/// @return `true` if the player is between the two sides of the checkpoint quad, `false` otherwise
+/// @details Uses cross products to validate that the player's position sits between the two sides
+/// of the checkpoint quad.
 bool MapdataCheckPoint::checkSector(const MapdataCheckPoint::LinkedCheckpoint &next,
         const EGG::Vector2f &p0, const EGG::Vector2f &p1) const {
     if (-(next.p0diff.y) * p0.x + next.p0diff.x * p0.y < 0.0f) {
@@ -164,21 +179,11 @@ bool MapdataCheckPoint::checkSector(const MapdataCheckPoint::LinkedCheckpoint &n
     return true;
 }
 
-/// @brief Constructor
-/// @param header Pointer to the map section header containing the checkpoint data
-MapdataCheckPointAccessor::MapdataCheckPointAccessor(const MapSectionHeader *header)
-    : MapdataAccessorBase<MapdataCheckPoint, MapdataCheckPoint::SData>(header) {
-    MapdataAccessorBase::init(
-            reinterpret_cast<const MapdataCheckPoint::SData *>(m_sectionHeader + 1),
-            parse<u16>(m_sectionHeader->count));
-    init();
-}
-
-/// @brief Default virtual destructor
-MapdataCheckPointAccessor::~MapdataCheckPointAccessor() = default;
-
 /// @addr{0x80515244}
 /// @brief Initializes all checkpoint links, and finds the finish line and last key checkpoint
+/// @details Initializes each checkpoint's links. If the checkpoint is the finish line, its ID is
+/// saved to @ref m_finishLineCheckpointId. The type of the last key checkpoint encountered is saved
+/// to @ref m_lastKcpType.
 void MapdataCheckPointAccessor::init() {
     s8 lastKcpType = -1;
     s16 finishLineCheckpointId = -1;

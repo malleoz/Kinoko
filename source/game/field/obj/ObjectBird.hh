@@ -49,13 +49,13 @@ public:
     /// @beginGetters
 
     /// @brief Gets a pointer to the leader of the flock of birds
-    /// @return A const pointer to the @ref ObjectBirdLeader of the flock.
+    /// @return A const pointer to the @ref ObjectBirdLeader of the flock, @ref m_leader
     [[nodiscard]] const ObjectBirdLeader *leader() const {
         return m_leader;
     }
 
     /// @brief Exposes the follower birds so that @ref ObjectBirdFollower can access them
-    /// @return A const ref to the collection of follower birds.
+    /// @return A const ref to the collection of follower birds, @ref m_followers
     [[nodiscard]] const auto &followers() const {
         return m_followers;
     }

@@ -30,7 +30,7 @@ public:
     /// @beginGetters
 
     /// @brief Exposes whether the switch is activated or not
-    /// @return `true` if the switch is activated, `false` otherwise
+    /// @return The value of @ref m_isOn
     [[nodiscard]] bool isOn() const {
         return m_isOn;
     }

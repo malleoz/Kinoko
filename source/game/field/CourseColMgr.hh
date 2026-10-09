@@ -397,14 +397,14 @@ public:
     /// @beginGetters
 
     /// @brief Gets a pointer to the @ref KColData that represents the course's KCL
-    /// @return A const pointer to the course's @ref KColData
+    /// @return A const pointer to @ref m_data.
     [[nodiscard]] const KColData *data() const {
         return m_data;
     }
 
     /// @brief Gets a pointer to the @ref NoBounceWallColInfo struct used for accumulating soft wall
     /// collision info
-    /// @return A pointer to the @ref NoBounceWallColInfo struct
+    /// @return A pointer to @ref m_noBounceWallInfo.
     [[nodiscard]] NoBounceWallColInfo *noBounceWallInfo() const {
         return m_noBounceWallInfo;
     }

@@ -24,14 +24,27 @@ public:
     };
     STATIC_ASSERT(sizeof(SData) == 0x10);
 
-    MapdataCheckPath(const SData *data);
+    /// @addr{0x80515098}
+    /// @brief Constructor
+    /// @param data Pointer to the raw checkpoint path data
+    /// @details Creates a @ref EGG::RamStream from the raw cannon point data and reads the data
+    /// into the member variables. Also sets @ref m_invCount to `1.0f / @ref m_size`.
+    MapdataCheckPath(const SData *data) : m_rawData(data), m_depth(-1) {
+        EGG::RamStream stream = EGG::RamStream(data, sizeof(SData));
+        read(stream);
+        m_invCount = 1.0f / m_size;
+    }
+
+    /// @brief Default destructor
+    ~MapdataCheckPath() = default;
+
     void read(EGG::Stream &stream);
 
     void findDepth(s8 depth, const MapdataCheckPathAccessor &accessor);
 
     /// @brief Checks if the provided checkpoint id lies within this checkpoint path
     /// @param checkpointId The checkpoint id to check
-    /// @return True if the checkpoint id lies within this checkpoint path, false otherwise
+    /// @return `true` if the checkpoint id lies within this checkpoint path, `false` otherwise
     [[nodiscard]] bool isPointInPath(u16 checkpointId) const {
         return m_start <= checkpointId && checkpointId <= end();
     }
@@ -50,22 +63,30 @@ public:
         return m_start + m_size - 1;
     }
 
+    /// @brief Gets the indices of the next connected checkpoint paths
+    /// @return The indices of the next connected checkpoint paths
     [[nodiscard]] const std::array<u8, MAX_NEIGHBORS> &next() const {
         return m_next;
     }
 
+    /// @brief Gets the indices of the previous connected checkpoint paths
+    /// @return The indices of the previous connected checkpoint paths
     [[nodiscard]] const std::array<u8, MAX_NEIGHBORS> &prev() const {
         return m_prev;
     }
 
+    /// @brief Gets the depth of this checkpoint path in the traversal order
+    /// @return The depth of this checkpoint path
     [[nodiscard]] s8 depth() const {
         return m_depth;
     }
 
+    /// @brief Gets the inverse of the number of checkpoints in this checkpath
+    /// @return The inverse of the number of checkpoints in this checkpath
     [[nodiscard]] f32 invCount() const {
         return m_invCount;
     }
-    
+
     /// @endGetters
 
 private:
@@ -78,18 +99,39 @@ private:
     f32 m_invCount; ///< Inverse of the number of checkpoints in this checkpath
 };
 
-/// @brief Provides access to entries in the CKPH section of the course KMP
+/// @brief Provides access to entries in the `CKPH` section of the course KMP
 class MapdataCheckPathAccessor
     : public MapdataAccessorBase<MapdataCheckPath, MapdataCheckPath::SData> {
 public:
     MapdataCheckPathAccessor(const MapSectionHeader *header);
-    ~MapdataCheckPathAccessor() override;
 
-    [[nodiscard]] MapdataCheckPath *findCheckpathForCheckpoint(u16 checkpointId) const;
+    /// @brief Default virtual destructor
+    ~MapdataCheckPathAccessor() override = default;
 
+    /// @addr{0x80515014}
+    /// @brief Finds the checkpoint path that contains the specified checkpoint id
+    /// @param checkpointId The checkpoint id to search for
+    /// @return Pointer to the checkpoint path containing the checkpoint id, or `nullptr` if not
+    /// found.
+    [[nodiscard]] MapdataCheckPath *findCheckpathForCheckpoint(u16 checkpointId) const {
+        for (auto &checkpath : m_entries) {
+            if (checkpath->isPointInPath(checkpointId)) {
+                return checkpath;
+            }
+        }
+
+        return nullptr;
+    }
+
+    /// @beginGetters
+
+    /// @brief Gets the minimum proportion of a lap a checkpath can be
+    /// @return The minimum proportion of a lap a checkpath can be
     [[nodiscard]] f32 lapProportion() const {
         return m_lapProportion;
     }
+
+    /// @endGetters
 
 private:
     /// @brief Minimum proportion of a lap a checkpath can be. Calculated as

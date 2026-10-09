@@ -76,20 +76,21 @@ public:
     /// @beginGetters
 
     /// @brief Gets the @ref ObjectFlowTable for the objects
-    /// @return Const ref to the @ref ObjectFlowTable for the objects
+    /// @return Const ref to the @ref ObjectFlowTable for the objects, @ref m_flowTable
     [[nodiscard]] const ObjectFlowTable &flowTable() const {
         return m_flowTable;
     }
 
     /// @brief Gets the @ref ObjectHitTable for the kart objects
-    /// @return Const ref to the @ref ObjectHitTable for the kart objects
+    /// @return Const ref to the @ref ObjectHitTable for the kart objects, @ref m_hitTableKart
     [[nodiscard]] const ObjectHitTable &hitTableKart() const {
         return m_hitTableKart;
     }
 
     /// @brief Gets the object at the specified collision index
     /// @param idx The index of the collision to retrieve the object for
-    /// @return Const pointer to the @ref ObjectCollidable at the specified collision index
+    /// @return Const pointer to the @ref ObjectCollidable at the specified collision index in @ref
+    /// m_collidingObjects
     /// @pre Assumes that @ref checkKartObjectCollision() has been called and returned a number of
     /// collisions greater than the specified index
     [[nodiscard]] const ObjectCollidable *collidingObject(size_t idx) const {
@@ -99,7 +100,7 @@ public:
 
     /// @brief Gets the reaction at the specified collision index
     /// @param idx The index of the collision to retrieve the reaction for
-    /// @return The @ref Kart::Reaction at the specified collision index
+    /// @return The @ref Kart::Reaction at the specified collision index in @ref m_reactions
     /// @pre Assumes that @ref checkKartObjectCollision() has been called and returned a number of
     /// collisions greater than the specified index
     [[nodiscard]] Kart::Reaction reaction(size_t idx) const {
@@ -109,7 +110,8 @@ public:
 
     /// @brief Gets the hit depth at the specified collision index
     /// @param idx The index of the collision to retrieve the hit depth for
-    /// @return Const reference to the hit depth vector at the specified collision index
+    /// @return Const reference to the hit depth vector at the specified collision index in @ref
+    /// m_hitDepths
     /// @pre Assumes that @ref checkKartObjectCollision() has been called and returned a number of
     /// collisions greater than the specified index
     [[nodiscard]] const EGG::Vector3f &hitDepth(size_t idx) const {
@@ -118,14 +120,14 @@ public:
     }
 
     /// @brief Exposes a span of the managed objects' pointers
-    /// @return A span of the managed objects' pointers
+    /// @return A span of the managed objects' pointers from @ref m_managedObjects
     [[nodiscard]] std::span<ObjectCollidable *const> managedObjects() {
         return std::span<ObjectCollidable *>(m_managedObjects.begin(), m_managedObjects.size());
     }
 
     /// @brief Exposes the rising water object, so that @ref Kart::KartMove::calcRisingWater can
     /// know if it should run or not
-    /// @return A pointer to the rising water object
+    /// @return A pointer to the rising water object, @ref m_psea
     [[nodiscard]] ObjectPsea *psea() const {
         return m_psea;
     }

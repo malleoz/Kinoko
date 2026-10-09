@@ -51,13 +51,13 @@ public:
     /// @beginGetters
 
     /// @brief Gets the distance from the center of the parent object
-    /// @return The distance from the center of the parent object
+    /// @return The distance from the center of the parent object, @ref m_distance
     [[nodiscard]] f32 distance() const {
         return m_distance;
     }
 
     /// @brief Gets the angle of the fireball around the axis of rotation of the parent object
-    /// @return The fireball's angle in degrees around the parent's axis of rotation
+    /// @return The fireball's angle in degrees around the parent's axis of rotation, @ref m_angle
     [[nodiscard]] f32 angle() const {
         return m_angle;
     }

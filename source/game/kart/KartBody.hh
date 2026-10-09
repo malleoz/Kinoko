@@ -11,7 +11,16 @@ namespace Kinoko::Kart {
 /// response to the colliding @ref Field::CollisionInfo::intensity.
 class KartBody : protected KartObjectProxy {
 public:
-    KartBody(KartPhysics *physics);
+    /// @addr{0x8056C394}
+    /// @brief Constructor
+    /// @param physics Pointer to the kart's physics state manager
+    /// @details Saves a pointer to the kart's physics state manager to @ref m_physics. Initializes
+    /// @ref m_leanAngle, @ref m_sinkDepth, and @ref m_targetSinkDepth to zero.
+    KartBody(KartPhysics *physics) : m_physics(physics) {
+        m_leanAngle = 0.0f;
+        m_sinkDepth = 0.0f;
+        m_targetSinkDepth = 0.0f;
+    }
 
     /// @addr{0x8056CD84}
     /// @brief Default virtual destructor
@@ -20,6 +29,8 @@ public:
 
     /// @addr{0x8056C604}
     /// @brief Computes a matrix to represent wheel rotation. For karts, this is wheel-agnostic.
+    /// @return The transformation matrix representing the wheel's rotation
+    /// @details For karts, this is simply the kart's full rotation and position.
     [[nodiscard]] virtual EGG::Matrix34f wheelMatrix(u16) {
         EGG::Matrix34f mat;
         mat.makeQT(fullRot(), pos());
@@ -28,6 +39,8 @@ public:
 
     /// @addr{0x8056C4B4}
     /// @brief Resets the kart's body to default values
+    /// @details Calls @ref KartPhysics::reset() on @ref m_physics. Resets @ref m_leanAngle, @ref
+    /// m_sinkDepth, and @ref m_targetSinkDepth to zero.
     void reset() {
         m_physics->reset();
         m_leanAngle = 0.0f;
@@ -37,6 +50,8 @@ public:
 
     /// @addr{0x8056C9C4}
     /// @brief Interpolates the current sink depth towards the target sink depth
+    /// @details Smoothly updates @ref m_sinkDepth to approach @ref m_targetSinkDepth using a fixed
+    /// `0.1f` interpolation rate.
     void calcSinkDepth() {
         constexpr f32 SINK_INTERP_RATE = 0.1f;
 
@@ -52,7 +67,8 @@ public:
     }
 
     /// @addr{0x8056C964}
-    /// @brief Sets the target sink depth based off of the current collision's intensity
+    /// @brief Updates the target sink depth based off of the current collision's intensity
+    /// @details Sets @ref m_targetSinkDepth to three times the intensity of the current collision.
     void calcTargetSinkDepth() {
         m_targetSinkDepth = 3.0f * static_cast<f32>(collisionData().intensity);
     }
@@ -60,18 +76,24 @@ public:
     /// @beginSetters
 
     /// @addr{0x8056E424}
+    /// @brief Sets the lean angle of the kart
+    /// @param val The new lean angle to set
     void setLeanAngle(f32 val) {
         m_leanAngle = val;
     }
-    
+
     /// @endSetters
 
     /// @beginGetters
 
+    /// @brief Gets a pointer to the underlying @ref KartPhysics instance
+    /// @return A pointer to the underlying @ref KartPhysics instance, @ref m_physics
     [[nodiscard]] KartPhysics *physics() const {
         return m_physics;
     }
 
+    /// @brief Gets the current sink depth of the kart
+    /// @return The current sink depth, @ref m_sinkDepth
     [[nodiscard]] f32 sinkDepth() const {
         return m_sinkDepth;
     }
@@ -79,10 +101,10 @@ public:
     /// @endGetters
 
 protected:
-    KartPhysics *m_physics; ///< Pointer to the kart's physics state manager
-    f32 m_leanAngle;        ///< Lean angle of the kart incurred from drifting, SSMT, or burnout
-    f32 m_sinkDepth;        ///< Current smoothed vehicle offset applied downward into collision
-    f32 m_targetSinkDepth;  ///< Maximum vehicle offset applied downward into collision
+    KartPhysics *const m_physics; ///< Pointer to the kart's physics state manager
+    f32 m_leanAngle;       ///< Lean angle of the kart incurred from drifting, SSMT, or burnout
+    f32 m_sinkDepth;       ///< Current smoothed vehicle offset applied downward into collision
+    f32 m_targetSinkDepth; ///< Maximum vehicle offset applied downward into collision
 };
 
 /// @brief Represents the body of a kart
@@ -96,7 +118,7 @@ public:
     KartBodyKart(KartPhysics *physics) : KartBody(physics) {}
 
     /// @addr{0x8056E494}
-    /// @brief Destroys the underlying @ref KartPhysics subsystem
+    /// @brief Virtual destructor that destroys the underlying @ref KartPhysics subsystem
     ~KartBodyKart() override {
         EGG::egg_delete(m_physics);
     }
@@ -107,10 +129,45 @@ public:
 /// wheel.
 class KartBodyBike : public KartBody {
 public:
-    KartBodyBike(KartPhysics *physics);
-    ~KartBodyBike() override;
+    /// @addr{0x8056D858}
+    /// @brief Constructor
+    /// @param physics Pointer to the kart's physics state manager
+    KartBodyBike(KartPhysics *physics) : KartBody(physics) {}
 
-    [[nodiscard]] EGG::Matrix34f wheelMatrix(u16 wheelIdx) override;
+    /// @addr{0x8056E2BC}
+    /// @brief Virtual destructor that destroys the underlying @ref KartPhysics subsystem
+    ~KartBodyBike() override {
+        EGG::egg_delete(m_physics);
+    }
+
+    /// @addr{0x8056DD54}
+    /// @brief Computes a matrix to represent the rotation of a wheel.
+    /// @param wheelIdx 0 for front wheel, 1 for rear wheel
+    /// @return The transformation matrix representing the wheel's rotation
+    /// @details For the front wheel, we factor in the handlebar rotation.
+    /// For the rear wheel, we only factor in the kart's rotation.
+    [[nodiscard]] EGG::Matrix34f wheelMatrix(u16 wheelIdx) override {
+        EGG::Matrix34f mat;
+
+        mat.makeQT(fullRot(), pos());
+        if (wheelIdx != 0) {
+            return mat;
+        }
+
+        EGG::Vector3f position = param()->bikeDisp().m_handlePos * scale();
+        EGG::Vector3f rotation = DEG2RAD * param()->bikeDisp().m_handleRot;
+
+        EGG::Matrix34f handleMatrix;
+        handleMatrix.makeRT(rotation, position);
+        EGG::Matrix34f tmp = mat.multiplyTo(handleMatrix);
+
+        EGG::Vector3f yRotation = EGG::Vector3f(0.0f, DEG2RAD * m_leanAngle, 0.0f);
+        EGG::Matrix34f yRotMatrix;
+        yRotMatrix.makeR(yRotation);
+        mat = tmp.multiplyTo(yRotMatrix);
+
+        return mat;
+    }
 };
 
 /// @brief Represents the body of @ref Vehicle::Quacker
@@ -130,6 +187,7 @@ public:
 
     /// @addr{0x8056E2FC}
     /// @brief Computes a matrix to represent wheel rotation. For Quacker, this is wheel-agnostic.
+    /// @return The transformation matrix representing the wheel's rotation
     [[nodiscard]] EGG::Matrix34f wheelMatrix(u16 /* wheelIdx */) override {
         EGG::Matrix34f mat;
         mat.makeQT(fullRot(), pos());

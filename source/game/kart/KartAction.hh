@@ -42,11 +42,30 @@ public:
     /// @brief A bitfield of @ref eFlags that represents the state of the current action
     typedef EGG::TBitFlag<u32, eFlags> Flags;
 
-    KartAction();
-    ~KartAction();
+    /// @addr{0x805672CC}
+    /// @brief Constructor
+    /// @details Initializes @ref m_currentAction to @ref Action::None, @ref m_hitDepth to zero, and
+    /// @ref m_velocity to the forward vector. Sets @ref m_onStart, @ref m_onCalc, @ref m_onEnd,
+    /// @ref m_actionParams, and @ref m_rotationParams all to `nullptr`. Finally, initializes @ref
+    /// m_priority to zero.
+    KartAction()
+        : m_currentAction(Action::None),
+          m_hitDepth(EGG::Vector3f::zero),
+          m_velocity(EGG::Vector3f::ez),
+          m_onStart(nullptr),
+          m_onCalc(nullptr),
+          m_onEnd(nullptr),
+          m_actionParams(nullptr),
+          m_rotationParams(nullptr),
+          m_priority(0) {}
+
+    /// @addr{0x8056A1A8}
+    /// @brief Default virtual destructor
+    ~KartAction() override = default;
 
     /// @addr{0x8056739C}
     /// @brief Resets the current action and clears all flags
+    /// @details Sets @ref m_currentAction to @ref Action::None and clears all bits in @ref m_flags.
     void init() {
         m_currentAction = Action::None;
         m_flags.makeAllZero();
@@ -59,18 +78,24 @@ public:
 
     /// @beginSetters
 
+    /// @brief Sets the hit depth for the current action
+    /// @param hitDepth The new hit depth vector
     void setHitDepth(const EGG::Vector3f &hitDepth) {
         m_hitDepth = hitDepth;
     }
 
+    /// @brief Sets the velocity for the current action
+    /// @param v The new velocity vector
     void setVelocity(const EGG::Vector3f &v) {
         m_velocity = v;
     }
-    
+
     /// @endSetters
 
     /// @beginGetters
 
+    /// @brief Gets the flags for the current state of the active action
+    /// @return The current flags for the active action
     [[nodiscard]] const Flags &flags() const {
         return m_flags;
     }
@@ -116,6 +141,7 @@ private:
     /// @addr{0x80567A54}
     /// @brief Executes a frame of the current action.
     /// @return Whether or not the action should end.
+    /// @details Increments @ref m_frame and calls @ref m_onCalc.
     bool calcCurrentAction() {
         ++m_frame;
         return (this->*m_onCalc)();
@@ -126,7 +152,7 @@ private:
     void calcUp();
     void calcLanding();
     void startLaunch(f32 extVelScalar, f32 extVelKart, f32 extVelBike, f32 numRotations,
-            u32 param6);
+            u32 dirType);
     void activateCrush(u16 timer);
 
     void applyStartSpeed();
@@ -136,10 +162,13 @@ private:
      *     START FUNCTIONS
      * ================================ */
 
+    /// @brief A stub function that does nothing when starting an action.
+    /// @details This is used when the implementation can be omitted for Kinoko.
     void startStub() {}
 
     /// @addr{0x80567FB4}
     /// @brief Called when the kart begins to spin out and rotates 720 degrees
+    /// @details Calls @ref startRotation() to initiate the spin rotation.
     void startSpinTwice() {
         startRotation(2);
     }
@@ -152,6 +181,7 @@ private:
 
     /// @addr{0x80568000}
     /// @brief Called when the kart begins to spin out from a fireball and rotates 720 degrees
+    /// @details Calls @ref startRotation() to initiate the spin rotation.
     void startFireSpin() {
         startRotation(2);
     }
@@ -161,6 +191,7 @@ private:
 
     /// @addr{0x80568058}
     /// @brief Called when the kart begins to spin out and shrink in size temporarily
+    /// @details Calls @ref startRotation() to initiate the spin rotation.
     void startSpinShrinkAction() {
         startRotation(1);
     }
@@ -169,6 +200,9 @@ private:
      *     CALC FUNCTIONS
      * ================================ */
 
+    /// @brief A stub function that does nothing when calculating an action every frame.
+    /// @return Always returns `false`.
+    /// @details This is used when the implementation can be omitted for Kinoko.
     bool calcStub() {
         return false;
     }
@@ -183,6 +217,8 @@ private:
      *     END FUNCTIONS
      * ================================ */
 
+    /// @brief A stub function that does nothing when ending an action.
+    /// @details This is used when the implementation can be omitted for Kinoko.
     void endStub(bool /*newActionStarting*/) {}
 
     void endSpin(bool newActionStarting);

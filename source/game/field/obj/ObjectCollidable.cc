@@ -10,7 +10,7 @@ namespace Kinoko::Field {
 /// @addr{0x8081F0A0}
 /// @copybrief ObjectBase::load()
 /// @details This function loads the graphical assets, animations, collision object(s), and rail for
-/// the collidable object. It also registers the object with the @ref ObjectDirector.
+/// the collidable object. It also registers the object with the @ref Field::ObjectDirector.
 void ObjectCollidable::load() {
     loadGraphics();
     loadAnims();

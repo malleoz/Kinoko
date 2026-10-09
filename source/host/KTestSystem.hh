@@ -32,6 +32,7 @@ public:
 
     /// @brief Creates the singleton instance of the @ref KTestSystem
     /// @return A pointer to the newly created @ref KTestSystem instance
+    /// @pre The singleton instance of the @ref KTestSystem has not been created yet.
     static KTestSystem *CreateInstance() {
         ASSERT(!s_instance);
         s_instance = EGG::egg_new<KTestSystem>();
@@ -39,6 +40,7 @@ public:
     }
 
     /// @brief Destroys the singleton instance of the @ref KTestSystem
+    /// @pre The singleton instance of the @ref KTestSystem has already been created.
     static void DestroyInstance() {
         ASSERT(s_instance);
         auto *instance = s_instance;
@@ -94,8 +96,17 @@ private:
 
     EGG_NEW_DELETE_FRIEND
 
-    KTestSystem();
-    ~KTestSystem() override;
+    /// @brief Default private constructor
+    /// @details Initializes @ref m_testMode to @ref Host::EOption::Invalid.
+    KTestSystem() : m_testMode(Host::EOption::Invalid) {}
+
+    /// @brief Private virtual destructor
+    ~KTestSystem() override {
+        if (s_instance) {
+            s_instance = nullptr;
+            WARN("KTestSystem instance not explicitly handled!");
+        }
+    }
 
     /// @brief Deleted copy constructor
     KTestSystem(const KTestSystem &) = delete;
@@ -218,7 +229,7 @@ private:
 
     /// @brief Runs a single test case, and ends when the test is finished or when a desync is
     /// found.
-    /// @return Whether the run synchronized or desynchronized.
+    /// @return `true` if the run synchronized, `false` is the run desynced.
     /// @details This will also accumulate results in results.txt.
     bool runTest() {
         while (calcTest()) {
@@ -246,6 +257,7 @@ private:
     /// @brief Gets the current test case.
     /// @return The current test case.
     /// @details In the event that there is no active test case, this gets the next test case.
+    /// @pre There is at least one test case in the queue.
     const TestCase &getCurrentTestCase() const {
         ASSERT(!m_testCases.empty());
         return m_testCases.front();
@@ -253,6 +265,8 @@ private:
 
     /// @brief Initializes the race configuration as needed for test cases.
     /// @param config The race configuration instance.
+    /// @details Calls @ref System::RaceConfig::setGhost() with the current test case's RKG
+    /// filepath and changes the player type to `Ghost`.
     static void OnInit(System::RaceConfig *config, void * /* arg */) {
         std::span<const u8> rkg =
                 Abstract::File::Load(Instance()->getCurrentTestCase().rkgPath.data());

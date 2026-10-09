@@ -62,32 +62,6 @@ Context::Context() {
     m_statics.m_flamePoleCount = Field::ObjectFlamePoleFoot::s_flamePoleCount;
 }
 
-/// @brief Copy constructor which clones the provided context
-/// @param c The context to copy from.
-Context::Context(const Context &c) {
-    m_contextMemory = malloc(MEMORY_SPACE_SIZE);
-    ASSERT(m_contextMemory && c.m_contextMemory);
-    memcpy(m_contextMemory, c.m_contextMemory, MEMORY_SPACE_SIZE);
-    m_statics = c.m_statics;
-}
-
-/// @brief Move constructs a context by stealing the memory block and pointers from the provided
-/// context
-/// @param c The context to move from.
-Context::Context(Context &&c) {
-    m_contextMemory = c.m_contextMemory;
-    c.m_contextMemory = nullptr;
-    m_statics = c.m_statics;
-    c.m_statics = {};
-}
-
-/// @brief Destructor which frees the allocated context memory.
-/// @note This class does not manage the lifecycle of the heap that it referenced at the time of
-/// construction; it only manages the copy.
-Context::~Context() {
-    free(m_contextMemory);
-}
-
 /// @brief Equality comparison operator to check equivalence between two contexts
 /// @param rhs The context to compare against.
 /// @return `true` if the contexts are equivalent, `false` otherwise.
@@ -133,7 +107,7 @@ bool Context::operator==(const Context &rhs) const {
 
 /// @brief Applies this context to the root heap, effectively loading a savestate
 /// @param rhs The context to apply to the root heap.
-/// @note This will overwrite the current state of the root heap with the state stored in the
+/// @warning This will overwrite the current state of the root heap with the state stored in the
 /// context. If you want to restore the previous state, you should save it in another context before
 /// calling this function.
 void Context::SetActiveContext(const Context &rhs) {

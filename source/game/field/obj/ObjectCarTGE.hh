@@ -145,7 +145,7 @@ public:
     /// @beginGetters
 
     /// @brief Checks if this vehicle has squashed the player this frame
-    /// @return `true` if the vehicle has squashed the player, `false` otherwise
+    /// @return The value of @ref m_squashed
     [[nodiscard]] bool squashed() const {
         return m_squashed;
     }

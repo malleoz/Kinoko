@@ -2,22 +2,6 @@
 
 namespace Kinoko::System {
 
-/// @addr{0x80518CC0}
-/// @brief Constructor
-DvdArchive::DvdArchive()
-    : m_archive(nullptr),
-      m_archiveStart(nullptr),
-      m_archiveSize(0),
-      m_fileStart(nullptr),
-      m_fileSize(0),
-      m_state(State::Cleared) {}
-
-/// @addr{0x80518CF4}
-/// @brief Destructor that unmounts the archive and clears all associated data from memory
-DvdArchive::~DvdArchive() {
-    unmount();
-}
-
 /// @addr{0x80519420}
 /// @brief Retrieves a file from the mounted archive
 /// @param filename The name of the file to retrieve
@@ -54,6 +38,9 @@ std::span<const u8> DvdArchive::getFile(const char *filename) const {
 /// @brief Decompresses and mounts the archive at the provided path
 /// @param path The path to the archive file
 /// @param decompress_ Whether to decompress the file data
+/// @details Loads the file from the specified `path` into memory. If successful, checks to see if
+/// the file is compressed and calls @ref decompress(), otherwise calls @ref move(). Finally, mounts
+/// the archive via @ref mount().
 void DvdArchive::load(const char *path, bool decompress_) {
     if (m_state == State::Cleared) {
         rip(path);
@@ -75,6 +62,9 @@ void DvdArchive::load(const char *path, bool decompress_) {
 /// @param fileStart Pointer to the start of the file data in memory
 /// @param fileSize Size of the file data in memory
 /// @param decompress_ Whether to decompress the file data
+/// @details Updates @ref m_fileStart to point to the provided `fileStart` and @ref m_fileSize to
+/// the provided `fileSize`. If `decompress_` is `true`, decompresses the file via @ref decompress()
+/// and clears @ref m_fileStart and @ref m_fileSize. Finally, mounts the archive via @ref mount().
 void DvdArchive::load(void *fileStart, size_t fileSize, bool decompress_) {
     m_fileStart = fileStart;
     m_fileSize = fileSize;

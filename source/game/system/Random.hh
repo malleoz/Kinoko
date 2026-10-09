@@ -22,6 +22,7 @@ class Random {
 public:
     /// @brief Constructor which sets the initial RNG value
     /// @param seed The initial seed value for the RNG
+    /// @details Sets both @ref m_x and @ref m_seed to the provided `seed`.
     Random(u32 seed) : m_x(seed), m_seed(seed) {}
 
     /// @brief Copy constructor

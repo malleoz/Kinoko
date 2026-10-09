@@ -21,6 +21,8 @@ class KPadDirector : EGG::Disposer {
 public:
     /// @addr{0x805238F0}
     /// @brief Every frame, checks controller state and updates the player input state accordingly
+    /// @details Calls @ref calcPads() to update the controller state, then updates the player's
+    /// input state via @ref KPadPlayer::calc().
     void calc() {
         calcPads();
         m_playerInput.calc();
@@ -28,6 +30,8 @@ public:
 
     /// @addr{0x805237E8}
     /// @brief Updates the state of the ghost and host controllers
+    /// @details Calls the `calc()` function for both @ref m_ghostController and @ref
+    /// m_hostController.
     void calcPads() {
         m_ghostController->calc();
         m_hostController->calc();
@@ -44,15 +48,14 @@ public:
     }
 
     /// @addr{0x80524580}
-    /// @brief Signals that the @ref KPadPlayer should begin reading from the ghost
-    /// controller
+    /// @brief Signals that the @ref KPadPlayer should begin reading from the ghost controller
     void startGhostProxies() {
         m_playerInput.startGhostProxy();
     }
 
     /// @addr{0x805245DC}
-    /// @brief Signals that the @ref KPadPlayer should stop reading from the ghost
-    /// controller (due to @ref Scene::RaceScene end)
+    /// @brief Signals that the @ref KPadPlayer should stop reading from the ghost controller (due
+    /// to @ref Scene::RaceScene end)
     void endGhostProxies() {
         m_playerInput.endGhostProxy();
     }
@@ -73,19 +76,24 @@ public:
 
     /// @beginGetters
 
+    /// @brief Gets the player's pad
+    /// @return A const ref to the player's pad, @ref m_playerInput
     [[nodiscard]] const KPadPlayer &playerInput() const {
         return m_playerInput;
     }
 
+    /// @brief Gets the host controller
+    /// @return A pointer to the host controller, @ref m_hostController
     [[nodiscard]] KPadHostController *hostController() {
         return m_hostController;
     }
-    
+
     /// @endGetters
 
     /// @addr{0x8052313C}
     /// @brief Creates the singleton instance of the @ref KPadDirector
     /// @return A pointer to the newly created @ref KPadDirector instance
+    /// @pre The singleton instance of the @ref KPadDirector does not already exist
     static KPadDirector *CreateInstance() {
         ASSERT(!s_instance);
         return s_instance = EGG::egg_new<KPadDirector>();
@@ -93,6 +101,7 @@ public:
 
     /// @addr{0x8052318C}
     /// @brief Destroys the singleton instance of the @ref KPadDirector
+    /// @pre The singleton instance of the @ref KPadDirector must already exist
     static void DestroyInstance() {
         ASSERT(s_instance);
         auto *instance = s_instance;
@@ -109,14 +118,29 @@ public:
 private:
     EGG_NEW_DELETE_FRIEND
 
-    KPadDirector();
-    ~KPadDirector() override;
+    /// @addr{0x805232F0}
+    /// @brief Private constructor that initializes the ghost and host controllers
+    KPadDirector() {
+        m_ghostController = EGG::egg_new<KPadGhostController>();
+        m_hostController = EGG::egg_new<KPadHostController>();
+    }
+
+    /// @addr{0x805231DC}
+    /// @brief Private destructor
+    ~KPadDirector() override {
+        if (s_instance) {
+            s_instance = nullptr;
+            WARN("KPadDirector instance not explicitly handled!");
+        }
+    }
 
     KPadPlayer m_playerInput;               ///< The player's pad state
     KPadGhostController *m_ghostController; ///< Controller object for ghost input playback
     KPadHostController *m_hostController;   ///< Controller object for external sources
 
-    static KPadDirector *s_instance; ///< @addr{0x809BD70C}
+    /// @addr{0x809BD70C}
+    ///< @brief Singleton instance of the @ref KPadDirector
+    static KPadDirector *s_instance;
 };
 
 } // namespace System

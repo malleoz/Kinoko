@@ -41,9 +41,10 @@ public:
     }
 
     /// @addr{0x805414A8}
-    /// @brief Retrieves the BSP file for the specified vehicle
-    /// @param vehicle The @ref Vehicle whose BSP file is to be retrieved
-    /// @return A span containing the BSP file's contents, or an empty span if the file is not found
+    /// @brief Retrieves the `BSP` file for the specified vehicle
+    /// @param vehicle The @ref Vehicle whose `BSP` file is to be retrieved
+    /// @return A span containing the `BSP` file's contents, or an empty span if the file is not
+    /// found
     [[nodiscard]] std::span<const u8> getBsp(Vehicle vehicle) {
         char buffer[32];
 
@@ -70,6 +71,7 @@ public:
     /// @addr{0x805411E4}
     /// @brief Unmounts the specified @ref MultiDvdArchive
     /// @param archive The archive to unmount
+    /// @details Simply calls @ref MultiDvdArchive::unmount() on the provided archive.
     void unmount(MultiDvdArchive *archive) {
         archive->unmount();
     }
@@ -77,7 +79,7 @@ public:
     /// @addr{0x805419EC}
     /// @brief Retrieves the name of the specified vehicle
     /// @param vehicle The vehicle whose name is to be retrieved
-    /// @return The name of the vehicle, or nullptr if the vehicle is invalid
+    /// @return The name of the vehicle, or `nullptr` if the vehicle is invalid
     [[nodiscard]] static const char *GetVehicleName(Vehicle vehicle) {
         return vehicle < Vehicle::Max ? VEHICLE_NAMES[static_cast<u8>(vehicle)] : nullptr;
     }
@@ -85,6 +87,7 @@ public:
     /// @addr{0x8053FC4C}
     /// @brief Creates the singleton instance of the @ref ResourceManager
     /// @return A pointer to the newly created @ref ResourceManager instance
+    /// @pre The singleton instance of the @ref ResourceManager must not already exist.
     static ResourceManager *CreateInstance() {
         ASSERT(!s_instance);
         s_instance = EGG::egg_new<ResourceManager>();
@@ -93,6 +96,7 @@ public:
 
     /// @addr{0x8053FC9C}
     /// @brief Destroys the singleton instance of the @ref ResourceManager
+    /// @pre The singleton instance of the @ref ResourceManager must exist.
     static void DestroyInstance() {
         ASSERT(s_instance);
         auto *instance = s_instance;
@@ -109,8 +113,22 @@ public:
 private:
     EGG_NEW_DELETE_FRIEND
 
-    ResourceManager();
-    ~ResourceManager() override;
+    /// @addr{0x8053FCEC}
+    /// @brief Private constructor which allocates and creates two @ref MultiDvdArchive objects
+    ResourceManager() : m_archives(ARCHIVE_COUNT) {
+        for (u8 i = 0; i < ARCHIVE_COUNT; i++) {
+            m_archives.push_back(Create(i));
+        }
+    }
+
+    /// @addr{0x8053FF1C}
+    /// @brief Private virtual destructor
+    ~ResourceManager() override {
+        if (s_instance) {
+            s_instance = nullptr;
+            WARN("ResourceManager instance not explicitly handled!");
+        }
+    }
 
     fixed_vector<MultiDvdArchive *> m_archives; ///< One archive for each @ref ArchiveId
 
@@ -131,7 +149,9 @@ private:
     /// @brief The total number of archives managed by the ResourceManager
     static constexpr size_t ARCHIVE_COUNT = 2;
 
-    static ResourceManager *s_instance; ///< @addr{0x809BD738}
+    /// @addr{0x809BD738}
+    /// @brief The singleton instance of the @ref ResourceManager
+    static ResourceManager *s_instance;
 };
 
 } // namespace System

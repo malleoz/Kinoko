@@ -2,18 +2,6 @@
 
 namespace Kinoko::Kart {
 
-/// @addr{0x80588D28}
-/// @brief Constructor
-KartBoost::KartBoost() : m_timers{0}, m_active{false} {
-    m_multiplier = 1.0f;
-    m_acceleration = 1.0f;
-    m_speedLimit = -1.0f;
-}
-
-/// @addr{0x8057811C}
-/// @brief Default destructor
-KartBoost::~KartBoost() = default;
-
 /// @addr{0x80588DB0}
 /// @brief Starts/restarts a boost of the given type
 /// @param type The type of boost (e.g. mini-turbo)
@@ -35,6 +23,10 @@ bool KartBoost::activate(Type type, s16 frames) {
 /// @addr{0x80588E24}
 /// @brief Computes the current frame's boost multiplier, acceleration, and speed limit.
 /// @return whether a boost is active
+/// @details Uses lookup tables to find the appropriate multiplier, acceleration, and speed limit
+/// for the active boost type. Boosts have a base multiplier of 1.0f and an additional multiplier
+/// added based on the lookup table. Checks if the boost timer has expired, setting the
+/// corresponding @ref m_active entry to `false` if so.
 bool KartBoost::calc() {
     static constexpr std::array<f32, BOOST_TYPE_COUNT> MULTIPLIERS = {{
             0.2f,

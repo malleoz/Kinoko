@@ -18,6 +18,7 @@ struct Timer {
 
     /// @brief Constructor that parses a time from an RKG's 3 byte time format. @see RawGhostFile
     /// @param data The 3 byte time data from an RKG file
+    /// @details Also sets @ref valid to `true`.
     Timer(u32 data) {
         min = static_cast<u16>(data >> 0x19);
         sec = static_cast<u8>(data >> 0x12) & 0x7F;
@@ -149,7 +150,7 @@ public:
     }
 
     /// @addr{0x80535904}
-    /// @brief Every frame after he race starts, updates the timer based on the frame counter
+    /// @brief Every frame after the race starts, updates the timer based on the frame counter
     /// @details The game runs at 59.94fps and the timer is updated accordingly each frame.
     void calc() {
         constexpr f32 REFRESH_PERIOD = 1000.0f / 59.94f;
@@ -180,6 +181,8 @@ public:
 
     /// @beginGetters
 
+    /// @brief Retrieves the current race timer
+    /// @return A const ref to the current race timer, @ref m_currentTimer
     [[nodiscard]] const Timer &currentTimer() const {
         return m_currentTimer;
     }
@@ -188,11 +191,13 @@ public:
 
     /// @beginSetters
 
-    /// @brief Called when the countdown has ended
+    /// @brief Toggles whether the race has started
+    /// @param isSet A boolean indicating whether the race has started
+    /// @details Called when the countdown has ended to set @ref m_started to `true`.
     void setStarted(bool isSet) {
         m_started = isSet;
     }
-    
+
     /// @endSetters
 
 private:

@@ -15,14 +15,25 @@ public:
         Max,                   ///< The maximum number of boost types, used for array sizing
     };
 
-    KartBoost();
-    ~KartBoost();
+    /// @addr{0x80588D28}
+    /// @brief Constructor
+    /// @details Zero-initializes @ref m_active and calls @ref init() to initializes other members.
+    KartBoost() {
+        resetActive();
+        init();
+    }
+
+    /// @addr{0x8057811C}
+    /// @brief Default destructor
+    ~KartBoost() = default;
 
     [[nodiscard]] bool activate(Type type, s16 frames);
     [[nodiscard]] bool calc();
 
     /// @addr{0x80588D74}
     /// @brief Initializes the current boost state
+    /// @details Resets the timers in @ref m_timers to zero. Initializes @ref m_multiplier and @ref
+    /// m_acceleration to `1.0f` and @ref m_speedLimit to `-1.0f`.
     void init() {
         m_timers.fill(0);
         m_multiplier = 1.0f;
@@ -32,24 +43,31 @@ public:
 
     /// @addr{0x80588E18}
     /// @brief Clears the current boost state
+    /// @details Sets all elements in @ref m_active to `false`.
     void resetActive() {
         m_active.fill(false);
     }
 
     /// @beginGetters
 
+    /// @brief Gets the current boost multiplier
+    /// @return The current boost multiplier, @ref m_multiplier
     [[nodiscard]] f32 multiplier() const {
         return m_multiplier;
     }
 
+    /// @brief Gets the current boost acceleration
+    /// @return The current boost acceleration, @ref m_acceleration
     [[nodiscard]] f32 acceleration() const {
         return m_acceleration;
     }
 
+    /// @brief Gets the current boost speed limit
+    /// @return The current boost speed limit, @ref m_speedLimit
     [[nodiscard]] f32 speedLimit() const {
         return m_speedLimit;
     }
-    
+
     /// @endGetters
 
 private:

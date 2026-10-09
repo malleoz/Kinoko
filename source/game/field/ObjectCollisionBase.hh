@@ -92,7 +92,7 @@ public:
 
     /// @addr{0x80573520}
     /// @brief Gets the current velocity of the associated object
-    /// @return The current velocity of the associated object
+    /// @return The current velocity of the associated object, @ref m_velocity
     [[nodiscard]] const EGG::Vector3f &velocity() const {
         return m_velocity;
     }

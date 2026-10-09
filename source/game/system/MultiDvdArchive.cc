@@ -27,10 +27,6 @@ MultiDvdArchive::MultiDvdArchive(u16 archiveCount)
     }
 }
 
-/// @addr{0x8052A6DC}
-/// @brief Default destructor
-MultiDvdArchive::~MultiDvdArchive() = default;
-
 /// @addr{0x8052A760}
 /// @brief Retrieves a file from the sub-archives
 /// @param filename The name of the file to retrieve

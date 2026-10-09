@@ -22,6 +22,8 @@ public:
     /// @addr{0x80512C2C}
     /// @brief Constructor
     /// @param data Pointer to the raw KMP file header data
+    /// @details Obtains pointers to the section definition array and determines the version of the
+    /// KMP file.
     MapdataFileAccessor(const MapdataFileAccessor::SData *data)
         : m_rawData(data),
           m_sectionDefOffset(parse<u16>(data->headerSize) - parse<u16>(data->sectionCount) * 4),
@@ -32,7 +34,7 @@ public:
     /// @addr{0x80514208}
     /// @brief Finds a section in the KMP file by its signature
     /// @param signature The signature of the section to find
-    /// @return Pointer to the section header if found, nullptr otherwise
+    /// @return Pointer to the section header if found, `nullptr` otherwise
     [[nodiscard]] const MapSectionHeader *findSection(u32 signature) const {
         const MapSectionHeader *sectionPtr = nullptr;
 
@@ -51,10 +53,14 @@ public:
 
     /// @beginGetters
 
+    /// @brief Gets the version of the KMP file format
+    /// @return The version of the KMP file format
+    /// @details The version is 2520 for all vanilla courses. We implement this for posterity's sake
+    /// as the `AREA` section does not contain rail indices in versions before 2200.
     [[nodiscard]] u32 version() const {
         return m_version;
     }
-    
+
     /// @endGetters
 
 private:

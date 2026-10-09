@@ -25,7 +25,8 @@ public:
 
     /// @brief Fetches the rail at the given index
     /// @param idx The index of the rail to fetch
-    /// @return A pointer to the rail at the given index
+    /// @return A pointer to the rail at the given index in @ref m_rails
+    /// @pre Requires that `idx` is a valid index within @ref m_rails
     [[nodiscard]] Rail *rail(size_t idx) {
         ASSERT(idx < m_rails.size());
         return m_rails[idx];
@@ -33,7 +34,8 @@ public:
 
     /// @brief  Fetches the rail at the given index
     /// @param idx The index of the rail to fetch
-    /// @return A const pointer to the rail at the given index
+    /// @return A const pointer to the rail at the given index in @ref m_rails
+    /// @pre Requires that `idx` is a valid index within @ref m_rails
     [[nodiscard]] const Rail *rail(size_t idx) const {
         ASSERT(idx < m_rails.size());
         return m_rails[idx];
@@ -78,7 +80,9 @@ private:
     /// @brief The rails parsed from @ref System::CourseMap
     fixed_vector<Rail *> m_rails;
 
-    static RailManager *s_instance; ///< @addr{0x809C22B0}
+    /// @addr{0x809C22B0}
+    /// @brief The pointer to the singleton instance of the class
+    static RailManager *s_instance;
 };
 
 } // namespace Field

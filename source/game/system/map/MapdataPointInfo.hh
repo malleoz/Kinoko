@@ -28,6 +28,8 @@ public:
 
     /// @brief Constructor
     /// @param data Pointer to the raw route data
+    /// @details Creates a @ref EGG::RamStream from the raw point data and reads the data into the
+    /// member variables.
     MapdataPointInfo(const SData *data) : m_rawData(data) {
         EGG::RamStream stream =
                 EGG::RamStream(data, sizeof(SData) + parse<u16>(data->pointCount) * sizeof(Point));
@@ -62,19 +64,27 @@ public:
 
     /// @beginGetters
 
+    /// @brief Gets the number of points in the route
+    /// @return The number of points in the route, aka the size of  @ref m_points.
     [[nodiscard]] size_t pointCount() const {
         return m_points.size();
     }
 
+    /// @brief Gets the route setting at the specified index
+    /// @param idx The index of the route setting to retrieve
+    /// @return The route setting at the specified index, @ref m_settings.
+    /// @pre `idx` must be less than the number of route settings (2).
     [[nodiscard]] u8 setting(size_t idx) const {
         ASSERT(idx < m_settings.size());
         return m_settings[idx];
     }
 
+    /// @brief Gets the array of points in the route
+    /// @return The array of points in the route, @ref m_points.
     [[nodiscard]] const owning_span<Point> &points() const {
         return m_points;
     }
-    
+
     /// @endGetters
 
 private:
@@ -83,7 +93,7 @@ private:
     owning_span<Point> m_points;                   ///< Array of points in the route
 };
 
-/// @brief Provides access to entries in the POTI section of the course KMP
+/// @brief Provides access to entries in the `POTI` section of the course KMP
 class MapdataPointInfoAccessor
     : public MapdataAccessorBase<MapdataPointInfo, MapdataPointInfo::SData> {
 public:
@@ -100,6 +110,7 @@ public:
     ~MapdataPointInfoAccessor() override = default;
 
     /// @copydoc MapdataAccessorBase::init()
+    /// @details Creates @ref MapdataPointInfo instances for each entry in the `POTI` section.
     void init(const MapdataPointInfo::SData *start, u16 count) {
         if (count != 0) {
             m_entries.reserve(count);

@@ -53,13 +53,13 @@ public:
     /// @beginGetters
 
     /// @brief Gets the number of uses remaining for the current item
-    /// @return The number of uses remaining for the current item
+    /// @return The number of uses remaining for the current item, @ref m_currentCount
     [[nodiscard]] int currentCount() const {
         return m_currentCount;
     }
 
     /// @brief Gets the current item id in the slot
-    /// @return The @ref ItemId for the current item
+    /// @return The @ref ItemId for the current item, @ref m_currentId
     [[nodiscard]] ItemId id() const {
         return m_currentId;
     }

@@ -71,9 +71,32 @@ namespace Host {
 class Context {
 public:
     Context();
-    Context(const Context &c);
-    Context(Context &&c);
-    ~Context();
+
+    /// @brief Copy constructor which clones the provided context
+    /// @param c The context to copy from.
+    Context(const Context &c) {
+        m_contextMemory = malloc(MEMORY_SPACE_SIZE);
+        ASSERT(m_contextMemory && c.m_contextMemory);
+        memcpy(m_contextMemory, c.m_contextMemory, MEMORY_SPACE_SIZE);
+        m_statics = c.m_statics;
+    }
+
+    /// @brief Move constructs a context by stealing the memory block and pointers from the provided
+    /// context
+    /// @param c The context to move from.
+    Context(Context &&c) {
+        m_contextMemory = c.m_contextMemory;
+        c.m_contextMemory = nullptr;
+        m_statics = c.m_statics;
+        c.m_statics = {};
+    }
+
+    /// @brief Destructor which frees the allocated context memory.
+    /// @note This class does not manage the lifecycle of the heap that it referenced at the time of
+    /// construction; it only manages the copy.
+    ~Context() {
+        free(m_contextMemory);
+    }
 
     /// @brief Copy assignment operator
     /// @param rhs The context to copy from.
@@ -108,6 +131,8 @@ public:
     static void SetActiveContext(const Context &rhs);
 
 private:
+    /// @brief Structure holding all static pointers and values that represent the state of the
+    /// context.
     struct Statics {
         Abstract::Memory::MEMList m_rootList;
         Abstract::Memory::MEMList m_archiveList;
@@ -146,8 +171,8 @@ private:
         u32 m_flamePoleCount;
     };
 
-    void *m_contextMemory;
-    Statics m_statics;
+    void *m_contextMemory; ///< Pointer to the allocated memory block representing the context
+    Statics m_statics;     ///< Structure holding all static pointers and values
 };
 
 } // namespace Host

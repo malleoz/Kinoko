@@ -66,6 +66,7 @@ public:
     /// @brief Retrieves the position of the specified Wiggler body segment
     /// @param idx The index of the body segment
     /// @return The position of the body segment
+    /// @pre `idx` must be less than the number of links in the chain
     [[nodiscard]] const EGG::Vector3f &pos(size_t idx) const {
         ASSERT(idx < m_links.size());
         return m_links[idx].pos();
@@ -75,6 +76,7 @@ public:
     /// @brief Retrieves the up vector of the specified Wiggler body segment
     /// @param idx The index of the body segment
     /// @return The up vector of the body segment
+    /// @pre `idx` must be less than the number of links in the chain
     [[nodiscard]] const EGG::Vector3f &up(size_t idx) const {
         ASSERT(idx < m_links.size());
         return m_links[idx].up();

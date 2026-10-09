@@ -30,7 +30,8 @@ public:
         Abstract::File::Remove("results.txt");
     }
 
-    /// @copydoc KSystem::calc()
+    /// @copybrief KSystem::calc()
+    /// @details Simply calls @ref EGG::SceneManager::calc() on @ref m_sceneMgr.
     void calc() override {
         m_sceneMgr->calc();
     }
@@ -40,6 +41,7 @@ public:
 
     /// @brief Creates the singleton instance of the @ref KReplaySystem
     /// @return A pointer to the newly created @ref KReplaySystem instance
+    /// @pre The singleton instance of the @ref KReplaySystem must not already exist.
     static KReplaySystem *CreateInstance() {
         ASSERT(!s_instance);
         s_instance = EGG::egg_new<KReplaySystem>();
@@ -47,6 +49,7 @@ public:
     }
 
     /// @brief Destroys the singleton instance of the @ref KReplaySystem
+    /// @pre The singleton instance of the @ref KReplaySystem must exist.
     static void DestroyInstance() {
         ASSERT(s_instance);
         auto *instance = s_instance;
@@ -66,8 +69,27 @@ private:
 
     EGG_NEW_DELETE_FRIEND
 
-    KReplaySystem();
-    ~KReplaySystem() override;
+    /// @brief Default private constructor
+    /// @details Initializes @ref m_progressInterval, @ref m_replaysPlayed, and @ref m_replaysSynced
+    /// to zero and @ref m_currentGhost to `nullptr`.
+    KReplaySystem()
+        : m_progressInterval(0),
+          m_replaysPlayed(0),
+          m_replaysSynced(0),
+          m_currentGhost(nullptr) {}
+
+    /// @brief Default virtual destructor that destroys the associated @ref EGG::SceneManager, @ref
+    /// System::GhostFile and frees the raw ghost data buffer
+    ~KReplaySystem() override {
+        if (s_instance) {
+            s_instance = nullptr;
+            WARN("KReplaySystem instance not explicitly handled!");
+        }
+
+        EGG::egg_delete(m_sceneMgr);
+        EGG::egg_delete(m_currentGhost);
+        EGG::egg_free(const_cast<u8 *>(m_currentRawGhost.data()));
+    }
 
     /// @brief Deleted copy constructor
     KReplaySystem(const KReplaySystem &) = delete;

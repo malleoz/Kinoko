@@ -210,32 +210,32 @@ public:
     /// @beginGetters
 
     /// @brief Gets the bounding box containing all KCL tris
-    /// @return The bounding box encompassing all KCL triangles
+    /// @return The bounding box encompassing all KCL triangles, @ref m_bbox
     [[nodiscard]] const EGG::BoundBox3f &bbox() const {
         return m_bbox;
     }
 
     /// @brief Gets the index of the prism stored in @ref m_prismCache at the specified index `idx`
     /// @param idx The index in the cache to retrieve the prism index from
-    /// @return The prism index stored at the specified cache index
+    /// @return The prism index stored at the specified cache index in @ref m_prismCache.
     [[nodiscard]] u16 prismCache(u32 idx) const {
         return m_prismCache[idx];
     }
 
     /// @brief Gets a read-only span of all prisms in the KCL data
-    /// @return A read-only span of all prisms in the KCL data
+    /// @return A read-only span of all prisms in the KCL data from @ref m_prisms
     [[nodiscard]] std::span<const KCollisionPrism> prisms() const {
         return m_prisms.view();
     }
 
     /// @brief Gets a read-only span of all normal vectors in the KCL data
-    /// @return A read-only span of all normal vectors in the KCL data
+    /// @return A read-only span of all normal vectors in the KCL data from @ref m_nrms
     [[nodiscard]] std::span<const EGG::Vector3f> nrms() const {
         return m_nrms.view();
     }
 
     /// @brief Gets a read-only span of all vertex positions in the KCL data
-    /// @return A read-only span of all vertex positions in the KCL data
+    /// @return A read-only span of all vertex positions in the KCL data from @ref m_vertices
     [[nodiscard]] std::span<const EGG::Vector3f> vertices() const {
         return m_vertices.view();
     }

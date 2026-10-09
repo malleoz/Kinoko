@@ -176,7 +176,7 @@ public:
     /// @beginGetters
 
     /// @brief Gets the current height of the dirt trail segment
-    /// @return The current height of the dirt trail segment
+    /// @return The current height of the dirt trail segment, @ref m_height
     [[nodiscard]] f32 height() const {
         return m_height;
     }

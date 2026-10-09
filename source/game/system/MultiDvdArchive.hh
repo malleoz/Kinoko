@@ -2,6 +2,8 @@
 
 #include "game/system/DvdArchive.hh"
 
+#include <algorithm>
+
 const char *const SZS_EXTENSION = ".szs";
 
 namespace Kinoko::System {
@@ -20,7 +22,10 @@ public:
     };
 
     MultiDvdArchive(u16 archiveCount = 1);
-    ~MultiDvdArchive();
+
+    /// @addr{0x8052A6DC}
+    /// @brief Default destructor
+    ~MultiDvdArchive() = default;
 
     [[nodiscard]] std::span<const u8> getFile(const char *filename) const;
     void load(const char *filename);
@@ -28,6 +33,7 @@ public:
 
     /// @addr{0x8052AC40}
     /// @brief Clears all archives and their file data from memory
+    /// @details Calls @ref DvdArchive::clear() for each sub-archive.
     void clear() {
         for (auto &archive : m_archives) {
             archive.clear();
@@ -36,6 +42,7 @@ public:
 
     /// @addr{0x8052AA88}
     /// @brief Unmounts all sub-archives and clears all associated data from memory
+    /// @details Calls @ref DvdArchive::unmount() for each sub-archive.
     void unmount() {
         for (auto &archive : m_archives) {
             archive.unmount();
@@ -46,27 +53,16 @@ public:
     /// @brief Checks if any of the sub-archives are loaded
     /// @return `true` if at least one sub-archive is loaded, `false` otherwise
     [[nodiscard]] bool isLoaded() const {
-        for (const auto &archive : m_archives) {
-            if (archive.isLoaded()) {
-                return true;
-            }
-        }
-
-        return false;
+        return std::ranges::any_of(m_archives,
+                [](const auto &archive) { return archive.isLoaded(); });
     }
 
     /// @addr{0x8052AE08}
     /// @brief Returns the number of sub-archives that have been ripped
     /// @return The count of ripped sub-archives
     [[nodiscard]] u16 rippedArchiveCount() const {
-        u16 count = 0;
-        for (const auto &archive : m_archives) {
-            if (archive.isRipped()) {
-                count++;
-            }
-        }
-
-        return count;
+        return std::ranges::count_if(m_archives,
+                [](const auto &archive) { return archive.isRipped(); });
     }
 
 private:

@@ -42,7 +42,7 @@ public:
     /// @details Sets @ref m_isOscillating based on whether `info` has setting 2 set to 1. Performs
     /// a deep copy of the points from `info` and saves to @ref m_points. Saves the provided `idx`
     /// to @ref m_idx. Finally, initializes @ref m_hasCheckedCol to `false`.
-    Rail(u16 idx, System::MapdataPointInfo *info)
+    Rail(u16 idx, const System::MapdataPointInfo *info)
         : m_isOscillating(info->setting(1) == 1),
           m_points(info->points()),
           m_idx(idx) {
@@ -81,19 +81,20 @@ public:
     /// @beginGetters
 
     /// @brief Gets the number of points along the rail
-    /// @return The number of points in the rail
+    /// @return The number of points in the rail, aka the size of @ref m_points
     [[nodiscard]] u16 pointCount() const {
         return m_points.size();
     }
 
     /// @brief Checks whether the rail is a loop or a back-and-forth path
-    /// @return `true` if the rail is oscillating, `false` if the rail is a loop
+    /// @return @ref m_isOscillating which is `true` if the rail is oscillating, or `false` if the
+    /// rail is a loop
     [[nodiscard]] bool isOscillating() const {
         return m_isOscillating;
     }
 
     /// @brief Gets a read-only span of the points in the rail
-    /// @return A span of the points in the rail
+    /// @return A span of the points in the rail, from @ref m_points
     [[nodiscard]] std::span<const System::MapdataPointInfo::Point> points() const {
         return m_points.view();
     }
@@ -101,7 +102,7 @@ public:
     /// @addr{0x806ED150}
     /// @brief Gets the position of the point at the given index `idx
     /// @param idx The index of the point in the rail
-    /// @return The position of the point at the given index
+    /// @return The position of the point at the given index in @ref m_points
     /// @pre `idx` must be less than the number of points in the rail
     [[nodiscard]] const EGG::Vector3f &pointPos(u16 idx) const {
         ASSERT(idx < m_points.size());
@@ -110,7 +111,7 @@ public:
 
     /// @brief Gets the up vector of the point at the given index `idx`
     /// @param idx The index of the point in the rail
-    /// @return The up vector of the point at the given index `idx`
+    /// @return The up vector of the point at the given index `idx` in @ref m_floorNrms
     /// @pre Assumes @ref checkSphereFull() has been called in order to allocate the array of floor
     /// normals and set each element.
     [[nodiscard]] const EGG::Vector3f &floorNrm(u16 idx) const {
@@ -120,7 +121,7 @@ public:
 
     /// @addr{0x806F09C0} @addr{0x806EF9AC}
     /// @brief Gets the length of the edge or curve between the two points
-    /// @return The length of the edge or curve between the two points
+    /// @return The length of the edge or curve between the two points, @ref m_pathLength
     /// @details Normally @ref m_pathLength is a member in each derived class, but by moving it to
     /// the base class, we can devirtualize this method.
     [[nodiscard]] f32 getPathLength() const {
@@ -149,7 +150,7 @@ private:
 /// it can linearly interpolate the position of an object along the rail based on its speed.
 class RailLine : public Rail {
 public:
-    RailLine(u16 idx, System::MapdataPointInfo *info);
+    RailLine(u16 idx, const System::MapdataPointInfo *info);
 
     /// @addr{0x806EFD6C}
     ~RailLine() override = default;
@@ -202,7 +203,7 @@ private:
 /// it can smoothly interpolate the position of an object along the rail based on its speed.
 class RailSpline : public Rail {
 public:
-    RailSpline(u16 idx, System::MapdataPointInfo *info);
+    RailSpline(u16 idx, const System::MapdataPointInfo *info);
 
     /// @addr{0x806ED828}
     ~RailSpline() override = default;

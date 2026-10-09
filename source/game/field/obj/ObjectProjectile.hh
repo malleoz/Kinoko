@@ -26,8 +26,7 @@ public:
 
     /// @brief Gets the unique index of this projectile within the @ref ObjectSniper's list of
     /// projectiles.
-    /// @return The unique index of this projectile within the @ref ObjectSniper's list of
-    /// projectiles.
+    /// @return The index within the @ref ObjectSniper's list of projectiles, @ref m_idx
     [[nodiscard]] s16 idx() const {
         return m_idx;
     }

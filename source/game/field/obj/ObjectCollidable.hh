@@ -112,7 +112,7 @@ public:
 
     /// @addr{0x80573518}
     /// @brief Gets a pointer to the GJK collision object
-    /// @return A pointer to the @ref ObjectCollisionBase GJK collision object
+    /// @return A pointer to the @ref ObjectCollisionBase GJK collision object, @ref m_collision
     /// @details In the base game, this is a virtual function. Since no derived class
     /// overrides this function, we can devirtualize for Kinoko.
     [[nodiscard]] ObjectCollisionBase *collision() const {

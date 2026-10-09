@@ -45,34 +45,38 @@ public:
 
     void read(EGG::Stream &stream);
 
-    /// @brief Virtual function that tests whether the provided position lies within the area
+    /// @brief Tests whether the provided position lies within the area
     /// @param pos The position to check
-    /// @return True if the position lies within the area, false otherwise
+    /// @return `true` if the position lies within the area, `false` otherwise
     [[nodiscard]] virtual bool testImpl(const EGG::Vector3f &pos) const = 0;
 
     /// @addr{0x805160B0}
     /// @brief Tests whether the provided position lies within the area
     /// @param pos The position to check
-    /// @return True if the position lies within the area, false otherwise
+    /// @return `true` if the position lies within the area, `false` otherwise
     /// @details Performs a preliminary check using the bounding sphere before invoking the more
-    /// detailed test implementation.
+    /// detailed @ref testImpl() virtual function.
     [[nodiscard]] bool test(const EGG::Vector3f &pos) const {
         return (m_position - pos).squaredLength() > m_boundingRadiusSq ? false : testImpl(pos);
     }
 
     /// @beginGetters
 
-    [[nodiscard]] MapdataPointInfo *getPointInfo() const;
+    [[nodiscard]] const MapdataPointInfo *getPointInfo() const;
 
+    /// @brief Gets the type of area (e.g. @ref Type::MovingRoad)
+    /// @return The type of the area
     [[nodiscard]] Type type() const {
         return m_type;
     }
 
+    /// @brief Gets the priority of the area
+    /// @return The priority of the area
     [[nodiscard]] u8 priority() const {
         return m_priority;
     }
 
-    /// @brief Fetches the area settings
+    /// @brief Fetches the area setting at the specified index
     /// @param i The index of the setting to fetch
     /// @return The value of the specified setting
     [[nodiscard]] s16 param(size_t i) const {
@@ -80,10 +84,12 @@ public:
         return m_params[i];
     }
 
+    /// @brief Gets the index of the entry in the AREA section of the KMP
+    /// @return The index of the entry in the AREA section of the KMP
     [[nodiscard]] s16 index() const {
         return m_index;
     }
-    
+
     /// @endGetters
 
 protected:
@@ -99,7 +105,7 @@ protected:
     EGG::Vector3f m_right;      ///< Right direction vector of the area
     EGG::Vector3f m_up;         ///< Up direction vector of the area
     EGG::Vector3f m_forward;    ///< Forward direction vector of the area
-    EGG::Vector3f m_dimensions; ///< Dimensions of the area
+    EGG::Vector3f m_dimensions; ///< Half-length of each dimension of the area
     f32 m_ellipseRadiusSq;      ///< Square of the x-axis dimension (used for cylinders only)
     f32 m_ellipseRatio;     ///< Ratio between the x and z-axis dimensions (used for cylinders only)
     f32 m_boundingRadiusSq; ///< Square of the bounding sphere containing the entire area shape
@@ -110,7 +116,9 @@ protected:
 class MapdataAreaBox final : public MapdataAreaBase {
 public:
     MapdataAreaBox(const SData *data, s16 index);
-    ~MapdataAreaBox() = default;
+
+    /// @brief Default virtual destructor
+    ~MapdataAreaBox() override = default;
 
     [[nodiscard]] bool testImpl(const EGG::Vector3f &pos) const override;
 };
@@ -119,25 +127,41 @@ public:
 class MapdataAreaCylinder final : public MapdataAreaBase {
 public:
     MapdataAreaCylinder(const SData *data, s16 index);
-    ~MapdataAreaCylinder() = default;
+
+    /// @brief Default virtual destructor
+    ~MapdataAreaCylinder() override = default;
 
     [[nodiscard]] bool testImpl(const EGG::Vector3f &pos) const override;
 };
 
-/// @brief Provides access to entries in the AREA section of the course KMP
+/// @brief Provides access to entries in the `AREA` section of the course KMP
 class MapdataAreaAccessor final
     : public MapdataAccessorBase<MapdataAreaBase, MapdataAreaBase::SData> {
 public:
-    MapdataAreaAccessor(const MapSectionHeader *header);
-    ~MapdataAreaAccessor() override;
+    /// @addr{0x80515E50}
+    /// @brief Constructor
+    /// @param header Pointer to the header of the AREA section
+    /// @details Constructs all entries and sorts them by priority to @ref m_sortedEntries
+    MapdataAreaAccessor(const MapSectionHeader *header)
+        : MapdataAccessorBase<MapdataAreaBase, MapdataAreaBase::SData>(header) {
+        init(reinterpret_cast<const MapdataAreaBase::SData *>(m_sectionHeader + 1),
+                parse<u16>(m_sectionHeader->count));
+
+        m_sortedEntries = owning_span<MapdataAreaBase *>(size());
+    }
+
+    /// @addr{0x80518BDC}
+    /// @brief Default virtual destructor
+    ~MapdataAreaAccessor() override = default;
 
     void init(const MapdataAreaBase::SData *start, u16 count);
     void sort();
 
-    /// @brief Returns the sorted entry at the specified index
+    /// @brief Gets the sorted entry at the specified index
     /// @param i The index of the sorted entry to retrieve
-    /// @return A pointer to the sorted entry at the specified index, or nullptr if the index is out
-    /// of bounds
+    /// @return A pointer to the sorted entry at the specified index, or `nullptr` if the index is
+    /// out of bounds
+    /// @pre Requires that @ref m_sortedEntries has already been initialized.
     [[nodiscard]] MapdataAreaBase *getSorted(u16 i) const {
         ASSERT(!m_sortedEntries.empty());
         return i < m_sortedEntries.size() ? m_sortedEntries[i] : nullptr;

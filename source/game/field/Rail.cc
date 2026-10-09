@@ -43,7 +43,7 @@ void Rail::checkSphereFull() {
 /// @param info Pointer to the map data point information
 /// @details Initializes the rail line by calculating the direction and length between
 /// points and the resulting total path length.
-RailLine::RailLine(u16 idx, System::MapdataPointInfo *info) : Rail(idx, info) {
+RailLine::RailLine(u16 idx, const System::MapdataPointInfo *info) : Rail(idx, info) {
     u16 transCount = m_isOscillating ? m_points.size() - 1 : m_points.size();
     m_transitions = owning_span<RailLineTransition>(transCount);
     m_pathLength = 0.0f;
@@ -70,7 +70,7 @@ RailLine::RailLine(u16 idx, System::MapdataPointInfo *info) : Rail(idx, info) {
 /// @param idx The index of the rail
 /// @param info Pointer to the map data point information
 /// @details Calculates each spline's control points and length and computes the total rail length
-RailSpline::RailSpline(u16 idx, System::MapdataPointInfo *info) : Rail(idx, info) {
+RailSpline::RailSpline(u16 idx, const System::MapdataPointInfo *info) : Rail(idx, info) {
     u16 transitionCount = m_isOscillating ? m_points.size() - 1 : m_points.size();
     m_transitions = owning_span<RailSplineTransition>(transitionCount);
     invalidateTransitions(false);

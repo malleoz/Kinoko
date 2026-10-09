@@ -245,31 +245,31 @@ public:
     /// @beginGetters
 
     /// @brief Gets the @ref RailInterpolator associated with the object
-    /// @return The @ref RailInterpolator for the object
+    /// @return The @ref RailInterpolator for the object, @ref m_railInterpolator
     [[nodiscard]] const RailInterpolator *railInterpolator() const {
         return m_railInterpolator;
     }
 
     /// @brief Gets the position of the object in world space
-    /// @return The position of the object in world space
+    /// @return The position of the object in world space, @ref m_pos
     [[nodiscard]] const EGG::Vector3f &pos() const {
         return m_pos;
     }
 
     /// @brief Gets the scale of the object
-    /// @return The scale of the object
+    /// @return The scale of the object, @ref m_scale
     [[nodiscard]] const EGG::Vector3f &scale() const {
         return m_scale;
     }
 
     /// @brief Gets the rotation of the object
-    /// @return The rotation of the object
+    /// @return The rotation of the object, @ref m_rot
     [[nodiscard]] const EGG::Vector3f &rot() const {
         return m_rot;
     }
 
     /// @brief Gets the transformation matrix of the object
-    /// @return The transformation matrix of the object
+    /// @return The transformation matrix of the object, @ref m_transform
     [[nodiscard]] const EGG::Matrix34f &transform() const {
         return m_transform;
     }

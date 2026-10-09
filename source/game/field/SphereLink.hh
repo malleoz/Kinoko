@@ -95,19 +95,20 @@ public:
     }
 
     /// @brief Gets the length of the link
-    /// @return The maximum distance between this link and the previous (forward) link
+    /// @return The maximum distance between this link and the previous (forward) link, @ref
+    /// m_linkLen
     [[nodiscard]] f32 linkLen() const {
         return m_linkLen;
     }
 
     /// @brief Gets the current position of the link in world space
-    /// @return The current position of the link
+    /// @return The current position of the link, @ref m_pos
     [[nodiscard]] const EGG::Vector3f &pos() const {
         return m_pos;
     }
 
     /// @brief Gets the smoothed up vector of the link
-    /// @return The smoothed up vector of the link
+    /// @return The smoothed up vector of the link, @ref m_smoothedUp
     [[nodiscard]] const EGG::Vector3f &up() const {
         return m_smoothedUp;
     }

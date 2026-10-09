@@ -59,7 +59,6 @@ public:
     void initCheckpointLinks(MapdataCheckPointAccessor &accessor, int id);
     [[nodiscard]] SectorOccupancy checkSectorAndDistanceRatio(const EGG::Vector3f &pos,
             f32 &distanceRatio) const;
-
     [[nodiscard]] u16 getEntryOffsetMs(const EGG::Vector2f &prevPos,
             const EGG::Vector2f &pos) const;
 
@@ -89,64 +88,92 @@ public:
     }
 
     /// @brief Checks whether this checkpoint is a regular checkpoint
-    /// @return True if this checkpoint is a regular checkpoint, false otherwise.
+    /// @return `true` if this checkpoint is a regular checkpoint (@ref Type::NormalCheckpoint),
+    /// `false` otherwise.
     [[nodiscard]] bool isNormalCheckpoint() const {
         return static_cast<Type>(m_type) == Type::NormalCheckpoint;
     }
 
     /// @brief Checks whether this checkpoint increments the lap count
-    /// @return True if this checkpoint increments the lap count, false otherwise.
+    /// @return `true` if this checkpoint increments the lap count (@ref Type::FinishLine), `false`
+    /// otherwise.
     [[nodiscard]] bool isFinishLine() const {
         return static_cast<Type>(m_type) == Type::FinishLine;
     }
 
     /// @beginSetters
 
+    /// @brief Marks this checkpoint as searched in the DFS traversal this frame
+    /// @details Sets @ref m_searched to `true`.
     void setSearched() {
         m_searched = true;
     }
 
+    /// @brief Clears the searched status of this checkpoint
+    /// @details Sets @ref m_searched to `false`.
     void clearSearched() {
         m_searched = false;
     }
-    
+
     /// @endSetters
 
     /// @beginGetters
 
+    /// @brief Checks whether this checkpoint has been searched in the DFS traversal this frame
+    /// @return `true` if this checkpoint has been searched, `false` otherwise.
     [[nodiscard]] bool searched() const {
         return m_searched;
     }
 
+    /// @brief Gets the index of the respawn point associated with this checkpoint
+    /// @return The respawn point index, @ref m_jugemIndex.
     [[nodiscard]] s8 jugemIndex() const {
         return m_jugemIndex;
     }
 
+    /// @brief Gets the type of this checkpoint
+    /// @return The checkpoint's type, @ref m_type.
     [[nodiscard]] s8 type() const {
         return m_type;
     }
 
+    /// @brief Gets the number of next checkpoints linked to this checkpoint
+    /// @return The number of next checkpoints, @ref m_nextCount.
     [[nodiscard]] u16 nextCount() const {
         return m_nextCount;
     }
 
+    /// @brief Gets the number of previous checkpoints linked to this checkpoint
+    /// @return The number of previous checkpoints, @ref m_prevCount.
     [[nodiscard]] u16 prevCount() const {
         return m_prevCount;
     }
 
+    /// @brief Gets the direction vector of this checkpoint
+    /// @return The direction vector, @ref m_dir.
     [[nodiscard]] const EGG::Vector2f &dir() const {
         return m_dir;
     }
 
+    /// @brief Gets the ID of this checkpoint
+    /// @return The checkpoint's ID, @ref m_id.
     [[nodiscard]] u16 id() const {
         return m_id;
     }
 
+    /// @brief Gets the previous checkpoint at the given index
+    /// @param i The index of the previous checkpoint
+    /// @return A pointer to the previous checkpoint
+    /// @pre Requires that `i` is less than the size of @ref m_prevPoints (aka @ref MAX_NEIGHBORS)
     [[nodiscard]] MapdataCheckPoint *prevPoint(size_t i) const {
         ASSERT(i < m_prevPoints.size());
         return m_prevPoints[i];
     }
 
+    /// @brief Gets the next checkpoint at the given index
+    /// @param i The index of the next checkpoint
+    /// @return A pointer to the next checkpoint
+    /// @pre Requires that `i` is less than the size of @ref m_nextPoints (aka @ref MAX_NEIGHBORS)
     [[nodiscard]] MapdataCheckPoint *nextPoint(size_t i) const {
         ASSERT(i < m_nextPoints.size());
         return m_nextPoints[i].checkpoint;
@@ -222,15 +249,27 @@ private:
     std::array<LinkedCheckpoint, MAX_NEIGHBORS> m_nextPoints;
 };
 
-/// @brief Provides access to entries in the CKPT section of the course KMP
+/// @brief Provides access to entries in the `CKPT` section of the course KMP
 class MapdataCheckPointAccessor
     : public MapdataAccessorBase<MapdataCheckPoint, MapdataCheckPoint::SData> {
 public:
-    MapdataCheckPointAccessor(const MapSectionHeader *header);
-    ~MapdataCheckPointAccessor() override;
+    /// @brief Constructor
+    /// @param header Pointer to the map section header containing the checkpoint data
+    MapdataCheckPointAccessor(const MapSectionHeader *header)
+        : MapdataAccessorBase<MapdataCheckPoint, MapdataCheckPoint::SData>(header) {
+        MapdataAccessorBase::init(
+                reinterpret_cast<const MapdataCheckPoint::SData *>(m_sectionHeader + 1),
+                parse<u16>(m_sectionHeader->count));
+        init();
+    }
+
+    /// @brief Default virtual destructor
+    ~MapdataCheckPointAccessor() override = default;
 
     /// @beginGetters
 
+    /// @brief Gets the type of the last key checkpoint encountered
+    /// @return The type of the last key checkpoint encountered, @ref m_lastKcpType
     [[nodiscard]] s8 lastKcpType() const {
         return m_lastKcpType;
     }

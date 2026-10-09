@@ -34,14 +34,18 @@ public:
 
     /// @beginGetters
 
+    /// @brief Gets the position of the respawn point
+    /// @return The position of the respawn point, @ref m_pos.
     const EGG::Vector3f &pos() const {
         return m_pos;
     }
 
+    /// @brief Gets the rotation of the respawn point
+    /// @return The rotation of the respawn point, @ref m_rot.
     const EGG::Vector3f &rot() const {
         return m_rot;
     }
-    
+
     /// @endGetters
 
 private:
@@ -50,7 +54,7 @@ private:
     EGG::Vector3f m_rot;                           ///< Rotation of the respawn point
 };
 
-/// @brief Provides access to entries in the JGPT section of the course KMP
+/// @brief Provides access to entries in the `JGPT` section of the course KMP
 class MapdataJugemPointAccessor
     : public MapdataAccessorBase<MapdataJugemPoint, MapdataJugemPoint::SData> {
 public:

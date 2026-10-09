@@ -27,23 +27,6 @@ MultiDvdArchive *ResourceManager::load(s32 idx, const char *filename) {
     return m_archives[idx];
 }
 
-/// @addr{0x8053FCEC}
-/// @brief Private constructor which allocates and creates two @ref MultiDvdArchive objects
-ResourceManager::ResourceManager() : m_archives(ARCHIVE_COUNT) {
-    for (u8 i = 0; i < ARCHIVE_COUNT; i++) {
-        m_archives.push_back(Create(i));
-    }
-}
-
-/// @addr{0x8053FF1C}
-/// @brief Private virtual destructor
-ResourceManager::~ResourceManager() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("ResourceManager instance not explicitly handled!");
-    }
-}
-
 ResourceManager *ResourceManager::s_instance = nullptr;
 
 } // namespace Kinoko::System

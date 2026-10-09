@@ -342,7 +342,9 @@ private:
     f32 m_cacheRadius;          ///< Radius of the last sphere search; -1 if no cache is valid
     BoxColFlag m_cacheFlag;     ///< Flag filter used in the last search
 
-    static BoxColManager *s_instance; ///< @addr{0x809C2EF0}
+    /// @addr{0x809C2EF0}
+    /// @brief The pointer to the singleton instance of the class
+    static BoxColManager *s_instance;
 };
 
 } // namespace Field

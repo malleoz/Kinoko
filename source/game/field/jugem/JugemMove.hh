@@ -72,13 +72,14 @@ public:
     /// @beginGetters
 
     /// @brief Returns Lakitu's transformed position
-    /// @return The transformed position of Lakitu in world space
+    /// @return The transformed position of Lakitu in world space, @ref m_transPos
     const EGG::Vector3f &transPos() const {
         return m_transPos;
     }
 
     /// @brief Returns Lakitu's transformation matrix
-    /// @return The combined lean and rotation matrices representing Lakitu's orientation
+    /// @return The combined lean and rotation matrices representing Lakitu's orientation, @ref
+    /// m_transform
     const EGG::Matrix34f &transform() const {
         return m_transform;
     }

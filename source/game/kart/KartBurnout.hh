@@ -8,8 +8,13 @@ namespace Kinoko::Kart {
 /// when holding acceleration too long during the race countdown.
 class KartBurnout : private KartObjectProxy {
 public:
-    KartBurnout();
-    ~KartBurnout();
+    /// @addr{inlined in 0x80577FC4}
+    /// @brief Default constructor
+    KartBurnout() = default;
+
+    /// @addr{0x805781DC}
+    /// @brief Default virtual destructor
+    ~KartBurnout() override = default;
 
     /// @addr{0x805890B0}
     /// @brief Runs when a burnout occurs at the beginning of the race

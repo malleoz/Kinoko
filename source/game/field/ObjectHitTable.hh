@@ -60,7 +60,7 @@ public:
 
     /// @brief Gets the reaction for the specified entry in the first data section
     /// @param i The index of the entry to get the reaction for
-    /// @return The @ref Kart::Reaction for the specified entry
+    /// @return The @ref Kart::Reaction for the specified entry in @ref m_reactions
     [[nodiscard]] Kart::Reaction reaction(s16 i) const {
         ASSERT(i != -1);
         ASSERT(i < m_count);

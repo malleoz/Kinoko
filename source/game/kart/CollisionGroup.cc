@@ -4,6 +4,7 @@ namespace Kinoko::Kart {
 
 /// @addr{0x805B821C}
 /// @brief Resets the collision data to default values to prep for a new collision check
+/// @details Resets all vectors to zero and all booleans to `false`.
 void CollisionData::reset() {
     tangentOff.setZero();
     floorNrm.setZero();
@@ -38,20 +39,18 @@ void CollisionData::reset() {
     bMovingWaterVertical = false;
 }
 
-/// @addr{0x805B7F48}
-/// @brief Constructor
-Hitbox::Hitbox() : m_bspHitbox(nullptr), m_ownsBSP(false) {}
-
-/// @addr{0x805B8480}
-/// @brief Destructor that frees the @ref BSP::Hitbox pointer if this instance owns it
-Hitbox::~Hitbox() {
-    if (m_ownsBSP) {
-        EGG::egg_delete(m_bspHitbox);
-    }
-}
-
 /// @addr{0x805B7FBC}
 /// @brief Calculates the position of a given hitbox, both relative to the player and world
+/// @param totalScale The total scale factor to apply to the hitbox
+/// @param sinkDepth The depth to sink the hitbox
+/// @param scale The scale vector for the hitbox
+/// @param rot The rotation quaternion for the hitbox
+/// @param pos The world position of the hitbox
+/// @details Updates @ref m_relPos and @ref m_worldPos based on the provided scale, rotation, and
+/// world position. `totalScale` is used to adjust the hitbox's vertical position upwards even when
+/// `scale` is smaller, such as when the player was crushed by a stomper. Also applies `sinkDepth`
+/// to the hitbox's vertical position to account for instances when the vehicle can sink into the
+/// road KCL.
 void Hitbox::calc(f32 totalScale, f32 sinkDepth, const EGG::Vector3f &scale, const EGG::Quatf &rot,
         const EGG::Vector3f &pos) {
     f32 scaledHeightOffset = 0.0f;
@@ -69,6 +68,11 @@ void Hitbox::calc(f32 totalScale, f32 sinkDepth, const EGG::Vector3f &scale, con
 /// @addr{0x805B80A8}
 /// @brief Saves the current position of the hitbox so it can be referenced after updating the
 /// Hitbox's next position
+/// @param scale The scale vector for the hitbox
+/// @param pose The transformation matrix for the hitbox
+/// @details Updates @ref m_lastPos based on the provided scale and transformation matrix. Offsets
+/// the hitbox's vertical position upwards if the Y-scale is different from the Z-scale and less
+/// than 1.0f.
 void Hitbox::setLastPos(const EGG::Vector3f &scale, const EGG::Matrix34f &pose) {
     f32 yScaleFactor = scale.y;
     EGG::Vector3f scaledPos = m_bspHitbox->position;
@@ -84,23 +88,18 @@ void Hitbox::setLastPos(const EGG::Vector3f &scale, const EGG::Matrix34f &pose) 
     m_lastPos = pose.ps_multVector(scaledPos);
 }
 
-/// @addr{0x805B82BC}
-/// @brief Constructor
-CollisionGroup::CollisionGroup() : m_hitboxScale(1.0f) {
-    m_collisionData.reset();
-}
-
-/// @brief Default destructor
-CollisionGroup::~CollisionGroup() = default;
-
 /// @addr{0x805B84C0}
 /// @brief Initializes the hitbox array based on the provided @ref BSP::Hitbox array
 /// @details The BSP always contains 16 hitboxes, but only some of them are valid/enabled.
 /// The game iterates the @ref BSP::Hitbox array to see how many are enabled, allocates a Hitbox
 /// array of that size, sets all the enabled BSP hitboxes, and computes the bounding radius of the
 /// kart based on the enabled hitboxes.
-/// @param hitboxes The hitboxes from @p KartParam.bin
+/// @param hitboxes The hitboxes from `KartParam.bin`
 /// @return Half of the largest Z-axis extent among the enabled hitboxes
+/// @details Counts the number of BSP hitboxes that are actually enabled and sizes @ref m_hitboxes
+/// accordingly. For each enabled hitbox, a corresponding @ref Hitbox instance is created and
+/// initialized with the provided @ref BSP::Hitbox. Finally, returns the bounding radius of the
+/// hitboxes.
 f32 CollisionGroup::initHitboxes(const std::array<BSP::Hitbox, 16> &hitboxes) {
     u16 bspHitboxCount = 0;
 
@@ -125,6 +124,8 @@ f32 CollisionGroup::initHitboxes(const std::array<BSP::Hitbox, 16> &hitboxes) {
 /// @addr{0x805B883C}
 /// @brief Sets the bounding radius
 /// @return Half of the largest Z-axis extent among the enabled hitboxes
+/// @details This effectively computes the required radius of a bounding sphere that encompasses all
+/// enabled hitboxes.
 f32 CollisionGroup::computeCollisionLimits() {
     EGG::Vector3f max = EGG::Vector3f::zero;
 
@@ -158,6 +159,10 @@ f32 CollisionGroup::computeCollisionLimits() {
 /// @brief Creates a hitbox to represent a tire
 /// @param radius The radius of the tire
 /// @param relPos The position of the tire relative to the kart's position
+/// @details Creates a single hitbox to represent the tire. Creates a new @ref BSP::Hitbox instance
+/// and associates it with the @ref Hitbox. Sets the BSP hitbox's position and radius based on the
+/// provided parameters, the hitbox's radius based on the provided `radius`, and sets @ref
+/// m_boundingRadius to the provided `radius`.
 void CollisionGroup::createSingleHitbox(f32 radius, const EGG::Vector3f &relPos) {
     m_hitboxes = owning_span<Hitbox>(1);
 

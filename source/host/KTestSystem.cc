@@ -161,17 +161,6 @@ void KTestSystem::parseOptions(int argc, char **argv) {
     }
 }
 
-/// @brief Default private constructor
-KTestSystem::KTestSystem() : m_testMode(Host::EOption::Invalid) {}
-
-/// @brief Private virtual destructor
-KTestSystem::~KTestSystem() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("KTestSystem instance not explicitly handled!");
-    }
-}
-
 /// @brief Initializes the test suite by reading the KRKG file and generating the list of test cases
 /// @details Validates that the header and footer signatures are present in the file. Validates that
 /// the `.krkg` file version is supported by the Kinoko executable. Validates that `.rkg` and
@@ -234,6 +223,7 @@ void KTestSystem::initSuite() {
 }
 
 /// @brief Starts the next test case.
+/// @details Reads in data from the `KRKG` file and initializes the test system's state accordingly.
 void KTestSystem::startNextTestCase() {
     constexpr u32 KRKG_SIGNATURE = 0x4b524b47; // KRKG
 

@@ -43,31 +43,30 @@ public:
         }
     }
 
-    /// @brief Returns the entry at the specified index, or nullptr if the index is out of bounds
+    /// @brief Returns the entry at the specified index
     /// @param i The index of the entry to retrieve
-    /// @return A pointer to the entry at the specified index, or nullptr if the index is out of
+    /// @return A pointer to the entry at the specified index, or `nullptr` if the index is out of
     /// bounds
     [[nodiscard]] T *get(u16 i) const {
         return i < m_entries.size() ? m_entries[i] : nullptr;
     }
 
-    /// @brief Returns the raw data for the entry at the specified index, or nullptr if the index is
-    /// out of bounds
+    /// @brief Returns the raw data for the entry at the specified index
     /// @param i The index of the entry to retrieve
-    /// @return A pointer to the raw data for the entry at the specified index, or nullptr if the
+    /// @return A pointer to the raw data for the entry at the specified index, or `nullptr` if the
     /// index is out of bounds
     [[nodiscard]] TData *getData(u16 i) const {
         return i < m_entries.size() ? m_entries[i]->data() : nullptr;
     }
 
-    /// @brief Returns the number of entries in the section
+    /// @brief Gets the number of entries in the section
     /// @return The number of entries in the section
     [[nodiscard]] u16 size() const {
         return m_entries.size();
     }
 
-    /// @brief Returns whether the section has no entries
-    /// @return True if the section has no entries, false otherwise
+    /// @brief Determines whether the section has no entries
+    /// @return `true` if the section has no entries, `false` otherwise
     [[nodiscard]] bool empty() const {
         return m_entries.empty();
     }

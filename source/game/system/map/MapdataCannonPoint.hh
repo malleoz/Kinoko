@@ -20,6 +20,8 @@ public:
 
     /// @brief Constructor
     /// @param data Pointer to the raw cannon point data
+    /// @details Creates a @ref EGG::RamStream from the raw cannon point data and reads the data
+    /// into the member variables.
     MapdataCannonPoint(const SData *data) : m_rawData(data) {
         EGG::RamStream stream = EGG::RamStream(data, sizeof(SData));
         read(stream);
@@ -39,22 +41,30 @@ public:
 
     /// @beginGetters
 
-    const EGG::Vector3f &pos() const {
+    /// @brief Gets the position of the cannon target
+    /// @return The position of the cannon target
+    [[nodiscard]] const EGG::Vector3f &pos() const {
         return m_pos;
     }
 
-    const EGG::Vector3f &rot() const {
+    /// @brief Gets the rotation of karts in this cannon
+    /// @return The rotation of karts in this cannon
+    [[nodiscard]] const EGG::Vector3f &rot() const {
         return m_rot;
     }
 
-    u16 id() const {
+    /// @brief Gets the index of the cannon point
+    /// @return The index of the cannon point
+    [[nodiscard]] u16 id() const {
         return m_id;
     }
 
-    s16 parameterIdx() const {
+    /// @brief Gets the index into the global table of cannon properties
+    /// @return The index into the global table of cannon properties
+    [[nodiscard]] s16 parameterIdx() const {
         return m_parameterIdx;
     }
-    
+
     /// @endGetters
 
 private:
@@ -65,7 +75,7 @@ private:
     s16 m_parameterIdx;                            ///< Index into the table of cannon properties
 };
 
-/// @brief Provides access to entries in the CNPT section of the course KMP
+/// @brief Provides access to entries in the `CNPT` section of the course KMP
 class MapdataCannonPointAccessor
     : public MapdataAccessorBase<MapdataCannonPoint, MapdataCannonPoint::SData> {
 public:

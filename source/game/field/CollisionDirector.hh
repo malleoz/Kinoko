@@ -279,7 +279,7 @@ public:
     /// @beginGetters
 
     /// @brief Gets a pointer to the closest cached collision information
-    /// @return A const pointer to the closest cached collision information, or `nullptr` if there
+    /// @return A const pointer to @ref m_closestCollisionEntry, or `nullptr` if there
     /// is none.
     [[nodiscard]] const CollisionEntry *closestCollisionEntry() const {
         return m_closestCollisionEntry;

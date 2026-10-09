@@ -6,8 +6,10 @@ namespace Kinoko::System {
 
 /// @addr{0x805302C4}
 /// @brief Initialization that occurs upon loading a race
-/// @details Normally we copy the menu scenario into the race scenario.
-/// However, Kinoko doesn't support menus, so we use a callback.
+/// @details Sets the race scenario's player count to 1 since we only implement a single player in
+/// Kinoko. Normally we copy the menu scenario into the race scenario. However, Kinoko doesn't
+/// support menus, so we use a callback. Finally, initializes controllers via @ref
+/// initControllers().
 void RaceConfig::initRace() {
     m_raceScenario.playerCount = 1;
 
@@ -20,7 +22,10 @@ void RaceConfig::initRace() {
 
 /// @addr{0x8052F4E8}
 /// @brief Initializes the controllers for each player
-/// @details This is normally scoped within RaceConfig::Scenario, but Kinoko doesn't support menus.
+/// @details If the player is a ghost, then calls @ref initGhost(). If the player is a local/live
+/// player, then initializes the controller via @ref KPadDirector::setHostPad(). Otherwise, panics
+/// due to an invalid player type.
+/// @note This is normally scoped within RaceConfig::Scenario, but Kinoko doesn't support menus.
 /// For Kinoko, we just care about the player at index 0.
 void RaceConfig::initControllers() {
     switch (m_raceScenario.players[0].type) {
@@ -38,7 +43,9 @@ void RaceConfig::initControllers() {
 
 /// @addr{0x8052EEF0}
 /// @brief Initializes the ghost
-/// @details This is normally scoped within RaceConfig::Scenario, but Kinoko doesn't support menus.
+/// @details Sets the race scenario's course and player info based on the ghost data. Finally, sets
+/// the ghost pad via @ref KPadDirector::setGhostPad().
+/// @note This is normally scoped within RaceConfig::Scenario, but Kinoko doesn't support menus.
 void RaceConfig::initGhost() {
     GhostFile ghost(m_ghost);
 
@@ -49,19 +56,6 @@ void RaceConfig::initGhost() {
     player.driftIsAuto = ghost.driftIsAuto();
 
     KPadDirector::Instance()->setGhostPad(ghost.inputs(), ghost.driftIsAuto());
-}
-
-/// @addr{0x8053015C}
-/// @brief Private default constructor
-RaceConfig::RaceConfig() = default;
-
-/// @addr{0x80530038}
-/// @brief Private virtual destructor
-RaceConfig::~RaceConfig() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("RaceConfig instance not explicitly handled!");
-    }
 }
 
 /// @addr{Inlined in 0x8052DD40}
