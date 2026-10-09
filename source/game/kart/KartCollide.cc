@@ -672,7 +672,8 @@ void KartCollide::calcObjectCollision() {
 
 /// @addr{Inlined in 0x80571F10}
 /// @brief Applies a small angular velocity to the kart when colliding with a dummy pole
-//// @details Applies @ref m_poleYar to the Y-component of the kart's @ref KartDynamics::m_angVel2.
+/// @details Applies @ref m_poleYaw to the Y-component of the kart's @ref KartDynamics::m_angVel2.
+/// Decrements @ref m_poleAngVelTimer.
 void KartCollide::calcPoleTimer() {
     if (m_poleAngVelTimer > 0 && status().onBit(eStatus::Accelerate, eStatus::Brake)) {
         EGG::Vector3f nextAngVel2 = angVel2();
@@ -737,6 +738,13 @@ void KartCollide::processMovingWater(CollisionData &collisionData, Field::KCLTyp
 
 /// @addr{0x8056F184}
 /// @brief Checks for wall collisions and updates the kart's @ref CollisionData accordingly
+/// @details If the collision did not involve any KCL types within
+/// #KCL_TYPE_DRIVER_WALL_NO_INVISIBLE_WALL2, this function will return `false` immediately.
+/// Otherwise, it will check for the closest wall collision. Populates @ref
+/// CollisionData::closestWallFlags and @ref CollisionData::closestWallSettings based on the
+/// collision entry's @ref CollisionDirector::CollisionEntry::baseType() and @ref
+/// CollisionDirector::CollisionEntry::variant(). If the collision was with a soft wall, sets @ref
+/// CollisionData::bSoftWall to `true`.
 bool KartCollide::processWall(CollisionData &collisionData, Field::KCLTypeMask *maskOut) {
     if (!(*maskOut & KCL_TYPE_DRIVER_WALL_NO_INVISIBLE_WALL2)) {
         return false;
@@ -892,6 +900,9 @@ void KartCollide::processCannon(Field::KCLTypeMask *mask) {
 /// @param shouldApplyVelXZ Whether the floor moment affects the kart's XZ external velocity
 /// @param shouldApplyVelY Whether the floor moment affects the kart's Y external velocity
 /// @param shouldApplyAngVel Whether the floor moment affects the kart's angular velocity
+/// @details If the kart is moving away from the floor, then this function early returns. Builds an
+/// inverse inertia tensor and uses it to compute the impulse magnitude required to cancel the
+/// velocity of the kart colliding into the floor.
 void KartCollide::applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitboxGroup,
         const EGG::Vector3f &forward, const EGG::Vector3f &nextDir, const EGG::Vector3f &speed,
         bool shouldApplyVelXZ, bool shouldApplyVelY, bool shouldApplyAngVel) {
@@ -995,7 +1006,7 @@ void KartCollide::applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitbo
 /// @param count Counts the number of body hitbox collisions that have occurred this frame
 /// @param mask A mask representing the type of collision that occurred
 /// @param colInfo The collision information from the collision check
-/// @return Returns true if the collision should be skipped, false otherwise
+/// @return Returns `true` if the collision should be skipped, `false` otherwise
 /// @details Updates the provided @ref CollisionData with the results of the collision. If not
 /// colliding with a wall, updates the relative position and bounding box of the collision so that
 /// subsequent collision checks for the body's hitboxes reflect this change in position. Finally
