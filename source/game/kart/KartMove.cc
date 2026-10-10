@@ -13,75 +13,8 @@
 
 namespace Kinoko::Kart {
 
-/// @addr{0x80577FC4}
-/// @brief Constructor
-KartMove::KartMove() : m_smoothedUp(EGG::Vector3f::ey), m_scale(1.0f, 1.0f, 1.0f) {
-    m_totalScale = 1.0f;
-    m_hitboxScale = 1.0f;
-    m_shockSpeedMultiplier = 1.0f;
-    m_invScale = 1.0f;
-    m_padType.makeAllZero();
-    m_flags.makeAllZero();
-    m_jump = nullptr;
-}
-
-/// @addr{0x80587B78}
-/// @brief Virtual destructor that destroys the underlying kart subsystems
-KartMove::~KartMove() {
-    EGG::egg_delete(m_jump);
-    EGG::egg_delete(m_halfPipe);
-    EGG::egg_delete(m_kartScale);
-}
-
-/// @addr{0x8057A8B4}
-void KartMove::calcTurn() {
-    m_realTurn = 0.0f;
-    m_rawTurn = 0.0f;
-
-    auto &status = KartObjectProxy::status();
-
-    if (status.onBit(eStatus::InAction, eStatus::CannonStart, eStatus::InCannon,
-                eStatus::OverZipper)) {
-        return;
-    }
-
-    if (status.onBit(eStatus::BeforeRespawn)) {
-        return;
-    }
-
-    if (status.offBit(eStatus::Hop) || m_hopStickX == 0) {
-        m_rawTurn = -state()->stickX();
-        if (status.onBit(eStatus::JumpPadMushroom)) {
-            m_rawTurn *= 0.35f;
-        } else if (status.onBit(eStatus::AirtimeOver20)) {
-            m_rawTurn *= 0.01f;
-        }
-    } else {
-        m_rawTurn = static_cast<f32>(m_hopStickX);
-    }
-
-    f32 reactivity;
-    if (state()->isDrifting()) {
-        reactivity = param()->stats().driftReactivity;
-    } else {
-        reactivity = param()->stats().handlingReactivity;
-    }
-
-    m_weightedTurn = m_rawTurn * reactivity + m_weightedTurn * (1.0f - reactivity);
-    m_weightedTurn = std::max(-1.0f, std::min(1.0f, m_weightedTurn));
-
-    m_realTurn = m_weightedTurn;
-
-    if (!state()->isDrifting()) {
-        return;
-    }
-
-    m_realTurn = (m_weightedTurn + static_cast<f32>(m_hopStickX)) * 0.5f;
-    m_realTurn = m_realTurn * 0.8f + 0.2f * static_cast<f32>(m_hopStickX);
-    m_realTurn = std::max(-1.0f, std::min(1.0f, m_realTurn));
-}
-
 /// @addr{0x8057829C}
+/// @brief Initializes the system and computes turn-related members
 void KartMove::setTurnParams() {
     static constexpr std::array<DriftingParameters, 3> DRIFTING_PARAMS_ARRAY = {{
             {10.0f, 0.5f, 0.5f, 1.0f},
@@ -100,105 +33,8 @@ void KartMove::setTurnParams() {
     m_kartScale->reset();
 }
 
-/// @addr{0x805784D4}
-/// @brief Resets the kart's movement state to its initial conditions
-/// @param preserveScale Whether to preserve the kart's current scale
-/// @param preserveFloorCount Whether to preserve the number of colliding floors
-void KartMove::reset(bool preserveScale, bool preserveFloorCount) {
-    m_lastSpeed = 0.0f;
-    m_baseSpeed = param()->stats().speed;
-    m_jumpPadSoftSpeedLimit = m_softSpeedLimit = param()->stats().speed;
-    m_speed = 0.0f;
-    setKartSpeedLimit();
-    m_acceleration = 0.0f;
-    m_speedDragMultiplier = 1.0f;
-    m_up = EGG::Vector3f::ey;
-    m_smoothedUp = EGG::Vector3f::ey;
-    m_smoothedForward = EGG::Vector3f::ez;
-    m_intVelDir = EGG::Vector3f::ez;
-    m_lastDir = EGG::Vector3f::ez;
-    m_dir = EGG::Vector3f::ez;
-    m_landingDir = EGG::Vector3f::ez;
-    m_dirDiff = EGG::Vector3f::zero;
-    m_hasLandingDir = false;
-    m_outsideDriftAngle = 0.0f;
-    m_landingAngle = 0.0f;
-    m_outsideDriftLastDir = EGG::Vector3f::ez;
-    m_speedRatio = 0.0f;
-    m_speedRatioCapped = 0.0f;
-    m_kclSpeedFactor = 1.0f;
-    m_kclRotFactor = 1.0f;
-    m_kclWheelSpeedFactor = 1.0f;
-    m_kclWheelRotFactor = 1.0f;
-
-    if (!preserveFloorCount) {
-        m_floorCollisionCount = 0;
-    }
-
-    m_hopStickX = 0;
-    m_hopFrame = 0;
-    m_hopUp = EGG::Vector3f::ey;
-    m_hopDir = EGG::Vector3f::ez;
-    m_divingRot = 0.0f;
-    m_standStillBoostRot = 0.0f;
-    m_driftState = DriftState::NotDrifting;
-    m_smtCharge = 0;
-    m_mtCharge = 0;
-    m_outsideDriftBonus = 0.0f;
-    m_boost.init();
-    m_zipperBoostTimer = 0;
-    m_zipperBoostDuration = 0;
-    m_reject.reset();
-    m_offroadInvincibilityTimer = 0;
-    m_ssmtCharge = 0;
-    m_ssmtLeewayTimer = 0;
-    m_ssmtDisableAccelTimer = 0;
-    m_nonZipperAirtime = 0;
-    m_realTurn = 0.0f;
-    m_weightedTurn = 0.0f;
-
-    if (!preserveScale) {
-        m_scale.set(1.0f);
-        m_totalScale = 1.0f;
-        m_hitboxScale = 1.0f;
-        m_shockSpeedMultiplier = 1.0f;
-        m_invScale = 1.0f;
-        m_mushroomBoostTimer = 0;
-        m_shockTimer = 0;
-        m_crushTimer = 0;
-    }
-
-    m_jumpPadMinSpeed = 0.0f;
-    m_jumpPadMaxSpeed = 0.0f;
-    m_jumpPadBoostMultiplier = 0.0f;
-    m_jumpPadProperties = nullptr;
-    m_rampBoostTimer = 0;
-    m_autoDriftAngle = 0.0f;
-    m_autoDriftStartFrameCounter = 0;
-
-    m_cannonLength = 0.0f;
-    m_cannonEntryPos.setZero();
-    m_cannonDir.setZero();
-    m_cannonOrthog.setZero();
-    m_cannonProgress.setZero();
-
-    m_hopVelY = 0.0f;
-    m_hopPosY = 0.0f;
-    m_hopGravity = 0.0f;
-    m_timeInRespawn = 0;
-    m_respawnPreLandTimer = 0;
-    m_respawnPostLandTimer = 0;
-    m_respawnBoostTimer = 0;
-    m_bumpTimer = 0;
-    m_drivingDirection = DrivingDirection::Forwards;
-    m_padType.makeAllZero();
-    m_flags.makeAllZero();
-    m_jump->reset();
-    m_halfPipe->reset();
-    m_rawTurn = 0.0f;
-}
-
 /// @addr{0x8058348C}
+/// @brief Clears some of the kart's movement state when starting an @ref Action
 void KartMove::clear() {
     auto &status = KartObjectProxy::status();
 
@@ -326,6 +162,551 @@ void KartMove::calcRespawnTrigger() {
     Item::ItemDirector::Instance()->kartItem(0).clear();
 
     status().resetBit(eStatus::TriggerRespawn).setBit(eStatus::InRespawn);
+}
+
+/// @addr{0x80583F2C}
+/// @brief Computes a collision check for the kart anchored to the underside of the kart's position
+/// @param radius The radius of the collision sphere
+/// @param scale The scale factor for the kart's position
+/// @param pos The position of the kart's origin
+/// @param upLocal Out parameter, the local up vector of the kart
+/// @param prevPos The previous position of the kart
+/// @param colInfo Pointer to store collision information
+/// @param maskOut Pointer to store the KCL type mask of the collision
+/// @param flags The KCL type mask flags to use for the collision check
+/// @return True if a collision occurred, false otherwise
+bool KartMove::calcCollisions(f32 radius, f32 scale, EGG::Vector3f &pos, EGG::Vector3f &upLocal,
+        const EGG::Vector3f &prevPos, Field::CollisionInfo *colInfo, Field::KCLTypeMask *maskOut,
+        Field::KCLTypeMask flags) const {
+    upLocal = mainRot().rotateVector(EGG::Vector3f::ey);
+    pos = dynamics()->pos() + (-scale * m_scale.y) * upLocal;
+
+    auto *colDir = Field::CollisionDirector::Instance();
+    return colDir->checkSphereFullPush(radius, pos, prevPos, flags, colInfo, maskOut, 0);
+}
+
+/// @addr{0x80586DB4}
+/// @brief Called when an object collision applies a force on the kart
+/// @param force The magnitude of the force applied
+/// @param hitDir The direction of the force applied
+/// @param stop True if the kart's speed should be set to zero, false otherwise
+/// @details Also sets a 5 frame bump cooldown which prevents additional forces being applied
+/// sporadically.
+void KartMove::applyForce(f32 force, const EGG::Vector3f &hitDir, bool stop) {
+    constexpr s16 BUMP_COOLDOWN = 5;
+
+    if (m_bumpTimer >= 1) {
+        return;
+    }
+
+    dynamics()->addForce(force * hitDir.perpInPlane(m_up, true));
+    collide()->applyWeakFloorMomentScalar();
+
+    m_bumpTimer = BUMP_COOLDOWN;
+
+    if (stop) {
+        m_speed = 0.0f;
+    }
+}
+
+/// @addr{0x8057F3D8}
+/// @brief Activates the mushroom boost for the kart
+/// @details The boost lasts for 90 frames and grants offroad invincibility during this time.
+void KartMove::activateMushroom() {
+    constexpr s16 MUSHROOM_DURATION = 90;
+
+    auto &status = KartObjectProxy::status();
+
+    if (status.onBit(eStatus::BeforeRespawn, eStatus::InAction)) {
+        return;
+    }
+
+    activateBoost(KartBoost::Type::MushroomAndBoostPanel, MUSHROOM_DURATION);
+
+    m_mushroomBoostTimer = MUSHROOM_DURATION;
+    status.setBit(eStatus::MushroomBoost);
+    setOffroadInvincibility(MUSHROOM_DURATION);
+}
+
+/// @addr{0x8057F96C}
+/// @brief Activates the zipper boost for the kart
+/// @details If the player tricked on the zipper, the duration is 100 frames, otherwise it's 50
+/// frames. During this time, the kart also has offroad invinsibility.
+void KartMove::activateZipperBoost() {
+    constexpr s16 BASE_DURATION = 50;
+    constexpr s16 TRICK_DURATION = 100;
+
+    auto &status = KartObjectProxy::status();
+
+    if (status.onBit(eStatus::BeforeRespawn, eStatus::InAction)) {
+        return;
+    }
+
+    s16 boostDuration = status.onBit(eStatus::ZipperTrick) ? TRICK_DURATION : BASE_DURATION;
+    activateBoost(KartBoost::Type::TrickAndZipper, boostDuration);
+
+    setOffroadInvincibility(boostDuration);
+    m_zipperBoostTimer = 0;
+    m_zipperBoostDuration = boostDuration;
+    status.setBit(eStatus::ZipperBoost);
+}
+
+/// @addr{0x8058498C}
+/// @brief Called when the kart enters a cannon
+/// @details Resets most of the kart's movement state, including drifts and boosts. Computes the
+/// direction and length the kart will travel in the cannon, and changes the kart's forward
+/// direction to the cannon travel direction.
+void KartMove::enterCannon() {
+    reset(true, true);
+    physics()->clearDecayingRot();
+    m_boost.resetActive();
+
+    auto &status = KartObjectProxy::status();
+
+    status.resetBit(eStatus::Boost);
+
+    cancelJumpPad();
+    clearRampBoost();
+    clearZipperBoost();
+    clearSsmt();
+    clearOffroadInvincibility();
+
+    dynamics()->reset();
+
+    clearDrift();
+
+    status.resetBit(eStatus::Hop, eStatus::CannonStart)
+            .setBit(eStatus::InCannon, eStatus::SkipWheelCalc);
+
+    const auto [cannonPos, cannonDir] = getCannonPosRot();
+    m_cannonEntryPos = pos();
+    m_cannonDir = cannonPos - pos();
+    m_cannonLength = m_cannonDir.normalise();
+    m_cannonDir.normalise();
+    m_dir = m_cannonDir;
+    m_intVelDir = m_cannonDir;
+    m_cannonOrthog = EGG::Vector3f::ey.perpInPlane(m_cannonDir, true);
+    m_cannonProgress.setZero();
+}
+
+/// @addr{0x805784D4}
+/// @brief Resets the kart's movement state to its initial conditions
+/// @param preserveScale Whether to preserve the kart's current scale
+/// @param preserveFloorCount Whether to preserve the number of colliding floors
+void KartMove::reset(bool preserveScale, bool preserveFloorCount) {
+    m_lastSpeed = 0.0f;
+    m_baseSpeed = param()->stats().speed;
+    m_jumpPadSoftSpeedLimit = m_softSpeedLimit = param()->stats().speed;
+    m_speed = 0.0f;
+    setKartSpeedLimit();
+    m_acceleration = 0.0f;
+    m_speedDragMultiplier = 1.0f;
+    m_up = EGG::Vector3f::ey;
+    m_smoothedUp = EGG::Vector3f::ey;
+    m_smoothedForward = EGG::Vector3f::ez;
+    m_intVelDir = EGG::Vector3f::ez;
+    m_lastDir = EGG::Vector3f::ez;
+    m_dir = EGG::Vector3f::ez;
+    m_landingDir = EGG::Vector3f::ez;
+    m_dirDiff = EGG::Vector3f::zero;
+    m_hasLandingDir = false;
+    m_outsideDriftAngle = 0.0f;
+    m_landingAngle = 0.0f;
+    m_outsideDriftLastDir = EGG::Vector3f::ez;
+    m_speedRatio = 0.0f;
+    m_speedRatioCapped = 0.0f;
+    m_kclSpeedFactor = 1.0f;
+    m_kclRotFactor = 1.0f;
+    m_kclWheelSpeedFactor = 1.0f;
+    m_kclWheelRotFactor = 1.0f;
+
+    if (!preserveFloorCount) {
+        m_floorCollisionCount = 0;
+    }
+
+    m_hopStickX = 0;
+    m_hopFrame = 0;
+    m_hopUp = EGG::Vector3f::ey;
+    m_hopDir = EGG::Vector3f::ez;
+    m_divingRot = 0.0f;
+    m_standStillBoostRot = 0.0f;
+    m_driftState = DriftState::NotDrifting;
+    m_smtCharge = 0;
+    m_mtCharge = 0;
+    m_outsideDriftBonus = 0.0f;
+    m_boost.init();
+    m_zipperBoostTimer = 0;
+    m_zipperBoostDuration = 0;
+    m_reject.reset();
+    m_offroadInvincibilityTimer = 0;
+    m_ssmtCharge = 0;
+    m_ssmtLeewayTimer = 0;
+    m_ssmtDisableAccelTimer = 0;
+    m_nonZipperAirtime = 0;
+    m_realTurn = 0.0f;
+    m_weightedTurn = 0.0f;
+
+    if (!preserveScale) {
+        m_scale.set(1.0f);
+        m_totalScale = 1.0f;
+        m_hitboxScale = 1.0f;
+        m_shockSpeedMultiplier = 1.0f;
+        m_invScale = 1.0f;
+        m_mushroomBoostTimer = 0;
+        m_shockTimer = 0;
+        m_crushTimer = 0;
+    }
+
+    m_jumpPadMinSpeed = 0.0f;
+    m_jumpPadMaxSpeed = 0.0f;
+    m_jumpPadBoostMultiplier = 0.0f;
+    m_jumpPadProperties = nullptr;
+    m_rampBoostTimer = 0;
+    m_autoDriftAngle = 0.0f;
+    m_autoDriftStartFrameCounter = 0;
+
+    m_cannonLength = 0.0f;
+    m_cannonEntryPos.setZero();
+    m_cannonDir.setZero();
+    m_cannonOrthog.setZero();
+    m_cannonProgress.setZero();
+
+    m_hopVelY = 0.0f;
+    m_hopPosY = 0.0f;
+    m_hopGravity = 0.0f;
+    m_timeInRespawn = 0;
+    m_respawnPreLandTimer = 0;
+    m_respawnPostLandTimer = 0;
+    m_respawnBoostTimer = 0;
+    m_bumpTimer = 0;
+    m_drivingDirection = DrivingDirection::Forwards;
+    m_padType.makeAllZero();
+    m_flags.makeAllZero();
+    m_jump->reset();
+    m_halfPipe->reset();
+    m_rawTurn = 0.0f;
+}
+
+/// @addr{0x805869DC}
+/// @brief Responds to player input to handle up/down kart tilt mid-air
+/// @details Every frame, the diving rotation decayse by 4%. If the kart is on the ground, in a
+/// cannon, in an action, or over a zipper, diving inputs are ignored. If the kart is in a side
+/// trick, upwards Y stick inputs are more sensitive towards the max dive magnitude. The Y stick
+/// magnitude is then scaled down based on how much airtime has occurred. On the first frame of
+/// airtime, it is scaled to 2% and steps up 2% every frame until 50 frames of airtime. If the
+/// magnitude of the Y stick input is close to 0, the diving rotation decays further. Finally, the
+/// modified Y stick input is applied to the diving rotation, with a maximum increase of 0.005f per
+/// frame. Lastly, the diving rotation is added to the X component of @ref KartDynamics::m_angVel2.
+///
+/// If the kart has more than 50 frames of airtime, gravity is altered based on whether the kart is
+/// in a nosedive or a taildive, such that the kart falls faster in a nosedive and slower in a
+/// taildive.
+void KartMove::calcDive() {
+    constexpr f32 DIVE_LIMIT = 0.8f;
+
+    m_divingRot *= 0.96f;
+
+    const auto &status = KartObjectProxy::status();
+
+    if (status.onBit(eStatus::TouchingGround, eStatus::CannonStart, eStatus::InCannon,
+                eStatus::InAction, eStatus::OverZipper)) {
+        return;
+    }
+
+    f32 stickY = state()->stickY();
+
+    if (status.onBit(eStatus::InATrick) && m_jump->type() == TrickType::BikeSideStuntTrick) {
+        stickY = std::min(1.0f, stickY + 0.4f);
+    }
+
+    u32 airtime = state()->airtime();
+
+    if (airtime > 50) {
+        if (EGG::Mathf::abs(stickY) < 0.1f) {
+            m_divingRot += 0.05f * (-0.025f - m_divingRot);
+        }
+    } else {
+        stickY *= (airtime / 50.0f);
+    }
+
+    m_divingRot = std::max(-DIVE_LIMIT, std::min(DIVE_LIMIT, m_divingRot + stickY * 0.005f));
+
+    EGG::Vector3f nextAngVel2 = angVel2();
+    nextAngVel2.x += m_divingRot;
+    dynamics()->setAngVel2(nextAngVel2);
+
+    if (state()->airtime() < 50) {
+        return;
+    }
+
+    EGG::Vector3f topRotated = mainRot().rotateVector(EGG::Vector3f::ey);
+    EGG::Vector3f forwardRotated = mainRot().rotateVector(EGG::Vector3f::ez);
+    f32 upDotTop = m_up.dot(topRotated);
+    EGG::Vector3f upCrossTop = m_up.cross(topRotated);
+    f32 crossNorm = upCrossTop.length();
+    f32 angle = EGG::Mathf::abs(EGG::Mathf::atan2(crossNorm, upDotTop));
+
+    f32 fVar1 = angle * RAD2DEG - 20.0f;
+    if (fVar1 <= 0.0f) {
+        return;
+    }
+
+    f32 mult = std::min(1.0f, fVar1 / 20.0f);
+    if (forwardRotated.y > 0.0f) {
+        dynamics()->setGravity((1.0f - 0.2f * mult) * dynamics()->gravity());
+    } else {
+        dynamics()->setGravity((0.2f * mult + 1.0f) * dynamics()->gravity());
+    }
+}
+
+/// @addr{0x8057D1D4}
+/// @brief Computes @ref m_standStillBoostRot based on countdown start boost charge, stand-still MT
+/// (SSMT) charge, or speed difference from the last frame depending on certain conditions
+/// @details If the kart is touching the ground during the race countdown, @ref m_standStillBoostRot
+/// is computed based on the start boost charge. If the kart is touching the ground after the race
+/// has started and is charging a stand-still MT (SSMT), @ref m_standStillBoostRot is computed based
+/// on the SSMT charge.
+///
+/// If the kart is touching the ground, not charging a SSMT, and does not have a ramp boost or
+/// active jump pad, @ref m_standStillBoostRot is computed based on the kart's speed difference from
+/// the previous frame. The rotation is further scaled down depending on whether the kart is in a
+/// Mushroom boost or a wheelie.
+///
+/// Finally, @ref m_standStillBoostRot is set based on whether or not the kart is bouncing off of a
+/// wall and whether or not it is a bike.
+void KartMove::calcStandstillBoostRot() {
+    constexpr s16 MAX_SSMT_CHARGE = 75;
+
+    f32 next = 0.0f;
+    f32 scalar = 1.0f;
+
+    auto &status = KartObjectProxy::status();
+
+    if (status.onBit(eStatus::TouchingGround)) {
+        if (System::RaceManager::Instance()->stage() == System::RaceManager::Stage::Countdown) {
+            next = 0.015f * -state()->startBoostCharge();
+        } else if (status.offBit(eStatus::ChargingSSMT)) {
+            if (status.offBit(eStatus::JumpPad, eStatus::RampBoost,
+                        eStatus::SoftWallUnlockRotation)) {
+                f32 speedDiff = m_lastSpeed - m_speed;
+                scalar = std::min(3.0f, std::max(speedDiff, -3.0f));
+
+                if (status.onBit(eStatus::MushroomBoost)) {
+                    next = (scalar * 0.15f) * 0.25f;
+                    if (status.onBit(eStatus::Wheelie)) {
+                        next *= 0.5f;
+                    }
+                } else {
+                    next = (scalar * 0.15f) * 0.08f;
+                }
+                scalar = m_driftingParams->boostRotFactor;
+            }
+        } else {
+            next = 0.015f * (-static_cast<f32>(m_ssmtCharge) / static_cast<f32>(MAX_SSMT_CHARGE));
+        }
+    }
+
+    if (m_flags.onBit(eFlags::WallBounce)) {
+        m_standStillBoostRot = isBike() ? next * 3.0f : next * 10.0f;
+    } else {
+        m_standStillBoostRot += scalar * (next * m_invScale - m_standStillBoostRot);
+    }
+}
+
+/// @addr{0x8057A8B4}
+/// @brief Each frame, looks at player input and kart stats. Saves turn-related info.
+void KartMove::calcTurn() {
+    m_realTurn = 0.0f;
+    m_rawTurn = 0.0f;
+
+    auto &status = KartObjectProxy::status();
+
+    if (status.onBit(eStatus::InAction, eStatus::CannonStart, eStatus::InCannon,
+                eStatus::OverZipper)) {
+        return;
+    }
+
+    if (status.onBit(eStatus::BeforeRespawn)) {
+        return;
+    }
+
+    if (status.offBit(eStatus::Hop) || m_hopStickX == 0) {
+        m_rawTurn = -state()->stickX();
+        if (status.onBit(eStatus::JumpPadMushroom)) {
+            m_rawTurn *= 0.35f;
+        } else if (status.onBit(eStatus::AirtimeOver20)) {
+            m_rawTurn *= 0.01f;
+        }
+    } else {
+        m_rawTurn = static_cast<f32>(m_hopStickX);
+    }
+
+    f32 reactivity;
+    if (state()->isDrifting()) {
+        reactivity = param()->stats().driftReactivity;
+    } else {
+        reactivity = param()->stats().handlingReactivity;
+    }
+
+    m_weightedTurn = m_rawTurn * reactivity + m_weightedTurn * (1.0f - reactivity);
+    m_weightedTurn = std::max(-1.0f, std::min(1.0f, m_weightedTurn));
+
+    m_realTurn = m_weightedTurn;
+
+    if (!state()->isDrifting()) {
+        return;
+    }
+
+    m_realTurn = (m_weightedTurn + static_cast<f32>(m_hopStickX)) * 0.5f;
+    m_realTurn = m_realTurn * 0.8f + 0.2f * static_cast<f32>(m_hopStickX);
+    m_realTurn = std::max(-1.0f, std::min(1.0f, m_realTurn));
+}
+
+/// @addr{0x8057CF0C}
+/// @brief Calculates the rotation of the kart based on the current turn input and kart state
+/// @param turn The yaw/turn magnitude
+/// @details If the kart is in an action, no wheels are touching the floor, and the kart is not
+/// hopping, then decays @ref KartDynamics::m_angVel0 by 2%. Otherwise, checks if the kart is
+/// skidding and calculates the appropriate tile magnitude if so. With the computed tilt magnitude,
+/// multiplies it by @ref m_weightedTurn, @ref KartParam::Stats::tilt, and @ref m_invScale to
+/// determine the final lean applied to the kart's rotation. Dispatches to @ref
+/// calcStandstillBoostRot() and applies the resulting @ref m_standStillBoostRot and computed lean
+/// to the kart's @ref KartDynamics::m_angVel0. Also applies the turn parameter to @ref
+/// KartDynamics::m_angVel2. Lastly, calls @ref calcDive() to adjust the kart's dive rotation based
+/// on the current state.
+void KartMove::calcVehicleRotation(f32 turn) {
+    f32 tiltMagnitude = 0.0f;
+    auto &status = KartObjectProxy::status();
+
+    if (status.offBit(eStatus::InAction, eStatus::SoftWallUnlockRotation) &&
+            status.onBit(eStatus::AnyWheelCollision)) {
+        EGG::Vector3f front = componentZAxis();
+        front = front.perpInPlane(m_up, true);
+        EGG::Vector3f frontSpeed = velocity().rej(front).perpInPlane(m_up, false);
+
+        if (frontSpeed.squaredLength() > std::numeric_limits<f32>::epsilon()) {
+            tiltMagnitude = frontSpeed.length();
+
+            if (front.z * frontSpeed.x - front.x * frontSpeed.z > 0.0f) {
+                tiltMagnitude = -tiltMagnitude;
+            }
+
+            tiltMagnitude = std::clamp(tiltMagnitude, -1.0f, 1.0f);
+        }
+    } else if (status.offBit(eStatus::Hop) || m_hopPosY <= 0.0f) {
+        EGG::Vector3f angVel0 = dynamics()->angVel0();
+        angVel0.z *= 0.98f;
+        dynamics()->setAngVel0(angVel0);
+    }
+
+    f32 lean =
+            m_invScale * (tiltMagnitude * param()->stats().tilt * EGG::Mathf::abs(m_weightedTurn));
+
+    calcStandstillBoostRot();
+
+    EGG::Vector3f angVel0 = dynamics()->angVel0();
+    angVel0.x += m_standStillBoostRot;
+    angVel0.z += lean;
+    dynamics()->setAngVel0(angVel0);
+
+    EGG::Vector3f nextAngVel2 = angVel2();
+    nextAngVel2.y += turn;
+    dynamics()->setAngVel2(nextAngVel2);
+
+    calcDive();
+}
+
+/// @addr{0x8057DA5C}
+/// @brief Called when beginning a manual drift hop
+/// @details Sets the @ref eStatus::Hop flag. Cancels wheelies (if the vehicle is a bike).
+/// Calculates hop direction vectors based on the kart's current orientation. Initializes manual
+/// drift-related members. Applies initial hop velocity to @ref KartDynamics::m_extVel and clears
+/// the Y component of @ref KartDynamics::m_totalForce.
+void KartMove::startHop() {
+    status().setBit(eStatus::Hop).resetBit(eStatus::DriftManual);
+    onPreDrift();
+
+    m_hopUp = mainRot().rotateVector(EGG::Vector3f::ey);
+    m_hopDir = mainRot().rotateVector(EGG::Vector3f::ez);
+    m_driftState = DriftState::NotDrifting;
+    m_smtCharge = 0;
+    m_mtCharge = 0;
+    m_hopStickX = 0;
+    m_hopFrame = 0;
+    m_hopPosY = 0.0f;
+    m_hopGravity = dynamics()->gravity();
+    m_hopVelY = m_driftingParams->hopVelY;
+    m_outsideDriftBonus = 0.0f;
+
+    EGG::Vector3f nextExtVel = extVel();
+    nextExtVel.y = 0.0f + m_hopVelY;
+    dynamics()->setExtVel(nextExtVel);
+
+    EGG::Vector3f totalForce = dynamics()->totalForce();
+    totalForce.y = 0.0f;
+    dynamics()->setTotalForce(totalForce);
+}
+
+/// @addr{0x8057EE50}
+/// @brief Every frame during a drift, calculates MT/SMT charge based on player input
+/// @details If the kart has already charged a super mini-turbo, bails out early. Every frame, the
+/// MT charge increases by 2. Additionally, if the X stick input is large enough, the MT charge
+/// increases an additional 3 units. If the MT charge exceeds 270, it is clamped at 270 and the
+/// drift state advances to @ref DriftState::ChargingSmt to signal that a regular MT boost can be
+/// released and that the kart is now charging a super mini-turbo. After this point, the same
+/// incrementing logic applies but for super mini-turbos with a charge threshold of 300. Once this
+/// threshold is hit, the drift state advances to @ref DriftState::ChargedSmt to signal that a
+/// super mini-turbo boost can be released.
+void KartMove::calcMtCharge() {
+    // TODO: Some of these are shared between the base and derived class implementations.
+    constexpr u16 MAX_MT_CHARGE = 270;
+    constexpr u16 MAX_SMT_CHARGE = 300;
+    constexpr u16 BASE_MT_CHARGE = 2;
+    constexpr u16 BASE_SMT_CHARGE = 2;
+    constexpr f32 BONUS_CHARGE_STICK_THRESHOLD = 0.4f;
+    constexpr u16 EXTRA_MT_CHARGE = 3;
+
+    if (m_driftState == DriftState::ChargedSmt) {
+        return;
+    }
+
+    f32 stickX = state()->stickX();
+
+    if (m_driftState == DriftState::ChargingMt) {
+        m_mtCharge += BASE_MT_CHARGE;
+
+        if (-BONUS_CHARGE_STICK_THRESHOLD <= stickX) {
+            if (BONUS_CHARGE_STICK_THRESHOLD < stickX && m_hopStickX == -1) {
+                m_mtCharge += EXTRA_MT_CHARGE;
+            }
+        } else if (m_hopStickX != -1) {
+            m_mtCharge += EXTRA_MT_CHARGE;
+        }
+
+        if (m_mtCharge > MAX_MT_CHARGE) {
+            m_mtCharge = MAX_MT_CHARGE;
+            m_driftState = DriftState::ChargingSmt;
+        }
+    }
+
+    if (m_driftState != DriftState::ChargingSmt) {
+        return;
+    }
+
+    m_smtCharge += BASE_SMT_CHARGE;
+
+    if (-BONUS_CHARGE_STICK_THRESHOLD <= stickX) {
+        if (BONUS_CHARGE_STICK_THRESHOLD < stickX && m_hopStickX == -1) {
+            m_smtCharge += EXTRA_MT_CHARGE;
+        }
+    } else if (m_hopStickX != -1) {
+        m_smtCharge += EXTRA_MT_CHARGE;
+    }
+
+    if (m_smtCharge > MAX_SMT_CHARGE) {
+        m_smtCharge = MAX_SMT_CHARGE;
+        m_driftState = DriftState::ChargedSmt;
+    }
 }
 
 /// @addr{0x80579A50}
@@ -1348,45 +1729,6 @@ void KartMove::calcVehicleSpeed() {
     }
 }
 
-/// @addr{0x8057B868}
-/// @brief Every frame, computes acceleration based off the character/vehicle stats
-/// @returns The calculated acceleration value based on the current speed ratio and vehicle stats
-/// @details This function leverages an array of speed thresholds and associated acceleration values
-/// for each threshold. The array varies depending on whether the vehicle is drifting or not. If the
-/// vehicle is traveling backwards, the kart moves with a constant acceleration of 1. Performs a
-/// lookup in the array of speed thresholds to find which acceleration should correspond with the
-/// current speed ratio.
-f32 KartMove::calcVehicleAcceleration() const {
-    f32 ratio = m_speed / m_softSpeedLimit;
-    if (ratio < 0.0f) {
-        return 1.0f;
-    }
-
-    std::span<const f32> as;
-    std::span<const f32> ts;
-    if (state()->isDrifting()) {
-        as = param()->stats().accelerationDriftA;
-        ts = param()->stats().accelerationDriftT;
-    } else {
-        as = param()->stats().accelerationStandardA;
-        ts = param()->stats().accelerationStandardT;
-    }
-
-    size_t i = 0;
-    f32 acceleration = 0.0f;
-    f32 t_curr = 0.0f;
-    for (; i < ts.size(); ++i) {
-        if (ratio < ts[i]) {
-            acceleration = as[i] + ((as[i + 1] - as[i]) / (ts[i] - t_curr)) * (ratio - t_curr);
-            break;
-        }
-
-        t_curr = ts[i];
-    }
-
-    return i < ts.size() ? acceleration : as.back();
-}
-
 /// @addr{0x8057B9BC}
 /// @brief Every frame, calculates the kart's speed and applies it to the internal velocity
 /// @details If the kart is in a burnout, its speed is set to 0. Otherwise, acceleration is applied
@@ -1573,51 +1915,6 @@ void KartMove::calcSpeed() {
     }
 }
 
-/// @addr{0x8057B108}
-/// @brief Every frame, computes a speed scalar if we are colliding with a wall
-/// @param walColSeverity Out param, represents how head-on the wall hit is [0.0f, 1.0f]
-/// @return The speed factor to apply due to the wall collision [0.0f, 1.0f]
-/// @details Bails out early if we are not colliding with a wall. Dispatches to @ref
-/// onWallCollision() so that wheelies are cancelled on wall collisions. If the kart is over a
-/// zipper, bails out early. Computes the dot product between the kart's last direction and the wall
-/// normal to determine how head-on the collision is. If the dot product is non-negative, then the
-/// kart isn't driving into the wall, so returns 1.0f. Otherwise, the speed factory is computed
-/// based on the dot product multiplied by a scalar that depends on the type of the wall the kart
-/// collided with.
-f32 KartMove::calcWallCollisionSpeedFactor(f32 &walColSeverity) {
-    constexpr f32 WALL_COLLISION_SPEED_FACTOR = 0.4f;
-    constexpr f32 WALL3_COLLISION_SPEED_FACTOR = 0.7f;
-
-    auto &status = KartObjectProxy::status();
-
-    if (status.offBit(eStatus::WallCollision, eStatus::Wall3Collision)) {
-        return 1.0f;
-    }
-
-    onWallCollision();
-
-    if (status.onBit(eStatus::ZipperInvisibleWall, eStatus::OverZipper)) {
-        return 1.0f;
-    }
-
-    EGG::Vector3f wallNrm = collisionData().wallNrm;
-    if (wallNrm.y > 0.0f) {
-        wallNrm.y = 0.0f;
-        wallNrm.normalise();
-    }
-
-    f32 dot = m_lastDir.dot(wallNrm);
-
-    if (dot < 0.0f) {
-        walColSeverity = std::max(0.0f, dot + 1.0f);
-        f32 wallSpeedFactor = status.onBit(eStatus::WallCollision) ? WALL_COLLISION_SPEED_FACTOR :
-                                                                     WALL3_COLLISION_SPEED_FACTOR;
-        return std::min(1.0f, walColSeverity * wallSpeedFactor);
-    }
-
-    return 1.0f;
-}
-
 /// @addr{0x8057B2A0}
 /// @brief If we started to collide with a wall this frame, applies a rotation and force on the kart
 /// @param wallColSeverity How head-on the wall collision hit was [0.0f, 1.0f]
@@ -1700,324 +1997,6 @@ void KartMove::calcWallCollisionStart(f32 wallColSeverity) {
             collide()->applyWeakFloorMomentScalar();
         }
     }
-}
-
-/// @addr{0x8057D1D4}
-/// @brief Computes @ref m_standStillBoostRot based on countdown start boost charge, stand-still MT
-/// (SSMT) charge, or speed difference from the last frame depending on certain conditions
-/// @details If the kart is touching the ground during the race countdown, @ref m_standStillBoostRot
-/// is computed based on the start boost charge. If the kart is touching the ground after the race
-/// has started and is charging a stand-still MT (SSMT), @ref m_standStillBoostRot is computed based
-/// on the SSMT charge.
-///
-/// If the kart is touching the ground, not charging a SSMT, and does not have a ramp boost or
-/// active jump pad, @ref m_standStillBoostRot is computed based on the kart's speed difference from
-/// the previous frame. The rotation is further scaled down depending on whether the kart is in a
-/// Mushroom boost or a wheelie.
-///
-/// Finally, @ref m_standStillBoostRot is set based on whether or not the kart is bouncing off of a
-/// wall and whether or not it is a bike.
-void KartMove::calcStandstillBoostRot() {
-    constexpr s16 MAX_SSMT_CHARGE = 75;
-
-    f32 next = 0.0f;
-    f32 scalar = 1.0f;
-
-    auto &status = KartObjectProxy::status();
-
-    if (status.onBit(eStatus::TouchingGround)) {
-        if (System::RaceManager::Instance()->stage() == System::RaceManager::Stage::Countdown) {
-            next = 0.015f * -state()->startBoostCharge();
-        } else if (status.offBit(eStatus::ChargingSSMT)) {
-            if (status.offBit(eStatus::JumpPad, eStatus::RampBoost,
-                        eStatus::SoftWallUnlockRotation)) {
-                f32 speedDiff = m_lastSpeed - m_speed;
-                scalar = std::min(3.0f, std::max(speedDiff, -3.0f));
-
-                if (status.onBit(eStatus::MushroomBoost)) {
-                    next = (scalar * 0.15f) * 0.25f;
-                    if (status.onBit(eStatus::Wheelie)) {
-                        next *= 0.5f;
-                    }
-                } else {
-                    next = (scalar * 0.15f) * 0.08f;
-                }
-                scalar = m_driftingParams->boostRotFactor;
-            }
-        } else {
-            next = 0.015f * (-static_cast<f32>(m_ssmtCharge) / static_cast<f32>(MAX_SSMT_CHARGE));
-        }
-    }
-
-    if (m_flags.onBit(eFlags::WallBounce)) {
-        m_standStillBoostRot = isBike() ? next * 3.0f : next * 10.0f;
-    } else {
-        m_standStillBoostRot += scalar * (next * m_invScale - m_standStillBoostRot);
-    }
-}
-
-/// @addr{0x805869DC}
-/// @brief Responds to player input to handle up/down kart tilt mid-air
-/// @details Every frame, the diving rotation decayse by 4%. If the kart is on the ground, in a
-/// cannon, in an action, or over a zipper, diving inputs are ignored. If the kart is in a side
-/// trick, upwards Y stick inputs are more sensitive towards the max dive magnitude. The Y stick
-/// magnitude is then scaled down based on how much airtime has occurred. On the first frame of
-/// airtime, it is scaled to 2% and steps up 2% every frame until 50 frames of airtime. If the
-/// magnitude of the Y stick input is close to 0, the diving rotation decays further. Finally, the
-/// modified Y stick input is applied to the diving rotation, with a maximum increase of 0.005f per
-/// frame. Lastly, the diving rotation is added to the X component of @ref KartDynamics::m_angVel2.
-///
-/// If the kart has more than 50 frames of airtime, gravity is altered based on whether the kart is
-/// in a nosedive or a taildive, such that the kart falls faster in a nosedive and slower in a
-/// taildive.
-void KartMove::calcDive() {
-    constexpr f32 DIVE_LIMIT = 0.8f;
-
-    m_divingRot *= 0.96f;
-
-    const auto &status = KartObjectProxy::status();
-
-    if (status.onBit(eStatus::TouchingGround, eStatus::CannonStart, eStatus::InCannon,
-                eStatus::InAction, eStatus::OverZipper)) {
-        return;
-    }
-
-    f32 stickY = state()->stickY();
-
-    if (status.onBit(eStatus::InATrick) && m_jump->type() == TrickType::BikeSideStuntTrick) {
-        stickY = std::min(1.0f, stickY + 0.4f);
-    }
-
-    u32 airtime = state()->airtime();
-
-    if (airtime > 50) {
-        if (EGG::Mathf::abs(stickY) < 0.1f) {
-            m_divingRot += 0.05f * (-0.025f - m_divingRot);
-        }
-    } else {
-        stickY *= (airtime / 50.0f);
-    }
-
-    m_divingRot = std::max(-DIVE_LIMIT, std::min(DIVE_LIMIT, m_divingRot + stickY * 0.005f));
-
-    EGG::Vector3f nextAngVel2 = angVel2();
-    nextAngVel2.x += m_divingRot;
-    dynamics()->setAngVel2(nextAngVel2);
-
-    if (state()->airtime() < 50) {
-        return;
-    }
-
-    EGG::Vector3f topRotated = mainRot().rotateVector(EGG::Vector3f::ey);
-    EGG::Vector3f forwardRotated = mainRot().rotateVector(EGG::Vector3f::ez);
-    f32 upDotTop = m_up.dot(topRotated);
-    EGG::Vector3f upCrossTop = m_up.cross(topRotated);
-    f32 crossNorm = upCrossTop.length();
-    f32 angle = EGG::Mathf::abs(EGG::Mathf::atan2(crossNorm, upDotTop));
-
-    f32 fVar1 = angle * RAD2DEG - 20.0f;
-    if (fVar1 <= 0.0f) {
-        return;
-    }
-
-    f32 mult = std::min(1.0f, fVar1 / 20.0f);
-    if (forwardRotated.y > 0.0f) {
-        dynamics()->setGravity((1.0f - 0.2f * mult) * dynamics()->gravity());
-    } else {
-        dynamics()->setGravity((0.2f * mult + 1.0f) * dynamics()->gravity());
-    }
-}
-
-/// @addr{0x80583F2C}
-/// @brief Computes a collision check for the kart anchored to the underside of the kart's position
-/// @param radius The radius of the collision sphere
-/// @param scale The scale factor for the kart's position
-/// @param pos The position of the kart's origin
-/// @param upLocal Out parameter, the local up vector of the kart
-/// @param prevPos The previous position of the kart
-/// @param colInfo Pointer to store collision information
-/// @param maskOut Pointer to store the KCL type mask of the collision
-/// @param flags The KCL type mask flags to use for the collision check
-/// @return True if a collision occurred, false otherwise
-bool KartMove::calcCollisions(f32 radius, f32 scale, EGG::Vector3f &pos, EGG::Vector3f &upLocal,
-        const EGG::Vector3f &prevPos, Field::CollisionInfo *colInfo, Field::KCLTypeMask *maskOut,
-        Field::KCLTypeMask flags) const {
-    upLocal = mainRot().rotateVector(EGG::Vector3f::ey);
-    pos = dynamics()->pos() + (-scale * m_scale.y) * upLocal;
-
-    auto *colDir = Field::CollisionDirector::Instance();
-    return colDir->checkSphereFullPush(radius, pos, prevPos, flags, colInfo, maskOut, 0);
-}
-
-/// @addr{0x80586DB4}
-/// @brief Called when an object collision applies a force on the kart
-/// @param force The magnitude of the force applied
-/// @param hitDir The direction of the force applied
-/// @param stop True if the kart's speed should be set to zero, false otherwise
-/// @details Also sets a 5 frame bump cooldown which prevents additional forces being applied
-/// sporadically.
-void KartMove::applyForce(f32 force, const EGG::Vector3f &hitDir, bool stop) {
-    constexpr s16 BUMP_COOLDOWN = 5;
-
-    if (m_bumpTimer >= 1) {
-        return;
-    }
-
-    dynamics()->addForce(force * hitDir.perpInPlane(m_up, true));
-    collide()->applyWeakFloorMomentScalar();
-
-    m_bumpTimer = BUMP_COOLDOWN;
-
-    if (stop) {
-        m_speed = 0.0f;
-    }
-}
-
-/// @addr{0x8057CF0C}
-/// @brief Calculates the rotation of the kart based on the current turn input and kart state
-/// @param turn The yaw/turn magnitude
-/// @details If the kart is in an action, no wheels are touching the floor, and the kart is not
-/// hopping, then decays @ref KartDynamics::m_angVel0 by 2%. Otherwise, checks if the kart is
-/// skidding and calculates the appropriate tile magnitude if so. With the computed tilt magnitude,
-/// multiplies it by @ref m_weightedTurn, @ref KartParam::Stats::tilt, and @ref m_invScale to
-/// determine the final lean applied to the kart's rotation. Dispatches to @ref
-/// calcStandstillBoostRot() and applies the resulting @ref m_standStillBoostRot and computed lean
-/// to the kart's @ref KartDynamics::m_angVel0. Also applies the turn parameter to @ref
-/// KartDynamics::m_angVel2. Lastly, calls @ref calcDive() to adjust the kart's dive rotation based
-/// on the current state.
-void KartMove::calcVehicleRotation(f32 turn) {
-    f32 tiltMagnitude = 0.0f;
-    auto &status = KartObjectProxy::status();
-
-    if (status.offBit(eStatus::InAction, eStatus::SoftWallUnlockRotation) &&
-            status.onBit(eStatus::AnyWheelCollision)) {
-        EGG::Vector3f front = componentZAxis();
-        front = front.perpInPlane(m_up, true);
-        EGG::Vector3f frontSpeed = velocity().rej(front).perpInPlane(m_up, false);
-
-        if (frontSpeed.squaredLength() > std::numeric_limits<f32>::epsilon()) {
-            tiltMagnitude = frontSpeed.length();
-
-            if (front.z * frontSpeed.x - front.x * frontSpeed.z > 0.0f) {
-                tiltMagnitude = -tiltMagnitude;
-            }
-
-            tiltMagnitude = std::clamp(tiltMagnitude, -1.0f, 1.0f);
-        }
-    } else if (status.offBit(eStatus::Hop) || m_hopPosY <= 0.0f) {
-        EGG::Vector3f angVel0 = dynamics()->angVel0();
-        angVel0.z *= 0.98f;
-        dynamics()->setAngVel0(angVel0);
-    }
-
-    f32 lean =
-            m_invScale * (tiltMagnitude * param()->stats().tilt * EGG::Mathf::abs(m_weightedTurn));
-
-    calcStandstillBoostRot();
-
-    EGG::Vector3f angVel0 = dynamics()->angVel0();
-    angVel0.x += m_standStillBoostRot;
-    angVel0.z += lean;
-    dynamics()->setAngVel0(angVel0);
-
-    EGG::Vector3f nextAngVel2 = angVel2();
-    nextAngVel2.y += turn;
-    dynamics()->setAngVel2(nextAngVel2);
-
-    calcDive();
-}
-
-/// @addr{0x8057EE50}
-/// @brief Every frame during a drift, calculates MT/SMT charge based on player input
-/// @details If the kart has already charged a super mini-turbo, bails out early. Every frame, the
-/// MT charge increases by 2. Additionally, if the X stick input is large enough, the MT charge
-/// increases an additional 3 units. If the MT charge exceeds 270, it is clamped at 270 and the
-/// drift state advances to @ref DriftState::ChargingSmt to signal that a regular MT boost can be
-/// released and that the kart is now charging a super mini-turbo. After this point, the same
-/// incrementing logic applies but for super mini-turbos with a charge threshold of 300. Once this
-/// threshold is hit, the drift state advances to @ref DriftState::ChargedSmt to signal that a
-/// super mini-turbo boost can be released.
-void KartMove::calcMtCharge() {
-    // TODO: Some of these are shared between the base and derived class implementations.
-    constexpr u16 MAX_MT_CHARGE = 270;
-    constexpr u16 MAX_SMT_CHARGE = 300;
-    constexpr u16 BASE_MT_CHARGE = 2;
-    constexpr u16 BASE_SMT_CHARGE = 2;
-    constexpr f32 BONUS_CHARGE_STICK_THRESHOLD = 0.4f;
-    constexpr u16 EXTRA_MT_CHARGE = 3;
-
-    if (m_driftState == DriftState::ChargedSmt) {
-        return;
-    }
-
-    f32 stickX = state()->stickX();
-
-    if (m_driftState == DriftState::ChargingMt) {
-        m_mtCharge += BASE_MT_CHARGE;
-
-        if (-BONUS_CHARGE_STICK_THRESHOLD <= stickX) {
-            if (BONUS_CHARGE_STICK_THRESHOLD < stickX && m_hopStickX == -1) {
-                m_mtCharge += EXTRA_MT_CHARGE;
-            }
-        } else if (m_hopStickX != -1) {
-            m_mtCharge += EXTRA_MT_CHARGE;
-        }
-
-        if (m_mtCharge > MAX_MT_CHARGE) {
-            m_mtCharge = MAX_MT_CHARGE;
-            m_driftState = DriftState::ChargingSmt;
-        }
-    }
-
-    if (m_driftState != DriftState::ChargingSmt) {
-        return;
-    }
-
-    m_smtCharge += BASE_SMT_CHARGE;
-
-    if (-BONUS_CHARGE_STICK_THRESHOLD <= stickX) {
-        if (BONUS_CHARGE_STICK_THRESHOLD < stickX && m_hopStickX == -1) {
-            m_smtCharge += EXTRA_MT_CHARGE;
-        }
-    } else if (m_hopStickX != -1) {
-        m_smtCharge += EXTRA_MT_CHARGE;
-    }
-
-    if (m_smtCharge > MAX_SMT_CHARGE) {
-        m_smtCharge = MAX_SMT_CHARGE;
-        m_driftState = DriftState::ChargedSmt;
-    }
-}
-
-/// @addr{0x8057DA5C}
-/// @brief Called when beginning a manual drift hop
-/// @details Sets the @ref eStatus::Hop flag. Cancels wheelies (if the vehicle is a bike).
-/// Calculates hop direction vectors based on the kart's current orientation. Initializes manual
-/// drift-related members. Applies initial hop velocity to @ref KartDynamics::m_extVel and clears
-/// the Y component of @ref KartDynamics::m_totalForce.
-void KartMove::startHop() {
-    status().setBit(eStatus::Hop).resetBit(eStatus::DriftManual);
-    onPreDrift();
-
-    m_hopUp = mainRot().rotateVector(EGG::Vector3f::ey);
-    m_hopDir = mainRot().rotateVector(EGG::Vector3f::ez);
-    m_driftState = DriftState::NotDrifting;
-    m_smtCharge = 0;
-    m_mtCharge = 0;
-    m_hopStickX = 0;
-    m_hopFrame = 0;
-    m_hopPosY = 0.0f;
-    m_hopGravity = dynamics()->gravity();
-    m_hopVelY = m_driftingParams->hopVelY;
-    m_outsideDriftBonus = 0.0f;
-
-    EGG::Vector3f nextExtVel = extVel();
-    nextExtVel.y = 0.0f + m_hopVelY;
-    dynamics()->setExtVel(nextExtVel);
-
-    EGG::Vector3f totalForce = dynamics()->totalForce();
-    totalForce.y = 0.0f;
-    dynamics()->setTotalForce(totalForce);
 }
 
 /// @addr{0x8057FD18}
@@ -2153,48 +2132,6 @@ void KartMove::tryEndJumpPad() {
     }
 }
 
-/// @addr{0x8057F3D8}
-/// @brief Activates the mushroom boost for the kart
-/// @details The boost lasts for 90 frames and grants offroad invincibility during this time.
-void KartMove::activateMushroom() {
-    constexpr s16 MUSHROOM_DURATION = 90;
-
-    auto &status = KartObjectProxy::status();
-
-    if (status.onBit(eStatus::BeforeRespawn, eStatus::InAction)) {
-        return;
-    }
-
-    activateBoost(KartBoost::Type::MushroomAndBoostPanel, MUSHROOM_DURATION);
-
-    m_mushroomBoostTimer = MUSHROOM_DURATION;
-    status.setBit(eStatus::MushroomBoost);
-    setOffroadInvincibility(MUSHROOM_DURATION);
-}
-
-/// @addr{0x8057F96C}
-/// @brief Activates the zipper boost for the kart
-/// @details If the player tricked on the zipper, the duration is 100 frames, otherwise it's 50
-/// frames. During this time, the kart also has offroad invinsibility.
-void KartMove::activateZipperBoost() {
-    constexpr s16 BASE_DURATION = 50;
-    constexpr s16 TRICK_DURATION = 100;
-
-    auto &status = KartObjectProxy::status();
-
-    if (status.onBit(eStatus::BeforeRespawn, eStatus::InAction)) {
-        return;
-    }
-
-    s16 boostDuration = status.onBit(eStatus::ZipperTrick) ? TRICK_DURATION : BASE_DURATION;
-    activateBoost(KartBoost::Type::TrickAndZipper, boostDuration);
-
-    setOffroadInvincibility(boostDuration);
-    m_zipperBoostTimer = 0;
-    m_zipperBoostDuration = boostDuration;
-    status.setBit(eStatus::ZipperBoost);
-}
-
 /// @addr{0x80582E34}
 /// @brief Calculates the duration of the active zipper boost
 /// @details This function does nothing if @ref eStatus::ZipperBoost is not set. Sets
@@ -2261,44 +2198,6 @@ void KartMove::applyShrink(u16 timer) {
         m_shockTimer = timer;
         m_kartScale->startShrink(false);
     }
-}
-
-/// @addr{0x8058498C}
-/// @brief Called when the kart enters a cannon
-/// @details Resets most of the kart's movement state, including drifts and boosts. Computes the
-/// direction and length the kart will travel in the cannon, and changes the kart's forward
-/// direction to the cannon travel direction.
-void KartMove::enterCannon() {
-    reset(true, true);
-    physics()->clearDecayingRot();
-    m_boost.resetActive();
-
-    auto &status = KartObjectProxy::status();
-
-    status.resetBit(eStatus::Boost);
-
-    cancelJumpPad();
-    clearRampBoost();
-    clearZipperBoost();
-    clearSsmt();
-    clearOffroadInvincibility();
-
-    dynamics()->reset();
-
-    clearDrift();
-
-    status.resetBit(eStatus::Hop, eStatus::CannonStart)
-            .setBit(eStatus::InCannon, eStatus::SkipWheelCalc);
-
-    const auto [cannonPos, cannonDir] = getCannonPosRot();
-    m_cannonEntryPos = pos();
-    m_cannonDir = cannonPos - pos();
-    m_cannonLength = m_cannonDir.normalise();
-    m_cannonDir.normalise();
-    m_dir = m_cannonDir;
-    m_intVelDir = m_cannonDir;
-    m_cannonOrthog = EGG::Vector3f::ey.perpInPlane(m_cannonDir, true);
-    m_cannonProgress.setZero();
 }
 
 /// @addr{0x80584D58}
@@ -2417,28 +2316,168 @@ void KartMove::exitCannon() {
     dynamics()->setIntVel(m_cannonDir * m_speed);
 }
 
-/// @addr{0x80587B30}
-/// @brief Constructor
-KartMoveBike::KartMoveBike() : m_leanRot(0.0f) {}
+/// @addr{0x8057B868}
+/// @brief Every frame, computes acceleration based off the character/vehicle stats
+/// @returns The calculated acceleration value based on the current speed ratio and vehicle stats
+/// @details This function leverages an array of speed thresholds and associated acceleration values
+/// for each threshold. The array varies depending on whether the vehicle is drifting or not. If the
+/// vehicle is traveling backwards, the kart moves with a constant acceleration of 1. Performs a
+/// lookup in the array of speed thresholds to find which acceleration should correspond with the
+/// current speed ratio.
+f32 KartMove::calcVehicleAcceleration() const {
+    f32 ratio = m_speed / m_softSpeedLimit;
+    if (ratio < 0.0f) {
+        return 1.0f;
+    }
 
-/// @addr{0x80589704}
-/// @brief Default destructor
-KartMoveBike::~KartMoveBike() = default;
+    std::span<const f32> as;
+    std::span<const f32> ts;
+    if (state()->isDrifting()) {
+        as = param()->stats().accelerationDriftA;
+        ts = param()->stats().accelerationDriftT;
+    } else {
+        as = param()->stats().accelerationStandardA;
+        ts = param()->stats().accelerationStandardT;
+    }
 
-/// @addr{0x80588350}
-/// @brief Sets the wheelie bit flag and some wheelie-related variables
-/// @details In the base game this is a virtual function, but since no derived class overrides
-/// it here, we can divirtualize for Kinoko.
-void KartMoveBike::startWheelie() {
-    constexpr f32 MAX_WHEELIE_ROTATION = 0.07f;
-    constexpr u16 WHEELIE_COOLDOWN = 20;
+    size_t i = 0;
+    f32 acceleration = 0.0f;
+    f32 t_curr = 0.0f;
+    for (; i < ts.size(); ++i) {
+        if (ratio < ts[i]) {
+            acceleration = as[i] + ((as[i + 1] - as[i]) / (ts[i] - t_curr)) * (ratio - t_curr);
+            break;
+        }
 
-    status().setBit(eStatus::Wheelie);
+        t_curr = ts[i];
+    }
+
+    return i < ts.size() ? acceleration : as.back();
+}
+
+/// @addr{0x8057B108}
+/// @brief Every frame, computes a speed scalar if we are colliding with a wall
+/// @param walColSeverity Out param, represents how head-on the wall hit is [0.0f, 1.0f]
+/// @return The speed factor to apply due to the wall collision [0.0f, 1.0f]
+/// @details Bails out early if we are not colliding with a wall. Dispatches to @ref
+/// onWallCollision() so that wheelies are cancelled on wall collisions. If the kart is over a
+/// zipper, bails out early. Computes the dot product between the kart's last direction and the wall
+/// normal to determine how head-on the collision is. If the dot product is non-negative, then the
+/// kart isn't driving into the wall, so returns 1.0f. Otherwise, the speed factory is computed
+/// based on the dot product multiplied by a scalar that depends on the type of the wall the kart
+/// collided with.
+f32 KartMove::calcWallCollisionSpeedFactor(f32 &walColSeverity) {
+    constexpr f32 WALL_COLLISION_SPEED_FACTOR = 0.4f;
+    constexpr f32 WALL3_COLLISION_SPEED_FACTOR = 0.7f;
+
+    auto &status = KartObjectProxy::status();
+
+    if (status.offBit(eStatus::WallCollision, eStatus::Wall3Collision)) {
+        return 1.0f;
+    }
+
+    onWallCollision();
+
+    if (status.onBit(eStatus::ZipperInvisibleWall, eStatus::OverZipper)) {
+        return 1.0f;
+    }
+
+    EGG::Vector3f wallNrm = collisionData().wallNrm;
+    if (wallNrm.y > 0.0f) {
+        wallNrm.y = 0.0f;
+        wallNrm.normalise();
+    }
+
+    f32 dot = m_lastDir.dot(wallNrm);
+
+    if (dot < 0.0f) {
+        walColSeverity = std::max(0.0f, dot + 1.0f);
+        f32 wallSpeedFactor = status.onBit(eStatus::WallCollision) ? WALL_COLLISION_SPEED_FACTOR :
+                                                                     WALL3_COLLISION_SPEED_FACTOR;
+        return std::min(1.0f, walColSeverity * wallSpeedFactor);
+    }
+
+    return 1.0f;
+}
+
+/// @addr{0x80587C54}
+/// @copybrief KartMove::setTurnParams()
+/// @details On init, sets the bike's lean rotation cap and increment.
+/// In addition to setting the lean rotation cap and increment on init,
+/// this function also gets called when falling out-of-bounds.
+void KartMoveBike::setTurnParams() {
+    static constexpr std::array<TurningParameters, 2> TURNING_PARAMS_ARRAY = {{
+            {0.8f, 0.08f, 1.0f, 0.1f, 1.2f, 0.8f, 0.08f, 0.6f, 0.15f, 1.6f, 0.9f, 180},
+            {1.0f, 0.1f, 1.0f, 0.05f, 1.5f, 0.7f, 0.08f, 0.6f, 0.15f, 1.3f, 0.9f, 180},
+    }};
+
+    KartMove::setTurnParams();
+
+    if (vehicleType() == KartParam::Stats::DriftType::Outside_Drift_Bike) {
+        m_turningParams = &TURNING_PARAMS_ARRAY[0];
+    } else if (vehicleType() == KartParam::Stats::DriftType::Inside_Drift_Bike) {
+        m_turningParams = &TURNING_PARAMS_ARRAY[1];
+    }
+
+    if (System::RaceManager::Instance()->isStageReached(System::RaceManager::Stage::Race)) {
+        m_leanRotInc = m_turningParams->leanRotIncRace;
+        m_leanRotCap = m_turningParams->leanRotCapRace;
+    } else {
+        m_leanRotInc = m_turningParams->leanRotIncCountdown;
+        m_leanRotCap = m_turningParams->leanRotCapCountdown;
+    }
+}
+
+/// @addr{0x80587D00}
+/// @copybrief KartMove::reset()
+/// @param preserveScale Whether to preserve the kart's current scale
+/// @param preserveFloorCount Whether to preserve the number of colliding floors
+/// @details Additionally resets the bike-specific wheelie and lean rotation parameters
+void KartMoveBike::reset(bool preserveScale, bool preserveFloorCount) {
+    KartMove::reset(preserveScale, preserveFloorCount);
+
+    m_leanRot = 0.0f;
+    m_leanRotCap = 0.0f;
+    m_leanRotInc = 0.0f;
+    m_wheelieRot = 0.0f;
+    m_maxWheelieRot = 0.0f;
     m_wheelieFrames = 0;
-    m_maxWheelieRot = MAX_WHEELIE_ROTATION;
-    m_wheelieCooldown = WHEELIE_COOLDOWN;
-    m_wheelieRotDec = 0.0f;
+    m_wheelieCooldown = 0;
     m_autoHardStickXFrames = 0;
+}
+
+/// @addr{0x80588888}
+/// @copybrief KartMove::calcMtCharge()
+/// @details If the kart is not actually in the process of charging a mini-turbo, bails out early.
+/// Every frame, the MT charge increases by 2. Additionally, if the X stick input is large enough,
+/// the MT charge increases an additional 3 units. If the MT charge exceeds 270, it is clamped at
+/// 270 and the drift state advances to @ref DriftState::ChargedMt to signal that a boost can be
+/// released.
+void KartMoveBike::calcMtCharge() {
+    constexpr u16 MAX_MT_CHARGE = 270;
+    constexpr u16 BASE_MT_CHARGE = 2;
+    constexpr f32 BONUS_CHARGE_STICK_THRESHOLD = 0.4f;
+    constexpr u16 EXTRA_MT_CHARGE = 3;
+
+    if (m_driftState != DriftState::ChargingMt) {
+        return;
+    }
+
+    m_mtCharge += BASE_MT_CHARGE;
+
+    f32 stickX = state()->stickX();
+    if (-BONUS_CHARGE_STICK_THRESHOLD <= stickX) {
+        if (BONUS_CHARGE_STICK_THRESHOLD < stickX && m_hopStickX == -1) {
+            m_mtCharge += EXTRA_MT_CHARGE;
+        }
+    } else if (m_hopStickX != -1) {
+        m_mtCharge += EXTRA_MT_CHARGE;
+    }
+
+    if (m_mtCharge > MAX_MT_CHARGE) {
+        m_mtCharge = MAX_MT_CHARGE;
+        m_driftState = DriftState::ChargedMt;
+    }
 }
 
 /// @addr{0x80587D68}
@@ -2570,52 +2609,6 @@ void KartMoveBike::calcVehicleRotation(f32 turn) {
     dynamics()->setStabilizeUp(top);
 }
 
-/// @addr{0x80587C54}
-/// @copybrief KartMove::setTurnParams()
-/// @details On init, sets the bike's lean rotation cap and increment.
-/// In addition to setting the lean rotation cap and increment on init,
-/// this function also gets called when falling out-of-bounds.
-void KartMoveBike::setTurnParams() {
-    static constexpr std::array<TurningParameters, 2> TURNING_PARAMS_ARRAY = {{
-            {0.8f, 0.08f, 1.0f, 0.1f, 1.2f, 0.8f, 0.08f, 0.6f, 0.15f, 1.6f, 0.9f, 180},
-            {1.0f, 0.1f, 1.0f, 0.05f, 1.5f, 0.7f, 0.08f, 0.6f, 0.15f, 1.3f, 0.9f, 180},
-    }};
-
-    KartMove::setTurnParams();
-
-    if (vehicleType() == KartParam::Stats::DriftType::Outside_Drift_Bike) {
-        m_turningParams = &TURNING_PARAMS_ARRAY[0];
-    } else if (vehicleType() == KartParam::Stats::DriftType::Inside_Drift_Bike) {
-        m_turningParams = &TURNING_PARAMS_ARRAY[1];
-    }
-
-    if (System::RaceManager::Instance()->isStageReached(System::RaceManager::Stage::Race)) {
-        m_leanRotInc = m_turningParams->leanRotIncRace;
-        m_leanRotCap = m_turningParams->leanRotCapRace;
-    } else {
-        m_leanRotInc = m_turningParams->leanRotIncCountdown;
-        m_leanRotCap = m_turningParams->leanRotCapCountdown;
-    }
-}
-
-/// @addr{0x80587D00}
-/// @copybrief KartMove::reset()
-/// @param preserveScale Whether to preserve the kart's current scale
-/// @param preserveFloorCount Whether to preserve the number of colliding floors
-/// @details Additionally resets the bike-specific wheelie and lean rotation parameters
-void KartMoveBike::reset(bool preserveScale, bool preserveFloorCount) {
-    KartMove::reset(preserveScale, preserveFloorCount);
-
-    m_leanRot = 0.0f;
-    m_leanRotCap = 0.0f;
-    m_leanRotInc = 0.0f;
-    m_wheelieRot = 0.0f;
-    m_maxWheelieRot = 0.0f;
-    m_wheelieFrames = 0;
-    m_wheelieCooldown = 0;
-    m_autoHardStickXFrames = 0;
-}
-
 /// @addr{0x805883F4}
 /// @copybrief KartMove::calcWheelie()
 /// @details Checks player inputs to see if a wheelie should start or end. Decrements the @ref
@@ -2685,38 +2678,20 @@ void KartMoveBike::calcWheelie() {
     }
 }
 
-/// @addr{0x80588888}
-/// @copybrief KartMove::calcMtCharge()
-/// @details If the kart is not actually in the process of charging a mini-turbo, bails out early.
-/// Every frame, the MT charge increases by 2. Additionally, if the X stick input is large enough,
-/// the MT charge increases an additional 3 units. If the MT charge exceeds 270, it is clamped at
-/// 270 and the drift state advances to @ref DriftState::ChargedMt to signal that a boost can be
-/// released.
-void KartMoveBike::calcMtCharge() {
-    constexpr u16 MAX_MT_CHARGE = 270;
-    constexpr u16 BASE_MT_CHARGE = 2;
-    constexpr f32 BONUS_CHARGE_STICK_THRESHOLD = 0.4f;
-    constexpr u16 EXTRA_MT_CHARGE = 3;
+/// @addr{0x80588350}
+/// @brief Sets the wheelie bit flag and some wheelie-related variables
+/// @details In the base game this is a virtual function, but since no derived class overrides
+/// it here, we can divirtualize for Kinoko.
+void KartMoveBike::startWheelie() {
+    constexpr f32 MAX_WHEELIE_ROTATION = 0.07f;
+    constexpr u16 WHEELIE_COOLDOWN = 20;
 
-    if (m_driftState != DriftState::ChargingMt) {
-        return;
-    }
-
-    m_mtCharge += BASE_MT_CHARGE;
-
-    f32 stickX = state()->stickX();
-    if (-BONUS_CHARGE_STICK_THRESHOLD <= stickX) {
-        if (BONUS_CHARGE_STICK_THRESHOLD < stickX && m_hopStickX == -1) {
-            m_mtCharge += EXTRA_MT_CHARGE;
-        }
-    } else if (m_hopStickX != -1) {
-        m_mtCharge += EXTRA_MT_CHARGE;
-    }
-
-    if (m_mtCharge > MAX_MT_CHARGE) {
-        m_mtCharge = MAX_MT_CHARGE;
-        m_driftState = DriftState::ChargedMt;
-    }
+    status().setBit(eStatus::Wheelie);
+    m_wheelieFrames = 0;
+    m_maxWheelieRot = MAX_WHEELIE_ROTATION;
+    m_wheelieCooldown = WHEELIE_COOLDOWN;
+    m_wheelieRotDec = 0.0f;
+    m_autoHardStickXFrames = 0;
 }
 
 /// @addr{0x80588798}

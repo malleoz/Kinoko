@@ -7,15 +7,16 @@ namespace Kinoko::Kart {
 
 /// @addr{0x805764FC}
 /// @brief Calculates the rotation of the kart during a trick
-/// @details Decays the rotation speed towards a minimum value. Applies the rotation speed to the
-/// accumulated angle, and applies the accumulated rotation to the kart's physics.
+/// @details @ref m_rotSpeed decays by @ref m_decayRate every frame, clamped to a minimum value
+/// specified by @ref TrickProperties::minRotSpeed. Subtracts @ref m_decayRateDelta from @ref
+/// m_decayRate each frame, clamping it to a minimum value of @ref TrickProperties::minDecayRate.
+/// Increments m_angle by @ref m_rotSpeed every frame, clamping it to a maximum value of @ref
+/// m_targetAngle. Finally, applies the computed @ref m_rot to the kart via @ref
+/// KartPhysics::composeStuntRot().
 void KartJump::calcRot() {
-    m_rotSpeed *= m_decayRate;
-    m_rotSpeed = std::max(m_rotSpeed, m_properties.minRotSpeed);
-    m_decayRate -= m_decayRateDelta;
-    m_decayRate = std::max(m_decayRate, m_properties.minDecayRate);
-    m_angle += m_rotSpeed;
-    m_angle = std::min(m_angle, m_targetAngle);
+    m_rotSpeed = std::max(m_rotSpeed * m_decayRate, m_properties.minRotSpeed);
+    m_decayRate = std::max(m_decayRate - m_decayRateDelta, m_properties.minDecayRate);
+    m_angle = std::min(m_angle + m_rotSpeed, m_targetAngle);
 
     switch (m_type) {
     case TrickType::KartFlipTrickZ:
@@ -34,6 +35,11 @@ void KartJump::calcRot() {
 
 /// @addr{0x80576460}
 /// @brief Assigns the trick properties and target angle based on the trick type and surface variant
+/// @details Indexes into a static properties table based on the trick @ref m_variant to set both
+/// @ref m_properties and @ref m_targetAngle. @ref m_rotSpeed is initialized based on @ref
+/// TrickProperties::initRotSpeed and @ref m_decayRateDelta is initialized based on @ref
+/// TrickProperties::initDecayRateDelta. Finally, resets @ref m_angle to zero, @ref m_decayRate to
+/// `1.0f`, and @ref m_rot to the identity quaternion.
 void KartJump::setupProperties() {
     static constexpr std::array<TrickProperties, 3> TRICK_PROPERTIES = {{
             {11.0f, 1.5f, 0.9f, 0.0018f},
@@ -68,8 +74,10 @@ void KartJump::setupProperties() {
 /// @addr{0x80575D7C}
 /// @brief Starts a trick if the player is moving fast enough and the trick start flag is set
 /// @param left The left vector of the kart at the start of the trick
-/// @details Maps the boost ramp type to a surface variant, and then calls @ref start to initialize
-/// the trick. Finally clears the @ref eStatus::TrickStart flag.
+/// @details If the @ref eStatus::TrickStart bit is not set in the kart's @ref Status, early returns
+/// without starting a trick. If the kart is moving at more than 50% of its base speed, maps the
+/// @ref KartState::m_boostRampType to a trick variant, and then calls @ref start() to initialize
+/// the trick. Regardless, clears the @ref eStatus::TrickStart flag.
 void KartJump::tryStart(const EGG::Vector3f &left) {
     auto &status = KartObjectProxy::status();
 
@@ -110,9 +118,14 @@ void KartJump::calc() {
 }
 
 /// @addr{0x80575B38}
-/// @brief Checks player controller input to try starting a trick'
-/// @details Checks if the player is attempting to start a trick, and buffers the trick input for a
-/// few frames if so. Once the player has 3 or more frames of airtime, the trick will be started.
+/// @brief Checks player controller input to try starting a trick
+/// @details If trick inputs should not be ignored (determined via @ref shouldIgnoreTrick() and the
+/// user is pressing a trick input, sets @ref m_nextTrick to the current trick input and sets @ref
+/// m_leniencyTimer to `14`. If the kart has more than 2 frames of airtime, sets the @ref
+/// eStatus::TrickStart flag. Decrements @ref m_leniency if a trick cannot be performed (no airtime,
+/// more than 10 frames of airtime, not on a trickable surface, or @ref shouldIgnoreTrick() returns
+/// `true`). Finally, if the kart is on the ground (indicated via the @ref eStatus::TouchingGround
+/// bit in the kart's @ref Status) and not on a boost ramp, resets @ref m_boostRampTrick to `false`.
 void KartJump::calcInput() {
     constexpr s16 TRICK_ALLOW_TIMER = 14;
 
@@ -163,9 +176,12 @@ void KartJump::end() {
 
 /// @addr{0x80576230}
 /// @brief Influences the kart's pitch and direction when starting a trick
-/// @details The max pitch angle from horizontal and the pitch correction applied are mapped based
-/// off the vehicle's weight class and the surface variant. If the kart is already pitched above the
-/// max angle, no pitch correction is applied.
+/// @details If the kart is on a jump pad (indicated by the @ref eStatus::JumpPad flag in the kart's
+/// @ref Status), the function returns early. The max pitch angle from horizontal and the pitch
+/// correction applied are mapped based off the vehicle's weight class and the trick variant. If the
+/// kart is already pitched above the max angle, no pitch correction is applied.
+/// @note In Kinoko, we take creative liberty to move the @ref eStatus::JumpPad check before the
+/// angle computation as a slight performance improvement.
 void KartJump::setAngle(const EGG::Vector3f &left) {
     static constexpr std::array<std::array<AngleProperties, 3>, 3> ANGLE_PROPERTIES = {{
             {{
@@ -185,15 +201,18 @@ void KartJump::setAngle(const EGG::Vector3f &left) {
             }},
     }};
 
+    if (status().onBit(eStatus::JumpPad)) {
+        return;
+    }
+
     f32 vel1YDot = m_move->intVelDir().dot(EGG::Vector3f::ey);
     EGG::Vector3f vel1YCross = m_move->intVelDir().cross(EGG::Vector3f::ey);
-    f32 vel1YCrossMag = vel1YCross.length();
-    f32 pitch = EGG::Mathf::abs(EGG::Mathf::atan2(vel1YCrossMag, vel1YDot));
+    f32 pitch = EGG::Mathf::abs(EGG::Mathf::atan2(vel1YCross.length(), vel1YDot));
     f32 angle = 90.0f - (pitch * RAD2DEG);
     u32 weightClass = static_cast<u32>(param()->stats().weightClass);
     f32 targetAngle = ANGLE_PROPERTIES[weightClass][static_cast<u32>(m_variant)].maxAngle;
 
-    if (status().onBit(eStatus::JumpPad) || angle > targetAngle) {
+    if (angle > targetAngle) {
         return;
     }
 
@@ -212,8 +231,9 @@ void KartJump::setAngle(const EGG::Vector3f &left) {
 /// @addr{0x80575EE8}
 /// @brief Called when a trick has started
 /// @param left The left vector of the kart at the start of the trick
-/// @details Initializes the trick type, rotation direction, and trick properties based on the
-/// surface variant. Also enforces a 5 frame delay before another trick can occur.
+/// @details Initializes the trick type, rotation direction, and trick properties via a call to @ref
+/// init(). Influences the kart's rotation and orientation via a call to @ref setAngle. Sets the
+/// @ref eStatus::InATrick bit in the kart's @ref Status. Sets @ref m_trickDelay to `5`.
 void KartJump::start(const EGG::Vector3f &left) {
     init();
     setAngle(left);
@@ -253,9 +273,8 @@ void KartJump::init() {
 /// @details Decays @ref m_rotSpeed by @ref m_decayRate each frame, clamping it to a minimum value
 /// of @ref TrickProperties::minRotSpeed. Subtracts @ref m_decayRateDelta from @ref m_decayRate each
 /// frame, clamping it to a minimum value of @ref TrickProperties::minDecayRate. Increments m_angle
-/// by @ref m_rotSpeed every frame, clamping it to a maximum value of @ref m_targetAngle. Computes
-/// @ref m_rot based on the updated @ref m_angle and the trick's @ref m_type. Finally, applies the
-/// computed @ref m_rot to the kart via @ref KartPhysics::composeStuntRot().
+/// by @ref m_rotSpeed every frame, clamping it to a maximum value of @ref m_targetAngle.  Finally,
+/// applies the computed @ref m_rot to the kart via @ref KartPhysics::composeStuntRot().
 void KartJumpBike::calcRot() {
     /// @brief Computed using double precision, so we hard-code it.
     constexpr f32 PI_OVER_9 = 0.34906584f;

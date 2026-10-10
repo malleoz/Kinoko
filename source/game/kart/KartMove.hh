@@ -34,210 +34,70 @@ public:
     /// @brief Represents a bit flag for the type of pads the kart is interacting with
     typedef EGG::TBitFlag<u32, ePadType> PadType;
 
-    KartMove();
-    virtual ~KartMove();
+    /// @addr{0x80577FC4}
+    /// @brief Constructor
+    KartMove() : m_smoothedUp(EGG::Vector3f::ey), m_scale(1.0f, 1.0f, 1.0f) {
+        m_totalScale = 1.0f;
+        m_hitboxScale = 1.0f;
+        m_shockSpeedMultiplier = 1.0f;
+        m_invScale = 1.0f;
+        m_padType.makeAllZero();
+        m_flags.makeAllZero();
+        m_jump = nullptr;
+    }
+
+    /// @addr{0x80587B78}
+    /// @brief Virtual destructor that destroys the underlying kart subsystems
+    ~KartMove() override {
+        EGG::egg_delete(m_jump);
+        EGG::egg_delete(m_halfPipe);
+        EGG::egg_delete(m_kartScale);
+    }
 
     /// @addr{0x8057821C}
     /// @brief Constructs the underlying subsystems for the kart
+    /// @param stats The stats used to initialize the @ref KartScale subsystem
+    /// @details Constructs the @ref m_jump, @ref m_halfpipe, and @ref m_kartScale subsystems.
     virtual void createSubsystems(const KartParam::Stats &stats) {
         m_jump = EGG::egg_new<KartJump>(this);
         m_halfPipe = EGG::egg_new<KartHalfPipe>();
         m_kartScale = EGG::egg_new<KartScale>(stats);
     }
 
-    /// @brief Each frame, looks at player input and kart stats. Saves turn-related info.
-    virtual void calcTurn();
-
-    /// @brief Handles the wheelie lifecycle and angular velocity from wheeling
-    /// @details For karts, this is a no-op since they cannot wheelie
-    virtual void calcWheelie() {}
-
-    /// @brief Initializes the system and computes turn-related members
     virtual void setTurnParams();
-
-    virtual void reset(bool preserveScale, bool preserveFloorCount);
-
-    /// @brief Clears some of the kart's movement state when starting an @ref Action
     virtual void clear();
 
     /// @addr{0x8058974C}
     /// @brief Gets the lean rotation of the vehicle
-    /// @details For karts, this is always 0.0f since they cannot lean.
+    /// @return Always `0.0f` for karts
     [[nodiscard]] virtual f32 leanRot() const {
         return 0.0f;
     }
 
     void setInitialPhysicsValues(const EGG::Vector3f &position, const EGG::Vector3f &angles);
-
-    /// @addr{0x8057EA50}
-    /// @brief Clears the kart's drift state
-    void resetDriftManual() {
-        m_hopStickX = 0;
-        m_hopFrame = 0;
-        status().resetBit(eStatus::Hop, eStatus::DriftManual);
-        m_driftState = DriftState::NotDrifting;
-        m_smtCharge = 0;
-        m_mtCharge = 0;
-    }
-
     void calc();
     void calcRespawnTrigger();
-    void calcInRespawn();
-    void calcRespawnBoost();
-    void calcTop();
-    void calcAirtimeTop();
-    void calcSpecialFloor();
-    void calcDirs();
-    void calcStickyRoad();
-    void calcOffroad();
-    void calcRisingWater();
-
-    /// @addr{0x80582694}
-    /// @brief Computes the current boost state for the kart
-    void calcBoost() {
-        auto &status = KartObjectProxy::status();
-
-        if (m_boost.calc()) {
-            status.setBit(eStatus::Accelerate);
-        } else {
-            status.resetBit(eStatus::Boost);
-        }
-
-        calcRampBoost();
-    }
-
-    /// @addr{0x80582804}
-    /// @brief Computes the current ramp boost state for the kart
-    /// @details Clears @ref eStatus::RampBoost when the ramp boost timer ends.
-    void calcRampBoost() {
-        auto &status = KartObjectProxy::status();
-
-        if (status.offBit(eStatus::RampBoost)) {
-            return;
-        }
-
-        status.setBit(eStatus::Accelerate);
-        if (--m_rampBoostTimer < 1) {
-            m_rampBoostTimer = 0;
-            status.resetBit(eStatus::RampBoost);
-        }
-    }
-
-    /// @addr{Inlined in 0x805828CC}
-    /// @brief Computes the current cooldown duration between braking and reversing
-    void calcDisableBackwardsAccel() {
-        auto &status = KartObjectProxy::status();
-
-        if (status.offBit(eStatus::DisableBackwardsAccel)) {
-            return;
-        }
-
-        if (--m_ssmtDisableAccelTimer < 0 ||
-                (m_flags.offBit(eFlags::SsmtLeeway) && status.offBit(eStatus::Brake))) {
-            status.resetBit(eStatus::DisableBackwardsAccel);
-            m_ssmtDisableAccelTimer = 0;
-        }
-    }
-
-    void calcSsmtCharge();
-    bool calcPreDrift();
-    void calcAutoDrift();
-    void calcManualDrift();
-    void startManualDrift();
     void clearDrift();
-
-    /// @addr{0x80582DB4}
-    /// @brief Clears the jump pad state for the kart
-    void clearJumpPad() {
-        m_jumpPadMinSpeed = 0.0f;
-        status().resetBit(eStatus::JumpPad);
-    }
-
-    /// @addr{0x80582DD8}
-    /// @brief Clears the ramp boost state for the kart
-    void clearRampBoost() {
-        m_rampBoostTimer = 0;
-        status().resetBit(eStatus::RampBoost);
-    }
-
-    /// @addr{0x80582F38}
-    /// @brief Clears the zipper boost state for the kart
-    void clearZipperBoost() {
-        m_zipperBoostTimer = 0;
-        status().resetBit(eStatus::ZipperBoost);
-    }
-
-    /// @addr{0x80582D94}
-    /// @brief Clears the boost state for the kart
-    void clearBoost() {
-        m_boost.resetActive();
-        status().resetBit(eStatus::Boost);
-    }
-
-    /// @addr{0x80582F58}
-    /// @brief Clears the standstill mini-turbo (SSMT) state for the kart
-    void clearSsmt() {
-        m_ssmtCharge = 0;
-        m_ssmtLeewayTimer = 0;
-        m_ssmtDisableAccelTimer = 0;
-        m_flags.resetBit(eFlags::SsmtCharged, eFlags::SsmtLeeway);
-    }
-
-    /// @addr{0x80582F7C}
-    /// @brief Clears the offroad invincibility state for the kart
-    void clearOffroadInvincibility() {
-        m_offroadInvincibilityTimer = 0;
-        status().resetBit(eStatus::BoostOffroadInvincibility);
-    }
+    bool calcCollisions(f32 radius, f32 scale, EGG::Vector3f &pos, EGG::Vector3f &upLocal,
+            const EGG::Vector3f &prevPos, Field::CollisionInfo *colInfo,
+            Field::KCLTypeMask *maskOut, Field::KCLTypeMask flags) const;
+    void applyForce(f32 force, const EGG::Vector3f &hitDir, bool stop);
+    void activateMushroom();
+    void activateZipperBoost();
+    void enterCannon();
 
     /// @brief Clears the reject road state for the kart
+    /// @details Clears the @ref eStatus::RejectRoadTrigger and @ref eStatus::NoSparkInvisibleWall
+    /// bits from the kart's @ref Status.
     void clearRejectRoad() {
         status().resetBit(eStatus::RejectRoadTrigger, eStatus::NoSparkInvisibleWall);
     }
 
-    void releaseMt();
-    void calcDrift();
-    void calcRotation();
-    void calcVehicleSpeed();
-
-    /// @addr{0x8057B028}
-    /// @brief Applies gravity-induced rolling on slopes when the kart is near stationary
-    void calcDeceleration() {
-        f32 vel = 0.0f;
-        f32 initialVel = 1.0f - m_smoothedUp.y;
-        if (EGG::Mathf::abs(m_speed) < 30.0f && m_smoothedUp.y > 0.0f && initialVel > 0.0f) {
-            initialVel = std::min(initialVel * 2.0f, 2.0f);
-            vel += initialVel;
-            vel *= std::min(0.5f, std::max(-0.5f, -bodyForward().y));
-        }
-        m_speed += vel;
-    }
-
-    [[nodiscard]] f32 calcVehicleAcceleration() const;
-    void calcSpeed();
-    [[nodiscard]] f32 calcWallCollisionSpeedFactor(f32 &walColSeverity);
-    void calcWallCollisionStart(f32 walColSeverity);
-    void calcStandstillBoostRot();
-    void calcDive();
-
-    /// @addr{Inlined in 0x805788DC}
-    /// @brief Calculates whether we are charging a standstill mini-turbo
-    void calcSsmt() {
-        auto &status = KartObjectProxy::status();
-
-        if (EGG::Mathf::abs(m_speed) >= 10.0f || status.onBit(eStatus::Boost, eStatus::RampBoost) ||
-                status.offAnyBit(eStatus::Accelerate, eStatus::Brake)) {
-            status.resetBit(eStatus::ChargingSSMT);
-            return;
-        }
-
-        status.setBit(eStatus::ChargingSSMT).resetBit(eStatus::HopStart, eStatus::DriftInput);
-    }
-
     /// @addr{0x80579968}
     /// @brief Calculates velocity and position induced from a drift hop
-    /// @details Once the kart begins falling, the hop velocity and position in cleared so that
-    /// normal gravity can take over.
+    /// @details Decays @ref m_hopVelY by 0.2% and then adds @ref m_hopGravity. Adds @ref m_hopVelY
+    /// to @ref m_hopPosY. Once the kart begins falling, @ref m_hopPosY and @ref m_hopVelY are
+    /// cleared so that normal gravity can take over.
     void calcHop() {
         m_hopVelY = m_hopVelY * 0.998f + m_hopGravity;
         m_hopPosY += m_hopVelY;
@@ -249,33 +109,16 @@ public:
     }
 
     /// @addr{0x80579960}
-    /// @brief Dispatches to @ref KartReject::calc() to handle reject road physics
+    /// @brief Calculates reject road physics for the kart
+    /// @details Dispatches to @ref KartReject::calc() to handle reject road physics
     void calcRejectRoad() {
         m_reject.calc();
     }
 
-    bool calcCollisions(f32 radius, f32 scale, EGG::Vector3f &pos, EGG::Vector3f &upLocal,
-            const EGG::Vector3f &prevPos, Field::CollisionInfo *colInfo,
-            Field::KCLTypeMask *maskOut, Field::KCLTypeMask flags) const;
-
-    void applyForce(f32 force, const EGG::Vector3f &hitDir, bool stop);
-
-    virtual void calcVehicleRotation(f32 turn);
-    virtual void startHop();
-
-    /// @brief Called when the vehicle hops or initiates a slipdrift. It just cancels wheelies.
-    /// @details For the base class, this is a no-op since karts cannot wheelie.
-    virtual void onPreDrift() {}
-
-    /// @addr{0x80570D20}
-    /// @brief Called when you collide with a wall so that wheelies can be cancelled
-    /// @details For the base class, this is a no-op since karts cannot wheelie.
-    virtual void onWallCollision() {}
-
-    virtual void calcMtCharge();
-
     /// @addr{0x80583658}
-    /// @brief Clears boost and offroad invinsibility when the kart goes out of bounds
+    /// @brief Clears portions of the kart's movement state when it goes out-of-bounds
+    /// @details Clears states related to boosts, jump pads, ramp boosts, zipper boosts, SSMTs, and
+    /// offroad invincibility.
     virtual void initOob() {
         clearBoost();
         clearJumpPad();
@@ -285,155 +128,14 @@ public:
         clearOffroadInvincibility();
     }
 
-    /// @addr{0x8057C3C8}
-    /// @brief Returns the % speed boost from wheelies.
-    /// @details For karts, this is always 0.0f since karts cannot wheelie.
-    [[nodiscard]] virtual f32 getWheelieSoftSpeedLimitBonus() const {
-        return 0.0f;
-    }
-
-    /// @addr{0x8058758C}
-    /// @brief Returns whether the vehicle can perform a wheelie
-    [[nodiscard]] virtual bool canWheelie() const {
-        return false;
-    }
-
-    /// @addr{0x8057DA18}
-    /// @brief Checks whether the vehicle can perform a hop
-    /// @details In the base game this is virtual, but it is not overriden in any derived class, so
-    /// we can de-virtualize it here.
-    [[nodiscard]] bool canHop() const {
-        const auto &status = KartObjectProxy::status();
-
-        if (status.offAnyBit(eStatus::HopStart, eStatus::TouchingGround)) {
-            return false;
-        }
-
-        if (status.onBit(eStatus::InAction)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /// @addr{0x8057EA94}
-    /// @brief Checks whether the vehicle can start drifting
-    /// @details The kart can drift if its speed is at 55% or greater than its base speed.
-    /// @note This doesn't bytematch the base game. The base game's implementation uses the >
-    /// comparison. In practice, > is only ever used once, whereas >= is used in every other
-    /// scenario, so we simplify by writing this function for the more common scenario.
-    bool canStartDrift() const {
-        return m_speed >= MINIMUM_DRIFT_THRESOLD * m_baseSpeed;
-    }
-
-    /// @addr{Inlined at 0x80587590}
-    /// @brief Activates a boost panel boost if the kart is not in an action or preparing to respawn
-    /// @details Also sets 60 frames of offroad invinsibility so the kart does not lose speed.
-    void tryStartBoostPanel() {
-        constexpr s16 BOOST_PANEL_DURATION = 60;
-
-        if (status().onBit(eStatus::BeforeRespawn, eStatus::InAction)) {
-            return;
-        }
-
-        activateBoost(KartBoost::Type::MushroomAndBoostPanel, BOOST_PANEL_DURATION);
-        setOffroadInvincibility(BOOST_PANEL_DURATION);
-    }
-
-    /// @addr{Inlined at 0x80587590}
-    /// @brief Activates a boost ramp boost if the kart is not in an action or preparing to respawn
-    /// @details Also sets 60 frames of offroad invincibility and sets @ref eStatus::RampBoost.
-    void tryStartBoostRamp() {
-        constexpr s16 BOOST_RAMP_DURATION = 60;
-
-        auto &status = KartObjectProxy::status();
-
-        if (status.onBit(eStatus::BeforeRespawn, eStatus::InAction)) {
-            return;
-        }
-
-        status.setBit(eStatus::RampBoost);
-        m_rampBoostTimer = BOOST_RAMP_DURATION;
-        setOffroadInvincibility(BOOST_RAMP_DURATION);
-    }
-
-    void tryStartJumpPad();
-    void tryEndJumpPad();
-
-    /// @addr{0x80582DB4}
-    /// @brief Cancels the jump pad effect on the kart
-    void cancelJumpPad() {
-        m_jumpPadMinSpeed = 0.0f;
-        status().resetBit(eStatus::JumpPad);
-    }
-
-    /// @addr{0x8057F090}
-    /// @brief Activates a boost of the specified type for a set number of frames
-    /// @param type The type of boost to activate
-    /// @param frames The number of frames to apply the boost for
-    /// @details Also sets the @ref eStatus::Boost flag if the boost is successfully activated.
-    void activateBoost(KartBoost::Type type, s16 frames) {
-        if (m_boost.activate(type, frames)) {
-            status().setBit(eStatus::Boost);
-        }
-    }
-
     /// @addr{0x8058212C}
     /// @brief Activates the race start boost for a set number of frames
     /// @param frames The number of frames to apply the start boost for
+    /// @details Activates the boost by calling @ref activateBoost() with the @ref
+    /// KartBoost::Type::MiniTurbo type and the specified number of `frames`.
     void applyStartBoost(s16 frames) {
         activateBoost(KartBoost::Type::MiniTurbo, frames);
     }
-
-    void activateMushroom();
-    void activateZipperBoost();
-
-    /// @addr{0x805824C8}
-    /// @brief Ignores offroad KCL collision for a set amount of time
-    /// @param timer Number of frames to ignore offroad slowdown for
-    /// @details Also sets the @ref eStatus::BoostOffroadInvincibility flag.
-    void setOffroadInvincibility(s16 timer) {
-        if (timer > m_offroadInvincibilityTimer) {
-            m_offroadInvincibilityTimer = timer;
-        }
-
-        status().setBit(eStatus::BoostOffroadInvincibility);
-    }
-
-    /// @addr{0x805824F0}
-    /// @brief Checks a timer to see if we are still ignoring offroad slowdown
-    /// @details When the timer expires, resets the @ref eStatus::BoostOffroadInvincibility flag.
-    void calcOffroadInvincibility() {
-        auto &status = KartObjectProxy::status();
-
-        if (status.offBit(eStatus::BoostOffroadInvincibility)) {
-            return;
-        }
-
-        if (--m_offroadInvincibilityTimer > 0) {
-            return;
-        }
-
-        status.resetBit(eStatus::BoostOffroadInvincibility);
-    }
-
-    /// @brief Checks a timer to see if we are still boosting from a mushroom
-    /// @details When the timer expires, resets the @ref eStatus::MushroomBoost flag.
-    void calcMushroomBoost() {
-        auto &status = KartObjectProxy::status();
-
-        if (status.offBit(eStatus::MushroomBoost)) {
-            return;
-        }
-
-        if (--m_mushroomBoostTimer > 0) {
-            return;
-        }
-
-        status.resetBit(eStatus::MushroomBoost);
-    }
-
-    void calcZipperBoost();
 
     /// @addr{0x8057F7A8}
     /// @brief Activates a trick boost whose duration depends on vehicle type and jump pad variant
@@ -472,23 +174,6 @@ public:
         m_kartScale->startCrush();
     }
 
-    /// @addr{0x80580F9C}
-    /// @brief Checks if the crush effect is still active and updates the timer
-    /// @details When the timer expires, resets the @ref eStatus::Crushed flag and re-scales the
-    /// kart.
-    void calcCrushed() {
-        if (status().offBit(eStatus::Crushed)) {
-            return;
-        }
-
-        if (--m_crushTimer == 0) {
-            status().resetBit(eStatus::Crushed);
-            m_kartScale->endCrush();
-        }
-    }
-
-    void calcScale();
-
     /// @addr{0x80580768}
     /// @brief Activates the shrink effect for 300 frames
     void activateShrink() {
@@ -496,42 +181,6 @@ public:
 
         applyShrink(SHRINK_DURATION);
     }
-
-    void applyShrink(u16 timer);
-
-    /// @addr{0x80580998}
-    /// @brief Calculates the shock's speed multiplier and checks if the shock should end
-    void calcShock() {
-        auto &status = state()->status();
-
-        if (status.onBit(eStatus::Shocked)) {
-            if (--m_shockTimer == 0) {
-                deactivateShock(false);
-            }
-
-            m_shockSpeedMultiplier = std::max(0.7f, m_shockSpeedMultiplier - 0.03f);
-        } else {
-            m_shockSpeedMultiplier = std::min(1.0f, m_shockSpeedMultiplier + 0.05f);
-        }
-    }
-
-    /// @addr{0x80580A84}
-    /// @brief Deactivates the shock effect and optionally resets the speed multiplier
-    /// @param resetSpeed If true, resets the speed multiplier to 1.0f
-    void deactivateShock(bool resetSpeed) {
-        status().resetBit(eStatus::Shocked);
-        m_shockTimer = 0;
-        m_kartScale->endShrink(0);
-
-        if (resetSpeed) {
-            m_shockSpeedMultiplier = 1.0f;
-        }
-    }
-
-    void enterCannon();
-    void calcCannon();
-    void calcRotCannon(const EGG::Vector3f &forward);
-    void exitCannon();
 
     /// @addr{0x805799AC}
     /// @brief Called when the screen wipes to black during a respawn
@@ -778,6 +427,11 @@ protected:
         f32 endSpeed; ///< Target speed the kart will decelerate towards near the end of the cannon
     };
 
+    virtual void reset(bool preserveScale, bool preserveFloorCount);
+
+    void calcDive();
+    void calcStandstillBoostRot();
+
     f32 m_baseSpeed;            ///< The base driving speed for the current character/vehicle stats
     f32 m_softSpeedLimit;       ///< Base speed + boosts + wheelies, clamped to the hard speed limit
     f32 m_speed;                ///< Current speed, restricted to the soft speed limit
@@ -874,6 +528,361 @@ protected:
             {500.0f, 5000.0f, 6000.0f, -1.0f},
             {120.0f, 2000.0f, 1000.0f, 45.0f},
     }};
+
+private:
+    virtual void calcTurn();
+
+    /// @brief Handles the wheelie lifecycle and angular velocity from wheeling
+    /// @details For karts, this is a no-op since they cannot wheelie
+    virtual void calcWheelie() {}
+
+    virtual void calcVehicleRotation(f32 turn);
+    virtual void startHop();
+
+    /// @brief Called when the vehicle hops or initiates a slipdrift. It just cancels wheelies.
+    /// @details For the base class, this is a no-op since karts cannot wheelie.
+    virtual void onPreDrift() {}
+
+    /// @addr{0x80570D20}
+    /// @brief Called when you collide with a wall so that wheelies can be cancelled
+    /// @details For the base class, this is a no-op since karts cannot wheelie.
+    virtual void onWallCollision() {}
+
+    virtual void calcMtCharge();
+
+    /// @addr{0x8057C3C8}
+    /// @brief Returns the % speed boost from wheelies.
+    /// @details For karts, this is always 0.0f since karts cannot wheelie.
+    [[nodiscard]] virtual f32 getWheelieSoftSpeedLimitBonus() const {
+        return 0.0f;
+    }
+
+    void calcInRespawn();
+    void calcRespawnBoost();
+    void calcTop();
+    void calcAirtimeTop();
+    void calcSpecialFloor();
+    void calcDirs();
+    void calcStickyRoad();
+    void calcOffroad();
+    void calcRisingWater();
+    void calcSsmtCharge();
+    bool calcPreDrift();
+    void calcAutoDrift();
+    void calcManualDrift();
+    void startManualDrift();
+    void releaseMt();
+    void calcDrift();
+    void calcRotation();
+    void calcVehicleSpeed();
+    void calcSpeed();
+    void calcWallCollisionStart(f32 walColSeverity);
+    void tryStartJumpPad();
+    void tryEndJumpPad();
+    void calcZipperBoost();
+    void calcScale();
+    void applyShrink(u16 timer);
+    void calcCannon();
+    void calcRotCannon(const EGG::Vector3f &forward);
+    void exitCannon();
+
+    [[nodiscard]] f32 calcVehicleAcceleration() const;
+    [[nodiscard]] f32 calcWallCollisionSpeedFactor(f32 &walColSeverity);
+
+    /// @addr{0x8057EA50}
+    /// @brief Clears the kart's drift state
+    void resetDriftManual() {
+        m_hopStickX = 0;
+        m_hopFrame = 0;
+        status().resetBit(eStatus::Hop, eStatus::DriftManual);
+        m_driftState = DriftState::NotDrifting;
+        m_smtCharge = 0;
+        m_mtCharge = 0;
+    }
+
+    /// @addr{0x80582694}
+    /// @brief Computes the current boost state for the kart
+    void calcBoost() {
+        auto &status = KartObjectProxy::status();
+
+        if (m_boost.calc()) {
+            status.setBit(eStatus::Accelerate);
+        } else {
+            status.resetBit(eStatus::Boost);
+        }
+
+        calcRampBoost();
+    }
+
+    /// @addr{0x80582804}
+    /// @brief Computes the current ramp boost state for the kart
+    /// @details Clears @ref eStatus::RampBoost when the ramp boost timer ends.
+    void calcRampBoost() {
+        auto &status = KartObjectProxy::status();
+
+        if (status.offBit(eStatus::RampBoost)) {
+            return;
+        }
+
+        status.setBit(eStatus::Accelerate);
+        if (--m_rampBoostTimer < 1) {
+            m_rampBoostTimer = 0;
+            status.resetBit(eStatus::RampBoost);
+        }
+    }
+
+    /// @addr{Inlined in 0x805828CC}
+    /// @brief Computes the current cooldown duration between braking and reversing
+    void calcDisableBackwardsAccel() {
+        auto &status = KartObjectProxy::status();
+
+        if (status.offBit(eStatus::DisableBackwardsAccel)) {
+            return;
+        }
+
+        if (--m_ssmtDisableAccelTimer < 0 ||
+                (m_flags.offBit(eFlags::SsmtLeeway) && status.offBit(eStatus::Brake))) {
+            status.resetBit(eStatus::DisableBackwardsAccel);
+            m_ssmtDisableAccelTimer = 0;
+        }
+    }
+
+    /// @addr{0x80582DB4}
+    /// @brief Clears the jump pad state for the kart
+    void clearJumpPad() {
+        m_jumpPadMinSpeed = 0.0f;
+        status().resetBit(eStatus::JumpPad);
+    }
+
+    /// @addr{0x80582DD8}
+    /// @brief Clears the ramp boost state for the kart
+    void clearRampBoost() {
+        m_rampBoostTimer = 0;
+        status().resetBit(eStatus::RampBoost);
+    }
+
+    /// @addr{0x80582F38}
+    /// @brief Clears the zipper boost state for the kart
+    void clearZipperBoost() {
+        m_zipperBoostTimer = 0;
+        status().resetBit(eStatus::ZipperBoost);
+    }
+
+    /// @addr{0x80582D94}
+    /// @brief Clears the boost state for the kart
+    void clearBoost() {
+        m_boost.resetActive();
+        status().resetBit(eStatus::Boost);
+    }
+
+    /// @addr{0x80582F58}
+    /// @brief Clears the standstill mini-turbo (SSMT) state for the kart
+    void clearSsmt() {
+        m_ssmtCharge = 0;
+        m_ssmtLeewayTimer = 0;
+        m_ssmtDisableAccelTimer = 0;
+        m_flags.resetBit(eFlags::SsmtCharged, eFlags::SsmtLeeway);
+    }
+
+    /// @addr{0x80582F7C}
+    /// @brief Clears the offroad invincibility state for the kart
+    void clearOffroadInvincibility() {
+        m_offroadInvincibilityTimer = 0;
+        status().resetBit(eStatus::BoostOffroadInvincibility);
+    }
+
+    /// @addr{0x8057B028}
+    /// @brief Applies gravity-induced rolling on slopes when the kart is near stationary
+    void calcDeceleration() {
+        f32 vel = 0.0f;
+        f32 initialVel = 1.0f - m_smoothedUp.y;
+        if (EGG::Mathf::abs(m_speed) < 30.0f && m_smoothedUp.y > 0.0f && initialVel > 0.0f) {
+            initialVel = std::min(initialVel * 2.0f, 2.0f);
+            vel += initialVel;
+            vel *= std::min(0.5f, std::max(-0.5f, -bodyForward().y));
+        }
+        m_speed += vel;
+    }
+
+    /// @addr{Inlined in 0x805788DC}
+    /// @brief Calculates whether we are charging a standstill mini-turbo
+    void calcSsmt() {
+        auto &status = KartObjectProxy::status();
+
+        if (EGG::Mathf::abs(m_speed) >= 10.0f || status.onBit(eStatus::Boost, eStatus::RampBoost) ||
+                status.offAnyBit(eStatus::Accelerate, eStatus::Brake)) {
+            status.resetBit(eStatus::ChargingSSMT);
+            return;
+        }
+
+        status.setBit(eStatus::ChargingSSMT).resetBit(eStatus::HopStart, eStatus::DriftInput);
+    }
+
+    /// @addr{0x8057DA18}
+    /// @brief Checks whether the vehicle can perform a hop
+    /// @details In the base game this is virtual, but it is not overriden in any derived class, so
+    /// we can de-virtualize it here.
+    [[nodiscard]] bool canHop() const {
+        const auto &status = KartObjectProxy::status();
+
+        if (status.offAnyBit(eStatus::HopStart, eStatus::TouchingGround)) {
+            return false;
+        }
+
+        if (status.onBit(eStatus::InAction)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /// @addr{0x8057EA94}
+    /// @brief Checks whether the vehicle can start drifting
+    /// @details The kart can drift if its speed is at 55% or greater than its base speed.
+    /// @note This doesn't bytematch the base game. The base game's implementation uses the >
+    /// comparison. In practice, > is only ever used once, whereas >= is used in every other
+    /// scenario, so we simplify by writing this function for the more common scenario.
+    bool canStartDrift() const {
+        return m_speed >= MINIMUM_DRIFT_THRESOLD * m_baseSpeed;
+    }
+
+    /// @addr{Inlined at 0x80587590}
+    /// @brief Activates a boost panel boost if the kart is not in an action or preparing to respawn
+    /// @details Also sets 60 frames of offroad invinsibility so the kart does not lose speed.
+    void tryStartBoostPanel() {
+        constexpr s16 BOOST_PANEL_DURATION = 60;
+
+        if (status().onBit(eStatus::BeforeRespawn, eStatus::InAction)) {
+            return;
+        }
+
+        activateBoost(KartBoost::Type::MushroomAndBoostPanel, BOOST_PANEL_DURATION);
+        setOffroadInvincibility(BOOST_PANEL_DURATION);
+    }
+
+    /// @addr{Inlined at 0x80587590}
+    /// @brief Activates a boost ramp boost if the kart is not in an action or preparing to respawn
+    /// @details Also sets 60 frames of offroad invincibility and sets @ref eStatus::RampBoost.
+    void tryStartBoostRamp() {
+        constexpr s16 BOOST_RAMP_DURATION = 60;
+
+        auto &status = KartObjectProxy::status();
+
+        if (status.onBit(eStatus::BeforeRespawn, eStatus::InAction)) {
+            return;
+        }
+
+        status.setBit(eStatus::RampBoost);
+        m_rampBoostTimer = BOOST_RAMP_DURATION;
+        setOffroadInvincibility(BOOST_RAMP_DURATION);
+    }
+
+    /// @addr{0x80582DB4}
+    /// @brief Cancels the jump pad effect on the kart
+    void cancelJumpPad() {
+        m_jumpPadMinSpeed = 0.0f;
+        status().resetBit(eStatus::JumpPad);
+    }
+
+    /// @addr{0x8057F090}
+    /// @brief Activates a boost of the specified type for a set number of frames
+    /// @param type The type of boost to activate
+    /// @param frames The number of frames to apply the boost for
+    /// @details Also sets the @ref eStatus::Boost flag if the boost is successfully activated.
+    void activateBoost(KartBoost::Type type, s16 frames) {
+        if (m_boost.activate(type, frames)) {
+            status().setBit(eStatus::Boost);
+        }
+    }
+
+    /// @addr{0x805824C8}
+    /// @brief Ignores offroad KCL collision for a set amount of time
+    /// @param timer Number of frames to ignore offroad slowdown for
+    /// @details Also sets the @ref eStatus::BoostOffroadInvincibility flag.
+    void setOffroadInvincibility(s16 timer) {
+        if (timer > m_offroadInvincibilityTimer) {
+            m_offroadInvincibilityTimer = timer;
+        }
+
+        status().setBit(eStatus::BoostOffroadInvincibility);
+    }
+
+    /// @addr{0x805824F0}
+    /// @brief Checks a timer to see if we are still ignoring offroad slowdown
+    /// @details When the timer expires, resets the @ref eStatus::BoostOffroadInvincibility flag.
+    void calcOffroadInvincibility() {
+        auto &status = KartObjectProxy::status();
+
+        if (status.offBit(eStatus::BoostOffroadInvincibility)) {
+            return;
+        }
+
+        if (--m_offroadInvincibilityTimer > 0) {
+            return;
+        }
+
+        status.resetBit(eStatus::BoostOffroadInvincibility);
+    }
+
+    /// @brief Checks a timer to see if we are still boosting from a mushroom
+    /// @details When the timer expires, resets the @ref eStatus::MushroomBoost flag.
+    void calcMushroomBoost() {
+        auto &status = KartObjectProxy::status();
+
+        if (status.offBit(eStatus::MushroomBoost)) {
+            return;
+        }
+
+        if (--m_mushroomBoostTimer > 0) {
+            return;
+        }
+
+        status.resetBit(eStatus::MushroomBoost);
+    }
+
+    /// @addr{0x80580F9C}
+    /// @brief Checks if the crush effect is still active and updates the timer
+    /// @details When the timer expires, resets the @ref eStatus::Crushed flag and re-scales the
+    /// kart.
+    void calcCrushed() {
+        if (status().offBit(eStatus::Crushed)) {
+            return;
+        }
+
+        if (--m_crushTimer == 0) {
+            status().resetBit(eStatus::Crushed);
+            m_kartScale->endCrush();
+        }
+    }
+
+    /// @addr{0x80580998}
+    /// @brief Calculates the shock's speed multiplier and checks if the shock should end
+    void calcShock() {
+        auto &status = state()->status();
+
+        if (status.onBit(eStatus::Shocked)) {
+            if (--m_shockTimer == 0) {
+                deactivateShock(false);
+            }
+
+            m_shockSpeedMultiplier = std::max(0.7f, m_shockSpeedMultiplier - 0.03f);
+        } else {
+            m_shockSpeedMultiplier = std::min(1.0f, m_shockSpeedMultiplier + 0.05f);
+        }
+    }
+
+    /// @addr{0x80580A84}
+    /// @brief Deactivates the shock effect and optionally resets the speed multiplier
+    /// @param resetSpeed If true, resets the speed multiplier to 1.0f
+    void deactivateShock(bool resetSpeed) {
+        status().resetBit(eStatus::Shocked);
+        m_shockTimer = 0;
+        m_kartScale->endShrink(0);
+
+        if (resetSpeed) {
+            m_shockSpeedMultiplier = 1.0f;
+        }
+    }
 };
 
 /// @copybrief KartMove
@@ -897,10 +906,13 @@ public:
         u16 maxWheelieFrames;    ///< Maximum number of frames a wheelie can be held
     };
 
-    KartMoveBike();
-    ~KartMoveBike() override;
+    /// @addr{0x80587B30}
+    /// @brief Constructor
+    KartMoveBike() : m_leanRot(0.0f) {}
 
-    void startWheelie();
+    /// @addr{0x80589704}
+    /// @brief Default virtual destructor
+    ~KartMoveBike() override = default;
 
     /// @addr{0x805883C4}
     /// @brief Clears the wheelie bit flag and resets the rotation decrement
@@ -912,20 +924,50 @@ public:
         m_autoHardStickXFrames = 0;
     }
 
-    /// @copybrief KartMove::createSubsystems()
     /// @addr{0x80587BB8}
-    /// @details This override creates the bike-specific @ref KartJumpBike subsystem.
+    /// @copydoc KartMove::createSubsystems()
+    /// @details For bikes, this override creates the bike-specific @ref KartJumpBike subsystem for
+    /// @ref m_jump.
     void createSubsystems(const KartParam::Stats &stats) override {
         m_jump = EGG::egg_new<KartJumpBike>(this);
         m_halfPipe = EGG::egg_new<KartHalfPipe>();
         m_kartScale = EGG::egg_new<KartScale>(stats);
     }
 
+    /// @copybrief KartMove::initOob()
+    /// @addr{0x80588B58}
+    /// @details For bikes, this also cancels wheelies.
+    void initOob() override {
+        KartMove::initOob();
+        cancelWheelie();
+    }
+
+    void setTurnParams() override;
+
+    /// @addr{0x80588950}
+    /// @copybrief KartMove::clear()
+    /// @details Also cancels wheelies.
+    void clear() override {
+        KartMove::clear();
+        cancelWheelie();
+    }
+
+    /// @beginGetters
+
+    /// @addr{0x805896BC}
+    /// @copybrief KartMove::leanRot()
+    [[nodiscard]] f32 leanRot() const override {
+        return m_leanRot;
+    }
+
+    /// @endGetters
+
+private:
     void calcVehicleRotation(f32 /*turn*/) override;
     void calcWheelie() override;
 
-    /// @copybrief KartMove::onPreDrift()
     /// @addr{0x80588B30}
+    /// @copybrief KartMove::onPreDrift()
     void onPreDrift() override {
         if (status().onBit(eStatus::AutoDrift)) {
             return;
@@ -942,25 +984,7 @@ public:
     }
 
     void calcMtCharge() override;
-
-    /// @copybrief KartMove::initOob()
-    /// @addr{0x80588B58}
-    /// @details For bikes, this also cancels wheelies.
-    void initOob() override {
-        KartMove::initOob();
-        cancelWheelie();
-    }
-
-    void setTurnParams() override;
     void reset(bool preserveScale, bool preserveFloorCount) override;
-
-    /// @addr{0x80588950}
-    /// @copybrief KartMove::clear()
-    /// @details Also cancels wheelies.
-    void clear() override {
-        KartMove::clear();
-        cancelWheelie();
-    }
 
     /// @addr{0x80588324}
     /// @copybrief KartMove::getWheelieSoftSpeedLimitBonus()
@@ -968,6 +992,20 @@ public:
     [[nodiscard]] f32 getWheelieSoftSpeedLimitBonus() const override {
         constexpr f32 WHEELIE_SPEED_BONUS = 0.15f;
         return status().onBit(eStatus::Wheelie) ? WHEELIE_SPEED_BONUS : 0.0f;
+    }
+
+    void startWheelie();
+    void calcWheelieInput();
+
+    /// @addr{0x80588FE0}
+    /// @copybrief KartMove::canWheelie()
+    /// @details The kart can wheelie if it is traveling over 30% of its base speed stat
+    /// @note This is normally a virtual function in the base game, but since its base class
+    /// implementation is never called, we can de-virtualize in Kinoko.
+    [[nodiscard]] bool canWheelie() const {
+        constexpr f32 WHEELIE_THRESHOLD = 0.3f;
+
+        return m_speedRatioCapped >= WHEELIE_THRESHOLD && m_speed >= 0.0f;
     }
 
     /// @addr{0x80588860}
@@ -978,28 +1016,6 @@ public:
         return status().onBit(eStatus::Wheelie) ? WHEELIE_ROTATION_FACTOR : 1.0f;
     }
 
-    void calcWheelieInput();
-
-    /// @beginGetters
-
-    /// @addr{0x805896BC}
-    /// @copybrief KartMove::leanRot()
-    [[nodiscard]] f32 leanRot() const override {
-        return m_leanRot;
-    }
-
-    /// @addr{0x80588FE0}
-    /// @copybrief KartMove::canWheelie()
-    /// @details The kart can wheelie if it is traveling over 30% of its base speed stat
-    [[nodiscard]] bool canWheelie() const override {
-        constexpr f32 WHEELIE_THRESHOLD = 0.3f;
-
-        return m_speedRatioCapped >= WHEELIE_THRESHOLD && m_speed >= 0.0f;
-    }
-
-    /// @endGetters
-
-private:
     f32 m_leanRot;         ///< Z-axis rotation of the bike from leaning
     f32 m_leanRotCap;      ///< The maximum leaning rotation
     f32 m_leanRotInc;      ///< The incrementor for leaning rotation
