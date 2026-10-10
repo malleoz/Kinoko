@@ -2,35 +2,14 @@
 
 namespace Kinoko::Kart {
 
-/// @addr{0x805B4AF8}
-/// @brief Constructor
-/// @details Initializes all member variables to their default values.
-KartDynamics::KartDynamics() {
-    m_angVel0Factor = 1.0f;
-    m_inertiaTensor = EGG::Matrix34f::ident;
-    m_invInertiaTensor = EGG::Matrix34f::ident;
-    init();
-}
-
-/// @addr{0x8059F6B8}
-/// @brief Default virtual destructor
-KartDynamics::~KartDynamics() = default;
-
-/// @addr{0x805B5B68}
-/// @details Rotates the kart up towards the world up vector
-void KartDynamics::stabilize() {
-    EGG::Vector3f top = m_mainRot.rotateVector(EGG::Vector3f::ey);
-    if (EGG::Mathf::abs(top.dot(m_up)) >= 0.9999f) {
-        return;
-    }
-
-    EGG::Quatf q;
-    q.makeVectorRotation(top, m_up);
-    m_mainRot = m_mainRot.slerpTo(q.multSwap(m_mainRot), m_stabilizationFactor);
-}
-
 /// @addr{0x805B4B54}
 /// @brief Initializes the kart's dynamics to default values
+/// @details Initializess all position and velocity vectors to zero. Sets @ref m_speedNorm to zero.
+/// Initializes all rotation quaternions to the identity quaternion. Sets gravity to `-1.0f`.
+/// Initializes @ref m_up and @ref m_stabilizeUp to the world up vector. Sets @ref m_forceUpright to
+/// `true`. Sets @ref m_noGravity and @ref m_killExtVelY to `false` and @ref m_stabilizationFactor
+/// to `0.1f`. Initializes @ref m_headingExtVel and @ref m_angVel0YFactor to `0.0f`. Sets @ref
+/// m_scale to the unit vector.
 void KartDynamics::init() {
     m_pos = EGG::Vector3f::zero;
     m_extVel = EGG::Vector3f::zero;
@@ -61,31 +40,17 @@ void KartDynamics::init() {
     m_scale = EGG::Vector3f::unit;
 }
 
-/// @addr{0x805B4E84}
-/// @brief Computes the intertia tensor from the provided cuboid dimensions
-/// @param m The dimensions of the first cuboid with mas 12
-/// @param n The dimensions of the second cuboid with mass 1
-void KartDynamics::setInertia(const EGG::Vector3f &m, const EGG::Vector3f &n) {
-    constexpr f32 TWELFTH = 1.0f / 12.0f;
-
-    m_inertiaTensor = EGG::Matrix34f::zero;
-    m_inertiaTensor[0, 0] = TWELFTH * (m.y * m.y + m.z * m.z) + (n.y * n.y + n.z * n.z);
-    m_inertiaTensor[1, 1] = TWELFTH * (m.z * m.z + m.x * m.x) + (n.z * n.z + n.x * n.x);
-    m_inertiaTensor[2, 2] = TWELFTH * (m.x * m.x + m.y * m.y) + (n.x * n.x + n.y * n.y);
-    m_inertiaTensor.inverseTo33(m_invInertiaTensor);
-}
-
 /// @addr{0x805B5170}
 /// @brief Every frame, computes acceleration, velocity, position, and rotation of the kart.
-/// @param dt Delta time. It's always 1.0f.
-/// @param maxSpeed Always 120.0f.
-/// @param air True if the kart is in the air, false otherwise.
+/// @param dt Delta time, always 1.0f
+/// @param maxSpeed Maximum speed of the kart, always 120.0f
+/// @param air `true` if the kart is in the air, `false` otherwise.
 /// @details Applies acceleration from gravity and total force to external velocity. Decays external
-/// velocity and angular velocity. Extracts the forward/backward component from external velocity
-/// and stores it in @ref m_headingExtVel. If mid-air, caps the internal velocity at 120.0f.
-/// Computes overall velocity from external, internal, and moving object/road velocities. Updates
-/// position accordingly. Calculates overall angular velocity, stabilizes the vehicle, and applies
-/// the resulting rotation.
+/// velocity by 0.2% and angular velocity by 2% each frame. Extracts the forward/backward component
+/// from external velocity and stores it in @ref m_headingExtVel. If mid-air, caps the internal
+/// velocity at `120.0f`. Computes overall velocity from external, internal, and moving object/road
+/// velocities. Updates position accordingly. Calculates overall angular velocity, stabilizes the
+/// vehicle, and applies the resulting rotation.
 void KartDynamics::calc(f32 dt, f32 maxSpeed, bool air) {
     constexpr f32 EXT_VEL_DECAY = 0.998f;
     constexpr f32 ANG_VEL_DECAY = 0.98f;
@@ -201,7 +166,10 @@ void KartDynamics::reset() {
 /// @param pos Position of the rigid body.
 /// @param fLinear Linear motion force
 /// @param fRot Rotational force
-/// @param ignoreX If true, no x-axis torque is applied (e.g. when in a wheelie)
+/// @param ignoreX If `true`, no x-axis torque is applied (e.g. when in a wheelie)
+/// @details Adds the Y-component of `fLinear` to @ref m_totalForce.y. Computes the torque generated
+/// by `fRot` at the given `pos` and adds it to @ref m_totalTorque, optionally ignoring the x-axis
+/// component if `ignoreX` is `true`.
 void KartDynamics::applySuspensionWrench(const EGG::Vector3f &pos, const EGG::Vector3f &fLinear,
         const EGG::Vector3f &fRot, bool ignoreX) {
     m_totalForce.y += fLinear.y;
@@ -216,42 +184,23 @@ void KartDynamics::applySuspensionWrench(const EGG::Vector3f &pos, const EGG::Ve
     m_totalTorque += torque;
 }
 
-/// @addr{0x805B5CE8}
-/// @brief Applies a scaled linear force and rotationally to the kart.
-/// @param pos Position of the rigid body.
-/// @param fLinear Linear motion force
-/// @param scale Scale factor for the torque
-void KartDynamics::applyWrenchScaled(const EGG::Vector3f &pos, const EGG::Vector3f &fLinear,
-        f32 scale) {
-    m_totalForce += fLinear;
-
-    EGG::Vector3f fBody = m_fullRot.rotateVectorInv(fLinear);
-    EGG::Vector3f rBody = m_fullRot.rotateVectorInv(pos - m_pos);
-    EGG::Vector3f torque = rBody.cross(fBody);
-
-    m_totalTorque += torque * scale;
-}
-
-KartDynamicsBike::KartDynamicsBike() = default;
-
-/// @addr{0x805B66E4}
-KartDynamicsBike::~KartDynamicsBike() = default;
-
 /// @addr{0x805B6448}
-/// @details Stabilizes the bike by rotating towards the target stabilization up vector.
+/// @copybrief KartDynamics::stabilize()
+/// @details Stabilizes the bike by rotating towards the target stabilization up vector using
+/// spherical linear interpolation with a rate of @ref m_stabilizationFactor.
 void KartDynamicsBike::stabilize() {
     EGG::Vector3f forward = m_up.cross(m_mainRot.rotateVector(EGG::Vector3f::ez)).cross(m_up);
     forward.normalise();
-    EGG::Vector3f local_4c = forward.cross(m_stabilizeUp.cross(forward));
-    local_4c.normalise();
+    EGG::Vector3f targetUp = forward.cross(m_stabilizeUp.cross(forward));
+    targetUp.normalise();
 
     EGG::Vector3f top = m_mainRot.rotateVector(EGG::Vector3f::ey);
-    if (EGG::Mathf::abs(top.dot(local_4c)) >= 0.9999f) {
+    if (EGG::Mathf::abs(top.dot(targetUp)) >= 0.9999f) {
         return;
     }
 
     EGG::Quatf q;
-    q.makeVectorRotation(top, local_4c);
+    q.makeVectorRotation(top, targetUp);
     m_mainRot = m_mainRot.slerpTo(q.multSwap(m_mainRot), m_stabilizationFactor);
 }
 

@@ -82,16 +82,10 @@ public:
 
     void init();
     void setHitboxLastPos();
-
     void calcHitboxes();
-
     void findCollision();
     void calcRebound();
-    void applyRebound(f32 param_1, f32 param_2, bool lockXZ, bool addExtVelY);
-    void calcBodyCollision(f32 totalScale, f32 sinkDepth, const EGG::Quatf &rot,
-            const EGG::Vector3f &scale);
     void calcFloorEffect();
-    void calcLeanCollision(Field::KCLTypeMask *maskOut, const EGG::Vector3f &pos, bool twoPoint);
     void calcTriggers(Field::KCLTypeMask *mask);
     void calcFallBoundary(Field::KCLTypeMask *mask, bool shortBoundary);
     void calcBeforeRespawnAndShrink();
@@ -99,42 +93,12 @@ public:
             bool somethingBullet);
     void calcWheelCollision(u16 wheelIdx, CollisionGroup *hitboxGroup, const EGG::Vector3f &colVel,
             const EGG::Vector3f &center, f32 radius);
-    void calcSideCollision(CollisionData &collisionData, Hitbox &hitbox,
-            Field::CollisionInfo *colInfo);
     void calcBoundingRadius();
     void calcObjectCollision();
-    void calcPoleTimer();
-
-    /// @addr{0x8056E8D4}
-    /// @brief Processes moving water and floor collision effects
-    /// @param collisionData The struct to accumulate collsion information
-    /// @param hitbox The hitbox being processed
-    /// @param colInfo Collision information for the current frame
-    /// @param mask The collision type mask from the preceding collision check
-    /// @details Simply calls @ref processMovingWater() and @ref processFloor().
-    void processWheel(CollisionData &collisionData, Hitbox &hitbox, Field::CollisionInfo *colInfo,
-            Field::KCLTypeMask *mask) {
-        processMovingWater(collisionData, mask);
-        processFloor(collisionData, hitbox, colInfo, mask, true);
-    }
-
-    void processBody(CollisionData &collisionData, Hitbox &hitbox, Field::CollisionInfo *colInfo,
-            Field::KCLTypeMask *maskOut);
-    void processMovingWater(CollisionData &collisionData, Field::KCLTypeMask *maskOut);
-    [[nodiscard]] bool processWall(CollisionData &collisionData, Field::KCLTypeMask *maskOut);
-    void processFloor(CollisionData &collisionData, Hitbox &hitbox, Field::CollisionInfo *colInfo,
-            Field::KCLTypeMask *mask, bool wheel);
-    void processCannon(Field::KCLTypeMask *maskOut);
-
     void applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitboxGroup,
             const EGG::Vector3f &forward, const EGG::Vector3f &nextDir, const EGG::Vector3f &speed,
             bool b1, bool b2, bool b3);
-
-    [[nodiscard]] bool accumulateBodyCollision(CollisionData &collisionData, const Hitbox &hitbox,
-            EGG::BoundBox3f &minMax, EGG::Vector3f &relPos, s32 &count,
-            const Field::KCLTypeMask &maskOut, const Field::CollisionInfo &colInfo);
-    void applyBodyCollision(CollisionData &collisionData, const EGG::Vector3f &movement,
-            const EGG::Vector3f &posRel, s32 count);
+    void calcFloorMomentScalar();
 
     /// @addr{0x805713D8}
     /// @brief Sets the floor moment scalar to a small value
@@ -144,7 +108,122 @@ public:
         m_floorMomentScalar = 0.01f;
     }
 
-    void calcFloorMomentScalar();
+    /// @beginSetters
+
+    /// @brief Sets the tangent offset vector for the kart
+    /// @param v The tangent offset vector
+    void setTangentOff(const EGG::Vector3f &v) {
+        m_tangentOff = v;
+    }
+
+    /// @brief Sets the movement vector for the kart
+    /// @param v The movement vector
+    void setMovement(const EGG::Vector3f &v) {
+        m_movement = v;
+    }
+
+    /// @endSetters
+
+    /// @beginGetters
+
+    /// @brief Gets the @ref KartPullPath instance associated with this kart
+    /// @return Ref to the @ref KartPullPath instance associated with this kart, @ref m_pullPath
+    [[nodiscard]] KartPullPath &pullPath() {
+        return m_pullPath;
+    }
+
+    /// @brief Gets the @ref KartPullPath instance associated with this kart
+    /// @return Const ref to the @ref KartPullPath instance associated with this kart, @ref
+    /// m_pullPath
+    [[nodiscard]] const KartPullPath &pullPath() const {
+        return m_pullPath;
+    }
+
+    /// @brief Gets the bounding radius of the kart
+    /// @return The bounding radius of the kart, @ref m_boundingRadius
+    [[nodiscard]] f32 boundingRadius() const {
+        return m_boundingRadius;
+    }
+
+    /// @brief Gets the floor moment rate of the kart
+    /// @return The floor moment rate of the kart, @ref m_floorMomentScalar
+    [[nodiscard]] f32 floorMomentRate() const {
+        return m_floorMomentScalar;
+    }
+
+    /// @brief Gets the surface flags of the kart
+    /// @return Const ref to the surface flags of the kart, @ref m_surfaceFlags
+    [[nodiscard]] const SurfaceFlags &surfaceFlags() const {
+        return m_surfaceFlags;
+    }
+
+    /// @brief Gets the accumulated collision hit depths vector
+    /// @return Const ref to the accumulated collision hit depths vector, @ref m_tangentOff
+    [[nodiscard]] const EGG::Vector3f &tangentOff() const {
+        return m_tangentOff;
+    }
+
+    /// @brief Gets the movement vector of the kart
+    /// @return Const ref to the movement vector of the kart, @ref m_movement
+    [[nodiscard]] const EGG::Vector3f &movement() const {
+        return m_movement;
+    }
+
+    /// @brief Gets the sum of the hitbox bottom heights for soft wall collisions
+    /// @return The sum of the hitbox bottom heights for soft wall collisions, @ref
+    /// m_sumSoftwallBottomHeight
+    [[nodiscard]] f32 sumHitboxBottomHeightSoftWall() const {
+        return m_sumSoftwallBottomHeight;
+    }
+
+    /// @brief Gets the number of soft wall collisions the kart has experienced
+    /// @return The number of soft wall collisions the kart has experienced, @ref
+    /// m_numSoftWallCollisions
+    [[nodiscard]] u16 numSoftWallCollisions() const {
+        return m_numSoftWallCollisions;
+    }
+
+    /// @brief Gets the sum of the hitbox bottom heights for floor-only collisions
+    /// @return The sum of the hitbox bottom heights for floor-only collisions, @ref
+    /// m_sumFloorBottomHeight
+    [[nodiscard]] f32 sumHitboxBottomHeightFloorOnly() const {
+        return m_sumFloorBottomHeight;
+    }
+
+    /// @brief Gets the number of floor-only collisions the kart has experienced
+    /// @return The number of floor-only collisions the kart has experienced, @ref
+    /// m_numFloorOnlyCollisions
+    [[nodiscard]] u16 numFloorOnlyCollisions() const {
+        return m_numFloorOnlyCollisions;
+    }
+
+    /// @brief Gets the perpendicularity of the collision
+    /// @return The perpendicularity of the collision, @ref m_colPerpendicularity
+    [[nodiscard]] f32 colPerpendicularity() const {
+        return m_colPerpendicularity;
+    }
+
+    /// @endGetters
+
+    /// @addr{0x805B78D0}
+    /// @brief Sets the floor collision information in a @ref CollisionData struct
+    /// @param collisionData The @ref CollisionData struct to set
+    /// @param relPos The position of the colliding hitbox relative to the kart's position
+    /// @param vel The velocity of the kart at the time of collision
+    /// @param floorNrm The normal of the colliding floor KCL
+    static void SetFloorColInfo(CollisionData &collisionData, const EGG::Vector3f &relPos,
+            const EGG::Vector3f &vel, const EGG::Vector3f &floorNrm) {
+        collisionData.relPos = relPos;
+        collisionData.vel = vel;
+        collisionData.floorNrm = floorNrm;
+        collisionData.bFloor = true;
+    }
+
+private:
+    /// @brief Function pointer type for a function that represents an object collision handler
+    /// @param idx The index of the colliding object's hit depth in @ref
+    /// Field::ObjectDirector::m_hitDepths
+    typedef Action (KartCollide::*ObjectCollisionHandler)(size_t idx);
 
     /* ================================ *
      *     OBJECT COLLISION HANDLERS
@@ -334,122 +413,38 @@ public:
         return Action::ExplosionLoseItem;
     }
 
-    /// @addr{0x805B78D0}
-    /// @brief Sets the floor collision information in a @ref CollisionData struct
-    /// @param collisionData The @ref CollisionData struct to set
-    /// @param relPos The position of the colliding hitbox relative to the kart's position
-    /// @param vel The velocity of the kart at the time of collision
-    /// @param floorNrm The normal of the colliding floor KCL
-    void setFloorColInfo(CollisionData &collisionData, const EGG::Vector3f &relPos,
-            const EGG::Vector3f &vel, const EGG::Vector3f &floorNrm) {
-        collisionData.relPos = relPos;
-        collisionData.vel = vel;
-        collisionData.floorNrm = floorNrm;
-        collisionData.bFloor = true;
+    void applyRebound(f32 param_1, f32 param_2, bool lockXZ, bool addExtVelY);
+    void calcBodyCollision(f32 totalScale, f32 sinkDepth, const EGG::Quatf &rot,
+            const EGG::Vector3f &scale);
+    [[nodiscard]] bool accumulateBodyCollision(CollisionData &collisionData, const Hitbox &hitbox,
+            EGG::BoundBox3f &minMax, EGG::Vector3f &relPos, s32 &count,
+            const Field::KCLTypeMask &maskOut, const Field::CollisionInfo &colInfo);
+    void applyBodyCollision(CollisionData &collisionData, const EGG::Vector3f &movement,
+            const EGG::Vector3f &posRel, s32 count);
+    void calcLeanCollision(Field::KCLTypeMask *maskOut, const EGG::Vector3f &pos, bool twoPoint);
+    void calcSideCollision(CollisionData &collisionData, Hitbox &hitbox,
+            Field::CollisionInfo *colInfo);
+    void calcPoleTimer();
+    void processBody(CollisionData &collisionData, Hitbox &hitbox, Field::CollisionInfo *colInfo,
+            Field::KCLTypeMask *maskOut);
+    void processMovingWater(CollisionData &collisionData, Field::KCLTypeMask *maskOut);
+    [[nodiscard]] bool processWall(CollisionData &collisionData, Field::KCLTypeMask *maskOut);
+    void processFloor(CollisionData &collisionData, Hitbox &hitbox, Field::CollisionInfo *colInfo,
+            Field::KCLTypeMask *mask, bool wheel);
+    void processCannon(Field::KCLTypeMask *maskOut);
+
+    /// @addr{0x8056E8D4}
+    /// @brief Processes moving water and floor collision effects
+    /// @param collisionData The struct to accumulate collsion information
+    /// @param hitbox The hitbox being processed
+    /// @param colInfo Collision information for the current frame
+    /// @param mask The collision type mask from the preceding collision check
+    /// @details Simply calls @ref processMovingWater() and @ref processFloor().
+    void processWheel(CollisionData &collisionData, Hitbox &hitbox, Field::CollisionInfo *colInfo,
+            Field::KCLTypeMask *mask) {
+        processMovingWater(collisionData, mask);
+        processFloor(collisionData, hitbox, colInfo, mask, true);
     }
-
-    /// @beginSetters
-
-    /// @brief Sets the tangent offset vector for the kart
-    /// @param v The tangent offset vector
-    void setTangentOff(const EGG::Vector3f &v) {
-        m_tangentOff = v;
-    }
-
-    /// @brief Sets the movement vector for the kart
-    /// @param v The movement vector
-    void setMovement(const EGG::Vector3f &v) {
-        m_movement = v;
-    }
-
-    /// @endSetters
-
-    /// @beginGetters
-
-    /// @brief Gets the @ref KartPullPath instance associated with this kart
-    /// @return Ref to the @ref KartPullPath instance associated with this kart, @ref m_pullPath
-    [[nodiscard]] KartPullPath &pullPath() {
-        return m_pullPath;
-    }
-
-    /// @brief Gets the @ref KartPullPath instance associated with this kart
-    /// @return Const ref to the @ref KartPullPath instance associated with this kart, @ref
-    /// m_pullPath
-    [[nodiscard]] const KartPullPath &pullPath() const {
-        return m_pullPath;
-    }
-
-    /// @brief Gets the bounding radius of the kart
-    /// @return The bounding radius of the kart, @ref m_boundingRadius
-    [[nodiscard]] f32 boundingRadius() const {
-        return m_boundingRadius;
-    }
-
-    /// @brief Gets the floor moment rate of the kart
-    /// @return The floor moment rate of the kart, @ref m_floorMomentScalar
-    [[nodiscard]] f32 floorMomentRate() const {
-        return m_floorMomentScalar;
-    }
-
-    /// @brief Gets the surface flags of the kart
-    /// @return Const ref to the surface flags of the kart, @ref m_surfaceFlags
-    [[nodiscard]] const SurfaceFlags &surfaceFlags() const {
-        return m_surfaceFlags;
-    }
-
-    /// @brief Gets the accumulated collision hit depths vector
-    /// @return Const ref to the accumulated collision hit depths vector, @ref m_tangentOff
-    [[nodiscard]] const EGG::Vector3f &tangentOff() const {
-        return m_tangentOff;
-    }
-
-    /// @brief Gets the movement vector of the kart
-    /// @return Const ref to the movement vector of the kart, @ref m_movement
-    [[nodiscard]] const EGG::Vector3f &movement() const {
-        return m_movement;
-    }
-
-    /// @brief Gets the sum of the hitbox bottom heights for soft wall collisions
-    /// @return The sum of the hitbox bottom heights for soft wall collisions, @ref
-    /// m_sumSoftwallBottomHeight
-    [[nodiscard]] f32 sumHitboxBottomHeightSoftWall() const {
-        return m_sumSoftwallBottomHeight;
-    }
-
-    /// @brief Gets the number of soft wall collisions the kart has experienced
-    /// @return The number of soft wall collisions the kart has experienced, @ref
-    /// m_numSoftWallCollisions
-    [[nodiscard]] u16 numSoftWallCollisions() const {
-        return m_numSoftWallCollisions;
-    }
-
-    /// @brief Gets the sum of the hitbox bottom heights for floor-only collisions
-    /// @return The sum of the hitbox bottom heights for floor-only collisions, @ref
-    /// m_sumFloorBottomHeight
-    [[nodiscard]] f32 sumHitboxBottomHeightFloorOnly() const {
-        return m_sumFloorBottomHeight;
-    }
-
-    /// @brief Gets the number of floor-only collisions the kart has experienced
-    /// @return The number of floor-only collisions the kart has experienced, @ref
-    /// m_numFloorOnlyCollisions
-    [[nodiscard]] u16 numFloorOnlyCollisions() const {
-        return m_numFloorOnlyCollisions;
-    }
-
-    /// @brief Gets the perpendicularity of the collision
-    /// @return The perpendicularity of the collision, @ref m_colPerpendicularity
-    [[nodiscard]] f32 colPerpendicularity() const {
-        return m_colPerpendicularity;
-    }
-
-    /// @endGetters
-
-private:
-    /// @brief Function pointer type for a function that represents an object collision handler
-    /// @param idx The index of the colliding object's hit depth in @ref
-    /// Field::ObjectDirector::m_hitDepths
-    typedef Action (KartCollide::*ObjectCollisionHandler)(size_t idx);
 
     KartPullPath m_pullPath; ///< The state of the pull path that the kart is currently following
     f32 m_boundingRadius; ///< The radius of the sphere that encompasses the kart's body and wheels

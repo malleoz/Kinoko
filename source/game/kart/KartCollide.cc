@@ -115,162 +115,6 @@ void KartCollide::calcRebound() {
             status.offBit(eStatus::JumpPadDisableYsusForce));
 }
 
-/// @addr{0x805B72B8}
-/// @brief Affects velocity and rotation when colliding with floors and walls
-/// @param reboundScalar The scalar to apply to the rebound effect
-/// @param reboundVelAmt The velocity to add to the velocity from the kart's @ref CollisionData
-/// @param lockXZ If true, the relative X and Z position of the collision will be set to 0
-/// @param addExtVelY Gates whether the vertical component of rebound actually gets applied to the
-/// kart's external velocity
-/// @details Every frame, this function checks the player's position relative to the floor and wall
-/// collision and applies external velocity and angular velocity.
-void KartCollide::applyRebound(f32 reboundScalar, f32 reboundVelAmt, bool lockXZ, bool addExtVelY) {
-    const auto &colData = collisionData();
-
-    if (!colData.bFloor && !colData.bWall && !colData.bWall3) {
-        return;
-    }
-
-    EGG::Vector3f colDir = colData.floorNrm + colData.wallNrm;
-    colDir.normalise();
-
-    f32 normalVel = colData.vel.dot(colDir);
-    if (normalVel >= 0.0f) {
-        return;
-    }
-
-    EGG::Matrix34f rtMat;
-    rtMat.makeQ(mainRot());
-    rtMat = rtMat.multiplyTo(dynamics()->invInertiaTensor()).multiplyTo(rtMat.transpose());
-
-    EGG::Vector3f relPos = colData.relPos;
-    if (lockXZ) {
-        relPos.x = 0.0f;
-        relPos.z = 0.0f;
-    }
-
-    EGG::Vector3f torque = rtMat.multVector33(relPos.cross(colDir));
-    f32 normalImpulse =
-            (-normalVel * (1.0f + reboundVelAmt)) / (1.0f + colDir.dot(torque.cross(relPos)));
-
-    EGG::Vector3f tanDir = colDir.cross(-colData.vel).cross(colDir);
-    tanDir.normalise();
-
-    f32 maxTanImpulse = reboundScalar * EGG::Mathf::abs(normalImpulse);
-    f32 tanImpulse = (normalImpulse * colData.vel.dot(tanDir)) / normalVel;
-
-    f32 clampedTanImpulse = tanImpulse;
-    if (maxTanImpulse < EGG::Mathf::abs(tanImpulse)) {
-        clampedTanImpulse = maxTanImpulse;
-        if (tanImpulse < 0.0f) {
-            clampedTanImpulse = -reboundScalar * EGG::Mathf::abs(normalImpulse);
-        }
-    }
-
-    EGG::Vector3f impulse = normalImpulse * colDir + clampedTanImpulse * tanDir;
-
-    f32 impulseY = impulse.y;
-    if (!addExtVelY) {
-        impulseY = 0.0f;
-    } else if (colData.bFloor) {
-        f32 velY = intVel().y;
-        if (velY > 0.0f) {
-            velY += extVel().y;
-            if (velY < 0.0f) {
-                EGG::Vector3f newExtVel = extVel();
-                newExtVel.y = velY;
-                dynamics()->setExtVel(newExtVel);
-            }
-        }
-    }
-
-    f32 prevExtVelY = extVel().y;
-    EGG::Vector3f extVelAdd = impulse;
-    extVelAdd.y = impulseY;
-    dynamics()->setExtVel(extVel() + extVelAdd);
-
-    if (prevExtVelY < 0.0f && extVel().y > 0.0f && extVel().y < 10.0f) {
-        EGG::Vector3f extVelNoY = extVel();
-        extVelNoY.y = 0.0f;
-        dynamics()->setExtVel(extVelNoY);
-    }
-
-    EGG::Vector3f worldAngVelDelta = rtMat.multVector33(relPos.cross(impulse));
-    EGG::Vector3f localAngVelDelta = mainRot().rotateVectorInv(worldAngVelDelta);
-    localAngVelDelta.y = 0.0f;
-    dynamics()->setAngVel0(dynamics()->angVel0() + localAngVelDelta);
-}
-
-/// @addr{0x805B6724}
-/// @brief Checks and acts on collision for each kart hitbox
-/// @param totalScale Overall scale of the vehicle (only affected by shrinking)
-/// @param sinkDepth The depth of the kart's body into the ground
-/// @param rot The rotation of the kart's body
-/// @param scale Per-axis scale of the kart's body
-/// @details For each kart hitbox, updates the hitbox's position and orientation and performs a
-/// collision check against #KCL_TYPE_BODY_COLLIDABLE (or #KCL_TYPE_BODY_WALLS_ONLY_COLLIDABLE if
-/// the @ref BSP::Hitbox specifies walls only). If a collision is detected, then the collision info
-/// is accumulated via @ref accumulateBodyCollision(), moving road velocity (if present) is saved to
-/// @ref collisionData, and @ref processBody() is called to handle the collision response. Finally,
-/// if any hitbox had a collision, then calls @ref applyBodyCollision() to finalize the collision
-/// response.
-void KartCollide::calcBodyCollision(f32 totalScale, f32 sinkDepth, const EGG::Quatf &rot,
-        const EGG::Vector3f &scale) {
-    CollisionGroup *hitboxGroup = physics()->hitboxGroup();
-    CollisionData &collisionData = hitboxGroup->collisionData();
-    collisionData.reset();
-
-    EGG::Vector3f posRel = EGG::Vector3f::zero;
-    s32 count = 0;
-    Field::CollisionInfo colInfo;
-    colInfo.bbox.setDirect(EGG::Vector3f::zero, EGG::Vector3f::zero);
-    Field::KCLTypeMask maskOut;
-    Field::CourseColMgr::NoBounceWallColInfo noBounceWallInfo;
-    EGG::BoundBox3f minMax;
-    minMax.setZero();
-    bool bVar1 = false;
-
-    for (u16 hitboxIdx = 0; hitboxIdx < hitboxGroup->hitboxCount(); ++hitboxIdx) {
-        Field::KCLTypeMask flags = KCL_TYPE_BODY_COLLIDABLE;
-        Hitbox &hitbox = hitboxGroup->hitbox(hitboxIdx);
-
-        if (hitbox.bspHitbox()->wallsOnly != 0) {
-            flags = KCL_TYPE_BODY_WALLS_ONLY_COLLIDABLE;
-            Field::CourseColMgr::Instance()->setNoBounceWallInfo(&noBounceWallInfo);
-        }
-
-        hitbox.calc(totalScale, sinkDepth, scale, rot, pos());
-
-        if (Field::CollisionDirector::Instance()->checkSphereCachedFullPush(hitbox.radius(),
-                    hitbox.worldPos(), hitbox.lastPos(), flags, &colInfo, &maskOut, 0)) {
-            if (!!(maskOut & KCL_TYPE_VEHICLE_COLLIDEABLE)) {
-                Field::CollisionDirector::Instance()->findClosestCollisionEntry(&maskOut,
-                        KCL_TYPE_VEHICLE_COLLIDEABLE);
-            }
-
-            if (!accumulateBodyCollision(collisionData, hitbox, minMax, posRel, count, maskOut,
-                        colInfo)) {
-                bVar1 = true;
-
-                if (colInfo.movingFloorDist > -std::numeric_limits<f32>::min()) {
-                    collisionData.bHasRoadVel = true;
-                    collisionData.roadVelocity = colInfo.roadVelocity;
-                }
-
-                processBody(collisionData, hitbox, &colInfo, &maskOut);
-            }
-        }
-    }
-
-    if (bVar1) {
-        EGG::Vector3f movement = minMax.min + minMax.max;
-        applyBodyCollision(collisionData, movement, posRel, count);
-    } else {
-        collisionData.speedFactor = 1.0f;
-        collisionData.rotFactor = 1.0f;
-    }
-}
-
 /// @addr{0x80571634}
 /// @brief Calculates the effect the colliding floor has on the kart
 /// @details Calls @ref calcLeanCollision() to check for #KCL_TYPE_NON_DIRECTIONAL collisions. If
@@ -317,62 +161,6 @@ void KartCollide::calcFloorEffect() {
         if (colDir->checkSphereCachedPartialPush(m_boundingRadius, pos(), EGG::Vector3f::inf,
                     KCL_TYPE_BIT(COL_TYPE_FALL_BOUNDARY), nullptr, &maskOut, 0)) {
             calcFallBoundary(&maskOut, true);
-        }
-    }
-}
-
-/// @addr{0x805718D4}
-/// @brief Checks for collisions using a position behind and below the kart.
-/// @param maskOut The collision type mask to store the result of the collision check
-/// @param pos The position of the kart to check for collisions
-/// @param checkDirection If `true`, the function will check for directional collisions including
-/// triggers (such as fall plane OOB and cannon entries)
-/// @details Exponentially smooths @ref m_smoothedBack towards the dot product of the kart's back
-/// vector and its smoothed up vector, with an interpolation rate of `0.3f`. Derives the position
-/// behind the kart to check for collisions by moving towards the back of the kart. Performs a
-/// sphere collision check with a radius which varies based on `checkDirection` (`80.0f` if
-/// `checkDirection` is `true`, otherwise `100.0f` times the kart's total scale defined by @ref
-/// KartMove::m_totalScale). If a collision did not occur, the function returns early. If
-/// `checkDirection` was `true`, then the function calls @ref calcTriggers() and returns after.
-/// Otherwise, fetches the closest #KCL_TYPE_FLOOR collision entry (this is effectively ignored in
-/// the current Kinoko implementation). If the collision set any of the bits of #KCL_TYPE_WALL, then
-/// sets the @ref eSurfaceFlags::Wall bit in @ref m_surfaceFlags. If the collision set the
-/// #COL_TYPE_SOLID_OOB bit, then sets the @ref eSurfaceFlags::SolidOOB bit in @ref m_surfaceFlags.
-void KartCollide::calcLeanCollision(Field::KCLTypeMask *maskOut, const EGG::Vector3f &pos,
-        bool checkDirection) {
-    const EGG::Vector3f &v1 = checkDirection ? prevPos() : EGG::Vector3f::inf;
-    Field::KCLTypeMask typeMask = checkDirection ? KCL_TYPE_DIRECTIONAL : KCL_TYPE_NON_DIRECTIONAL;
-    f32 radius = checkDirection ? 80.0f : 100.0f * move()->totalScale();
-    f32 scalar = -bsp().offsetY * move()->totalScale() * 0.3f;
-    EGG::Vector3f scaledPos = pos + scalar * componentYAxis();
-    EGG::Vector3f back = mainRot().rotateVector(EGG::Vector3f::ez);
-
-    m_smoothedBack += (back.dot(move()->smoothedUp()) - m_smoothedBack) * 0.3f;
-
-    scalar = m_smoothedBack * -physics()->halfLength() * 1.8f * move()->totalScale();
-    scaledPos += scalar * back;
-
-    bool collide = Field::CollisionDirector::Instance()->checkSphereCachedPartialPush(radius,
-            scaledPos, v1, typeMask, nullptr, maskOut, 0);
-
-    if (!collide) {
-        return;
-    }
-
-    if (checkDirection) {
-        calcTriggers(maskOut);
-    } else {
-        if (*maskOut & KCL_TYPE_FLOOR) {
-            Field::CollisionDirector::Instance()->findClosestCollisionEntry(maskOut,
-                    KCL_TYPE_FLOOR);
-        }
-
-        if (*maskOut & KCL_TYPE_WALL) {
-            m_surfaceFlags.setBit(eSurfaceFlags::Wall);
-        }
-
-        if (*maskOut & KCL_TYPE_BIT(COL_TYPE_SOLID_OOB)) {
-            m_surfaceFlags.setBit(eSurfaceFlags::SolidOOB);
         }
     }
 }
@@ -551,59 +339,6 @@ void KartCollide::calcWheelCollision(u16 /*wheelIdx*/, CollisionGroup *hitboxGro
             KCL_TYPE_VEHICLE_COLLIDEABLE);
 }
 
-/// @addr{0x8056F26C}
-/// @brief Checks for collisions on the left and right sides of the kart
-void KartCollide::calcSideCollision(CollisionData &collisionData, Hitbox &hitbox,
-        Field::CollisionInfo *colInfo) {
-    if (colInfo->perpendicularity <= 0.0f) {
-        return;
-    }
-
-    m_colPerpendicularity = std::max(m_colPerpendicularity, colInfo->perpendicularity);
-
-    if (collisionData.bWallAtLeftCloser || collisionData.bWallAtRightCloser) {
-        return;
-    }
-
-    f32 bspPosX = hitbox.bspHitbox()->position.x;
-    if (EGG::Mathf::abs(bspPosX) > 10.0f) {
-        if (bspPosX > 0.0f) {
-            collisionData.bWallAtLeftCloser = true;
-        } else {
-            collisionData.bWallAtRightCloser = true;
-        }
-
-        collisionData.colPerpendicularity = colInfo->perpendicularity;
-
-        return;
-    }
-
-    EGG::Vector3f right = mainRot().rotateVector(EGG::Vector3f::ex);
-    std::array<f32, 2> tangents = {0.0f, 0.0f};
-
-    // The loop is just to do left/right wall
-    for (size_t i = 0; i < tangents.size(); ++i) {
-        f32 sign = i == 1 ? -1.0f : 1.0f;
-        f32 effectiveRadius = sign * hitbox.radius();
-        EGG::Vector3f effectivePos = hitbox.worldPos() + effectiveRadius * right;
-        Field::CollisionInfoPartial tempColInfo;
-
-        if (Field::CollisionDirector::Instance()->checkSphereCachedPartial(hitbox.radius(),
-                    effectivePos, hitbox.lastPos(), KCL_TYPE_DRIVER_WALL, &tempColInfo, nullptr,
-                    0)) {
-            tangents[i] = colInfo->tangentOff.squaredLength();
-        }
-    }
-
-    if (tangents[0] > tangents[1]) {
-        collisionData.bWallAtLeftCloser = true;
-        collisionData.colPerpendicularity = colInfo->perpendicularity;
-    } else if (tangents[1] > tangents[0]) {
-        collisionData.bWallAtRightCloser = true;
-        collisionData.colPerpendicularity = colInfo->perpendicularity;
-    }
-}
-
 /// @addr{0x8056E70C}
 /// @brief Calculates the bounding radius for the kart based off the collision group's bounding
 /// radius and the kart's current hitbox scale.
@@ -670,6 +405,531 @@ void KartCollide::calcObjectCollision() {
     calcPoleTimer();
 }
 
+/// @addr{0x805B7928}
+/// @brief Applies external and angular velocity based on the collision with the floor
+/// @param down Always 0.1f
+/// @param rate Downward velocity? Related to suspension stiffness
+/// @param hitboxGroup The wheel's hitbox and collision info
+/// @param forward Current world facing direction of the kart
+/// @param nextDir Updated facing direction of the kart
+/// @param speed Tire speed
+/// @param shouldApplyVelXZ Whether the floor moment affects the kart's XZ external velocity
+/// @param shouldApplyVelY Whether the floor moment affects the kart's Y external velocity
+/// @param shouldApplyAngVel Whether the floor moment affects the kart's angular velocity
+/// @details If the wheel is moving away from the floor, then this function early returns. Builds an
+/// inverse inertia tensor and uses it to compute the impulse magnitude required to cancel the
+/// velocity of the wheel colliding into the floor. Rejects the wheel's velocity onto the floor's
+/// tangent plane, scales it by impulse magnitude and the provided `speed`, and splits it into
+/// forward and sideways components. The components' magnitude is clamped by `down` and `rate`
+/// respectively. These components are then recombined and and added to the kart's @ref
+/// KartDynamics::m_extVel. If `shouldApplyAngVel` is `true`, then also computes torque and adds it
+/// to @ref KartDynamics::m_angVel0.
+void KartCollide::applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitboxGroup,
+        const EGG::Vector3f &forward, const EGG::Vector3f &nextDir, const EGG::Vector3f &speed,
+        bool shouldApplyVelXZ, bool shouldApplyVelY, bool shouldApplyAngVel) {
+    CollisionData &colData = hitboxGroup->collisionData();
+    if (!colData.bFloor) {
+        return;
+    }
+
+    f32 velDotFloorNrm = colData.vel.dot(colData.floorNrm);
+
+    if (velDotFloorNrm >= 0.0f) {
+        return;
+    }
+
+    EGG::Matrix34f rotMat;
+    rotMat.makeQ(mainRot());
+    EGG::Matrix34f tmp = rotMat.multiplyTo(dynamics()->invInertiaTensor());
+    EGG::Matrix34f rotMatTrans = rotMat.transpose();
+    tmp = tmp.multiplyTo(rotMatTrans);
+
+    EGG::Vector3f crossVec = colData.relPos.cross(colData.floorNrm);
+    crossVec = tmp.multVector(crossVec);
+    crossVec = crossVec.cross(colData.relPos);
+
+    f32 scalar = -velDotFloorNrm / (1.0f + colData.floorNrm.dot(crossVec));
+    EGG::Vector3f negSpeed = -speed;
+    crossVec = colData.floorNrm.cross(negSpeed);
+    crossVec = crossVec.cross(colData.floorNrm);
+
+    if (std::numeric_limits<f32>::epsilon() >= crossVec.squaredLength()) {
+        return;
+    }
+
+    crossVec.normalise();
+    f32 speedDot = std::min(0.0f, speed.dot(crossVec));
+    crossVec *= ((scalar * speedDot) / velDotFloorNrm);
+
+    auto [proj, rej] = crossVec.projAndRej(forward);
+
+    f32 projNorm = proj.length();
+    f32 rejNorm = rej.length();
+    f32 projNorm_ = projNorm;
+    f32 rejNorm_ = rejNorm;
+
+    f32 dVar7 = down * EGG::Mathf::abs(scalar);
+    if (dVar7 < EGG::Mathf::abs(projNorm)) {
+        projNorm_ = dVar7;
+        if (projNorm < 0.0f) {
+            projNorm_ = -down * EGG::Mathf::abs(scalar);
+        }
+    }
+
+    f32 dVar5 = rate * EGG::Mathf::abs(scalar);
+    if (EGG::Mathf::abs(rejNorm) > dVar5) {
+        rejNorm_ = dVar5;
+        if (rejNorm < 0.0f) {
+            rejNorm_ = -rate * EGG::Mathf::abs(scalar);
+        }
+    }
+
+    proj.normalise();
+    rej.normalise();
+
+    proj *= projNorm_;
+    rej *= rejNorm_;
+
+    EGG::Vector3f projRejSum = proj + rej;
+    EGG::Vector3f projRejSumOrig = projRejSum;
+
+    if (!shouldApplyVelXZ) {
+        projRejSum.x = 0.0f;
+        projRejSum.z = 0.0f;
+    }
+    if (!shouldApplyVelY) {
+        projRejSum.y = 0.0f;
+    }
+
+    projRejSum = projRejSum.rej(nextDir);
+
+    dynamics()->setExtVel(extVel() + projRejSum);
+
+    if (shouldApplyAngVel) {
+        EGG::Vector3f rotation = colData.relPos.cross(projRejSumOrig);
+        EGG::Vector3f rotation2 = mainRot().rotateVectorInv(tmp.multVector(rotation));
+
+        EGG::Vector3f angVel = rotation2;
+        angVel.y = 0.0f;
+        if (!shouldApplyVelXZ) {
+            angVel.x = 0.0f;
+        }
+        dynamics()->setAngVel0(dynamics()->angVel0() + angVel);
+    }
+}
+
+/// @addr{0x805713FC}
+/// @brief Calculates the scalar used to affect the kart's floor alignment
+/// @details If in a rotating action, the scalar is set to its minimum value of `0.01f`. Otherwise,
+/// it is incremented by `0.01f` up to a maximum of `0.8f`.
+void KartCollide::calcFloorMomentScalar() {
+    m_floorMomentScalar = status().onBit(eStatus::InAction) &&
+                    action()->flags().onBit(KartAction::eFlags::Rotating) ?
+            0.01f :
+            std::min(m_floorMomentScalar + 0.01f, 0.8f);
+}
+
+/// @addr{0x80573A2C}
+/// @brief Models an elastic collision by applying force to the kart away from the colliding object
+/// @param idx The index of the collision in the @ref Field::ObjectDirector array of collisions
+/// @details Applys a force to the kart away from the colliding object based on the hit direction
+/// and the kart's orientation. The magnitude of the force is capped at `70.0f` and is scaled down
+/// based on the angle between the hit direction and the kart's forward axis.
+Action KartCollide::handleReactRubberWall(size_t idx) {
+    constexpr f32 BASE_DIR_FORCE_SCALAR = 0.95f;
+    constexpr f32 DIR_FORCE_SCALAR = 0.050000012f;
+    constexpr f32 MAX_FORCE = 70.0f;
+
+    const EGG::Vector3f &hitDir = Field::ObjectCollisionKart::GetHitDirection(idx);
+    const EGG::Vector3f &zAxis = componentZAxis();
+
+    f32 force = BASE_DIR_FORCE_SCALAR + DIR_FORCE_SCALAR * EGG::Mathf::abs(hitDir.dot(zAxis));
+    move()->applyForce(MAX_FORCE * force, hitDir, true);
+
+    return Action::None;
+}
+
+/// @addr{0x805B72B8}
+/// @brief Affects velocity and rotation when colliding with floors and walls
+/// @param reboundScalar The scalar to apply to the rebound effect
+/// @param reboundVelAmt The velocity to add to the velocity from the kart's @ref CollisionData
+/// @param lockXZ If true, the relative X and Z position of the collision will be set to 0
+/// @param addExtVelY Gates whether the vertical component of rebound actually gets applied to the
+/// kart's external velocity
+/// @details Every frame, this function checks the player's position relative to the floor and wall
+/// collision and applies external velocity and angular velocity.
+void KartCollide::applyRebound(f32 reboundScalar, f32 reboundVelAmt, bool lockXZ, bool addExtVelY) {
+    const auto &colData = collisionData();
+
+    if (!colData.bFloor && !colData.bWall && !colData.bWall3) {
+        return;
+    }
+
+    EGG::Vector3f colDir = colData.floorNrm + colData.wallNrm;
+    colDir.normalise();
+
+    f32 normalVel = colData.vel.dot(colDir);
+    if (normalVel >= 0.0f) {
+        return;
+    }
+
+    EGG::Matrix34f rtMat;
+    rtMat.makeQ(mainRot());
+    rtMat = rtMat.multiplyTo(dynamics()->invInertiaTensor()).multiplyTo(rtMat.transpose());
+
+    EGG::Vector3f relPos = colData.relPos;
+    if (lockXZ) {
+        relPos.x = 0.0f;
+        relPos.z = 0.0f;
+    }
+
+    EGG::Vector3f torque = rtMat.multVector33(relPos.cross(colDir));
+    f32 normalImpulse =
+            (-normalVel * (1.0f + reboundVelAmt)) / (1.0f + colDir.dot(torque.cross(relPos)));
+
+    EGG::Vector3f tanDir = colDir.cross(-colData.vel).cross(colDir);
+    tanDir.normalise();
+
+    f32 maxTanImpulse = reboundScalar * EGG::Mathf::abs(normalImpulse);
+    f32 tanImpulse = (normalImpulse * colData.vel.dot(tanDir)) / normalVel;
+
+    f32 clampedTanImpulse = tanImpulse;
+    if (maxTanImpulse < EGG::Mathf::abs(tanImpulse)) {
+        clampedTanImpulse = maxTanImpulse;
+        if (tanImpulse < 0.0f) {
+            clampedTanImpulse = -reboundScalar * EGG::Mathf::abs(normalImpulse);
+        }
+    }
+
+    EGG::Vector3f impulse = normalImpulse * colDir + clampedTanImpulse * tanDir;
+
+    f32 impulseY = impulse.y;
+    if (!addExtVelY) {
+        impulseY = 0.0f;
+    } else if (colData.bFloor) {
+        f32 velY = intVel().y;
+        if (velY > 0.0f) {
+            velY += extVel().y;
+            if (velY < 0.0f) {
+                EGG::Vector3f newExtVel = extVel();
+                newExtVel.y = velY;
+                dynamics()->setExtVel(newExtVel);
+            }
+        }
+    }
+
+    f32 prevExtVelY = extVel().y;
+    EGG::Vector3f extVelAdd = impulse;
+    extVelAdd.y = impulseY;
+    dynamics()->setExtVel(extVel() + extVelAdd);
+
+    if (prevExtVelY < 0.0f && extVel().y > 0.0f && extVel().y < 10.0f) {
+        EGG::Vector3f extVelNoY = extVel();
+        extVelNoY.y = 0.0f;
+        dynamics()->setExtVel(extVelNoY);
+    }
+
+    EGG::Vector3f worldAngVelDelta = rtMat.multVector33(relPos.cross(impulse));
+    EGG::Vector3f localAngVelDelta = mainRot().rotateVectorInv(worldAngVelDelta);
+    localAngVelDelta.y = 0.0f;
+    dynamics()->setAngVel0(dynamics()->angVel0() + localAngVelDelta);
+}
+
+/// @addr{0x805B6724}
+/// @brief Checks and acts on collision for each kart hitbox
+/// @param totalScale Overall scale of the vehicle (only affected by shrinking)
+/// @param sinkDepth The depth of the kart's body into the ground
+/// @param rot The rotation of the kart's body
+/// @param scale Per-axis scale of the kart's body
+/// @details For each kart hitbox, updates the hitbox's position and orientation and performs a
+/// collision check against #KCL_TYPE_BODY_COLLIDABLE (or #KCL_TYPE_BODY_WALLS_ONLY_COLLIDABLE if
+/// the @ref BSP::Hitbox specifies walls only). If a collision is detected, then the collision info
+/// is accumulated via @ref accumulateBodyCollision(), moving road velocity (if present) is saved to
+/// @ref collisionData, and @ref processBody() is called to handle the collision response. Finally,
+/// if any hitbox had a collision, then calls @ref applyBodyCollision() to finalize the collision
+/// response.
+void KartCollide::calcBodyCollision(f32 totalScale, f32 sinkDepth, const EGG::Quatf &rot,
+        const EGG::Vector3f &scale) {
+    CollisionGroup *hitboxGroup = physics()->hitboxGroup();
+    CollisionData &collisionData = hitboxGroup->collisionData();
+    collisionData.reset();
+
+    EGG::Vector3f posRel = EGG::Vector3f::zero;
+    s32 count = 0;
+    Field::CollisionInfo colInfo;
+    colInfo.bbox.setDirect(EGG::Vector3f::zero, EGG::Vector3f::zero);
+    Field::KCLTypeMask maskOut;
+    Field::CourseColMgr::NoBounceWallColInfo noBounceWallInfo;
+    EGG::BoundBox3f minMax;
+    minMax.setZero();
+    bool bVar1 = false;
+
+    for (u16 hitboxIdx = 0; hitboxIdx < hitboxGroup->hitboxCount(); ++hitboxIdx) {
+        Field::KCLTypeMask flags = KCL_TYPE_BODY_COLLIDABLE;
+        Hitbox &hitbox = hitboxGroup->hitbox(hitboxIdx);
+
+        if (hitbox.bspHitbox()->wallsOnly != 0) {
+            flags = KCL_TYPE_BODY_WALLS_ONLY_COLLIDABLE;
+            Field::CourseColMgr::Instance()->setNoBounceWallInfo(&noBounceWallInfo);
+        }
+
+        hitbox.calc(totalScale, sinkDepth, scale, rot, pos());
+
+        if (Field::CollisionDirector::Instance()->checkSphereCachedFullPush(hitbox.radius(),
+                    hitbox.worldPos(), hitbox.lastPos(), flags, &colInfo, &maskOut, 0)) {
+            if (!!(maskOut & KCL_TYPE_VEHICLE_COLLIDEABLE)) {
+                Field::CollisionDirector::Instance()->findClosestCollisionEntry(&maskOut,
+                        KCL_TYPE_VEHICLE_COLLIDEABLE);
+            }
+
+            if (!accumulateBodyCollision(collisionData, hitbox, minMax, posRel, count, maskOut,
+                        colInfo)) {
+                bVar1 = true;
+
+                if (colInfo.movingFloorDist > -std::numeric_limits<f32>::min()) {
+                    collisionData.bHasRoadVel = true;
+                    collisionData.roadVelocity = colInfo.roadVelocity;
+                }
+
+                processBody(collisionData, hitbox, &colInfo, &maskOut);
+            }
+        }
+    }
+
+    if (bVar1) {
+        EGG::Vector3f movement = minMax.min + minMax.max;
+        applyBodyCollision(collisionData, movement, posRel, count);
+    } else {
+        collisionData.speedFactor = 1.0f;
+        collisionData.rotFactor = 1.0f;
+    }
+}
+
+/// @addr{0x805B6A9C}
+/// @brief Called when the body of the kart has a collision.
+/// @param collisionData The collision data to update with the results of the collision
+/// @param hitbox The hitbox of the kart's body that collided
+/// @param minMax The minimum and maximum points of the collision bounding box
+/// @param relPos The relative position of the collision to the kart's position
+/// @param count Counts the number of body hitbox collisions that have occurred this frame
+/// @param mask A mask representing the type of collision that occurred
+/// @param colInfo The collision information from the collision check
+/// @return Returns `true` if the collision should be skipped, `false` otherwise
+/// @details Updates the provided @ref CollisionData with the results of the collision. If not
+/// colliding with a wall, updates the relative position and bounding box of the collision so that
+/// subsequent collision checks for the body's hitboxes reflect this change in position. Finally
+/// increments the number of hitbox collisions that have occurred.
+bool KartCollide::accumulateBodyCollision(CollisionData &collisionData, const Hitbox &hitbox,
+        EGG::BoundBox3f &minMax, EGG::Vector3f &relPos, s32 &count, const Field::KCLTypeMask &mask,
+        const Field::CollisionInfo &colInfo) {
+    if (mask & KCL_TYPE_WALL) {
+        if (!(mask & KCL_TYPE_FLOOR) && status().onBit(eStatus::HWG) &&
+                state()->softWallNrm().dot(colInfo.wallNrm) < 0.3f) {
+            return true;
+        }
+
+        bool skipWalls = false;
+
+        collisionData.wallNrm += colInfo.wallNrm;
+
+        if (mask & KCL_TYPE_ANY_INVISIBLE_WALL) {
+            collisionData.bInvisibleWall = true;
+
+            if (!(mask & KCL_TYPE_VISIBLE_WALL)) {
+                collisionData.bInvisibleWallOnly = true;
+
+                if (mask & KCL_TYPE_BIT(COL_TYPE_HALFPIPE_INVISIBLE_WALL)) {
+                    skipWalls = true;
+                }
+            }
+        }
+
+        if (!skipWalls) {
+            if (mask & KCL_TYPE_BIT(COL_TYPE_WALL_2)) {
+                collisionData.bWall3 = true;
+            } else {
+                collisionData.bWall = true;
+            }
+        }
+    }
+
+    if (mask & KCL_TYPE_FLOOR) {
+        collisionData.floorNrm += colInfo.floorNrm;
+        collisionData.bFloor = true;
+    }
+
+    EGG::Vector3f tangentOff = colInfo.tangentOff;
+    minMax.min = minMax.min.minimize(tangentOff);
+    minMax.max = minMax.max.maximize(tangentOff);
+    tangentOff.normalise();
+
+    relPos += hitbox.relPos();
+    relPos += -hitbox.radius() * tangentOff;
+    ++count;
+
+    return false;
+}
+
+/// @addr{0x805B6D48}
+/// @brief Runs when the kart's body has a collision
+/// @param collisionData The collision data to update with the results of the collision
+/// @param movement The movement vector to apply to the kart's position
+/// @param posRel The relative position of the collision to the kart's position
+/// @param count The total number of body hitbox collisions that have occurred this frame
+/// @details Adds `movement` to the kart's position and also saves it to the provided
+/// `collisionData` if colliding with a wall and not the floor. Updates `collisionData`'s relative
+/// position and velocity based on the average of all collisions and the kart's angular velocity.
+void KartCollide::applyBodyCollision(CollisionData &collisionData, const EGG::Vector3f &movement,
+        const EGG::Vector3f &posRel, s32 count) {
+    setPos(pos() + movement);
+
+    if (!collisionData.bFloor && (collisionData.bWall || collisionData.bWall3)) {
+        collisionData.movement = movement;
+    }
+
+    f32 avgFactor = 1.0f / static_cast<f32>(count);
+    EGG::Vector3f avgRelPos = avgFactor * posRel;
+    collisionData.rotFactor *= avgFactor;
+
+    EGG::Vector3f scaledAngVel0 = dynamics()->angVel0Factor() * dynamics()->angVel0();
+    EGG::Vector3f localRelPos = mainRot().rotateVectorInv(avgRelPos);
+    EGG::Vector3f rotVel = scaledAngVel0.cross(localRelPos);
+    rotVel = mainRot().rotateVector(rotVel);
+    rotVel += extVel();
+
+    collisionData.vel = rotVel;
+    collisionData.relPos = avgRelPos;
+
+    if (collisionData.bFloor) {
+        f32 intVelY = intVel().y;
+        if (intVelY > 0.0f) {
+            collisionData.vel.y += intVelY;
+        }
+        collisionData.floorNrm.normalise();
+    }
+}
+
+/// @addr{0x805718D4}
+/// @brief Checks for collisions using a position behind and below the kart.
+/// @param maskOut The collision type mask to store the result of the collision check
+/// @param pos The position of the kart to check for collisions
+/// @param checkDirection If `true`, the function will check for directional collisions including
+/// triggers (such as fall plane OOB and cannon entries)
+/// @details Exponentially smooths @ref m_smoothedBack towards the dot product of the kart's back
+/// vector and its smoothed up vector, with an interpolation rate of `0.3f`. Derives the position
+/// behind the kart to check for collisions by moving towards the back of the kart. Performs a
+/// sphere collision check with a radius which varies based on `checkDirection` (`80.0f` if
+/// `checkDirection` is `true`, otherwise `100.0f` times the kart's total scale defined by @ref
+/// KartMove::m_totalScale). If a collision did not occur, the function returns early. If
+/// `checkDirection` was `true`, then the function calls @ref calcTriggers() and returns after.
+/// Otherwise, fetches the closest #KCL_TYPE_FLOOR collision entry (this is effectively ignored in
+/// the current Kinoko implementation). If the collision set any of the bits of #KCL_TYPE_WALL, then
+/// sets the @ref eSurfaceFlags::Wall bit in @ref m_surfaceFlags. If the collision set the
+/// #COL_TYPE_SOLID_OOB bit, then sets the @ref eSurfaceFlags::SolidOOB bit in @ref m_surfaceFlags.
+void KartCollide::calcLeanCollision(Field::KCLTypeMask *maskOut, const EGG::Vector3f &pos,
+        bool checkDirection) {
+    const EGG::Vector3f &v1 = checkDirection ? prevPos() : EGG::Vector3f::inf;
+    Field::KCLTypeMask typeMask = checkDirection ? KCL_TYPE_DIRECTIONAL : KCL_TYPE_NON_DIRECTIONAL;
+    f32 radius = checkDirection ? 80.0f : 100.0f * move()->totalScale();
+    f32 scalar = -bsp().offsetY * move()->totalScale() * 0.3f;
+    EGG::Vector3f scaledPos = pos + scalar * componentYAxis();
+    EGG::Vector3f back = mainRot().rotateVector(EGG::Vector3f::ez);
+
+    m_smoothedBack += (back.dot(move()->smoothedUp()) - m_smoothedBack) * 0.3f;
+
+    scalar = m_smoothedBack * -physics()->halfLength() * 1.8f * move()->totalScale();
+    scaledPos += scalar * back;
+
+    bool collide = Field::CollisionDirector::Instance()->checkSphereCachedPartialPush(radius,
+            scaledPos, v1, typeMask, nullptr, maskOut, 0);
+
+    if (!collide) {
+        return;
+    }
+
+    if (checkDirection) {
+        calcTriggers(maskOut);
+    } else {
+        if (*maskOut & KCL_TYPE_FLOOR) {
+            Field::CollisionDirector::Instance()->findClosestCollisionEntry(maskOut,
+                    KCL_TYPE_FLOOR);
+        }
+
+        if (*maskOut & KCL_TYPE_WALL) {
+            m_surfaceFlags.setBit(eSurfaceFlags::Wall);
+        }
+
+        if (*maskOut & KCL_TYPE_BIT(COL_TYPE_SOLID_OOB)) {
+            m_surfaceFlags.setBit(eSurfaceFlags::SolidOOB);
+        }
+    }
+}
+
+/// @addr{0x8056F26C}
+/// @brief Checks for collisions on the left and right sides of the kart
+/// @details Early returns if the collision is not head-on. Updates @ref m_colPerpendicularity to
+/// reflect the maximum between itself and the provided `colInfo`'s perpendicularity.
+///
+/// If the @ref BSPHitbox X-position is more than 10 units off-center, then directly infers which
+/// side wall is closer and updates the corresponding fields in the provided `collisionData` and
+/// updates @ref CollisionData::colPerpendicularity from the provided `colInfo`.
+///
+/// Otherwise, it calculates which side wall is closer by performing two collision checks to the
+/// left and to the right of the hitbox's center. Whichever side's collision check resulting in the
+/// larger tangent offset is considered closer and the corresponding field in the provided
+/// `collisionData` is updated. As long as one of the two collision checks resulted in a collision,
+/// updates @ref CollisionData::colPerpendicularity from the provided `colInfo`.
+void KartCollide::calcSideCollision(CollisionData &collisionData, Hitbox &hitbox,
+        Field::CollisionInfo *colInfo) {
+    if (colInfo->perpendicularity <= 0.0f) {
+        return;
+    }
+
+    m_colPerpendicularity = std::max(m_colPerpendicularity, colInfo->perpendicularity);
+
+    if (collisionData.bWallAtLeftCloser || collisionData.bWallAtRightCloser) {
+        return;
+    }
+
+    f32 bspPosX = hitbox.bspHitbox()->position.x;
+    if (EGG::Mathf::abs(bspPosX) > 10.0f) {
+        if (bspPosX > 0.0f) {
+            collisionData.bWallAtLeftCloser = true;
+        } else {
+            collisionData.bWallAtRightCloser = true;
+        }
+
+        collisionData.colPerpendicularity = colInfo->perpendicularity;
+
+        return;
+    }
+
+    EGG::Vector3f right = mainRot().rotateVector(EGG::Vector3f::ex);
+    std::array<f32, 2> tangents = {0.0f, 0.0f};
+
+    // The loop is just to do left/right wall
+    for (size_t i = 0; i < tangents.size(); ++i) {
+        f32 sign = i == 1 ? -1.0f : 1.0f;
+        f32 effectiveRadius = sign * hitbox.radius();
+        EGG::Vector3f effectivePos = hitbox.worldPos() + effectiveRadius * right;
+        Field::CollisionInfoPartial tempColInfo;
+
+        if (Field::CollisionDirector::Instance()->checkSphereCachedPartial(hitbox.radius(),
+                    effectivePos, hitbox.lastPos(), KCL_TYPE_DRIVER_WALL, &tempColInfo, nullptr,
+                    0)) {
+            tangents[i] = colInfo->tangentOff.squaredLength();
+        }
+    }
+
+    if (tangents[0] > tangents[1]) {
+        collisionData.bWallAtLeftCloser = true;
+        collisionData.colPerpendicularity = colInfo->perpendicularity;
+    } else if (tangents[1] > tangents[0]) {
+        collisionData.bWallAtRightCloser = true;
+        collisionData.colPerpendicularity = colInfo->perpendicularity;
+    }
+}
+
 /// @addr{Inlined in 0x80571F10}
 /// @brief Applies a small angular velocity to the kart when colliding with a dummy pole
 /// @details Applies @ref m_poleYaw to the Y-component of the kart's @ref KartDynamics::m_angVel2.
@@ -686,6 +946,9 @@ void KartCollide::calcPoleTimer() {
 
 /// @addr{0x8056E764}
 /// @brief Processes the collision for a single hitbox and updates the kart's collision data
+/// @details Dispatches to @ref processMovingWater, @ref processWall, and @ref processFloor. If @ref
+/// processWall() returned `true`, then also calls @ref calcSideCollision(). Finally, calls @ref
+/// processCannon().
 void KartCollide::processBody(CollisionData &collisionData, Hitbox &hitbox,
         Field::CollisionInfo *colInfo, Field::KCLTypeMask *maskOut) {
     processMovingWater(collisionData, maskOut);
@@ -703,6 +966,9 @@ void KartCollide::processBody(CollisionData &collisionData, Hitbox &hitbox,
 
 /// @addr{0x8056E930}
 /// @brief Sets flags in the provided @ref CollisionData to reflect collisions with moving water KCL
+/// @details If the provided `mask` does not include #COL_TYPE_MOVING_WATER, then this function
+/// early returns. Sets the @ref eStatus::StickyRoad flag in the kart's @ref Status. Updates moving
+/// water-related fields in the provided @ref CollisionData based on the KCL variant.
 void KartCollide::processMovingWater(CollisionData &collisionData, Field::KCLTypeMask *mask) {
     if (!(*mask & KCL_TYPE_BIT(COL_TYPE_MOVING_WATER))) {
         return;
@@ -887,249 +1153,6 @@ void KartCollide::processCannon(Field::KCLTypeMask *mask) {
         state()->setCannonPointId(colDirector->closestCollisionEntry()->variant());
         status().setBit(eStatus::CannonStart);
     }
-}
-
-/// @addr{0x805B7928}
-/// @brief Applies external and angular velocity based on the collision with the floor
-/// @param down Always 0.1f
-/// @param rate Downward velocity? Related to suspension stiffness
-/// @param hitboxGroup Used to retrieve CollisionData reference
-/// @param forward Current world facing direction of the kart
-/// @param nextDir Updated facing direction of the kart
-/// @param speed Tire speed
-/// @param shouldApplyVelXZ Whether the floor moment affects the kart's XZ external velocity
-/// @param shouldApplyVelY Whether the floor moment affects the kart's Y external velocity
-/// @param shouldApplyAngVel Whether the floor moment affects the kart's angular velocity
-/// @details If the kart is moving away from the floor, then this function early returns. Builds an
-/// inverse inertia tensor and uses it to compute the impulse magnitude required to cancel the
-/// velocity of the kart colliding into the floor.
-void KartCollide::applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitboxGroup,
-        const EGG::Vector3f &forward, const EGG::Vector3f &nextDir, const EGG::Vector3f &speed,
-        bool shouldApplyVelXZ, bool shouldApplyVelY, bool shouldApplyAngVel) {
-    CollisionData &colData = hitboxGroup->collisionData();
-    if (!colData.bFloor) {
-        return;
-    }
-
-    f32 velDotFloorNrm = colData.vel.dot(colData.floorNrm);
-
-    if (velDotFloorNrm >= 0.0f) {
-        return;
-    }
-
-    EGG::Matrix34f rotMat;
-    rotMat.makeQ(mainRot());
-    EGG::Matrix34f tmp = rotMat.multiplyTo(dynamics()->invInertiaTensor());
-    EGG::Matrix34f rotMatTrans = rotMat.transpose();
-    tmp = tmp.multiplyTo(rotMatTrans);
-
-    EGG::Vector3f crossVec = colData.relPos.cross(colData.floorNrm);
-    crossVec = tmp.multVector(crossVec);
-    crossVec = crossVec.cross(colData.relPos);
-
-    f32 scalar = -velDotFloorNrm / (1.0f + colData.floorNrm.dot(crossVec));
-    EGG::Vector3f negSpeed = -speed;
-    crossVec = colData.floorNrm.cross(negSpeed);
-    crossVec = crossVec.cross(colData.floorNrm);
-
-    if (std::numeric_limits<f32>::epsilon() >= crossVec.squaredLength()) {
-        return;
-    }
-
-    crossVec.normalise();
-    f32 speedDot = std::min(0.0f, speed.dot(crossVec));
-    crossVec *= ((scalar * speedDot) / velDotFloorNrm);
-
-    auto [proj, rej] = crossVec.projAndRej(forward);
-
-    f32 projNorm = proj.length();
-    f32 rejNorm = rej.length();
-    f32 projNorm_ = projNorm;
-    f32 rejNorm_ = rejNorm;
-
-    f32 dVar7 = down * EGG::Mathf::abs(scalar);
-    if (dVar7 < EGG::Mathf::abs(projNorm)) {
-        projNorm_ = dVar7;
-        if (projNorm < 0.0f) {
-            projNorm_ = -down * EGG::Mathf::abs(scalar);
-        }
-    }
-
-    f32 dVar5 = rate * EGG::Mathf::abs(scalar);
-    if (EGG::Mathf::abs(rejNorm) > dVar5) {
-        rejNorm_ = dVar5;
-        if (rejNorm < 0.0f) {
-            rejNorm_ = -rate * EGG::Mathf::abs(scalar);
-        }
-    }
-
-    proj.normalise();
-    rej.normalise();
-
-    proj *= projNorm_;
-    rej *= rejNorm_;
-
-    EGG::Vector3f projRejSum = proj + rej;
-    EGG::Vector3f projRejSumOrig = projRejSum;
-
-    if (!shouldApplyVelXZ) {
-        projRejSum.x = 0.0f;
-        projRejSum.z = 0.0f;
-    }
-    if (!shouldApplyVelY) {
-        projRejSum.y = 0.0f;
-    }
-
-    projRejSum = projRejSum.rej(nextDir);
-
-    dynamics()->setExtVel(extVel() + projRejSum);
-
-    if (shouldApplyAngVel) {
-        EGG::Vector3f rotation = colData.relPos.cross(projRejSumOrig);
-        EGG::Vector3f rotation2 = mainRot().rotateVectorInv(tmp.multVector(rotation));
-
-        EGG::Vector3f angVel = rotation2;
-        angVel.y = 0.0f;
-        if (!shouldApplyVelXZ) {
-            angVel.x = 0.0f;
-        }
-        dynamics()->setAngVel0(dynamics()->angVel0() + angVel);
-    }
-}
-
-/// @addr{0x805B6A9C}
-/// @brief Called when the body of the kart has a collision.
-/// @param collisionData The collision data to update with the results of the collision
-/// @param hitbox The hitbox of the kart's body that collided
-/// @param minMax The minimum and maximum points of the collision bounding box
-/// @param relPos The relative position of the collision to the kart's position
-/// @param count Counts the number of body hitbox collisions that have occurred this frame
-/// @param mask A mask representing the type of collision that occurred
-/// @param colInfo The collision information from the collision check
-/// @return Returns `true` if the collision should be skipped, `false` otherwise
-/// @details Updates the provided @ref CollisionData with the results of the collision. If not
-/// colliding with a wall, updates the relative position and bounding box of the collision so that
-/// subsequent collision checks for the body's hitboxes reflect this change in position. Finally
-/// increments the number of hitbox collisions that have occurred.
-bool KartCollide::accumulateBodyCollision(CollisionData &collisionData, const Hitbox &hitbox,
-        EGG::BoundBox3f &minMax, EGG::Vector3f &relPos, s32 &count, const Field::KCLTypeMask &mask,
-        const Field::CollisionInfo &colInfo) {
-    if (mask & KCL_TYPE_WALL) {
-        if (!(mask & KCL_TYPE_FLOOR) && status().onBit(eStatus::HWG) &&
-                state()->softWallNrm().dot(colInfo.wallNrm) < 0.3f) {
-            return true;
-        }
-
-        bool skipWalls = false;
-
-        collisionData.wallNrm += colInfo.wallNrm;
-
-        if (mask & KCL_TYPE_ANY_INVISIBLE_WALL) {
-            collisionData.bInvisibleWall = true;
-
-            if (!(mask & KCL_TYPE_VISIBLE_WALL)) {
-                collisionData.bInvisibleWallOnly = true;
-
-                if (mask & KCL_TYPE_BIT(COL_TYPE_HALFPIPE_INVISIBLE_WALL)) {
-                    skipWalls = true;
-                }
-            }
-        }
-
-        if (!skipWalls) {
-            if (mask & KCL_TYPE_BIT(COL_TYPE_WALL_2)) {
-                collisionData.bWall3 = true;
-            } else {
-                collisionData.bWall = true;
-            }
-        }
-    }
-
-    if (mask & KCL_TYPE_FLOOR) {
-        collisionData.floorNrm += colInfo.floorNrm;
-        collisionData.bFloor = true;
-    }
-
-    EGG::Vector3f tangentOff = colInfo.tangentOff;
-    minMax.min = minMax.min.minimize(tangentOff);
-    minMax.max = minMax.max.maximize(tangentOff);
-    tangentOff.normalise();
-
-    relPos += hitbox.relPos();
-    relPos += -hitbox.radius() * tangentOff;
-    ++count;
-
-    return false;
-}
-
-/// @addr{0x805B6D48}
-/// @brief Runs when the kart's body has a collision
-/// @param collisionData The collision data to update with the results of the collision
-/// @param movement The movement vector to apply to the kart's position
-/// @param posRel The relative position of the collision to the kart's position
-/// @param count The total number of body hitbox collisions that have occurred this frame
-/// @details Adds `movement` to the kart's position and also saves it to the provided
-/// `collisionData` if colliding with a wall and not the floor. Updates `collisionData`'s relative
-/// position and velocity based on the average of all collisions and the kart's angular velocity.
-void KartCollide::applyBodyCollision(CollisionData &collisionData, const EGG::Vector3f &movement,
-        const EGG::Vector3f &posRel, s32 count) {
-    setPos(pos() + movement);
-
-    if (!collisionData.bFloor && (collisionData.bWall || collisionData.bWall3)) {
-        collisionData.movement = movement;
-    }
-
-    f32 avgFactor = 1.0f / static_cast<f32>(count);
-    EGG::Vector3f avgRelPos = avgFactor * posRel;
-    collisionData.rotFactor *= avgFactor;
-
-    EGG::Vector3f scaledAngVel0 = dynamics()->angVel0Factor() * dynamics()->angVel0();
-    EGG::Vector3f localRelPos = mainRot().rotateVectorInv(avgRelPos);
-    EGG::Vector3f rotVel = scaledAngVel0.cross(localRelPos);
-    rotVel = mainRot().rotateVector(rotVel);
-    rotVel += extVel();
-
-    collisionData.vel = rotVel;
-    collisionData.relPos = avgRelPos;
-
-    if (collisionData.bFloor) {
-        f32 intVelY = intVel().y;
-        if (intVelY > 0.0f) {
-            collisionData.vel.y += intVelY;
-        }
-        collisionData.floorNrm.normalise();
-    }
-}
-
-/// @addr{0x805713FC}
-/// @brief Calculates the scalar used to affect the kart's floor alignment
-/// @details If in a rotating action, the scalar is set to its minimum value of `0.01f`. Otherwise,
-/// it is incremented by `0.01f` up to a maximum of `0.8f`.
-void KartCollide::calcFloorMomentScalar() {
-    m_floorMomentScalar = status().onBit(eStatus::InAction) &&
-                    action()->flags().onBit(KartAction::eFlags::Rotating) ?
-            0.01f :
-            std::min(m_floorMomentScalar + 0.01f, 0.8f);
-}
-
-/// @addr{0x80573A2C}
-/// @brief Models an elastic collision by applying force to the kart away from the colliding object
-/// @param idx The index of the collision in the @ref Field::ObjectDirector array of collisions
-/// @details Applys a force to the kart away from the colliding object based on the hit direction
-/// and the kart's orientation. The magnitude of the force is capped at `70.0f` and is scaled down
-/// based on the angle between the hit direction and the kart's forward axis.
-Action KartCollide::handleReactRubberWall(size_t idx) {
-    constexpr f32 BASE_DIR_FORCE_SCALAR = 0.95f;
-    constexpr f32 DIR_FORCE_SCALAR = 0.050000012f;
-    constexpr f32 MAX_FORCE = 70.0f;
-
-    const EGG::Vector3f &hitDir = Field::ObjectCollisionKart::GetHitDirection(idx);
-    const EGG::Vector3f &zAxis = componentZAxis();
-
-    f32 force = BASE_DIR_FORCE_SCALAR + DIR_FORCE_SCALAR * EGG::Mathf::abs(hitDir.dot(zAxis));
-    move()->applyForce(MAX_FORCE * force, hitDir, true);
-
-    return Action::None;
 }
 
 } // namespace Kinoko::Kart

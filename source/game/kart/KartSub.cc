@@ -308,7 +308,7 @@ void KartSub::calcPass1() {
                 f32 scalar = (1.0f / static_cast<f32>(count));
                 floorNrm.normalise();
 
-                collide()->setFloorColInfo(collisionData(), relPos * scalar, vel * scalar,
+                KartCollide::SetFloorColInfo(collisionData(), relPos * scalar, vel * scalar,
                         floorNrm);
 
                 collide()->calcRebound();

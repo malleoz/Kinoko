@@ -110,6 +110,78 @@ void KartAction::startRotation(size_t idx) {
     m_flags.setBit(eFlags::Rotating);
 }
 
+/// @addr{0x80569DB4}
+/// @brief Sets the rotation parameters for the current action
+/// @param idx The index of the rotation parameters to use
+/// @details Indices 0 and 1 correspond to a spinout whereas indices 2, 3, and 4 correspond to a
+/// launch.
+void KartAction::setRotation(size_t idx) {
+    ASSERT(idx - 1 < ROTATION_PARAMS.size());
+    m_rotationParams = &ROTATION_PARAMS[--idx];
+
+    m_targetYaw = m_rotationParams->finalAngle;
+    m_yawRotVel = m_rotationParams->initRotSpeed;
+    m_decayRateDelta = m_rotationParams->initDecayRate;
+    m_yawAngle = 0.0f;
+    m_decayRate = 1.0f;
+}
+
+/// @addr{0x80568794}
+/// @brief Called when the kart is launched into the air
+/// @param extVelScalar Scalar applied to the launch direction to calculate the external velocity
+/// @param extVelKart The upwards external velocity to apply to the kart if it is a kart
+/// @param extVelBike The upwards external velocity to apply to the kart if it is a bike
+/// @param numRotations The number of rotations to perform while in the air
+/// @param dirType Determines how to calculate the launch direction and external velocity (0 =
+/// Forward, 1 = Away from the hit depth, 2 = Away from the hit depth and biased by the colliding
+/// object's velocity)
+/// @details Calculates the target rotation, axis of rotation, launch direction, and external
+/// velocity to apply to the kart.
+void KartAction::startLaunch(f32 extVelScalar, f32 extVelKart, f32 extVelBike, f32 numRotations,
+        u32 dirType) {
+    m_targetRot = 360.0f * numRotations;
+
+    EGG::Vector3f newExtVel = EGG::Vector3f::zero;
+    newExtVel.y = isBike() ? extVelBike : extVelKart;
+
+    if (dirType == 0) {
+        m_hitDepth = move()->dir();
+        calcSideFromHitDepth();
+    } else if (dirType == 1) {
+        calcSideFromHitDepth();
+        newExtVel += extVelScalar * m_launchDir;
+    } else if (dirType == 2) {
+        calcSideFromHitDepthAndTranslation();
+        newExtVel += extVelScalar * m_launchDir;
+    }
+
+    setRotation(static_cast<size_t>(numRotations + 3.0f));
+    m_groundStartLaunchTimer = 0;
+    m_rotAxis = move()->smoothedUp().cross(m_launchDir);
+
+    dynamics()->setExtVel(extVel() + newExtVel);
+}
+
+/// @addr{0x805696CC}
+/// @brief Activates the kart's crush state for a given duration and clears the player's items
+/// @param timer How long the kart remains crushed after the action ends
+void KartAction::activateCrush(u16 timer) {
+    move()->activateCrush(m_crushActionDuration + timer);
+    Item::ItemDirector::Instance()->kartItem(0).clear();
+}
+
+/// @addr{0x80567C68}
+/// @brief Applies the initial start speed multiplier to the kart for the action that just started
+/// @details Applies the initial start speed multiplier (@ref ActionParams::startSpeedMult) to the
+/// kart's speed. If the multiplier is zero, the kart's drift is cleared via @ref
+/// KartMove::clearDrift().
+void KartAction::applyStartSpeed() {
+    move()->setSpeed(m_actionParams->startSpeedMult * speed());
+    if (m_actionParams->startSpeedMult == 0.0f) {
+        move()->clearDrift();
+    }
+}
+
 /// @addr{0x80569AE8}
 /// @brief Computes @ref m_launchDir from @ref m_hitDepth, projected onto the plane perpendicular
 /// to the kart's smoothed up vector
@@ -140,39 +212,6 @@ void KartAction::calcSideFromHitDepthAndTranslation() {
         m_launchDir *= sign;
     } else {
         m_launchDir = EGG::Vector3f::ey;
-    }
-}
-
-/// @addr{0x80567B98}
-/// @brief Runs when an action ends, resetting the current action and clearing all flags
-/// @details Clears the @ref eStatus::InAction and @ref eStatus::LargeFlipHit @ref Status flags.
-/// Calls @ref KartDynamics::setForceUpright() to ensure the kart is upright. Resets @ref
-/// m_currentAction to @ref Action::None. Resets @ref m_priority to zero and clears all bits in @ref
-/// m_flags.
-void KartAction::end() {
-    status().resetBit(eStatus::InAction, eStatus::LargeFlipHit);
-    dynamics()->setForceUpright(true);
-
-    m_currentAction = Action::None;
-    m_priority = 0;
-    m_flags.makeAllZero();
-}
-
-/// @addr{0x80567A88}
-/// @brief Runs the end function for the current action, if any, and resets the current action
-/// @param newActionStarting `true` if this action ended because a higher priority action is
-/// starting
-/// @details Does nothing if @ref m_currentAction is @ref Action::None. If an end function is set
-/// for the current action, it is called with `newActionStarting` as the argument, and then @ref
-/// end() is called to reset the action.
-void KartAction::calcEndAction(bool newActionStarting) {
-    if (m_currentAction == Action::None) {
-        return;
-    }
-
-    if (m_onEnd) {
-        (this->*m_onEnd)(newActionStarting);
-        end();
     }
 }
 
@@ -239,76 +278,37 @@ void KartAction::calcLanding() {
     physics()->composeDecayingExtraRot(m_rotation);
 }
 
-/// @addr{0x80568794}
-/// @brief Called when the kart is launched into the air
-/// @param extVelScalar Scalar applied to the launch direction to calculate the external velocity
-/// @param extVelKart The upwards external velocity to apply to the kart if it is a kart
-/// @param extVelBike The upwards external velocity to apply to the kart if it is a bike
-/// @param numRotations The number of rotations to perform while in the air
-/// @param dirType Determines how to calculate the launch direction and external velocity (0 =
-/// Forward, 1 = Away from the hit depth, 2 = Away from the hit depth and biased by the colliding
-/// object's velocity)
-/// @details Calculates the target rotation, axis of rotation, launch direction, and external
-/// velocity to apply to the kart.
-void KartAction::startLaunch(f32 extVelScalar, f32 extVelKart, f32 extVelBike, f32 numRotations,
-        u32 dirType) {
-    m_targetRot = 360.0f * numRotations;
+/// @addr{0x80567B98}
+/// @brief Runs when an action ends, resetting the current action and clearing all flags
+/// @details Clears the @ref eStatus::InAction and @ref eStatus::LargeFlipHit @ref Status flags.
+/// Calls @ref KartDynamics::setForceUpright() to ensure the kart is upright. Resets @ref
+/// m_currentAction to @ref Action::None. Resets @ref m_priority to zero and clears all bits in @ref
+/// m_flags.
+void KartAction::end() {
+    status().resetBit(eStatus::InAction, eStatus::LargeFlipHit);
+    dynamics()->setForceUpright(true);
 
-    EGG::Vector3f newExtVel = EGG::Vector3f::zero;
-    newExtVel.y = isBike() ? extVelBike : extVelKart;
+    m_currentAction = Action::None;
+    m_priority = 0;
+    m_flags.makeAllZero();
+}
 
-    if (dirType == 0) {
-        m_hitDepth = move()->dir();
-        calcSideFromHitDepth();
-    } else if (dirType == 1) {
-        calcSideFromHitDepth();
-        newExtVel += extVelScalar * m_launchDir;
-    } else if (dirType == 2) {
-        calcSideFromHitDepthAndTranslation();
-        newExtVel += extVelScalar * m_launchDir;
+/// @addr{0x80567A88}
+/// @brief Runs the end function for the current action, if any, and resets the current action
+/// @param newActionStarting `true` if this action ended because a higher priority action is
+/// starting
+/// @details Does nothing if @ref m_currentAction is @ref Action::None. If an end function is set
+/// for the current action, it is called with `newActionStarting` as the argument, and then @ref
+/// end() is called to reset the action.
+void KartAction::calcEndAction(bool newActionStarting) {
+    if (m_currentAction == Action::None) {
+        return;
     }
 
-    setRotation(static_cast<size_t>(numRotations + 3.0f));
-    m_groundStartLaunchTimer = 0;
-    m_rotAxis = move()->smoothedUp().cross(m_launchDir);
-
-    dynamics()->setExtVel(extVel() + newExtVel);
-}
-
-/// @addr{0x805696CC}
-/// @brief Activates the kart's crush state for a given duration and clears the player's items
-/// @param timer How long the kart remains crushed after the action ends
-void KartAction::activateCrush(u16 timer) {
-    move()->activateCrush(m_crushActionDuration + timer);
-    Item::ItemDirector::Instance()->kartItem(0).clear();
-}
-
-/// @addr{0x80567C68}
-/// @brief Applies the initial start speed multiplier to the kart for the action that just started
-/// @details Applies the initial start speed multiplier (@ref ActionParams::startSpeedMult) to the
-/// kart's speed. If the multiplier is zero, the kart's drift is cleared via @ref
-/// KartMove::clearDrift().
-void KartAction::applyStartSpeed() {
-    move()->setSpeed(m_actionParams->startSpeedMult * speed());
-    if (m_actionParams->startSpeedMult == 0.0f) {
-        move()->clearDrift();
+    if (m_onEnd) {
+        (this->*m_onEnd)(newActionStarting);
+        end();
     }
-}
-
-/// @addr{0x80569DB4}
-/// @brief Sets the rotation parameters for the current action
-/// @param idx The index of the rotation parameters to use
-/// @details Indices 0 and 1 correspond to a spinout whereas indices 2, 3, and 4 correspond to a
-/// launch.
-void KartAction::setRotation(size_t idx) {
-    ASSERT(idx - 1 < ROTATION_PARAMS.size());
-    m_rotationParams = &ROTATION_PARAMS[--idx];
-
-    m_targetYaw = m_rotationParams->finalAngle;
-    m_yawRotVel = m_rotationParams->initRotSpeed;
-    m_decayRateDelta = m_rotationParams->initDecayRate;
-    m_yawAngle = 0.0f;
-    m_decayRate = 1.0f;
 }
 
 /* ================================ *

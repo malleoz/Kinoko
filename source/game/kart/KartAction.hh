@@ -74,7 +74,6 @@ public:
     void calc();
     void calcVehicleSpeed();
     bool start(Action action);
-    void startRotation(size_t idx);
 
     /// @beginSetters
 
@@ -133,11 +132,6 @@ private:
     /// is now starting
     typedef void (KartAction::*EndActionFunc)(bool newActionStarting);
 
-    void calcSideFromHitDepth();
-    void calcSideFromHitDepthAndTranslation();
-
-    void end();
-
     /// @addr{0x80567A54}
     /// @brief Executes a frame of the current action.
     /// @return Whether or not the action should end.
@@ -147,16 +141,21 @@ private:
         return (this->*m_onCalc)();
     }
 
-    void calcEndAction(bool newActionStarting);
-    bool calcRotation();
-    void calcUp();
-    void calcLanding();
+    void startRotation(size_t idx);
+    void setRotation(size_t idx);
     void startLaunch(f32 extVelScalar, f32 extVelKart, f32 extVelBike, f32 numRotations,
             u32 dirType);
     void activateCrush(u16 timer);
-
     void applyStartSpeed();
-    void setRotation(size_t idx);
+
+    void calcSideFromHitDepth();
+    void calcSideFromHitDepthAndTranslation();
+    bool calcRotation();
+    void calcUp();
+    void calcLanding();
+
+    void end();
+    void calcEndAction(bool newActionStarting);
 
     /* ================================ *
      *     START FUNCTIONS

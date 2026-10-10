@@ -121,6 +121,28 @@ f32 CollisionGroup::initHitboxes(const std::array<BSP::Hitbox, 16> &hitboxes) {
     return computeCollisionLimits();
 }
 
+/// @addr{0x805B875C}
+/// @brief Creates a hitbox to represent a tire
+/// @param radius The radius of the tire
+/// @param relPos The position of the tire relative to the kart's position
+/// @details Creates a single hitbox to represent the tire. Creates a new @ref BSP::Hitbox instance
+/// and associates it with the @ref Hitbox. Sets the BSP hitbox's position and radius based on the
+/// provided parameters, the hitbox's radius based on the provided `radius`, and sets @ref
+/// m_boundingRadius to the provided `radius`.
+void CollisionGroup::createSingleHitbox(f32 radius, const EGG::Vector3f &relPos) {
+    m_hitboxes = owning_span<Hitbox>(1);
+
+    for (auto &hitbox : m_hitboxes) {
+        hitbox.reset();
+        BSP::Hitbox *bspHitbox = EGG::egg_new<BSP::Hitbox>();
+        hitbox.setBspHitbox(bspHitbox, true);
+        bspHitbox->position = relPos;
+        bspHitbox->radius = radius;
+        hitbox.setRadius(radius);
+    }
+    m_boundingRadius = radius;
+}
+
 /// @addr{0x805B883C}
 /// @brief Sets the bounding radius
 /// @return Half of the largest Z-axis extent among the enabled hitboxes
@@ -153,28 +175,6 @@ f32 CollisionGroup::computeCollisionLimits() {
     m_boundingRadius = maxComponent;
 
     return max.z * 0.5f;
-}
-
-/// @addr{0x805B875C}
-/// @brief Creates a hitbox to represent a tire
-/// @param radius The radius of the tire
-/// @param relPos The position of the tire relative to the kart's position
-/// @details Creates a single hitbox to represent the tire. Creates a new @ref BSP::Hitbox instance
-/// and associates it with the @ref Hitbox. Sets the BSP hitbox's position and radius based on the
-/// provided parameters, the hitbox's radius based on the provided `radius`, and sets @ref
-/// m_boundingRadius to the provided `radius`.
-void CollisionGroup::createSingleHitbox(f32 radius, const EGG::Vector3f &relPos) {
-    m_hitboxes = owning_span<Hitbox>(1);
-
-    for (auto &hitbox : m_hitboxes) {
-        hitbox.reset();
-        BSP::Hitbox *bspHitbox = EGG::egg_new<BSP::Hitbox>();
-        hitbox.setBspHitbox(bspHitbox, true);
-        bspHitbox->position = relPos;
-        bspHitbox->radius = radius;
-        hitbox.setRadius(radius);
-    }
-    m_boundingRadius = radius;
 }
 
 } // namespace Kinoko::Kart

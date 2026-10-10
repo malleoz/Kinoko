@@ -10,11 +10,19 @@ namespace Kinoko::Kart {
 /// while performing a trick, and applying variable length boosts after landing from the zipper.
 class KartHalfPipe : private KartObjectProxy {
 public:
-    KartHalfPipe();
-    ~KartHalfPipe();
+    /// @addr{0x80574114}
+    /// @brief Constructor
+    /// @details Initializes @ref m_prevPos to zero.
+    KartHalfPipe() : m_prevPos(EGG::Vector3f::zero) {}
+
+    /// @addr{0x80574170}
+    /// @brief Default virtual destructor
+    ~KartHalfPipe() override = default;
 
     /// @addr{0x805741B0}
     /// @brief Resets the half-pipe state to its default values
+    /// @details Sets @ref m_stunt to `StuntType::None`, @ref m_touchingZipper to `false`, and
+    /// @ref m_landingBoostDelayTimer to `0`.
     void reset() {
         m_stunt = StuntType::None;
         m_touchingZipper = false;
@@ -22,14 +30,11 @@ public:
     }
 
     void calc();
-    void calcTrick();
-    void calcTrickRot();
-    void calcCollision(bool notAirborne);
-    void activateTrick(s32 duration, System::Trick trick);
     void end(bool boost);
 
     /// @addr{0x80574108}
-    /// @brief Returns the terminal velocity while mid-air from a half-pipe zipper
+    /// @brief Gets the terminal velocity while mid-air from a half-pipe zipper
+    /// @return The terminal velocity while mid-air from a half-pipe zipper, always `65.0f`
     static consteval f32 TerminalVelocity() {
         return 65.0f;
     }
@@ -69,6 +74,11 @@ private:
         f32 decayRate;              ///< Current rate at which the rotational speed decays per frame
         StuntProperties properties; ///< Properties of the current trick's rotation
     };
+
+    void calcTrick();
+    void calcTrickRot();
+    void calcCollision(bool notAirborne);
+    void activateTrick(s32 duration, System::Trick trick);
 
     bool m_touchingZipper;        ///< True if the kart is currently touching a half-pipe zipper
     s16 m_landingBoostDelayTimer; ///< Delay timer for applying a boost after landing from a zipper

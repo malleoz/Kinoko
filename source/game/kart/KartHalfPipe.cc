@@ -7,21 +7,19 @@
 
 namespace Kinoko::Kart {
 
-/// @addr{0x80574114}
-/// @brief Constructor
-KartHalfPipe::KartHalfPipe() : m_prevPos(EGG::Vector3f::zero) {}
-
-/// @addr{0x80574170}
-/// @brief Default destructor
-KartHalfPipe::~KartHalfPipe() = default;
-
 /// @addr{0x80574340}
-/// @brief Every frame, checks if the kart is on over went over a half-pipe zipper and updates the
+/// @brief Runs per-frame updates for zipper interactions and trick rotation management
+/// @details Every frame, checks if the kart is on or went over a half-pipe zipper and updates the
 /// kart's rotation accordingly. When the player starts getting airtime off the zipper, derives the
 /// total duration the kart will be in the air based on the current velocity. Determines if the
-/// player is attempting a trick and references the derived duration to determine if a trick is
-/// allowed to occur. Alters the kart's rotation based on the trick being performed and applies a
-/// boost if the player lands.
+/// player is attempting a trick and references the derived duration (@ref m_attemptedTrickTimer) to
+/// determine if a trick is allowed to occur. Alters the kart's rotation based on the trick being
+/// performed and applies a boost if the player lands.
+/// @bug The airtime duration calculation is not perfect and can result in @ref
+/// m_attemptedTrickTimer being higher than the actual observed airtime of the kart. This can allow
+/// tricks to occur in scenarios where a trick would normally not be allowed. In practice, this has
+/// been observed after the Rainbow Road cannon when drifting tightly and tricking at the zipper
+/// turn.
 void KartHalfPipe::calc() {
     constexpr s16 LANDING_BOOST_DELAY = 3;
     constexpr f32 GRAVITY = 1.3f;
@@ -92,11 +90,44 @@ void KartHalfPipe::calc() {
     m_touchingZipper = isOnZipper;
 }
 
+/// @addr{0x805758E4}
+/// @brief Called when the kart should end the half-pipe state and applies any necessary boosts
+/// @param boost `true` if a boost should be applied, `false` otherwise
+/// @details If the kart was over the zipper (indicated by the kart's @ref Status having the @ref
+/// eStatus::OverZipper bit set)and had more than 5 frames of airtime (indicated by @ref
+/// KartState::m_airtime), applies a boost whose duration depends on whether a trick occurred. If
+/// the kart was still in a trick when ending the half-pipe state, the trick's rotation is composed
+/// with decay into the kart's @ref KartPhysics::m_decayingStuntRot. Resets all zipper-related @ref
+/// Status bits and clears @ref m_stunt.
+void KartHalfPipe::end(bool boost) {
+    auto &status = KartObjectProxy::status();
+    bool overZipper = status.onBit(eStatus::OverZipper);
+
+    if (overZipper && state()->airtime() > 5 && boost) {
+        move()->activateZipperBoost();
+    }
+
+    if (status.onBit(eStatus::ZipperTrick)) {
+        physics()->composeDecayingStuntRot(m_stuntRot);
+    }
+
+    if (overZipper) {
+        move()->setDir(mainRot().rotateVector(EGG::Vector3f::ez));
+        move()->setVel1Dir(move()->dir());
+    }
+
+    status.resetBit(eStatus::OverZipper, eStatus::ZipperTrick, eStatus::ZipperStick,
+            eStatus::ZipperBypassInvisWall);
+
+    m_stunt = StuntType::None;
+}
+
 /// @addr{0x80574C90}
 /// @brief Evaluates whether the player is attempting a trick and whether the trick can be performed
-/// @details Caches the attempted trick input for 10 frames. If the player is over the zipper, there
-/// is a cached trick input, and the player has between 3 and 10 frames of airtime, activates the
-/// input trick. Finally, decrements the cache/leniency timer.
+/// @details Caches the attempted trick input for up to 10 frames. If the player is over the zipper,
+/// a cached trick input exists, and the player has between 3 and 10 frames of airtime, attempts to
+/// activate the input trick via @ref activateTrick(). Finally, decrements the cache/leniency timer,
+/// @ref m_leniencyTimer.
 void KartHalfPipe::calcTrick() {
     constexpr s16 TRICK_COOLDOWN = 10;
 
@@ -124,6 +155,7 @@ void KartHalfPipe::calcTrick() {
 /// @details Does nothing if there is no trick being performed. Computes the cumulative rotation
 /// angle based on the properties of the trick being performed. With that angle, evaluates the
 /// quaternion to represent the rotation of the kart based on the type of trick being performed.
+/// Finally, composes the stunt rotation into the kart's @ref KartPhysics::m_stuntRot.
 void KartHalfPipe::calcTrickRot() {
     if (m_stunt == StuntType::None) {
         return;
@@ -165,9 +197,12 @@ void KartHalfPipe::calcTrickRot() {
 
 /// @addr{0x805752E8}
 /// @brief Checks for collisions with the half-pipe walls and floor
-/// @param notAirborne True if the kart is not airborne, false otherwise
-/// @details If the kart is colliding with the half-pipe wall collision, then the kart's up vector
-/// is interpolated towards the wall normal and the kart's position is adjusted to be on the wall.
+/// @param notAirborne `true` if the kart is not airborne, `false` otherwise
+/// @details Resets the @ref eStatus::ZipperBypassInvisWall flag in the kart's @ref Status. Performs
+/// a collision check to see if the kart is colliding with the half-pipe walls. If so, the kart's up
+/// vector is interpolated towards the wall normal and the kart's position is adjusted to be on the
+/// wall. Updates zipper-related @ref Status flags depending on the result of the collision check
+/// and whether the kart is currently over the zipper (indicated by @ref eStatus::OverZipper).
 void KartHalfPipe::calcCollision(bool notAirborne) {
     constexpr f32 LANDING_RADIUS = 150.0f;
     constexpr f32 PREVIOUS_RADIUS = 200.0f;
@@ -254,12 +289,14 @@ void KartHalfPipe::calcCollision(bool notAirborne) {
 
 /// @addr{0x80574E60}
 /// @brief Activates a trick based on the provided duration and trick input
-/// @param duration The duration of the airtime, must be greater than 50 frames to activate a trick
+/// @param duration The anticipated duration of the airtime, must be greater than 50 frames to
+/// activate a trick
 /// @param trick The trick type to activate
 /// @details Requires that the duration of the attempted trick is greater than 50 frames. Determines
-/// which trick type to activate based on the trick input and the duration of the airtime. Finally,
-/// initializes the properties of the trick in the @ref StuntManager and sets the @ref
-/// eStatus::ZipperTrick bit.
+/// which trick type to activate based on the trick input (or lack thereof) and the duration of the
+/// airtime. Finally, initializes the properties of the trick in the @ref StuntManager and sets the
+/// @ref eStatus::ZipperTrick bit in the kart's @ref Status. Regardless, resets @ref m_stuntRot to
+/// the identity quaternion.
 void KartHalfPipe::activateTrick(s32 duration, System::Trick trick) {
     if (duration < 51 || trick == System::Trick::None) {
         m_stunt = StuntType::None;
@@ -291,34 +328,6 @@ void KartHalfPipe::activateTrick(s32 duration, System::Trick trick) {
     m_stuntRot = EGG::Quatf::ident;
 }
 
-/// @addr{0x805758E4}
-/// @brief Called when the kart should end the half-pipe state and applies any necessary boosts
-/// @param boost True if a boost should be applied, false otherwise
-/// @details If the kart was over the zipper and had more than 5 frames of airtime, applies a boost
-/// whose duration depends on whether a trick occurred.
-void KartHalfPipe::end(bool boost) {
-    auto &status = KartObjectProxy::status();
-    bool overZipper = status.onBit(eStatus::OverZipper);
-
-    if (overZipper && state()->airtime() > 5 && boost) {
-        move()->activateZipperBoost();
-    }
-
-    if (status.onBit(eStatus::ZipperTrick)) {
-        physics()->composeDecayingStuntRot(m_stuntRot);
-    }
-
-    if (overZipper) {
-        move()->setDir(mainRot().rotateVector(EGG::Vector3f::ez));
-        move()->setVel1Dir(move()->dir());
-    }
-
-    status.resetBit(eStatus::OverZipper, eStatus::ZipperTrick, eStatus::ZipperStick,
-            eStatus::ZipperBypassInvisWall);
-
-    m_stunt = StuntType::None;
-}
-
 /// @brief Calculates the cumulative angle of rotation for the current trick
 /// @details If the current angle is greater than the target rotation multiplied by the angle decay
 /// threshold, the rotation speed is decreased by multiplying it with the decay rate, and the decay
@@ -335,6 +344,9 @@ void KartHalfPipe::StuntManager::calcAngle() {
 
 /// @brief Sets the properties of the current stunt based on the provided index
 /// @param idx The index of the stunt properties to set
+/// @details Sets @ref properties based on the @ref StuntProperties at the specified index in a
+/// static array. Sets @ref rotSpeed to the initial rotation speed defined in the selected stunt
+/// properties, resets @ref angle to zero, and sets @ref decayRate to `1.0f`.
 void KartHalfPipe::StuntManager::setProperties(size_t idx) {
     static constexpr std::array<StuntProperties, 6> STUNT_PROPERTIES = {{
             {6.0f, 2.5f, 0.955f, 0.01f, 0.7f, 360.0f},

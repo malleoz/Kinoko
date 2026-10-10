@@ -61,7 +61,7 @@ void KartPhysics::calc(f32 dt, f32 maxSpeed, const EGG::Vector3f &scale, bool ai
     m_stuntRot = m_instantaneousStuntRot * m_decayingStuntRot;
     m_extraRot = m_instantaneousExtraRot * m_decayingExtraRot;
 
-    m_dynamics->setSpecialRot(m_stuntRot);
+    m_dynamics->setStuntRot(m_stuntRot);
     m_dynamics->setExtraRot(m_extraRot);
     m_dynamics->setScale(scale);
 
