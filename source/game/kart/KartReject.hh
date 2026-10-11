@@ -19,8 +19,13 @@ namespace Kart {
 /// limit.
 class KartReject : private KartObjectProxy {
 public:
-    KartReject();
-    ~KartReject();
+    /// @addr{Inlined in 0x80577FC4}
+    /// @brief Default constructor
+    KartReject() = default;
+
+    /// @addr{0x8057815C}
+    /// @brief Default virtual destructor
+    ~KartReject() override = default;
 
     /// @addr{0x80585AE8}
     /// @brief Resets the direction of rejection

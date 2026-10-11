@@ -10,9 +10,6 @@
 
 namespace Kinoko::Kart {
 
-/// @brief Default constructor
-KartSub::KartSub() = default;
-
 /// @addr{0x80598AC8}
 /// @brief Destructor that destroys all owning subsystems
 KartSub::~KartSub() {

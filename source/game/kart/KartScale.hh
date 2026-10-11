@@ -10,7 +10,10 @@ namespace Kinoko::Kart {
 class KartScale : private KartObjectProxy {
 public:
     KartScale(const KartParam::Stats &stats);
-    ~KartScale();
+
+    /// @addr{0x8056B5A8}
+    /// @brief Default virtual destructor
+    ~KartScale() override = default;
 
     void reset();
     void calc();
@@ -53,7 +56,7 @@ public:
     [[nodiscard]] const EGG::Vector3f &pressScale() const {
         return m_pressScale;
     }
-    
+
     /// @endGetters
 
 private:

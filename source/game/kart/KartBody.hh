@@ -111,7 +111,7 @@ protected:
 /// @details In the base game, this is a separate class from @ref KartBody, even though we don't
 /// implement any overridden functions in this subclass. To maintain clarity, we define this as a
 /// separate class so the @p addr{} Doxygen annotations are accurate.
-class KartBodyKart : public KartBody {
+class KartBodyKart final : public KartBody {
 public:
     /// @addr{0x8056CCC0}
     /// @brief Constructor

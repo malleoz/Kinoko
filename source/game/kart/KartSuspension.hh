@@ -37,7 +37,7 @@ public:
     [[nodiscard]] KartSuspensionPhysics *suspPhysics() {
         return m_physics;
     }
-    
+
     /// @endGetters
 
 private:
@@ -45,7 +45,7 @@ private:
 };
 
 /// @brief Front suspension for bikes, wrapping around @ref KartSuspensionPhysics
-class KartSuspensionFrontBike : public KartSuspension {
+class KartSuspensionFrontBike final : public KartSuspension {
 public:
     /// @brief Default constructor
     KartSuspensionFrontBike() = default;
@@ -56,7 +56,7 @@ public:
 };
 
 /// @brief Rear suspension for bikes, wrapping around @ref KartSuspensionPhysics
-class KartSuspensionRearBike : public KartSuspension {
+class KartSuspensionRearBike final : public KartSuspension {
 public:
     /// @brief Default constructor
     KartSuspensionRearBike() = default;

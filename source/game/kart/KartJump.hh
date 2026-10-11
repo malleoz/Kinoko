@@ -137,7 +137,7 @@ private:
 /// @brief Specialization of @ref KartJump that calculates rotation differently for
 /// bike-specific trick behavior
 /// @copydetails KartJump
-class KartJumpBike : public KartJump {
+class KartJumpBike final : public KartJump {
 public:
     /// @brief Constructor
     /// @param move Pointer to the kart's movement state manager

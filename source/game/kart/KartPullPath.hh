@@ -28,8 +28,19 @@ public:
         Regional, ///< Checks the current segment, the next segment, and the previous segment
     };
 
-    KartPullPathTracker(KartPullPath *handle, Type type);
-    ~KartPullPathTracker();
+    /// @addr{0x8059308C}
+    /// @brief Constructor
+    /// @param handle Pointer to the owning @ref KartPullPath subsystem
+    /// @param type The type of tracker to use for the pull path
+    KartPullPathTracker(KartPullPath *handle, Type type)
+        : m_type(type),
+          m_currentIdx(0),
+          m_pointInfo(nullptr),
+          m_handle(handle) {}
+
+    /// @addr{0x805930E4}
+    /// @brief Default virtual destructor
+    ~KartPullPathTracker() override = default;
 
     /// @brief Calls into the appropriate tracker type's calc function to find the current segment
     /// of the pull path
@@ -56,7 +67,7 @@ public:
         m_pointInfo = info;
         m_currentIdx = 0;
     }
-    
+
     /// @endSetters
 
 private:

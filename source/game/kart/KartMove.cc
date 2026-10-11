@@ -564,7 +564,7 @@ void KartMove::calcTurn() {
     auto &status = KartObjectProxy::status();
 
     if (status.onBit(eStatus::InAction, eStatus::CannonStart, eStatus::InCannon,
-                eStatus::OverZipper, BeforeRespawn)) {
+                eStatus::OverZipper, eStatus::BeforeRespawn)) {
         return;
     }
 

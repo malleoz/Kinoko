@@ -7,30 +7,25 @@ namespace Kinoko::Kart {
 /// @brief The highest level abstraction for a kart.
 class KartObject : public KartObjectProxy {
 public:
-    KartObject(KartParam *param);
-    virtual ~KartObject();
-
-    /// @addr{0x8058E5F8}
-    /// @brief Creates a KartBody object based on the type of vehicle (kart or bike)
-    /// @details For the base class, this creates a @ref KartBodyKart.
-    [[nodiscard]] virtual KartBody *createBody(KartPhysics *physics) {
-        return EGG::egg_new<KartBodyKart>(physics);
+    /// @addr{0x8058DDBC}
+    /// @brief Constructor
+    /// @param param Pointer to the kart's stats
+    /// @details Initializes KartAccessor::param with the provided `param` pointer.
+    KartObject(KartParam *param) {
+        m_pointers.param = param;
     }
 
-    /// @brief Creates the appropriate @ref KartTire and @ref KartSuspension objects
-    virtual void createTires();
+    virtual ~KartObject();
 
     void init();
     void initCollision();
     void initPhysics();
-    void prepareTiresAndSuspensions();
-
-    void createSub();
     void createModel();
-
     void calcSub();
     void calc();
 
+    /// @brief Gets a pointer to the collection of associated kart subsystems
+    /// @return Const pointer to the collection of associated kart subsystems, @ref m_pointers
     [[nodiscard]] const KartAccessor *accessor() const {
         return &m_pointers;
     }
@@ -39,17 +34,42 @@ public:
 
 protected:
     KartAccessor m_pointers; ///< The collection of pointers to the various subsystems of the kart
+
+private:
+    /// @addr{0x8058E5F8}
+    /// @brief Creates a KartBody object based on the type of vehicle (kart or bike)
+    /// @param physics Pointer to the kart's physics state manager
+    /// @return Pointer to the created KartBody instance
+    /// @details For the base class, this creates a @ref KartBodyKart.
+    [[nodiscard]] virtual KartBody *createBody(KartPhysics *physics) {
+        return EGG::egg_new<KartBodyKart>(physics);
+    }
+
+    virtual void createTires();
+
+    void prepareTiresAndSuspensions();
+    void createSub();
 };
 
 /// @brief The highest level abstraction for a bike.
-class KartObjectBike : public KartObject {
+class KartObjectBike final : public KartObject {
 public:
-    KartObjectBike(KartParam *param);
-    ~KartObjectBike() override;
+    /// @addr{0x8058F20C}
+    /// @brief Constructor
+    /// @param param Pointer to the kart's stats
+    KartObjectBike(KartParam *param) : KartObject(param) {}
 
+    /// @addr{0x8058F8B0}
+    /// @brief Default virtual destructor
+    ~KartObjectBike() override = default;
+
+private:
     /// @addr{0x8058F260}
-    /// @details For this derived class, this creates a @ref KartBodyBike or @ref KartBodyQuacker
-    /// depending on the vehicle type.
+    /// @copybrief @ref KartObject::createBody()
+    /// @param physics Pointer to the kart's physics state manager
+    /// @return Pointer to the created KartBody instance
+    /// @details Creates a @ref KartBodyBike, except for the Quacker bike which creates a @ref
+    /// KartBodyQuacker.
     [[nodiscard]] KartBody *createBody(KartPhysics *physics) override {
         if (m_pointers.param->isVehicleRelativeBike()) {
             return EGG::egg_new<KartBodyQuacker>(physics);

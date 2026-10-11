@@ -24,9 +24,6 @@ KartParam::KartParam(Character character, Vehicle vehicle, u8 playerIdx) {
     initCameraParams(character);
 }
 
-/// @brief Default destructor
-KartParam::~KartParam() = default;
-
 /// @addr{0x80591FA4}
 /// @brief Parses out the character/vehicle combo stats
 /// @param character The character to initialize stats for

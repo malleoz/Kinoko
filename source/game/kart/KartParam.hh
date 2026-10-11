@@ -279,8 +279,9 @@ public:
     STATIC_ASSERT(sizeof(KartCameraParam) == 0x10);
 
     KartParam(Character character, Vehicle vehicle, u8 playerIdx);
-    ~KartParam();
 
+    /// @brief Default destructor
+    ~KartParam() = default;
     /// @beginSetters
 
     void setTireCount(u16 tireCount) {
@@ -290,7 +291,7 @@ public:
     void setSuspCount(u16 suspCount) {
         m_suspCount = suspCount;
     }
-    
+
     /// @endSetters
 
     /// @beginGetters
@@ -339,7 +340,7 @@ public:
     [[nodiscard]] u16 tireCount() const {
         return m_tireCount;
     }
-    
+
     /// @endGetters
 
 private:

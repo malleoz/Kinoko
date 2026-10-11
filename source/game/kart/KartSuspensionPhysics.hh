@@ -9,8 +9,21 @@ namespace Kinoko::Kart {
 /// @details Each wheel corresponds to a @ref CollisionGroup with a single hitbox for the tire.
 class WheelPhysics : KartObjectProxy {
 public:
-    WheelPhysics(u16 wheelIdx, u16 bspWheelIdx);
-    ~WheelPhysics();
+    /// @addr{0x8059940C}
+    /// @brief Constructor
+    /// @param wheelIdx The index of the wheel
+    /// @param bspWheelIdx The index of the wheel in the @ref BSP::wheels array
+    WheelPhysics(u16 wheelIdx, u16 bspWheelIdx)
+        : m_wheelIdx(wheelIdx),
+          m_bspWheelIdx(bspWheelIdx),
+          m_bspWheel(nullptr) {}
+
+    /// @addr{0x8059A9C4}
+    /// @brief Virtual destructor that destroys the underlying @ref CollisionGroup subsystem for
+    /// this wheel
+    ~WheelPhysics() override {
+        EGG::egg_delete(m_hitboxGroup);
+    }
 
     /// @addr{0x80599470}
     /// @brief Initializes the wheel's @ref CollisionGroup and creates a single hitbox for the tire
@@ -57,7 +70,7 @@ public:
     void setColVel(const EGG::Vector3f &vec) {
         m_colVel = vec;
     }
-    
+
     /// @endSetters
 
     /// @beginGetters

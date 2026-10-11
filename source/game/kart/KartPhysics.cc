@@ -2,26 +2,6 @@
 
 namespace Kinoko::Kart {
 
-/// @addr{0x8059F5BC}
-/// @brief Constructor which initializes the @ref KartDynamics or @ref KartDynamicsBike subsystem
-/// depending on `isBike` and constructs the kart's @ref CollisionGroup
-/// @param isBike Whether the kart is a bike
-KartPhysics::KartPhysics(bool isBike) {
-    m_pose = EGG::Matrix34f::ident;
-    m_dynamics = isBike ? static_cast<KartDynamics *>(EGG::egg_new<KartDynamicsBike>()) :
-                          EGG::egg_new<KartDynamics>();
-    m_hitboxGroup = EGG::egg_new<CollisionGroup>();
-    m_halfLength = 50.0f; // set immediately after in KartPhysics::Create()
-}
-
-/// @addr{0x8059F6F8}
-/// @brief Destructor that destroys the @ref KartDynamics or @ref KartDynamicsBike subsystem and the
-/// kart's @ref CollisionGroup subsystem
-KartPhysics::~KartPhysics() {
-    EGG::egg_delete(m_dynamics);
-    EGG::egg_delete(m_hitboxGroup);
-}
-
 /// @addr{0x8059F7C8}
 /// @brief Resets the @ref KartDynamics and @ref CollisionGroup subsystems to their initial state
 void KartPhysics::reset() {

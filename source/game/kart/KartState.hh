@@ -10,8 +10,20 @@ namespace Kinoko::Kart {
 /// managing calculations of the start boost duration.
 class KartState : private KartObjectProxy {
 public:
-    KartState();
-    ~KartState();
+    /// @addr{0x805943B4}
+    /// @brief Constructor that initializes the status bits to 0, except for @ref eStatus::AutoDrift
+    KartState() {
+        m_status.makeAllZero();
+        m_status.changeBit(inputs()->driftIsAuto(), eStatus::AutoDrift);
+
+        m_airtime = 0;
+        m_cannonPointId = 0;
+        m_startBoostIdx = 0;
+    }
+
+    /// @addr{0x80595CC4}
+    /// @brief Default virtual destructor
+    ~KartState() override = default;
 
     /// @addr{0x8059455C}
     /// @brief Initializes the kart state by resetting all relevant flags and variables
@@ -56,7 +68,7 @@ public:
     void setTrickableTimer(s16 val) {
         m_trickableTimer = val;
     }
-    
+
     /// @endSetters
 
     /// @beginGetters

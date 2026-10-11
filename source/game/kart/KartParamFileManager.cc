@@ -2,29 +2,6 @@
 
 namespace Kinoko::Kart {
 
-/// @addr{0x80591C9C}
-/// @brief Clears all loaded parameter files from the manager (but does not clear them from memory)
-void KartParamFileManager::clear() {
-    m_kartParam = {};
-    m_driverParam = {};
-    m_bikeDispParam = {};
-    m_kartDispParam = {};
-    m_kartCameraParam = {};
-}
-
-/// @addr{0x805919F4}
-/// @brief Loads and validates the kart parameter files.
-void KartParamFileManager::init() {
-    m_kartParam = load("kartParam.bin");
-    m_driverParam = load("driverParam.bin");
-    m_bikeDispParam = load("bikePartsDispParam.bin");
-    m_kartDispParam = load("kartPartsDispParam.bin");
-    m_kartCameraParam = load("kartCameraParam.bin");
-    if (!validate()) {
-        PANIC("Parameter files could not be validated!");
-    }
-}
-
 /// @brief Gets a @ref EGG::RamStream for the provided character's parameters from `driverParam.bin`
 /// @param character The character to get the parameters for
 /// @return A @ref EGG::RamStream containing the character's parameters
@@ -178,19 +155,6 @@ EGG::RamStream KartParamFileManager::getKartCameraStream(Character character) co
     // We skip 1 to get 16:9
     return EGG::RamStream(file + static_cast<u32>(weightClass) * 4 + 1,
             sizeof(KartParam::KartCameraParam));
-}
-
-/// @brief Private constructor that loads and validates the kart parameter files
-KartParamFileManager::KartParamFileManager() {
-    init();
-}
-
-/// @brief Private virtual destructor
-KartParamFileManager::~KartParamFileManager() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("KartParamFileManager instance not explicitly handled!");
-    }
 }
 
 /// @brief Performs checks to make sure the files were loaded successfully

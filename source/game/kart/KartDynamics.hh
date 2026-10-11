@@ -373,7 +373,7 @@ protected:
 /// @brief State management for most components of a bike's physics
 /// @details Sharing the same members as KartDynamics, this class overrides some functions to
 /// specifically handle bike physics.
-class KartDynamicsBike : public KartDynamics {
+class KartDynamicsBike final : public KartDynamics {
 public:
     /// @brief Default constructor
     KartDynamicsBike() = default;

@@ -6,20 +6,6 @@
 
 namespace Kinoko::Kart {
 
-/// @addr{0x8059308C}
-/// @brief Constructor
-/// @param handle Pointer to the owning @ref KartPullPath subsystem
-/// @param type The type of tracker to use for the pull path
-KartPullPathTracker::KartPullPathTracker(KartPullPath *handle, Type type)
-    : m_type(type),
-      m_currentIdx(0),
-      m_pointInfo(nullptr),
-      m_handle(handle) {}
-
-/// @addr{0x805930E4}
-/// @brief Default destructor
-KartPullPathTracker::~KartPullPathTracker() = default;
-
 /// @addr{0x80593138}
 /// @brief Checks to see if the kart is within the global tracker's current segment
 /// @details The global tracker is an exhaustive round-robin scan of all points in the pull path.

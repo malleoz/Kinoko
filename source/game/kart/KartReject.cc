@@ -6,14 +6,6 @@
 
 namespace Kinoko::Kart {
 
-/// @addr{Inlined in 0x80577FC4}
-/// @brief Default constructor
-KartReject::KartReject() = default;
-
-/// @addr{0x8057815C}
-/// @brief Default destructor
-KartReject::~KartReject() = default;
-
 /// @addr{0x80585AF8}
 /// @brief Runs every frame to handle reject road interactions
 /// @details This function has two different branches. The first branch involves checking if a

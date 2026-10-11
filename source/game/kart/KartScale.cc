@@ -24,10 +24,6 @@ KartScale::KartScale(const KartParam::Stats &stats) {
     }
 }
 
-/// @addr{0x8056B5A8}
-/// @brief Default destructor
-KartScale::~KartScale() = default;
-
 /// @addr{0x8056AF10}
 /// @brief Resets the kart's scale-related properties to their default values
 void KartScale::reset() {

@@ -10,7 +10,9 @@ class KartObject;
 /// two-pass physics calculations.
 class KartSub : private KartObjectProxy {
 public:
-    KartSub();
+    /// @brief Default constructor
+    KartSub() = default;
+
     ~KartSub();
 
     void createSubsystems(bool isBike, const KartParam::Stats &stats);
@@ -43,7 +45,7 @@ public:
     [[nodiscard]] f32 suspScale() {
         return m_suspScale;
     }
-    
+
     /// @endGetters
 
 private:

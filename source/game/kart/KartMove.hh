@@ -1036,7 +1036,7 @@ private:
 /// @copybrief KartMove
 /// @details This derived class has specialized behavior for bikes, such as wheelies and leaning.
 /// There are also additional member variables to track the bike's unique state.
-class KartMoveBike : public KartMove {
+class KartMoveBike final : public KartMove {
 public:
     /// @brief Represents turning information which differs only between inside/outside drift
     struct TurningParameters {

@@ -23,8 +23,30 @@ class KartParamFileManager : EGG::Disposer {
     friend class Host::Context;
 
 public:
-    void clear();
-    void init();
+    /// @addr{0x80591C9C}
+    /// @brief Clears all loaded parameter files from the manager (but does not clear them from
+    /// memory)
+    void clear() {
+        m_kartParam = {};
+        m_driverParam = {};
+        m_bikeDispParam = {};
+        m_kartDispParam = {};
+        m_kartCameraParam = {};
+    }
+
+    /// @addr{0x805919F4}
+    /// @brief Loads and validates the kart parameter files.
+    void init() {
+        m_kartParam = load("kartParam.bin");
+        m_driverParam = load("driverParam.bin");
+        m_bikeDispParam = load("bikePartsDispParam.bin");
+        m_kartDispParam = load("kartPartsDispParam.bin");
+        m_kartCameraParam = load("kartCameraParam.bin");
+        if (!validate()) {
+            PANIC("Parameter files could not be validated!");
+        }
+    }
+
     [[nodiscard]] EGG::RamStream getDriverStream(Character character) const;
     [[nodiscard]] EGG::RamStream getVehicleStream(Vehicle vehicle) const;
     [[nodiscard]] EGG::RamStream getHitboxStream(Vehicle vehicle) const;
@@ -78,8 +100,18 @@ private:
 
     EGG_NEW_DELETE_FRIEND
 
-    KartParamFileManager();
-    ~KartParamFileManager() override;
+    /// @brief Private constructor that loads and validates the kart parameter files
+    KartParamFileManager() {
+        init();
+    }
+
+    /// @brief Private virtual destructor
+    ~KartParamFileManager() override {
+        if (s_instance) {
+            s_instance = nullptr;
+            WARN("KartParamFileManager instance not explicitly handled!");
+        }
+    }
 
     [[nodiscard]] bool validate() const;
 

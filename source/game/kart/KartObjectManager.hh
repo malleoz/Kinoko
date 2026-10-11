@@ -53,12 +53,13 @@ public:
     [[nodiscard]] static const Abstract::g3d::ResAnmChr *PressScaleUpAnmChr() {
         return s_pressScaleUpAnmChr;
     }
-    
+
     /// @endGetters
 
     /// @addr{0x8058FAA8}
     /// @brief Creates the singleton instance of the @ref KartObjectManager
     /// @return A pointer to the newly created singleton instance of the @ref KartObjectManager
+    /// @pre The singleton instance of the @ref KartObjectManager must not already exist.
     static KartObjectManager *CreateInstance() {
         ASSERT(!s_instance);
         s_instance = EGG::egg_new<KartObjectManager>();
@@ -67,6 +68,7 @@ public:
 
     /// @addr{0x8058FAF8}
     /// @brief Destroys the singleton instance of the @ref KartObjectManager
+    /// @pre The singleton instance of the @ref KartObjectManager must already exist.
     static void DestroyInstance() {
         ASSERT(s_instance);
         auto *instance = s_instance;

@@ -13,13 +13,6 @@
 
 namespace Kinoko::Kart {
 
-/// @addr{0x8058DDBC}
-/// @brief Constructs a KartObject with the provided KartParam pointer
-/// @param param Pointer to the kart's parameter structure containing its configuration and stats
-KartObject::KartObject(KartParam *param) {
-    m_pointers.param = param;
-}
-
 /// @addr{0x8058DEF0}
 /// @brief Virtual destructor that destroys the KartObject and all of its subsystems
 KartObject::~KartObject() {
@@ -39,6 +32,7 @@ KartObject::~KartObject() {
 }
 
 /// @addr{0x8058EA0C}
+/// @brief Creates the appropriate @ref KartTire and @ref KartSuspension objects
 /// @details Creates 4 tire objects, except for @ref Vehicle::Blue_Falcon which only has 3 tires.
 /// Adds the tire and suspension objects to the shared @ref KartAccessor. Finally, initializes the
 /// tire suspensions.
@@ -101,6 +95,9 @@ void KartObject::init() {
 
 /// @addr{0x8058E188}
 /// @brief Initializes the kart's collision data and bounding box
+/// @details Initializes the kart's @ref Field::BoxColUnit via @ref KartSub::initAABB(). Dispatches
+/// to @ref KartSub::init() to initialize the kart's subsystems. Finally, initializes the kart's GJK
+/// collision object via @ref Field::ObjectCollisionKart::init().
 void KartObject::initCollision() {
     sub()->initAABB(m_pointers, this);
     sub()->init();
@@ -109,48 +106,13 @@ void KartObject::initCollision() {
 
 /// @addr{0x8058EE48}
 /// @brief Sets the initial position and rotation of the kart based off the current track.
+/// @details Dispatches to @ref System::RaceManager::findKartStartPoint() to determine the initial
+/// position and rotation of the kart, and then sets these values via @ref
+/// KartMove::setInitialPhysicsValues().
 void KartObject::initPhysics() {
     EGG::Vector3f euler_angles_deg, position;
-
     System::RaceManager::Instance()->findKartStartPoint(position, euler_angles_deg);
     move()->setInitialPhysicsValues(position, euler_angles_deg);
-}
-
-/// @addr{0x8058E804}
-/// @brief Computes the number of wheels based off the BSP
-void KartObject::prepareTiresAndSuspensions() {
-    constexpr u16 LOCAL_20[4] = {2, 1, 1, 1};
-    constexpr u16 LOCAL_28[4] = {2, 1, 1, 2};
-
-    const BSP &rBsp = m_pointers.param->bsp();
-    const KartParam::Stats::Body bodyWheels = m_pointers.param->stats().body;
-    u16 wheelCount = 0;
-
-    if (rBsp.wheels[0].enable != 0) {
-        wheelCount += LOCAL_20[static_cast<u16>(bodyWheels)];
-    }
-    if (rBsp.wheels[1].enable != 0) {
-        wheelCount += LOCAL_28[static_cast<u16>(bodyWheels)];
-    }
-    if (rBsp.wheels[2].enable != 0) {
-        wheelCount += LOCAL_20[static_cast<u16>(bodyWheels)];
-    }
-    if (rBsp.wheels[3].enable != 0) {
-        wheelCount += LOCAL_28[static_cast<u16>(bodyWheels)];
-    }
-
-    m_pointers.param->setTireCount(wheelCount);
-    m_pointers.param->setSuspCount(wheelCount);
-
-    m_pointers.tires.reserve(wheelCount);
-    m_pointers.suspensions.reserve(wheelCount);
-}
-
-/// @addr{0x8058E724}
-/// @brief Creates the @ref KartSub object and initializes its subsystems
-void KartObject::createSub() {
-    m_pointers.sub = EGG::egg_new<KartSub>();
-    m_pointers.sub->createSubsystems(m_pointers.param->isBike(), m_pointers.param->stats());
 }
 
 /// @addr{0x8058F820}
@@ -174,12 +136,14 @@ void KartObject::createModel() {
 
 /// @addr{0x8058EEB4}
 /// @brief Calls the first pass of the kart's subsystem calculations
+/// @details Simply calls @ref KartSub::calcPass0().
 void KartObject::calcSub() {
     sub()->calcPass0();
 }
 
 /// @addr{0x8058EEBC}
 /// @brief Calls the second pass of the kart's subsystem calculations and the model's calculations
+/// @details Simply calls @ref KartSub::calcPass1() and @ref KartModel::calc().
 void KartObject::calc() {
     sub()->calcPass1();
     model()->calc();
@@ -224,16 +188,45 @@ KartObject *KartObject::Create(Character character, Vehicle vehicle, u8 playerId
     return object;
 }
 
-/// @addr{0x8058F20C}
-/// @brief Constructs a KartObjectBike with the provided KartParam pointer
-/// @param param Pointer to the kart's parameter structure containing its configuration and stats
-KartObjectBike::KartObjectBike(KartParam *param) : KartObject(param) {}
+/// @addr{0x8058E804}
+/// @brief Computes the number of wheels based off the BSP
+void KartObject::prepareTiresAndSuspensions() {
+    constexpr u16 LOCAL_20[4] = {2, 1, 1, 1};
+    constexpr u16 LOCAL_28[4] = {2, 1, 1, 2};
 
-/// @addr{0x8058F8B0}
-/// @brief Default virtual destructor
-KartObjectBike::~KartObjectBike() = default;
+    const BSP &rBsp = m_pointers.param->bsp();
+    const KartParam::Stats::Body bodyWheels = m_pointers.param->stats().body;
+    u16 wheelCount = 0;
+
+    if (rBsp.wheels[0].enable != 0) {
+        wheelCount += LOCAL_20[static_cast<u16>(bodyWheels)];
+    }
+    if (rBsp.wheels[1].enable != 0) {
+        wheelCount += LOCAL_28[static_cast<u16>(bodyWheels)];
+    }
+    if (rBsp.wheels[2].enable != 0) {
+        wheelCount += LOCAL_20[static_cast<u16>(bodyWheels)];
+    }
+    if (rBsp.wheels[3].enable != 0) {
+        wheelCount += LOCAL_28[static_cast<u16>(bodyWheels)];
+    }
+
+    m_pointers.param->setTireCount(wheelCount);
+    m_pointers.param->setSuspCount(wheelCount);
+
+    m_pointers.tires.reserve(wheelCount);
+    m_pointers.suspensions.reserve(wheelCount);
+}
+
+/// @addr{0x8058E724}
+/// @brief Creates and initializes the @ref KartSub instance
+void KartObject::createSub() {
+    m_pointers.sub = EGG::egg_new<KartSub>();
+    m_pointers.sub->createSubsystems(m_pointers.param->isBike(), m_pointers.param->stats());
+}
 
 /// @addr{0x8058F2E8}
+/// @copybrief KartObject::createTires()
 void KartObjectBike::createTires() {
     for (u16 wheelIdx = 0; wheelIdx < m_pointers.param->suspCount(); ++wheelIdx) {
         KartSuspension *sus = nullptr;

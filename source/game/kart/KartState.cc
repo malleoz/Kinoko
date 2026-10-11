@@ -6,21 +6,6 @@
 
 namespace Kinoko::Kart {
 
-/// @addr{0x805943B4}
-/// @brief Constructor that initializes the status bits to 0, except for @ref eStatus::AutoDrift
-KartState::KartState() {
-    m_status.makeAllZero();
-    m_status.changeBit(inputs()->driftIsAuto(), eStatus::AutoDrift);
-
-    m_airtime = 0;
-    m_cannonPointId = 0;
-    m_startBoostIdx = 0;
-}
-
-/// @addr{0x80595CC4}
-/// @brief Default destructor
-KartState::~KartState() = default;
-
 /// @addr{0x80594594}
 /// @brief Resets the kart's state to its initial values
 void KartState::reset() {
