@@ -225,7 +225,7 @@ void KartJump::setAngle(const EGG::Vector3f &left) {
     EGG::Matrix34f nextDir;
     nextDir.setAxisRotation(-rotAngle * DEG2RAD, left);
     m_move->setDir(nextDir.ps_multVector(m_move->dir()));
-    m_move->setVel1Dir(m_move->dir());
+    m_move->setIntVelDir(m_move->dir());
 }
 
 /// @addr{0x80575EE8}

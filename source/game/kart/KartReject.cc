@@ -139,7 +139,7 @@ bool KartReject::calcRejection() {
             f32 speedScalar = isSteepTangent ?
                     1.0f :
                     static_cast<f32>(static_cast<f64>(EGG::Mathf::abs(speed()) * 0.01f) - 0.3);
-            speedScalar = std::min(1.0f, std::max(0.0f, speedScalar));
+            speedScalar = std::clamp(speedScalar, 0.0f, 1.0f);
 
             EGG::Vector3f posOffset =
                     colInfo.tangentOff + -radius * tangentOff + yOffset * tangentOff;
@@ -150,7 +150,7 @@ bool KartReject::calcRejection() {
 
         EGG::Vector3f newDir = move()->lastDir().perpInPlane(move()->smoothedUp(), true);
         move()->setDir(newDir);
-        move()->setVel1Dir(newDir);
+        move()->setIntVelDir(newDir);
 
         return true;
     }

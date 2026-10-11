@@ -51,7 +51,7 @@ void WheelPhysics::realign(const EGG::Vector3f &bottom, const EGG::Vector3f &veh
     const EGG::Vector3f topmostPos = m_topmostPos + vehicleMovement;
     f32 scaledMaxTravel = m_bspWheel->maxTravel * sub()->suspScale();
     f32 suspTravel = bottom.dot(m_pos - topmostPos);
-    m_suspTravel = std::max(0.0f, std::min(scaledMaxTravel, suspTravel));
+    m_suspTravel = std::clamp(suspTravel, 0.0f, scaledMaxTravel);
     m_pos = topmostPos + m_suspTravel * bottom;
     m_relVel = m_pos - m_lastPos;
     m_relVel -= intVel();
@@ -193,7 +193,7 @@ void KartSuspensionPhysics::calcCollision(f32 dt, const EGG::Vector3f &gravity,
     m_bottomDir = mat.multVector33(localBottomDir);
 
     f32 y_down = m_tirePhysics->suspTravel() + 5.0f * sub()->suspScale();
-    m_tirePhysics->setSuspTravel(std::max(0.0f, std::min(m_maxTravelScaled, y_down)));
+    m_tirePhysics->setSuspTravel(std::clamp(y_down, 0.0f, m_maxTravelScaled));
     m_tirePhysics->setColVel(dt * 10.0f * gravity);
     m_tirePhysics->setPos(topmostPos + m_tirePhysics->suspTravel() * m_bottomDir);
 
@@ -230,7 +230,7 @@ void KartSuspensionPhysics::calcSuspension(const EGG::Vector3f &forward,
     EGG::Vector3f fRot = m_bottomDir * springDamp;
 
     if (isPostRespawn()) {
-        fRot.y = std::max(-1.0f, std::min(1.0f, fRot.y));
+        fRot.y = std::clamp(fRot.y, -1.0f, 1.0f);
     }
 
     EGG::Vector3f fLinear = fRot;
@@ -238,8 +238,7 @@ void KartSuspensionPhysics::calcSuspension(const EGG::Vector3f &forward,
     rotProj.y = 0.0f;
 
     rotProj = rotProj.proj(collisionData.floorNrm);
-    fLinear.y += rotProj.y;
-    fLinear.y = std::min(fLinear.y, param()->stats().maxNormalForce);
+    fLinear.y = std::min(fLinear.y + rotProj.y, param()->stats().maxNormalForce);
 
     auto &status = KartObjectProxy::status();
 

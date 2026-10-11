@@ -139,10 +139,8 @@ void KartState::calcCollisions() {
             eStatus::VehicleBodyFloorCollision, eStatus::AnyWheelCollision,
             eStatus::AllWheelsCollision, eStatus::TouchingGround);
 
-    if (m_hwgTimer > 0) {
-        if (--m_hwgTimer == 0) {
-            m_status.resetBit(eStatus::SoftWallSuspension, eStatus::SoftWallPush);
-        }
+    if (m_hwgTimer > 0 && --m_hwgTimer == 0) {
+        m_status.resetBit(eStatus::SoftWallSuspension, eStatus::SoftWallPush);
     }
 
     m_up.setZero();
@@ -354,7 +352,7 @@ void KartState::calcStartBoost() {
         m_startBoostCharge *= START_BOOST_FALLOFF;
     }
 
-    m_startBoostCharge = std::max(0.0f, std::min(1.0f, m_startBoostCharge));
+    m_startBoostCharge = std::clamp(m_startBoostCharge, 0.0f, 1.0f);
 }
 
 /// @addr{0x805959D4}

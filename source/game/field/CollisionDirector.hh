@@ -244,10 +244,7 @@ public:
     void pushCollisionEntry(f32 dist, KCLTypeMask *typeMask, KCLTypeMask kclTypeBit,
             CollisionAttribute attribute) {
         *typeMask = *typeMask | kclTypeBit;
-        if (m_collisionEntryCount >= m_entries.size()) {
-            m_collisionEntryCount = m_entries.size() - 1;
-        }
-
+        m_collisionEntryCount = std::min(m_collisionEntryCount, m_entries.size() - 1);
         m_entries[m_collisionEntryCount++] = CollisionEntry(kclTypeBit, attribute, dist);
     }
 

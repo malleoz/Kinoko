@@ -43,6 +43,12 @@ public:
         }
     }
 
+    /// @brief Returns the array of entries in the section
+    /// @return A const ref to the array of entries in the section
+    [[nodiscard]] const fixed_vector<T *> &entries() const {
+        return m_entries;
+    }
+
     /// @brief Returns the entry at the specified index
     /// @param i The index of the entry to retrieve
     /// @return A pointer to the entry at the specified index, or `nullptr` if the index is out of

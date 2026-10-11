@@ -227,9 +227,7 @@ EGG::Matrix34f JugemMove::calcLeanBasis() {
     constexpr EGG::Vector3f LEAN_UP_BASE = EGG::Vector3f(0.0f, 100.0f, 0.0f);
 
     m_dir = Interpolate(0.1f, m_dir, m_vel);
-    f32 length = m_dir.normalise();
-    length = std::min(20.0f, length);
-    m_dir *= length;
+    m_dir *= std::min(20.0f, m_dir.normalise());
 
     EGG::Vector3f up = LEAN_UP_BASE - m_dir * 1.5f;
     f32 lengthRatio = up.length() / LEAN_UP_BASE.length();

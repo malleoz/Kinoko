@@ -113,7 +113,7 @@ void KartHalfPipe::end(bool boost) {
 
     if (overZipper) {
         move()->setDir(mainRot().rotateVector(EGG::Vector3f::ez));
-        move()->setVel1Dir(move()->dir());
+        move()->setIntVelDir(move()->dir());
     }
 
     status.resetBit(eStatus::OverZipper, eStatus::ZipperTrick, eStatus::ZipperStick,
@@ -260,7 +260,7 @@ void KartHalfPipe::calcCollision(bool notAirborne) {
 
         dynamics()->setPos(newPos);
         move()->setDir(move()->dir().perpInPlane(move()->up(), true));
-        move()->setVel1Dir(move()->dir());
+        move()->setIntVelDir(move()->dir());
 
         if (overZipper) {
             status.setBit(eStatus::ZipperStick);
