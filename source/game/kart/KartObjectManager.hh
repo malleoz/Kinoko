@@ -23,6 +23,8 @@ class KartObjectManager : EGG::Disposer {
 public:
     /// @addr{0x8058FEE0}
     /// @brief Initializes each object's collision and physics subsystems
+    /// @details Simply calls @ref KartObject::initCollision() and @ref KartObject::initPhysics()
+    /// for each object.
     void init() {
         for (auto *&object : m_objects) {
             object->initCollision();
@@ -42,14 +44,20 @@ public:
         return m_objects[i];
     }
 
+    /// @brief Gets the shock unshrink animation's data
+    /// @return Pointer to the shock unshrink animation's data, @ref s_thunderScaleUpAnmChr
     [[nodiscard]] static const Abstract::g3d::ResAnmChr *ThunderScaleUpAnmChr() {
         return s_thunderScaleUpAnmChr;
     }
 
+    /// @brief Gets the shock shrink animation's data
+    /// @return Pointer to the shock shrink animation's data, @ref s_thunderScaleDownAnmChr
     [[nodiscard]] static const Abstract::g3d::ResAnmChr *ThunderScaleDownAnmChr() {
         return s_thunderScaleDownAnmChr;
     }
 
+    /// @brief Gets the stomper uncrush animation's data
+    /// @return Pointer to the stomper uncrash animation's data, @ref s_pressScaleUpAnmChr
     [[nodiscard]] static const Abstract::g3d::ResAnmChr *PressScaleUpAnmChr() {
         return s_pressScaleUpAnmChr;
     }
@@ -105,7 +113,9 @@ private:
     /// @brief The scale animation when the crushed kart returns to full size
     static Abstract::g3d::ResAnmChr *s_pressScaleUpAnmChr;
 
-    static KartObjectManager *s_instance; ///< @addr{0x809C18F8}
+    /// @addr{0x809C18F8}
+    /// @brief Pointer to the @ref KartObjectManager singleton
+    static KartObjectManager *s_instance;
 };
 
 } // namespace Kart

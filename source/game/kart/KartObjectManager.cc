@@ -11,6 +11,8 @@ namespace Kinoko::Kart {
 
 /// @addr{0x8058FFE8}
 /// @brief Performs two passes of calculations for each kart object
+/// @details Resets @ref KartCollide::m_tangentOff and @ref KartCollide::m_movement for all objects.
+/// Then iterates all objects and calls @ref KartObject::calcSub() and @ref KartObject::calc().
 void KartObjectManager::calc() {
     for (auto *&object : m_objects) {
         object->collide()->setTangentOff(EGG::Vector3f::zero);
@@ -24,9 +26,10 @@ void KartObjectManager::calc() {
 }
 
 /// @addr{0x8058FB2C}
-/// @brief Private constructor that constructs the manager and kart objects for each player
-/// @details Creates the @ref KartParamFileManager singleton instance and @ref KartObject instances
-/// for each player. Also parses crush and shrink animation data from @p driver.brres.
+/// @brief Private constructor that loads animation data and creates a kart object for each player
+/// @details Creates the @ref KartParamFileManager singleton instance. Parses crush and shrink
+/// animation data from `driver.brres`. For each player, creates a @ref KartObject instance and
+/// invokes @ref KartObject::createModel() on the new instance.
 KartObjectManager::KartObjectManager() {
     const auto &raceScenario = System::RaceConfig::Instance()->raceScenario();
     u8 count = raceScenario.playerCount;
@@ -46,6 +49,10 @@ KartObjectManager::KartObjectManager() {
 /// @addr{0x8058FDD4}
 /// @brief Private virtual destructor which destroys all @ref KartObject objects, the @ref
 /// KartParamFileManager singleton instance, and the scale animation data
+/// @note If the proxy list is not cleared when we're done with the @ref KartObjectManager, the
+/// list's destructor calls delete on all of the links remaining in the list. Since the heaps are
+/// gone by that point, this results in a segmentation fault. So, we clear the @ref KartObjectProxy
+/// links here.
 KartObjectManager::~KartObjectManager() {
     if (s_instance) {
         s_instance = nullptr;
@@ -62,14 +69,12 @@ KartObjectManager::~KartObjectManager() {
     EGG::egg_delete(s_thunderScaleDownAnmChr);
     EGG::egg_delete(s_pressScaleUpAnmChr);
 
-    // If the proxy list is not cleared when we're done with the KartObjectManager, the list's
-    // destructor calls delete on all of the links remaining in the list. Since the heaps are
-    // gone by that point, this results in a segmentation fault. So, we clear the links here.
     KartObjectProxy::proxyList().clear();
 }
 
 /// @addr{0x8056AB6C}
-/// @brief Parses the scale animation data from @p driver.brres pertaining to shrinking and crushing
+/// @brief Parses the scale animation data from `driver.brres` pertaining to shrinking and crushing
+/// @pre Requires that `Common.szs` has already been loaded via the @ref System::ResourceManager.
 void KartObjectManager::loadScaleAnimations() {
     auto *resMgr = System::ResourceManager::Instance();
     std::span<const u8> file = resMgr->getFile("driver.brres", System::ArchiveId::Core);

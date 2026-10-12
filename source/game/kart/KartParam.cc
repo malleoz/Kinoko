@@ -39,7 +39,7 @@ void KartParam::initStats(Character character, Vehicle vehicle) {
 }
 
 /// @addr{0x80592594}
-/// @brief Initializes the display parameters for a given bike from bikePartsDispParam.bin
+/// @brief Initializes the display parameters for a given bike from `bikePartsDispParam.bin`
 /// @param vehicle The bike to initialize display parameters for
 void KartParam::initBikeDispParams(Vehicle vehicle) {
     auto *fileManager = KartParamFileManager::Instance();
@@ -49,7 +49,7 @@ void KartParam::initBikeDispParams(Vehicle vehicle) {
 }
 
 /// @addr{0x805924CC}
-/// @brief Initializes the display parameters for a given kart from kartPartsDispParam.bin
+/// @brief Initializes the display parameters for a given kart from `kartPartsDispParam.bin`
 /// @param vehicle The kart to initialize display parameters for
 void KartParam::initKartDispParams(Vehicle vehicle) {
     auto *fileManager = KartParamFileManager::Instance();
@@ -59,7 +59,7 @@ void KartParam::initKartDispParams(Vehicle vehicle) {
 }
 
 /// @addr{Inlined in 0x0x8058F5B4}
-/// @brief Initializes the hitboxes and wheels for a given vehicle from kartParam.bin
+/// @brief Initializes the hitboxes and wheels for a given vehicle from `kartParam.bin`
 /// @param vehicle The vehicle to initialize hitboxes for
 void KartParam::initHitboxes(Vehicle vehicle) {
     auto *fileManager = KartParamFileManager::Instance();
@@ -69,7 +69,7 @@ void KartParam::initHitboxes(Vehicle vehicle) {
 }
 
 /// @addr{0x80592718}
-/// @brief Initializes the camera parameters for a given character from kartCameraParam.bin
+/// @brief Initializes the camera parameters for a given character from `kartCameraParam.bin`
 /// @param character The character to initialize camera parameters for
 void KartParam::initCameraParams(Character character) {
     auto *fileManager = KartParamFileManager::Instance();
@@ -78,8 +78,8 @@ void KartParam::initCameraParams(Character character) {
     m_camera = KartCameraParam(cameraStream);
 }
 
-/// @brief Parses out the stats for a given KartParam.bin stream
-/// @param stream A RamStream of data from KartParam.bin
+/// @brief Parses out the stats for a given `KartParam.bin` stream
+/// @param stream A RamStream of data from `KartParam.bin`
 void KartParam::Stats::read(EGG::RamStream &stream) {
     body = static_cast<Body>(stream.read_s32());
     driftType = static_cast<DriftType>(stream.read_s32());
@@ -128,7 +128,7 @@ void KartParam::Stats::read(EGG::RamStream &stream) {
 }
 
 /// @brief Applies character stats on top of the kart stats
-/// @param stream A RamStream of data from driverParam.bin
+/// @param stream A RamStream of data from `driverParam.bin`
 void KartParam::Stats::applyCharacterBonus(EGG::RamStream &stream) {
     stream.skip(0x10);
     weight += stream.read_f32();
@@ -167,17 +167,8 @@ void KartParam::Stats::applyCharacterBonus(EGG::RamStream &stream) {
     }
 }
 
-/// @brief Uninitialized default constructor
-BSP::BSP() = default;
-
-/// @brief Constructor which parses out the hitboxes and wheels for a given KartParam.bin stream
-/// @param stream A @ref EGG::RamStream of data from KartParam.bin
-BSP::BSP(EGG::RamStream &stream) {
-    read(stream);
-}
-
-/// @brief Parses out the hitboxes and wheels for a given KartParam.bin stream
-/// @param stream A @ref EGG::RamStream of data from KartParam.bin
+/// @brief Parses out the hitboxes and wheels for a given `KartParam.bin` stream
+/// @param stream A @ref EGG::RamStream of data from `KartParam.bin`
 void BSP::read(EGG::RamStream &stream) {
     offsetY = stream.read_f32();
 

@@ -74,7 +74,7 @@ struct BSP {
         EGG::Vector3f position; ///< The relative position of the hitbox's center
         f32 radius;             ///< The hitbox's radius
         u16 wallsOnly;          ///< Specifies if the hitbox only collides with walls and not floors
-        u16 tireIdx;            ///< Unused - kept so the struct's size static assert passes
+        u16 tireIdx;            ///< Unused
     };
     STATIC_ASSERT(sizeof(Hitbox) == 0x18);
 
@@ -88,12 +88,21 @@ struct BSP {
         f32 xRot;                ///< The wheel's rotation around the X-axis (always 0)
         f32 wheelRadius;         ///< The radius of the wheel
         f32 sphereRadius;        ///< The radius of the wheel's sphere used for collision detection
-        u32 _28;                 ///< Unused - kept so the struct's size static assert passes
+        u32 _28;                 ///< Unused
     };
     STATIC_ASSERT(sizeof(Wheel) == 0x2c);
 
-    BSP();
-    BSP(EGG::RamStream &stream);
+    /// @brief Uninitialized default constructor
+    BSP() = default;
+
+    /// @brief Constructor which parses out the hitboxes and wheels for a given KartParam.bin stream
+    /// @param stream A @ref EGG::RamStream of data from KartParam.bin
+    BSP(EGG::RamStream &stream) {
+        read(stream);
+    }
+
+    /// @brief Default destructor
+    ~BSP() = default;
 
     void read(EGG::RamStream &stream);
 
@@ -101,7 +110,7 @@ struct BSP {
     std::array<Hitbox, 16> hitboxes; ///< Array of vehicle hitboxes, not all of which are active
     EGG::Vector3f cuboids[2];        ///< Cuboid dimensions for computing moment of inertia
     f32 angVel0Factor;               ///< Multiplier applied to angular velocity on the vehicle
-    f32 _1a0;                        ///< Unused - kept so the struct's size static assert passes
+    f32 _1a0;                        ///< Unused
     std::array<Wheel, 4> wheels;     ///< Array of vehicle wheels, not all of which are active
     f32 rumbleHeight; ///< Max vertical distance of the vehicle body's rumble animation.
     u16 rumbleSpeed;  ///< Speed of the vehicle body's rumble animation.
@@ -141,10 +150,10 @@ public:
         }
 
         f32 m_cameraDistY;         ///< Camera target vertical distance
-        u8 _04[0x0c - 0x04];       ///< Unused - kept so the struct's size static assert passes
+        u8 _04[0x0c - 0x04];       ///< Unused
         EGG::Vector3f m_handlePos; ///< Handlebar position relative to the bike's origin
         EGG::Vector3f m_handleRot; ///< Handlebar rotation
-        u8 _24[0xb0 - 0x24];       ///< Unused - kept so the struct's size static assert passes
+        u8 _24[0xb0 - 0x24];       ///< Unused
     };
     STATIC_ASSERT(sizeof(BikeDisp) == 0xB0);
 
@@ -167,13 +176,13 @@ public:
 
         /// @brief Parses out the display parameters for a given kart from a
         /// `kartPartsDispParam.bin` stream
-        /// @param stream A @ref EGG::RamStream of data from kartPartsDispParam.bin
+        /// @param stream A @ref EGG::RamStream of data from `kartPartsDispParam.bin`
         void read(EGG::RamStream &stream) {
             m_cameraDistY = stream.read_f32();
         }
 
         f32 m_cameraDistY;      ///< Camera target vertical distance
-        u8 _004[0x150 - 0x004]; ///< Unused - kept so the struct's size static assert passes
+        u8 _004[0x150 - 0x004]; ///< Unused
     };
     STATIC_ASSERT(sizeof(KartDisp) == 0x150);
 
@@ -212,16 +221,15 @@ public:
         Body body;               ///< The body style of the vehicle
         DriftType driftType;     ///< The type of drift
         WeightClass weightClass; ///< The weight class of the vehicle
-        f32 _00c;                ///< Unused - kept so the struct's size static assert passes
-
-        f32 weight; ///< Unused in Kinoko - kept so the struct's size static assert passes
-        f32 bumpDeviationLevel; ///< Scale applied to forces resulting from wall collision
-        f32 speed;              ///< Base full speed of the character/vehicle combo.
-        f32 turningSpeed;       ///< Speed decrement percentage of the vehicle when handling.
-        f32 tilt;               ///< Percentage of how much the kart can roll
+        f32 _00c;                ///< Unused
+        f32 weight;              ///< Unused in Kinoko
+        f32 bumpDeviationLevel;  ///< Scale applied to forces resulting from wall collision
+        f32 speed;               ///< Base full speed of the character/vehicle combo.
+        f32 turningSpeed;        ///< Speed decrement percentage of the vehicle when handling.
+        f32 tilt;                ///< Percentage of how much the kart can roll
         std::array<f32, 4> accelerationStandardA; ///< Boost accel values at each speed threshold
         std::array<f32, 3> accelerationStandardT; ///< Speed ratio threshold for acceleration values
-        std::array<f32, 2> accelerationDriftA; ///< Mini-turbo accel values at each speed threshold
+        std::array<f32, 2> accelerationDriftA; ///< Mini-turbo acceleration at each speed threshold
         std::array<f32, 1> accelerationDriftT; ///< Speed ratio threshold for mini-turbo accel vals
         f32 handlingManualTightness;    ///< Affects turn radius when manual and not drifting.
         f32 handlingAutomaticTightness; ///< Affects turn radius when auto and not drifting.
@@ -234,12 +242,12 @@ public:
         u32 miniTurboDuration;       ///< The framecount duration of a charged mini-turbo.
         std::array<f32, KColType::COL_TYPE_COUNT> kclSpeed; ///< Speed multipliers for each KCL flag
         std::array<f32, KColType::COL_TYPE_COUNT> kclRot;   ///< Rotation scalars for each KCL flag
-        f32 _170;           ///< Unused in Kinoko - kept so the struct's size static assert passes
-        f32 _174;           ///< Unused in Kinoko - kept so the struct's size static assert passes
-        f32 _178;           ///< Unused in Kinoko - kept so the struct's size static assert passes
-        f32 _17c;           ///< Unused in Kinoko - kept so the struct's size static assert passes
+        f32 _170;                                           ///< Unused in Kinoko
+        f32 _174;                                           ///< Unused in Kinoko
+        f32 _178;                                           ///< Unused in Kinoko
+        f32 _17c;                                           ///< Unused in Kinoko
         f32 maxNormalForce; ///< Maximum upwards force that can be applied to suspension
-        f32 megaScale;      ///< Unused in Kinoko - kept so the struct's size static assert passes
+        f32 megaScale;      ///< Unused in Kinoko
         f32 shrinkScale;    ///< Vehicle scale when shocked
     };
     STATIC_ASSERT(sizeof(Stats) == 0x18c);
@@ -274,7 +282,7 @@ public:
         f32 fov;        ///< Camera lens / field of view
         f32 dist;       ///< Camera distance from the vehicle's origin
         f32 posY;       ///< Camera Y position offset
-        f32 targetPosY; ///< Unused - kept so the struct's size static assert passes
+        f32 targetPosY; ///< Unused
     };
     STATIC_ASSERT(sizeof(KartCameraParam) == 0x10);
 
@@ -282,12 +290,17 @@ public:
 
     /// @brief Default destructor
     ~KartParam() = default;
+
     /// @beginSetters
 
+    /// @brief Sets the number of active tires for the kart
+    /// @param tireCount The number of active tires to set
     void setTireCount(u16 tireCount) {
         m_tireCount = tireCount;
     }
 
+    /// @brief Sets the number of active suspensions for the kart
+    /// @param suspCount The number of active suspensions to set
     void setSuspCount(u16 suspCount) {
         m_suspCount = suspCount;
     }
@@ -297,46 +310,68 @@ public:
     /// @beginGetters
 
     /// @addr{0x80591DBC}
+    /// @brief Exposes the @ref BSP struct associated with the kart
+    /// @return Const ref to the kart's @ref BSP data, @ref m_bsp
     [[nodiscard]] const BSP &bsp() const {
         return m_bsp;
     }
 
     /// @addr{0x80591F4C}
+    /// @brief Gets the @ref Stats struct associated with the kart
+    /// @return Const ref to the kart's @ref Stats data, @ref m_stats
     [[nodiscard]] const Stats &stats() const {
         return m_stats;
     }
 
     /// @addr{0x80592620}
+    /// @brief Gets the @ref BikeDisp struct associated with the vehicle
+    /// @return Const ref to the vehicle's @ref BikeDisp data, @ref m_bikeDisp
+    /// @pre Requires that the vehicle is a bike. @ref m_bikeDisp is not initialized for karts.
     [[nodiscard]] const BikeDisp &bikeDisp() const {
         return m_bikeDisp;
     }
 
     /// @addr{0x80592558}
+    /// @brief Gets the @ref KartDisp struct associated with the vehicle
+    /// @return Const ref to the vehicle's @ref KartDisp data, @ref m_kartDisp
+    /// @pre Requires that the vehicle is a kart. @ref m_kartDisp is not initialized for bikes.
     [[nodiscard]] const KartDisp &kartDisp() const {
         return m_kartDisp;
     }
 
     /// @addr{0x805927D4}
+    /// @brief Gets the @ref KartCameraParam struct associated with the vehicle
+    /// @return Const ref to the vehicle's @ref KartCameraParam data, @ref m_camera
     [[nodiscard]] const KartCameraParam &camera() const {
         return m_camera;
     }
 
+    /// @brief Gets the index of the player associated with this kart
+    /// @return The player index of the kart, @ref m_playerIdx
     [[nodiscard]] u8 playerIdx() const {
         return m_playerIdx;
     }
 
+    /// @brief Distinguishes whether the vehicle is a kart of bike
+    /// @return `true` if the vehicle is a bike, `false` if it's a kart
     [[nodiscard]] bool isBike() const {
         return m_isBike;
     }
 
+    /// @brief Effectively checks whether this vehicle is the Quacker
+    /// @return `true` if this vehicle is the Quacker, `false` for all other vehicles
     [[nodiscard]] bool isVehicleRelativeBike() const {
         return m_stats.body == Stats::Body::Vehicle_Relative_Bike;
     }
 
+    /// @brief Gets the number of active suspensions on the vehicle
+    /// @return The number of active suspensions on the vehicle, @ref m_suspCount
     [[nodiscard]] u16 suspCount() const {
         return m_suspCount;
     }
 
+    /// @brief Gets the number of active tires on the vehicle
+    /// @return The number of active tires on the vehicle, @ref m_tireCount
     [[nodiscard]] u16 tireCount() const {
         return m_tireCount;
     }

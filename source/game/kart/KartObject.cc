@@ -11,6 +11,8 @@
 
 #include "game/system/RaceManager.hh"
 
+#include <ranges>
+
 namespace Kinoko::Kart {
 
 /// @addr{0x8058DEF0}
@@ -117,9 +119,10 @@ void KartObject::initPhysics() {
 
 /// @addr{0x8058F820}
 /// @brief Creates the @ref Render::KartModel object
-/// @details Since the static @ref KartObjectProxy pointer list is cleared before creating the
-/// model, we have to call @ref KartObjectProxy::ApplyAll to share this object's pointers with the
-/// model.
+/// @details The instance is either a @ref Render::KartModelBike or @ref Render::KartModelKart
+/// depending on whether the vehicle is a bike or kart. Since the static @ref KartObjectProxy
+/// pointer list is cleared before creating the model, we have to call @ref
+/// KartObjectProxy::ApplyAll to share this object's pointers with the model.
 void KartObject::createModel() {
     s_proxyList.clear();
 
@@ -156,9 +159,9 @@ void KartObject::calc() {
 /// @param playerIdx The player index to assign to the kart (always 0 in Kinoko)
 /// @return A pointer to the created @ref KartObject
 /// @details Creates a @ref KartParam object based on the provided character and vehicle enums. If
-/// the vehicle is a kart, creates a @ref KartObject. If the vehicle is a bike, creates a @ref
-/// KartObjectBike. Initializes the kart's subsystems and shares the subsystem pointers with all
-/// subsystems. Finally, initializes the suspensions and tires.
+/// the vehicle is a kart, creates a @ref KartObject, otherwise creates a @ref KartObjectBike.
+/// Initializes the kart's subsystems and shares the subsystem pointers with all subsystems.
+/// Finally, initializes the suspensions and tires.
 KartObject *KartObject::Create(Character character, Vehicle vehicle, u8 playerIdx) {
     s_proxyList.clear();
 
@@ -190,25 +193,30 @@ KartObject *KartObject::Create(Character character, Vehicle vehicle, u8 playerId
 
 /// @addr{0x8058E804}
 /// @brief Computes the number of wheels based off the BSP
+/// @details Uses a static lookup table to map the @ref KartParam::Stats::Body to the number of
+/// wheels for each @ref BSP::Wheel that is enabled. Saves the computed number of wheels via @ref
+/// KartParam::setTireCount() and @ref KartParam::setSuspCount(). Finally, sizes @ref
+/// KartAccessor::tires and @ref KartAccessor::suspensions to hold the computed number of tire
+/// pointers.
 void KartObject::prepareTiresAndSuspensions() {
-    constexpr u16 LOCAL_20[4] = {2, 1, 1, 1};
-    constexpr u16 LOCAL_28[4] = {2, 1, 1, 2};
+    constexpr u16 FRONT_WHEEL_COUNT[4] = {2, 1, 1, 1};
+    constexpr u16 REAR_WHEEL_COUNT[4] = {2, 1, 1, 2};
 
     const BSP &rBsp = m_pointers.param->bsp();
-    const KartParam::Stats::Body bodyWheels = m_pointers.param->stats().body;
+    u16 bodyWheels = static_cast<u16>(m_pointers.param->stats().body);
     u16 wheelCount = 0;
 
     if (rBsp.wheels[0].enable != 0) {
-        wheelCount += LOCAL_20[static_cast<u16>(bodyWheels)];
+        wheelCount += FRONT_WHEEL_COUNT[bodyWheels];
     }
     if (rBsp.wheels[1].enable != 0) {
-        wheelCount += LOCAL_28[static_cast<u16>(bodyWheels)];
+        wheelCount += REAR_WHEEL_COUNT[bodyWheels];
     }
     if (rBsp.wheels[2].enable != 0) {
-        wheelCount += LOCAL_20[static_cast<u16>(bodyWheels)];
+        wheelCount += FRONT_WHEEL_COUNT[bodyWheels];
     }
     if (rBsp.wheels[3].enable != 0) {
-        wheelCount += LOCAL_28[static_cast<u16>(bodyWheels)];
+        wheelCount += REAR_WHEEL_COUNT[bodyWheels];
     }
 
     m_pointers.param->setTireCount(wheelCount);
@@ -227,6 +235,11 @@ void KartObject::createSub() {
 
 /// @addr{0x8058F2E8}
 /// @copybrief KartObject::createTires()
+/// @details For each tire, creates the associated @ref KartSuspension and @ref KartTire objects.
+/// Tire indices `0` and `2` correspond to the front tires (maps to @ref KartSuspensionFrontBike and
+/// @ref KartTireFrontBike) while indices `1` and `3` correspond to the rear tires (maps to @ref
+/// KartSuspensionRearBike and @ref KartTireRearBike). Also initializes tht created tire suspension
+/// object.
 void KartObjectBike::createTires() {
     for (u16 wheelIdx = 0; wheelIdx < m_pointers.param->suspCount(); ++wheelIdx) {
         KartSuspension *sus = nullptr;
