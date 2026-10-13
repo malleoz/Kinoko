@@ -64,7 +64,21 @@ void WheelPhysics::realign(const EGG::Vector3f &bottom, const EGG::Vector3f &veh
 /// @brief Performs the wheel's collision query and updates the wheel's position and radius
 /// @param bottom The "down" direction along the suspension axis
 /// @param topmostPos The world position of the top of the suspension
+/// @details If wheel collisions should not be skipped (indicated via the @ref
+/// eStatus::SkipWheelCalc flag in the kart's @ref Status), then calls @ref
+/// KartCollide::calcWheelCollision to perform a collision check centered on the bottom of the
+/// wheel. If a floor or wall collision occurred, updates the wheel's @ref m_pos. If the tire
+/// collided with KCL having "wheel depth", adjusts the wheel's @ref m_targetEffectiveRadius and
+/// calls @ref KartBody::trySetTargetSinkDepth() with the corresponding sink depth.
+///
+/// Sets @ref m_topmostPos to the provided `topmostPos`. Updates @ref m_wheelEdgePos to reflect the
+/// new wheel position. Interpolates @ref m_effectiveRadius towards @ref m_targetEffectiveRadius
+/// with a rate of `0.1f`. Updates @ref m_suspTravel based on the difference between the wheel's
+/// position and `topmostPos` along the suspension axis. If the suspension has overtravel, sets @ref
+/// m_hasSuspTravel to `1.0f` and calls @ref KartSub::updateSuspOvertravel().
 void WheelPhysics::calcCollision(const EGG::Vector3f &bottom, const EGG::Vector3f &topmostPos) {
+    constexpr f32 RADIUS_INTERP_RATE = 0.1f;
+
     m_targetEffectiveRadius = m_bspWheel->wheelRadius;
     const auto &status = KartObjectProxy::status();
 
@@ -101,7 +115,7 @@ void WheelPhysics::calcCollision(const EGG::Vector3f &bottom, const EGG::Vector3
 
     m_topmostPos = topmostPos;
     m_wheelEdgePos = m_pos + m_effectiveRadius * move()->totalScale() * bottom;
-    m_effectiveRadius += (m_targetEffectiveRadius - m_effectiveRadius) * 0.1f;
+    m_effectiveRadius += (m_targetEffectiveRadius - m_effectiveRadius) * RADIUS_INTERP_RATE;
     m_suspTravel = bottom.dot(m_pos - topmostPos);
 
     if (m_suspTravel < 0.0f) {
@@ -137,23 +151,32 @@ void KartSuspensionPhysics::init() {
 /// @addr{0x8059A02C}
 /// @brief Sets the initial state of the suspension, including the wheel's position and topmost
 /// suspension point
+/// @details If @ref m_tireType is @ref TireType::KartReflected, then the X-coordinate of the
+/// wheel's relative position is flipped. Sets the tire's initial world position based on the
+/// rotated relative position summed with the kart's position and the suspension's @ref
+/// BSP::Wheel::maxTravel. The tire's @ref WheelPhysics::m_lastPos is set to the same initial world
+/// position. The tire's @ref WheelPhysics::m_lastTopDiff and @ref WheelPhysics::m_wheelEdgePos are
+/// also initialized based on this position. Copies the tire's world position to the hitbox's world
+/// position, and sets the hitbox's last position to `100.0f` units above the kart's position.
+/// Finally, sets @ref m_topmostPos to the rotated relative position summed with the kart's
+/// position.
 void KartSuspensionPhysics::setInitialState() {
     EGG::Vector3f relPos = m_bspWheel->springTop;
     if (m_tireType == TireType::KartReflected) {
         relPos.x = -relPos.x;
     }
 
-    const EGG::Vector3f rotatedRelPos = fullRot().rotateVector(relPos) + pos();
-    const EGG::Vector3f unitRotated = fullRot().rotateVector(-EGG::Vector3f::ey);
+    const EGG::Vector3f worldPos = fullRot().rotateVector(relPos) + pos();
+    const EGG::Vector3f down = fullRot().rotateVector(-EGG::Vector3f::ey);
 
-    m_tirePhysics->setPos(rotatedRelPos + m_bspWheel->maxTravel * unitRotated);
-    m_tirePhysics->setLastPos(rotatedRelPos + m_bspWheel->maxTravel * unitRotated);
-    m_tirePhysics->setLastTopDiff(m_tirePhysics->pos() - rotatedRelPos);
+    m_tirePhysics->setPos(worldPos + m_bspWheel->maxTravel * down);
+    m_tirePhysics->setLastPos(worldPos + m_bspWheel->maxTravel * down);
+    m_tirePhysics->setLastTopDiff(m_tirePhysics->pos() - worldPos);
     m_tirePhysics->setWheelEdgePos(m_tirePhysics->pos() +
-            (m_tirePhysics->effectiveRadius() * move()->totalScale() * unitRotated));
+            (m_tirePhysics->effectiveRadius() * move()->totalScale() * down));
     m_tirePhysics->hitboxGroup()->hitbox(0).setWorldPos(m_tirePhysics->pos());
-    m_tirePhysics->hitboxGroup()->hitbox(0).setLastPos(pos() + 100 * EGG::Vector3f::ey);
-    m_topmostPos = rotatedRelPos;
+    m_tirePhysics->hitboxGroup()->hitbox(0).setLastPos(pos() + 100.0f * EGG::Vector3f::ey);
+    m_topmostPos = worldPos;
 }
 
 /// @addr{0x8059A278}
@@ -161,20 +184,26 @@ void KartSuspensionPhysics::setInitialState() {
 /// @param dt The time step (always `1.0f`)
 /// @param gravity The gravity vector affecting the wheel
 /// @param mat The world transformation matrix for the wheel's position and orientation
+/// @details Sets @ref m_maxTravelScaled based on the wheel's maximum travel and the suspension
+/// scale. Updates @ref m_bottomDir based off the provided `mat` transformation matrix. Sets @ref
+/// WheelPhysics::m_suspTravel based on the current suspension compression. Sets @ref
+/// WheelPhysics::m_colVel to `dt * 10.0f * gravity`. Sets @ref WheelPhysics::m_pos based on the
+/// topmost position and the suspension travel distance along @ref m_bottomDir. Finally, if wheel
+/// collision should not be skipped (indicated via @ref eStatus::SkipWheelCalc), calls @ref
+/// WheelPhysics::calcCollision() and updates @ref m_topmostPos.
 void KartSuspensionPhysics::calcCollision(f32 dt, const EGG::Vector3f &gravity,
         const EGG::Matrix34f &mat) {
     m_maxTravelScaled = m_bspWheel->maxTravel * sub()->suspScale();
 
-    EGG::Vector3f scaledRelPos = m_bspWheel->springTop * scale();
+    EGG::Vector3f topmostRelPos = m_bspWheel->springTop * scale();
     if (m_tireType == TireType::KartReflected) {
-        scaledRelPos.x = -scaledRelPos.x;
+        topmostRelPos.x = -topmostRelPos.x;
     }
 
-    const EGG::Vector3f topmostPos = mat.ps_multVector(scaledRelPos);
+    const EGG::Vector3f topmostPos = mat.ps_multVector(topmostRelPos);
     EGG::Matrix34f xRotMat;
-    EGG::Vector3f euler_angles(m_bspWheel->xRot * DEG2RAD, 0.0f, 0.0f);
-    xRotMat.makeR(euler_angles);
-    EGG::Vector3f localBottomDir = xRotMat.multVector33(EGG::Vector3f(0.0f, -1.0f, 0.0f));
+    xRotMat.makeR(EGG::Vector3f(m_bspWheel->xRot * DEG2RAD, 0.0f, 0.0f));
+    EGG::Vector3f localBottomDir = xRotMat.multVector33(-EGG::Vector3f::ey);
     m_bottomDir = mat.multVector33(localBottomDir);
 
     f32 y_down = m_tirePhysics->suspTravel() + 5.0f * sub()->suspScale();
@@ -192,6 +221,12 @@ void KartSuspensionPhysics::calcCollision(f32 dt, const EGG::Vector3f &gravity,
 /// @brief Calculates linear force and rotation from the kart's suspension
 /// @param forward The forward direction of the wheel
 /// @param vehicleMovement The movement of the vehicle to account for in the wheel's position
+/// @details Calls @ref WheelPhysics::realign() to update the wheel's position and velocity based on
+/// @ref m_bottomDir and the provided `vehicleMovement`. If the tire did not collide with the floor
+/// this frame, this function returns early. Based on the suspension travel, suspension stiffness,
+/// and other properties, applies a torque to the vehicle via @ref
+/// KartDynamics::applySuspensionWrench(). Finally, calls @ref WheelPhysics::calcSuspension() to
+/// apply angular and external velocity to the vehicle.
 void KartSuspensionPhysics::calcSuspension(const EGG::Vector3f &forward,
         const EGG::Vector3f &vehicleMovement) {
     EGG::Vector3f lastTopDiff = m_tirePhysics->lastTopDiff();

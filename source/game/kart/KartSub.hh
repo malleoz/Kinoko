@@ -78,7 +78,8 @@ private:
     f32 m_colPerpendicularity; ///< Dot product between floor and colliding wall normals
     f32 m_suspScale; ///< Vertical scale clamped to the vehicle's shrink scale; scales suspension
 
-    static constexpr f32 DT = 1.0f; ///< Delta time
+    static constexpr f32 DT = 1.0f;       ///< Delta time
+    static constexpr f32 GRAVITY = -1.3f; ///< Default gravitational force
 };
 
 } // namespace Kinoko::Kart

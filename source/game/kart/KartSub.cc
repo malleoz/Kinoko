@@ -73,7 +73,13 @@ void KartSub::initPhysicsValues() {
 
 /// @addr{0x8059617C}
 /// @brief Resets the kart's physics state and suspension/tire physics to their default values
-/// @details This is called during race initialization and in the balck screen during respawns.
+/// @details This is called during race initialization and in the black screen during respawns.
+/// Calls @ref KartPhysics::reset() and @ref initPhysicsValues(). Calls @ref
+/// KartSuspensionPhysics::reset() and @ref KartTirePhysics::reset() for all suspensions and tires.
+/// Resets the kart's speed limit to `120.0f` via @ref KartMove::setKartSpeedLimit(). Resets the
+/// object's @ref Field::BoxColUnit via @ref resizeAABB(). Finally, resets @ref m_suspScale to
+/// `1.0f` and @ref m_sideCollisionTimer, @ref m_maxSuspOvertravel, and @ref m_minSuspOvertravel to
+/// zero.
 void KartSub::resetPhysics() {
     physics()->reset();
     initPhysicsValues();
@@ -96,8 +102,39 @@ void KartSub::resetPhysics() {
 
 /// @addr{0x80596480}
 /// @brief The first phase of physics computations on each frame.
-/// @details Handles the first-half of physics calculations. This includes input processing,
-/// subsequent position/speed updates, as well as responding to last frame's collisions.
+/// @details If the kart has entered a cannon this frame (indicated via the @ref
+/// eStatus::CannonStart flag in the kart's @ref Status), resets the kart and tires' @ref
+/// CollisionGroup and calls @ref KartMove::enterCannon(). Calls @ref KartState::calc() to reset the
+/// kart's state for the new frame and process collision-related flags from the previous frame. If
+/// the kart's position needs to be updated due to a respawn (indicated via @ref
+/// eStatus::TriggerRespawn), resets the kart's inertia scale via @ref setInertiaScale() and calls
+/// @ref resetPhysics(), @ref KartState::reset(), @ref KartMove::setTurnParams(), and @ref
+/// KartMove::calcRespawnTrigger().
+///
+/// Updates @ref KartPhysics::m_pos and @ref KartPhysics::m_velocity to match @ref
+/// KartDynamics::m_pos and @ref KartDynamics::m_velocity. Resets @ref KartDynamics::m_gravity to
+/// @ref GRAVITY and @ref KartDynamics::m_angVel0YFactor to `0.9f`.
+///
+/// Processes inputs via @ref KartState::calcInput(). Updates the kart's movement physics via @ref
+/// KartMove::calc(). Processes any active actions via @ref KartAction::calc() and any active pull
+/// paths via @ref KartPullPath::calc().
+///
+/// If the @ref eStatus::SkipWheelCalc flag is set in the kart's @ref Status, then updates each
+/// tire's @ref WheelPhysics::m_lastPos and early returns.
+///
+/// Evaluates soft wall and the "Horizontal Wall Glitch" timer via @ref calcSoftWall(). Sets @ref
+/// KartDynamics::m_up to @ref KartMove::m_up.
+///
+/// If the countdown has not ended yet, enforces that @ref KartDynamics::m_intVel is zero. If the
+/// vehicle is a kart, then the X and Z components of @ref KartDynamics::m_extVel are reset to zero.
+/// If the vehicle is a bike, then @ref KartDynamics::m_extVel is instead set to the rejection of
+/// the external velocity along @ref KartMove::m_smoothedUp.
+///
+/// Calls @ref KartPhysics::calc() to apply trick and correction rotation. Calls @ref
+/// KartMove::calcRejectRoad() to handle road rejection collisions. Finally, if the kart is not in a
+/// cannon (indicated via the @ref eStatus::InCannon flag), calls @ref KartCollide::calcHitboxes()
+/// to update the hitbox positions for this frame and resets the @ref CollisionGroup::m_hitboxScale
+/// to @ref KartMove::m_totalScale.
 void KartSub::calcPass0() {
     auto &status = KartObjectProxy::status();
 
@@ -112,7 +149,7 @@ void KartSub::calcPass0() {
     state()->calc();
 
     if (status.onBit(eStatus::TriggerRespawn)) {
-        setInertiaScale(EGG::Vector3f(1.0f, 1.0f, 1.0f));
+        setInertiaScale(EGG::Vector3f::unit);
         resetPhysics();
         state()->reset();
         move()->setTurnParams();
@@ -121,7 +158,7 @@ void KartSub::calcPass0() {
 
     physics()->setPos(dynamics()->pos());
     physics()->setVelocity(dynamics()->velocity());
-    dynamics()->setGravity(-1.3f);
+    dynamics()->setGravity(GRAVITY);
     dynamics()->setAngVel0YFactor(0.9f);
 
     state()->calcInput();
@@ -169,8 +206,63 @@ void KartSub::calcPass0() {
 
 /// @addr{0x80596CFC}
 /// @brief The second phase of physics computations on each frame.
-/// @details Handles the second-half of physics calculations. This mainly includes
-/// collision detection, as well as suspension physics.
+/// @details Resets rejection-related @ref Status flags via @ref KartState::resetEjection(). Resets
+/// @ref m_movingWaterCollisionCount, @ref m_movingObjCollisionCount, and @ref
+/// m_floorCollisionCount to zero. Also sets @ref m_objVel, @ref m_maxSuspOvertravel, and @ref
+/// m_minSuspOvertravel to zero.
+///
+/// Performs a GJK collision check via @ref BoxColUnit::search(). Processes detected collisions via
+/// @ref KartCollide::calcObjectCollision(). Updates @ref KartDynamics::m_pos to reflect the
+/// accumulated @ref KartCollide::m_tangentOff from collisions.
+///
+/// If the kart is being pushed out from a soft wall (indicated via @ref eStatus::SoftWallPush),
+/// then offsets the kart's position with a speed that varies depending on whether the @ref
+/// eStatus::HWG flag is set. Adds this speed to @ref KartCollide::m_movement as well.
+///
+/// If a side collision is detected (indicated via @ref m_sideCollisionTimer, @ref
+/// CollisionData::bWallAtLeftCloser, or @ref CollisionData::bWallAtRightCloser), then applies an
+/// XZ-plane velocity away from the wall, scaled based on @ref m_colPerpendicularity. This velocity
+/// is applied to the kart's position and added to @ref KartCollide::m_movement. Finally, decrements
+/// @ref m_sideCollisionTimer towards zero.
+///
+/// Calls @ref KartBody::calcSinkDepth() to reflect collisions with KCL having "wheel depth".
+/// Narrows the spatial cache to KCL having #KCL_TYPE_VEHICLE_INTERACTABLE within `250f` units
+/// around the kart's position via @ref Field::CollisionDirector::checkCourseColNarrScLocal().
+///
+/// Performs additional calls if the kart is not in a cannon (indicated via @ref eStatus::InCannon).
+/// If the kart is not sticking to a zipper (@ref eStatus::ZipperStick), then performs a kart body
+/// collision check via @ref KartCollide::findCollision(), calls @ref
+/// KartBody::calcTargetSinkDepth() to update the kart's sink depth from any resulting body
+/// collisions, and applies movement resulting from wall collisions via @ref
+/// KartCollide::setMovement(). Otherwise, if the kart is sticking to a zipper, then resets the
+/// kart's @ref CollisionData. Regardless, calls @ref KartCollide::calcFloorEffect() and @ref
+/// KartCollide::calcFloorMomentScalar() to handle floor collisions. If a floor collision occurred,
+/// calls @ref addFloor() to update @ref m_floorCollisionCount and conditionally set various flags
+/// and moving road velocity.
+///
+/// Enforces @ref m_suspScale to be the maximum between the kart's veritcal @ref KartMove::m_scale
+/// and the scale when shocked (@ref KartParam::Stats::shrinkScale). For each suspension, updates
+/// the suspension's position and performs collision checks via @ref
+/// KartSuspensionPhysics::calcCollision(), accumulating the lowest KCL speed and rotation factors
+/// encountered.
+///
+/// Performs additional logic if @ref eStatus::SkipWheelCalc is not set in the kart's @ref Status.
+/// Updates @ref KartDynamics::m_pos to handle suspension overtravel. If the kart's body did not
+/// collide with the floor but any of the tires did, then saves the average of each tire's collision
+/// relative position, velocity, and floor normal to the kart body's @ref CollisionData and calls
+/// @ref KartCollide::calcRebound() to apply additional velocity and rotation to the kart.
+/// Regardless of whether the kart's body collided with the floor, updates each suspension via @ref
+/// KartSuspensionPhysics::calcSuspension(). Finally, calls @ref KartMove::calcHop() to alter
+/// velocity and position resulting from a manual drift hop.
+///
+/// Sets the KCL wheel speed and rotation factors in @ref KartMove based on any tire collisions that
+/// occurred. The accumulated factors are overridden if the kart is colliding with offroad KCL
+/// (identified via @ref eStatus::CollidingOffroad).
+///
+/// Finally, Copies @ref m_m_floorCollisionCount to @ref KartMove::m_floorCollisionCount, processes
+/// moving objects and moving road velocity and rotation via @ref calcMovingObj() and @ref
+/// calcMovingRoad(), updates the kart's pose via @ref KartPhysics::updatePose(), and updates the
+/// kart hitboxes' last frame position via @ref KartCollide::setHitboxLastPos().
 void KartSub::calcPass1() {
     constexpr s16 SIDE_COLLISION_TIME = 5;
 
@@ -224,10 +316,10 @@ void KartSub::calcPass1() {
             m_sideCollisionTimer = SIDE_COLLISION_TIME;
         }
 
-        EGG::Vector3f colPerpBounceDir = 2.0f * m_colPerpendicularity * scale().x * right;
-        colPerpBounceDir.y = 0.0f;
-        setPos(pos() + colPerpBounceDir);
-        collide()->setMovement(collide()->movement() + colPerpBounceDir);
+        EGG::Vector3f vel = 2.0f * m_colPerpendicularity * scale().x * right;
+        vel.y = 0.0f;
+        setPos(pos() + vel);
+        collide()->setMovement(collide()->movement() + vel);
     }
 
     m_sideCollisionTimer = std::max(m_sideCollisionTimer - 1, 0);
@@ -259,9 +351,10 @@ void KartSub::calcPass1() {
     }
 
     EGG::Vector3f forward = fullRot().rotateVector(EGG::Vector3f::ez);
-    m_suspScale = std::max(scale().y, param()->stats().shrinkScale);
+    const auto &stats = param()->stats();
+    m_suspScale = std::max(scale().y, stats.shrinkScale);
 
-    const EGG::Vector3f gravity(0.0f, -1.3f, 0.0f);
+    const EGG::Vector3f gravity(0.0f, GRAVITY, 0.0f);
     f32 speedFactor = 1.0f;
     f32 handlingFactor = 0.0f;
     for (u16 i = 0; i < suspCount(); ++i) {
@@ -320,7 +413,6 @@ void KartSub::calcPass1() {
     }
 
     if (status.onBit(eStatus::CollidingOffroad)) {
-        const auto &stats = param()->stats();
         speedFactor = stats.kclSpeed[3];
         handlingFactor = stats.kclRot[3];
     }
@@ -441,10 +533,20 @@ void KartSub::calcMovingObj() {
 
 /// @addr{0x80597D4C}
 /// @brief Processes road velocity pertaining to the moving water on Koopa Cape
+/// @details If the kart is colliding with moving water (indicated via @ref
+/// m_movingWaterCollisionCount), then composes the pull path's speed an direction via either @ref
+/// KartPhysics::composeMovingRoadVel() or @ref KartPhysics::shiftDecayMovingRoadVel (depending on
+/// whether the @ref eStatus::MovingWaterDecaySpeed flag is set in the kart's @ref Status).
+/// Otherwise, if the kart is not colliding with moving water this frame, decays the water's
+/// velocity via @ref KartPhysics::decayMovingRoadVel(). Finally, if the @ref
+/// eStatus::MovingWaterStickyRoad flag is set (used when entering the pipe in Koopa Cape), applies
+/// a `50.0f` scalar to the downward velocity of the pull path.
 void KartSub::calcMovingWater() {
+    constexpr f32 DECAY_SCALAR = 0.2f;
     constexpr f32 DECAY_FLOOR_SCALAR = 0.7f;
     constexpr f32 DECAY_AIR_SCALAR = 0.5f;
     constexpr f32 DECAY_KC_AIR_SCALAR = 0.3f;
+    constexpr f32 STICKY_ROAD_SCALAR = 50.0f;
 
     auto &status = KartObjectProxy::status();
     const auto &pullPath = collide()->pullPath();
@@ -456,7 +558,7 @@ void KartSub::calcMovingWater() {
 
         if (status.offBit(eStatus::MovingWaterDecaySpeed)) {
             EGG::Vector3f vel = pullPath.pullSpeed() * dir * ratio;
-            physics()->composeMovingRoadVel(vel, 0.2f);
+            physics()->composeMovingRoadVel(vel, DECAY_SCALAR);
         } else {
             EGG::Vector3f vel = pullPath.pullSpeed() * dir;
             physics()->shiftDecayMovingRoadVel(vel, pullPath.maxPullSpeed());
@@ -473,7 +575,7 @@ void KartSub::calcMovingWater() {
 
     if (status.onBit(eStatus::MovingWaterStickyRoad)) {
         EGG::Vector3f dir = pullPath.pullDirection().perpInPlane(move()->smoothedUp(), true);
-        dir.y *= 50.0f;
+        dir.y *= STICKY_ROAD_SCALAR;
         const EGG::Vector3f &vel = dynamics()->movingRoadVel();
         dynamics()->setMovingRoadVel(EGG::Vector3f(vel.x, dir.y, vel.z));
     }
