@@ -11,7 +11,7 @@
 namespace Kinoko::Kart {
 
 /// @addr{0x80598AC8}
-/// @brief Virtual destructor that destroys all owning subsystems
+/// @brief Virtual destructor that destroys all underyling subsystems
 KartSub::~KartSub() {
     EGG::egg_delete(m_collide);
     EGG::egg_delete(m_state);
@@ -37,6 +37,9 @@ void KartSub::createSubsystems(bool isBike, const KartParam::Stats &stats) {
 
 /// @addr{0x80595F78}
 /// @brief Initializes the Kart subsystems and resets their physics states
+/// @details Calls @ref resetPhysics() to initialize the kart's physics to their default state. Also
+/// calls @ref KartBody::reset(), @ref KartState::init(), @ref KartMove::setTurnParams(), @ref
+/// KartAction::init(), and @ref KartCollide::init().
 void KartSub::init() {
     resetPhysics();
     body()->reset();
@@ -50,6 +53,8 @@ void KartSub::init() {
 /// @brief Creates the kart's @ref Field::BoxColUnit so it can participate in collision detection
 /// @param accessor The KartAccessor containing the boxColUnit to initialize
 /// @param object The KartObject associated with this KartSub
+/// @details Calls to @ref Field::BoxColManager::insertDriver() with a radius of `25.0f` times @ref
+/// KartCollide:m_boundingRadius and a max speed of @ref KartCollide::m_hardSpeedLimit.
 void KartSub::initAABB(KartAccessor &accessor, KartObject *object) {
     f32 radius = 25.0f + collide()->boundingRadius();
     f32 hardSpeedLimit = move()->hardSpeedLimit();
@@ -60,6 +65,7 @@ void KartSub::initAABB(KartAccessor &accessor, KartObject *object) {
 
 /// @addr{0x80597934}
 /// @brief Initializes the kart's pose and hitbox positions
+/// @details Dispatches to @ref KartPhysics::updatePose() and @ref KartCollide::setHitboxLastPos().
 void KartSub::initPhysicsValues() {
     physics()->updatePose();
     collide()->setHitboxLastPos();
@@ -337,6 +343,9 @@ void KartSub::calcPass1() {
 /// @addr{0x80598338}
 /// @brief Resizes the kart's @ref Field::BoxColUnit to reflect its scaled radius and movement speed
 /// @param radiusScale The scale factor to apply to the kart's collision radius
+/// @details Calls @ref BoxColUnit::resize() with a max speed of @ref KartMove::m_hardSpeedLimit and
+/// a radius of `250.0f` times the provided `radiusScale` times @ref
+/// CollisionGroup::m_boundingRadius.
 void KartSub::resizeAABB(f32 radiusScale) {
     f32 radius = radiusScale * collisionGroup()->boundingRadius();
     boxColUnit()->resize(radius + 25.0f, move()->hardSpeedLimit());
@@ -404,14 +413,29 @@ void KartSub::calcSoftWall() {
 
 /// @addr{0x80597A88}
 /// @brief Processes the moving object velocity accumulated this frame (or decays it if no
-/// collisions occurred)
+/// moving object collisions occurred)
+/// @details If the kart is not colliding with any moving objects, then decays moving object
+/// velocity based on whether the kart has any airtime (decays 30% if colliding with the floor,
+/// decays 10% if more than `20` frames of airtime, or doesn't decay if fewer than `20` frames of
+/// airtime). Otherwise, if no moving object collision has occurred, scales down @ref m_objVel based
+/// on the number of tires colliding with the floor and interpolates @ref
+/// KartPhysics::m_movingObjVel towards this value with a rate of `0.2f`.
+/// @note This function is the reason why it is faster to hop at the end of a TF conveyer belt.
+/// Rather than take the `else` branch, moving object velocity can be preserved for 20 frames (at
+/// the cost of wheelie bonus speed).
 void KartSub::calcMovingObj() {
+    constexpr f32 FLOOR_DECAY_FACTOR = 0.7f;
+    constexpr f32 SHORT_AIR_DECAY_FACTOR = 1.0f;
+    constexpr f32 LONG_AIR_DECAY_FACTOR = 0.9f;
+    constexpr f32 NO_MOVING_OBJ_INTERP_RATE = 0.2f;
+
     if (m_movingObjCollisionCount == 0) {
-        f32 scalar = state()->airtime() < 20 ? 1.0f : 0.9f;
-        physics()->composeDecayingMovingObjVel(0.7f, scalar, m_floorCollisionCount != 0);
+        f32 scalar = state()->airtime() < 20 ? SHORT_AIR_DECAY_FACTOR : LONG_AIR_DECAY_FACTOR;
+        physics()->composeDecayingMovingObjVel(FLOOR_DECAY_FACTOR, scalar,
+                m_floorCollisionCount != 0);
     } else {
         m_objVel *= 1.0f / static_cast<f32>(m_floorCollisionCount);
-        physics()->composeMovingObjVel(m_objVel, 0.2f);
+        physics()->composeMovingObjVel(m_objVel, NO_MOVING_OBJ_INTERP_RATE);
     }
 }
 

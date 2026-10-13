@@ -128,8 +128,7 @@ void WheelPhysics::calcSuspension(const EGG::Vector3f &forward) {
 /// @addr{0x80599FA0}
 /// @brief Initializes the @ref WheelPhysics and @ref BSP::Wheel pointers for this suspension
 /// @details @ref m_tirePhysics is set by indexing into the kart's tire array using @ref m_wheelIdx,
-/// and
-/// @ref m_bspWheel is set by indexing into the @ref BSP::wheel array using @ref m_bspWheelIdx.
+/// and @ref m_bspWheel is set by indexing into the @ref BSP::wheel array using @ref m_bspWheelIdx.
 void KartSuspensionPhysics::init() {
     m_tirePhysics = tire(m_wheelIdx)->wheelPhysics();
     m_bspWheel = &bsp().wheels[m_bspWheelIdx];
