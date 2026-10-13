@@ -58,7 +58,8 @@ void KartPullPathTracker::calcTrackerRegional() {
 /// @param searchDirection The direction to search for the current point in the pull path
 /// @param idx The index of the current point in the pull path, if found
 /// @param point The position of the current point in the pull path, if found
-/// @return True if the kart lies within the searched segment, false otherwise
+/// @return `true` if the kart lies within the searched segment, `false` otherwise
+/// @pre Requires that @ref m_pointInfo was set via @ref setPointInfo().
 bool KartPullPathTracker::search(SearchDirection searchDirection, s16 &idx, EGG::Vector3f &point,
         EGG::Vector3f &dir) const {
     ASSERT(m_pointInfo);
@@ -124,22 +125,12 @@ bool KartPullPathTracker::search(SearchDirection searchDirection, s16 &idx, EGG:
     return false;
 }
 
-/// @addr{0x80593FA4}
-/// @brief Constructor which initializes the global and regional pull path trackers and initializes
-/// the pull path
-KartPullPath::KartPullPath()
-    : m_globalTracker(this, KartPullPathTracker::Type::Global),
-      m_regionalTracker(this, KartPullPathTracker::Type::Regional) {
-    init();
-}
-
-/// @addr{0x80594094}
-/// @brief Default destructor
-KartPullPath::~KartPullPath() = default;
-
 /// @addr{0x80593CB8}
 /// @brief Resets the pull path subsystem to its default state
-/// @details This was the init function in the base class, but it gets inlined in calcArea.
+/// @details Sets @ref m_distance to `-1.0f` to indicate that no valid distance has been found this
+/// frame. Resets @ref m_currentIdx and @ref m_incomingIdx to `-1`. Resets @ref m_pointInfo to
+/// `nullptr`, @ref m_pullDirection to `EGG::Vector3f::zero`, @ref m_pullSpeed to zero`, and @ref
+/// m_maxPullSpeed to zero.
 void KartPullPath::reset() {
     m_distance = -1.0f;
     m_currentIdx = -1;
@@ -150,26 +141,12 @@ void KartPullPath::reset() {
     m_maxPullSpeed = 0.0f;
 }
 
-/// @addr{0x80594134}
-/// @brief Every frame, updates the @ref KartPullPathTracker objects to find the current segment of
-/// the pull path
-/// @details If there is no active pull path area, it bails out.
-void KartPullPath::calc() {
-    if (!calcArea()) {
-        return;
-    }
-
-    ASSERT(m_pointInfo);
-    if (m_pointInfo->pointCount() > 2) {
-        calcTrackers();
-    }
-}
-
 /// @addr{0x805941BC}
 /// @brief Checks to see if the kart is within a pull path area and updates the current point info
-/// @return True if the kart is within a pull path area, false otherwise
-/// @details Based off of @ref System::MapdataAreaBase params, also sets the speed decay factor and
-/// max pull speed.
+/// @return `true` if the kart is within a pull path area, `false` otherwise
+/// @details Checks if the kart is within a pull path area via @ref
+/// System::CourseMap::getCurrentAreaID(). Based off of @ref System::MapdataAreaBase params, also
+/// sets the speed decay factor and max pull speed.
 bool KartPullPath::calcArea() {
     auto *courseMap = System::CourseMap::Instance();
 

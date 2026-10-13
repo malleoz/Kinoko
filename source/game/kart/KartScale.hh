@@ -20,19 +20,19 @@ public:
 
     /// @addr{0x8056B060}
     /// @brief Called when the kart starts being crushed
-    /// @details Sets the crush state to @ref CrushState::Crush, resets the press scale to the
-    /// default value, resets the uncrush animation framecounter, and marks that crush updates
-    /// should be performed.
+    /// @details Sets @ref m_crushState to @ref CrushState::Crush, resets the press scale to the
+    /// default value, resets @ref m_uncrushAnmFrame to zero, and marks that crush updates should be
+    /// performed by setting @ref m_calcCrush to `true`.
     void startCrush() {
         m_crushState = CrushState::Crush;
-        m_pressScale = EGG::Vector3f(1.0f, 1.0f, 1.0f);
+        m_pressScale = EGG::Vector3f::unit;
         m_uncrushAnmFrame = 0.0f;
         m_calcCrush = true;
     }
 
     /// @addr{0x8056B094}
     /// @brief Called when the kart finishes being crushed
-    /// @details Sets the crush state to @ref CrushState::Uncrush, resets the uncrush animation
+    /// @details Sets @ref m_crushState to @ref CrushState::Uncrush, resets the uncrush animation
     /// framecounter, and marks that crush updates should be performed. It also sets the press
     /// scale, which will get overwritten in @ref calcCrush on the following frame. It's set here
     /// so that @ref KartMove::calcScale() can snap the kart's scale to the correct value on the
@@ -49,10 +49,14 @@ public:
 
     /// @beginGetters
 
+    /// @brief Gets the current scale of the kart due to shrinking animations
+    /// @return The current scale of the kart due to shrinking animations, @ref m_shrinkScale
     [[nodiscard]] const EGG::Vector3f &shrinkScale() const {
         return m_shrinkScale;
     }
 
+    /// @brief Gets the current scale of the kart due to crush animations
+    /// @return The current scale of the kart due to crush animations, @ref m_pressScale
     [[nodiscard]] const EGG::Vector3f &pressScale() const {
         return m_pressScale;
     }
@@ -77,6 +81,7 @@ private:
         ScaleMegaDown = 3, ///< Mega mushroom scale down is active
     };
 
+    void calcShrink();
     void calcCrush();
 
     /// @addr{0x8056ACF4}

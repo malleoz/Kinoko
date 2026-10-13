@@ -29,6 +29,7 @@ public:
 
     /// @addr{0x80585AE8}
     /// @brief Resets the direction of rejection
+    /// @details Simply resets @ref m_rejectSign to zero.
     void reset() {
         m_rejectSign = 0.0f;
     }

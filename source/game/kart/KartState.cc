@@ -8,6 +8,9 @@ namespace Kinoko::Kart {
 
 /// @addr{0x80594594}
 /// @brief Resets the kart's state to its initial values
+/// @details Clears all @ref m_status bits besides @ref eStatus::AutoDrift. Resets all timers to
+/// zero. Resets @ref m_up to zero. Resets @ref m_boostRampType and @ref m_jumpPadVariant to -1.
+/// Resets @ref m_startBoostCharge and @ref m_stickX to zero.
 void KartState::reset() {
     // In the base game, we only wipe bitfield 0, 1, 2, and 3, so we need to bring back bitfield4.
     bool isAutoDrift = m_status.onBit(eStatus::AutoDrift);
@@ -30,7 +33,9 @@ void KartState::reset() {
 /// @details Ignores inputs if the kart is currently in an action, respawning, in a cannon, or over
 /// a zipper. Stores the X and Y analog stick components internally and sets the respective status
 /// bits. If not in a burnout, also updates the accelerate, brake, and drift input status bits. If
-/// the player is in the countdown phase, then it calculates the current start boost progress.
+/// the player is in the countdown phase, then it calculates the current start boost progress via
+/// @ref calcStartBoost(). When the countdown ends, @ref calcHandleStartBoost() will apply the start
+/// boost, if charged.
 /// @warning This function sets the @ref eStatus::DriftInput bit solely based off of whether @ref
 /// System::RaceInputState::drift() is true. That is to say, this function does not explicitly
 /// require that we are also accelerating on this frame. In this scenario, the ghost will hop
@@ -85,21 +90,29 @@ void KartState::calcInput() {
 
 /// @addr{0x8059474C}
 /// @brief Every frame, resets the input state and saves collision-related bit flags
+/// @details Calls @ref resetFlags() to clear flags that are re-computed every frame. Calls @ref
+/// KartCollide::calcBeforeRespawnAndShrink() to handle respawning and the shrink scale timer.
 void KartState::calc() {
     resetFlags();
     collide()->calcBeforeRespawnAndShrink();
-    calcCollisions();
+    processCollisions();
     collide()->calcBoundingRadius();
 }
 
 /// @addr{0x80594704}
 /// @brief Resets a subset of the status flags that are re-checked every frame
+/// @details Resets all input-related status flags (@ref eStatus::Accelerate, @ref eStatus::Brake,
+/// @ref eStatus::DriftInput, eStatus::StickLeft, @ref eStatus::StickRight, and @ref
+/// eStatus::AccelerateStart). Also clears @ref eStatus::GroundStart, @ref
+/// eStatus::WallCollisionStart, @ref eStatus::AirStart, @ref eStatus::ZipperInvisibleWall, @ref
+/// eStatus::JumpPadDisableYsusForce, and @ref eStatus::CollidingOffroad. Finally, resets @ref
+/// m_stickY and @ref m_stickX to zero.
 void KartState::resetFlags() {
     m_status.resetBit(eStatus::Accelerate, eStatus::Brake, eStatus::DriftInput, eStatus::HopStart,
             eStatus::AccelerateStart, eStatus::GroundStart, eStatus::StickLeft,
             eStatus::WallCollisionStart, eStatus::AirStart, eStatus::StickRight,
             eStatus::ZipperInvisibleWall, eStatus::JumpPadDisableYsusForce,
-            eStatus::CollidingOffroad, eStatus::JumpPadDisableYsusForce);
+            eStatus::CollidingOffroad);
 
     m_stickY = 0.0f;
     m_stickX = 0.0f;
@@ -116,7 +129,7 @@ void KartState::resetFlags() {
 /// @note This function also manages the "Horizontal Wall Glitch" timer. When this timer is
 /// active, wall collision normals will be skipped over, allowing karts to pass through walls until
 /// the timer expires.
-void KartState::calcCollisions() {
+void KartState::processCollisions() {
     bool wasTouchingGround = m_status.onBit(eStatus::TouchingGround);
     bool wasWallCollision = m_status.onBit(eStatus::WallCollision, eStatus::Wall3Collision);
 
@@ -323,16 +336,17 @@ void KartState::calcCollisions() {
 
 /// @addr{0x80595918}
 /// @brief Each frame, calculates the start boost charge
-/// @details If the player is holding accelerate, the start boost charge increases using exponential
-/// decay. If the player is not holding accelerate, the start boost charge decays by 4% each frame.
+/// @details If the player is holding accelerate, the start boost charge \f$c_n\f$ (@ref
+/// m_startBoostCharge on frame \f$n\f$) increases via \f[c_{n+1} = c_n + 0.02 - 0.018 \cdot c_n\f]
+/// until it reaches `1.0f`. If the player is not holding accelerate, the charge decays by 4% each
+/// frame.
 void KartState::calcStartBoost() {
-    constexpr f32 START_BOOST_DELTA_ONE = 0.02f;
-    constexpr f32 START_BOOST_DELTA_TWO = 0.002f;
+    constexpr f32 CHARGE_RATE_BASE = 0.02f;
+    constexpr f32 CHARGE_RATE_DECAY_FACTOR = CHARGE_RATE_BASE - 0.002f;
     constexpr f32 START_BOOST_FALLOFF = 0.96f;
 
     if (m_status.onBit(eStatus::ChargeStartBoost)) {
-        m_startBoostCharge += START_BOOST_DELTA_ONE -
-                (START_BOOST_DELTA_ONE - START_BOOST_DELTA_TWO) * m_startBoostCharge;
+        m_startBoostCharge += CHARGE_RATE_BASE - CHARGE_RATE_DECAY_FACTOR * m_startBoostCharge;
     } else {
         m_startBoostCharge *= START_BOOST_FALLOFF;
     }
@@ -341,25 +355,26 @@ void KartState::calcStartBoost() {
 }
 
 /// @addr{0x805959D4}
-/// @brief On countdown end, calculates and applies our start boost charge
+/// @brief On countdown end, calculates and applies a start boost charge
+/// @details If this is not the first frame that the countdown has ended, early returns. If the kart
+/// is not accelerating on this frame, no start boost is applied. Otherwise, maps the @ref
+/// m_startBoostCharge to the appropriate @ref m_startBoostIdx by finding the corresponding bound in
+/// @ref START_BOOST_ENTRIES. Calls @ref handleStartBoost() to apply the start boost (or burnout)
+/// and finally resets the @ref eStatus::ChargeStartBoost flag in the kart's @ref Status.
 void KartState::calcHandleStartBoost() {
     if (System::RaceManager::Instance()->getCountdownTimer() != 0) {
         return;
     }
 
     if (m_status.onBit(eStatus::Accelerate)) {
-        if (m_startBoostCharge > START_BOOST_ENTRIES.back().range) {
-            m_startBoostIdx = std::numeric_limits<size_t>::max();
-        } else if (m_startBoostCharge > START_BOOST_ENTRIES.front().range) {
-            // Ranges are exclusive on the lower bound and inclusive on the upper bound
-            for (size_t i = 1; i < START_BOOST_ENTRIES.size(); ++i) {
-                if (m_startBoostCharge > START_BOOST_ENTRIES[i - 1].range &&
-                        m_startBoostCharge <= START_BOOST_ENTRIES[i].range) {
-                    m_startBoostIdx = i;
-                    break;
-                }
-            }
-        }
+        // Ranges are exclusive on the lower bound and inclusive on the upper bound, so we want the
+        // first entry whose range is not less than the charge. Burnout if the charge exceeds all
+        // entries.
+        auto it = std::ranges::lower_bound(START_BOOST_ENTRIES, m_startBoostCharge, {},
+                &StartBoostEntry::range);
+        m_startBoostIdx = it == START_BOOST_ENTRIES.end() ?
+                std::numeric_limits<size_t>::max() :
+                static_cast<size_t>(std::distance(START_BOOST_ENTRIES.begin(), it));
     }
 
     if (m_startBoostIdx <= 0) {
@@ -375,7 +390,7 @@ void KartState::calcHandleStartBoost() {
 /// @param idx The index into the start boost entries array
 /// @details If the player accelerated for too long, activates a burnout.
 void KartState::handleStartBoost(size_t idx) {
-    if (m_startBoostIdx == std::numeric_limits<size_t>::max()) {
+    if (idx == std::numeric_limits<size_t>::max()) {
         move()->burnout().start();
     } else {
         move()->applyStartBoost(START_BOOST_ENTRIES[idx].frames);

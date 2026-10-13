@@ -8,6 +8,10 @@ namespace Kinoko::Kart {
 
 /// @addr{0x80599508}
 /// @brief Resets the wheel physics to its initial state
+/// @details Resets all position and velocity-related members to zero. Resets @ref m_suspTravel,
+/// @ref m_effectiveRadius, @ref m_targetEffectiveRadius, and @ref m_hasSuspTravel to zero. If @ref
+/// m_bspWheel is not `nullptr`, then sets @ref m_suspTravel and @ref m_effectiveRadius based on
+/// properties of @ref m_bspWheel.
 void WheelPhysics::reset() {
     m_pos.setZero();
     m_lastPos.setZero();
@@ -32,11 +36,18 @@ void WheelPhysics::reset() {
 /// direction and vehicle movement
 /// @param bottom The "down" direction along the suspension axis
 /// @param vehicleMovement The movement of the vehicle to account for in the wheel's position
+/// @details Sets @ref m_suspTravel to the projection of the wheel's displacement along the
+/// suspension axis, clamped between 0 and the maximum travel distance defined by @ref
+/// BSP::Wheel::maxTravel scaled by @ref KartSub::m_suspScale. Updates the wheel's position and
+/// relative velocity accordingly. @ref m_relVel is additionally adjusted to account for the kart's
+/// internal velocity, moving object velocity, moving road velocity, and collision displacement.
+/// Adds the resulting @ref m_relVel to the @ref CollisionData of @ref m_hitboxGroup. Updates @ref
+/// m_lastPos and @ref m_lastTopDiff to reflect the resulting this current frame's wheel position
+/// and suspension travel.
 void WheelPhysics::realign(const EGG::Vector3f &bottom, const EGG::Vector3f &vehicleMovement) {
     const EGG::Vector3f topmostPos = m_topmostPos + vehicleMovement;
-    f32 scaledMaxTravel = m_bspWheel->maxTravel * sub()->suspScale();
-    f32 suspTravel = bottom.dot(m_pos - topmostPos);
-    m_suspTravel = std::clamp(suspTravel, 0.0f, scaledMaxTravel);
+    f32 maxTravel = m_bspWheel->maxTravel * sub()->suspScale();
+    m_suspTravel = std::clamp(bottom.dot(m_pos - topmostPos), 0.0f, maxTravel);
     m_pos = topmostPos + m_suspTravel * bottom;
     m_relVel = m_pos - m_lastPos;
     m_relVel -= intVel();
@@ -105,6 +116,8 @@ void WheelPhysics::calcCollision(const EGG::Vector3f &bottom, const EGG::Vector3
 /// @addr{0x80599DC0}
 /// @brief Applies floor moment using the wheel's current speed
 /// @param forward The forward direction of the wheel
+/// @details Calculates the sideways moment cap based on whether the kart is contacting a soft wall
+/// or not. Dispatches to @ref KartCollide::applySomeFloorMoment() with the calculated cap.
 void WheelPhysics::calcSuspension(const EGG::Vector3f &forward) {
     f32 rate = status().onBit(eStatus::SoftWallPush) ? 0.01f : collide()->floorMomentRate();
 
@@ -112,23 +125,11 @@ void WheelPhysics::calcSuspension(const EGG::Vector3f &forward) {
             true, true, status().offBit(eStatus::LargeFlipHit, eStatus::WheelieRot));
 }
 
-/// @addr{0x80599ED4}
-/// @brief Constructor
-/// @param wheelIdx The index of the wheel
-/// @param tireType The type of tire
-/// @param bspWheelIdx The index of the wheel in the @ref BSP::wheels array
-KartSuspensionPhysics::KartSuspensionPhysics(u16 wheelIdx, TireType tireType, u16 bspWheelIdx)
-    : m_tirePhysics(nullptr),
-      m_tireType(tireType),
-      m_bspWheelIdx(bspWheelIdx),
-      m_wheelIdx(wheelIdx) {}
-
-/// @addr{0x8059AA04}
-/// @brief Default destructor
-KartSuspensionPhysics::~KartSuspensionPhysics() = default;
-
 /// @addr{0x80599FA0}
-/// @brief Fetches the @ref WheelPhysics and @ref BSP::Wheel pointers for this suspension
+/// @brief Initializes the @ref WheelPhysics and @ref BSP::Wheel pointers for this suspension
+/// @details @ref m_tirePhysics is set by indexing into the kart's tire array using @ref m_wheelIdx,
+/// and
+/// @ref m_bspWheel is set by indexing into the @ref BSP::wheel array using @ref m_bspWheelIdx.
 void KartSuspensionPhysics::init() {
     m_tirePhysics = tire(m_wheelIdx)->wheelPhysics();
     m_bspWheel = &bsp().wheels[m_bspWheelIdx];
@@ -158,7 +159,7 @@ void KartSuspensionPhysics::setInitialState() {
 
 /// @addr{0x8059A278}
 /// @brief Updates the tire's position and calls @ref WheelPhysics::calcCollision
-/// @param dt The time step (always 1.0f)
+/// @param dt The time step (always `1.0f`)
 /// @param gravity The gravity vector affecting the wheel
 /// @param mat The world transformation matrix for the wheel's position and orientation
 void KartSuspensionPhysics::calcCollision(f32 dt, const EGG::Vector3f &gravity,

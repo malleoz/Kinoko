@@ -11,7 +11,7 @@
 namespace Kinoko::Kart {
 
 /// @addr{0x80598AC8}
-/// @brief Destructor that destroys all owning subsystems
+/// @brief Virtual destructor that destroys all owning subsystems
 KartSub::~KartSub() {
     EGG::egg_delete(m_collide);
     EGG::egg_delete(m_state);
@@ -20,9 +20,12 @@ KartSub::~KartSub() {
 }
 
 /// @addr{0x80595D48}
-/// @brief Creates the Kart subsystems based on if the vehicle is a bike and the provided stats
+/// @brief Creates the kart's subsystems with the provided stats
 /// @param isBike Indicates if the vehicle is a bike
 /// @param stats The stats to initialize the subsystems with
+/// @details Creates @ref m_move based on whether the vehicle is a bike (@ref KartMoveBike) or a
+/// kart (@ref KartMove). Creates the @ref KartAction, @ref KartState, and @ref KartCollide
+/// subsystems. Also calls @ref KartMove::createSubsystems() with the provided `stats`.
 void KartSub::createSubsystems(bool isBike, const KartParam::Stats &stats) {
     m_move = isBike ? static_cast<KartMove *>(EGG::egg_new<KartMoveBike>()) :
                       EGG::egg_new<KartMove>();
@@ -30,15 +33,6 @@ void KartSub::createSubsystems(bool isBike, const KartParam::Stats &stats) {
     m_move->createSubsystems(stats);
     m_state = EGG::egg_new<KartState>();
     m_collide = EGG::egg_new<KartCollide>();
-}
-
-/// @addr{0x80596454}
-/// @brief Called during static construction of KartObject to synchronize the pointers
-void KartSub::copyPointers(KartAccessor &pointers) {
-    pointers.collide = m_collide;
-    pointers.state = m_state;
-    pointers.move = m_move;
-    pointers.action = m_action;
 }
 
 /// @addr{0x80595F78}

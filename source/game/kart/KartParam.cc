@@ -4,30 +4,12 @@
 
 namespace Kinoko::Kart {
 
-/// @addr{Inlined in 0x0x8058F5B4}
-/// @brief Constructor which initializes all stats and hitboxes based on the provided
-/// character/vehicle combo
-/// @param character The character to initialize stats for
-/// @param vehicle The vehicle to initialize stats for
-/// @param playerIdx The player index of the given vehicle (always 0 in Kinoko)
-KartParam::KartParam(Character character, Vehicle vehicle, u8 playerIdx) {
-    initStats(character, vehicle);
-    initHitboxes(vehicle);
-    m_playerIdx = playerIdx;
-    m_isBike = vehicle >= Vehicle::Standard_Bike_S;
-    if (m_isBike) {
-        initBikeDispParams(vehicle);
-    } else {
-        initKartDispParams(vehicle);
-    }
-
-    initCameraParams(character);
-}
-
 /// @addr{0x80591FA4}
 /// @brief Parses out the character/vehicle combo stats
 /// @param character The character to initialize stats for
 /// @param vehicle The vehicle to initialize stats for
+/// @details Gets a @ref EGG::RamStream to read in the vehicle and character stats. Saves the
+/// vehicle stats to @ref m_stats and applies character bonus stats.
 void KartParam::initStats(Character character, Vehicle vehicle) {
     auto *fileManager = KartParamFileManager::Instance();
 
@@ -41,6 +23,8 @@ void KartParam::initStats(Character character, Vehicle vehicle) {
 /// @addr{0x80592594}
 /// @brief Initializes the display parameters for a given bike from `bikePartsDispParam.bin`
 /// @param vehicle The bike to initialize display parameters for
+/// @details Gets a @ref EGG::RamStream to read in the bike display parameters, saving them to @ref
+/// m_bikeDisp.
 void KartParam::initBikeDispParams(Vehicle vehicle) {
     auto *fileManager = KartParamFileManager::Instance();
 
@@ -51,6 +35,8 @@ void KartParam::initBikeDispParams(Vehicle vehicle) {
 /// @addr{0x805924CC}
 /// @brief Initializes the display parameters for a given kart from `kartPartsDispParam.bin`
 /// @param vehicle The kart to initialize display parameters for
+/// @details Gets a @ref EGG::RamStream to read in the kart display parameters, saving them to @ref
+/// m_kartDisp.
 void KartParam::initKartDispParams(Vehicle vehicle) {
     auto *fileManager = KartParamFileManager::Instance();
 
@@ -61,6 +47,8 @@ void KartParam::initKartDispParams(Vehicle vehicle) {
 /// @addr{Inlined in 0x0x8058F5B4}
 /// @brief Initializes the hitboxes and wheels for a given vehicle from `kartParam.bin`
 /// @param vehicle The vehicle to initialize hitboxes for
+/// @details Gets a @ref EGG::RamStream to read in the @ref BSP hitbox data, saving it to @ref
+/// m_bsp.
 void KartParam::initHitboxes(Vehicle vehicle) {
     auto *fileManager = KartParamFileManager::Instance();
 
@@ -71,6 +59,8 @@ void KartParam::initHitboxes(Vehicle vehicle) {
 /// @addr{0x80592718}
 /// @brief Initializes the camera parameters for a given character from `kartCameraParam.bin`
 /// @param character The character to initialize camera parameters for
+/// @details Gets a @ref EGG::RamStream to read in the camera parameters, saving them to @ref
+/// m_camera.
 void KartParam::initCameraParams(Character character) {
     auto *fileManager = KartParamFileManager::Instance();
 

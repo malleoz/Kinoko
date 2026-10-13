@@ -4,9 +4,10 @@ namespace Kinoko::Kart {
 
 /// @brief Gets a @ref EGG::RamStream for the provided character's parameters from `driverParam.bin`
 /// @param character The character to get the parameters for
-/// @return A @ref EGG::RamStream containing the character's parameters
-/// @details Panics if the character is invalid and asserts that the `driverParam.bin` file is
-/// loaded.
+/// @return A @ref EGG::RamStream containing the character's parameter data
+/// @pre Requires that the `driverParam.bin` file has been loaded into memory (@ref m_driverParam is
+/// not an empty span).
+/// @pre Requires that the provided `character` is a valid character value.
 EGG::RamStream KartParamFileManager::getDriverStream(Character character) const {
     s32 idx;
     switch (character) {
@@ -53,8 +54,10 @@ EGG::RamStream KartParamFileManager::getDriverStream(Character character) const 
 
 /// @brief Gets a @ref EGG::RamStream for the provided vehicle's parameters from `kartParam.bin`
 /// @param vehicle The vehicle to get the parameters for
-/// @return A @ref EGG::RamStream containing the vehicle's parameters
-/// @details Panics if the vehicle is invalid and asserts that the `kartParam.bin` file is loaded.
+/// @return A @ref EGG::RamStream containing the vehicle's parameter data
+/// @pre Requires that the `kartParam.bin` file has been loaded into memory (@ref m_kartParam is not
+/// an empty span).
+/// @pre Requires that the provided `vehicle` is a valid vehicle value.
 EGG::RamStream KartParamFileManager::getVehicleStream(Vehicle vehicle) const {
     if (vehicle >= Vehicle::Max) {
         PANIC("Invalid vehicle.");
@@ -68,9 +71,9 @@ EGG::RamStream KartParamFileManager::getVehicleStream(Vehicle vehicle) const {
 
 /// @brief Gets a @ref EGG::RamStream for the vehicle's hitbox params from the kart's @ref BSP file
 /// @param vehicle The vehicle to get the hitbox params for
-/// @return A @ref EGG::RamStream containing the vehicle's hitbox params
-/// @details Panics if the vehicle is invalid and asserts that the vehicle's @ref BSP file is loaded
-/// and has the correct size.
+/// @return A @ref EGG::RamStream containing the vehicle's hitbox parameter data
+/// @pre Requires that `Common.szs` has been loaded via the @ref System::ResourceManager.
+/// @pre Requires that the provided `vehicle` is a valid vehicle value.
 EGG::RamStream KartParamFileManager::getHitboxStream(Vehicle vehicle) const {
     if (vehicle >= Vehicle::Max) {
         PANIC("Invalid vehicle.");
@@ -87,9 +90,10 @@ EGG::RamStream KartParamFileManager::getHitboxStream(Vehicle vehicle) const {
 /// @brief Gets a @ref EGG::RamStream for the provided bike's display parameters from
 /// `bikePartsDispParam.bin`
 /// @param vehicle The bike to get the display parameters for
-/// @return A @ref EGG::RamStream containing the bike's display parameters
-/// @details Panics if the vehicle is invalid and asserts that the `bikePartsDispParam.bin` file is
-/// loaded.
+/// @return A @ref EGG::RamStream containing the bike's display parameter data
+/// @pre Requires that the `bikePartsDispParam.bin` file has been loaded into memory (@ref
+/// m_bikeDispParam is not an empty span).
+/// @pre Requires that the provided `vehicle` is a valid bike (not a kart).
 EGG::RamStream KartParamFileManager::getBikeDispParamsStream(Vehicle vehicle) const {
     if (vehicle < Vehicle::Standard_Bike_S || vehicle >= Vehicle::Max) {
         PANIC("Invalid vehicle.");
@@ -107,9 +111,10 @@ EGG::RamStream KartParamFileManager::getBikeDispParamsStream(Vehicle vehicle) co
 /// @brief Gets a @ref EGG::RamStream for the provided kart's display parameters from
 /// `kartPartsDispParam.bin`
 /// @param vehicle The kart to get the display parameters for
-/// @return A @ref EGG::RamStream containing the kart's display parameters
-/// @details Panics if the vehicle is invalid and asserts that the `kartPartsDispParam.bin` file is
-/// loaded.
+/// @return A @ref EGG::RamStream containing the kart's display parameter data
+/// @pre Requires that the `kartPartsDispParam.bin` file has been loaded into memory (@ref
+/// m_kartDispParam is not an empty span).
+/// @pre Requires that the provided `vehicle` is a valid kart (not a bike).
 EGG::RamStream KartParamFileManager::getKartDispParamsStream(Vehicle vehicle) const {
     if (vehicle < Vehicle::Standard_Kart_S || vehicle > Vehicle::Honeycoupe) {
         PANIC("Invalid vehicle.");
@@ -125,9 +130,10 @@ EGG::RamStream KartParamFileManager::getKartDispParamsStream(Vehicle vehicle) co
 /// @brief Gets a @ref EGG::RamStream for the provided character's camera parameters from
 /// `kartCameraParam.bin`
 /// @param character The character to get the camera parameters for
-/// @return A @ref EGG::RamStream containing the character's camera parameters
-/// @details Panics if the character's weight class is invalid and asserts that the
-/// `kartCameraParam.bin` file is loaded.
+/// @return A @ref EGG::RamStream containing the character's camera parameter data
+/// @pre Requires that the `kartCameraParam.bin` file has been loaded into memory (@ref
+/// m_kartCameraParam is not an empty span).
+/// @pre Requires that the provided `character` maps to a valid weight class.
 /**
  * @note For each weight class, there are 4 sets of camera parameters, as follows:\n
  *

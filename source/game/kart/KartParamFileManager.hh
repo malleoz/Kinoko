@@ -15,7 +15,13 @@ class Context;
 namespace Kart {
 
 /// @brief Abstraction for the process of retrieving kart parameters from files
-/// @details This has been modified from the base game in order to perform validation and make the
+/// @details Hooks into the following parameter files:
+/// - `kartParam.bin` (@ref m_kartParam)
+/// - `driverParam.bin` (@ref m_driverParam)
+/// - `bikePartsDispParam.bin` (@ref m_bikeDispParam)
+/// - `kartPartsDispParam.bin` (@ref m_kartDispParam)
+/// - `kartCameraParam.bin` (@ref m_kartCameraParam)
+/// @note This has been modified from the base game in order to perform validation and make the
 /// class accessible as a singleton.
 class KartParamFileManager : EGG::Disposer {
     /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
@@ -55,7 +61,8 @@ public:
     [[nodiscard]] EGG::RamStream getKartCameraStream(Character character) const;
 
     /// @brief Creates the singleton instance of the @ref KartParamFileManager.
-    /// @return A pointer to the newly created KartParamFileManager instance.
+    /// @return A pointer to the newly created @ref KartParamFileManager instance.
+    /// @pre Requires that the singleton instance has not already been created.
     static KartParamFileManager *CreateInstance() {
         ASSERT(!s_instance);
         s_instance = EGG::egg_new<KartParamFileManager>();
@@ -63,6 +70,7 @@ public:
     }
 
     /// @brief Destroys the singleton instance of the @ref KartParamFileManager.
+    /// @pre Requires that the singleton instance has already been created.
     static void DestroyInstance() {
         ASSERT(s_instance);
         auto *instance = s_instance;
@@ -79,19 +87,20 @@ public:
 private:
     /// @brief A template struct that represents a parameter file containing a `T` array with length
     /// `count`.
-    /// @details `kartParam.bin`, `bikePartsDispParam.bin`, and `kartPartsDispParam.bin` all contain
-    /// an array of a given struct. The array length is stored in the first 4 bytes of the file, and
-    /// the rest of the file contains the array of structs. This struct is used to represent that
-    /// data in memory and enforce that array accesses are within bounds.
     /// @tparam T The type of the struct that is stored in the parameter file.
+    /// @details `kartParam.bin`, `bikePartsDispParam.bin`, and `kartPartsDispParam.bin` all contain
+    /// an array of entries. The number of array elements is stored in the first 4 bytes of the
+    /// file, and the rest of the file contains the array of structs. This struct is used to
+    /// represent that data in memory and enforce that array accesses are within bounds.
     template <typename T>
     struct ParamFile {
         u32 count;
         T params[];
 
         /// @brief Returns a reference to the `T` at the given index in the `@ref params` array.
-        /// @param index The index of the `T` to return.
+        /// @param index The index in the @ref params at which to get the `T` element
         /// @return A const reference to the `T` at the given index in the `@ref params` array.
+        /// @pre Requires that `index` is in-bounds (less than @ref count).
         const T &operator[](u32 index) const {
             ASSERT(index < count);
             return params[index];
@@ -101,6 +110,7 @@ private:
     EGG_NEW_DELETE_FRIEND
 
     /// @brief Private constructor that loads and validates the kart parameter files
+    /// @details Simply calls the @ref init() method to load and validate the kart parameter files.
     KartParamFileManager() {
         init();
     }
@@ -115,7 +125,7 @@ private:
 
     [[nodiscard]] bool validate() const;
 
-    /// @brief Loads the provided filename from the core archive into memory
+    /// @brief Loads the provided filename from the core archive (`Common.szs`) into memory
     /// @param filename The name of the file to load from the core archive
     /// @return A read-only span of the file data in memory
     [[nodiscard]] std::span<const u8> load(const char *filename) {
@@ -129,6 +139,8 @@ private:
     std::span<const u8> m_kartCameraParam; ///< File pointer and size for `kartCameraParam.bin`
 
     /// @brief Pointer to the singleton instance of the @ref KartParamFileManager
+    /// @note This is not actually a singleton in the base game, but since we only implement one
+    /// player instance in Kinoko, we can manage this class as if it were a singleton.
     static KartParamFileManager *s_instance;
 };
 

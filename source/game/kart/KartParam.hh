@@ -286,7 +286,20 @@ public:
     };
     STATIC_ASSERT(sizeof(KartCameraParam) == 0x10);
 
-    KartParam(Character character, Vehicle vehicle, u8 playerIdx);
+    /// @addr{Inlined in 0x0x8058F5B4}
+    /// @brief Constructor which initializes all stats and hitboxes based on the provided
+    /// character/vehicle combo
+    /// @param character The character to initialize stats for
+    /// @param vehicle The vehicle to initialize stats for
+    /// @param playerIdx The player index of the given vehicle (always 0 in Kinoko)
+    KartParam(Character character, Vehicle vehicle, u8 playerIdx)
+        : m_playerIdx(playerIdx),
+          m_isBike(vehicle >= Vehicle::Standard_Bike_S) {
+        initStats(character, vehicle);
+        initHitboxes(vehicle);
+        m_isBike ? initBikeDispParams(vehicle) : initKartDispParams(vehicle);
+        initCameraParams(character);
+    }
 
     /// @brief Default destructor
     ~KartParam() = default;
@@ -390,8 +403,8 @@ private:
     KartDisp m_kartDisp;      ///< The display parameters for the given kart (if applicable)
     BSP m_bsp;                ///< The hitbox and wheel data for the given vehicle
     KartCameraParam m_camera; ///< The camera parameters for the given vehicle
-    u8 m_playerIdx;           ///< The player index of the given vehicle (always 0 in Kinoko)
-    bool m_isBike;            ///< True if the vehicle is a bike, false if it is a kart
+    const u8 m_playerIdx;     ///< The player index of the given vehicle (always 0 in Kinoko)
+    const bool m_isBike;      ///< True if the vehicle is a bike, false if it is a kart
     u16 m_suspCount;          ///< The number of active suspensions on the vehicle
     u16 m_tireCount;          ///< The number of active tires on the vehicle
 };

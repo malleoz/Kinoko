@@ -8,13 +8,15 @@ namespace Kinoko::Kart {
 
 /// @addr{0x80585AF8}
 /// @brief Runs every frame to handle reject road interactions
-/// @details This function has two different branches. The first branch involves checking if a
-/// rejection should actually be applied to the kart. This is done by comparing the kart's up vector
-/// against its last direction to see if it is traveling upwards along the reject road. If so, it
-/// sets the @ref eStatus::RejectRoadTrigger flag to indicate that a rejection should be applied.
-/// In doing so, it also computes in what direction (left or right) the rejection should be applied.
-/// Once @ref eStatus::RejectRoadTrigger is set, the second branch of this function updates the
-/// kart's rotation and calls @ref calcRejection to apply the rejection on the kart's position.
+/// @details Early returns if the kart is in an action (identified via the @ref eStatus::InAction
+/// flag in the kart's @ref Status). This function has two different branches. The first branch
+/// involves checking if a rejection should actually be applied to the kart. This is done by
+/// comparing the kart's up vector against its last direction to see if it is traveling upwards
+/// along the reject road. If so, it sets the @ref eStatus::RejectRoadTrigger flag to indicate that
+/// a rejection should be applied. In doing so, it also computes in what direction (left or right)
+/// the rejection should be applied. Once @ref eStatus::RejectRoadTrigger is set, the second branch
+/// of this function updates the kart's rotation and calls @ref calcRejection() to apply the
+/// rejection on the kart's position.
 void KartReject::calc() {
     auto &status = KartObjectProxy::status();
 
@@ -84,12 +86,13 @@ void KartReject::calc() {
 
 /// @addr{0x805860BC}
 /// @brief Performs a collision check and computes the resulting rejection if applicable
-/// @details Runs a maximum of two collision checks: one with a sphere laying below the kart and one
-/// with a sphere lying at the kart's position. If a collision occurs, calls @ref calcCollision to
-/// see if the collision warrants a rejection. If so, the kart's up vector is snapped to the
-/// collision's tangent vector. If the angle of rejection is very steep, or if the kart's external
-/// velocity is downwards, updates the kart's position along the tangent direction based off a
-/// speed-dependent scalar.
+/// @return `true` if a rejection was applied, `false` otherwise
+/// @details Runs a maximum of two collision checks against #KCL_TYPE_REJECTABLE: one with a sphere
+/// laying below the kart and one with a sphere lying at the kart's position. If a collision occurs,
+/// calls @ref calcCollision() to see if the collision warrants a rejection. If so, the kart's up
+/// vector is snapped to the collision's tangent vector. If the angle of rejection is very steep, or
+/// if the kart's external velocity is downwards, updates the kart's position along the tangent
+/// direction based off a speed-dependent scalar.
 bool KartReject::calcRejection() {
     Field::CollisionInfo colInfo;
     Field::KCLTypeMask mask = KCL_NONE;
@@ -154,7 +157,13 @@ bool KartReject::calcRejection() {
 /// @param colInfo The collision data of the colliding object
 /// @param mask A mask representing the type of collision that occurred
 /// @param tangentOff Output of the tangent offset vector, if a rejection is applicable
-/// @return True if a rejection should be applied, false otherwise
+/// @return `true` if a rejection should be applied, `false` otherwise
+/// @details If the kart collided with #KCL_TYPE_INVISIBLE_WALL having variant 0 or
+/// #COL_TYPE_HALFPIPE_INVISIBLE_WALL, then sets the @ref eStatus::NoSparkInvisibleWall flag in the
+/// kart's @ref Status, updates `tangentOff` to the colliding wall's face normal, and returns
+/// `true`. If the kart collided with #KCL_TYPE_DRIVER_FLOOR having the @ref
+/// Field::CollisionDirector::eCollisionAttribute::RejectRoad attribute set, then updates
+/// `tangentOff` to the colliding floor's face normal and returns `true`.
 bool KartReject::calcCollision(Field::CollisionInfo &colInfo, Field::KCLTypeMask mask,
         EGG::Vector3f &tangentOff) {
     auto *colDir = Field::CollisionDirector::Instance();
