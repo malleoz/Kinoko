@@ -1294,7 +1294,7 @@ bool KartMove::calcPreDrift() {
                 m_hopStickX = 1;
             }
         }
-        m_hopFrame = std::min(m_hopFrame, 3);
+        m_hopFrame = std::min(m_hopFrame + 1, 3);
     } else if (status.onBit(eStatus::SlipdriftBuffered)) {
         m_hopFrame = 0;
     }
