@@ -13,7 +13,4 @@ Scene::Scene() {
     m_sceneMgr = nullptr;
 }
 
-/// @addr{0x8023AD84}
-Scene::~Scene() = default;
-
 } // namespace Kinoko::EGG

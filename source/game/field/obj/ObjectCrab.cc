@@ -144,7 +144,7 @@ void ObjectCrab::calcTransMat(const EGG::Vector3f &rot) {
     rotMat = rotMat.multiplyTo(EGG::Matrix34f::ident);
 
     EGG::Matrix34f mat;
-    mat.makeOrthonormalBasisLocal(m_railInterpolator->curTangentDir(), EGG::Vector3f::ey);
+    mat.ps_makeOrthonormalBasis(m_railInterpolator->curTangentDir(), EGG::Vector3f::ey);
     mat = mat.multiplyTo(rotMat);
     mat.setBase(3, pos());
     setTransform(mat);

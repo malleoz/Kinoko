@@ -19,7 +19,9 @@ public:
      *------------*/
 
     Scene();
-    virtual ~Scene();
+
+    /// @addr{0x8023AD84}
+    virtual ~Scene() = default;
 
     /*----------*
         Virtual
@@ -57,7 +59,7 @@ public:
     void setSceneMgr(SceneManager *sceneMgr) {
         m_sceneMgr = sceneMgr;
     }
-    
+
     /// @endSetters
 
     /// @beginGetters

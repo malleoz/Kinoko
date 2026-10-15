@@ -15,11 +15,6 @@ Heap::Heap(MEMiHeapHead *handle) : m_handle(handle), m_children(Disposer::getLin
     s_heapList.append(this);
 }
 
-/// @addr{0x80229780}
-Heap::~Heap() {
-    s_heapList.remove(this);
-}
-
 /// @addr{0x80229C5C}
 void Heap::dispose() {
     Disposer *node = nullptr;

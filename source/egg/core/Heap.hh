@@ -36,7 +36,11 @@ public:
     };
 
     Heap(Abstract::Memory::MEMiHeapHead *handle);
-    ~Heap() override;
+
+    /// @addr{0x80229780}
+    ~Heap() override {
+        s_heapList.remove(this);
+    }
 
     virtual void destroy() = 0;
     virtual Kind getHeapKind() const = 0;

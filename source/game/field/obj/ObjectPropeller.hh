@@ -32,10 +32,11 @@ public:
     /// @copybrief ObjectBase::init()
     /// @details Initializes the propeller's angular velocity and initial transformation matrix.
     /// Stores the propeller's axis of rotation to @ref m_axis based off of @ref m_initMat.
+    /// @note This function normally calls @ref EGG::Matrix34f::makeR() and then manually sets the
+    /// position, but we can optimize slightly by calling @ref EGG::Matrix34f::makeRT() instead.
     void init() override {
         initAngVel();
-        m_initMat.makeR(rot());
-        m_initMat.setBase(3, pos());
+        m_initMat.makeRT(rot(), pos());
         m_axis = m_initMat.base(2);
     }
 

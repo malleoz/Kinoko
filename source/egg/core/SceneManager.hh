@@ -24,35 +24,93 @@ public:
         Lifecycle
      *------------*/
 
-    SceneManager(SceneCreator *creator = nullptr);
-    virtual ~SceneManager();
+    /// @addr{0x8023ADDC}
+    SceneManager(SceneCreator *creator) {
+        m_creator = creator;
+        m_currentScene = nullptr;
+    }
+
+    virtual ~SceneManager() = default;
 
     /*----------*
         Virtual
      *----------*/
 
-    virtual void calc();
-    virtual void calcCurrentScene();
+    /// @addr{0x8023AE60}
+    virtual void calc() {
+        calcCurrentScene();
+    }
+
+    /// @addr{0x8023B588}
+    virtual void calcCurrentScene() {
+        if (!m_currentScene) {
+            return;
+        }
+
+        m_currentScene->calc();
+    }
 
     /*----------*
         Methods
      *----------*/
 
-    void createChildScene(int nextSceneId, Scene *parent);
+    /// @addr{0x8023B248}
+    void createChildScene(int id, Scene *parent) {
+        outgoingParentScene(parent);
+        setNextSceneId(id);
+        setupNextSceneId();
+        createScene(id, parent);
+    }
+
     void createScene(int nextSceneId, Scene *parent);
     void destroyScene(Scene *scene);
 
-    void changeScene(int nextSceneId);
-    void changeSiblingScene(int nextSceneId);
+    /// @addr{0x8023AF84}
+    void changeScene(int nextSceneId) {
+        while (m_currentScene) {
+            destroyCurrentSceneNoIncoming(true);
+        }
+
+        changeSiblingScene(nextSceneId);
+    }
+
+    /// @addr{0x8023AFE0}
+    void changeSiblingScene(int nextSceneId) {
+        setNextSceneId(nextSceneId);
+        changeSiblingScene();
+    }
+
     void changeSiblingScene();
-    void incomingCurrentScene();
-    void outgoingParentScene(Scene *parent);
-    void reinitCurrentScene();
+
+    /// @addr{0x8023B568}
+    void incomingCurrentScene() {
+        if (m_currentScene) {
+            m_currentScene->incoming_childDestroy();
+        }
+    }
+
+    /// @addr{0x8023B92C}
+    void outgoingParentScene(Scene *parent) {
+        parent->outgoing_childCreate();
+    }
+
+    /// @addr{0x8023AEF8}
+    void reinitCurrentScene() {
+        if (m_currentScene) {
+            m_currentScene->reinit();
+        }
+    }
 
     bool destroyCurrentSceneNoIncoming(bool destroyRootIfNoParent);
     bool destroyToSelectSceneId(int nextSceneId);
     [[nodiscard]] Scene *findParentScene(int id) const;
-    void setupNextSceneId();
+
+    /// @addr{0x8023B910}
+    void setupNextSceneId() {
+        m_prevSceneId = m_currentSceneId;
+        m_currentSceneId = m_nextSceneId;
+        m_nextSceneId = -1;
+    }
 
     /*----------*
         Getters

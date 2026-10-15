@@ -4,23 +4,27 @@
 
 #include <cmath>
 
+// frsqrte matching courtesy of Geotale, with reference to https://achurch.org/cpu-tests/ppc750cl.s
+
 namespace Kinoko {
 
-static constexpr f32 F_PI = 3.1415927f;      ///< Floating point representation of pi
-static constexpr f32 F_TAU = 6.2831855f;     ///< Floating point representation of tau/2pi
-static constexpr f32 DEG2RAD = 0.017453292f; ///< F_PI / 180.0f. Double precision and casted down.
-static constexpr f32 DEG2RAD360 = 0.034906585f; ///< F_PI / 360.0f. Double precision, casted down.
-static constexpr f32 RAD2DEG = 57.2957795f; ///< 180.0f / F_PI. Double precision and casted down.
+static constexpr f32 F_PI = 3.1415927f;          ///< Floating point representation of pi
+static constexpr f32 F_TAU = 6.2831855f;         ///< Floating point representation of `tau/2pi`
+static constexpr f32 DEG2RAD = 0.017453292f;     ///< @ref F_PI / 180.0f
+static constexpr f32 DEG2RAD360 = 0.034906585f;  ///< @ref F_PI / 360.0f
+static constexpr f32 RAD2DEG = 57.2957795f;      ///< `180.0f` / @ref F_PI
 static constexpr f32 DEG2FIDX = 256.0f / 360.0f; ///< Degrees to fixed index
 static constexpr f32 RAD2FIDX = 128.0f / F_PI;   ///< Radians to fixed index
 static constexpr f32 FIDX2RAD = F_PI / 128.0f;   ///< Fixed index to radians
-static constexpr f32 HALF_PI = F_PI / 2.0f;
-static constexpr f32 COS_PI_OVER_4 = 0.707f;
+static constexpr f32 HALF_PI = F_PI / 2.0f;      ///< @ref F_PI / `2.0f`
+static constexpr f32 COS_PI_OVER_4 = 0.707f;     ///< Cosine of `pi/4`
 
 /// @brief Math functions and constants used in the base game.
 namespace EGG::Mathf {
 
 /// @brief This is used to mimic the Wii's floating-point unit.
+/// @param x The double-precision floating-point number to be forced to 25-bit precision
+/// @return The double-precision floating-point number with 25-bit precision
 /// @details This handles the edgecase where double-precision floating-point numbers are passed into
 /// single-precision floating-point operands in assembly.
 [[nodiscard]] static inline constexpr f64 force25Bit(f64 x) {
@@ -29,31 +33,44 @@ namespace EGG::Mathf {
     return std::bit_cast<f64>(bits);
 }
 
-/// @brief Fused multiply-add operation.
-/// @details We cannot use std::fma due to the Wii computing at 64-bit precision.
+/// @brief Fused multiply-add operation
+/// @param x The first multiplicand
+/// @param y The second multiplicand
+/// @param z The value to add
+/// @return The result of the fused multiply-add operation
+/// @details We cannot use `std::fma` due to the Wii computing at 64-bit precision.
 [[nodiscard]] static inline constexpr f32 fma(f32 x, f32 y, f32 z) {
     return static_cast<f32>(
             static_cast<f64>(x) * force25Bit(static_cast<f64>(y)) + static_cast<f64>(z));
 }
 
-/// @brief Fused multiply-subtract operation.
-/// @details We cannot use std::fms due to the Wii computing at 64-bit precision.
+/// @brief Fused multiply-subtract operation
+/// @param x The first multiplicand
+/// @param y The second multiplicand
+/// @param z The value to subtract
+/// @return The result of the fused multiply-subtract operation
+/// @details We cannot use `std::fms` due to the Wii computing at 64-bit precision.
 [[nodiscard]] static inline constexpr f32 fms(f32 x, f32 y, f32 z) {
     return static_cast<f32>(
             static_cast<f64>(x) * force25Bit(static_cast<f64>(y)) - static_cast<f64>(z));
 }
 
-// sin/cos struct
+/// @brief Represents an entry in the @ref sSinCosTbl lookup table
 struct SinCosEntry {
-    f32 sinVal, cosVal, sinDt, cosDt;
+    f32 sinVal; ///< The sine value of this entry
+    f32 cosVal; ///< The cosine value of this entry
+    f32 sinDt;  ///< The delta between this entry's sine value and the next entry's sine value
+    f32 cosDt;  ///< The delta between this entry's cosine value and the next entry's cosine value
 };
 
-// atan struct
+/// @brief Represents an entry in the @ref sArcTanTbl lookup table
 struct AtanEntry {
-    f32 atanVal, atanDt;
+    f32 atanVal; ///< The atan value of this entry
+    f32 atanDt;  ///< The delta between this entry's atan value and the next entry's atan value
 };
 
 /// @addr{0x80248010}
+/// @brief A static lookup table for sin and cos value approximation
 static constexpr SinCosEntry sSinCosTbl[256 + 1] = {
         {0.000000f, 1.000000f, 0.024541f, -0.000301f},
         {0.024541f, 0.999699f, 0.024526f, -0.000903f},
@@ -315,6 +332,7 @@ static constexpr SinCosEntry sSinCosTbl[256 + 1] = {
 };
 
 /// @addr{0x80274148}
+/// @brief A static lookup table for atan value approximation
 static constexpr AtanEntry sArcTanTbl[32 + 1] = {
         {0.000000000f, 1.272825321f},
         {1.272825321f, 1.270345790f},
@@ -352,6 +370,15 @@ static constexpr AtanEntry sArcTanTbl[32 + 1] = {
 };
 
 /// @addr{0x80085110}
+/// @brief Approximates the sine of the provided fixed index parameter
+/// @param fidx The fixed index to compute the sin of
+/// @return The approximation of the sin of `fidx`
+/// @details This function takes in a "fixed index". Rather than divide a circle into 360 degrees, a
+/// fixed index represents dividing it into 256 discrete steps, one for each entry in the @ref
+/// sSinCosTbl lookup table. First, `fidx` is reduced modulo `65536` to ensure it falls within the
+/// valid range of the lookup table. The LSB of the result is used to index into the table to get
+/// the @ref SinCosEntry::sinVal. This is multiplied by the corresponding @ref SinCosEntry::sinDt
+/// times the fractional part of the fixed index to get the final approximation.
 [[nodiscard]] static inline constexpr f32 SinFIdx(f32 fidx) {
     f32 abs_fidx = fabs(fidx);
 
@@ -367,6 +394,15 @@ static constexpr AtanEntry sArcTanTbl[32 + 1] = {
 }
 
 /// @addr{0x80085180}
+/// @brief Approximates the cosine of the provided fixed index paramter
+/// @param fidx The fixed index to compute the cosine of
+/// @return The approximation of the cosine of `fidx`
+/// @details This function takes in a "fixed index". Rather than divide a circle into 360 degrees, a
+/// fixed index represents dividing it into 256 discrete steps, one for each entry in the @ref
+/// sSinCosTbl lookup table. First, `fidx` is reduced modulo `65536` to ensure it falls within the
+/// valid range of the lookup table. The LSB of the result is used to index into the table to get
+/// the @ref SinCosEntry::cosVal. This is multiplied by the corresponding @ref SinCosEntry::cosDt
+/// times the fractional part of the fixed index to get the final approximation.
 [[nodiscard]] static inline constexpr f32 CosFIdx(f32 fidx) {
     f32 abs_fidx = fabs(fidx);
 
@@ -382,6 +418,18 @@ static constexpr AtanEntry sArcTanTbl[32 + 1] = {
 }
 
 /// @addr{0x800851E0}
+/// @brief Computes both the sine and cosine of the provided fixed index parameter
+/// @param fidx The fixed index to compute the sine and cosine of
+/// @return A pair containing the sine and cosine of `fidx` (in that order)
+/// @details This function takes in a "fixed index". Rather than divide a circle into 360 degrees, a
+/// fixed index represents dividing it into 256 discrete steps, one for each entry in the @ref
+/// sSinCosTbl lookup table. First, `fidx` is reduced modulo `65536` to ensure it falls within the
+/// valid range of the lookup table. The LSB of the result is used to index into the table to get
+/// the @ref SinCosEntry::sinVal and @ref SinCosEntry::cosVal. These are multiplied by the
+/// corresponding @ref SinCosEntry::sinDt and @ref SinCosEntry::cosDt times the fractional part of
+/// the fixed index to get the final approximations.
+/// @note This function varies from @ref SinFIdx() and @ref CosFIdx() in that the lookup table
+/// values are combined via @ref fma().
 [[nodiscard]] static inline constexpr std::pair<f32, f32> SinCosFIdx(f32 fidx) {
     f32 abs_fidx = fabs(fidx);
 
@@ -403,6 +451,14 @@ static constexpr AtanEntry sArcTanTbl[32 + 1] = {
     return {sin, cos};
 }
 
+/// @brief Approximates the arctangent of the provided ratio
+/// @param x The ratio to take the inverse tangent of, in the range [0.0f, 1.0f]
+/// @return The arctangent of `x`
+/// @details The ratio is scaled to one of 32 discrete steps for the lookup table entries. This
+/// scaled ratio is then used to index into the @ref sArcTanTbl lookup table to get the
+/// corresponding @ref AtanEntry::atanVal and @ref AtanEntry::atanDt. The final approximation is
+/// computed by summing the `atanVal` by the product of the fractional part of the scaled ratio and
+/// `atanDt`.
 [[nodiscard]] static inline constexpr f32 AtanFIdx_(f32 x) {
     x *= 32.0f;
     u16 idx = static_cast<u16>(x);
@@ -411,6 +467,12 @@ static constexpr AtanEntry sArcTanTbl[32 + 1] = {
 }
 
 /// @addr{0x800853C0}
+/// @brief Approximates the arctangent of `x / y`
+/// @param y The y-coordinate
+/// @param x The x-coordinate
+/// @return The approximate arctangent of `x / y` (in fixed-index representation)
+/// @details Splits into octants depending on the signs of `x` and `y`, and uses @ref AtanFIdx_()
+/// to approximate the arctangent within each octant.
 [[nodiscard]] static inline constexpr f32 Atan2FIdx(f32 y, f32 x) {
     if (x == 0.0f && y == 0.0f) {
         return 0.0f;
@@ -447,38 +509,55 @@ static constexpr AtanEntry sArcTanTbl[32 + 1] = {
     }
 }
 
-/// Takes in radians
 /// @addr{0x8022F860}
+/// @brief Computes the sine of the provided float value (in radians)
+/// @param x The angle in radians
+/// @return The sine of `x`
+/// @details Computed using the @ref sSinCosTbl lookup table.
 [[nodiscard]] static inline constexpr f32 sin(f32 x) {
     return SinFIdx(x * RAD2FIDX);
 }
 
-/// Takes in radians
 /// @addr{0x8022F86C}
+/// @brief Computes the cosine of the provided float value (in radians)
+/// @param x The angle in radians
+/// @return The cosine of `x`
+/// @details Computed using the @ref sSinCosTbl lookup table.
 [[nodiscard]] static inline constexpr f32 cos(f32 x) {
     return CosFIdx(x * RAD2FIDX);
 }
 
 /// @addr{0x8022F89C}
+/// @brief Computers the arcsine of the provided float value
+/// @param x The value to compute the arcsine of
+/// @return The arcsine of `x`
 [[nodiscard]] static inline constexpr f32 asin(f32 x) {
     return ::asinl(x);
 }
 
 /// @addr{0x8022F8C0}
+/// @brief Computers the arccosine of the provided float value
+/// @param x The value to compute the arccosine of
+/// @return The arccosine of `x`
 [[nodiscard]] static inline constexpr f32 acos(f32 x) {
     return ::acosl(x);
 }
 
 /// @addr{0x8022F8E4}
+/// @brief Computes the arctangent of `y / x`
+/// @param y The y-coordinate
+/// @param x The x-coordinate
+/// @return The arctangent of `y / x` (in radians)
 [[nodiscard]] static inline constexpr f32 atan2(f32 y, f32 x) {
     return Atan2FIdx(y, x) * FIDX2RAD;
 }
 
+/// @brief Computes the absolute value of the provided float value
+/// @param x The value to compute the absolute value of
+/// @return The absolute value of `x`
 [[nodiscard]] static inline constexpr f32 abs(f32 x) {
     return std::abs(x);
 }
-
-// frsqrte matching courtesy of Geotale, with reference to https://achurch.org/cpu-tests/ppc750cl.s
 
 struct BaseAndDec32 {
     u32 base;
@@ -490,36 +569,43 @@ struct BaseAndDec64 {
     s64 dec;
 };
 
+/// @brief Union around a `u32` and `f32` to allow for bit-level manipulation of floating-point
+/// numbers
 union c32 {
+    /// @brief Constructs the union from a floating-point value
+    /// @param p The `f32` value to initialize the union with
     constexpr c32(const f32 p) {
         f = p;
     }
 
+    /// @brief Constructs the union from a `u32` value
+    /// @param p The `u32` value to initialize the union with
     constexpr c32(const u32 p) {
         u = p;
     }
 
-    u32 u;
-    f32 f;
+    u32 u; ///< The `u32` representation of the floating-point value
+    f32 f; ///< The `f32` representation of the floating-point value
 };
 
+/// @brief Union around a `u64` and `f64` to allow for bit-level manipulation of floating-point
+/// numbers
 union c64 {
+    /// @brief Constructs the union from a floating-point value
+    /// @param p The `f64` value to initialize the union with
     constexpr c64(const f64 p) {
         f = p;
     }
 
+    /// @brief Constructs the union from a `u64` value
+    /// @param p The `u64` value to initialize the union with
     constexpr c64(const u64 p) {
         u = p;
     }
 
-    u64 u;
-    f64 f;
+    u64 u; ///< The `u64` representation of the floating-point value
+    f64 f; ///< The `f64` representation of the floating-point value
 };
-
-static constexpr u64 EXPONENT_SHIFT_F64 = 52;
-static constexpr u64 MANTISSA_MASK_F64 = 0x000fffffffffffffULL;
-static constexpr u64 EXPONENT_MASK_F64 = 0x7ff0000000000000ULL;
-static constexpr u64 SIGN_MASK_F64 = 0x8000000000000000ULL;
 
 static constexpr std::array<BaseAndDec64, 32> RSQRTE_TABLE = {{
         {0x69fa000000000ULL, -0x15a0000000LL},
@@ -557,6 +643,11 @@ static constexpr std::array<BaseAndDec64, 32> RSQRTE_TABLE = {{
 }};
 
 [[nodiscard]] static inline constexpr f64 frsqrte(const f64 val) {
+    static constexpr u64 EXPONENT_SHIFT_F64 = 52;
+    static constexpr u64 MANTISSA_MASK_F64 = 0x000fffffffffffffULL;
+    static constexpr u64 EXPONENT_MASK_F64 = 0x7ff0000000000000ULL;
+    static constexpr u64 SIGN_MASK_F64 = 0x8000000000000000ULL;
+
     c64 bits(val);
 
     u64 mantissa = bits.u & MANTISSA_MASK_F64;
@@ -712,8 +803,8 @@ static constexpr std::array<BaseAndDec32, 32> FRES_TABLE = {{
     }
 }
 
-/// CREDIT: Hanachan
 /// @addr{0x80085040}
+/// @note CREDIT: Hanachan
 [[nodiscard]] static inline constexpr f32 frsqrt(f32 x) {
     // frsqrte instruction
     f64 est = frsqrte(x);
@@ -727,6 +818,9 @@ static constexpr std::array<BaseAndDec32, 32> FRES_TABLE = {{
 }
 
 /// @addr{0x8022F80C}
+/// @brief Computes the square root of a given value using the @ref frsqrt() approximation
+/// @param x The value to compute the square root of
+/// @return The square root of `x`, or `0.0f` is `x` is less than or equal to zero
 [[nodiscard]] static inline constexpr f32 sqrt(f32 x) {
     return x > 0.0f ? x * frsqrt(x) : 0.0f;
 }
@@ -781,20 +875,19 @@ static inline constexpr u32 FindRootsQuadratic(f32 a, f32 b, f32 c, f32 &root1, 
 }
 
 /// @addr{0x80085070}
-/// @brief Evaluates a cubic Hermite curve at a given parameter @p t.
+/// @brief Evaluates a cubic Hermite curve at a given parameter `t`.
+/// @param p0 Start value.
+/// @param m0 Start tangent.
+/// @param p1 End value.
+/// @param m1 End tangent.
+/// @param t Interpolation parameter in the domain `[0.0f, 1.0f]`
+/// @return Interpolated value at `t`.
 /// @details Computes \f[H(t) = h_0(t)\,p_0 + h_1(t)\,p_1 + h_2(t)\,m_0 + h_3(t)\,m_1\f] where the
 /// cubic Hermite basis functions are:
 /// \f[h_0(\theta) = 2\theta^3 - 3\theta^2 + 1\f]
 /// \f[h_1(\theta) = -2\theta^3 + 3\theta^2\f]
 /// \f[h_2(\theta) = \theta^3 - 2\theta^2 + \theta\f]
 /// \f[h_3(\theta) = \theta^3 - \theta^2\f]
-///
-/// @param p0 Start value.
-/// @param m0 Start tangent.
-/// @param p1 End value.
-/// @param m1 End tangent.
-/// @param t Interpolation parameter in the domain [0, 1]
-/// @return Interpolated value at @p t.
 [[nodiscard]] static inline constexpr f32 Hermite(f32 p0, f32 m0, f32 p1, f32 m1, f32 t) {
     f32 t2 = t * t;
     f32 t2_less_t = t2 - t;

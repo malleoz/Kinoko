@@ -485,6 +485,9 @@ void ObjectWanwan::calcRandomTarget() {
 /// @addr{0x806E8A60}
 /// @brief Pre-computes a 15 frame animation cycle that describes how the Chain Chomp's chain
 /// attachment point moves relative to its position
+/// @note When iterating each of the keyframes to set, this function normally calls @ref
+/// EGG::Matrix34f::makeR() and then manually sets the position, but we can optimize slightly by
+/// calling @ref EGG::Matrix34f::makeRT() instead.
 void ObjectWanwan::initTransformKeyframes() {
     std::array<f32, 15> xRot;
     SampleHermiteInterp(0.0f, 10.0f, 2.0f, -1.111111f, std::span(xRot.begin(), 6));
@@ -504,9 +507,10 @@ void ObjectWanwan::initTransformKeyframes() {
     SampleHermiteInterp(24.11f, 0.0f, 0.0f, -8.0366669f, std::span(zPos.begin() + 11, 4));
 
     for (u8 i = 0; i < m_transformKeyframes.size(); ++i) {
+        EGG::Vector3f rot = EGG::Vector3f(xRot[i] * DEG2RAD, 0.0f, 0.0f);
+        EGG::Vector3f pos = EGG::Vector3f(0.0f, yPos[i], zPos[i]);
         EGG::Matrix34f mat;
-        mat.makeR(EGG::Vector3f(xRot[i] * DEG2RAD, 0.0f, 0.0f));
-        mat.setBase(3, EGG::Vector3f(0.0f, yPos[i], zPos[i]));
+        mat.makeRT(rot, pos);
         m_transformKeyframes[i] = mat;
     }
 }
