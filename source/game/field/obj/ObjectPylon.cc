@@ -7,6 +7,21 @@
 
 namespace Kinoko::Field {
 
+/// @addr{0x8082CAD8}
+/// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @param params The parameters used to initialize the object
+/// @details Caches the cone's initial position, scale, and rotation to @ref m_initPos, @ref
+/// m_initScale, and @ref m_initRot.
+ObjectPylon::ObjectPylon(const System::MapdataGeoObj &params)
+    : ObjectCollidable(params),
+      m_initPos(pos()),
+      m_initScale(scale()),
+      m_initRot(rot()) {}
+
+/// @addr{0x8082E500}
+/// @brief Default virtual destructor
+ObjectPylon::~ObjectPylon() = default;
+
 /// @addr{0x8082CD60}
 /// @copybrief ObjectBase::init()
 /// @details Checks for floor and wall collision to make sure the pylon is not clipping. Assigns
@@ -96,6 +111,13 @@ void ObjectPylon::calc() {
     default:
         break;
     }
+}
+
+/// @addr{0x8082E4F8}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectPylon::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
 }
 
 /// @addr{0x8082DBEC}
@@ -342,6 +364,21 @@ void ObjectPylon::calcHiding() {
     disableCollision();
 }
 
+/// @brief Runs every frame that the pylon is intangible
+/// @details Once 900 frames have elapsed, the pylon will transition to the respawning state by
+/// setting @ref m_state to @ref State::ComeBack, setting @ref m_stateStartFrame to the current
+/// race time, and resetting the cone's rotation to @ref m_initRot.
+void ObjectPylon::calcHide() {
+    constexpr u32 HIDE_DURATION = 900;
+
+    u32 t = System::RaceManager::Instance()->timer();
+    if (t - m_stateStartFrame > HIDE_DURATION) {
+        m_state = State::ComeBack;
+        m_stateStartFrame = t;
+        setRot(m_initRot);
+    }
+}
+
 /// @brief Runs every frame that the pylon is respawning after being intangible
 /// @details First, the pylon's collision is re-enabled.
 ///
@@ -420,6 +457,15 @@ void ObjectPylon::calcComeBack() {
         if (hasCol) {
             addPos(info.tangentOff);
         }
+    }
+}
+
+/// @brief Runs every frame that the pylon is being pushed by the player
+/// @details If 5 frames have elapsed since the cone started moving, transitions the cone back
+/// to the @ref State::Idle state.
+void ObjectPylon::calcMoving() {
+    if (System::RaceManager::Instance()->timer() - m_stateStartFrame > STATE_COOLDOWN_FRAMES) {
+        m_state = State::Idle;
     }
 }
 

@@ -11,88 +11,20 @@ namespace Kinoko::Field {
 /// speed defined by param setting 1.
 class ObjectPropeller final : public ObjectCollidable {
 public:
-    /// @addr{0x80764CC8}
-    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
-    /// @param params The parameters used to initialize the object
-    /// @details Initializes @ref m_angle to zero and sets all blade collision pointers to
-    /// `nullptr`.
-    ObjectPropeller(const System::MapdataGeoObj &params) : ObjectCollidable(params), m_angle(0.0f) {
-        m_blades.fill(nullptr);
-    }
+    ObjectPropeller(const System::MapdataGeoObj &params);
+    ~ObjectPropeller() override;
 
-    /// @addr{0x80764E34}
-    /// @brief Virtual destructor that destroys each of the propeller blades' collision object
-    ~ObjectPropeller() override {
-        for (auto *&blade : m_blades) {
-            EGG::egg_delete(blade);
-        }
-    }
-
-    /// @addr{0x80764EB4}
-    /// @copybrief ObjectBase::init()
-    /// @details Initializes the propeller's angular velocity and initial transformation matrix.
-    /// Stores the propeller's axis of rotation to @ref m_axis based off of @ref m_initMat.
-    /// @note This function normally calls @ref EGG::Matrix34f::makeR() and then manually sets the
-    /// position, but we can optimize slightly by calling @ref EGG::Matrix34f::makeRT() instead.
-    void init() override {
-        initAngVel();
-        m_initMat.makeRT(rot(), pos());
-        m_axis = m_initMat.base(2);
-    }
-
-    /// @addr{0x80765068}
-    /// @copybrief ObjectBase::calc()
-    /// @details Dispatches to @ref calcAngleAndRot() to update the propeller's rotation angle and
-    /// transformation matrix.
-    void calc() override {
-        calcAngleAndRot();
-    }
-
-    /// @addr{0x80765BC0}
-    /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
-    [[nodiscard]] LoadFlags loadFlags() const override {
-        return LoadFlags(eLoadFlags::Calc);
-    }
-
+    void init() override;
+    void calc() override;
     void createCollision() override;
     void calcCollisionTransform() override;
+    [[nodiscard]] LoadFlags loadFlags() const override;
     [[nodiscard]] f32 getCollisionRadius() const override;
 
-    /// @addr{0x80765A54}
-    /// @copybrief ObjectCollidable::checkCollision()
-    /// @param lhs The object to check collision against (usually the player)
-    /// @param dist If a collision occurs, set to the distance between the two objects
-    /// @return Whether or not a collision occurred
-    /// @details Checks collision against each of the 3 blades and sums the resulting distance
-    /// vectors
-    bool checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &dist) override {
-        EGG::Vector3f dist0 = EGG::Vector3f::zero;
-        EGG::Vector3f dist1 = EGG::Vector3f::zero;
-        EGG::Vector3f dist2 = EGG::Vector3f::zero;
-
-        bool hasCol = lhs->check(*m_blades[0], dist0);
-        hasCol = hasCol || lhs->check(*m_blades[1], dist1);
-        hasCol = hasCol || lhs->check(*m_blades[2], dist2);
-
-        dist = dist0 + dist1 + dist2;
-
-        return hasCol;
-    }
+    bool checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &dist) override;
 
 private:
-    /// @addr{0x80765558}
-    /// @brief Initializes the propeller's angular velocity
-    /// @details @ref m_angVel is set based on param setting 1, and its direction is flipped if
-    /// param setting 2 is set to 1.
-    void initAngVel() {
-        ASSERT(m_mapObj);
-        m_angVel = static_cast<f32>(static_cast<s16>(m_mapObj->setting(0)));
-        if (m_mapObj->setting(1) == 1) {
-            m_angVel = -m_angVel;
-        }
-    }
-
+    void initAngVel();
     void calcAngleAndRot();
 
     f32 m_angVel;             ///< Angular speed of the propeller in degrees per frame

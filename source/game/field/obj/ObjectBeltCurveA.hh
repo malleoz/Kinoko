@@ -8,37 +8,12 @@ namespace Kinoko::Field {
 /// @details This conveyor switches direction twice.
 class ObjectBeltCurveA final : public ObjectBelt {
 public:
-    /// @addr{0x807FC90C}
-    /// @copybrief ObjectBelt::ObjectBelt(const System::MapdataGeoObj &)
-    /// @param params The parameters used to initialize the object
-    /// @details Sets @ref m_startForward to `true` if param setting 2 is `1`, `false` otherwise.
-    /// Sets @ref m_dirChange1Frame and @ref m_dirChange2Frame based on the number of seconds
-    /// specified by param settings 3 and 4 respectively. Finally, initialized @ref m_initRt with a
-    /// yaw of 90 degrees.
-    ObjectBeltCurveA(const System::MapdataGeoObj &params)
-        : ObjectBelt(params),
-          m_startForward(params.setting(1) == 1),
-          m_dirChange1Frame(params.setting(2) * 60),
-          m_dirChange2Frame(params.setting(3) * 60) {
-        constexpr EGG::Vector3f INITIAL_ROT = EGG::Vector3f(0.0f, HALF_PI, 0.0f);
-
-        m_initRt.makeR(INITIAL_ROT);
-    }
-
-    /// @addr{0x807FD7BC}
-    /// @brief Default virtual destructor
-    ~ObjectBeltCurveA() override = default;
+    ObjectBeltCurveA(const System::MapdataGeoObj &params);
+    ~ObjectBeltCurveA() override;
 
     [[nodiscard]] EGG::Vector3f calcRoadVelocity(u32 variant, const EGG::Vector3f &pos,
             u32 timeOffset) const override;
-
-    /// @addr{0x807FCCA4}
-    /// @copybrief ObjectBelt::isMoving()
-    /// @param variant The variant of the conveyer belt
-    /// @return `true` if the variant is 4 or 5, `false` otherwise (does not occur in the base game)
-    [[nodiscard]] bool isMoving(u32 variant, const EGG::Vector3f & /*pos*/) const override {
-        return variant == 4 || variant == 5;
-    }
+    [[nodiscard]] bool isMoving(u32 variant, const EGG::Vector3f &pos) const override;
 
 private:
     [[nodiscard]] f32 calcAngularSpeed(u32 t) const;

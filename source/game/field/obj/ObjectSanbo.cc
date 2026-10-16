@@ -1,8 +1,21 @@
 #include "ObjectSanbo.hh"
 
 #include "game/field/CollisionDirector.hh"
+#include "game/field/KColData.hh"
 
 namespace Kinoko::Field {
+
+/// @addr{0x80779F3C}
+/// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @param params The parameters used to initialize the object
+/// @details Sets @ref m_yVel to zero.
+ObjectSanbo::ObjectSanbo(const System::MapdataGeoObj &params) : ObjectCollidable(params) {
+    m_yVel = 0.0f;
+}
+
+/// @addr{0x8077A1A8}
+/// @brief Default virtual destructor
+ObjectSanbo::~ObjectSanbo() = default;
 
 /// @addr{0x8077A1E8}
 /// @copybrief ObjectBase::init()
@@ -17,6 +30,20 @@ void ObjectSanbo::init() {
     m_tangent.normalise();
     m_standstill = false;
     m_railInterpolator->init(0.0f, 0);
+}
+
+/// @addr{0x8077A36C}
+/// @copybrief ObjectBase::calc()
+/// @details Simply calls @ref calcMove() to update the Pokey's position.
+void ObjectSanbo::calc() {
+    calcMove();
+}
+
+/// @addr{0x8077BD38}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectSanbo::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
 }
 
 /// @addr{0x8077A5F8}

@@ -8,49 +8,13 @@ namespace Kinoko::Field {
 /// @details Their oscillation is represented as a sin wave, with two resting periods.
 class ObjectBulldozer final : public ObjectKCL {
 public:
-    /// @addr{0x807FD938}
-    /// @copybrief ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
-    /// @details Caches the object's initial position and rotation to @ref m_initialPos and @ref
-    /// m_initialRot respetviely. Computes @ref m_timeOffset by doubling param setting 4. Computes
-    /// @ref m_periodDenom as the max of `2` and param setting 3. Sets @ref m_restFrames based on
-    /// param setting 5. Computes @ref m_fullPeriod by summing @ref m_periodDenom and twice @ref
-    /// m_restFrames. Sets @ref m_amplitude based on param setting 2. Determines @ref m_left by
-    /// comparing the object's name to `bulldozer_left`. Computes @ref m_period as `@ref F_TAU /
-    /// @ref m_periodDenom` and @ref m_halfPeriod as half of @ref m_fullPeriod.
-    ObjectBulldozer(const System::MapdataGeoObj &params)
-        : ObjectKCL(params),
-          m_initialPos(pos()),
-          m_initialRot(rot()),
-          m_timeOffset(params.setting(3) * 2),
-          m_periodDenom(std::max<u16>(2, params.setting(2))),
-          m_restFrames(params.setting(4)),
-          m_fullPeriod(m_periodDenom + m_restFrames * 2),
-          m_amplitude(params.setting(1)),
-          m_left(strcmp(getName(), "bulldozer_left") == 0),
-          m_period(F_TAU / static_cast<f32>(m_periodDenom)),
-          m_halfPeriod(m_fullPeriod / 2) {}
-
-    /// @addr{0x807FE5F0}
-    /// @brief Default virtual destructor
-    ~ObjectBulldozer() override = default;
+    ObjectBulldozer(const System::MapdataGeoObj &params);
+    ~ObjectBulldozer() override;
 
     void calc() override;
-
-    /// @addr{0x807FE5E8}
-    /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
-    [[nodiscard]] LoadFlags loadFlags() const override {
-        return LoadFlags(eLoadFlags::Calc);
-    }
-
-    /// @addr{0x807FE4FC}
-    /// @copybrief ObjectKCL::colRadiusAdditionalLength()
-    /// @return The amplitude of the bulldozer's oscillation, @ref m_amplitude.
-    [[nodiscard]] f32 colRadiusAdditionalLength() const override {
-        return static_cast<f32>(m_amplitude);
-    }
-
     void initCollision() override;
+    [[nodiscard]] LoadFlags loadFlags() const override;
+    [[nodiscard]] f32 colRadiusAdditionalLength() const override;
     [[nodiscard]] const EGG::Matrix34f &getUpdatedMatrix(u32 timeOffset) override;
 
     [[nodiscard]] f32 calcPosOffset(u32 t) const;

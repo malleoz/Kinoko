@@ -117,7 +117,7 @@ private:
     /// @param t Interpolation factor
     /// @param proxy Pointer to the kart object proxy
     void calcForward(f32 t, const Kart::KartObjectProxy *proxy) {
-        m_forward = Interpolate(t, m_forward, proxy->move()->smoothedForward());
+        m_forward = m_forward.interpolate(t, proxy->move()->smoothedForward());
         m_right = EGG::Vector3f::ey.perpInPlane(m_forward, true);
     }
 
@@ -128,16 +128,6 @@ private:
     void initPos();
 
     void calcCollision(KartCameraState &state, bool isRear) const;
-
-    /// @addr{0x805A2C34}
-    /// @brief Linearly interpolates between two vectors
-    /// @param t Interpolation factor
-    /// @param v0 Starting vector
-    /// @param v1 Ending vector
-    /// @return The interpolated vector
-    static EGG::Vector3f Interpolate(f32 t, const EGG::Vector3f &v0, const EGG::Vector3f &v1) {
-        return v0 + (v1 - v0) * t;
-    }
 
     f32 m_driftYaw;                                      ///< Rotation induced when drifting
     f32 m_hopPosY;                                       ///< Tracks the hop height of the vehicle

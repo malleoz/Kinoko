@@ -1,126 +1,45 @@
 #pragma once
 
-#include "game/field/jugem/JugemMove.hh"
-#include "game/field/jugem/JugemSwitch.hh"
-
 #include "game/field/StateManager.hh"
 
-namespace Kinoko::Field {
+namespace Kinoko {
+
+namespace Kart {
+
+class KartObject;
+
+} // namespace Kart
+
+namespace Field {
+
+class JugemMove;
+class JugemSwitch;
 
 /// @brief Manages interpolation keyframes for the Lakitu's position when ascending and descending
 class JugemInterp {
 public:
-    /// @addr{Inlined in 0x80721514}
-    /// @brief Constructor which initializes an array of keyframes
-    /// @param count The number of keyframes
-    JugemInterp(u32 count) {
-        m_keyframes = owning_span<InterpKeyframe>(count);
-        m_time = 0.0f;
-        m_rate = 0.0f;
-    }
+    JugemInterp(u32 count);
+    ~JugemInterp();
 
-    /// @addr{0x80721E64}
-    /// @brief Default destructor
-    ~JugemInterp() = default;
-
-    /// @addr{0x8072370C}
-    /// @brief Initializes the keyframes for the interpolation sequence
-    /// @param startRate The interpolation rate for the first keyframe
-    /// @param endRate The interpolation rate for the last keyframe
-    /// @param tDelta The time delta between the first and last keyframe
-    void initKeyframes(f32 startRate, f32 endRate, f32 tDelta, u32 param4) {
-        m_numKeyframes = 0;
-
-        setStartKeyframe(startRate);
-        addKeyframe(endRate, tDelta, param4);
-
-        m_rate = startRate;
-        m_time = 0.0f;
-    }
-
-    /// @addr{0x80723AF8}
-    /// @brief Advances the interpolation sequenceand calculates the current interpolation rate
-    /// @param tDelta The time delta to advance the interpolation sequence
-    /// @return Whether the interpolation sequence has reached the end of the last keyframe
-    bool calc(f32 tDelta) {
-        m_rate = calcInterpRate(m_time);
-        m_time += tDelta;
-
-        bool endOfKeyframe = m_time > m_keyframes[1].m_time;
-        if (endOfKeyframe) {
-            m_time = m_keyframes[1].m_time;
-        }
-
-        return endOfKeyframe;
-    }
-
-    /// @addr{0x8074C048}
-    /// @brief Adds a keyframe at time 0 with the specified interpolation rate
-    /// @param rate The interpolation rate for the keyframe
-    void setStartKeyframe(f32 rate) {
-        m_keyframes[m_numKeyframes].m_interpRate = rate;
-        m_keyframes[m_numKeyframes].m_time = 0.0f;
-        ++m_numKeyframes;
-    }
-
-    /// @addr{0x8074C0B4}
-    /// @brief Adds a keyframe with the specified interpolation rate and time delta
-    /// @param rate The interpolation rate for the keyframe
-    /// @param tDelta The time delta from the previous keyframe to this keyframe
-    void addKeyframe(f32 rate, f32 tDelta, u32 /*param4*/) {
-        m_keyframes[m_numKeyframes].m_interpRate = rate;
-        m_keyframes[m_numKeyframes].m_time = tDelta + m_keyframes[m_numKeyframes - 1].m_time;
-        ++m_numKeyframes;
-    }
-
-    /// @addr{0x8074C1E0}
-    /// @brief Calculates the current interpolation rate based on the current time and keyframes
-    /// @param time The current frame in the interpolation sequence
-    [[nodiscard]] f32 calcInterpRate(f32 time) const {
-        const InterpKeyframe *currKeyframe = nullptr;
-        const InterpKeyframe *nextKeyframe = nullptr;
-
-        for (u32 idx = 0; idx < m_numKeyframes - 1; ++idx) {
-            currKeyframe = &m_keyframes[idx];
-            nextKeyframe = &m_keyframes[idx + 1];
-            if (currKeyframe->m_time <= time && time < nextKeyframe->m_time) {
-                break;
-            }
-        }
-
-        f32 timePastKeyframe = time - currKeyframe->m_time;
-        f32 keyframeDuration = nextKeyframe->m_time - currKeyframe->m_time;
-
-        timePastKeyframe = std::clamp(timePastKeyframe, 0.0f, keyframeDuration);
-
-        return SmoothLerp(currKeyframe->m_interpRate, nextKeyframe->m_interpRate,
-                timePastKeyframe / keyframeDuration);
-    }
-
-    [[nodiscard]] f32 rate() const {
-        return m_rate;
-    }
+    void initKeyframes(f32 startRate, f32 endRate, f32 tDelta, u32 param4);
+    bool calc(f32 tDelta);
+    void setStartKeyframe(f32 rate);
+    void addKeyframe(f32 rate, f32 tDelta, u32 /*param4*/);
+    [[nodiscard]] f32 calcInterpRate(f32 time) const;
+    [[nodiscard]] f32 rate() const;
 
 private:
     /// @brief Represents a single keyframe in the interpolation sequence
     struct InterpKeyframe {
+        /// @brief Constructor
+        /// @details Sets @ref m_interpRate and @ref m_time to zero.
         InterpKeyframe() : m_interpRate(0.0f), m_time(0.0f) {}
 
         f32 m_interpRate; ///< The interpolation rate at this keyframe
         f32 m_time;       ///< The time at which this keyframe occurs in the interpolation sequence
     };
 
-    /// @addr{0x8074C3F0}
-    /// @brief Performs a smooth interpolation between two values based on a parameter t
-    /// @param a The starting value
-    /// @param b The ending value
-    /// @param t The interpolation parameter [0, 1]
-    [[nodiscard]] static f32 SmoothLerp(f32 a, f32 b, f32 t) {
-        f32 sin = EGG::Mathf::SinFIdx(RAD2FIDX * (-HALF_PI + t * (HALF_PI - -HALF_PI)));
-        f32 interpFactor = std::clamp(0.5f * (1.0f + sin), 0.0f, 1.0f);
-
-        return a + interpFactor * (b - a);
-    }
+    [[nodiscard]] static f32 SmoothLerp(f32 a, f32 b, f32 t);
 
     owning_span<InterpKeyframe> m_keyframes; ///< Array of keyframes for the interpolation sequence
     u32 m_numKeyframes;                      ///< Number of keyframes in the interpolation sequence
@@ -136,44 +55,11 @@ private:
 class JugemUnit : private StateManager {
 public:
     JugemUnit(const Kart::KartObject *kartObj);
+    ~JugemUnit() override;
 
-    /// @addr{0x80721D2C}
-    /// @brief Virtual destructor that destroys the switch, movement, and interpolation controllers
-    ~JugemUnit() override {
-        EGG::egg_delete(m_switchReverse);
-        EGG::egg_delete(m_move);
-        EGG::egg_delete(m_interp);
-    }
-
-    /// @addr{0x80721EC0}
-    /// @brief Creates the switches for the Lakitu
-    /// @details For the purposes of syncing time trials in Kinoko, we only have to implement the
-    /// reverse switch.
-    void createSwitchRace() {
-        m_switchReverse = EGG::egg_new<JugemSwitchReverse>();
-    }
-
-    /// @addr{0x80722100}
-    /// @brief Initializes the internal state of the Lakitu unit
-    /// @details Resets @ref m_pos to zero and initializes the movement controller.
-    void init() {
-        m_pos.setZero();
-        m_move->init();
-    }
-
-    /// @addr{0x807221C4}
-    /// @brief Updates switches, runs the state machine, and updates Lakitu's position if not idle
-    void calc() {
-        calcSwitches();
-
-        StateManager::calc();
-
-        // Perform a collision check if Lakitu is not idle
-        if (m_currentStateId != 0) {
-            setPosFromTransform(m_move->transform());
-            calcCollision();
-        }
-    }
+    void init();
+    void createSwitchRace();
+    void calc();
 
 private:
     /// @brief Describes the current state of the Lakitu unit, which determines how it behaves and
@@ -185,47 +71,14 @@ private:
         Ascending = 3,  ///< Lakitu is ascending and leaving the player
     };
 
-    /// @addr{0x80723458}
-    /// @brief Runs once when the Lakitu begins ascending and leaving the player
-    /// @details Sets @ref m_state to @ref State::Away and resets @ref m_ascendTimer to zero.
-    void enterIdle() {
-        m_state = State::Away;
-        m_ascendTimer = 0;
-    }
-
+    void enterIdle();
     void enterReverse();
 
-    /// @addr{0x807234A4}
-    /// @brief Runs every frame when the Lakitu is idle and not visible, checking for switch toggles
-    /// @details If the reverse switch is toggled on, the Lakitu will transition to the reverse
-    /// state.
-    void calcIdle() {
-        if (m_switchReverse && m_switchReverse->isOn()) {
-            m_nextStateId = 1;
-        }
-    }
-
+    void calcIdle();
     void calcReverse();
 
-    /// @addr{0x80722ED8}
-    /// @brief Evaluates the switches for the Lakitu unit, checking if it should be toggled on/off
-    /// @details For the purposes of syncing time trials in Kinoko, we only need to evaluate the
-    /// reverse switch.
-    void calcSwitches() {
-        if (m_switchReverse) {
-            m_switchReverse->calc();
-        }
-    }
-
-    /// @addr{0x80722F6C}
-    /// @brief Updates the Lakitu's position based on the provided transformation matrix, while
-    /// keeping the y-coordinate fixed to the player's position
-    /// @param mat The transformation matrix used to update the Lakitu's position
-    void setPosFromTransform(const EGG::Matrix34f &mat) {
-        m_pos = mat.base(3);
-        m_pos.y = m_kartObj->pos().y;
-    }
-
+    void calcSwitches();
+    void setPosFromTransform(const EGG::Matrix34f &mat);
     [[nodiscard]] EGG::Vector3f transformLocalToWorldUpright(const EGG::Vector3f &v) const;
     void calcCollision();
 
@@ -237,16 +90,6 @@ private:
     JugemMove *m_move;            ///< Pointer to the Lakitu movement controller
     JugemInterp *m_interp;        ///< Pointer to the keyframe interpolation controller
 
-    /// @brief Linearly interpolates between two vectors
-    /// @param t Interpolation factor
-    /// @param v0 Starting vector
-    /// @param v1 Ending vector
-    /// @return The interpolated vector
-    [[nodiscard]] static EGG::Vector3f Interpolate(f32 t, const EGG::Vector3f &v0,
-            const EGG::Vector3f &v1) {
-        return v0 + (v1 - v0) * t;
-    }
-
     /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 2> STATE_ENTRIES = {{
             StateEntry<JugemUnit, &JugemUnit::enterIdle, &JugemUnit::calcIdle>(0),
@@ -254,4 +97,6 @@ private:
     }};
 };
 
-} // namespace Kinoko::Field
+} // namespace Field
+
+} // namespace Kinoko

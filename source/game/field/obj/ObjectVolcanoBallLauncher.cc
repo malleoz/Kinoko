@@ -59,6 +59,10 @@ ObjectVolcanoBallLauncher::ObjectVolcanoBallLauncher(const System::MapdataGeoObj
     m_active = false;
 }
 
+/// @addr{0x806E384C}
+/// @brief Default virtual destructor
+ObjectVolcanoBallLauncher::~ObjectVolcanoBallLauncher() = default;
+
 /// @addr{0x806E388C}
 /// @copybrief ObjectBase::init()
 /// @details Initializes all managed fireballs and sets the index of the next fireball to be
@@ -98,5 +102,27 @@ void ObjectVolcanoBallLauncher::calc() {
         m_currBallIdx = 0;
     }
 }
+
+/// @addr{0x806E3A70}
+/// @copybrief ObjectBase::loadGraphics()
+/// @details no-op because the launcher does not have any graphics to load
+void ObjectVolcanoBallLauncher::loadGraphics() {}
+
+/// @addr{0x806E3A68}
+/// @copybrief ObjectBase::createCollision()
+/// @details no-op because the launcher itself does not have any collision
+void ObjectVolcanoBallLauncher::createCollision() {}
+
+/// @addr{0x806E3A6C}
+/// @copybrief ObjectBase::loadRail()
+/// @details no-op because the launcher itself does not follow any rail path
+void ObjectVolcanoBallLauncher::loadRail() {}
+
+/// @addr{0x806E3A74}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectVolcanoBallLauncher::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
+};
 
 } // namespace Kinoko::Field

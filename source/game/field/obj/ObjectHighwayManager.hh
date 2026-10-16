@@ -12,57 +12,18 @@ class ObjectCarTGE;
 class ObjectHighwayManager final : public ObjectCollidable {
 public:
     ObjectHighwayManager();
+    ~ObjectHighwayManager() override;
 
-    /// @addr{0x806D2FE8}
-    /// @brief Default virtual destructor
-    ~ObjectHighwayManager() override = default;
-
-    /// @addr{0x806D332C}
-    /// @copybrief ObjectBase::init()
-    /// @details Initializes @ref m_squashTimer to @ref SQUASH_MAX so that the player is initially
-    /// vulnerable to being squashed.
-    void init() override {
-        m_squashTimer = SQUASH_MAX;
-    }
-
-    /// @addr{0x806D345C}
-    /// @copybrief ObjectBase::calc()
-    /// @details Simply calls @ref calcSquash() to check if any managed @ref ObjectCarTGE has
-    /// squashed the player this frame.
-    void calc() override {
-        calcSquash();
-    }
-
-    /// @addr{0x806D5C6C}
-    /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
-    [[nodiscard]] LoadFlags loadFlags() const override {
-        return LoadFlags(eLoadFlags::Calc);
-    }
-
-    /// @addr{0x806D5C68}
-    /// @copybrief ObjectBase::loadGraphics()
-    /// @details Does nothing since this is just a watcher class
-    void loadGraphics() override {}
-
-    /// @addr{0x806D5C60}
-    /// @copybrief ObjectBase::createCollision()
-    /// @details Does nothing since this is just a watcher class
-    void createCollision() override {}
-
-    /// @addr{0x806D5C64}
-    /// @copybrief ObjectBase::loadRail()
-    /// @details Does nothing since this is just a watcher class
-    void loadRail() override {}
+    void init() override;
+    void calc() override;
+    void loadGraphics() override;
+    void createCollision() override;
+    void loadRail() override;
+    [[nodiscard]] LoadFlags loadFlags() const override;
 
     /// @beginGetters
 
-    /// @brief Gets the number of frames since the last squash occurred from any managed car/truck
-    /// object
-    /// @return The number of frames since the last squash occurred, @ref m_squashTimer
-    [[nodiscard]] u32 squashTimer() const {
-        return m_squashTimer;
-    }
+    [[nodiscard]] u32 squashTimer() const;
 
     /// @endGetters
 

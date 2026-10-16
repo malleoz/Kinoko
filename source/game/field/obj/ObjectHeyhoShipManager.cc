@@ -40,6 +40,10 @@ ObjectHeyhoShipManager::ObjectHeyhoShipManager() {
     m_pointIdxs = owning_span<s16>(pointCount);
 }
 
+/// @addr{0x806D2514}
+/// @brief Default virtual destructor
+ObjectHeyhoShipManager::~ObjectHeyhoShipManager() = default;
+
 /// @addr{0x806D2590}
 /// @copybrief ObjectBase::init()
 /// @details Initializes every entry in @ref m_pointIdxs to -1. For each cannonball, stores the

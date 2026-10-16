@@ -28,6 +28,12 @@ ObjectFlamePoleFoot::ObjectFlamePoleFoot(const System::MapdataGeoObj &params)
     m_pole->load();
 }
 
+/// @addr{0x8067EBE0}
+/// @brief Virtual destructor that clears @ref s_flamePoleCount.
+ObjectFlamePoleFoot::~ObjectFlamePoleFoot() {
+    s_flamePoleCount = 0;
+}
+
 /// @addr{0x8067EC94}
 /// @copybrief ObjectBase::init()
 /// @details Even though this function sets @ref m_nextStateId to 0 (the expanding state), @ref
@@ -50,6 +56,44 @@ void ObjectFlamePoleFoot::init() {
     m_pole->setPos(polePos);
 
     initEruptKinematics();
+}
+
+/// @addr{0x8067EF70}
+/// @copybrief ObjectBase::calc()
+/// @details Only starts calculating the geyser's state after @ref m_initDelay frames have
+/// elapsed in the race. If so, calls @ref calcStates() to determine the current state of the
+/// geyser, evaluates the geyser's state machine, and updates the height and scale of the @ref
+/// ObjectFlamePole accordingly.
+void ObjectFlamePoleFoot::calc() {
+    if (System::RaceManager::Instance()->timer() < m_initDelay) {
+        return;
+    }
+
+    calcStates();
+    StateManager::calc();
+    calcHeightAndScale();
+}
+
+/// @addr{0x80681590}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectFlamePoleFoot::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
+}
+
+/// @addr{0x806814C4}
+/// @copybrief ObjectBase::getCollisionRadius()
+/// @return The collision radius of the flame pole foot, which is `245.0f` times param
+/// setting 3.
+f32 ObjectFlamePoleFoot::getCollisionRadius() const {
+    return 245.0f * static_cast<f32>(m_mapObj->setting(2));
+}
+
+/// @addr{0x8067FBB8}
+/// @copydoc ObjectKCL::getUpdatedMatrix()
+const EGG::Matrix34f &ObjectFlamePoleFoot::getUpdatedMatrix(u32 /*timeOffset*/) {
+    calcTransform();
+    return transform();
 }
 
 /// @addr{0x8067FC50}
@@ -144,6 +188,81 @@ bool ObjectFlamePoleFoot::checkCollisionCached(f32 radius, const EGG::Vector3f &
     return true;
 }
 
+/// @addr{0x8067F2DC}
+/// @brief Runs once when the geyser begins to expand
+/// @details Resets @ref m_heightOffset to `0.0f`.
+void ObjectFlamePoleFoot::enterExpanding() {
+    m_heightOffset = 0.0f;
+}
+
+/// @addr{0x8067F2F4}
+/// @brief Runs once when the geyser begins raising the flame pole
+/// @details Sets the pole to active, enables its collision, and resets @ref m_heightOffset to
+/// zero.
+/// @note Normally @ref m_initEruptVel and @ref m_eruptAccel are computed in this function.
+/// However, since these values do not change, we instead set them in @ref init().
+void ObjectFlamePoleFoot::enterEruptingUp() {
+    m_pole->setActive(true);
+    m_pole->enableCollision();
+    m_heightOffset = 0.0f;
+}
+
+/// @addr{0x8067F538}
+/// @brief Runs once when the fire pole has reached the peak of its eruption
+/// @details Sets @ref m_eruptedHeightOffset to @ref m_maxHeight to cache the height of the
+/// flame pole so that it can oscillate around this height.
+void ObjectFlamePoleFoot::enterEruptingStay() {
+    m_eruptedHeightOffset = m_maxHeight;
+}
+
+/// @addr{0x8067F5EC}
+/// @brief Runs once when the fire pole begins descending
+/// @details Sets @ref m_eruptedHeightOffset to the current @ref m_heightOffset to cache the
+/// height of the flame pole before it starts descending.
+void ObjectFlamePoleFoot::enterEruptingDown() {
+    m_eruptedHeightOffset = m_heightOffset;
+}
+
+/// @addr{0x8067F650}
+/// @brief Runs once when the geyser finishes contracting
+/// @details Deactivates the flame pole and disables its collision.
+void ObjectFlamePoleFoot::enterDormant() {
+    m_pole->setActive(false);
+    m_pole->disableCollision();
+}
+
+/// @addr{0x8067F484}
+/// @brief Runs every frame when the flame pole is raising up
+/// @details Updates @ref m_heightOffset based on the current frame and the eruption velocity
+/// and acceleration.
+void ObjectFlamePoleFoot::calcEruptingUp() {
+    f32 frame = static_cast<f32>(m_cycleFrame - STATE_STARTS[1]);
+    m_heightOffset =
+            std::min(m_maxHeight, m_initEruptVel * frame - frame * 0.5f * m_eruptAccel * frame);
+}
+
+/// @addr{0x8067F544}
+/// @brief Runs every frame after the flame pole reaches max height and before falling to
+/// dormancy
+/// @details Oscillates the flame pole around its peak height using a sinusoidal function with
+/// an amplitude of `50.0f` and a period of 60 frames.
+void ObjectFlamePoleFoot::calcEruptingStay() {
+    constexpr f32 HALF_PERIOD = 30.0f;
+    constexpr f32 AMPLITUDE = 50.0f;
+
+    f32 angle = 360.0f * static_cast<f32>(m_cycleFrame - STATE_STARTS[2]) / HALF_PERIOD;
+    m_heightOffset = m_eruptedHeightOffset + AMPLITUDE * EGG::Mathf::SinFIdx(DEG2FIDX * angle);
+}
+
+/// @addr{0x8067F604}
+/// @brief Runs every frame while the flame pole has finished erupting and is descending
+/// @details Updates @ref m_heightOffset based on the cached erupted height and @ref
+/// m_scaleDelta.
+void ObjectFlamePoleFoot::calcEruptingDown() {
+    m_heightOffset =
+            m_eruptedHeightOffset - m_scaleDelta * static_cast<f32>(m_cycleFrame - STATE_STARTS[3]);
+}
+
 /// @addr{0x8067F6B8}
 /// @brief Calculates the current state based off framecount within the cycle duration
 /// @details If the current frame corresponds to a different state than the current one, updates
@@ -165,6 +284,17 @@ void ObjectFlamePoleFoot::calcStates() {
     if (m_currentStateId != stateId) {
         m_nextStateId = stateId;
     }
+}
+
+/// @addr{0x8067F7C8}
+/// @brief Calculates the height and scale of the flame pole based on the current cycle frame
+/// @details The pole's y-position is updated based on @ref m_heightOffset, and the pole's scale
+/// is set to @ref m_maxScale.
+void ObjectFlamePoleFoot::calcHeightAndScale() {
+    setScale(getScaleY(0));
+    EGG::Vector3f polePos = m_pole->pos();
+    m_pole->setPos(EGG::Vector3f(polePos.x, m_heightOffset + (pos().y - m_maxHeight), polePos.z));
+    m_pole->setScale(m_maxScale);
 }
 
 /// @brief Helper function to avoid repeated calculation of constant eruption kinematics

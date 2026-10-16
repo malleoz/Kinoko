@@ -1,11 +1,46 @@
 #include "ObjectTruckWagon.hh"
 
 #include "game/field/CollisionDirector.hh"
+#include "game/field/KColData.hh"
 #include "game/field/RailManager.hh"
 
 #include "game/kart/KartCollide.hh"
 
 namespace Kinoko::Field {
+
+/// @addr{0x806DFE9C}
+/// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @param params The parameters used to initialize the object
+/// @details Initializes @ref m_active to `true`. Zeroes @ref m_vel, @ref m_lastVel, @ref m_up,
+/// @ref m_tangent, and @ref m_pitch.
+ObjectTruckWagonCart::ObjectTruckWagonCart(const System::MapdataGeoObj &params)
+    : ObjectCollidable(params),
+      StateManager(this, STATE_ENTRIES),
+      m_active(true),
+      m_vel(EGG::Vector3f::zero),
+      m_lastVel(EGG::Vector3f::zero),
+      m_up(EGG::Vector3f::zero),
+      m_tangent(EGG::Vector3f::zero),
+      m_pitch(0.0f) {}
+
+/// @addr{0x806E00F4}
+/// @brief Default virtual destructor
+ObjectTruckWagonCart::~ObjectTruckWagonCart() = default;
+
+/// @addr{0x806E03E8}
+/// @copybrief ObjectBase::calc()
+/// @details Early returns if the minecart if currently not tangible. Otherwise, updates the
+/// rail interpolator and sets the minecart's velocity accordingly. Evaluates the minecart's
+/// state machine. Finally, refreshes the minecart's transformation matrix.
+void ObjectTruckWagonCart::calc() {
+    if (!m_active) {
+        return;
+    }
+
+    calcRailAndVel();
+    StateManager::calc();
+    calcTransform();
+}
 
 /// @addr{0x806E2624}
 /// @copybrief ObjectBase::calcCollisionTransform()
@@ -28,6 +63,27 @@ void ObjectTruckWagonCart::calcCollisionTransform() {
     col->transform(transform().multiplyTo(mat), scale(), m_vel);
 }
 
+/// @addr{0x806E260C}
+/// @copybrief ObjectBase::getName()
+/// @return The name of the object, `TruckWagon`
+const char *ObjectTruckWagonCart::getName() const {
+    return "TruckWagon";
+}
+
+/// @addr{0x806E2744}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectTruckWagonCart::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
+}
+
+/// @addr{0x806E2618}
+/// @copybrief ObjectBase::getKclName()
+/// @return The model name of the truck wagon, `TruckWagon`.
+const char *ObjectTruckWagonCart::getKclName() const {
+    return "TruckWagon";
+}
+
 /// @addr{0x806E0650}
 /// @copybrief ObjectCollidable::onCollision()
 /// @param kartObj The kart object involved in the collision
@@ -38,6 +94,19 @@ Kart::Reaction ObjectTruckWagonCart::onCollision(Kart::KartObject *kartObj,
         Kart::Reaction reactionOnKart, Kart::Reaction /*reactionOnObj*/,
         EGG::Vector3f & /*hitDepth*/) {
     return kartObj->speedRatioCapped() < 0.5f ? Kart::Reaction::Wall : reactionOnKart;
+}
+
+/// @brief Whether the minecart is currently tangible
+/// @return The value of @ref m_active
+bool ObjectTruckWagonCart::isActive() const {
+    return m_active;
+}
+
+/// @addr{0x806E2060}
+/// @brief Interface used by @ref ObjectTruckWagon to enable or disable a cart
+/// @param isSet Whether the minecart should be spawned or despawned
+void ObjectTruckWagonCart::setActive(bool isSet) {
+    m_active = isSet;
 }
 
 /// @addr{0x806E0DF0}
@@ -77,9 +146,9 @@ void ObjectTruckWagonCart::calcRolling() {
     if (m_railInterpolator->curPointIdx() != 3) {
         setPos(railPos);
 
-        m_up = Interpolate(INTERP_RATE, m_up,
+        m_up = m_up.interpolate(INTERP_RATE,
                 m_railInterpolator->floorNrm(m_railInterpolator->nextPointIdx()));
-        m_tangent = Interpolate(INTERP_RATE, m_tangent, m_railInterpolator->curTangentDir());
+        m_tangent = m_tangent.interpolate(INTERP_RATE, m_railInterpolator->curTangentDir());
         m_up.normalise2();
         m_tangent.normalise2();
 
@@ -113,8 +182,8 @@ void ObjectTruckWagonCart::calcRolling() {
         setPos(EGG::Vector3f(pos().x, m_vel.y + pos().y, pos().z));
     }
 
-    m_up = Interpolate(INTERP_RATE, m_up, floorNrm);
-    m_tangent = Interpolate(INTERP_RATE, m_tangent, tangent);
+    m_up = m_up.interpolate(INTERP_RATE, floorNrm);
+    m_tangent = m_tangent.interpolate(INTERP_RATE, tangent);
     m_up.normalise2();
     m_tangent.normalise2();
 
@@ -155,8 +224,8 @@ void ObjectTruckWagonCart::calcSuspended() {
     mat.setAxisRotation(m_pitch, tanXZ);
     mat.setBase(3, EGG::Vector3f::zero);
 
-    m_up = Interpolate(INTERP_RATE, m_up, mat.ps_multVector(EGG::Vector3f::ey));
-    m_tangent = Interpolate(INTERP_RATE, m_tangent, tanXZ);
+    m_up = m_up.interpolate(INTERP_RATE, mat.ps_multVector(EGG::Vector3f::ey));
+    m_tangent = m_tangent.interpolate(INTERP_RATE, tanXZ);
     m_tangent.y = 0.0f;
 
     m_up.normalise2();
@@ -175,6 +244,77 @@ void ObjectTruckWagonCart::calcSuspended() {
 
     setPos(m_railInterpolator->curPos() + INITIAL_OFFSET - mat.ps_multVector(INITIAL_OFFSET));
     m_lastVel = m_vel;
+}
+
+/// @addr{0x806E1894}
+/// @brief Runs every frame that the cart has m_currentStateId equal to 2
+/// @todo It's not clear what the intended difference here is compared to rolling state
+/// (m_currentStateId = 0)
+void ObjectTruckWagonCart::calcState2() {
+    calcRolling();
+}
+
+/// @addr{0x806E1DD0}
+/// @brief Checks whether the minecart should transition to the suspended state where it is
+/// lifted into the air
+/// @details If the minecart is currently already in the suspended state, then early returns.
+/// Otherwise, checks the current rail node's second setting. If it is set to 0, then the
+/// minecart will return to the rolling state. If set to 1, then the minecart will transition to
+/// the suspended state.
+void ObjectTruckWagonCart::checkRailPointState() {
+    if (m_currentStateId == 1) {
+        return;
+    }
+
+    u16 setting = m_railInterpolator->curPoint().setting[1];
+    if (setting <= 2) {
+        m_nextStateId = setting;
+    }
+}
+
+/// @addr{0x806E1E34}
+/// @brief Updates the rail interpolator and the minecart's velocity
+/// @details Evaluates the rail interpolator for the current frame. If the minecart has reached
+/// the end of a rail segment, calls @ref checkRailPointState() to see if the mincart should
+/// transition from/to the rolling/suspended state. Otherwise, if the minecart has reached the
+/// end of the rail, calls @ref deactivate() to despawn the minecart. Regardless, updates @ref
+/// m_vel to reflect the rail's current velocity
+void ObjectTruckWagonCart::calcRailAndVel() {
+    switch (m_railInterpolator->calc()) {
+    case RailInterpolator::Status::SegmentEnd:
+        checkRailPointState();
+        break;
+    case RailInterpolator::Status::RailEnd:
+        deactivate();
+        break;
+    default:
+        break;
+    }
+
+    m_vel.x = m_railInterpolator->currSpeed() * m_railInterpolator->curTangentDir().x;
+    m_vel.z = m_railInterpolator->currSpeed() * m_railInterpolator->curTangentDir().z;
+}
+
+/// @addr{0x806E24FC}
+/// @brief Runs when the cart is signaled by the spawner object to spawn
+/// @details Resets the minecart to its initial state. Marks the minecart as active and loads
+/// its collision.
+void ObjectTruckWagonCart::activate() {
+    reset(0);
+    setActive(true);
+    loadAABB(0.0f);
+}
+
+/// @addr{0x806E1F20}
+/// @brief Runs when the cart is signaled by the spawner object to despawn
+/// @details Resets the minecart to its initial state. Marks the minecart as inactive and
+/// disables its collision. Finally, transitions the minecart to the rolling state so that it
+/// moves along the rail once the minecart becomes active again.
+void ObjectTruckWagonCart::deactivate() {
+    reset(0);
+    setActive(false);
+    unregisterCollision();
+    m_nextStateId = 0;
 }
 
 /// @addr{0x806E01C0}
@@ -249,6 +389,10 @@ ObjectTruckWagon::ObjectTruckWagon(const System::MapdataGeoObj &params)
     }
 }
 
+/// @addr{0x806E21EC}
+/// @brief Default virtual destructor
+ObjectTruckWagon::~ObjectTruckWagon() = default;
+
 /// @addr{0x806E222C}
 /// @copybrief ObjectBase::init()
 /// @details Since we do not implement low LOD minecarts in Kinoko, we early return if the @ref
@@ -301,6 +445,30 @@ void ObjectTruckWagon::calc() {
     }
 
     m_cycleFrame = m_cycleFrame % (m_spawn2Frame + m_spawn1Frame) + 1;
+}
+
+/// @addr{0x806E24E8}
+/// @copybrief ObjectBase::loadGraphics()
+/// @details This is a no-op in the base game since the spawner does not have any graphics.
+void ObjectTruckWagon::loadGraphics() {}
+
+/// @addr{0x806E24E0}
+/// @copybrief ObjectBase::createCollision()
+/// @details no-op because the spawner itself does not have any collision.
+void ObjectTruckWagon::createCollision() {}
+
+/// @addr{0x806E24E4}
+/// @copybrief ObjectBase::loadRail()
+/// @details no-op because the spawner itself does not have any rail. The individual carts
+/// manage their own positions along the rail.
+void ObjectTruckWagon::loadRail() {}
+
+/// @addr{0x806E24EC}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
+/// calculated every frame
+ObjectBase::LoadFlags ObjectTruckWagon::loadFlags() const {
+    return LoadFlags().setBit(eLoadFlags::Calc, eLoadFlags::Draw);
 }
 
 } // namespace Kinoko::Field

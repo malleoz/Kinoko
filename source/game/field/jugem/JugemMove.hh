@@ -7,99 +7,36 @@ namespace Kinoko::Field {
 /// @brief Manages state information related to Lakitu movement
 class JugemMove {
 public:
-    /// @addr{0x8071E9B4}
-    /// @brief Constructor
-    /// @param kartObj Pointer to the kart object associated with this instance
-    JugemMove(const Kart::KartObject *kartObj) : m_kartObj(kartObj) {}
-
-    /// @addr{0x8071EA80}
-    /// @brief Default destructor
-    ~JugemMove() = default;
+    JugemMove(const Kart::KartObject *kartObj);
+    ~JugemMove();
 
     void init();
     void calc();
-
-    /// @addr{0x8071EFA8}
-    /// @brief Sets Lakitu's position and optionally sets the transformed position
-    /// @param pos The new position to set
-    /// @param transPos If `true`, also sets the transformed position to the same value
-    void setPos(const EGG::Vector3f &pos, bool transPos) {
-        m_pos = pos;
-
-        if (transPos) {
-            m_transPos = pos;
-        }
-    }
-
-    void setForwardFromKartObjPosDelta(bool setCurr);
-    void setForwardFromKartObjMainRot(bool setCurr);
+    void calcForwardFromKartObjPosDelta(bool setCurr);
+    void calcForwardFromKartObjMainRot(bool setCurr);
 
     /// @beginSetters
 
-    /// @addr{0x8071EFD8}
-    /// @brief Sets the anchor position that Lakitu is trying to move towards
-    /// @param v The new anchor position to set
-    void setAnchorPos(const EGG::Vector3f &v) {
-        m_anchorPos = v;
-    }
-
-    /// @brief Sets Lakitu's velocity when rising back up
-    /// @param v The rising velocity to set
-    void setRiseVel(const EGG::Vector3f &v) {
-        m_riseVel = v;
-    }
-
-    /// @brief Sets whether Lakitu is either away or descending
-    /// @param isSet `true` if Lakitu is away or descending, `false` otherwise
-    void setAwayOrDescending(bool isSet) {
-        m_isAwayOrDescending = isSet;
-    }
-
-    /// @brief Sets whether Lakitu is descending from the sky
-    /// @param isSet `true` if Lakitu is descending, `false` otherwise
-    void setDescending(bool isSet) {
-        m_isDescending = isSet;
-    }
-
-    /// @brief Sets whether Lakitu is rising up into the sky
-    /// @param isSet `true` if Lakitu is rising, `false` otherwise
-    void setRising(bool isSet) {
-        m_isRising = isSet;
-    }
+    void setPos(const EGG::Vector3f &pos, bool transPos);
+    void setAnchorPos(const EGG::Vector3f &v);
+    void setRiseVel(const EGG::Vector3f &v);
+    void setAwayOrDescending(bool isSet);
+    void setDescending(bool isSet);
+    void setRising(bool isSet);
 
     /// @endSetters
 
     /// @beginGetters
 
-    /// @brief Returns Lakitu's transformed position
-    /// @return The transformed position of Lakitu in world space, @ref m_transPos
-    const EGG::Vector3f &transPos() const {
-        return m_transPos;
-    }
-
-    /// @brief Returns Lakitu's transformation matrix
-    /// @return The combined lean and rotation matrices representing Lakitu's orientation, @ref
-    /// m_transform
-    const EGG::Matrix34f &transform() const {
-        return m_transform;
-    }
+    const EGG::Vector3f &transPos() const;
+    const EGG::Matrix34f &transform() const;
 
     /// @endGetters
 
 private:
     EGG::Matrix34f calcOrthonormalBasis();
     EGG::Vector3f calcOscillation(const EGG::Matrix34f &mat);
-    [[nodiscard]] EGG::Matrix34f calcLeanBasis();
-
-    /// @brief Linearly interpolates between two vectors
-    /// @param t Interpolation factor
-    /// @param v0 Starting vector
-    /// @param v1 Ending vector
-    /// @return The interpolated vector
-    [[nodiscard]] static EGG::Vector3f Interpolate(f32 t, const EGG::Vector3f &v0,
-            const EGG::Vector3f &v1) {
-        return v0 + (v1 - v0) * t;
-    }
+    EGG::Matrix34f calcLeanBasis();
 
     const Kart::KartObject *m_kartObj; ///< Pointer to the kart object that Lakitu is following
     EGG::Vector3f m_pos;               ///< Lakitu's position in world space
@@ -113,7 +50,7 @@ private:
     EGG::Vector3f m_lastKartObjPos; ///< Position of the kart on the previous frame
     EGG::Vector3f m_vel;            ///< Velocity of Lakitu's movement
     EGG::Vector3f m_riseVel;        ///< Velocity of Lakitu once he leaves by rising upwards
-    EGG::Vector3f m_dir;            ///< Smoothed direction of Lakitu's movement
+    EGG::Vector3f m_smoothedVel;    ///< Smoothed velocity
     EGG::Vector3f m_currForward;    ///< Lakitu's current facing direction
     EGG::Vector3f m_targetForward;  ///< Lakitu's target facing direction
     f32 m_forwardInterpRate;        ///< Interpolation rate for Lakitu's smoothed facing direction

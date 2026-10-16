@@ -4,6 +4,7 @@
 #include "game/kart/KartSuspensionPhysics.hh"
 
 #include "game/field/CollisionDirector.hh"
+#include "game/field/BoxColManager.hh"
 
 #include "game/system/RaceConfig.hh"
 #include "game/system/RaceManager.hh"

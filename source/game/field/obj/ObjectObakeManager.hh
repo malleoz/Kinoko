@@ -14,258 +14,87 @@ namespace Kinoko::Field {
 /// uses the cache to find the blocks that require collision checks.
 class ObjectObakeManager final : public ObjectDrivable {
 public:
-    /// @addr{0x8080B0D8}
-    /// @copybrief Constructor that is called when the first @ref ObjectObakeBlock is added
-    /// @param params The parameters used to initialize the object
-    /// @details Sizes @ref m_blocks and @ref m_fallingBlocks to hold up to @ref MAX_BLOCKS
-    /// elements. Creates @ref m_colBox with a length and width of `195.00002f` and a height of
-    /// `130.0f`. Creates @ref m_colSphere with a radius of `1.0f` and a center at the origin.
-    /// Finally, adds the block defined by the `params` to the manager.
-    ObjectObakeManager(const System::MapdataGeoObj &params)
-        : ObjectDrivable(params),
-          m_blockCache({}),
-          m_blocks(MAX_BLOCKS),
-          m_fallingBlocks(MAX_BLOCKS) {
-        static constexpr f32 BLOCK_WIDTH = 195.00002f;
-        static constexpr f32 BLOCK_HEIGHT = 130.0f;
-
-        m_colBox = EGG::egg_new<ObjectCollisionBox>(BLOCK_WIDTH, BLOCK_HEIGHT, BLOCK_WIDTH,
-                EGG::Vector3f::zero);
-        m_colSphere = EGG::egg_new<ObjectCollisionSphere>(1.0f, EGG::Vector3f::zero);
-
-        addBlock(params);
-    }
-
-    /// @addr{0x8080BEA4}
-    /// @brief Virtual destructor that destroys the associated collision objects and blocks
-    ~ObjectObakeManager() override {
-        EGG::egg_delete(m_colBox);
-        EGG::egg_delete(m_colSphere);
-
-        for (auto *&block : m_blocks) {
-            EGG::egg_delete(block);
-        }
-    }
+    ObjectObakeManager(const System::MapdataGeoObj &params);
+    ~ObjectObakeManager() override;
 
     void calc() override;
+    void createCollision() override;
+    void calcCollisionTransform() override;
+    [[nodiscard]] LoadFlags loadFlags() const override;
+    [[nodiscard]] f32 getCollisionRadius() const override;
 
-    /// @addr{0x8080BE9C}
-    /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
-    /// calculated every frame
-    [[nodiscard]] LoadFlags loadFlags() const override {
-        return LoadFlags().setBit(eLoadFlags::Calc, eLoadFlags::Draw);
-    }
-
-    /// @addr{0x8080BE98}
-    /// @copybrief ObjectBase::createCollision()
-    /// @details This is a no-op because the manager itself does not have any collision
-    void createCollision() override {}
-
-    /// @addr{0x8080BE94}
-    /// @copybrief ObjectBase::calcCollisionTransform()
-    /// @details This is a no-op because the manager itself does not have any collision
-    void calcCollisionTransform() override {}
-
-    /// @addr{0x8080BE84}
-    /// @copybrief ObjectBase::getCollisionRadius()
-    /// @return The collision radius of the manager, `100000.0f`.
-    /// @details Uses a large radius to ensure the manager is always considered for collision checks
-    [[nodiscard]] f32 getCollisionRadius() const override {
-        return 100000.0f;
-    }
-
-    /// @addr{0x8080BE44}
-    /// @copydoc ObjectDrivable::checkPointPartial()
     [[nodiscard]] bool checkPointPartial(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) override {
-        return checkSpherePartialImpl(0.0f, pos, prevPos, mask, info, maskOut);
-    }
-
-    /// @addr{0x8080BE54}
-    /// @copydoc ObjectDrivable::checkPointPartialPush()
+            KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) override;
     [[nodiscard]] bool checkPointPartialPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) override {
-        return checkSpherePartialPushImpl(0.0f, pos, prevPos, mask, info, maskOut);
-    }
-
-    /// @addr{0x8080BE64}
-    /// @copydoc ObjectDrivable::checkPointFull()
+            KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) override;
     [[nodiscard]] bool checkPointFull(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override {
-        return checkSphereFullImpl(0.0f, pos, prevPos, mask, info, maskOut);
-    }
-
-    /// @addr{0x8080BE74}
-    /// @copydoc ObjectDrivable::checkPointFullPush()
+            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override;
     [[nodiscard]] bool checkPointFullPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override {
-        return checkSphereFullPushImpl(0.0f, pos, prevPos, mask, info, maskOut);
-    }
+            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override;
 
-    /// @addr{0x8080BE34}
-    /// @copydoc ObjectDrivable::checkSpherePartial()
     [[nodiscard]] bool checkSpherePartial(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut, u32 /*timeOffset*/) override {
-        return checkSpherePartialImpl(radius, pos, prevPos, mask, info, maskOut);
-    }
-
-    /// @addr{0x8080BE38}
-    /// @copydoc ObjectDrivable::checkSpherePartialPush()
+            KCLTypeMask *maskOut, u32 timeOffset) override;
     [[nodiscard]] bool checkSpherePartialPush(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut, u32 /*timeOffset*/) override {
-        return checkSpherePartialPushImpl(radius, pos, prevPos, mask, info, maskOut);
-    }
-
-    /// @addr{0x8080BE3C}
-    /// @copydoc ObjectDrivable::checkSphereFull()
+            KCLTypeMask *maskOut, u32 timeOffset) override;
     [[nodiscard]] bool checkSphereFull(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut, u32 /*timeOffset*/) override {
-        return checkSphereFullImpl(radius, pos, prevPos, mask, info, maskOut);
-    }
-
-    /// @addr{0x8080BE40}
-    /// @copydoc ObjectDrivable::checkSphereFullPush()
+            KCLTypeMask *maskOut, u32 timeOffset) override;
     [[nodiscard]] bool checkSphereFullPush(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut, u32 /*timeOffset*/) override {
-        return checkSphereFullPushImpl(radius, pos, prevPos, mask, info, maskOut);
-    }
+            KCLTypeMask *maskOut, u32 timeOffset) override;
 
-    /// @addr{0x8080BDF4}
-    /// @copydoc ObjectDrivable::checkPointCachedPartial()
     [[nodiscard]] bool checkPointCachedPartial(const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut) override {
-        return checkSpherePartialImpl(0.0f, pos, prevPos, mask, info, maskOut);
-    }
-
-    /// @addr{0x8080BE04}
-    /// @copydoc ObjectDrivable::checkPointCachedPartialPush()
+            KCLTypeMask *maskOut) override;
     [[nodiscard]] bool checkPointCachedPartialPush(const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut) override {
-        return checkSpherePartialPushImpl(0.0f, pos, prevPos, mask, info, maskOut);
-    }
-
-    /// @addr{0x8080BE14}
-    /// @copydoc ObjectDrivable::checkPointCachedFull()
+            KCLTypeMask *maskOut) override;
     [[nodiscard]] bool checkPointCachedFull(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override {
-        return checkSphereFullImpl(0.0f, pos, prevPos, mask, info, maskOut);
-    }
-
-    /// @addr{0x8080BE24}
-    /// @copydoc ObjectDrivable::checkPointCachedFullPush()
+            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override;
     [[nodiscard]] bool checkPointCachedFullPush(const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut) override {
-        return checkSphereFullPushImpl(0.0f, pos, prevPos, mask, info, maskOut);
-    }
+            KCLTypeMask *maskOut) override;
 
-    /// @addr{0x8080BDE4}
-    /// @copydoc ObjectDrivable::checkSphereCachedPartial()
     [[nodiscard]] bool checkSphereCachedPartial(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut, u32 /*timeOffset*/) override {
-        return checkSpherePartialImpl(radius, pos, prevPos, mask, info, maskOut);
-    }
-
-    /// @addr{0x8080BDE8}
-    /// @copydoc ObjectDrivable::checkSphereCachedPartialPush()
+            KCLTypeMask *maskOut, u32 timeOffset) override;
     [[nodiscard]] bool checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut, u32 /*timeOffset*/) override {
-        return checkSpherePartialPushImpl(radius, pos, prevPos, mask, info, maskOut);
-    }
-
-    /// @addr{0x8080BDEC}
-    /// @copydoc ObjectDrivable::checkSphereCachedFull()
+            KCLTypeMask *maskOut, u32 timeOffset) override;
     [[nodiscard]] bool checkSphereCachedFull(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut, u32 /*timeOffset*/) override {
-        return checkSphereFullImpl(radius, pos, prevPos, mask, info, maskOut);
-    }
-
-    /// @addr{0x8080BDF0}
-    /// @copydoc ObjectDrivable::checkSphereCachedFullPush()
+            KCLTypeMask *maskOut, u32 timeOffset) override;
     [[nodiscard]] bool checkSphereCachedFullPush(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut, u32 /*timeOffset*/) override {
-        return checkSphereFullPushImpl(radius, pos, prevPos, mask, info, maskOut);
-    }
+            KCLTypeMask *maskOut, u32 timeOffset) override;
 
-    /// @addr{0x8080B244}
-    /// @brief Public interface that adds a new block to the existing manager and places the block
-    /// in the spatial cache for collision checks
-    /// @param params The parameters used to initialize the new block
-    void addBlock(const System::MapdataGeoObj &params) {
-        auto *block = EGG::egg_new<ObjectObakeBlock>(params);
-        m_blocks.push_back(block);
-        auto [spatialX, spatialZ] = SpatialIndex(block->pos());
-        m_blockCache[spatialZ][spatialX] = block;
-    }
+    void addBlock(const System::MapdataGeoObj &params);
 
 private:
     static constexpr size_t CACHE_SIZE_X = 122;        ///< Width of the spatial cache
     static constexpr size_t CACHE_SIZE_Z = 116;        ///< Depth of the spatial cache
     static constexpr f32 WALL_BOUNDING_RADIUS = 85.0f; ///< Radius of a block's wall collision
 
-    /// @addr{0x8080BEE4}
-    /// @copydoc ObjectDrivable::checkSpherePartial()
     [[nodiscard]] bool checkSpherePartialImpl(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut) {
-        return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, false);
-    }
-
-    /// @addr{0x8080C41C}
-    /// @copydoc ObjectDrivable::checkSpherePartialPush()
+            KCLTypeMask *maskOut);
     [[nodiscard]] bool checkSpherePartialPushImpl(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut) {
-        return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, true);
-    }
-
-    /// @addr{0x8080C980}
-    /// @copydoc ObjectDrivable::checkSphereFull()
+            KCLTypeMask *maskOut);
     [[nodiscard]] bool checkSphereFullImpl(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut) {
-        return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, false);
-    }
-
-    /// @addr{0x8080D12C}
-    /// @copydoc ObjectDrivable::checkSphereFullPush()
+            KCLTypeMask *maskOut);
     [[nodiscard]] bool checkSphereFullPushImpl(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut) {
-        return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, true);
-    }
+            KCLTypeMask *maskOut);
 
     template <typename T>
         requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
     [[nodiscard]] bool checkSphereImpl(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info, KCLTypeMask *maskOut,
             bool push);
-
-    /// @brief Helper function to return the spatial index of a given block
-    /// @param pos The position of the block to compute the spatial index for
-    /// @return A pair of integers representing the (x, z) indices in the spatial grid
-    [[nodiscard]] std::pair<s32, s32> static SpatialIndex(const EGG::Vector3f &pos) {
-        constexpr f32 ORIGIN_OFFSET_X = -30647.498f;
-        constexpr f32 ORIGIN_OFFSET_Z = -21092.5f;
-        constexpr f32 GRID_WIDTH = 325.0f; // The "width" of each cell in the spatial grid
-        constexpr f32 GRID_HALF_WIDTH = 162.5f;
-
-        s32 x = (pos.x - ORIGIN_OFFSET_X + GRID_HALF_WIDTH) / GRID_WIDTH;
-        s32 z = (pos.z - ORIGIN_OFFSET_Z + GRID_HALF_WIDTH) / GRID_WIDTH;
-
-        return std::make_pair(x, z);
-    }
 
     ObjectCollisionBox *m_colBox;       ///< The hitbox of the block to check collision against
     ObjectCollisionSphere *m_colSphere; ///< The kart hitbox to check collision against
@@ -275,6 +104,8 @@ private:
 
     fixed_vector<ObjectObakeBlock *> m_blocks;        ///< Owning vector of all blocks
     fixed_vector<ObjectObakeBlock *> m_fallingBlocks; ///< Pointers to all actively falling blocks
+
+    [[nodiscard]] std::pair<s32, s32> static SpatialIndex(const EGG::Vector3f &pos);
 
     /// @brief Scale of a block's wall collision
     static constexpr EGG::Vector3f WALL_SCALE = EGG::Vector3f(1.0f, 1.1f, 1.0f);

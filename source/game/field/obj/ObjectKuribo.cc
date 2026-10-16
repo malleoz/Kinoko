@@ -1,8 +1,24 @@
 #include "ObjectKuribo.hh"
 
 #include "game/field/CollisionDirector.hh"
+#include "game/field/KColData.hh"
 
 namespace Kinoko::Field {
+
+/// @addr{0x806DB184}
+/// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @param params The parameters used to initialize the object
+/// @details Initializes the Goomba's acceleration based on param setting 2 divided by `100.0f`.
+/// Also initializes the animation rate based on param setting 3 divided by `100.0f`.
+ObjectKuribo::ObjectKuribo(const System::MapdataGeoObj &params)
+    : ObjectCollidable(params),
+      StateManager(this, STATE_ENTRIES),
+      m_accel(static_cast<f32>(params.setting(1)) / 100.0f),
+      m_animRate(static_cast<f32>(params.setting(2)) / 100.0f) {}
+
+/// @addr{0x806DB3A0}
+/// @brief Default virtual destructor
+ObjectKuribo::~ObjectKuribo() = default;
 
 /// @addr{0x806DB40C}
 /// @copybrief ObjectBase::init()
@@ -26,6 +42,66 @@ void ObjectKuribo::init() {
     anmMgr->playAnim(0.0f, m_animRate, 0);
     m_animDuration = anmMgr->activeAnim(Render::AnmType::Chr)->frameCount();
     m_nextStateId = 1;
+}
+
+/// @addr{0x806DB5B0}
+/// @copybrief ObjectBase::calc()
+/// @details Updates the animation timer mod the total animation duration, then evaluates the
+/// Goomba's state machine to run state-specific logic depending on whether the Goomba is
+/// changing direction or walking along the rail. Finally, increments @ref m_currFrame.
+void ObjectKuribo::calc() {
+    calcAnimTimer();
+    StateManager::calc();
+    ++m_currFrame;
+}
+
+/// @addr{0x806dd278}
+/// @copybrief ObjectBase::loadAnims()
+/// @details Loads the Goomba's walking animations, `walk_l` and `walk_r`.
+void ObjectKuribo::loadAnims() {
+    std::array<const char *, 2> names = {{
+            "walk_l",
+            "walk_r",
+    }};
+
+    std::array<Render::AnmType, 2> types = {{
+            Render::AnmType::Chr,
+            Render::AnmType::Chr,
+    }};
+
+    linkAnims(names, types);
+}
+
+/// @addr{0x806DD2C8}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
+/// calculated every frame
+ObjectBase::LoadFlags ObjectKuribo::loadFlags() const {
+    return LoadFlags().setBit(eLoadFlags::Calc, eLoadFlags::Draw);
+}
+
+/// @addr{0x806DC220}
+/// @brief Called when the Goomba is idle
+/// @details The Goomba is idle for the duration specified by the current rail node setting 1.
+/// If the Goomba has been idling for this duration, transitions the Goomba to the walking
+/// state. While idle, performs a collision check with the floor and updates the Goomba's
+/// position, rotation, and transform accordingly.
+void ObjectKuribo::calcIdle() {
+    if (m_railInterpolator->curPoint().setting[0] < m_currentFrame) {
+        m_nextStateId = 1;
+    }
+
+    checkSphereFull();
+    calcRot();
+    calcMatFromRotAndForward();
+}
+
+/// @addr{0x806DC3F8}
+/// @brief Called when Goomba is walking along the rail
+/// @details Dispatches to @ref calcAnim() to handle the Goomba's walking animation and movement
+/// along the rail.
+void ObjectKuribo::calcWalk() {
+    calcAnim();
 }
 
 /// @addr{0x806DCDDC}
@@ -67,6 +143,21 @@ void ObjectKuribo::calcAnim() {
     calcMatFromRotAndForward();
 }
 
+/// @addr{0x806DCC9C}
+/// @brief Smoothly interpolates the Goomba's up vector to match the floor normal beneath it
+/// @details Linearly interpolates @ref m_rot towards @ref m_floorNrm.
+void ObjectKuribo::calcRot() {
+    constexpr f32 INTERP_RATE = 0.1f;
+
+    m_rot = m_rot.interpolate(INTERP_RATE, m_floorNrm);
+
+    if (m_rot.squaredLength() > std::numeric_limits<f32>::epsilon()) {
+        m_rot.normalise2();
+    } else {
+        m_rot = EGG::Vector3f::ey;
+    }
+}
+
 /// @addr{0x806DCB58}
 /// @brief Checks for floor collision beneath the Goomba
 /// @details If the Goomba is walking, applies a downward gravitational force of `2.0f` every frame.
@@ -95,6 +186,20 @@ void ObjectKuribo::checkSphereFull() {
             m_floorNrm = colInfo.floorNrm;
         }
     }
+}
+
+/// @addr{0x806DCDD0}
+/// @brief Sets the transformation matrix based on rotation and forward direction
+void ObjectKuribo::calcMatFromRotAndForward() {
+    setMatrixTangentTo(m_rot, m_forward);
+}
+
+/// @addr{0x806DD038}
+/// @brief Updates the animation timer based on the current frame and animation rate
+/// @details Calculated as \f[ m\_animTimer = \bmod(m\_currFrame \times
+/// m\_animRate,\ m\_animDuration) \f]
+void ObjectKuribo::calcAnimTimer() {
+    m_animTimer = ::fmodf(static_cast<f32>(m_currFrame) * m_animRate, m_animDuration);
 }
 
 } // namespace Kinoko::Field

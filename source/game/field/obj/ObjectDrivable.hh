@@ -1,5 +1,6 @@
 #pragma once
 
+#include "game/field/BoxColManager.hh"
 #include "game/field/CourseColMgr.hh"
 #include "game/field/obj/ObjectBase.hh"
 
@@ -10,35 +11,14 @@ namespace Kinoko::Field {
 /// how karts react to landing and driving on these objects.
 class ObjectDrivable : public ObjectBase {
 public:
-    /// @addr{0x8081A6D0}
-    /// @copybrief ObjectBase::ObjectBase(const System::MapdataGeoObj &)
-    /// @param params The parameters used to initialize the object
-    ObjectDrivable(const System::MapdataGeoObj &params) : ObjectBase(params) {}
-
-    /// @addr{0x8067EB3C}
-    /// @brief Default virtual destructor
-    ~ObjectDrivable() override = default;
+    ObjectDrivable(const System::MapdataGeoObj &params);
+    ~ObjectDrivable() override;
 
     void load() override;
 
-    /// @addr{0x80682918}
-    /// @copybrief ObjectBase::getCollisionRadius()
-    /// @return The default collision radius of a drivable object, `5000.0f`.
-    [[nodiscard]] f32 getCollisionRadius() const override {
-        return 5000.0f;
-    }
+    [[nodiscard]] f32 getCollisionRadius() const override;
 
-    /// @brief Called once after collision creation to initialize the collision
-    virtual void initCollision() {}
-
-    /// @addr{0x8081A85C}
-    /// @brief Inserts this object into the @ref BoxColManager as a drivable entry
-    /// @param radius The collision radius for the @ref BoxColUnit
-    void loadAABB(f32 radius) {
-        auto *boxColMgr = BoxColManager::Instance();
-        const EGG::Vector3f &pos = getPosition();
-        m_boxColUnit = boxColMgr->insertDrivable(radius, 0.0f, &pos, false, this);
-    }
+    virtual void initCollision();
 
     /// @brief Checks collision between a point and the object, writing only partial collision info
     /// @param pos The point to check
@@ -252,6 +232,8 @@ public:
     [[nodiscard]] virtual bool checkSphereCachedFullPush(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
             KCLTypeMask *maskOut, u32 timeOffset) = 0;
+
+    void loadAABB(f32 radius);
 };
 
 } // namespace Kinoko::Field

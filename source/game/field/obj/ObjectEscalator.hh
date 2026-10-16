@@ -20,195 +20,64 @@ class ObjectEscalator final : public ObjectKCL {
 
 public:
     ObjectEscalator(const System::MapdataGeoObj &params, bool reverse = false);
+    ~ObjectEscalator() override;
 
-    /// @addr{0x80803D00}
-    /// @brief Default virtual destructor
-    ~ObjectEscalator() override = default;
+    void calc() override;
+    [[nodiscard]] ObjectId id() const override;
+    [[nodiscard]] LoadFlags loadFlags() const override;
 
-    /// @addr{0x808008FC}
-    /// @copybrief ObjectBase::calc()
-    /// @details Calculates the escalator's moving object velocity, updates @ref m_wrappedStepCount
-    /// by calling @ref calcWrappedStepCount() with the current race framecount, and sets the
-    /// escalator's position accordingly.
-    void calc() override {
-        s32 t = static_cast<s32>(System::RaceManager::Instance()->timer());
-        setMovingObjVel(m_stepDims * calcSpeed(t));
-
-        m_wrappedStepCount = calcWrappedStepCount(t);
-        setPos(m_initialPos + m_stepDims * m_wrappedStepCount);
-    }
-
-    /// @addr{0x80803CF0}
-    /// @copybrief ObjectBase::id()
-    /// @return The ID of the escalator object, `@ref ObjectId::Escalator`.
-    [[nodiscard]] ObjectId id() const override {
-        return ObjectId::Escalator;
-    }
-
-    /// @addr{0x80803CF8}
-    /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
-    [[nodiscard]] LoadFlags loadFlags() const override {
-        return LoadFlags(eLoadFlags::Calc);
-    }
-
-    /// @addr{0x80803910}
-    /// @copydoc ObjectDrivable::checkPointPartial()
     [[nodiscard]] bool checkPointPartial(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) override {
-        return checkPointImpl(&ObjColMgr::checkPointPartial, pos, prevPos, mask, info, maskOut);
-    }
-
-    /// @addr{0x80803A04}
-    /// @copydoc ObjectDrivable::checkPointPartialPush()
+            KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) override;
     [[nodiscard]] bool checkPointPartialPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) override {
-        return checkPointImpl(&ObjColMgr::checkPointPartialPush, pos, prevPos, mask, info, maskOut);
-    }
-
-    /// @addr{0x80803AF8}
-    /// @copydoc ObjectDrivable::checkPointFull()
+            KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) override;
     [[nodiscard]] bool checkPointFull(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override {
-        return checkPointImpl(&ObjColMgr::checkPointFull, pos, prevPos, mask, info, maskOut);
-    }
-
-    /// @addr{0x80803BEC}
-    /// @copydoc ObjectDrivable::checkPointFullPush()
+            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override;
     [[nodiscard]] bool checkPointFullPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override {
-        return checkPointImpl(&ObjColMgr::checkPointFullPush, pos, prevPos, mask, info, maskOut);
-    }
+            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override;
 
-    /// @addr{0x80803540}
-    /// @copydoc ObjectDrivable::checkSpherePartial()
     [[nodiscard]] bool checkSpherePartial(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override {
-        return checkSphereImpl(&ObjColMgr::checkSpherePartial, radius, pos, prevPos, mask, info,
-                maskOut, timeOffset);
-    }
-
-    /// @addr{0x80803680}
-    /// @copydoc ObjectDrivable::checkSpherePartialPush()
+            KCLTypeMask *maskOut, u32 timeOffset) override;
     [[nodiscard]] bool checkSpherePartialPush(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override {
-        return checkSphereImpl(&ObjColMgr::checkSpherePartialPush, radius, pos, prevPos, mask, info,
-                maskOut, timeOffset);
-    }
-
-    /// @addr{0x808037C0}
-    /// @copydoc ObjectDrivable::checkSphereFull()
+            KCLTypeMask *maskOut, u32 timeOffset) override;
     [[nodiscard]] bool checkSphereFull(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override {
-        return checkSphereImpl(&ObjColMgr::checkSphereFull, radius, pos, prevPos, mask, info,
-                maskOut, timeOffset);
-    }
-
-    /// @addr{0x80803900}
-    /// @copydoc ObjectDrivable::checkSphereFullPush()
+            KCLTypeMask *maskOut, u32 timeOffset) override;
     [[nodiscard]] bool checkSphereFullPush(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override {
-        return checkCollision(radius, pos, prevPos, mask, info, maskOut, timeOffset);
-    }
+            KCLTypeMask *maskOut, u32 timeOffset) override;
 
-    /// @addr{0x80802D98}
-    /// @copybrief ObjectDrivable::narrScLocal()
-    /// @param radius The radius of the sphere to check
-    /// @param pos The position of the sphere to check
-    /// @param mask The KCL flags to check collision against
     void narrScLocal(f32 radius, const EGG::Vector3f &pos, KCLTypeMask mask,
-            u32 /*timeOffset*/) override {
-        m_objColMgr->narrScLocal(radius, pos, mask);
-    }
+            u32 timeOffset) override;
 
-    /// @addr{0x80803170}
-    /// @copydoc ObjectDrivable::checkPointCachedPartial()
     [[nodiscard]] bool checkPointCachedPartial(const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut) override {
-        return checkPointImpl(&ObjColMgr::checkPointCachedPartial, pos, prevPos, mask, info,
-                maskOut);
-    }
-
-    /// @addr{0x80803264}
-    /// @copydoc ObjectDrivable::checkPointCachedPartialPush()
+            KCLTypeMask *maskOut) override;
     [[nodiscard]] bool checkPointCachedPartialPush(const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut) override {
-        return checkPointImpl(&ObjColMgr::checkPointCachedPartialPush, pos, prevPos, mask, info,
-                maskOut);
-    }
-
-    /// @addr{0x80803358}
-    /// @copydoc ObjectDrivable::checkPointCachedFull()
+            KCLTypeMask *maskOut) override;
     [[nodiscard]] bool checkPointCachedFull(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override {
-        return checkPointImpl(&ObjColMgr::checkPointCachedFull, pos, prevPos, mask, info, maskOut);
-    }
-
-    /// @addr{0x8080344C}
-    /// @copydoc ObjectDrivable::checkPointCachedFullPush()
+            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override;
     [[nodiscard]] bool checkPointCachedFullPush(const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut) override {
-        return checkPointImpl(&ObjColMgr::checkPointCachedFullPush, pos, prevPos, mask, info,
-                maskOut);
-    }
+            KCLTypeMask *maskOut) override;
 
-    /// @addr{0x80802DA0}
-    /// @copydoc ObjectDrivable::checkSphereCachedPartial()
     [[nodiscard]] bool checkSphereCachedPartial(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override {
-        return checkSphereImpl(&ObjColMgr::checkSphereCachedPartial, radius, pos, prevPos, mask,
-                info, maskOut, timeOffset);
-    }
-
-    /// @addr{0x80802EE0}
-    /// @copydoc ObjectDrivable::checkSphereCachedPartialPush()
+            KCLTypeMask *maskOut, u32 timeOffset) override;
     [[nodiscard]] bool checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override {
-        return checkSphereImpl(&ObjColMgr::checkSphereCachedPartialPush, radius, pos, prevPos, mask,
-                info, maskOut, timeOffset);
-    }
-
-    /// @addr{0x80803020}
-    /// @copydoc ObjectDrivable::checkSphereCachedFull()
+            KCLTypeMask *maskOut, u32 timeOffset) override;
     [[nodiscard]] bool checkSphereCachedFull(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override {
-        return checkSphereImpl(&ObjColMgr::checkSphereCachedFull, radius, pos, prevPos, mask, info,
-                maskOut, timeOffset);
-    }
-
-    /// @addr{0x80803160}
-    /// @copydoc ObjectDrivable::checkSphereCachedFullPush()
+            KCLTypeMask *maskOut, u32 timeOffset) override;
     [[nodiscard]] bool checkSphereCachedFullPush(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override {
-        return checkCollisionCached(radius, pos, prevPos, mask, info, maskOut, timeOffset);
-    }
+            KCLTypeMask *maskOut, u32 timeOffset) override;
 
-    /// @addr{0x80800A10}
-    /// @copybrief ObjectKCL::getUpdatedMatrix()
-    /// @param timeOffset The time offset used to calculate the current frame's transformation
-    [[nodiscard]] const EGG::Matrix34f &getUpdatedMatrix(u32 timeOffset) override {
-        u32 t = System::RaceManager::Instance()->timer() - timeOffset;
-        m_workMatrix.makeRT(rot(), m_initialPos + m_stepDims * calcWrappedStepCount(t));
-        return m_workMatrix;
-    }
-
-    /// @addr{0x80803CE0}
-    /// @copybrief ObjectKCL::colRadiusAdditionalLength()
-    /// @return The additional length to be added to the escalator's collision radius, `1000.0f`.
-    [[nodiscard]] f32 colRadiusAdditionalLength() const override {
-        return 1000.0f;
-    }
+    [[nodiscard]] const EGG::Matrix34f &getUpdatedMatrix(u32 timeOffset) override;
+    [[nodiscard]] f32 colRadiusAdditionalLength() const override;
 
     [[nodiscard]] bool checkCollision(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
@@ -232,55 +101,16 @@ private:
     using CheckSphereFunc = bool(ObjColMgr::*)(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info, KCLTypeMask *maskOut);
 
-    /// @brief Helper function which re-uses some shared code amongst collision check variants
-    /// @tparam T CollisionInfo or CollisionInfoPartial
-    /// @param checkFunc The function to use for the actual collision check
-    /// @param pos The point to check collision against
-    /// @param prevPos The previous position of the kart (used to compute collision depth)
-    /// @param mask The KCL masks to filter collision checks to (ignores other collision types)
-    /// @param info Out param that collision info is saved to (if any)
-    /// @param maskOut Type mask of the KCL the kart is colliding with (if any)
-    /// @return Whether or not a collision occurred
-    /// @details Early returns false if the kart's Y position is outside of the range `[@ref
-    /// m_checkColYPosMin, @ref m_checkColYPosMax]`.
     template <typename T>
         requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
     bool checkPointImpl(CheckPointFunc<T> checkFunc, const EGG::Vector3f &pos,
-            const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info, KCLTypeMask *maskOut) {
-        if (m_checkColYPosMin > pos.y || pos.y >= m_checkColYPosMax) {
-            return false;
-        }
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info, KCLTypeMask *maskOut);
 
-        return (m_objColMgr->*checkFunc)(pos, prevPos, mask, info, maskOut);
-    }
-
-    /// @brief Helper function which re-uses some shared code amongst collision check variants
-    /// @tparam T CollisionInfo or CollisionInfoPartial
-    /// @param checkFunc The function to use for the actual collision check
-    /// @param radius The radius of the sphere to check collision against
-    /// @param pos The position of the sphere to check collision against
-    /// @param prevPos The previous position of the kart (used to compute collision depth)
-    /// @param mask The KCL masks to filter collision checks to (ignores other collision types)
-    /// @param info Out param that collision info is saved to (if any)
-    /// @param maskOut Type mask of the KCL the kart is colliding with (if any)
-    /// @return Whether or not a collision occurred
-    /// @details Early returns false if the kart's Y position is outside of the range `[@ref
-    /// m_checkColYPosMin, @ref m_checkColYPosMax]`. Also updates the escalator's scale and the @ref
-    /// ObjColMgr transform before the collision check.
     template <typename T>
         requires std::is_same_v<T, CollisionInfo> || std::is_same_v<T, CollisionInfoPartial>
     bool checkSphereImpl(CheckSphereFunc<T> checkFunc, f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info, KCLTypeMask *maskOut,
-            u32 timeOffset) {
-        if (m_checkColYPosMin > pos.y || pos.y >= m_checkColYPosMax) {
-            return false;
-        }
-
-        calcScale(timeOffset);
-        update(timeOffset);
-
-        return (m_objColMgr->*checkFunc)(radius, pos, prevPos, mask, info, maskOut);
-    }
+            u32 timeOffset);
 
     [[nodiscard]] f32 calcWrappedStepCount(s32 t);
     [[nodiscard]] f32 calcSpeed(s32 t);
@@ -305,17 +135,7 @@ private:
     /// @param reverse Whether the escalator should move in reverse
     /// @return An array containing the speeds of the escalator at each stage of its movement
     [[nodiscard]] std::array<f32, 3> static InitSpeed(const System::MapdataGeoObj &params,
-            bool reverse) {
-        f32 sign = reverse ? -1.0f : 1.0f;
-        f32 speed1 =
-                sign * (0.15f * static_cast<f32>(static_cast<s16>(params.setting(1))) / 100.0f);
-        f32 speed2 =
-                sign * (0.15f * static_cast<f32>(static_cast<s16>(params.setting(3))) / 100.0f);
-        f32 speed3 =
-                sign * (0.15f * static_cast<f32>(static_cast<s16>(params.setting(5))) / 100.0f);
-
-        return {speed1, speed2, speed3};
-    }
+            bool reverse);
 
     static constexpr f32 STEP_HEIGHT = 10.0f;         ///< Height in units of a single step
     static constexpr f32 REVERSE_FRAMES_F32 = 240.0f; ///< from full speed to still or vice versa

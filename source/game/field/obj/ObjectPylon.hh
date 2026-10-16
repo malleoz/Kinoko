@@ -20,30 +20,12 @@ namespace Kinoko::Field {
 /// checks against neighboring pylons. See @ref checkIntraCollision() for more info.
 class ObjectPylon final : public ObjectCollidable {
 public:
-    /// @addr{0x8082CAD8}
-    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
-    /// @param params The parameters used to initialize the object
-    /// @details Caches the cone's initial position, scale, and rotation to @ref m_initPos, @ref
-    /// m_initScale, and @ref m_initRot.
-    ObjectPylon(const System::MapdataGeoObj &params)
-        : ObjectCollidable(params),
-          m_initPos(pos()),
-          m_initScale(scale()),
-          m_initRot(rot()) {}
-
-    /// @addr{0x8082E500}
-    /// @brief Default virtual destructor
-    ~ObjectPylon() = default;
+    ObjectPylon(const System::MapdataGeoObj &params);
+    ~ObjectPylon() override;
 
     void init() override;
     void calc() override;
-
-    /// @addr{0x8082E4F8}
-    /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
-    [[nodiscard]] LoadFlags loadFlags() const override {
-        return LoadFlags(eLoadFlags::Calc);
-    }
+    [[nodiscard]] LoadFlags loadFlags() const override;
 
     Kart::Reaction onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
             Kart::Reaction reactionOnObj, EGG::Vector3f &hitDepth) override;
@@ -60,37 +42,12 @@ private:
     };
 
     void checkIntraCollision(const EGG::Vector3f &hitDepth);
-
     void startHit(f32 velFactor, EGG::Vector3f &hitDepth);
-
     void calcHit();
     void calcHiding();
-
-    /// @brief Runs every frame that the pylon is intangible
-    /// @details Once 900 frames have elapsed, the pylon will transition to the respawning state by
-    /// setting @ref m_state to @ref State::ComeBack, setting @ref m_stateStartFrame to the current
-    /// race time, and resetting the cone's rotation to @ref m_initRot.
-    void calcHide() {
-        constexpr u32 HIDE_DURATION = 900;
-
-        u32 t = System::RaceManager::Instance()->timer();
-        if (t - m_stateStartFrame > HIDE_DURATION) {
-            m_state = State::ComeBack;
-            m_stateStartFrame = t;
-            setRot(m_initRot);
-        }
-    }
-
+    void calcHide();
     void calcComeBack();
-
-    /// @brief Runs every frame that the pylon is being pushed by the player
-    /// @details If 5 frames have elapsed since the cone started moving, transitions the cone back
-    /// to the @ref State::Idle state.
-    void calcMoving() {
-        if (System::RaceManager::Instance()->timer() - m_stateStartFrame > STATE_COOLDOWN_FRAMES) {
-            m_state = State::Idle;
-        }
-    }
+    void calcMoving();
 
     State m_state;                            ///< Current motion and tangibility state
     std::array<ObjectPylon *, 2> m_neighbors; ///< Pointers to the two closest neighboring pylons

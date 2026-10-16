@@ -7,6 +7,33 @@
 
 namespace Kinoko::Field {
 
+/// @addr{0x8081EFEC}
+/// @copybrief ObjectBase::ObjectBase(const System::MapdataGeoObj &)
+/// @param params The parameters used to initialize the object
+/// @details Initializes @ref m_collision to `nullptr`.
+ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &params)
+    : ObjectBase(params),
+      m_collision(nullptr) {}
+
+/// @addr{0x8081F064}
+/// @copybrief ObjectBase::ObjectBase(const char *, const EGG::Vector3f &, const EGG::Vector3f
+/// &, const EGG::Vector3f &)
+/// @param name The name of the object
+/// @param pos The initial position of the object
+/// @param rot The initial rotation of the object
+/// @param scale The initial scale of the object
+/// @details Initializes @ref m_collision to `nullptr`.
+ObjectCollidable::ObjectCollidable(const char *name, const EGG::Vector3f &pos,
+        const EGG::Vector3f &rot, const EGG::Vector3f &scale)
+    : ObjectBase(name, pos, rot, scale),
+      m_collision(nullptr) {}
+
+/// @addr{0x8067E384}
+/// @brief Virtual destructor that destroys the associated collision object
+ObjectCollidable::~ObjectCollidable() {
+    EGG::egg_delete(m_collision);
+}
+
 /// @addr{0x8081F0A0}
 /// @copybrief ObjectBase::load()
 /// @details This function loads the graphical assets, animations, collision object(s), and rail for
@@ -25,6 +52,14 @@ void ObjectCollidable::load() {
     ObjectDirector::Instance()->addObject(this);
 }
 
+/// @addr{0x8081F7C8}
+/// @copybrief ObjectBase::calcCollisionTransform()
+/// @details Updates the GJK collision transform
+void ObjectCollidable::calcCollisionTransform() {
+    calcTransform();
+    m_collision->transform(transform(), scale(), getCollisionTranslation());
+}
+
 /// @addr{0x806815A0}
 /// @copybrief ObjectBase::getCollisionRadius()
 /// @return The collision radius of the object, calculated based on its bounding box.
@@ -38,6 +73,24 @@ f32 ObjectCollidable::getCollisionRadius() const {
     f32 xRadius = scale().x * static_cast<f32>(parse<s16>(collisionSet->params.box.x));
 
     return std::max(xRadius, zRadius);
+}
+
+/// @addr{0x806816D8}
+/// @brief Creates a BoxColUnit based off the collision radius and the provided maxSpeed
+/// @param maxSpeed The maximum speed of the object
+void ObjectCollidable::loadAABB(f32 maxSpeed) {
+    loadAABB(getCollisionRadius(), maxSpeed);
+}
+
+/// @addr{0x8081F180}
+/// @brief Creates a @ref BoxColUnit based off the provided radius and maxSpeed
+/// @param radius The collision radius of the object
+/// @param maxSpeed The maximum speed of the object
+void ObjectCollidable::loadAABB(f32 radius, f32 maxSpeed) {
+    auto *boxColMgr = BoxColManager::Instance();
+    const EGG::Vector3f &pos = getPosition();
+    bool alwaysRecalc = loadFlags().onAnyBit(eLoadFlags::Calc, eLoadFlags::Unk);
+    m_boxColUnit = boxColMgr->insertObject(radius, maxSpeed, &pos, alwaysRecalc, this);
 }
 
 /// @addr{0x8081F66C}
@@ -68,6 +121,36 @@ void ObjectCollidable::processKartReactions(Kart::KartObject *kartObj,
     if (reactionOnObj == Kart::Reaction::UNK_3 || reactionOnObj == Kart::Reaction::UNK_4) {
         reactionOnObj = Kart::Reaction::None;
     }
+}
+
+/// @addr{0x8068179C}
+/// @brief Called when a collision occurs between a kart and this object
+/// @param reactionOnKart The reaction that should be applied to the kart upon collision
+/// @return The reaction that should be applied to the kart
+Kart::Reaction ObjectCollidable::onCollision(Kart::KartObject * /*kartObj*/,
+        Kart::Reaction reactionOnKart, Kart::Reaction /*reactionOnObj*/,
+        EGG::Vector3f & /*hitDepth*/) {
+    return reactionOnKart;
+}
+
+/// @addr{0x80681748}
+/// @brief Performs a collision check between this object and another collision object
+/// @param lhs The object to check collision against (usually the player)
+/// @param dist If a collision occurs, set to the distance between the two objects
+/// @return Whether or not a collision occurred
+bool ObjectCollidable::checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &dist) {
+    return lhs->check(*collision(), dist);
+}
+
+/// @beginGetters
+
+/// @addr{0x80573518}
+/// @brief Gets a pointer to the GJK collision object
+/// @return A pointer to the @ref ObjectCollisionBase GJK collision object, @ref m_collision
+/// @details In the base game, this is a virtual function. Since no derived class
+/// overrides this function, we can devirtualize for Kinoko.
+ObjectCollisionBase *ObjectCollidable::collision() const {
+    return m_collision;
 }
 
 /// @addr{0x8081F224}
@@ -105,6 +188,22 @@ void ObjectCollidable::createCollision() {
                 static_cast<size_t>(id()), parse<s16>(collisionSet->mode));
         break;
     }
+}
+
+/// @addr{0x8068173C}
+/// @brief The translation applied on top of the object's world transform for collision
+/// checks
+/// @return The translation vector applied on top of the object's world transform for
+/// collision checks
+const EGG::Vector3f &ObjectCollidable::getCollisionTranslation() const {
+    return EGG::Vector3f::zero;
+}
+
+/// @addr{0x806816B8}
+/// @brief Defines a local center for the GJK collision object
+/// @return The local center of the GJK collision object, defaulted to @ref EGG::Vector3f::zero.
+const EGG::Vector3f &ObjectCollidable::collisionCenter() const {
+    return EGG::Vector3f::zero;
 }
 
 /// @addr{0x8081F170}

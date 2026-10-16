@@ -1,8 +1,37 @@
 #include "game/field/obj/ObjectVolcanoPiece.hh"
 
 #include "game/system/RaceManager.hh"
+#include "game/system/ResourceManager.hh"
 
 namespace Kinoko::Field {
+
+/// @addr{0x80817DE8}
+/// @copybrief ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
+/// @details Sets @ref m_initialPos and @ref m_initialRot basd on the object's initial position
+/// and rotation. Sets @ref m_restDuration and @ref m_shakeDuration based on the number of
+/// seconds defined by param setting 2 and 3 respectively. Sets @ref m_quakeDuration based on
+/// the number of frames defined by param setting 8 plus one. Initializes @ref m_colMgrB and
+/// @ref m_colMgrC to `nullptr`. Finally, sets @ref m_modelName based on param setting 1.
+ObjectVolcanoPiece::ObjectVolcanoPiece(const System::MapdataGeoObj &params)
+    : ObjectKCL(params),
+      m_initialPos(pos()),
+      m_initialRot(rot()),
+      m_restDuration(params.setting(1) * 60),
+      m_shakeDuration(m_restDuration + params.setting(2) * 60),
+      m_quakeDuration(m_shakeDuration + params.setting(7) + 1),
+      m_colMgrB(nullptr),
+      m_colMgrC(nullptr) {
+    snprintf(m_modelName, sizeof(m_modelName), "VolcanoPiece%hd",
+            static_cast<s16>(params.setting(0)));
+}
+
+/// @addr{0x80803DA8}
+/// @brief Virtual destructor that deletes the secondary and tertiary collision managers for the
+/// volcano piece, if they exist
+ObjectVolcanoPiece::~ObjectVolcanoPiece() {
+    EGG::egg_delete(m_colMgrB);
+    EGG::egg_delete(m_colMgrC);
+}
 
 /// @addr{0x80819400}
 /// @copybrief ObjectBase::calc()
@@ -65,6 +94,20 @@ void ObjectVolcanoPiece::createCollision() {
         m_colMgrC->setInvMtx(invMat);
         m_colMgrC->setScale(scale().y);
     }
+}
+
+/// @addr{0x80805974}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectVolcanoPiece::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
+}
+
+/// @addr{0x80803F6C}
+/// @copybrief ObjectBase::getKclName()
+/// @return The model name of the volcano piece.
+const char *ObjectVolcanoPiece::getKclName() const {
+    return m_modelName;
 }
 
 /// @brief Helper function for frequently re-used portion of point collision checks
@@ -177,6 +220,70 @@ bool ObjectVolcanoPiece::checkCollisionImpl(f32 radius, const EGG::Vector3f &pos
     return hasCol;
 }
 
+/// @addr{0x80805404}
+/// @copydoc ObjectDrivable::checkPointPartial()
+bool ObjectVolcanoPiece::checkPointPartial(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
+        KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) {
+    return checkPointImpl(pos, prevPos, mask, info, maskOut, &ObjColMgr::checkPointPartial);
+}
+
+/// @addr{0x8080554C}
+/// @copydoc ObjectDrivable::checkPointPartialPush()
+bool ObjectVolcanoPiece::checkPointPartialPush(const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+        KCLTypeMask *maskOut) {
+    return checkPointImpl(pos, prevPos, mask, info, maskOut, &ObjColMgr::checkPointPartialPush);
+}
+
+/// @addr{0x80805694}
+/// @copydoc ObjectDrivable::checkPointFull()
+bool ObjectVolcanoPiece::checkPointFull(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
+        KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
+    return checkPointImpl(pos, prevPos, mask, info, maskOut, &ObjColMgr::checkPointFull);
+}
+
+/// @addr{0x808057DC}
+/// @copydoc ObjectDrivable::checkPointFullPush()
+bool ObjectVolcanoPiece::checkPointFullPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
+        KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
+    return checkPointImpl(pos, prevPos, mask, info, maskOut, &ObjColMgr::checkPointFullPush);
+}
+
+/// @addr{0x80804F68}
+/// @copydoc ObjectDrivable::checkSpherePartial()
+bool ObjectVolcanoPiece::checkSpherePartial(f32 radius, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+        KCLTypeMask *maskOut, u32 timeOffset) {
+    return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, timeOffset,
+            &ObjColMgr::checkSpherePartial);
+}
+
+/// @addr{0x808050EC}
+/// @copydoc ObjectDrivable::checkSpherePartialPush()
+bool ObjectVolcanoPiece::checkSpherePartialPush(f32 radius, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+        KCLTypeMask *maskOut, u32 timeOffset) {
+    return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, timeOffset,
+            &ObjColMgr::checkSpherePartialPush);
+}
+
+/// @addr{0x80805270}
+/// @copydoc ObjectDrivable::checkSphereFull()
+bool ObjectVolcanoPiece::checkSphereFull(f32 radius, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
+        u32 timeOffset) {
+    return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, timeOffset,
+            &ObjColMgr::checkSphereFull);
+}
+
+/// @addr{0x808053F4}
+/// @copydoc ObjectDrivable::checkSphereFullPush()
+bool ObjectVolcanoPiece::checkSphereFullPush(f32 radius, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
+        u32 timeOffset) {
+    return checkCollision(radius, pos, prevPos, mask, info, maskOut, timeOffset);
+}
+
 /// @addr{0x808044C0}
 /// @copybrief ObjectDrivable::narrScLocal()
 /// @param radius The radius of the sphere to check
@@ -201,6 +308,72 @@ void ObjectVolcanoPiece::narrScLocal(f32 radius, const EGG::Vector3f &pos, KCLTy
     if (m_colMgrC) {
         m_colMgrC->narrScLocal(radius, pos, mask);
     }
+}
+
+/// @addr{0x80804A48}
+/// @copydoc ObjectDrivable::checkPointCachedPartial()
+bool ObjectVolcanoPiece::checkPointCachedPartial(const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+        KCLTypeMask *maskOut) {
+    return checkPointImpl(pos, prevPos, mask, info, maskOut, &ObjColMgr::checkPointCachedPartial);
+}
+
+/// @addr{0x80804B90}
+/// @copydoc ObjectDrivable::checkPointCachedPartialPush()
+bool ObjectVolcanoPiece::checkPointCachedPartialPush(const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+        KCLTypeMask *maskOut) {
+    return checkPointImpl(pos, prevPos, mask, info, maskOut,
+            &ObjColMgr::checkPointCachedPartialPush);
+}
+
+/// @addr{0x80804CD8}
+/// @copydoc ObjectDrivable::checkPointCachedFull()
+bool ObjectVolcanoPiece::checkPointCachedFull(const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
+    return checkPointImpl(pos, prevPos, mask, info, maskOut, &ObjColMgr::checkPointCachedFull);
+}
+
+/// @addr{0x80804E20}
+/// @copydoc ObjectDrivable::checkPointCachedFullPush()
+bool ObjectVolcanoPiece::checkPointCachedFullPush(const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
+    return checkPointImpl(pos, prevPos, mask, info, maskOut, &ObjColMgr::checkPointCachedFullPush);
+}
+
+/// @addr{0x808045AC}
+/// @copydoc ObjectDrivable::checkSphereCachedPartial()
+bool ObjectVolcanoPiece::checkSphereCachedPartial(f32 radius, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+        KCLTypeMask *maskOut, u32 timeOffset) {
+    return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, timeOffset,
+            &ObjColMgr::checkSphereCachedPartial);
+}
+
+/// @addr{0x80804730}
+/// @copydoc ObjectDrivable::checkSphereCachedPartialPush()
+bool ObjectVolcanoPiece::checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+        KCLTypeMask *maskOut, u32 timeOffset) {
+    return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, timeOffset,
+            &ObjColMgr::checkSphereCachedPartialPush);
+}
+
+/// @addr{0x808048B4}
+/// @copydoc ObjectDrivable::checkSphereCachedFull()
+bool ObjectVolcanoPiece::checkSphereCachedFull(f32 radius, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
+        u32 timeOffset) {
+    return checkSphereImpl(radius, pos, prevPos, mask, info, maskOut, timeOffset,
+            &ObjColMgr::checkSphereCachedFull);
+}
+
+/// @addr{0x80804A38}
+/// @copydoc ObjectDrivable::checkSphereCachedFullPush()
+bool ObjectVolcanoPiece::checkSphereCachedFullPush(f32 radius, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
+        u32 timeOffset) {
+    return checkCollisionCached(radius, pos, prevPos, mask, info, maskOut, timeOffset);
 }
 
 /// @addr{0x80818334}
@@ -250,6 +423,44 @@ void ObjectVolcanoPiece::calcScale(u32 timeOffset) {
     if (m_colMgrB) {
         m_colMgrB->setScale(scale);
     }
+}
+
+/// @addr{0x80805924}
+/// @copydoc ObjectKCL::setMovingObjVel()
+/// @detail Sets the moving object velocity for both @ref m_objColmgr and @ref m_colMgrB.
+void ObjectVolcanoPiece::setMovingObjVel(const EGG::Vector3f &v) {
+    m_objColMgr->setMovingObjVel(v);
+
+    if (m_colMgrB) {
+        m_colMgrB->setMovingObjVel(v);
+    }
+}
+
+/// @addr{0x8080595C}
+/// @copybrief ObjectKCL::getUpdatedMatrix()
+/// @param timeOffset The time offset used to calculate the current frame's transformation
+/// @details Calls @ref calcShakeAndFall() to compute the current transformation matrix based on
+/// the piece's current state.
+const EGG::Matrix34f &ObjectVolcanoPiece::getUpdatedMatrix(u32 timeOffset) {
+    return calcShakeAndFall(nullptr, timeOffset);
+}
+
+/// @addr{0x808199A8}
+/// @copydoc ObjectKCL::checkCollision()
+bool ObjectVolcanoPiece::checkCollision(f32 radius, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
+        u32 timeOffset) {
+    return checkCollisionImpl(radius, pos, prevPos, mask, info, maskOut, timeOffset,
+            &ObjColMgr::checkSphereFullPush);
+}
+
+/// @addr{0x80819DA0}
+/// @copydoc ObjectKCL::checkCollisionCached()
+bool ObjectVolcanoPiece::checkCollisionCached(f32 radius, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
+        u32 timeOffset) {
+    return checkCollisionImpl(radius, pos, prevPos, mask, info, maskOut, timeOffset,
+            &ObjColMgr::checkSphereCachedFullPush);
 }
 
 /// @addr{0x808187B4}

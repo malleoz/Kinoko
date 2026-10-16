@@ -13,72 +13,15 @@ namespace Kinoko::Field {
 /// expected that the derived class sets the member pointers and @ref m_pointIdxs.
 class ObjectSniper : public ObjectCollidable {
 public:
-    /// @addr{0x806DDA84}
-    /// @brief Constructor that creates the object named `MapObjSniper`
-    ObjectSniper()
-        : ObjectCollidable("MapObjSniper", EGG::Vector3f::zero, EGG::Vector3f::ez,
-                  EGG::Vector3f::unit) {}
+    ObjectSniper();
+    ~ObjectSniper() override;
 
-    /// @addr{0x806DDAF4}
-    /// @brief Default virtual destructor
-    ~ObjectSniper() override = default;
-
-    /// @addr{0x806DDB34}
-    /// @copybrief ObjectBase::init()
-    /// @details Constructs the @ref m_pointIdxs mapping between projectile indices and the
-    /// corresponding rail point index to launch the projectile at. Initializes each projectile
-    /// object.
-    void init() override {
-        const auto *launcherRailInterp = m_launcher->railInterpolator();
-
-        for (auto &point : m_pointIdxs) {
-            point = -1;
-        }
-
-        const auto *launcherRail = launcherRailInterp->rail();
-
-        for (size_t i = 0; i < m_projectiles.size(); ++i) {
-            auto *obj = m_projectiles[i];
-            m_pointIdxs[obj->idx()] = i;
-            obj->initProjectile(launcherRail->pointPos(obj->idx()));
-        }
-    }
-
-    /// @addr{0x806DDC44}
-    /// @copybrief ObjectBase::calc()
-    /// @details Checks if the launcher should launch a projectile and triggers the
-    /// corresponding projectile's launch.
-    void calc() override {
-        s32 idx = m_launcher->launchPointIdx();
-
-        if (idx != -1) {
-            m_projectiles[m_pointIdxs[idx]]->onLaunch();
-        }
-    }
-
-    /// @addr{0x806D2900}
-    /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
-    [[nodiscard]] LoadFlags loadFlags() const override {
-        return LoadFlags(eLoadFlags::Calc);
-    }
-
-    /// @addr{0x806D28FC}
-    /// @copybrief ObjectBase::loadGraphics()
-    /// @details no-op because the manager object does not have any graphics to load.
-    void loadGraphics() override {}
-
-    /// @addr{0x806D28F4}
-    /// @copybrief ObjectBase::createCollision()
-    /// @details no-op because the manager object does not have any collision to load. The launcher
-    /// object independently loads its own collision.
-    void createCollision() override {}
-
-    /// @addr{0x806D28F8}
-    /// @copybrief ObjectBase::loadRail()
-    /// @details no-op because the manager object does not have any rail to load. The launcher
-    /// object independently manages its own position.
-    void loadRail() override {}
+    void init() override;
+    void calc() override;
+    void loadGraphics() override;
+    void createCollision() override;
+    void loadRail() override;
+    [[nodiscard]] LoadFlags loadFlags() const override;
 
 protected:
     owning_span<ObjectProjectile *> m_projectiles; ///< Pointers to the managed projectiles

@@ -14,54 +14,19 @@ namespace Kinoko::Field {
 /// ObjectHeyhoShipManager.
 class ObjectHeyhoBall final : public ObjectProjectile, private StateManager {
 public:
-    /// @addr{0x806D02C4}
-    /// @copydoc ObjectProjectile::ObjectProjectile(const System::MapdataGeoObj &)
-    /// @details Sets @ref m_airtime from param setting 2 and caches the cannonball's initial
-    /// position to @ref m_initPos. Finally, registers this object to the vector of managed objects
-    /// in @ref ObjectDirector.
-    ObjectHeyhoBall(const System::MapdataGeoObj &params)
-        : ObjectProjectile(params),
-          StateManager(this, STATE_ENTRIES),
-          m_airtime(static_cast<f32>(params.setting(1))),
-          m_initPos(params.pos()) {
-        registerManagedObject();
-    }
-
-    /// @addr{0x806D1820}
-    /// @brief Default virtual destructor
-    ~ObjectHeyhoBall() override = default;
+    ObjectHeyhoBall(const System::MapdataGeoObj &params);
+    ~ObjectHeyhoBall() override;
 
     void init() override;
-
-    /// @addr{0x806D0780}
-    /// @copybrief ObjectBase::calc()
-    /// @details Evaluates the cannonball's state machine and applies new position of the
-    /// cannonball.
-    void calc() override {
-        StateManager::calc();
-        setPos(m_workingPos);
-    }
+    void calc() override;
+    [[nodiscard]] LoadFlags loadFlags() const override;
 
     [[nodiscard]] Kart::Reaction onCollision(Kart::KartObject *kartObj,
             Kart::Reaction reactionOnKart, Kart::Reaction reactionOnObj,
             EGG::Vector3f &hitDepth) override;
 
-    /// @addr{0x806D18EC}
-    /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
-    [[nodiscard]] LoadFlags loadFlags() const override {
-        return LoadFlags(eLoadFlags::Calc);
-    }
-
     void initProjectile(const EGG::Vector3f &pos) override;
-
-    /// @addr{0x806D188C}
-    /// @brief Callback function use by the @ref ObjectHeyhoShip that wants to throw this
-    /// projectile.
-    /// @details Transitions the cannonball to the falling state.
-    void onLaunch() override {
-        m_nextStateId = 1;
-    }
+    void onLaunch() override;
 
 private:
     /// @brief Describes the intensity of the explosion when a kart collides with the explosion
@@ -70,67 +35,16 @@ private:
         SpinSomeSpeed = 1,     ///< The kart spins out but keeps its items
     };
 
-    /// @addr{0x806D0A3C}
-    /// @brief Runs once when the cannonball is fired
-    /// @details Initializes the cannonball's @ref Field::BoxColUnit if not already created. Resizes
-    /// the collision unit to a radius of @ref INIT_BLAST_RADIUS.
-    void enterFalling() {
-        if (!getUnit()) {
-            loadAABB(0.0f);
-            resize(INIT_BLAST_RADIUS, 0.0f);
-        }
-    }
+    void enterFalling();
+    void enterBlinking();
 
-    /// @addr{0x806D0C0C}
-    /// @brief Runs once when the cannonball has landed and is blinking before exploding
-    /// @details Snaps the cannonball to @ref m_initPos but offset down by half its @ref BALL_RADIUS
-    /// so that it is halfway clipped through the floor.
-    void enterBlinking() {
-        m_workingPos = m_initPos + EGG::Vector3f::ey * -BALL_RADIUS;
-    }
-
-    /// @addr{0x806D0A14}
-    /// @brief Runs every frame that the cannonball is not visible
-    /// @details Snaps the cannonball's position to the @ref ObjectHeyhoShip
-    void calcIntangible() {
-        m_workingPos = m_shipPos;
-    }
-
+    void calcIntangible();
     void calcFalling();
-
-    /// @addr{0x806D0CD8}
-    /// @brief Runs every frame that the cannonball is blinking before exploding
-    /// @details If the cannonball has been in the blinking state for `180` frames, transitions to
-    /// the exploding state.
-    void calcBlinking() {
-        constexpr u32 REST_FRAMES = 180;
-
-        if (m_currentFrame >= REST_FRAMES) {
-            m_nextStateId = 3;
-        }
-    }
-
+    void calcBlinking();
     void calcExploding();
 
-    /// @addr{0x806D14D8}
-    /// @brief Runs after the explosion has finished to set the final scale of the cannonball
-    /// @details Sets the cannonball's XYZ scale to `{1.001f, 1.001f, 1.001f}`.
-    void calcFinishedExplodingScale() {
-        constexpr EGG::Vector3f BALL_SCALE = EGG::Vector3f(1.001f, 1.001f, 1.001f);
-
-        setScale(BALL_SCALE);
-    }
-
-    /// @addr{0x806D14D8}
-    /// @brief Calculates the cannonball scale on the first 46 frames of the explosion
-    /// @todo Describe the parabola once we better understand the significance of the "40" term
-    void calcExplodingScale() {
-        f32 shrinkFrames = static_cast<f32>(m_currentFrame) - 40.0f;
-        f32 scale = 1.2f * m_blastRadiusRatio + -m_scaleChangeRate * shrinkFrames * shrinkFrames;
-
-        scale = std::min(m_blastRadiusRatio, scale);
-        setScale(scale);
-    }
+    void calcFinishedExplodingScale();
+    void calcExplodingScale();
 
     const f32 m_airtime;            ///< Number of frames between shooting and landing
     EGG::Vector3f m_shipPos;        ///< Position of the ship firing the ball

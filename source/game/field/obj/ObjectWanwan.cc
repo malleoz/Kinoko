@@ -8,6 +8,41 @@
 
 namespace Kinoko::Field {
 
+/// @addr{Inlined in 0x806E4224}
+/// @brief Constructor
+/// @param pos The initial position of the stake
+/// @param rot The initial rotation of the stake
+/// @param scale The initial scale of the stake
+ObjectWanwanPile::ObjectWanwanPile(const EGG::Vector3f &pos, const EGG::Vector3f &rot,
+        const EGG::Vector3f &scale)
+    : ObjectCollidable("pile", pos, rot, scale) {}
+
+/// @addr{0x806E9568}
+/// @brief Default virtual destructor
+ObjectWanwanPile::~ObjectWanwanPile() = default;
+
+/// @addr{0x806E9560}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectWanwanPile::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
+}
+
+/// @addr{0x806E9554}
+/// @copybrief ObjectBase::getResources()
+/// @details Returns the resource name for the Chain Chomp.
+/// @return The resource name for the Chain Chomp, `wanwan`.
+const char *ObjectWanwanPile::getResources() const {
+    return "wanwan";
+}
+
+/// @addr{0x806E9548}
+/// @copybrief ObjectBase::getKclName()
+/// @return The model name of the stake, `pile`.
+const char *ObjectWanwanPile::getKclName() const {
+    return "pile";
+}
+
 /// @addr{0x806E4224}
 /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 /// @param params The parameters used to initialize the object
@@ -77,6 +112,10 @@ ObjectWanwan::ObjectWanwan(const System::MapdataGeoObj &params)
     initTransformKeyframes();
 }
 
+/// @addr{0x806E4AEC}
+/// @brief Default virtual destructor
+ObjectWanwan::~ObjectWanwan() = default;
+
 /// @addr{0x806E4B9C}
 /// @copybrief ObjectBase::init()
 /// @details Sets the Chain Chomp's position and @ref m_chainAttachPos to @ref m_initPos. Resets
@@ -130,6 +169,14 @@ void ObjectWanwan::calc() {
     }
 }
 
+/// @addr{0x806E94BC}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
+/// calculated every frame
+ObjectBase::LoadFlags ObjectWanwan::loadFlags() const {
+    return LoadFlags().setBit(eLoadFlags::Calc, eLoadFlags::Draw);
+}
+
 /// @addr{0x806E526C}
 /// @copybrief ObjectCollidable::onCollision()
 /// @param kartObj The kart object involved in the collision
@@ -145,6 +192,59 @@ Kart::Reaction ObjectWanwan::onCollision(Kart::KartObject *kartObj, Kart::Reacti
     }
 
     return kartObj->speedRatioCapped() < 0.5f ? Kart::Reaction::Wall : reactionOnKart;
+}
+
+/// @brief Helper function that handles the case when the param's wander duration is zero
+/// @param duration The duration specified by the param settings
+/// @return `duration` if it is non-zero, otherwise `300.0f`
+f32 ObjectWanwan::initWanderDuration(f32 duration) const {
+    if (duration == 0.0f) {
+        duration = 300.0f;
+    }
+    return duration;
+}
+
+/// @brief Helper function that handles the case when the param's attack arc is zero
+/// @param arc The attack arc specified by the param settings
+/// @return `arc` if it is non-zero, otherwise `30.0f`
+f32 ObjectWanwan::initAttackArc(f32 arc) const {
+    if (arc == 0.0f) {
+        arc = 30.0f;
+    }
+    return arc;
+}
+
+/// @addr{0x806E8A60}
+/// @brief Pre-computes a 15 frame animation cycle that describes how the Chain Chomp's chain
+/// attachment point moves relative to its position
+/// @note When iterating each of the keyframes to set, this function normally calls @ref
+/// EGG::Matrix34f::makeR() and then manually sets the position, but we can optimize slightly by
+/// calling @ref EGG::Matrix34f::makeRT() instead.
+void ObjectWanwan::initTransformKeyframes() {
+    std::array<f32, 15> xRot;
+    SampleHermiteInterp(0.0f, 10.0f, 2.0f, -1.111111f, std::span(xRot.begin(), 6));
+    SampleHermiteInterp(10.0f, -10.0f, -1.111111f, -1.111111f, std::span(xRot.begin() + 5, 5));
+    SampleHermiteInterp(-10.0f, 0.0f, -1.111111f, 2.0f, std::span(xRot.begin() + 9, 6));
+
+    std::array<f32, 15> yPos;
+    SampleHermiteInterp(0.0f, -27.35f, -9.1166658f, 3.75f, std::span(yPos.begin(), 4));
+    SampleHermiteInterp(-27.35f, 33.75f, 3.75f, 2.4863639f, std::span(yPos.begin() + 3, 7));
+    SampleHermiteInterp(33.75f, 0.0f, 2.4863639f, -6.75f, std::span(yPos.begin() + 9, 6));
+
+    std::array<f32, 15> zPos;
+    SampleHermiteInterp(0.0f, -33.75f, -6.75f, -4.8214278f, std::span(zPos.begin(), 6));
+    SampleHermiteInterp(-33.75f, -33.75f, -4.8214278f, 8.4375f, std::span(zPos.begin() + 5, 3));
+    SampleHermiteInterp(-33.75f, 0.0f, 8.4375f, 14.464999f, std::span(zPos.begin() + 7, 3));
+    SampleHermiteInterp(0.0f, 24.11f, 14.464999f, 0.0f, std::span(zPos.begin() + 9, 3));
+    SampleHermiteInterp(24.11f, 0.0f, 0.0f, -8.0366669f, std::span(zPos.begin() + 11, 4));
+
+    for (u8 i = 0; i < m_transformKeyframes.size(); ++i) {
+        EGG::Vector3f rot = EGG::Vector3f(xRot[i] * DEG2RAD, 0.0f, 0.0f);
+        EGG::Vector3f pos = EGG::Vector3f(0.0f, yPos[i], zPos[i]);
+        EGG::Matrix34f mat;
+        mat.makeRT(rot, pos);
+        m_transformKeyframes[i] = mat;
+    }
 }
 
 /// @addr{0x806E6208}
@@ -364,6 +464,17 @@ void ObjectWanwan::calcBack() {
     }
 }
 
+/// @addr{0x806E59BC}
+/// @brief Applies acceleration to velocity and adds velocity to the position
+/// @details Updates @ref m_vel based on @ref m_accel and applies a downward gravitational force
+/// of @ref GRAVITY. Updates the Chain Chomp's position accordingly and resets @ref m_accel to
+/// zero.
+void ObjectWanwan::calcPos() {
+    m_vel += m_accel - GRAVITY;
+    addPos(m_vel);
+    m_accel.setZero();
+}
+
 /// @addr{0x806E5A8C}
 /// @brief Performs a collision check to see if the Chain Chomp is touching the floor
 /// @details If the Chain Chomp is touching the floor, then it bounces upwards with an acceleration
@@ -464,6 +575,75 @@ void ObjectWanwan::calcSpeed() {
     }
 }
 
+/// @addr{0x806E794C}
+/// @brief Checks if the Chain Chomp is touching the floor and applies a bounce if it is
+/// @details If the Chain Chomp is not touching the floor, then clears the Y-component of @ref
+/// m_accel. Otherwise, if the Chain Chomp is touching the floor, then clears the Y-component of
+/// @ref m_vel.y and applies an upward acceleration of `12.0f`.
+void ObjectWanwan::calcBounce() {
+    constexpr f32 BOUNCE_ACCEL = 12.0f;
+
+    if (m_touchingFloor) {
+        m_vel.y = 0.0f;
+        m_accel += EGG::Vector3f::ey * BOUNCE_ACCEL;
+    } else {
+        m_accel.y = 0.0f;
+    }
+}
+
+/// @addr{0x806E79E4}
+/// @brief Calculates the wandering behavior of the Chain Chomp
+/// @details In the base game, this behavior changes depending on whether we are in a race or a
+/// time trial. For Kinoko, we simply call @ref calcWanderTimeTrial().
+void ObjectWanwan::calcWander() {
+    calcWanderTimeTrial();
+}
+
+/// @addr{0x806E7B7C}
+/// @brief Calculates the wandering behavior of the Chain Chomp specifically for time trial mode
+/// @details Increments @ref m_wanderTimer and transitions the Chain Chomp to the attack state
+/// if the timer exceeds @ref m_wanderDuration.
+void ObjectWanwan::calcWanderTimeTrial() {
+    if (m_wanderTimer++ >= m_wanderDuration) {
+        m_nextStateId = 1;
+    }
+}
+
+/// @addr{0x806E7BA4}
+/// @brief Calculates the world position of the chain attachment point on the Chain Chomp
+/// @details Simply calls @ref calcChainAttachPos() with the current chain attachment matrix.
+void ObjectWanwan::calcChain() {
+    if (m_chainAttachMat.base(3).squaredLength() > std::numeric_limits<f32>::epsilon()) {
+        calcChainAttachPos(m_chainAttachMat);
+    }
+}
+
+/// @addr{0x806E7E38}
+/// @brief Interpolates the Chain Chomp's tangent vector towards the target direction
+/// @param interpRate The interpolation factor
+/// @details Updates @ref m_tangent by interpolating it towards @ref m_targetDir.
+void ObjectWanwan::calcTangent(f32 interpRate) {
+    m_tangent = m_tangent.interpolate(interpRate, m_targetDir);
+    if (m_tangent.squaredLength() > std::numeric_limits<f32>::epsilon()) {
+        m_tangent.normalise2();
+    } else {
+        m_tangent = m_targetDir;
+    }
+}
+
+/// @addr{0x806E7F64}
+/// @brief Interpolates the Chain Chomp's up vector towards the target up direction
+/// @param interpRate The interpolation factor
+/// @details Updates @ref m_up by interpolating it towards @ref m_targetUp.
+void ObjectWanwan::calcUp(f32 interpRate) {
+    m_up = m_up.interpolate(interpRate, m_targetUp);
+    if (m_up.squaredLength() > std::numeric_limits<f32>::epsilon()) {
+        m_up.normalise2();
+    } else {
+        m_up = EGG::Vector3f::ey;
+    }
+}
+
 /// @addr{0x806E87C8}
 /// @brief Calculates a random target position for the Chain Chomp to lunge towards
 /// @details The target position is calculated by rotating the vector defined by @ref
@@ -480,39 +660,6 @@ void ObjectWanwan::calcRandomTarget() {
     m_targetDir = m_target - pos();
     m_targetDir.y = 0.0f;
     m_targetDir.normalise2();
-}
-
-/// @addr{0x806E8A60}
-/// @brief Pre-computes a 15 frame animation cycle that describes how the Chain Chomp's chain
-/// attachment point moves relative to its position
-/// @note When iterating each of the keyframes to set, this function normally calls @ref
-/// EGG::Matrix34f::makeR() and then manually sets the position, but we can optimize slightly by
-/// calling @ref EGG::Matrix34f::makeRT() instead.
-void ObjectWanwan::initTransformKeyframes() {
-    std::array<f32, 15> xRot;
-    SampleHermiteInterp(0.0f, 10.0f, 2.0f, -1.111111f, std::span(xRot.begin(), 6));
-    SampleHermiteInterp(10.0f, -10.0f, -1.111111f, -1.111111f, std::span(xRot.begin() + 5, 5));
-    SampleHermiteInterp(-10.0f, 0.0f, -1.111111f, 2.0f, std::span(xRot.begin() + 9, 6));
-
-    std::array<f32, 15> yPos;
-    SampleHermiteInterp(0.0f, -27.35f, -9.1166658f, 3.75f, std::span(yPos.begin(), 4));
-    SampleHermiteInterp(-27.35f, 33.75f, 3.75f, 2.4863639f, std::span(yPos.begin() + 3, 7));
-    SampleHermiteInterp(33.75f, 0.0f, 2.4863639f, -6.75f, std::span(yPos.begin() + 9, 6));
-
-    std::array<f32, 15> zPos;
-    SampleHermiteInterp(0.0f, -33.75f, -6.75f, -4.8214278f, std::span(zPos.begin(), 6));
-    SampleHermiteInterp(-33.75f, -33.75f, -4.8214278f, 8.4375f, std::span(zPos.begin() + 5, 3));
-    SampleHermiteInterp(-33.75f, 0.0f, 8.4375f, 14.464999f, std::span(zPos.begin() + 7, 3));
-    SampleHermiteInterp(0.0f, 24.11f, 14.464999f, 0.0f, std::span(zPos.begin() + 9, 3));
-    SampleHermiteInterp(24.11f, 0.0f, 0.0f, -8.0366669f, std::span(zPos.begin() + 11, 4));
-
-    for (u8 i = 0; i < m_transformKeyframes.size(); ++i) {
-        EGG::Vector3f rot = EGG::Vector3f(xRot[i] * DEG2RAD, 0.0f, 0.0f);
-        EGG::Vector3f pos = EGG::Vector3f(0.0f, yPos[i], zPos[i]);
-        EGG::Matrix34f mat;
-        mat.makeRT(rot, pos);
-        m_transformKeyframes[i] = mat;
-    }
 }
 
 /// @addr{0x806E9084}
@@ -543,6 +690,58 @@ void ObjectWanwan::calcAttackPos() {
         m_chainTaut = true;
         subPos(dir * dist);
         addPos(dir * TAUT_POS_OFFSET);
+    }
+}
+
+/// @brief Calculates the world position of the chain attachment point on the Chain Chomp
+/// @param mat The world transform matrix of the Chain Chomp
+/// @details The attachment point is found by taking the chain chomp's position, subtracting a
+/// neck offset of `250.0f` from the Chain Chomp's forward direction, subtracting an additional
+/// offset of `140.0f` from the forward direction, and adding a vertical offset of `20.0f` to
+/// the up direction. Saves the result to @ref m_chainAttachPos.
+void ObjectWanwan::calcChainAttachPos(EGG::Matrix34f mat) {
+    constexpr f32 NECK_OFFSET = 250.0f;
+    constexpr f32 CHAIN_BACK_OFFSET = 140.0f;
+    constexpr f32 CHAIN_UP_OFFSET = 20.0f;
+
+    EGG::Vector3f pos = mat.base(3);
+    pos -= mat.base(2) * NECK_OFFSET * scale().x;
+    mat.setBase(3, pos);
+
+    EGG::Vector3f backOffset = mat.base(2) * CHAIN_BACK_OFFSET * scale().x;
+    EGG::Vector3f verticalOffset = mat.base(1) * CHAIN_UP_OFFSET * scale().x;
+    m_chainAttachPos = pos - backOffset + verticalOffset;
+}
+
+/// @addr{0x806B38A8}
+/// @brief Calculates the cross product of the XZ components of three vectors
+/// @param v0 The first vector
+/// @param v1 The second vector
+/// @param v2 The third vector
+/// @return The cross product of the XZ components of the three vectors
+f32 ObjectWanwan::CrossXZ(const EGG::Vector3f &v0, const EGG::Vector3f &v1,
+        const EGG::Vector3f &v2) {
+    return (v2.x - v1.x) * (v0.z - v1.z) - (v0.x - v1.x) * (v2.z - v1.z);
+}
+
+/// @addr{0x806E8F4C}
+/// @brief Samples a Hermite interpolation between two values with the number of samples
+/// specified by the size of the destination span
+/// @param start The starting value of the interpolation
+/// @param end The ending value of the interpolation
+/// @param startTangent The tangent at the starting value
+/// @param endTangent The tangent at the ending value
+/// @param dst The destination span to store the sampled values
+void ObjectWanwan::SampleHermiteInterp(f32 start, f32 end, f32 startTangent, f32 endTangent,
+        std::span<f32> dst) {
+    dst.front() = start;
+    dst.back() = end;
+
+    f32 scalar = 1.0f / static_cast<f32>(dst.size() - 1);
+
+    for (u8 i = 1; i < dst.size() - 1; ++i) {
+        dst[i] = EGG::Mathf::Hermite(start, startTangent, end, endTangent,
+                scalar * static_cast<f32>(i));
     }
 }
 

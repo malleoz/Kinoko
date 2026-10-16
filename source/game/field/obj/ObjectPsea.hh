@@ -16,68 +16,16 @@ namespace Kinoko::Field {
 /// speed or out-of-bounds trigger.
 class ObjectPsea final : public ObjectCollidable {
 public:
-    /// @addr{0x8082C234}
-    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
-    /// @details Calculates @ref m_initPosY based off hard-coded offsets. Initializes @ref m_frame
-    /// to zero. Finally, assigns this instance to the @ref ObjectDirector.
-    ObjectPsea(const System::MapdataGeoObj &params)
-        : ObjectCollidable(params),
-          m_initPosY(calcInitPosY()) {
-        m_frame = 0;
+    ObjectPsea(const System::MapdataGeoObj &params);
+    ~ObjectPsea() override;
 
-        auto *objDir = ObjectDirector::Instance();
-        ASSERT(!objDir->psea());
-        objDir->setPsea(this);
-    }
-
-    /// @addr{0x8082C890}
-    /// @brief Default virtual destructor
-    ~ObjectPsea() override = default;
-
-    /// @addr{0x8082C634}
-    /// @copybrief ObjectBase::calc()
-    /// @details Computes the position of the rising water using a sine wave with a period of @ref
-    /// PERIOD. Increments @ref m_frame, wrapping around to 0 after it exceeds @ref CYCLE_DURATION.
-    /// Finally, updates the Y-position of the rising water based on the computed sine value.
-    void calc() override {
-        constexpr f32 POS_OFFSET = 9590.399f;
-        constexpr f32 AMPLITUDE = 140.0f;
-
-        f32 sin = EGG::Mathf::sin(PERIOD * static_cast<f32>(m_frame));
-
-        if (CYCLE_DURATION < m_frame++) {
-            m_frame = 0;
-        }
-
-        f32 posY = m_initPosY + AMPLITUDE * sin + POS_OFFSET;
-        setPos(EGG::Vector3f(pos().x, posY, pos().z));
-    }
-
-    /// @addr{0x8082C888}
-    /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
-    [[nodiscard]] LoadFlags loadFlags() const override {
-        return LoadFlags(eLoadFlags::Calc);
-    }
-
-    /// @addr{0x8082C884}
-    /// @copybrief ObjectBase::loadGraphics()
-    /// @details This is a no-op in the base game.
-    void loadGraphics() override {}
-
-    /// @copybrief ObjectBase::createCollision()
-    /// @details no-op because collision is managed via @ref Kart::KartMove::calcRisingWater().
-    void createCollision() override {}
+    void calc() override;
+    void loadGraphics() override;
+    void createCollision() override;
+    [[nodiscard]] LoadFlags loadFlags() const override;
 
 private:
-    /// @brief Helper function to initialize @ref m_initPosY
-    /// @return The initial Y position of the rising water after applying hard-coded offsets
-    [[nodiscard]] f32 calcInitPosY() const {
-        constexpr EGG::Vector3f POS_OFFSET = EGG::Vector3f(0.0f, 6.75f, 0.0f) * 96.0f;
-        constexpr EGG::Vector3f EXTRA_OFFSET = EGG::Vector3f(0.0f, 1.0f, 0.0f);
-
-        return (pos() + POS_OFFSET + EXTRA_OFFSET).y;
-    }
+    [[nodiscard]] f32 calcInitPosY() const;
 
     u16 m_frame;          ///< Frame within the sinusoidal cycle of the rising water
     const f32 m_initPosY; ///< Initial position after applying hard-coded offsets

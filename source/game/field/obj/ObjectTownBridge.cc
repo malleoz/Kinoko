@@ -1,8 +1,48 @@
 #include "ObjectTownBridge.hh"
 
 #include "game/system/RaceManager.hh"
+#include "game/system/ResourceManager.hh"
 
 namespace Kinoko::Field {
+
+/// @addr{0x80809448}
+/// @copybrief ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
+/// @param params The parameters used to initialize the object
+/// @details Sets @ref m_rotateUpwards based on whether the drawbridge is oriented upright. Sets
+/// @ref m_raisedAngle based on param setting 1, @ref m_pivotFrames based on param setting 2,
+/// @ref m_raisedFrames based on param setting 3, and @ref m_loweredFrames based on param
+/// setting 4. Computes @ref m_fullAnimFrames by doubling @ref m_pivotFrames and summing with
+/// @ref m_loweredFrames and @ref m_raisedFrames. Finally, initializes @ref m_state to @ref
+/// State::Raising.
+ObjectTownBridge::ObjectTownBridge(const System::MapdataGeoObj &params)
+    : ObjectKCL(params),
+      m_rotateUpwards(rot().y < 0.0f),
+      m_raisedAngle(static_cast<float>(params.setting(0))),
+      m_pivotFrames(static_cast<u32>(params.setting(1))),
+      m_raisedFrames(static_cast<u32>(params.setting(2))),
+      m_loweredFrames(static_cast<u32>(params.setting(3))),
+      m_fullAnimFrames(m_pivotFrames * 2 + (m_loweredFrames + m_raisedFrames)) {
+    m_state = State::Raising;
+}
+
+/// @addr{0x8080ACE0}
+/// @brief Virtual destructor that deletes all underlying object collision managers
+ObjectTownBridge::~ObjectTownBridge() {
+    // Whichever ObjColMgr is active will be destroyed naturally as part of ObjectKCL's
+    // destructor. We need to destroy the other ones to avoid leaking. The base game does not
+    // bother doing this.
+    if (m_flatColMgr != m_objColMgr) {
+        EGG::egg_delete(m_flatColMgr);
+    }
+
+    if (m_midColMgr != m_objColMgr) {
+        EGG::egg_delete(m_midColMgr);
+    }
+
+    if (m_raisedColMgr != m_objColMgr) {
+        EGG::egg_delete(m_raisedColMgr);
+    }
+}
 
 /// @addr{0x80809774}
 /// @copybrief ObjectBase::calc()
@@ -54,6 +94,20 @@ void ObjectTownBridge::createCollision() {
             EGG::egg_new<ObjColMgr>(resMgr->getFile(filepath, System::ArchiveId::Course).data());
 
     m_raisedColMgr = m_objColMgr;
+}
+
+/// @addr{0x8080ACD8}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectTownBridge::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
+}
+
+/// @addr{0x8080A8D0}
+/// @copybrief ObjectKCL::colRadiusAdditionalLength()
+/// @return The additional length to be added to the drawbridge's collision radius, `500.0f`.
+f32 ObjectTownBridge::colRadiusAdditionalLength() const {
+    return 500.0f;
 }
 
 /// @addr{0x80809CDC}

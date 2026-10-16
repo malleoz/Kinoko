@@ -1,6 +1,7 @@
 #include "ObjectBird.hh"
 
 #include "game/field/CollisionDirector.hh"
+#include "game/field/KColData.hh"
 
 #include "game/system/RaceManager.hh"
 
@@ -29,6 +30,10 @@ ObjectBird::ObjectBird(const System::MapdataGeoObj &params) : ObjectCollidable(p
     }
 }
 
+/// @addr{0x8077CDC8}
+/// @brief Default virtual destructor
+ObjectBird::~ObjectBird() = default;
+
 /// @addr{0x8077BFC8}
 /// @copybrief ObjectBase::calc()
 /// @details Ensures that follower birds maintain a minimum spacing of `300.0f` units between each
@@ -55,6 +60,53 @@ void ObjectBird::calc() {
     }
 }
 
+/// @addr{0x8077CCF4}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectBird::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
+}
+
+/// @addr{0x8077CCF0}
+/// @copybrief ObjectBase::loadGraphics()
+/// @details This is a no-op in the base game.
+void ObjectBird::loadGraphics() {}
+
+/// @addr{0x8077CCE8}
+/// @copybrief ObjectBase::createCollision()
+/// @details This is a no-op in the base game.
+void ObjectBird::createCollision() {}
+
+/// @addr{0x8077CCE0}
+/// @copybrief ObjectBase::loadRail()
+/// @details This is a no-op in the base game.
+void ObjectBird::loadRail() {}
+
+/// @brief Gets a pointer to the leader of the flock of birds
+/// @return A const pointer to the @ref ObjectBirdLeader of the flock, @ref m_leader
+const ObjectBirdLeader *ObjectBird::leader() const {
+    return m_leader;
+}
+
+/// @brief Exposes the follower birds so that @ref ObjectBirdFollower can access them
+/// @return A const ref to the collection of follower birds, @ref m_followers
+const auto &ObjectBird::followers() const {
+    return m_followers;
+}
+
+/// @addr{0x8077C2F4}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
+/// @param bird The @ref ObjectBird instance that this leader belongs to
+/// @details Sets @ref m_bird based on the provided @ref ObjectBird pointer.
+ObjectBirdLeader::ObjectBirdLeader(const System::MapdataGeoObj &params, const ObjectBird *bird)
+    : ObjectCollidable(params),
+      m_bird(bird) {}
+
+/// @addr{0x8077CE48}
+/// @brief Default virtual destructor
+ObjectBirdLeader::~ObjectBirdLeader() = default;
+
 /// @addr{0x8077C384}
 /// @copybrief ObjectBase::init()
 /// @details Plays the flying animation whose rate is determined randomly scaled between 0 and the
@@ -74,6 +126,58 @@ void ObjectBirdLeader::init() {
     setPos(m_railInterpolator->curPos());
     m_railInterpolator->setSpeed(static_cast<f32>(m_mapObj->setting(0)));
 }
+
+/// @addr{0x8077C504}
+/// @copybrief ObjectBase::calc()
+/// @details Updates the rail interpolator and sets the leader's position accordingly.
+void ObjectBirdLeader::calc() {
+    m_railInterpolator->calc();
+    setPos(m_railInterpolator->curPos());
+}
+
+/// @addr{0x8077CCD4}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectBirdLeader::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
+}
+
+/// @addr{0x8077CC78}
+/// @copybrief ObjectBase::loadAnims()
+/// @details Loads the `flying` animation for the bird leader.
+void ObjectBirdLeader::loadAnims() {
+    std::array<const char *, 1> names = {{
+            "flying",
+    }};
+
+    std::array<Render::AnmType, 1> types = {{
+            Render::AnmType::Chr,
+    }};
+
+    linkAnims(names, types);
+}
+
+/// @copybrief ObjectBase::createCollision()
+/// @details Not overridden in the base game, but collision mode 0 will cause our assert to
+/// fail in @ref ObjectCollidable::createCollision().
+void ObjectBirdLeader::createCollision() {}
+
+/// @addr{0x8077C580}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
+/// @param bird The @ref ObjectBird instance that this follower belongs to
+/// @param idx The index of this follower in the flock
+/// @details Sets the bird's @ref m_idx to the provided `idx` and the bird's @ref m_baseSpeed
+/// based off param setting 1.
+ObjectBirdFollower::ObjectBirdFollower(const System::MapdataGeoObj &params, const ObjectBird *bird,
+        u32 idx)
+    : ObjectBirdLeader(params, bird),
+      m_idx(idx),
+      m_baseSpeed(static_cast<f32>(params.setting(0))) {}
+
+/// @addr{0x8077CE88}
+/// @brief Default virtual destructor
+ObjectBirdFollower::~ObjectBirdFollower() = default;
 
 /// @addr{0x8077C5E0}
 /// @copybrief ObjectBase::init()

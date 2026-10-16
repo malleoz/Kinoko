@@ -1,8 +1,12 @@
 #pragma once
 
-#include "game/field/jugem/JugemUnit.hh"
+#include <egg/core/Disposer.hh>
+
+#include <host/Context.hh>
 
 namespace Kinoko::Field {
+
+class JugemUnit;
 
 /// @brief Manager class for the lifecycle of Lakitu objects for players
 /// @desync Lakitu performs a collision check with the floor to make sure that it does not clip into
@@ -20,66 +24,23 @@ class JugemDirector : EGG::Disposer {
     friend class Host::Context;
 
 public:
-    /// @addr{0x8071E638}
-    /// @brief Creates the @ref JugemUnit for the player and initializes it
-    void init() {
-        createUnits();
-        m_unit->init();
-    }
+    void init();
+    void calc();
 
-    /// @addr{8071E6C0}
-    /// @brief Updates the @ref JugemUnit for the player
-    void calc() {
-        m_unit->calc();
-    }
-
-    /// @addr{0x8071E270}
-    /// @brief Creates the singleton instance of @ref JugemDirector
-    /// @return A pointer to the newly created singleton instance of @ref JugemDirector
-    /// @pre The singleton instance must not already exist.
-    static JugemDirector *CreateInstance() {
-        ASSERT(!s_instance);
-        s_instance = EGG::egg_new<JugemDirector>();
-        return s_instance;
-    }
-
-    /// @addr{0x8071E2FC}
-    /// @brief Destroys the singleton instance of @ref JugemDirector
-    /// @pre The singleton instance must exist already.
-    static void DestroyInstance() {
-        ASSERT(s_instance);
-        auto *instance = s_instance;
-        s_instance = nullptr;
-        EGG::egg_delete(instance);
-    }
-
-    /// @addr{0x809C28B8}
-    /// @brief Returns the singleton instance of the @ref JugemDirector
-    /// @return A pointer to the singleton instance of the @ref JugemDirector
-    [[nodiscard]] static JugemDirector *Instance() {
-        return s_instance;
-    }
+    static JugemDirector *CreateInstance();
+    static void DestroyInstance();
+    [[nodiscard]] static JugemDirector *Instance();
 
 private:
     EGG_NEW_DELETE_FRIEND
 
-    /// @addr{0x8071E330}
-    /// @brief Private constructor
-    /// @details Initializes @ref m_unit to `nullptr`.
-    JugemDirector() : m_unit(nullptr) {}
-
-    /// @addr{0x8071E390}
-    /// @brief Private virtual destructor that destroys the underlying @ref JugemUnit
-    ~JugemDirector() override {
-        EGG::egg_delete(m_unit);
-    }
+    JugemDirector();
+    ~JugemDirector() override;
 
     void createUnits();
 
     JugemUnit *m_unit; ///< Pointer to the @ref JugemUnit for the player
 
-    /// @addr{0x809C28B8}
-    /// @brief The pointer to the singleton instance of the class
     static JugemDirector *s_instance;
 };
 

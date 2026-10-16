@@ -7,181 +7,60 @@ namespace Kinoko::Field {
 /// @brief The base class for a conveyor belt which induces road velocity.
 class ObjectBelt : public ObjectDrivable {
 public:
-    /// @addr{0x807FC248}
-    /// @copybrief ObjectDrivable::ObjectDrivable(const System::MapdataGeoObj &)
-    /// @param params The parameters used to initialize the object
-    /// @details Initializes @ref m_roadVel to `32.0f`.
-    ObjectBelt(const System::MapdataGeoObj &params) : ObjectDrivable(params), m_roadVel(32.0f) {}
+    ObjectBelt(const System::MapdataGeoObj &params);
+    ~ObjectBelt() override;
 
-    /// @addr{0x807FC5EC}
-    /// @brief Default virtual destructor
-    ~ObjectBelt() override = default;
+    [[nodiscard]] LoadFlags loadFlags() const override;
+    void createCollision() override;
+    void calcCollisionTransform() override;
+    [[nodiscard]] f32 getCollisionRadius() const override;
 
-    /// @addr{0x807FD79C}
-    /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
-    [[nodiscard]] LoadFlags loadFlags() const override {
-        return LoadFlags(eLoadFlags::Calc);
-    }
-
-    /// @addr{0x807FD798}
-    /// @copybrief ObjectBase::createCollision()
-    void createCollision() override {}
-
-    /// @addr{0x807FD794}
-    /// @copybrief ObjectBase::calcCollisionTransform()
-    /// @details no-op because collision is managed entirely by the collision functions.
-    void calcCollisionTransform() override {}
-
-    /// @addr{0x807FD784}
-    /// @copybrief ObjectBase::getCollisionRadius()
-    /// @return The collision radius of the conveyer belt, `25000.0f`.
-    [[nodiscard]] f32 getCollisionRadius() const override {
-        return 25000.0f;
-    }
-
-    /// @addr{0x807FD750}
-    /// @copybrief ObjectDrivable::checkPointPartial()
-    /// @return `false`, as this class only implements full push collision checks
-    [[nodiscard]] bool checkPointPartial(const EGG::Vector3f & /*pos*/,
-            const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/,
-            CollisionInfoPartial * /*info*/, KCLTypeMask * /*maskOut*/) override {
-        return false;
-    }
-
-    /// @addr{0x807FD758}
-    /// @copybrief ObjectDrivable::checkPointPartialPush()
-    /// @return `false`, as this class only implements full push collision checks
-    [[nodiscard]] bool checkPointPartialPush(const EGG::Vector3f & /*pos*/,
-            const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/,
-            CollisionInfoPartial * /*info*/, KCLTypeMask * /*maskOut*/) override {
-        return false;
-    }
-
-    /// @addr{0x807FD760}
-    /// @copybrief ObjectDrivable::checkPointFull()
-    /// @return `false`, as this class only implements full push collision checks
-    [[nodiscard]] bool checkPointFull(const EGG::Vector3f & /*pos*/,
-            const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/, CollisionInfo * /*info*/,
-            KCLTypeMask * /*maskOut*/) override {
-        return false;
-    }
-
-    /// @addr{0x807FD768}
-    /// @copydoc ObjectDrivable::checkPointFullPush()
+    [[nodiscard]] bool checkPointPartial(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
+            KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) override;
+    [[nodiscard]] bool checkPointPartialPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
+            KCLTypeMask mask, CollisionInfoPartial *info, KCLTypeMask *maskOut) override;
+    [[nodiscard]] bool checkPointFull(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
+            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override;
     [[nodiscard]] bool checkPointFullPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
-            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override {
-        return calcCollision(pos, prevPos, mask, info, maskOut, 0);
-    }
+            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override;
 
-    /// @addr{0x807FD728}
-    /// @copybrief ObjectDrivable::checkSpherePartial()
-    /// @return `false`, as this class only implements full push collision checks
-    [[nodiscard]] bool checkSpherePartial(f32 /*radius*/, const EGG::Vector3f & /*pos*/,
-            const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/,
-            CollisionInfoPartial * /*info*/, KCLTypeMask * /*maskOut*/,
-            u32 /*timeOffset*/) override {
-        return false;
-    }
-
-    /// @addr{0x807FD730}
-    /// @copybrief ObjectDrivable::checkSpherePartialPush()
-    /// @return `false`, as this class only implements full push collision checks
-    [[nodiscard]] bool checkSpherePartialPush(f32 /*radius*/, const EGG::Vector3f & /*pos*/,
-            const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/,
-            CollisionInfoPartial * /*info*/, KCLTypeMask * /*maskOut*/,
-            u32 /*timeOffset*/) override {
-        return false;
-    }
-
-    /// @addr{0x807FD738}
-    /// @copybrief ObjectDrivable::checkSphereFull()
-    /// @return `false`, as this class only implements full push collision checks
-    [[nodiscard]] bool checkSphereFull(f32 /*radius*/, const EGG::Vector3f & /*pos*/,
-            const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/, CollisionInfo * /*info*/,
-            KCLTypeMask * /*maskOut*/, u32 /*timeOffset*/) override {
-        return false;
-    }
-
-    /// @addr{0x807FD740}
-    /// @copydoc ObjectDrivable::checkSphereFullPush()
+    [[nodiscard]] bool checkSpherePartial(f32 /*radius*/, const EGG::Vector3f &pos,
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+            KCLTypeMask *maskOut, u32 /*timeOffset*/) override;
+    [[nodiscard]] bool checkSpherePartialPush(f32 /*radius*/, const EGG::Vector3f &pos,
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+            KCLTypeMask *maskOut, u32 /*timeOffset*/) override;
+    [[nodiscard]] bool checkSphereFull(f32 /*radius*/, const EGG::Vector3f &pos,
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
+            KCLTypeMask *maskOut, u32 /*timeOffset*/) override;
     [[nodiscard]] bool checkSphereFullPush(f32 /*radius*/, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override {
-        return calcCollision(pos, prevPos, mask, info, maskOut, timeOffset);
-    }
+            KCLTypeMask *maskOut, u32 timeOffset) override;
 
-    /// @addr{0x807FD6F4}
-    /// @copybrief ObjectDrivable::checkPointCachedPartial()
-    /// @return `false`, as this class only implements full push collision checks
-    [[nodiscard]] bool checkPointCachedPartial(const EGG::Vector3f & /*pos*/,
-            const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/,
-            CollisionInfoPartial * /*info*/, KCLTypeMask * /*maskOut*/) override {
-        return false;
-    }
-
-    /// @addr{0x807FD6FC}
-    /// @copybrief ObjectDrivable::checkPointCachedPartialPush()
-    /// @return `false`, as this class only implements full push collision checks
-    [[nodiscard]] bool checkPointCachedPartialPush(const EGG::Vector3f & /*pos*/,
-            const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/,
-            CollisionInfoPartial * /*info*/, KCLTypeMask * /*maskOut*/) override {
-        return false;
-    }
-
-    /// @addr{0x807FD704}
-    /// @copybrief ObjectDrivable::checkPointCachedFull()
-    /// @return `false`, as this class only implements full push collision checks
-    [[nodiscard]] bool checkPointCachedFull(const EGG::Vector3f & /*pos*/,
-            const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/, CollisionInfo * /*info*/,
-            KCLTypeMask * /*maskOut*/) override {
-        return false;
-    }
-
-    /// @addr{0x807FD70C}
-    /// @copydoc ObjectDrivable::checkPointCachedFullPush()
+    [[nodiscard]] bool checkPointCachedPartial(const EGG::Vector3f &pos,
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+            KCLTypeMask *maskOut) override;
+    [[nodiscard]] bool checkPointCachedPartialPush(const EGG::Vector3f &pos,
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+            KCLTypeMask *maskOut) override;
+    [[nodiscard]] bool checkPointCachedFull(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
+            KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) override;
     [[nodiscard]] bool checkPointCachedFullPush(const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut) override {
-        return calcCollision(pos, prevPos, mask, info, maskOut, 0);
-    }
+            KCLTypeMask *maskOut) override;
 
-    /// @addr{0x807FD6CC}
-    /// @copybrief ObjectDrivable::checkSphereCachedPartial()
-    /// @return `false`, as this class only implements full push collision checks
-    [[nodiscard]] bool checkSphereCachedPartial(f32 /*radius*/, const EGG::Vector3f & /*pos*/,
-            const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/,
-            CollisionInfoPartial * /*info*/, KCLTypeMask * /*maskOut*/,
-            u32 /*timeOffset*/) override {
-        return false;
-    }
-
-    /// @addr{0x807FD6D4}
-    /// @copybrief ObjectDrivable::checkSphereCachedPartialPush()
-    /// @return `false`, as this class only implements full push collision checks
-    [[nodiscard]] bool checkSphereCachedPartialPush(f32 /*radius*/, const EGG::Vector3f & /*pos*/,
-            const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/,
-            CollisionInfoPartial * /*info*/, KCLTypeMask * /*maskOut*/,
-            u32 /*timeOffset*/) override {
-        return false;
-    }
-
-    /// @addr{0x807FD6DC}
-    /// @copybrief ObjectDrivable::checkSphereCachedFull()
-    /// @return `false`, as this class only implements full push collision checks
-    [[nodiscard]] bool checkSphereCachedFull(f32 /*radius*/, const EGG::Vector3f & /*pos*/,
-            const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/, CollisionInfo * /*info*/,
-            KCLTypeMask * /*maskOut*/, u32 /*timeOffset*/) override {
-        return false;
-    }
-
-    /// @addr{0x807FD6E4}
-    /// @copydoc ObjectDrivable::checkSphereCachedFullPush()
-    [[nodiscard]] bool checkSphereCachedFullPush(f32 /*radius*/, const EGG::Vector3f &pos,
+    [[nodiscard]] bool checkSphereCachedPartial(f32 radius, const EGG::Vector3f &pos,
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+            KCLTypeMask *maskOut, u32 timeOffset) override;
+    [[nodiscard]] bool checkSphereCachedPartialPush(f32 radius, const EGG::Vector3f &pos,
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfoPartial *info,
+            KCLTypeMask *maskOut, u32 timeOffset) override;
+    [[nodiscard]] bool checkSphereCachedFull(f32 radius, const EGG::Vector3f &pos,
             const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
-            KCLTypeMask *maskOut, u32 timeOffset) override {
-        return calcCollision(pos, prevPos, mask, info, maskOut, timeOffset);
-    }
+            KCLTypeMask *maskOut, u32 timeOffset) override;
+    [[nodiscard]] bool checkSphereCachedFullPush(f32 radius, const EGG::Vector3f &pos,
+            const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info,
+            KCLTypeMask *maskOut, u32 timeOffset) override;
 
     /// @brief Calculates the conveyer belt's velocity at a given position based on its variant
     /// @param variant The variant of the conveyer belt

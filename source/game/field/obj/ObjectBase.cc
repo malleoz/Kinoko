@@ -1,5 +1,6 @@
 #include "ObjectBase.hh"
 
+#include "game/field/BoxColManager.hh"
 #include "game/field/ObjectDirector.hh"
 
 #include "game/system/CourseMap.hh"
@@ -57,14 +58,28 @@ ObjectBase::ObjectBase(const char *name, const EGG::Vector3f &pos, const EGG::Ve
     m_flags.setBit(eFlags::Position, eFlags::Rotation, eFlags::Scale);
 }
 
-/// @addr{0x80680730}
-/// @brief Fetches the name of the resource file (.brres) associated with the object, if any
-/// @return The name of the resource file, or "-" if none is associated
-const char *ObjectBase::getResources() const {
-    const auto &flowTable = ObjectDirector::Instance()->flowTable();
-    const auto *collisionSet = flowTable.set(flowTable.slot(id()));
-    ASSERT(collisionSet);
-    return collisionSet->resources;
+/// @addr{0x8067E3C4}
+/// @brief Virtual destructor that deletes the @ref Abstract::g3d::ResFile, @ref
+/// Render::DrawMdl, and @ref RailInterpolator instances associated with the object
+ObjectBase::~ObjectBase() {
+    EGG::egg_delete(m_resFile);
+    EGG::egg_delete(m_drawMdl);
+    EGG::egg_delete(m_railInterpolator);
+}
+
+/// @addr{0x8081FC68}
+/// @brief Run once during race initialization
+void ObjectBase::init() {}
+
+/// @addr{0x806BF448}
+/// @brief Runs once per frame if the calc flag is set in @ref loadFlags()
+void ObjectBase::calc() {}
+
+/// @addr{0x808217B8}
+/// @brief Updates the object's model
+/// @details The base implementation simply calls @ref calcTransform().
+void ObjectBase::calcModel() {
+    calcTransform();
 }
 
 /// @addr{0x8081FD10}
@@ -85,6 +100,11 @@ void ObjectBase::loadGraphics() {
         m_drawMdl = EGG::egg_new<Render::DrawMdl>();
     }
 }
+
+/// @addr{0x8082072C}
+/// @brief Links associated animations from the object's resource file to the @ref
+/// Render::DrawMdl, if any
+void ObjectBase::loadAnims() {}
 
 /// @addr{0x80820980}
 /// @brief Loads the rail interpolator for the object
@@ -112,14 +132,34 @@ void ObjectBase::loadRail() {
     }
 }
 
+/// @addr{0x80680730}
+/// @brief Fetches the name of the resource file (.brres) associated with the object, if any
+/// @return The name of the resource file, or "-" if none is associated
+const char *ObjectBase::getResources() const {
+    const auto &flowTable = ObjectDirector::Instance()->flowTable();
+    const auto *collisionSet = flowTable.set(flowTable.slot(id()));
+    ASSERT(collisionSet);
+    return collisionSet->resources;
+}
+
 /// @addr{0x80680784}
 /// @brief Fetches the name of the object from the @ref ObjectFlowTable
 /// @return The name of the object
-[[nodiscard]] const char *ObjectBase::getName() const {
+const char *ObjectBase::getName() const {
     const auto &flowTable = ObjectDirector::Instance()->flowTable();
     const auto *collisionSet = flowTable.set(flowTable.slot(id()));
     ASSERT(collisionSet);
     return collisionSet->name;
+}
+
+/// @addr{0x806BF434}
+/// @brief Returns a bitmask indicating which lifecycle hooks should be called for the object
+/// @return No flags set
+/// @details In Kinoko, the only effective behavior of this bitmask is to determine whether
+/// calc() should be called. The other bits are unused.
+ObjectBase::LoadFlags ObjectBase::loadFlags() const {
+    // TODO: This references LOD to determine load flags
+    return LoadFlags();
 }
 
 /// @addr{0x806806DC}
@@ -131,6 +171,177 @@ const char *ObjectBase::getKclName() const {
     const auto *collisionSet = flowTable.set(flowTable.slot(id()));
     ASSERT(collisionSet);
     return collisionSet->resources;
+}
+
+/// @addr{0x80681598}
+/// @brief The position of the object in world space
+/// @return The position of the object in world space
+const EGG::Vector3f &ObjectBase::getPosition() const {
+    return m_pos;
+}
+
+/// @addr{0x8080BDC0}
+/// @brief Collision radius to use for GJK checks
+/// @return Default collision radius of `100.0f`
+f32 ObjectBase::getCollisionRadius() const {
+    return 100.0f;
+}
+
+/// @addr{0x80572574}
+/// @brief Fetches the unique identifier of the object
+/// @return The unique identifier of the object, @ref m_id
+ObjectId ObjectBase::id() const {
+    return m_id;
+}
+
+/// @addr{0x80821DB8}
+/// @brief Resizes the BoxColUnit associated with the object
+/// @param radius The new radius of the collision box
+/// @param maxSpeed The maximum speed for the collision box
+/// @details This function is virtual in the base game, but no derived classes override it, so
+/// we can devirtualize in Kinoko. This does not affect the actual collision geometry of the
+/// object, only the BoxColUnit used for sptially indexed collision queries. This effectively
+/// adjusts how close the player needs to be to the object before collision checks are
+/// performed.
+void ObjectBase::resize(f32 radius, f32 maxSpeed) {
+    m_boxColUnit->resize(radius, maxSpeed);
+}
+
+/// @addr{0x80821DD8}
+/// @brief Unregisters the BoxColUnit associated with the object from the BoxColManager
+/// @details This function is virtual in the base game, but no derived classes override it, so
+/// we can devirtualize in Kinoko.
+void ObjectBase::unregisterCollision() {
+    BoxColManager::Instance()->remove(m_boxColUnit);
+}
+
+/// @addr{0x80821DEC}
+/// @brief Skips collision checks for this object in the BoxColManager
+/// @details This function is virtual in the base game, but no derived classes override it, so
+/// we can devirtualize in Kinoko.
+void ObjectBase::disableCollision() const {
+    m_boxColUnit->m_flag.setBit(eBoxColFlag::Intangible);
+}
+
+/// @addr{0x80821E00}
+/// @brief Re-enables collision checks for this object in the BoxColManager
+/// @details This function is virtual in the base game, but no derived classes override it, so
+/// we can devirtualize in Kinoko.
+void ObjectBase::enableCollision() const {
+    m_boxColUnit->m_flag.resetBit(eBoxColFlag::Intangible);
+}
+
+/// @addr{0x80680618}
+/// @brief Fetches the @ref BoxColUnit associated with the object
+/// @return The @ref BoxColUnit associated with the object
+/// @details This function is virtual in the base game, but no derived classes override it, so
+/// we can devirtualize in Kinoko.
+const BoxColUnit *ObjectBase::getUnit() const {
+    return m_boxColUnit;
+}
+
+/// @brief Sets the position of the object in world space and updates the position matrix flag
+/// @param pos The new position of the object in world space
+void ObjectBase::setPos(const EGG::Vector3f &pos) {
+    m_flags.setBit(eFlags::Position);
+    m_pos = pos;
+}
+
+/// @brief Adds a vector to the object's position and updates the position matrix flag
+/// @param v The vector to add to the object's position
+void ObjectBase::addPos(const EGG::Vector3f &v) {
+    m_flags.setBit(eFlags::Position);
+    m_pos += v;
+}
+
+/// @brief Subtracts a vector from the object's position and updates the position matrix flag
+/// @param v The vector to subtract from the object's position
+void ObjectBase::subPos(const EGG::Vector3f &v) {
+    m_flags.setBit(eFlags::Position);
+    m_pos -= v;
+}
+
+/// @brief Sets the scale of the object and updates the scale flag
+/// @param scale The new scale of the object
+void ObjectBase::setScale(const EGG::Vector3f &scale) {
+    m_flags.setBit(eFlags::Scale);
+    m_scale = scale;
+}
+
+/// @brief Sets the uniform scale of the object and updates the scale flag
+/// @param scale The new uniform scale of the object
+void ObjectBase::setScale(f32 scale) {
+    m_flags.setBit(eFlags::Scale);
+    m_scale.set(scale);
+}
+
+/// @brief Sets the rotation of the object and updates the rotation flag
+/// @param rot The new rotation of the object
+void ObjectBase::setRot(const EGG::Vector3f &rot) {
+    m_flags.setBit(eFlags::Rotation);
+    m_rot = rot;
+}
+
+/// @brief Sets the rotation of the object without updating the rotation flag
+/// @param rot The new rotation of the object
+void ObjectBase::setRotNoFlag(const EGG::Vector3f &rot) {
+    m_rot = rot;
+}
+
+/// @brief Adds a vector to the object's rotation and updates the rotation flag
+/// @param v The vector to add to the object's rotation
+void ObjectBase::addRot(const EGG::Vector3f &v) {
+    m_rotUpdated = true;
+    m_flags.setBit(eFlags::Rotation);
+    m_rot += v;
+}
+
+/// @brief Subtracts a vector from the object's rotation and updates the rotation flag
+/// @param v The vector to subtract from the object's rotation
+void ObjectBase::subRot(const EGG::Vector3f &v) {
+    m_rotUpdated = true;
+    m_flags.setBit(eFlags::Rotation);
+    m_rot -= v;
+}
+
+/// @addr{0x806C296C}
+/// @brief Sets the transformation matrix of the object and updates the matrix flag
+/// @param mat The new transformation matrix of the object
+void ObjectBase::setTransform(const EGG::Matrix34f &mat) {
+    m_rotUpdated = false;
+    m_flags.setBit(eFlags::Matrix);
+    m_transform = mat;
+    m_pos = mat.base(3);
+}
+
+/// @brief Gets the @ref RailInterpolator associated with the object
+/// @return The @ref RailInterpolator for the object, @ref m_railInterpolator
+const RailInterpolator *ObjectBase::railInterpolator() const {
+    return m_railInterpolator;
+}
+
+/// @brief Gets the position of the object in world space
+/// @return The position of the object in world space, @ref m_pos
+const EGG::Vector3f &ObjectBase::pos() const {
+    return m_pos;
+}
+
+/// @brief Gets the scale of the object
+/// @return The scale of the object, @ref m_scale
+const EGG::Vector3f &ObjectBase::scale() const {
+    return m_scale;
+}
+
+/// @brief Gets the rotation of the object
+/// @return The rotation of the object, @ref m_rot
+const EGG::Vector3f &ObjectBase::rot() const {
+    return m_rot;
+}
+
+/// @brief Gets the transformation matrix of the object
+/// @return The transformation matrix of the object, @ref m_transform
+const EGG::Matrix34f &ObjectBase::transform() const {
+    return m_transform;
 }
 
 /// @addr{0x80821640}
@@ -311,6 +522,17 @@ EGG::Vector3f ObjectBase::AdjustVecForward(f32 sidewaysScalar, f32 forwardScalar
     }
 
     return sideways + newForward;
+}
+
+/// @addr{0x806B59A8}
+/// @brief Solves the standard kinematic equation \f$y(t) = v_0\, t - \frac{1}{2} a t^{2}\f$
+/// @param initVel The initial velocity
+/// @param accel The acceleration
+/// @param frame The frame number
+/// @return The displacement at the given frame
+f32 ObjectBase::CalcParabolicDisplacement(f32 initVel, f32 accel, u32 frame) {
+    f32 t = static_cast<f32>(frame);
+    return initVel * t - t * (0.5f * accel * t);
 }
 
 } // namespace Kinoko::Field

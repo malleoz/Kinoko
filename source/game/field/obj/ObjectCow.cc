@@ -1,23 +1,24 @@
 #include "ObjectCow.hh"
 
 #include "game/field/CollisionDirector.hh"
+#include "game/field/KColData.hh"
 #include "game/field/RailManager.hh"
 
 #include "game/kart/KartCollide.hh"
 
 namespace Kinoko::Field {
 
-/// @addr{0x806BC2AC}
-/// @copydoc ObjectCollidable::onCollision()
-/// @param kartObj The kart object that collided with this object
-/// @param reactionOnKart The reaction that should be applied to the kart upon collision
-/// @param hitDepth The depth of the collision between the kart and the object
-/// @return @ref Kart::Reaction::Wall if the kart's speed is below 50%, otherwise @ref
-/// Kart::Reaction::LaunchAwayFlipOnce.
-Kart::Reaction ObjectCow::onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
-        Kart::Reaction /*reactionOnObj*/, EGG::Vector3f & /*hitDepth*/) {
-    return kartObj->speedRatioCapped() < 0.5f ? Kart::Reaction::Wall : reactionOnKart;
-}
+/// @addr{0x806BBEC0}
+/// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @param params The parameters used to initialize the object
+/// @details Sets @ref m_startFrame based off param setting 3.
+ObjectCow::ObjectCow(const System::MapdataGeoObj &params)
+    : ObjectCollidable(params),
+      m_startFrame(params.setting(2)) {}
+
+/// @addr{0x806BBF24}
+/// @brief Default virtual destructor
+ObjectCow::~ObjectCow() = default;
 
 /// @addr{0x806BBF64}
 /// @brief copybrief ObjectBase::init()
@@ -39,6 +40,18 @@ void ObjectCow::init() {
     m_targetDir = EGG::Vector3f::ez;
     m_upForce = EGG::Vector3f::zero;
     m_interpRate = 0.05f;
+}
+
+/// @addr{0x806BC2AC}
+/// @copydoc ObjectCollidable::onCollision()
+/// @param kartObj The kart object that collided with this object
+/// @param reactionOnKart The reaction that should be applied to the kart upon collision
+/// @param hitDepth The depth of the collision between the kart and the object
+/// @return @ref Kart::Reaction::Wall if the kart's speed is below 50%, otherwise @ref
+/// Kart::Reaction::LaunchAwayFlipOnce.
+Kart::Reaction ObjectCow::onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
+        Kart::Reaction /*reactionOnObj*/, EGG::Vector3f & /*hitDepth*/) {
+    return kartObj->speedRatioCapped() < 0.5f ? Kart::Reaction::Wall : reactionOnKart;
 }
 
 /// @addr{0x806BC87C}
@@ -102,7 +115,7 @@ void ObjectCow::interpOrientation() {
     constexpr f32 UP_INTERP_RATE = 0.1f;
 
     m_prevTangent = m_tangent;
-    m_tangent = Interpolate(m_interpRate, m_tangent, m_targetDir);
+    m_tangent = m_tangent.interpolate(m_interpRate, m_targetDir);
 
     if (m_tangent.squaredLength() > std::numeric_limits<f32>::epsilon()) {
         m_tangent.normalise2();
@@ -110,7 +123,7 @@ void ObjectCow::interpOrientation() {
         m_tangent = EGG::Vector3f::ez;
     }
 
-    m_up = Interpolate(UP_INTERP_RATE, m_up, m_floorNrm);
+    m_up = m_up.interpolate(UP_INTERP_RATE, m_floorNrm);
 
     if (m_up.squaredLength() > std::numeric_limits<f32>::epsilon()) {
         m_up.normalise2();
@@ -120,6 +133,31 @@ void ObjectCow::interpOrientation() {
 
     setMatrixTangentTo(m_up, m_tangent);
 }
+
+/// @addr{0x806BCDC4}
+/// @brief Sets the target position and direction for the cow
+/// @param v The target position
+/// @return The distance from the current position to the target position
+f32 ObjectCow::setTarget(const EGG::Vector3f &v) {
+    m_targetPos = v;
+    EGG::Vector3f posDiff = m_targetPos - pos();
+    f32 dist = posDiff.normalise();
+    m_targetDir = m_targetPos + posDiff * 1000.0f - pos();
+    m_targetDir.normalise2();
+
+    return dist;
+}
+
+/// @addr{0x806BD080}
+/// @copybrief ObjectCow::ObjectCow()
+/// @param params The parameters used to initialize the object
+ObjectCowLeader::ObjectCowLeader(const System::MapdataGeoObj &params)
+    : ObjectCow(params),
+      StateManager(this, STATE_ENTRIES) {}
+
+/// @addr{0x806BD1F8}
+/// @brief Default virtual destructor
+ObjectCowLeader::~ObjectCowLeader() = default;
 
 /// @addr{0x806BD264}
 /// @copybrief ObjectBase::init()
@@ -161,6 +199,64 @@ void ObjectCowLeader::calc() {
     calcPos();
     calcFloor();
     interpOrientation();
+}
+
+/// @addr{0x806BF42C}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectCowLeader::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
+}
+
+/// @addr{0x806BDCD8}
+/// @copybrief ObjectCow::calcFloor()
+/// @details Clears the leader's upwards velocity. Sets@ref m_upForce to @ref GRAVITY_FORCE.
+/// Finally, sets @ref m_floorNrm to the next rail point's floor normal.
+void ObjectCowLeader::calcFloor() {
+    m_velocity.y = 0.0f;
+    m_upForce = GRAVITY_FORCE;
+    m_floorNrm = m_railInterpolator->floorNrm(m_railInterpolator->nextPointIdx());
+}
+
+/// @addr{0x806BD6B0}
+/// @brief Called when the cow enters the wait state.
+/// @details Sets the cow's target position based on the current rail interpolator's position
+/// and tangent direction.
+void ObjectCowLeader::enterWait() {
+    constexpr f32 DISTANCE = 10.0f;
+
+    setTarget(m_railInterpolator->curPos() + m_railInterpolator->curTangentDir() * DISTANCE);
+}
+
+/// @addr{0x806BD7D8}
+/// @brief Called when the cow enters the eat state.
+/// @details Initializes the cow's eating animation and sets the duration by generating a random
+/// number in the range `[120, 240]`.
+void ObjectCowLeader::enterEat() {
+    constexpr u32 BASE_EAT_FRAMES = 120;
+    constexpr u32 EAT_FRAMES_RANGE = 240 - BASE_EAT_FRAMES;
+
+    m_eatAnmType = EatAnmType::EatST;
+    u32 rand = System::RaceManager::Instance()->random().getU32(EAT_FRAMES_RANGE);
+    m_eatFrames = rand + BASE_EAT_FRAMES;
+}
+
+/// @addr{0x806BDA1C}
+/// @brief Called when the cow enters the roaming state.
+/// @details Resets @ref m_endedRailSegment to `false` to indicate that the cow has reached the
+/// end of its current rail segment.
+void ObjectCowLeader::enterRoam() {
+    m_endedRailSegment = false;
+}
+
+/// @addr{0x806BD738}
+/// @brief Called every frame while the cow is in the wait state.
+/// @details Transitions the cow to the eat state once the current frame exceeds the wait
+/// duration.
+void ObjectCowLeader::calcWait() {
+    if (m_currentFrame > m_railInterpolator->curPoint().setting[0]) {
+        m_nextStateId = 2;
+    }
 }
 
 /// @addr{0x806BD84C}
@@ -240,6 +336,27 @@ void ObjectCowLeader::calcRoam() {
     setTarget(m_railInterpolator->curPos() + m_railInterpolator->curTangentDir() * 10.0f);
 }
 
+/// @addr{0x806BDD48}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
+/// @param pos The initial position offset for the follower cow
+/// @param initRot The initial rotation for the follower cow
+/// @details Applies the provided position offset to the cow's position and sets its initial yaw
+/// based on the given `initRot`.
+ObjectCowFollower::ObjectCowFollower(const System::MapdataGeoObj &params, const EGG::Vector3f &pos,
+        f32 initRot)
+    : ObjectCow(params),
+      StateManager(this, STATE_ENTRIES),
+      m_posOffset(pos),
+      m_rail(nullptr) {
+    addPos(m_posOffset);
+    setRot(EGG::Vector3f(rot().x, initRot, rot().z));
+}
+
+/// @addr{0x806BDFF4}
+/// @brief Default virtual destructor
+ObjectCowFollower::~ObjectCowFollower() = default;
+
 /// @addr{0x806BE060}
 /// @copybrief ObjectBase::init()
 /// @details Initializes the cow follower by setting its initial position and orientation relative
@@ -279,6 +396,34 @@ void ObjectCowFollower::calc() {
     interpOrientation();
 }
 
+/// @addr{0x806BF420}
+/// @copybrief ObjectBase::loadRail()
+/// @details no-op because the herd's rail is managed by @ref ObjectCowLeader.
+void ObjectCowFollower::loadRail() {}
+
+/// @addr{0x806BF424}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectCowFollower::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
+}
+
+/// @addr{0x806BE4E8}
+/// @brief Called when the cow enters the wait state.
+/// @details Sets the cow's wait duration and rail segment threshold using random values. @ref
+/// m_waitFrames will be set in the range `[100, 160]` and @ref m_railSegThreshold will be set
+/// in the range `[0.2f, 1.0f]`.
+void ObjectCowFollower::enterWait() {
+    constexpr u32 BASE_WAIT_FRAMES = 100;
+    constexpr u32 WAIT_FRAMES_VARIANCE = 60;
+    constexpr f32 BASE_RAIL_THRESHOLD = 0.2f;
+    constexpr f32 RAIL_THRESHOLD_VARIANCE = 0.8f;
+
+    auto &rand = System::RaceManager::Instance()->random();
+    m_waitFrames = rand.getU32(WAIT_FRAMES_VARIANCE) + BASE_WAIT_FRAMES;
+    m_railSegThreshold = BASE_RAIL_THRESHOLD + rand.getF32(RAIL_THRESHOLD_VARIANCE);
+}
+
 /// @addr{0x806BE62C}
 /// @brief Runs when the cow enters the free roam state
 /// @details The cow's top speed while roaming is a random number in the range `[2.0f, 4.0f]`. The
@@ -309,6 +454,32 @@ void ObjectCowFollower::enterFreeRoam() {
 
     f32 distance = BASE_WALK_DISTANCE + rand.getF32(WALK_DISTANCE_VARIANCE);
     setTarget(pos() + dir * distance);
+}
+
+/// @addr{0x806BE930}
+/// @brief Called when the cow enters the follow leader state.
+/// @details Resets the stopping flag, sets the interpolation rate to `0.01f`, and determines
+/// the cow's top speed using a random value in the range `[2.0f, 4.0f]`.
+void ObjectCowFollower::enterFollowLeader() {
+    m_bStopping = false;
+    m_interpRate = 0.01f;
+
+    auto &rand = System::RaceManager::Instance()->random();
+    m_topSpeed = BASE_TOP_SPEED + rand.getF32(TOP_SPEED_VARIANCE);
+}
+
+/// @addr{0x806BE580}
+/// @brief Called every frame while the cow is in the wait state.
+/// @details Transitions the cow to the free roam state once @ref m_waitFrames frames elapse or
+/// the cow reaches @ref m_railSegThreshold along the rail segment.
+void ObjectCowFollower::calcWait() {
+    if (m_currentFrame > m_waitFrames) {
+        m_nextStateId = 1;
+    }
+
+    if (m_rail->segmentT() > m_railSegThreshold) {
+        m_nextStateId = 2;
+    }
 }
 
 /// @addr{0x806BE794}
@@ -402,6 +573,54 @@ ObjectCowHerd::ObjectCowHerd(const System::MapdataGeoObj &params) : ObjectCollid
 
     auto *rail = RailManager::Instance()->rail(static_cast<size_t>(params.pathId()));
     rail->checkSphereFull();
+}
+
+/// @addr{0x806BEFEC}
+/// @brief Default virtual destructor
+ObjectCowHerd::~ObjectCowHerd() = default;
+
+/// @addr{0x806BF02C}
+/// @copybrief ObjectBase::init()
+/// @details Assigns the leader's rail to each child.
+void ObjectCowHerd::init() {
+    for (auto *&child : m_followers) {
+        child->m_rail = m_leader->m_railInterpolator;
+    }
+}
+
+/// @addr{0x806BF064}
+/// @copybrief ObjectBase::calc()
+/// @details Checks for collisions between the cows in the herd. If a follower strays `4000.0f`
+/// units away from the leader, it will transition to the follow state.
+void ObjectCowHerd::calc() {
+    constexpr f32 MAX_DIST = 4000.0f; // Distance at which a cow will return to its leader
+
+    checkIntraCollision();
+
+    for (auto *&follower : m_followers) {
+        EGG::Vector3f posDelta = follower->pos() - m_leader->pos();
+
+        if (posDelta.squaredLength() > MAX_DIST * MAX_DIST) {
+            follower->m_nextStateId = 2;
+        }
+    }
+}
+
+/// @addr{0x806BF348}
+/// @copybrief ObjectBase::createCollision()
+/// @details no-op because the herd object itself does not have collision.
+void ObjectCowHerd::createCollision() {}
+
+/// @addr{0x806BF34C}
+/// @copybrief ObjectBase::loadRail()
+/// @details no-op because the herd's rail is managed by @ref ObjectCowLeader.
+void ObjectCowHerd::loadRail() {}
+
+/// @addr{0x806BF42C}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectCowHerd::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
 }
 
 /// @addr{0x806BF114}

@@ -15,81 +15,21 @@ class ObjectDossun : public ObjectCollidable {
     friend ObjectDossunTsuibiHolder;
 
 public:
-    /// @addr{0x80764510}
-    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
-    /// @param params The parameters used to initialize the object
-    /// @details Initializes @ref m_touchingGround to `false`.
-    ObjectDossun(const System::MapdataGeoObj &params)
-        : ObjectCollidable(params),
-          m_touchingGround(false) {}
-
-    /// @addr{0x8075EE68}
-    /// @brief Default virtual destructor
-    ~ObjectDossun() override = default;
+    ObjectDossun(const System::MapdataGeoObj &params);
+    ~ObjectDossun() override;
 
     void init() override;
-
-    /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
-    [[nodiscard]] LoadFlags loadFlags() const override {
-        return LoadFlags(eLoadFlags::Calc);
-    }
-
-    /// @addr{0x807648A4}
-    /// @copybrief ObjectBase::calcCollisionTransform()
-    /// @details Scales up the height of the Thwomp's transformation matrix by `400.0f`.
-    void calcCollisionTransform() override {
-        constexpr f32 HEIGHT = 400.0f;
-
-        if (!m_collision) {
-            return;
-        }
-
-        calcTransform();
-        EGG::Matrix34f mat = transform();
-        mat[1, 3] += HEIGHT * scale().x;
-        collision()->transform(mat, scale());
-    }
+    void calcCollisionTransform() override;
+    [[nodiscard]] LoadFlags loadFlags() const override;
 
     Kart::Reaction onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
             Kart::Reaction reactionOnObj, EGG::Vector3f &hitDepth) override;
 
-    /// @addr{0x8075F21C}
-    /// @brief Initializes @ref m_stillTimer to param setting 3 (or param setting 4 if setting 3 is
-    /// 0). Also resets @ref m_groundedTimer, @ref m_beforeFallTimer, and @ref m_shakePhase to zero.
-    void initState() {
-        ASSERT(m_mapObj);
-        m_stillTimer = static_cast<u32>(m_mapObj->setting(2));
-        if (m_stillTimer == 0) {
-            m_stillTimer = static_cast<u32>(m_mapObj->setting(3));
-        }
+    virtual void startStill();
 
-        m_groundedTimer = 0;
-        m_beforeFallTimer = 0;
-        m_shakePhase = 0;
-    }
-
+    void initState();
     void calcStomp();
-
-    /// @addr{0x8075FB50}
-    /// @brief Runs once when the Thwomp resets after a stomp
-    /// @details Sets @ref m_anmState to @ref AnmState::Still, resets @ref m_shakePhase to zero and
-    /// @ref m_vel to zero, and resets the Thwomp's yaw to @ref m_currYaw.
-    virtual void startStill() {
-        m_anmState = AnmState::Still;
-        m_shakePhase = 0;
-        m_vel = 0.0f;
-        setRot(EGG::Vector3f(rot().x, m_currYaw, rot().z));
-    }
-
-    /// @addr{0x8075FE8C}
-    /// @brief Runs once when the Thwomp hits the ground after a stomp
-    /// @details Resets @ref m_anmState to @ref AnmState::Grounded and @ref m_groundedTimer to @ref
-    /// GROUND_DURATION.
-    void startGrounded() {
-        m_anmState = AnmState::Grounded;
-        m_groundedTimer = GROUND_DURATION;
-    }
+    void startGrounded();
 
 protected:
     /// @brief Represents the current movement state of the Thwomp in terms of its stomp
@@ -124,51 +64,10 @@ protected:
     static constexpr u32 BEFORE_FALL_DURATION = 10;
 
 private:
-    /// @addr{0x8075F3F4}
-    /// @brief Called when the Thwomp lurches upwards before crushing down
-    /// @details Raises the Thwomp's height by `50.0f` every frame while in this animation state.
-    /// Once @ref m_beforeFallTimer reaches zero, the Thwomp transitions to the falling animation
-    /// state.
-    void calcBeforeFall() {
-        constexpr f32 BEFORE_FALL_VEL = 50.0f;
-
-        setPos(EGG::Vector3f(pos().x, BEFORE_FALL_VEL + pos().y, pos().z));
-
-        if (--m_beforeFallTimer == 0) {
-            m_anmState = AnmState::Falling;
-        }
-    }
-
-    /// @addr{0x8075F430}
-    /// @brief Runs every frame while the Thwomp is stomping downwards
-    /// @details Decreases the Thwomp's vertical velocity by @ref STOMP_ACCEL and updates its
-    /// height accordingly. Checks for floor collision and sets @ref m_touchingGround if a collision
-    /// occurs.
-    void calcFalling() {
-        m_vel -= STOMP_ACCEL;
-        setPos(EGG::Vector3f(pos().x, m_vel + pos().y, pos().z));
-        checkFloorCollision();
-    }
-
-    /// @addr{0x8075F460}
-    /// @brief Runs every frame while the Thwomp is on the ground after a stomp
-    /// @details Decrements @ref m_groundedTimer each frame and transitions to the rising state
-    /// once it reaches zero.
-    void calcGrounded() {
-        if (--m_groundedTimer == 0) {
-            m_anmState = AnmState::Rising;
-        }
-    }
-
-    /// @addr{0x8075F4D8}
-    /// @brief Runs every frame while the Thwomp is rising to its initial position after a stomp
-    /// @details Increases the Thwomp's height by @ref RISING_VEL each frame until it reaches @ref
-    /// m_initialPosY.
-    void calcRising() {
-        f32 posY = std::min(RISING_VEL + pos().y, m_initialPosY);
-        setPos(EGG::Vector3f(pos().x, posY, pos().z));
-    }
-
+    void calcBeforeFall();
+    void calcFalling();
+    void calcGrounded();
+    void calcRising();
     void checkFloorCollision();
 
     /// @brief The number of frames the Thwomp remains on the ground after a stomp

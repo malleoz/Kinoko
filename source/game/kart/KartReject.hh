@@ -2,6 +2,8 @@
 
 #include "game/kart/KartObjectProxy.hh"
 
+#include "game/field/KColData.hh"
+
 namespace Kinoko {
 
 namespace Field {

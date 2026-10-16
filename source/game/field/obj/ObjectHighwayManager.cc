@@ -41,6 +41,57 @@ ObjectHighwayManager::ObjectHighwayManager()
     }
 }
 
+/// @addr{0x806D2FE8}
+/// @brief Default virtual destructor
+ObjectHighwayManager::~ObjectHighwayManager() = default;
+
+/// @addr{0x806D332C}
+/// @copybrief ObjectBase::init()
+/// @details Initializes @ref m_squashTimer to @ref SQUASH_MAX so that the player is initially
+/// vulnerable to being squashed.
+void ObjectHighwayManager::init() {
+    m_squashTimer = SQUASH_MAX;
+}
+
+/// @addr{0x806D345C}
+/// @copybrief ObjectBase::calc()
+/// @details Simply calls @ref calcSquash() to check if any managed @ref ObjectCarTGE has
+/// squashed the player this frame.
+void ObjectHighwayManager::calc() {
+    calcSquash();
+}
+
+/// @addr{0x806D5C68}
+/// @copybrief ObjectBase::loadGraphics()
+/// @details Does nothing since this is just a watcher class
+void ObjectHighwayManager::loadGraphics() {}
+
+/// @addr{0x806D5C60}
+/// @copybrief ObjectBase::createCollision()
+/// @details Does nothing since this is just a watcher class
+void ObjectHighwayManager::createCollision() {}
+
+/// @addr{0x806D5C64}
+/// @copybrief ObjectBase::loadRail()
+/// @details Does nothing since this is just a watcher class
+void ObjectHighwayManager::loadRail() {}
+
+/// @addr{0x806D5C6C}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectHighwayManager::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
+}
+
+/// @beginGetters
+
+/// @brief Gets the number of frames since the last squash occurred from any managed car/truck
+/// object
+/// @return The number of frames since the last squash occurred, @ref m_squashTimer
+u32 ObjectHighwayManager::squashTimer() const {
+    return m_squashTimer;
+}
+
 /// @addr{0x806D50AC}
 /// @brief Iterates all vehicles and resets the squash timer if any vehicle has squashed the player
 /// @details If any vehicle has squashed the player and the player is currently vulnerable, resets

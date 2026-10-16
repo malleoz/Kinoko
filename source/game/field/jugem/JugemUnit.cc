@@ -1,10 +1,118 @@
 #include "JugemUnit.hh"
 
 #include "game/field/CollisionDirector.hh"
+#include "game/field/KColData.hh"
+#include "game/field/jugem/JugemMove.hh"
+#include "game/field/jugem/JugemSwitch.hh"
 
 #include "game/kart/KartMove.hh"
 
 namespace Kinoko::Field {
+
+/// @addr{Inlined in 0x80721514}
+/// @brief Constructor which initializes an array of keyframes
+/// @param count The number of keyframes
+JugemInterp::JugemInterp(u32 count) {
+    m_keyframes = owning_span<InterpKeyframe>(count);
+    m_time = 0.0f;
+    m_rate = 0.0f;
+}
+
+/// @addr{0x80721E64}
+/// @brief Default destructor
+JugemInterp::~JugemInterp() = default;
+
+/// @addr{0x8072370C}
+/// @brief Initializes the keyframes for the interpolation sequence
+/// @param startRate The interpolation rate for the first keyframe
+/// @param endRate The interpolation rate for the last keyframe
+/// @param tDelta The time delta between the first and last keyframe
+void JugemInterp::initKeyframes(f32 startRate, f32 endRate, f32 tDelta, u32 param4) {
+    m_numKeyframes = 0;
+
+    setStartKeyframe(startRate);
+    addKeyframe(endRate, tDelta, param4);
+
+    m_rate = startRate;
+    m_time = 0.0f;
+}
+
+/// @addr{0x80723AF8}
+/// @brief Advances the interpolation sequenceand calculates the current interpolation rate
+/// @param tDelta The time delta to advance the interpolation sequence
+/// @return Whether the interpolation sequence has reached the end of the last keyframe
+bool JugemInterp::calc(f32 tDelta) {
+    m_rate = calcInterpRate(m_time);
+    m_time += tDelta;
+
+    bool endOfKeyframe = m_time > m_keyframes[1].m_time;
+    if (endOfKeyframe) {
+        m_time = m_keyframes[1].m_time;
+    }
+
+    return endOfKeyframe;
+}
+
+/// @addr{0x8074C048}
+/// @brief Adds a keyframe at time 0 with the specified interpolation rate
+/// @param rate The interpolation rate for the keyframe
+void JugemInterp::setStartKeyframe(f32 rate) {
+    m_keyframes[m_numKeyframes].m_interpRate = rate;
+    m_keyframes[m_numKeyframes].m_time = 0.0f;
+    ++m_numKeyframes;
+}
+
+/// @addr{0x8074C0B4}
+/// @brief Adds a keyframe with the specified interpolation rate and time delta
+/// @param rate The interpolation rate for the keyframe
+/// @param tDelta The time delta from the previous keyframe to this keyframe
+void JugemInterp::addKeyframe(f32 rate, f32 tDelta, u32 /*param4*/) {
+    m_keyframes[m_numKeyframes].m_interpRate = rate;
+    m_keyframes[m_numKeyframes].m_time = tDelta + m_keyframes[m_numKeyframes - 1].m_time;
+    ++m_numKeyframes;
+}
+
+/// @addr{0x8074C1E0}
+/// @brief Calculates the current interpolation rate based on the current time and keyframes
+/// @param time The current frame in the interpolation sequence
+f32 JugemInterp::calcInterpRate(f32 time) const {
+    const InterpKeyframe *currKeyframe = nullptr;
+    const InterpKeyframe *nextKeyframe = nullptr;
+
+    for (u32 idx = 0; idx < m_numKeyframes - 1; ++idx) {
+        currKeyframe = &m_keyframes[idx];
+        nextKeyframe = &m_keyframes[idx + 1];
+        if (currKeyframe->m_time <= time && time < nextKeyframe->m_time) {
+            break;
+        }
+    }
+
+    f32 timePastKeyframe = time - currKeyframe->m_time;
+    f32 keyframeDuration = nextKeyframe->m_time - currKeyframe->m_time;
+
+    timePastKeyframe = std::clamp(timePastKeyframe, 0.0f, keyframeDuration);
+
+    return SmoothLerp(currKeyframe->m_interpRate, nextKeyframe->m_interpRate,
+            timePastKeyframe / keyframeDuration);
+}
+
+/// @brief Gets the current interpolation rate
+/// @return The current interpolation rate, @ref m_rate
+f32 JugemInterp::rate() const {
+    return m_rate;
+}
+
+/// @addr{0x8074C3F0}
+/// @brief Performs a smooth interpolation between two values based on a parameter t
+/// @param a The starting value
+/// @param b The ending value
+/// @param t The interpolation parameter [0, 1]
+f32 JugemInterp::SmoothLerp(f32 a, f32 b, f32 t) {
+    f32 sin = EGG::Mathf::SinFIdx(RAD2FIDX * (-HALF_PI + t * (HALF_PI - -HALF_PI)));
+    f32 interpFactor = std::clamp(0.5f * (1.0f + sin), 0.0f, 1.0f);
+
+    return a + interpFactor * (b - a);
+}
 
 /// @addr{0x80721514}
 /// @brief Constructs the movement and interpolation controllers for the Lakitu unit
@@ -17,6 +125,52 @@ JugemUnit::JugemUnit(const Kart::KartObject *kartObj)
       m_switchReverse(nullptr) {
     m_move = EGG::egg_new<JugemMove>(kartObj);
     m_interp = EGG::egg_new<JugemInterp>(2);
+}
+
+/// @addr{0x80721D2C}
+/// @brief Virtual destructor that destroys the switch, movement, and interpolation controllers
+JugemUnit::~JugemUnit() {
+    EGG::egg_delete(m_switchReverse);
+    EGG::egg_delete(m_move);
+    EGG::egg_delete(m_interp);
+}
+
+/// @addr{0x80722100}
+/// @brief Initializes the internal state of the Lakitu unit
+/// @details Resets @ref m_pos to zero and initializes the movement controller.
+void JugemUnit::init() {
+    m_pos.setZero();
+    m_move->init();
+}
+
+/// @addr{0x80721EC0}
+/// @brief Creates the switches for the Lakitu
+/// @details For the purposes of syncing time trials in Kinoko, we only have to implement the
+/// reverse switch.
+void JugemUnit::createSwitchRace() {
+    m_switchReverse = EGG::egg_new<JugemSwitchReverse>();
+}
+
+/// @addr{0x807221C4}
+/// @brief Updates switches, runs the state machine, and updates Lakitu's position if not idle
+void JugemUnit::calc() {
+    calcSwitches();
+
+    StateManager::calc();
+
+    // Perform a collision check if Lakitu is not idle
+    if (m_currentStateId != 0) {
+        setPosFromTransform(m_move->transform());
+        calcCollision();
+    }
+}
+
+/// @addr{0x80723458}
+/// @brief Runs once when the Lakitu begins ascending and leaving the player
+/// @details Sets @ref m_state to @ref State::Away and resets @ref m_ascendTimer to zero.
+void JugemUnit::enterIdle() {
+    m_state = State::Away;
+    m_ascendTimer = 0;
 }
 
 /// @addr{0x80724794}
@@ -32,8 +186,18 @@ void JugemUnit::enterReverse() {
     m_move->init();
     EGG::Vector3f pos = transformLocalToWorldUpright(INIT_POS_OFFSET);
     m_move->setPos(pos, true);
-    m_move->setForwardFromKartObjPosDelta(true);
+    m_move->calcForwardFromKartObjPosDelta(true);
     m_move->setDescending(false);
+}
+
+/// @addr{0x807234A4}
+/// @brief Runs every frame when the Lakitu is idle and not visible, checking for switch toggles
+/// @details If the reverse switch is toggled on, the Lakitu will transition to the reverse
+/// state.
+void JugemUnit::calcIdle() {
+    if (m_switchReverse && m_switchReverse->isOn()) {
+        m_nextStateId = 1;
+    }
 }
 
 /// @addr{0x80724880}
@@ -61,10 +225,10 @@ void JugemUnit::calcReverse() {
     switch (m_state) {
     case State::Away: {
         bool isDoneInterpolating = m_interp->calc(1.0f);
-        EGG::Vector3f localPos = Interpolate(m_interp->rate(), AWAY_LOCAL_POS, DESCEND_LOCAL_POS);
+        EGG::Vector3f localPos = AWAY_LOCAL_POS.interpolate(m_interp->rate(), DESCEND_LOCAL_POS);
         m_move->setAwayOrDescending(true);
         m_move->setAnchorPos(transformLocalToWorldUpright(localPos));
-        m_move->setForwardFromKartObjMainRot(true);
+        m_move->calcForwardFromKartObjMainRot(true);
 
         if (isDoneInterpolating) {
             m_move->setDescending(true);
@@ -75,10 +239,10 @@ void JugemUnit::calcReverse() {
     } break;
     case State::Descending: {
         bool isDoneInterpolating = m_interp->calc(1.0f);
-        EGG::Vector3f localPos = Interpolate(m_interp->rate(), DESCEND_LOCAL_POS, STAY_LOCAL_POS);
+        EGG::Vector3f localPos = DESCEND_LOCAL_POS.interpolate(m_interp->rate(), STAY_LOCAL_POS);
         m_move->setAwayOrDescending(true);
         m_move->setAnchorPos(transformLocalToWorldUpright(localPos));
-        m_move->setForwardFromKartObjMainRot(true);
+        m_move->calcForwardFromKartObjMainRot(true);
 
         if (isDoneInterpolating) {
             m_state = State::Stay;
@@ -87,7 +251,7 @@ void JugemUnit::calcReverse() {
     case State::Stay: {
         m_move->setAwayOrDescending(false);
         m_move->setAnchorPos(transformLocalToWorldUpright(STAY_LOCAL_POS));
-        m_move->setForwardFromKartObjPosDelta(false);
+        m_move->calcForwardFromKartObjPosDelta(false);
 
         if (!m_switchReverse->isOn() || local_40.length() > 2000.0f) {
             m_interp->initKeyframes(INTERP_RATE_START, INTERP_RATE_END, STAY_INTERP_RATE_DURATION,
@@ -110,6 +274,25 @@ void JugemUnit::calcReverse() {
     }
 
     m_move->calc();
+}
+
+/// @addr{0x80722ED8}
+/// @brief Evaluates the switches for the Lakitu unit, checking if it should be toggled on/off
+/// @details For the purposes of syncing time trials in Kinoko, we only need to evaluate the
+/// reverse switch.
+void JugemUnit::calcSwitches() {
+    if (m_switchReverse) {
+        m_switchReverse->calc();
+    }
+}
+
+/// @addr{0x80722F6C}
+/// @brief Updates the Lakitu's position based on the provided transformation matrix, while
+/// keeping the y-coordinate fixed to the player's position
+/// @param mat The transformation matrix used to update the Lakitu's position
+void JugemUnit::setPosFromTransform(const EGG::Matrix34f &mat) {
+    m_pos = mat.base(3);
+    m_pos.y = m_kartObj->pos().y;
 }
 
 /// @addr{0x807230D4}

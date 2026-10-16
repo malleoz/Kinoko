@@ -4,6 +4,23 @@
 
 namespace Kinoko::Field {
 
+/// @addr{0x806D02C4}
+/// @copydoc ObjectProjectile::ObjectProjectile(const System::MapdataGeoObj &)
+/// @details Sets @ref m_airtime from param setting 2 and caches the cannonball's initial
+/// position to @ref m_initPos. Finally, registers this object to the vector of managed objects
+/// in @ref ObjectDirector.
+ObjectHeyhoBall::ObjectHeyhoBall(const System::MapdataGeoObj &params)
+    : ObjectProjectile(params),
+      StateManager(this, STATE_ENTRIES),
+      m_airtime(static_cast<f32>(params.setting(1))),
+      m_initPos(params.pos()) {
+    registerManagedObject();
+}
+
+/// @addr{0x806D1820}
+/// @brief Default virtual destructor
+ObjectHeyhoBall::~ObjectHeyhoBall() = default;
+
 /// @addr{0x806D05F0}
 /// @copybrief ObjectBase::init()
 /// @details Starts the cannonball in the intangible state. Initializes some internal state
@@ -25,6 +42,22 @@ void ObjectHeyhoBall::init() {
     m_blastRadiusRatio = INIT_BLAST_RADIUS /
             static_cast<f32>(parse<s16>(flowTable.set(flowTable.slot(id()))->params.sphere.radius));
     m_scaleChangeRate = (1.2f * m_blastRadiusRatio - 1.0f) / 40.0f / 40.0f;
+}
+
+/// @addr{0x806D0780}
+/// @copybrief ObjectBase::calc()
+/// @details Evaluates the cannonball's state machine and applies new position of the
+/// cannonball.
+void ObjectHeyhoBall::calc() {
+    StateManager::calc();
+    setPos(m_workingPos);
+}
+
+/// @addr{0x806D18EC}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectHeyhoBall::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
 }
 
 /// @addr{0x806D0880}
@@ -68,6 +101,40 @@ void ObjectHeyhoBall::initProjectile(const EGG::Vector3f &pos) {
     m_initYSpeed = yDist / m_airtime + 0.5f * 4.0f * m_airtime;
 }
 
+/// @addr{0x806D188C}
+/// @brief Callback function use by the @ref ObjectHeyhoShip that wants to throw this
+/// projectile.
+/// @details Transitions the cannonball to the falling state.
+void ObjectHeyhoBall::onLaunch() {
+    m_nextStateId = 1;
+}
+
+/// @addr{0x806D0A3C}
+/// @brief Runs once when the cannonball is fired
+/// @details Initializes the cannonball's @ref Field::BoxColUnit if not already created. Resizes
+/// the collision unit to a radius of @ref INIT_BLAST_RADIUS.
+void ObjectHeyhoBall::enterFalling() {
+    if (!getUnit()) {
+        loadAABB(0.0f);
+        resize(INIT_BLAST_RADIUS, 0.0f);
+    }
+}
+
+/// @addr{0x806D0C0C}
+/// @brief Runs once when the cannonball has landed and is blinking before exploding
+/// @details Snaps the cannonball to @ref m_initPos but offset down by half its @ref BALL_RADIUS
+/// so that it is halfway clipped through the floor.
+void ObjectHeyhoBall::enterBlinking() {
+    m_workingPos = m_initPos + EGG::Vector3f::ey * -BALL_RADIUS;
+}
+
+/// @addr{0x806D0A14}
+/// @brief Runs every frame that the cannonball is not visible
+/// @details Snaps the cannonball's position to the @ref ObjectHeyhoShip
+void ObjectHeyhoBall::calcIntangible() {
+    m_workingPos = m_shipPos;
+}
+
 /// @addr{0x806D0AD8}
 /// @brief Runs every frame that the cannonball is falling
 /// @details Applies a gravitational force of `4.0f` and compares the resulting height with the
@@ -89,6 +156,18 @@ void ObjectHeyhoBall::calcFalling() {
     } else {
         m_nextStateId = 2;
         m_workingPos = (m_workingPos + m_initPos + EGG::Vector3f::ey * -BALL_RADIUS) * 0.5f;
+    }
+}
+
+/// @addr{0x806D0CD8}
+/// @brief Runs every frame that the cannonball is blinking before exploding
+/// @details If the cannonball has been in the blinking state for `180` frames, transitions to
+/// the exploding state.
+void ObjectHeyhoBall::calcBlinking() {
+    constexpr u32 REST_FRAMES = 180;
+
+    if (m_currentFrame >= REST_FRAMES) {
+        m_nextStateId = 3;
     }
 }
 
@@ -119,6 +198,26 @@ void ObjectHeyhoBall::calcExploding() {
         m_intensity = m_currentFrame >= SPIN_FRAME ? ExplosionIntensity::SpinSomeSpeed :
                                                      ExplosionIntensity::ExplosionLoseItem;
     }
+}
+
+/// @addr{0x806D14D8}
+/// @brief Runs after the explosion has finished to set the final scale of the cannonball
+/// @details Sets the cannonball's XYZ scale to `{1.001f, 1.001f, 1.001f}`.
+void ObjectHeyhoBall::calcFinishedExplodingScale() {
+    constexpr EGG::Vector3f BALL_SCALE = EGG::Vector3f(1.001f, 1.001f, 1.001f);
+
+    setScale(BALL_SCALE);
+}
+
+/// @addr{0x806D14D8}
+/// @brief Calculates the cannonball scale on the first 46 frames of the explosion
+/// @todo Describe the parabola once we better understand the significance of the "40" term
+void ObjectHeyhoBall::calcExplodingScale() {
+    f32 shrinkFrames = static_cast<f32>(m_currentFrame) - 40.0f;
+    f32 scale = 1.2f * m_blastRadiusRatio + -m_scaleChangeRate * shrinkFrames * shrinkFrames;
+
+    scale = std::min(m_blastRadiusRatio, scale);
+    setScale(scale);
 }
 
 } // namespace Kinoko::Field

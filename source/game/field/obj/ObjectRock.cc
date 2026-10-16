@@ -1,10 +1,26 @@
 #include "ObjectRock.hh"
 
 #include "game/field/CollisionDirector.hh"
+#include "game/field/KColData.hh"
 
 #include "game/kart/KartCollide.hh"
 
 namespace Kinoko::Field {
+
+/// @addr{0x8076F2E0}
+/// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @param params The parameters used to initialize the object
+/// @details Initializes @ref m_cooldownDuration based on param setting 2, @ref m_railSpeed
+/// based on param setting 3, and @ref m_bounceFactor basd on param setting 4.
+ObjectRock::ObjectRock(const System::MapdataGeoObj &params)
+    : ObjectCollidable(params),
+      m_cooldownDuration(params.setting(1)),
+      m_railSpeed(static_cast<f32>(params.setting(2))),
+      m_bounceFactor(static_cast<f32>(params.setting(3))) {}
+
+/// @addr{0x8076F344}
+/// @brief Default virtual destructor
+ObjectRock::~ObjectRock() = default;
 
 /// @addr{0x8076F384}
 /// @copybrief ObjectBase::init()
@@ -59,6 +75,19 @@ void ObjectRock::calc() {
     m_vel.z = scaledTang.z;
 }
 
+/// @addr{0x8076FFC0}
+/// @brief Makes the rock tangible again after being intangible
+/// @details Sets @ref m_state to @ref State::Tangible. Resets @ref m_angSpd to @ref
+/// INITIAL_ANGULAR_SPEED, sets @ref m_vel.y to @ref m_bounceFactor, and resets the
+/// cooldown timer. Finally, re-enables the rock's collision.
+void ObjectRock::enterTangible() {
+    m_state = State::Tangible;
+    m_angSpd = INITIAL_ANGULAR_SPEED;
+    m_vel.y = m_bounceFactor;
+    m_cooldownTimer = m_cooldownDuration;
+    enableCollision();
+}
+
 /// @addr{0x8076F768}
 /// @brief Runs every frame that the rock is collidable
 /// @details Updates the rock's position along the rail. If the rock has reached the end of the
@@ -83,6 +112,15 @@ void ObjectRock::calcTangible() {
     calcTangibleSub();
 }
 
+/// @addr{0x8076F868}
+/// @brief Runs every frame that the rock is intangible
+/// @details Waits for the cooldown timer to expire before making the rock tangible again.
+void ObjectRock::calcIntangible() {
+    if (m_cooldownTimer < 0) {
+        enterTangible();
+    }
+}
+
 /// @addr{0x8076F91C}
 /// @brief Updates the rock's rotation based on its angular velocity
 /// @details Increments the rock's @ref m_angRad based on @ref m_angSpd and updates its rotation
@@ -100,6 +138,19 @@ void ObjectRock::calcTangibleSub() {
     mat = m.multiplyTo(mat);
     mat.setBase(3, pos());
     setTransform(mat);
+}
+
+/// @addr{0x8076FD90}
+/// @brief Runs when a collision occurs or when the rock reaches the end of its rail path
+/// @details Sets @ref m_state to @ref State::Intangible, reinitializes the rail interpolator to
+/// the start of the rail with a speed of @ref m_railSpeed, resets the rock's vertical position
+/// to @ref m_startYPos, and disables the rock's collision.
+void ObjectRock::breakRock() {
+    m_state = State::Intangible;
+    m_railInterpolator->init(0.0f, 0);
+    m_railInterpolator->setSpeed(m_railSpeed);
+    setPos(EGG::Vector3f(pos().x, m_startYPos, pos().z));
+    disableCollision();
 }
 
 /// @addr{0x8076FA60}
@@ -123,6 +174,21 @@ void ObjectRock::checkSphereFull() {
                 m_angSpd + 1.0f);
         addPos(info.tangentOff);
     }
+}
+
+/// @addr{0x8077037C}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectRock::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
+}
+
+/// @addr{0x8077036C}
+/// @copybrief ObjectCollidable::getCollisionTranslation()
+/// @return @ref m_vel, so that it is applied on top of the object's world transform for
+/// collision checks
+const EGG::Vector3f &ObjectRock::getCollisionTranslation() const {
+    return m_vel;
 }
 
 /// @addr{0x80770068}

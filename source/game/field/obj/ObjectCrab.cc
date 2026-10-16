@@ -4,6 +4,21 @@
 
 namespace Kinoko::Field {
 
+/// @addr{0x8088344C}
+/// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @param params The parameters used to initialize the object
+/// @details Sets @ref m_vel based on param setting 1 and sets @ref m_backwards to `true` when
+/// param setting 2 is non-zero. Finally, initializes @ref m_introCalc to `false`.
+ObjectCrab::ObjectCrab(const System::MapdataGeoObj &params)
+    : ObjectCollidable(params),
+      m_vel(static_cast<f32>(static_cast<s16>(params.setting(0)))),
+      m_backwards(!!params.setting(1)),
+      m_introCalc(false) {}
+
+/// @addr{0x808837B8}
+/// @brief Default virtual destructor
+ObjectCrab::~ObjectCrab() = default;
+
 /// @addr{0x80883844}
 /// @copybrief ObjectBase::init()
 /// @details Initializes the crab's rotation to @ref INIT_ROT. Updates the rail interpolator's
@@ -66,6 +81,23 @@ void ObjectCrab::calc() {
         setState(State::Still);
         calcState();
     }
+}
+
+/// @addr{0x808864DC}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectCrab::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
+}
+
+/// @addr{0x80886438}
+/// @brief Sets the provided state and resets the phase
+/// @param state The new state to set for the crab
+/// @details Updates @ref m_state to the provided state and resets @ref m_statePhase to @ref
+/// StatePhase::Start.
+void ObjectCrab::setState(State state) {
+    m_state = state;
+    m_statePhase = StatePhase::Start;
 }
 
 /// @brief Tries to move the crab along its rail, unless @ref m_still is `true`
@@ -133,6 +165,15 @@ ObjectCrab::StateResult ObjectCrab::calcState() {
     }
 
     return StateResult::BeginWalking;
+}
+
+/// @brief Updates the crab's rotation based off the provided rotation
+/// @param rot The rotation to set for the crab.
+/// @details Sets rotation by factoring in the crab's backwards setting and rail direction.
+void ObjectCrab::calcCurRot(const EGG::Vector3f &rot) {
+    m_curRot = rot;
+    m_curRot = m_backwards ? -m_curRot : m_curRot;
+    m_curRot.y = m_railInterpolator->isMovementDirectionForward() ? m_curRot.y : -m_curRot.y;
 }
 
 /// @brief Sets the transformation matrix based on the provided rotation and the rail's tangent

@@ -11,10 +11,7 @@ namespace Kinoko::Field {
 class ObjectHeyhoShipManager final : public ObjectSniper {
 public:
     ObjectHeyhoShipManager();
-
-    /// @addr{0x806D2514}
-    /// @brief Default virtual destructor
-    ~ObjectHeyhoShipManager() override = default;
+    ~ObjectHeyhoShipManager() override;
 
     void init() override;
     void calc() override;

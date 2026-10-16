@@ -5,6 +5,23 @@
 
 namespace Kinoko::Field {
 
+/// @addr{0x806C0D18}
+/// @brief Constructor
+/// @param params The parameters used to initialize the object
+ObjectFireSnakeKid::ObjectFireSnakeKid(const System::MapdataGeoObj &params)
+    : ObjectCollidable(params) {}
+
+/// @addr{0x806C2ACC}
+/// @brief Default virtual destructor
+ObjectFireSnakeKid::~ObjectFireSnakeKid() = default;
+
+/// @addr{0x806C2B60}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectFireSnakeKid::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
+}
+
 /// @addr{0x806C0F30}
 /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 /// @param params The parameters used to initialize the object
@@ -35,6 +52,49 @@ ObjectFireSnake::ObjectFireSnake(const System::MapdataGeoObj &params)
     m_prevTransforms.fill(EGG::Matrix34f::ident);
 }
 
+/// @addr{0x806C1284}
+/// @brief Default virtual destructor
+ObjectFireSnake::~ObjectFireSnake() = default;
+
+/// @addr{0x806C13B0}
+/// @copybrief ObjectBase::init()
+/// @details Initializes the fire snake to the despawned state. Also caches the initial rotation
+/// and bounce direction of the fire snake.
+void ObjectFireSnake::init() {
+    m_nextStateId = 0;
+    enterDespawned();
+
+    m_spawnPos.setZero();
+
+    calcTransform();
+    m_initRot = transform().base(0);
+    m_bounceDir = transform().base(0);
+}
+
+/// @addr{0x806C14E4}
+/// @copybrief ObjectBase::calc()
+/// @details Evaluates the fire snake's state machine. If the fire snake has exceeded its
+/// maximum age while in the active state, it transitions to the despawned state. Also updates
+/// the state of all children.
+void ObjectFireSnake::calc() {
+    StateManager::calc();
+
+    if (isCollisionEnabled()) {
+        if (++m_age >= m_maxAge && m_currentStateId == 3) {
+            m_nextStateId = 0;
+        }
+    }
+
+    calcChildren();
+}
+
+/// @addr{0x806C2A5C}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectFireSnake::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
+}
+
 /// @addr{0x806C23C8}
 /// @brief Callback function called by the managing @ref ObjectSunDS.
 /// @param pos The initial spawn position for the fire snake
@@ -55,6 +115,48 @@ void ObjectFireSnake::initProjectile(const EGG::Vector3f &pos) {
     m_fallDir = RotateXZByYaw(HALF_PI, m_xzSunDist);
     m_xzFallSpeed = dist * EGG::Mathf::sqrt(GRAVITY * 0.5f / (m_spawnPos.y - m_initPos.y));
     m_fallDuration = static_cast<u16>(dist / m_xzFallSpeed);
+}
+
+/// @addr{0x806C29FC}
+/// @brief Callback function use by the @ref ObjectSunDS that wants to throw this projectile.
+/// @details Sets the next state to the falling state when the fire snake is launched.
+void ObjectFireSnake::onLaunch() {
+    m_nextStateId = 1;
+}
+
+/// @addr{0x806C1930}
+/// @brief Runs once when the fire snake despawns
+/// @details Resets the trajectory position to the spawn position and disables collision.
+void ObjectFireSnake::enterDespawned() {
+    if (getUnit()) {
+        unregisterCollision();
+    }
+
+    m_trajectoryPos = m_spawnPos;
+    setPos(m_spawnPos);
+}
+
+/// @addr{0x806C19E8}
+/// @brief Runs once when the fire snake respawns
+/// @details Loads the collision bounding box if it hasn't been loaded yet.
+void ObjectFireSnake::enterFalling() {
+    if (!getUnit()) {
+        loadAABB(0.0f);
+    }
+}
+
+/// @addr{0x806C1DCC}
+/// @brief Runs once after landing from the sun (for the case of @ref ObjectFireSnake), or runs
+/// once upon re-spawning (for the case of @ref ObjectFireSnakeV).
+/// @details Sets the trajectory position to the initial landing position, snaps the fire
+/// snake's position to the landing position, and determines the bounce direction with a 50%
+/// chance of flipping it.
+void ObjectFireSnake::enterHighBounce() {
+    m_trajectoryPos = m_initPos;
+    setPos(m_initPos);
+    f32 rand = System::RaceManager::Instance()->random().getF32();
+    m_bounceDir = rand >= 0.5f ? m_initRot : -m_initRot;
+    m_age = 0;
 }
 
 /// @addr{0x806C2000}
@@ -119,6 +221,15 @@ void ObjectFireSnake::calcFalling() {
     }
 }
 
+/// @addr{0x806C1E90}
+/// @brief Runs every frame during the first bounce
+/// @details Dispatches to calcBounce(float) with a 60% increase in the bounce velocity.
+void ObjectFireSnake::calcHighBounce() {
+    constexpr f32 HIGH_BOUNCE_SCALAR = 1.6f;
+
+    calcBounce(HIGH_BOUNCE_SCALAR * BOUNCE_VELOCITY);
+}
+
 /// @addr{0x806C2138}
 /// @brief Runs every frame while the fire snake is in between jumps
 /// @details If the fire snake has been resting for at least `30` frames, it transitions to the
@@ -134,10 +245,17 @@ void ObjectFireSnake::calcRest() {
 
     calcTransform();
 
-    EGG::Vector3f tangent = Interpolate(TANGENT_INTERP_FACTOR, transform().base(2), m_bounceDir);
+    EGG::Vector3f tangent = transform().base(2).interpolate(TANGENT_INTERP_FACTOR, m_bounceDir);
     tangent.normalise2();
 
     setMatrixTangentTo(EGG::Vector3f::ey, tangent);
+}
+
+/// @addr{0x806C2254}
+/// @brief Runs every frame the fire snake is bouncing, except the first bounce
+/// @details Dispatches to calcBounc(float) with a velocity of @ref BOUNCE_VELOCITY.
+void ObjectFireSnake::calcBounce() {
+    calcBounce(BOUNCE_VELOCITY);
 }
 
 /// @addr{0x806C2530}
@@ -209,6 +327,12 @@ void ObjectFireSnake::calcBounce(f32 initialVel) {
     }
 
     setPos(m_trajectoryPos);
+}
+
+/// @brief Collision is enabled if the snake has landed from the spawner
+/// @return `true` if collision is enabled (when bouncing or resting), `false` otherwise.
+bool ObjectFireSnake::isCollisionEnabled() const {
+    return m_currentStateId == 2 || m_currentStateId == 3 || m_currentStateId == 4;
 }
 
 } // namespace Kinoko::Field

@@ -1,6 +1,7 @@
 #include "ObjectHeyho.hh"
 
 #include "game/field/CollisionDirector.hh"
+#include "game/field/KColData.hh"
 #include "game/field/RailManager.hh"
 
 namespace Kinoko::Field {
@@ -33,6 +34,10 @@ ObjectHeyho::ObjectHeyho(const System::MapdataGeoObj &params)
     m_accel = m_maxVelSq / (m_apex - m_midpoint.y);
 }
 
+/// @addr{0x806CEB24}
+/// @brief Default virtual destructor
+ObjectHeyho::~ObjectHeyho() = default;
+
 /// @addr{0x806CEB90}
 /// @copybrief ObjectBase::init()
 /// @details Initializes the Shy Guy's rail interpolator to the midpoint of its route and snaps the
@@ -55,6 +60,18 @@ void ObjectHeyho::init() {
     m_spinFrame = 0;
 
     changeAnimation(Animation::Move);
+}
+
+/// @addr{0x806CEDF8}
+/// @copybrief ObjectBase::calc()
+/// @details Checks if the Shy Guy should transition to the next state. Updates the Shy Guy's
+/// position along the rail. Evaluates the Shy Guy's state machine. Finally, interpolates the
+/// Shy Guy's transform based off the current floor normal.
+void ObjectHeyho::calc() {
+    calcStateTransition();
+    calcMotion();
+    StateManager::calc();
+    calcInterp();
 }
 
 /// @addr{0x806D013C}
@@ -97,6 +114,20 @@ void ObjectHeyho::calcCollisionTransform() {
     calcTransform();
     EGG::Matrix34f m = transform().multiplyTo(tm);
     objCol->transform(m, scale(), m_initVel);
+}
+
+/// @addr{0x806D02B4}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
+/// calculated every frame
+ObjectBase::LoadFlags ObjectHeyho::loadFlags() const {
+    return LoadFlags().setBit(eLoadFlags::Calc, eLoadFlags::Draw);
+}
+
+/// @brief Runs when the Shy Guy enters the jump state
+/// @details Resets the spin frame counter for mid-air spinning
+void ObjectHeyho::enterJump() {
+    m_spinFrame = 0;
 }
 
 /// @addr{0x806CF4D0}
@@ -197,6 +228,32 @@ void ObjectHeyho::calcJump() {
     }
 }
 
+/// @brief Sets the specified animation (move or jump)
+/// @param anim The animation to set
+void ObjectHeyho::changeAnimation(Animation anim) {
+    m_drawMdl->anmMgr()->playAnim(0.0f, 1.0f, static_cast<size_t>(anim));
+    m_currentAnim = anim;
+}
+
+/// @addr{0x806CFD48}
+/// @brief Updates the @ref StateManager based off the current and next rail point settings
+/// @details If the current or next rail point's second setting is 0, then the Shy Guy
+/// transitions to the move state. Otherwise, it transitions to the jump state.
+/// @note Contrary to the other classes that inherit from @ref StateManager, this class directly
+/// sets @ref m_currentStateId rather than queuing the transition via @ref m_nextStateId.
+void ObjectHeyho::calcStateTransition() {
+    if (m_railInterpolator->curPoint().setting[1] == 0 ||
+            m_railInterpolator->nextPoint().setting[1] == 0) {
+        if (m_currentStateId != 0) {
+            m_currentStateId = 0;
+        }
+    } else {
+        if (m_currentStateId != 1) {
+            m_currentStateId = 1;
+        }
+    }
+}
+
 /// @addr{0x806CFDB0}
 /// @brief Updates the position of the Shy Guy along the rail and locks X/Z position when airborne
 /// @details There is special handling for an edge that that occurs if the rail endpoint heights
@@ -246,6 +303,17 @@ void ObjectHeyho::calcMotion() {
         m_currentSpeed = m_launchVel;
         m_freeFall = false;
     }
+}
+
+/// @addr{0x806CFFB0}
+/// @brief Interpolates the Shy Guy's orientation to reflect the current floor normal
+/// @details Interpolates the smoothed up vector, normalises the forward direction vector, and
+/// updates the transform matrix accordingly.
+void ObjectHeyho::calcInterp() {
+    m_up = m_up.interpolate(0.2f, m_floorNrm);
+    m_up.normalise2();
+    m_forward.normalise2();
+    setMatrixTangentTo(m_up, m_forward);
 }
 
 } // namespace Kinoko::Field

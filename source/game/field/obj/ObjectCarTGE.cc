@@ -105,6 +105,12 @@ ObjectCarTGE::ObjectCarTGE(const System::MapdataGeoObj &params)
     }
 }
 
+/// @addr{0x806D691C}
+/// @brief Virtual destructor that destroys the auxiliary collision object
+ObjectCarTGE::~ObjectCarTGE() {
+    EGG::egg_delete(m_auxCollision);
+}
+
 /// @addr{0x806D6B14}
 /// @copybrief ObjectBase::init()
 /// @details Initializes the rail interpolator to the node index specified by param setting 1. Sets
@@ -137,6 +143,24 @@ void ObjectCarTGE::init() {
     m_currSpeed = m_railInterpolator->speed();
     m_vel = m_railInterpolator->curTangentDir() * m_currSpeed;
     m_hitAngle = (m_carType == CarType::Truck) ? HIT_ANGLE_TRUCK : HIT_ANGLE_NORMAL;
+}
+
+/// @addr{0x806D6ECC}
+/// @copybrief ObjectBase::calc()
+/// @details Evaluates the car's state machine and updates the rail interpolator. Calls @ref
+/// calcState() to determine if the car should transition to a different state. Updates the
+/// car's position along the rail via @ref calcPos(). Finally, resets @ref m_hasAuxCollision to
+/// `false`.
+void ObjectCarTGE::calc() {
+    StateManager::calc();
+
+    if (m_railInterpolator->calc() == RailInterpolator::Status::SegmentEnd) {
+        calcState();
+    }
+
+    calcPos();
+
+    m_hasAuxCollision = false;
 }
 
 /// @addr{0x806D7AF8}
@@ -181,6 +205,59 @@ void ObjectCarTGE::calcCollisionTransform() {
     calcTransform();
     mat.setBase(3, transform().base(3));
     m_auxCollision->transform(mat, scale(), m_vel);
+}
+
+/// @addr{0x806DA7AC}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectCarTGE::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
+}
+
+/// @addr{0x806D68B0}
+/// @copybrief ObjectBase::getResources()
+/// @details Returns the resource name of the car variant
+/// @return The resource name of the car variant, @ref m_carName
+const char *ObjectCarTGE::getResources() const {
+    return m_carName;
+}
+
+/// @addr{0x806DA7A4}
+/// @copybrief ObjectBase::getKclName()
+/// @return The model name of the car variant, @ref m_mdlName
+const char *ObjectCarTGE::getKclName() const {
+    return m_mdlName;
+}
+
+/// @addr{0x806D69C0}
+/// @copybrief ObjectBase::getCollisionRadius()
+/// @return The collision radius of the vehicle, `600.0f` for cars and `1100.0f` for trucks.
+/// @pre Requires that @ref m_carType is either @ref CarType::Truck or @ref CarType::Normal.
+f32 ObjectCarTGE::getCollisionRadius() const {
+    constexpr f32 NORMAL_RADIUS = 600.0f;
+    constexpr f32 TRUCK_RADIUS = 1100.0f;
+
+    ASSERT(m_carType == CarType::Truck || m_carType == CarType::Normal);
+    return (m_carType == CarType::Truck) ? TRUCK_RADIUS : NORMAL_RADIUS;
+}
+
+/// @addr{0x806D7CF8}
+/// @copydoc ObjectCollidable::collisionCenter()
+/// @details The center of the car's collision volume is based on its type. Normal cars have an
+/// upwards offset of `100.0f` units, whereas trucks have an upwards offset of `300.0f` units.
+const EGG::Vector3f &ObjectCarTGE::collisionCenter() const {
+    static constexpr EGG::Vector3f CENTER_TRUCK = EGG::Vector3f(0.0f, 300.0f, 0.0f);
+    static constexpr EGG::Vector3f CENTER_NORMAL = EGG::Vector3f(0.0f, 100.0f, 0.0f);
+    static constexpr EGG::Vector3f CENTER_DEFAULT = EGG::Vector3f(0.0f, 0.0f, 0.0f);
+
+    switch (m_carType) {
+    case CarType::Truck:
+        return CENTER_TRUCK;
+    case CarType::Normal:
+        return CENTER_NORMAL;
+    default:
+        return CENTER_DEFAULT;
+    }
 }
 
 /// @addr{0x806D7328}
@@ -236,6 +313,80 @@ Kart::Reaction ObjectCarTGE::onCollision(Kart::KartObject *kartObj, Kart::Reacti
     return reactionOnKart;
 }
 
+/// @addr{0x806DA660}
+/// @brief Checks kart collision against both the primary and auxiliary collision objects
+/// @param lhs The collision object to check against this car
+/// @param dist The vector to store the collision depth
+/// @return `true` if a collision occurred, `false` otherwise
+bool ObjectCarTGE::checkCollision(ObjectCollisionBase *lhs, EGG::Vector3f &dist) {
+    dist = EGG::Vector3f::zero;
+    bool hasCol = lhs->check(*m_collision, dist);
+
+    if (!hasCol) {
+        hasCol = lhs->check(*m_auxCollision, dist);
+        m_hasAuxCollision = hasCol;
+    }
+
+    return hasCol;
+}
+
+/// @brief Sets the @ref ObjectHighwayManager associated with this object
+/// @param highwayMgr The highway manager to oversee this object
+void ObjectCarTGE::setHighwayManager(const ObjectHighwayManager *highwayMgr) {
+    m_highwayMgr = highwayMgr;
+}
+
+/// @addr{0x806D9A04}
+/// @brief Resets @ref m_squashed to `false`
+/// @details This is called by @ref ObjectHighwayManager on all vehicles immediately after a
+/// squash with any one car occurs, so that it can enforce the squish cooldown for the player.
+void ObjectCarTGE::reset() {
+    m_squashed = false;
+}
+
+/// @brief Checks if this vehicle has squashed the player this frame
+/// @return The value of @ref m_squashed
+bool ObjectCarTGE::squashed() const {
+    return m_squashed;
+}
+
+/// @addr{0x806D7D70}
+/// @brief Runs once per frame when cars are speeding up when getting on the highway
+/// @details Increases @ref m_currSpeed by @ref TOLL_BOOTH_ACCEL. Once @ref m_currSpeed reaches
+/// @ref m_highwaySpeed, it's clamped to @ref m_highwaySpeed and transitions to the cruising
+/// state. Regardless, sets the rail interpolator's speed to the updated @ref m_currSpeed and
+/// sets @ref m_vel by scaling the rail interpolator's current tangent direction by @ref
+/// m_currSpeed.
+void ObjectCarTGE::calcSpeedup() {
+    m_currSpeed += TOLL_BOOTH_ACCEL;
+
+    if (m_currSpeed > m_highwaySpeed) {
+        m_currSpeed = m_highwaySpeed;
+        m_nextStateId = 0;
+    }
+
+    m_railInterpolator->setSpeed(m_currSpeed);
+    m_vel = m_railInterpolator->curTangentDir() * m_currSpeed;
+}
+
+/// @addr{0x806D7E0C}
+/// @brief Runs every frame when the car is slowing down after getting off the highway
+/// @details Decreases @ref m_currSpeed by @ref TOLL_BOOTH_ACCEL. Once @ref m_currSpeed reaches
+/// @ref m_localSpeed, it's clamped to @ref m_localSpeed and transitions to the cruising state.
+/// Regardless, sets the rail interpolator's speed to the updated @ref m_currSpeed and sets @ref
+/// m_vel by scaling the rail interpolator's current tangent direction by @ref m_currSpeed.
+void ObjectCarTGE::calcSlowdown() {
+    m_currSpeed -= TOLL_BOOTH_ACCEL;
+
+    if (m_currSpeed < m_localSpeed) {
+        m_currSpeed = m_localSpeed;
+        m_nextStateId = 0;
+    }
+
+    m_railInterpolator->setSpeed(m_currSpeed);
+    m_vel = m_railInterpolator->curTangentDir() * m_currSpeed;
+}
+
 /// @addr{0x806D9000}
 /// @brief Calculates the position and orientation of the car along the rail
 /// @details Derives position and orientation by computing a cubic bezier along the rail to find
@@ -270,6 +421,23 @@ void ObjectCarTGE::calcPos() {
 
     m_up = OrthonormalBasis(m_tangent).base(1);
     setMatrixTangentTo(m_up, m_tangent);
+}
+
+/// @addr{0x806D9504}
+/// @brief Checks if the car should speed up or slow down based off the rail point's settings
+/// @details For each point along the rail, setting 2 is used to specify whether it is a highway
+/// point (1) or a local road point (0). Based on the current and next rail point settings,
+/// transitions the car to the appropriate state (or does nothing if the road type has not
+/// changed).
+void ObjectCarTGE::calcState() {
+    u16 curPointSpeedSetting = m_railInterpolator->curPoint().setting[1];
+    u16 nextPointSpeedSetting = m_railInterpolator->nextPoint().setting[1];
+
+    if (curPointSpeedSetting == 0 && nextPointSpeedSetting == 1) {
+        m_nextStateId = 1;
+    } else if (curPointSpeedSetting == 1 && nextPointSpeedSetting == 0) {
+        m_nextStateId = 2;
+    }
 }
 
 } // namespace Kinoko::Field

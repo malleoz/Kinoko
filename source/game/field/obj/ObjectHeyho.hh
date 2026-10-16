@@ -13,35 +13,13 @@ namespace Kinoko::Field {
 class ObjectHeyho final : public ObjectCollidable, private StateManager {
 public:
     ObjectHeyho(const System::MapdataGeoObj &params);
-
-    /// @addr{0x806CEB24}
-    /// @brief Default virtual destructor
-    ~ObjectHeyho() override = default;
+    ~ObjectHeyho() override;
 
     void init() override;
-
-    /// @addr{0x806CEDF8}
-    /// @copybrief ObjectBase::calc()
-    /// @details Checks if the Shy Guy should transition to the next state. Updates the Shy Guy's
-    /// position along the rail. Evaluates the Shy Guy's state machine. Finally, interpolates the
-    /// Shy Guy's transform based off the current floor normal.
-    void calc() override {
-        calcStateTransition();
-        calcMotion();
-        StateManager::calc();
-        calcInterp();
-    }
-
+    void calc() override;
     void loadAnims() override;
     void calcCollisionTransform() override;
-
-    /// @addr{0x806D02B4}
-    /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
-    /// calculated every frame
-    [[nodiscard]] LoadFlags loadFlags() const override {
-        return LoadFlags().setBit(eLoadFlags::Calc, eLoadFlags::Draw);
-    }
+    [[nodiscard]] LoadFlags loadFlags() const override;
 
 private:
     /// @brief Current animation of the Shy Guy
@@ -58,53 +36,14 @@ private:
         Green = 2,  ///< Green Shy Guy that performs a 180
     };
 
-    /// @brief Sets the specified animation (move or jump)
-    /// @param anim The animation to set
-    void changeAnimation(Animation anim) {
-        m_drawMdl->anmMgr()->playAnim(0.0f, 1.0f, static_cast<size_t>(anim));
-        m_currentAnim = anim;
-    }
-
-    /// @brief Runs when the Shy Guy enters the jump state
-    /// @details Resets the spin frame counter for mid-air spinning
-    void enterJump() {
-        m_spinFrame = 0;
-    }
-
+    void enterJump();
     void calcMove();
     void calcJump();
 
-    /// @addr{0x806CFD48}
-    /// @brief Updates the @ref StateManager based off the current and next rail point settings
-    /// @details If the current or next rail point's second setting is 0, then the Shy Guy
-    /// transitions to the move state. Otherwise, it transitions to the jump state.
-    /// @note Contrary to the other classes that inherit from @ref StateManager, this class directly
-    /// sets @ref m_currentStateId rather than queuing the transition via @ref m_nextStateId.
-    void calcStateTransition() {
-        if (m_railInterpolator->curPoint().setting[1] == 0 ||
-                m_railInterpolator->nextPoint().setting[1] == 0) {
-            if (m_currentStateId != 0) {
-                m_currentStateId = 0;
-            }
-        } else {
-            if (m_currentStateId != 1) {
-                m_currentStateId = 1;
-            }
-        }
-    }
-
+    void changeAnimation(Animation anim);
+    void calcStateTransition();
     void calcMotion();
-
-    /// @addr{0x806CFFB0}
-    /// @brief Interpolates the Shy Guy's orientation to reflect the current floor normal
-    /// @details Interpolates the smoothed up vector, normalises the forward direction vector, and
-    /// updates the transform matrix accordingly.
-    void calcInterp() {
-        m_up = Interpolate(0.2f, m_up, m_floorNrm);
-        m_up.normalise2();
-        m_forward.normalise2();
-        setMatrixTangentTo(m_up, m_forward);
-    }
+    void calcInterp();
 
     const Color m_color;      ///< Color of the Shy Guy, used to determine if it spins
     f32 m_apex;               ///< Highest Y position between the rail endpoints

@@ -14,95 +14,18 @@ class ObjectDossunTsuibi;
 class ObjectDossunTsuibiHolder final : public ObjectCollidable {
 public:
     ObjectDossunTsuibiHolder(const System::MapdataGeoObj &params);
-
-    /// @addr{0x80764BC8}
-    /// @brief Default virtual destructor
-    ~ObjectDossunTsuibiHolder() override = default;
+    ~ObjectDossunTsuibiHolder() override;
 
     void init() override;
     void calc() override;
+    void calcModel() override;
+    void loadGraphics() override;
+    void createCollision() override;
+    [[nodiscard]] LoadFlags loadFlags() const override;
 
-    /// @addr{0x80764A1C}
-    /// @copybrief ObjectBase::calcModel()
-    /// @details Does nothing since the holder itself does not have a visual model.
-    void calcModel() override {}
-
-    /// @addr{0x80764A30}
-    /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
-    [[nodiscard]] LoadFlags loadFlags() const override {
-        return LoadFlags(eLoadFlags::Calc);
-    }
-
-    /// @addr{0x80764A2C}
-    /// @copybrief ObjectBase::loadGraphics()
-    /// @details This is a no-op in the base game.
-    void loadGraphics() override {}
-
-    /// @addr{0x80764A24}
-    /// @copybrief ObjectBase::createCollision()
-    /// @details This is a no-op in the base game.
-    void createCollision() override {}
-
-    /// @brief Runs once when the Thwomps enter the Still state, where the Thwomps return to their
-    /// home position and remain still
-    /// @details Sets the Thwomp's movement state to @ref State::Backward to indicate the Thwomps
-    /// are moving backwards towards their home. Also updates the rail interpolator's speed to the
-    /// Thwomp's speed.
-    void startStill() {
-        m_state = State::Backward;
-        m_railInterpolator->setSpeed(m_speed);
-    }
+    void startStill();
 
 private:
-    /// @addr{0x807623AC}
-    /// @brief Runs every frame while the Thwomps remain still at their home position
-    void calcStill() {
-        if (--m_stillTimer == 0) {
-            m_state = State::Forward;
-            m_movingSideways = false;
-        }
-    }
-
-    /// @addr{0x807638F8}
-    /// @brief Runs once when transitioning to the StartStomp state
-    void enterStartStomp() {
-        m_state = State::StartStomp;
-        m_forwardTimer = 0;
-        m_movingForward = false;
-        m_lastStompZ = pos().z;
-    }
-
-    void calcForward();
-    void calcStartStomp();
-    void calcStomp();
-    void calcBackwards();
-
-    /// @addr{0x807630D0}
-    /// @brief Nudges the Thwomps' Z-pos back to their home before moving forward
-    void calcResetZ() {
-        updatePos(EGG::Vector3f(pos().x, pos().y, pos().z - m_resetZVel));
-    }
-
-    void calcRot();
-
-    /// @addr{0x8076321C}
-    /// @brief Updates position from the rail every frame while the Thwomps are moving forward
-    void calcForwardRail() {
-        m_railInterpolator->setSpeed(m_forwardVel);
-
-        if (m_railInterpolator->calc() == RailInterpolator::Status::RailEnd) {
-            enterStartStomp();
-        }
-
-        updatePos(m_railInterpolator->curPos());
-    }
-
-    void calcForwardOscillation();
-
-    void updatePos(const EGG::Vector3f &pos);
-    void updateRot(f32 yaw);
-
     /// @brief Describes the current movement of the Thwomps
     enum class State {
         Still = 0,         ///< At their home position, not moving
@@ -112,6 +35,19 @@ private:
         Backward = 4,      ///< Moving backwards up the hallway towards home
         StillRotating = 5, ///< Returned back to home, but rotating to face forward
     };
+
+    void calcStill();
+    void enterStartStomp();
+    void calcForward();
+    void calcStartStomp();
+    void calcStomp();
+    void calcBackwards();
+    void calcResetZ();
+    void calcRot();
+    void calcForwardRail();
+    void calcForwardOscillation();
+    void updatePos(const EGG::Vector3f &pos);
+    void updateRot(f32 yaw);
 
     std::array<ObjectDossunTsuibi *, 2> m_dossuns; ///< Pointers to the two Thwomps
     State m_state;                                 ///< Current movement of the Thwomps

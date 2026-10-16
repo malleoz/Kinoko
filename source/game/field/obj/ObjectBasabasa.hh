@@ -8,60 +8,27 @@ namespace Kinoko::Field {
 /// @brief Represents a single bat. It's owned and managed by @ref ObjectBasabasa.
 class ObjectBasabasaDummy final : public ObjectCollidable, private StateManager {
 public:
-    /// @addr{0x806B5C84}
-    /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
-    /// @param params The parameters used to initialize the object
-    /// @details Uses param setting 8 to determine if collisions with the bat should result in a
-    /// larger bump effect.
-    ObjectBasabasaDummy(const System::MapdataGeoObj &params)
-        : ObjectCollidable(params),
-          StateManager(this, STATE_ENTRIES),
-          m_bigBump(params.setting(7) == 1) {
-        m_active = true;
-    }
-
-    /// @addr{0x806B7630}
-    /// @brief Default virtual destructor
-    ~ObjectBasabasaDummy() override = default;
+    ObjectBasabasaDummy(const System::MapdataGeoObj &params);
+    ~ObjectBasabasaDummy() override;
 
     void init() override;
-
-    /// @addr{0x806B602C}
-    /// @copybrief ObjectBase::calc()
-    /// @details Simply evaluates the bat's state machine.
-    void calc() override {
-        StateManager::calc();
-    }
-
-    /// @addr{0x806B7700}
-    /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
-    /// calculated every frame
-    [[nodiscard]] LoadFlags loadFlags() const override {
-        return LoadFlags().setBit(eLoadFlags::Calc, eLoadFlags::Draw);
-    }
-
-    /// @addr{0x806B76F4}
-    /// @copybrief ObjectBase::getKclName()
-    /// @return Retuns "basabasa" so that the individual bat's collision is used
-    [[nodiscard]] virtual const char *getKclName() const override {
-        return "basabasa";
-    }
-
+    void calc() override;
+    [[nodiscard]] LoadFlags loadFlags() const override;
+    [[nodiscard]] virtual const char *getKclName() const override;
     Kart::Reaction onCollision(Kart::KartObject *kartObj, Kart::Reaction reactionOnKart,
             Kart::Reaction reactionOnObj, EGG::Vector3f &hitDepth) override;
 
-    /// @brief Sets whether the bat is spawned
-    /// @param isSet Whether the bat should be active or not
-    void setActive(bool isSet) {
-        m_active = isSet;
-    }
+    /// @beginSetters
 
-    /// @brief Checks whether the bat is currently spawned
-    /// @return `true` if the bat is active, `false` otherwise
-    [[nodiscard]] bool active() const {
-        return m_active;
-    }
+    void setActive(bool isSet);
+
+    /// @endSetters
+
+    /// @beginGetters
+
+    [[nodiscard]] bool active() const;
+
+    /// @endGetters
 
 private:
     void calcStateActive();
@@ -87,43 +54,17 @@ class ObjectBasabasa final : public ObjectCollidable {
 
 public:
     ObjectBasabasa(const System::MapdataGeoObj &params);
-
-    /// @addr{0x806B72F4}
-    /// @brief Default virtual destructor
-    ~ObjectBasabasa() override = default;
+    ~ObjectBasabasa() override;
 
     void init() override;
     void calc() override;
 
-    /// @addr{0x806B7628}
-    /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
-    /// calculated every frame
-    [[nodiscard]] LoadFlags loadFlags() const override {
-        return LoadFlags().setBit(eLoadFlags::Calc, eLoadFlags::Draw);
-    }
+    [[nodiscard]] LoadFlags loadFlags() const override;
+    void createCollision() override;
+    void loadRail() override;
 
-    /// @addr{0x806B761C}
-    /// @copybrief ObjectBase::createCollision()
-    /// @details No-op since the spawner itself does not have any collision
-    void createCollision() override {}
-
-    /// @addr{0x806B7620}
-    /// @copybrief ObjectBase::loadRail()
-    /// @details No-op since the spawner itself does not have any rail to load
-    void loadRail() override {}
-
-    /// @brief Exposes the range of initial X positions so the dummy can access it
-    /// @return The range of initial X positions for the bats
-    [[nodiscard]] static f32 InitialXRange() {
-        return s_initialXRange;
-    }
-
-    /// @brief Exposes the range of initial Y positions so the dummy can access it
-    /// @return The range of initial Y positions for the bats
-    [[nodiscard]] static f32 InitialYRange() {
-        return s_initialYRange;
-    }
+    [[nodiscard]] static f32 InitialXRange();
+    [[nodiscard]] static f32 InitialYRange();
 
 private:
     owning_span<ObjectBasabasaDummy *> m_bats; ///< The array of individual bats

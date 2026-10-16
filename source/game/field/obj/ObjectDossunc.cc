@@ -38,6 +38,10 @@ ObjectDossunc::ObjectDossunc(const System::MapdataGeoObj &params) : ObjectCollid
     }
 }
 
+/// @addr{0x80764B08}
+/// @brief Default virtual destructor
+ObjectDossunc::~ObjectDossunc() = default;
+
 /// @addr{0x80764A38}
 /// @copybrief ObjectBase::load()
 /// @details This object is a holder for Dossun objects and does not have any resources of its own.

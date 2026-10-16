@@ -4,6 +4,32 @@
 
 namespace Kinoko::Field {
 
+/// @addr{0x807FD938}
+/// @copybrief ObjectKCL::ObjectKCL(const System::MapdataGeoObj &)
+/// @details Caches the object's initial position and rotation to @ref m_initialPos and @ref
+/// m_initialRot respetviely. Computes @ref m_timeOffset by doubling param setting 4. Computes
+/// @ref m_periodDenom as the max of `2` and param setting 3. Sets @ref m_restFrames based on
+/// param setting 5. Computes @ref m_fullPeriod by summing @ref m_periodDenom and twice @ref
+/// m_restFrames. Sets @ref m_amplitude based on param setting 2. Determines @ref m_left by
+/// comparing the object's name to `bulldozer_left`. Computes @ref m_period as `@ref F_TAU /
+/// @ref m_periodDenom` and @ref m_halfPeriod as half of @ref m_fullPeriod.
+ObjectBulldozer::ObjectBulldozer(const System::MapdataGeoObj &params)
+    : ObjectKCL(params),
+      m_initialPos(pos()),
+      m_initialRot(rot()),
+      m_timeOffset(params.setting(3) * 2),
+      m_periodDenom(std::max<u16>(2, params.setting(2))),
+      m_restFrames(params.setting(4)),
+      m_fullPeriod(m_periodDenom + m_restFrames * 2),
+      m_amplitude(params.setting(1)),
+      m_left(strcmp(getName(), "bulldozer_left") == 0),
+      m_period(F_TAU / static_cast<f32>(m_periodDenom)),
+      m_halfPeriod(m_fullPeriod / 2) {}
+
+/// @addr{0x807FE5F0}
+/// @brief Default virtual destructor
+ObjectBulldozer::~ObjectBulldozer() = default;
+
 /// @addr{0x807FDC50}
 /// @copybrief ObjectBase::calc()
 /// @details Updates the position of the bulldozer based on its oscillation on the current frame.
@@ -16,6 +42,20 @@ void ObjectBulldozer::calc() {
     f32 xPos = m_left ? m_initialPos.x + posOffset : m_initialPos.x - posOffset;
     setPos(EGG::Vector3f(xPos, prevPos.y, prevPos.z));
     setMovingObjVel(pos() - prevPos);
+}
+
+/// @addr{0x807FE5E8}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectBulldozer::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
+}
+
+/// @addr{0x807FE4FC}
+/// @copybrief ObjectKCL::colRadiusAdditionalLength()
+/// @return The amplitude of the bulldozer's oscillation, @ref m_amplitude.
+f32 ObjectBulldozer::colRadiusAdditionalLength() const {
+    return static_cast<f32>(m_amplitude);
 }
 
 /// @addr{0x807FE364}

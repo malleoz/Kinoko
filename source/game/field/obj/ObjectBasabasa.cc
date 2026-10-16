@@ -8,6 +8,22 @@
 
 namespace Kinoko::Field {
 
+/// @addr{0x806B5C84}
+/// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
+/// @param params The parameters used to initialize the object
+/// @details Uses param setting 8 to determine if collisions with the bat should result in a
+/// larger bump effect.
+ObjectBasabasaDummy::ObjectBasabasaDummy(const System::MapdataGeoObj &params)
+    : ObjectCollidable(params),
+      StateManager(this, STATE_ENTRIES),
+      m_bigBump(params.setting(7) == 1) {
+    m_active = true;
+}
+
+/// @addr{0x806B7630}
+/// @brief Default virtual destructor
+ObjectBasabasaDummy::~ObjectBasabasaDummy() = default;
+
 /// @addr{0x806B5E80}
 /// @copybrief ObjectBase::init()
 /// @details Fetches the bat's initial position by advancing RNG.
@@ -25,6 +41,28 @@ void ObjectBasabasaDummy::init() {
     m_nextStateId = 0;
 }
 
+/// @addr{0x806B602C}
+/// @copybrief ObjectBase::calc()
+/// @details Simply evaluates the bat's state machine.
+void ObjectBasabasaDummy::calc() {
+    StateManager::calc();
+}
+
+/// @addr{0x806B7700}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
+/// calculated every frame
+ObjectBase::LoadFlags ObjectBasabasaDummy::loadFlags() const {
+    return LoadFlags().setBit(eLoadFlags::Calc, eLoadFlags::Draw);
+}
+
+/// @addr{0x806B76F4}
+/// @copybrief ObjectBase::getKclName()
+/// @return Retuns "basabasa" so that the individual bat's collision is used
+const char *ObjectBasabasaDummy::getKclName() const {
+    return "basabasa";
+}
+
 /// @addr{0x806B6874}
 /// @copydoc ObjectCollidable::onCollision()
 /// @details Adjusts the reaction based on the course and whether the bat has a big bump
@@ -38,6 +76,18 @@ Kart::Reaction ObjectBasabasaDummy::onCollision(Kart::KartObject * /*kartObj*/,
     }
 
     return reactionOnKart;
+}
+
+/// @brief Sets whether the bat is spawned
+/// @param isSet Whether the bat should be active or not
+void ObjectBasabasaDummy::setActive(bool isSet) {
+    m_active = isSet;
+}
+
+/// @brief Checks whether the bat is currently spawned
+/// @return `true` if the bat is active, `false` otherwise
+bool ObjectBasabasaDummy::active() const {
+    return m_active;
 }
 
 /// @addr{0x806B6100}
@@ -99,6 +149,10 @@ ObjectBasabasa::ObjectBasabasa(const System::MapdataGeoObj &params)
     s_initialYRange = params.setting(4);
 }
 
+/// @addr{0x806B72F4}
+/// @brief Default virtual destructor
+ObjectBasabasa::~ObjectBasabasa() = default;
+
 /// @addr{0x806B7334}
 /// @copybrief ObjectBase::init()
 /// @details Initializes all bats to be inactive with disabled collision and resets the spawner's
@@ -137,6 +191,36 @@ void ObjectBasabasa::calc() {
     m_batsActive %= m_bats.size();
 
     ++m_cycleTimer;
+}
+
+/// @addr{0x806B7628}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
+/// calculated every frame
+ObjectBase::LoadFlags ObjectBasabasa::loadFlags() const {
+    return LoadFlags().setBit(eLoadFlags::Calc, eLoadFlags::Draw);
+}
+
+/// @addr{0x806B761C}
+/// @copybrief ObjectBase::createCollision()
+/// @details No-op since the spawner itself does not have any collision
+void ObjectBasabasa::createCollision() {}
+
+/// @addr{0x806B7620}
+/// @copybrief ObjectBase::loadRail()
+/// @details No-op since the spawner itself does not have any rail to load
+void ObjectBasabasa::loadRail() {}
+
+/// @brief Exposes the range of initial X positions so the dummy can access it
+/// @return The range of initial X positions for the bats
+f32 ObjectBasabasa::InitialXRange() {
+    return s_initialXRange;
+}
+
+/// @brief Exposes the range of initial Y positions so the dummy can access it
+/// @return The range of initial Y positions for the bats
+f32 ObjectBasabasa::InitialYRange() {
+    return s_initialYRange;
 }
 
 f32 ObjectBasabasa::s_initialXRange;

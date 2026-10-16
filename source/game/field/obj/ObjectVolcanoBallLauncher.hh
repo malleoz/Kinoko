@@ -13,35 +13,15 @@ class ObjectVolcanoBall;
 class ObjectVolcanoBallLauncher final : public ObjectCollidable {
 public:
     ObjectVolcanoBallLauncher(const System::MapdataGeoObj &params);
-
-    /// @addr{0x806E384C}
-    /// @brief Default virtual destructor
-    ~ObjectVolcanoBallLauncher() override = default;
+    ~ObjectVolcanoBallLauncher() override;
 
     void init() override;
     void calc() override;
 
-    /// @addr{0x806E3A74}
-    /// @copybrief ObjectBase::loadFlags()
-    /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
-    [[nodiscard]] LoadFlags loadFlags() const override {
-        return LoadFlags(eLoadFlags::Calc);
-    };
-
-    /// @addr{0x806E3A70}
-    /// @copybrief ObjectBase::loadGraphics()
-    /// @details no-op because the launcher does not have any graphics to load
-    void loadGraphics() override {}
-
-    /// @addr{0x806E3A68}
-    /// @copybrief ObjectBase::createCollision()
-    /// @details no-op because the launcher itself does not have any collision
-    void createCollision() override {}
-
-    /// @addr{0x806E3A6C}
-    /// @copybrief ObjectBase::loadRail()
-    /// @details no-op because the launcher itself does not follow any rail path
-    void loadRail() override {}
+    void loadGraphics() override;
+    void createCollision() override;
+    void loadRail() override;
+    [[nodiscard]] LoadFlags loadFlags() const override;
 
 private:
     owning_span<ObjectVolcanoBall *> m_balls; ///< Array of fireballs managed by the launcher

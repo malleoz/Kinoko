@@ -23,6 +23,10 @@ ObjectDossunTsuibiHolder::ObjectDossunTsuibiHolder(const System::MapdataGeoObj &
     }
 }
 
+/// @addr{0x80764BC8}
+/// @brief Default virtual destructor
+ObjectDossunTsuibiHolder::~ObjectDossunTsuibiHolder() = default;
+
 /// @addr{0x80761744}
 /// @copybrief ObjectBase::init()
 /// @details Initializes each @ref ObjectDossunTsuibi instance managed by this holder. Initializes
@@ -89,6 +93,56 @@ void ObjectDossunTsuibiHolder::calc() {
 
         break;
     }
+}
+
+/// @addr{0x80764A1C}
+/// @copybrief ObjectBase::calcModel()
+/// @details Does nothing since the holder itself does not have a visual model.
+void ObjectDossunTsuibiHolder::calcModel() {}
+
+/// @addr{0x80764A2C}
+/// @copybrief ObjectBase::loadGraphics()
+/// @details This is a no-op in the base game.
+void ObjectDossunTsuibiHolder::loadGraphics() {}
+
+/// @addr{0x80764A24}
+/// @copybrief ObjectBase::createCollision()
+/// @details This is a no-op in the base game.
+void ObjectDossunTsuibiHolder::createCollision() {}
+
+/// @addr{0x80764A30}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectDossunTsuibiHolder::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
+}
+
+/// @brief Runs once when the Thwomps enter the Still state, where the Thwomps return to their
+/// home position and remain still
+/// @details Sets the Thwomp's movement state to @ref State::Backward to indicate the Thwomps
+/// are moving backwards towards their home. Also updates the rail interpolator's speed to the
+/// Thwomp's speed.
+void ObjectDossunTsuibiHolder::startStill() {
+    m_state = State::Backward;
+    m_railInterpolator->setSpeed(m_speed);
+}
+
+/// @addr{0x807623AC}
+/// @brief Runs every frame while the Thwomps remain still at their home position
+void ObjectDossunTsuibiHolder::calcStill() {
+    if (--m_stillTimer == 0) {
+        m_state = State::Forward;
+        m_movingSideways = false;
+    }
+}
+
+/// @addr{0x807638F8}
+/// @brief Runs once when transitioning to the StartStomp state
+void ObjectDossunTsuibiHolder::enterStartStomp() {
+    m_state = State::StartStomp;
+    m_forwardTimer = 0;
+    m_movingForward = false;
+    m_lastStompZ = pos().z;
 }
 
 /// @addr{0x807624F0}
@@ -180,6 +234,12 @@ void ObjectDossunTsuibiHolder::calcBackwards() {
     updatePos(EGG::Vector3f(pos().x, pos().y, m_lastStompZ));
 }
 
+/// @addr{0x807630D0}
+/// @brief Nudges the Thwomps' Z-pos back to their home before moving forward
+void ObjectDossunTsuibiHolder::calcResetZ() {
+    updatePos(EGG::Vector3f(pos().x, pos().y, pos().z - m_resetZVel));
+}
+
 /// @addr{0x807625F0}
 /// @brief Runs every frame in order to update the Thwomps' rotation
 /// @details If the Thwomps are facing backwards, then they rotate for 36 frames at 5 degrees per
@@ -218,6 +278,18 @@ void ObjectDossunTsuibiHolder::calcRot() {
             m_stillTimer = m_stillDuration;
         }
     }
+}
+
+/// @addr{0x8076321C}
+/// @brief Updates position from the rail every frame while the Thwomps are moving forward
+void ObjectDossunTsuibiHolder::calcForwardRail() {
+    m_railInterpolator->setSpeed(m_forwardVel);
+
+    if (m_railInterpolator->calc() == RailInterpolator::Status::RailEnd) {
+        enterStartStomp();
+    }
+
+    updatePos(m_railInterpolator->curPos());
 }
 
 /// @addr{0x807634C0}

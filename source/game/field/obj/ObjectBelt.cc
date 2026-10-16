@@ -6,6 +6,177 @@
 
 namespace Kinoko::Field {
 
+/// @addr{0x807FC248}
+/// @copybrief ObjectDrivable::ObjectDrivable(const System::MapdataGeoObj &)
+/// @param params The parameters used to initialize the object
+/// @details Initializes @ref m_roadVel to `32.0f`.
+ObjectBelt::ObjectBelt(const System::MapdataGeoObj &params)
+    : ObjectDrivable(params),
+      m_roadVel(32.0f) {}
+
+/// @addr{0x807FC5EC}
+/// @brief Default virtual destructor
+ObjectBelt::~ObjectBelt() = default;
+
+/// @addr{0x807FD79C}
+/// @copybrief ObjectBase::loadFlags()
+/// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
+ObjectBase::LoadFlags ObjectBelt::loadFlags() const {
+    return LoadFlags(eLoadFlags::Calc);
+}
+
+/// @addr{0x807FD798}
+/// @copybrief ObjectBase::createCollision()
+void ObjectBelt::createCollision() {}
+
+/// @addr{0x807FD794}
+/// @copybrief ObjectBase::calcCollisionTransform()
+/// @details no-op because collision is managed entirely by the collision functions.
+void ObjectBelt::calcCollisionTransform() {}
+
+/// @addr{0x807FD784}
+/// @copybrief ObjectBase::getCollisionRadius()
+/// @return The collision radius of the conveyer belt, `25000.0f`.
+f32 ObjectBelt::getCollisionRadius() const {
+    return 25000.0f;
+}
+
+/// @addr{0x807FD750}
+/// @copybrief ObjectDrivable::checkPointPartial()
+/// @return `false`, as this class only implements full push collision checks
+bool ObjectBelt::checkPointPartial(const EGG::Vector3f & /*pos*/, const EGG::Vector3f & /*prevPos*/,
+        KCLTypeMask /*mask*/, CollisionInfoPartial * /*info*/, KCLTypeMask * /*maskOut*/) {
+    return false;
+}
+
+/// @addr{0x807FD758}
+/// @copybrief ObjectDrivable::checkPointPartialPush()
+/// @return `false`, as this class only implements full push collision checks
+bool ObjectBelt::checkPointPartialPush(const EGG::Vector3f & /*pos*/,
+        const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/, CollisionInfoPartial * /*info*/,
+        KCLTypeMask * /*maskOut*/) {
+    return false;
+}
+
+/// @addr{0x807FD760}
+/// @copybrief ObjectDrivable::checkPointFull()
+/// @return `false`, as this class only implements full push collision checks
+bool ObjectBelt::checkPointFull(const EGG::Vector3f & /*pos*/, const EGG::Vector3f & /*prevPos*/,
+        KCLTypeMask /*mask*/, CollisionInfo * /*info*/, KCLTypeMask * /*maskOut*/) {
+    return false;
+}
+
+/// @addr{0x807FD768}
+/// @copydoc ObjectDrivable::checkPointFullPush()
+bool ObjectBelt::checkPointFullPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
+        KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
+    return calcCollision(pos, prevPos, mask, info, maskOut, 0);
+}
+
+/// @addr{0x807FD728}
+/// @copybrief ObjectDrivable::checkSpherePartial()
+/// @return `false`, as this class only implements full push collision checks
+bool ObjectBelt::checkSpherePartial(f32 /*radius*/, const EGG::Vector3f & /*pos*/,
+        const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/, CollisionInfoPartial * /*info*/,
+        KCLTypeMask * /*maskOut*/, u32 /*timeOffset*/) {
+    return false;
+}
+
+/// @addr{0x807FD730}
+/// @copybrief ObjectDrivable::checkSpherePartialPush()
+/// @return `false`, as this class only implements full push collision checks
+bool ObjectBelt::checkSpherePartialPush(f32 /*radius*/, const EGG::Vector3f & /*pos*/,
+        const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/, CollisionInfoPartial * /*info*/,
+        KCLTypeMask * /*maskOut*/, u32 /*timeOffset*/) {
+    return false;
+}
+
+/// @addr{0x807FD738}
+/// @copybrief ObjectDrivable::checkSphereFull()
+/// @return `false`, as this class only implements full push collision checks
+bool ObjectBelt::checkSphereFull(f32 /*radius*/, const EGG::Vector3f & /*pos*/,
+        const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/, CollisionInfo * /*info*/,
+        KCLTypeMask * /*maskOut*/, u32 /*timeOffset*/) {
+    return false;
+}
+
+/// @addr{0x807FD740}
+/// @copydoc ObjectDrivable::checkSphereFullPush()
+bool ObjectBelt::checkSphereFullPush(f32 /*radius*/, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
+        u32 timeOffset) {
+    return calcCollision(pos, prevPos, mask, info, maskOut, timeOffset);
+}
+
+/// @addr{0x807FD6F4}
+/// @copybrief ObjectDrivable::checkPointCachedPartial()
+/// @return `false`, as this class only implements full push collision checks
+bool ObjectBelt::checkPointCachedPartial(const EGG::Vector3f & /*pos*/,
+        const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/, CollisionInfoPartial * /*info*/,
+        KCLTypeMask * /*maskOut*/) {
+    return false;
+}
+
+/// @addr{0x807FD6FC}
+/// @copybrief ObjectDrivable::checkPointCachedPartialPush()
+/// @return `false`, as this class only implements full push collision checks
+bool ObjectBelt::checkPointCachedPartialPush(const EGG::Vector3f & /*pos*/,
+        const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/, CollisionInfoPartial * /*info*/,
+        KCLTypeMask * /*maskOut*/) {
+    return false;
+}
+
+/// @addr{0x807FD704}
+/// @copybrief ObjectDrivable::checkPointCachedFull()
+/// @return `false`, as this class only implements full push collision checks
+bool ObjectBelt::checkPointCachedFull(const EGG::Vector3f & /*pos*/,
+        const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/, CollisionInfo * /*info*/,
+        KCLTypeMask * /*maskOut*/) {
+    return false;
+}
+
+/// @addr{0x807FD70C}
+/// @copydoc ObjectDrivable::checkPointCachedFullPush()
+bool ObjectBelt::checkPointCachedFullPush(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
+        KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut) {
+    return calcCollision(pos, prevPos, mask, info, maskOut, 0);
+}
+
+/// @addr{0x807FD6CC}
+/// @copybrief ObjectDrivable::checkSphereCachedPartial()
+/// @return `false`, as this class only implements full push collision checks
+bool ObjectBelt::checkSphereCachedPartial(f32 /*radius*/, const EGG::Vector3f & /*pos*/,
+        const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/, CollisionInfoPartial * /*info*/,
+        KCLTypeMask * /*maskOut*/, u32 /*timeOffset*/) {
+    return false;
+}
+
+/// @addr{0x807FD6D4}
+/// @copybrief ObjectDrivable::checkSphereCachedPartialPush()
+/// @return `false`, as this class only implements full push collision checks
+bool ObjectBelt::checkSphereCachedPartialPush(f32 /*radius*/, const EGG::Vector3f & /*pos*/,
+        const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/, CollisionInfoPartial * /*info*/,
+        KCLTypeMask * /*maskOut*/, u32 /*timeOffset*/) {
+    return false;
+}
+
+/// @addr{0x807FD6DC}
+/// @copybrief ObjectDrivable::checkSphereCachedFull()
+/// @return `false`, as this class only implements full push collision checks
+bool ObjectBelt::checkSphereCachedFull(f32 /*radius*/, const EGG::Vector3f & /*pos*/,
+        const EGG::Vector3f & /*prevPos*/, KCLTypeMask /*mask*/, CollisionInfo * /*info*/,
+        KCLTypeMask * /*maskOut*/, u32 /*timeOffset*/) {
+    return false;
+}
+
+/// @addr{0x807FD6E4}
+/// @copydoc ObjectDrivable::checkSphereCachedFullPush()
+bool ObjectBelt::checkSphereCachedFullPush(f32 /*radius*/, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos, KCLTypeMask mask, CollisionInfo *info, KCLTypeMask *maskOut,
+        u32 timeOffset) {
+    return calcCollision(pos, prevPos, mask, info, maskOut, timeOffset);
+}
+
 /// @addr{0x807FC294}
 /// @brief Checks if an object at a given position is colliding with the conveyer and if so, saves
 /// the road velocity to the @ref CollisionInfo
