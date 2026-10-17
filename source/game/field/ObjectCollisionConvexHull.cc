@@ -2,6 +2,26 @@
 
 namespace Kinoko::Field {
 
+/// @addr{0x808364E0}
+/// @brief Constructor that creates a convex hull with the provided points
+/// @param points Span of vertex positions defining the convex hull
+/// @details The base game has the possibility to only provide a count to allocate space.
+/// To account for this, we split the base game's constructor into two overloads.
+/// This overload enables conversion from std::array into a span, which initializes the points.
+/// Initializes @ref m_scaledRadius to @ref INIT_RADIUS.
+/// @warning The game stores the point array size as a single byte, so the number of points must
+/// be less than 256.
+ObjectCollisionConvexHull::ObjectCollisionConvexHull(const std::span<const EGG::Vector3f> &points)
+    : m_points(points),
+      m_worldPoints(points.size()),
+      m_scaledRadius(INIT_RADIUS) {
+    ASSERT(points.size() < 0x100);
+}
+
+/// @addr{0x808365A8}
+/// @brief Default virtual destructor
+ObjectCollisionConvexHull::~ObjectCollisionConvexHull() = default;
+
 /// @addr{0x808366D0}
 /// @copydoc ObjectCollisionBase::transform(const EGG::Matrix34f &, const EGG::Vector3f &)
 /// @details Transforms the convex hull's vertices into world space using the provided
@@ -67,6 +87,43 @@ const EGG::Vector3f &ObjectCollisionConvexHull::getSupport(const EGG::Vector3f &
     }
 
     return *result;
+}
+
+/// @addr{0x807F957C}
+/// @copydetails ObjectCollisionBase::getBoundingRadius()
+f32 ObjectCollisionConvexHull::getBoundingRadius() const {
+    return m_scaledRadius;
+}
+
+/// @addr{0x8080C414}
+/// @brief Sets the scaled radius of the bounding sphere
+/// @param val The new scaled radius value
+void ObjectCollisionConvexHull::setBoundingRadius(f32 val) {
+    m_scaledRadius = val;
+}
+
+/// @addr{0x8081E254}
+/// @brief Gets the initial radius of the bounding sphere
+/// @return The initial radius of the bounding sphere, @ref INIT_RADIUS
+/// @details This is normally a non-static member function, but the initial radius is always set
+/// to @ref INIT_RADIUS in both constructors and never changes.
+f32 ObjectCollisionConvexHull::InitRadius() {
+    return INIT_RADIUS;
+}
+
+/// @addr{0x808364E0}
+/// @brief Protected constructor that allocates space for a convex hull with `count` vertices
+/// @param count Number of points to allocate space for the convex hull
+/// @details The base game has the possibility to only provide a count to allocate space.
+/// To account for this, we split the base game's constructor into two overloads.
+/// This overload enables avoiding immediate point initialization, which is useful for
+/// inheritance. Initializes @ref m_scaledRadius to @ref INIT_RADIUS.
+/// @warning The game stores the point array size as a single byte, so the number of points must
+/// be less than 256.
+ObjectCollisionConvexHull::ObjectCollisionConvexHull(size_t count) : m_scaledRadius(INIT_RADIUS) {
+    ASSERT(count < 0x100);
+    m_points = owning_span<EGG::Vector3f>(count);
+    m_worldPoints = owning_span<EGG::Vector3f>(count);
 }
 
 } // namespace Kinoko::Field

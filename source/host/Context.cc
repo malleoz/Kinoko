@@ -4,6 +4,7 @@
 
 #include <game/field/CollisionDirector.hh>
 #include <game/field/ObjectDirector.hh>
+#include <game/field/ObjectDrivableDirector.hh>
 #include <game/field/RailManager.hh>
 #include <game/field/jugem/JugemDirector.hh>
 #include <game/field/obj/ObjectBasabasa.hh>
@@ -17,6 +18,7 @@
 
 #include <game/system/CourseMap.hh>
 #include <game/system/KPadDirector.hh>
+#include <game/system/RaceConfig.hh>
 
 namespace Kinoko::Host {
 

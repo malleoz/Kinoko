@@ -1,4 +1,5 @@
 #pragma once
+
 /// @file KCollisionTypes.hh
 /// This file houses information about KCL types, as well as the struct for collision prisms.
 /// KCL files define collision for Mario %Kart Wii and other games. They organize collision

@@ -5,6 +5,9 @@
 #include "game/field/ObjectCollisionSphere.hh"
 #include "game/field/ObjectDirector.hh"
 
+#include "game/kart/KartCollide.hh"
+#include "game/kart/KartObject.hh"
+
 namespace Kinoko::Field {
 
 /// @addr{0x8081EFEC}

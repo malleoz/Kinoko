@@ -1,5 +1,6 @@
 #include "KartMove.hh"
 
+#include "game/kart/KartCollide.hh"
 #include "game/kart/KartSub.hh"
 #include "game/kart/KartSuspension.hh"
 
@@ -7,6 +8,7 @@
 #include "game/field/ObjectDirector.hh"
 
 #include "game/item/ItemDirector.hh"
+#include "game/item/KartItem.hh"
 
 #include "game/system/CourseMap.hh"
 #include "game/system/RaceManager.hh"

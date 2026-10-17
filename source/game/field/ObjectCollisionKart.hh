@@ -1,6 +1,6 @@
 #pragma once
 
-#include "game/field/ObjectCollisionConvexHull.hh"
+#include <egg/math/Matrix.hh>
 
 namespace Kinoko {
 
@@ -12,6 +12,8 @@ class KartObject;
 
 namespace Field {
 
+class ObjectCollisionConvexHull;
+
 /// @brief Relates a KartObject with its convex hull representation
 /// @details Exposes a function to initialize the convex hull based on the KartObject's vehicle.
 /// Each vehicle type has a unique set of vertices that define its convex hull. Once initialized,
@@ -19,18 +21,10 @@ namespace Field {
 /// other objects via @ref ObjectDirector.
 class ObjectCollisionKart {
 public:
-    /// @addr{0x8081E0CC}
-    /// @brief Constructor
-    ObjectCollisionKart() : m_kartObject(nullptr) {}
-
-    /// @addr{0x8081E0E4}
-    /// @brief Destructor that destroys the convex hull associated with the @ref Kart::KartObject
-    ~ObjectCollisionKart() {
-        EGG::egg_delete(m_hull);
-    }
+    ObjectCollisionKart();
+    ~ObjectCollisionKart();
 
     void init(u32 idx);
-
     size_t checkCollision(const EGG::Matrix34f &mat, const EGG::Vector3f &v);
 
     [[nodiscard]] static EGG::Vector3f GetHitDirection(u16 idx);

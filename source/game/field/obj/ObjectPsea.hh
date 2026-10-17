@@ -1,6 +1,6 @@
 #pragma once
 
-#include "game/field/ObjectDirector.hh"
+#include "game/field/obj/ObjectCollidable.hh"
 
 namespace Kinoko::Field {
 

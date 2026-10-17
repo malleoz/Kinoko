@@ -4,6 +4,7 @@
 #include "game/kart/KartPhysics.hh"
 
 #include "game/item/ItemDirector.hh"
+#include "game/item/KartItem.hh"
 
 namespace Kinoko::Kart {
 

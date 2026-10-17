@@ -10,10 +10,7 @@ namespace Kinoko::Field {
 class ObjectCollisionBox final : public ObjectCollisionConvexHull {
 public:
     ObjectCollisionBox(f32 x, f32 y, f32 z, const EGG::Vector3f &center);
-
-    /// @addr{0x808342F0}
-    /// @brief Default virtual destructor
-    ~ObjectCollisionBox() override = default;
+    ~ObjectCollisionBox() override;
 
     void transform(const EGG::Matrix34f &mat, const EGG::Vector3f &scale) override;
     void transform(const EGG::Matrix34f &mat, const EGG::Vector3f &scale,

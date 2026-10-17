@@ -1,9 +1,11 @@
 #include "ObjectPylon.hh"
 
 #include "game/field/CollisionDirector.hh"
+#include "game/field/KColData.hh"
 #include "game/field/ObjectDirector.hh"
 
 #include "game/kart/KartObject.hh"
+#include "game/kart/Reaction.hh"
 
 namespace Kinoko::Field {
 

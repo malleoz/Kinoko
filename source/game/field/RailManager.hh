@@ -1,6 +1,6 @@
 #pragma once
 
-#include "game/field/Rail.hh"
+#include <Types.hh>
 
 namespace Kinoko {
 
@@ -11,6 +11,8 @@ class Context;
 } // namespace Host
 
 namespace Field {
+
+class Rail;
 
 /// @brief Creates and exposes access to the rails from @ref System::CourseMap
 /// @details For each rail, determines whether it represents a linear rail (@ref RailLine) or a
@@ -23,51 +25,14 @@ class RailManager {
 public:
     /// @beginGetters
 
-    /// @brief Fetches the rail at the given index
-    /// @param idx The index of the rail to fetch
-    /// @return A pointer to the rail at the given index in @ref m_rails
-    /// @pre Requires that `idx` is a valid index within @ref m_rails
-    [[nodiscard]] Rail *rail(size_t idx) {
-        ASSERT(idx < m_rails.size());
-        return m_rails[idx];
-    }
-
-    /// @brief  Fetches the rail at the given index
-    /// @param idx The index of the rail to fetch
-    /// @return A const pointer to the rail at the given index in @ref m_rails
-    /// @pre Requires that `idx` is a valid index within @ref m_rails
-    [[nodiscard]] const Rail *rail(size_t idx) const {
-        ASSERT(idx < m_rails.size());
-        return m_rails[idx];
-    }
+    [[nodiscard]] Rail *rail(size_t idx);
+    [[nodiscard]] const Rail *rail(size_t idx) const;
 
     /// @endGetters
 
-    /// @addr{0x806F09C8}
-    /// @brief Creates the singleton instance of @ref RailManager and parses all rails from the
-    /// @ref System::CourseMap
-    /// @return A pointer to the newly created singleton instance of @ref RailManager
-    static RailManager *CreateInstance() {
-        ASSERT(!s_instance);
-        s_instance = EGG::egg_new<RailManager>();
-        s_instance->createPaths();
-        return s_instance;
-    }
-
-    /// @addr{0x806F0A4C}
-    /// @brief Destroys the singleton instance of the @ref RailManager
-    static void DestroyInstance() {
-        ASSERT(s_instance);
-        auto *instance = s_instance;
-        s_instance = nullptr;
-        EGG::egg_delete(instance);
-    }
-
-    /// @brief Returns the singleton instance of the @ref RailManager
-    /// @return A pointer to the singleton instance of the @ref RailManager
-    [[nodiscard]] static RailManager *Instance() {
-        return s_instance;
-    }
+    static RailManager *CreateInstance();
+    static void DestroyInstance();
+    [[nodiscard]] static RailManager *Instance();
 
 private:
     EGG_NEW_DELETE_FRIEND

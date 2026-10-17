@@ -1,9 +1,9 @@
 #pragma once
 
-#include "game/field/ObjectDrivableDirector.hh"
 #include "game/field/ObjectFlowTable.hh"
 #include "game/field/ObjectHitTable.hh"
-#include "game/field/obj/ObjectCollidable.hh"
+
+#include <egg/math/Vector.hh>
 
 namespace Kinoko {
 
@@ -13,8 +13,23 @@ class Context;
 
 } // namespace Host
 
+namespace Kart {
+
+class KartObject;
+
+} // namespace Kart
+
+namespace System {
+
+class MapdataGeoObj;
+
+}
+
 namespace Field {
 
+class ObjectBase;
+class ObjectCollidable;
+class ObjectCollisionConvexHull;
 class ObjectPsea;
 
 /// @brief Singleton class that manages collidable objects and their interactions
@@ -28,179 +43,48 @@ class ObjectDirector : EGG::Disposer {
     friend class Host::Context;
 
 public:
-    /// @addr{0x8082A2B4}
-    /// @brief Initializes all objects, including those in @ref ObjectDrivableDirector
-    void init() {
-        for (auto *&obj : m_objects) {
-            obj->init();
-            obj->calcModel();
-        }
-
-        ObjectDrivableDirector::Instance()->init();
-    }
-
-    /// @addr{0x8082A8F4}
-    /// @brief Runs per-frame calculations for all objects, including those in @ref
-    /// ObjectDrivableDirector
-    void calc() {
-        for (auto *&obj : m_calcObjects) {
-            obj->calc();
-        }
-
-        for (auto *&obj : m_calcObjects) {
-            obj->calcModel();
-        }
-
-        ObjectDrivableDirector::Instance()->calc();
-    }
+    void init();
+    void calc();
 
     void addObject(ObjectCollidable *obj);
-
-    /// @brief Adds an object to the director without adding it to the list of objects that require
-    /// per-frame calculations or collision checks
-    /// @param obj The object to add to the director without adding it to @ref calcObjects
-    void addObjectNoImpl(ObjectBase *obj) {
-        m_objects.push_back(obj);
-    }
-
-    /// @addr{0x806C4ED4}
-    /// @brief Adds an object to the list of objects that are meant to be accessed directly by other
-    /// @param obj The @ref ObjectCollidable to add to the list of managed objects
-    void addManagedObject(ObjectCollidable *obj) {
-        m_managedObjects.push_back(obj);
-    }
+    void addObjectNoImpl(ObjectBase *obj);
+    void addManagedObject(ObjectCollidable *obj);
 
     size_t checkKartObjectCollision(Kart::KartObject *kartObj,
             ObjectCollisionConvexHull *convexHull);
 
     /// @beginGetters
 
-    /// @brief Gets the @ref ObjectFlowTable for the objects
-    /// @return Const ref to the @ref ObjectFlowTable for the objects, @ref m_flowTable
-    [[nodiscard]] const ObjectFlowTable &flowTable() const {
-        return m_flowTable;
-    }
-
-    /// @brief Gets the @ref ObjectHitTable for the kart objects
-    /// @return Const ref to the @ref ObjectHitTable for the kart objects, @ref m_hitTableKart
-    [[nodiscard]] const ObjectHitTable &hitTableKart() const {
-        return m_hitTableKart;
-    }
-
-    /// @brief Gets the object at the specified collision index
-    /// @param idx The index of the collision to retrieve the object for
-    /// @return Const pointer to the @ref ObjectCollidable at the specified collision index in @ref
-    /// m_collidingObjects
-    /// @pre Assumes that @ref checkKartObjectCollision() has been called and returned a number of
-    /// collisions greater than the specified index
-    [[nodiscard]] const ObjectCollidable *collidingObject(size_t idx) const {
-        ASSERT(idx < m_collidingObjects.size());
-        return m_collidingObjects[idx];
-    }
-
-    /// @brief Gets the reaction at the specified collision index
-    /// @param idx The index of the collision to retrieve the reaction for
-    /// @return The @ref Kart::Reaction at the specified collision index in @ref m_reactions
-    /// @pre Assumes that @ref checkKartObjectCollision() has been called and returned a number of
-    /// collisions greater than the specified index
-    [[nodiscard]] Kart::Reaction reaction(size_t idx) const {
-        ASSERT(idx < m_reactions.size());
-        return m_reactions[idx];
-    }
-
-    /// @brief Gets the hit depth at the specified collision index
-    /// @param idx The index of the collision to retrieve the hit depth for
-    /// @return Const reference to the hit depth vector at the specified collision index in @ref
-    /// m_hitDepths
-    /// @pre Assumes that @ref checkKartObjectCollision() has been called and returned a number of
-    /// collisions greater than the specified index
-    [[nodiscard]] const EGG::Vector3f &hitDepth(size_t idx) const {
-        ASSERT(idx < m_hitDepths.size());
-        return m_hitDepths[idx];
-    }
-
-    /// @brief Exposes a span of the managed objects' pointers
-    /// @return A span of the managed objects' pointers from @ref m_managedObjects
-    [[nodiscard]] std::span<ObjectCollidable *const> managedObjects() {
-        return std::span<ObjectCollidable *>(m_managedObjects.begin(), m_managedObjects.size());
-    }
-
-    /// @brief Exposes the rising water object, so that @ref Kart::KartMove::calcRisingWater can
-    /// know if it should run or not
-    /// @return A pointer to the rising water object, @ref m_psea
-    [[nodiscard]] ObjectPsea *psea() const {
-        return m_psea;
-    }
+    [[nodiscard]] const ObjectFlowTable &flowTable() const;
+    [[nodiscard]] const ObjectHitTable &hitTableKart() const;
+    [[nodiscard]] const ObjectCollidable *collidingObject(size_t idx) const;
+    [[nodiscard]] Kart::Reaction reaction(size_t idx) const;
+    [[nodiscard]] const EGG::Vector3f &hitDepth(size_t idx) const;
+    [[nodiscard]] std::span<ObjectCollidable *const> managedObjects();
+    [[nodiscard]] ObjectPsea *psea() const;
 
     /// @endGetters
 
     /// @beginSetters
 
-    /// @brief Sets the @ref ObjectPsea instance to expose in the director
-    /// @param psea A pointer to the @ref ObjectPsea instance to set
-    void setPsea(ObjectPsea *psea) {
-        m_psea = psea;
-    }
+    void setPsea(ObjectPsea *psea);
 
     /// @endSetters
 
     [[nodiscard]] f32 distAboveRisingWater(f32 offset) const;
     [[nodiscard]] f32 risingWaterKillPlaneHeight() const;
 
-    ///< @addr{0x808C70E8}
-    /// @brief Gets the maximum pitch angle of @ref ObjectWanwan based on the current stage
-    /// @return The maximum pitch angle of @ref ObjectWanwan
-    /// @see s_wanwanMaxPitch
-    [[nodiscard]] static f32 WanwanMaxPitch() {
-        return s_wanwanMaxPitch;
-    }
+    [[nodiscard]] static f32 WanwanMaxPitch();
 
-    /// @addr{0x8082A784}
-    /// @brief Creates the singleton instances of @ref ObjectDirector and @ref
-    /// ObjectDrivableDirector. Also creates all objects in the course.
-    /// @return A pointer to the newly created singleton instance of @ref ObjectDirector
-    static ObjectDirector *CreateInstance() {
-        ASSERT(!s_instance);
-        s_instance = EGG::egg_new<ObjectDirector>();
-        ObjectDrivableDirector::CreateInstance();
-        s_instance->createObjects();
-        return s_instance;
-    }
-
-    /// @addr{0x8082A824}
-    /// @brief Destroys the singleton instances of @ref ObjectDirector and @ref
-    /// ObjectDrivableDirector
-    static void DestroyInstance() {
-        ASSERT(s_instance);
-        auto *instance = s_instance;
-        s_instance = nullptr;
-        EGG::egg_delete(instance);
-        ObjectDrivableDirector::DestroyInstance();
-    }
-
-    /// @brief Returns the singleton instance of the @ref ObjectDirector
-    /// @return A pointer to the singleton instance of the @ref ObjectDirector
-    [[nodiscard]] static ObjectDirector *Instance() {
-        return s_instance;
-    }
+    static ObjectDirector *CreateInstance();
+    static void DestroyInstance();
+    [[nodiscard]] static ObjectDirector *Instance();
 
 private:
     EGG_NEW_DELETE_FRIEND
 
     ObjectDirector();
-
-    /// @addr{0x8082A694}
-    /// @brief Private virtual destructor that deletes all objects in the director
-    ~ObjectDirector() override {
-        if (s_instance) {
-            s_instance = nullptr;
-            WARN("ObjectDirector instance not explicitly handled!");
-        }
-
-        for (auto *&obj : m_objects) {
-            EGG::egg_delete(obj);
-        }
-    }
+    ~ObjectDirector() override;
 
     void createObjects();
     [[nodiscard]] ObjectBase *createObject(const System::MapdataGeoObj &params);

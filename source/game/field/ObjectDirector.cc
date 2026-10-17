@@ -1,11 +1,38 @@
 #include "ObjectDirector.hh"
 
+#include "game/field/ObjectDrivableDirector.hh"
 #include "game/field/obj/ObjectRegistry.hh"
 
 #include "game/system/CourseMap.hh"
 #include "game/system/RaceConfig.hh"
 
 namespace Kinoko::Field {
+
+/// @addr{0x8082A2B4}
+/// @brief Initializes all objects, including those in @ref ObjectDrivableDirector
+void ObjectDirector::init() {
+    for (auto *&obj : m_objects) {
+        obj->init();
+        obj->calcModel();
+    }
+
+    ObjectDrivableDirector::Instance()->init();
+}
+
+/// @addr{0x8082A8F4}
+/// @brief Runs per-frame calculations for all objects, including those in @ref
+/// ObjectDrivableDirector
+void ObjectDirector::calc() {
+    for (auto *&obj : m_calcObjects) {
+        obj->calc();
+    }
+
+    for (auto *&obj : m_calcObjects) {
+        obj->calcModel();
+    }
+
+    ObjectDrivableDirector::Instance()->calc();
+}
 
 /// @addr{0x8082B0E8}
 /// @brief Registers an object to the director, and adds it to the appropriate lists based on its
@@ -31,6 +58,20 @@ void ObjectDirector::addObject(ObjectCollidable *obj) {
     }
 
     m_objects.push_back(obj);
+}
+
+// @brief Adds an object to the director without adding it to the list of objects that require
+/// per-frame calculations or collision checks
+/// @param obj The object to add to the director without adding it to @ref calcObjects
+void ObjectDirector::addObjectNoImpl(ObjectBase *obj) {
+    m_objects.push_back(obj);
+}
+
+/// @addr{0x806C4ED4}
+/// @brief Adds an object to the list of objects that are meant to be accessed directly by other
+/// @param obj The @ref ObjectCollidable to add to the list of managed objects
+void ObjectDirector::addManagedObject(ObjectCollidable *obj) {
+    m_managedObjects.push_back(obj);
 }
 
 /// @addr{0x8082AB04}
@@ -90,6 +131,69 @@ size_t ObjectDirector::checkKartObjectCollision(Kart::KartObject *kartObj,
     return count;
 }
 
+/// @brief Gets the @ref ObjectFlowTable for the objects
+/// @return Const ref to the @ref ObjectFlowTable for the objects, @ref m_flowTable
+[[nodiscard]] const ObjectFlowTable &ObjectDirector::flowTable() const {
+    return m_flowTable;
+}
+
+/// @brief Gets the @ref ObjectHitTable for the kart objects
+/// @return Const ref to the @ref ObjectHitTable for the kart objects, @ref m_hitTableKart
+[[nodiscard]] const ObjectHitTable &ObjectDirector::hitTableKart() const {
+    return m_hitTableKart;
+}
+
+/// @brief Gets the object at the specified collision index
+/// @param idx The index of the collision to retrieve the object for
+/// @return Const pointer to the @ref ObjectCollidable at the specified collision index in @ref
+/// m_collidingObjects
+/// @pre Assumes that @ref checkKartObjectCollision() has been called and returned a number of
+/// collisions greater than the specified index
+[[nodiscard]] const ObjectCollidable *ObjectDirector::collidingObject(size_t idx) const {
+    ASSERT(idx < m_collidingObjects.size());
+    return m_collidingObjects[idx];
+}
+
+/// @brief Gets the reaction at the specified collision index
+/// @param idx The index of the collision to retrieve the reaction for
+/// @return The @ref Kart::Reaction at the specified collision index in @ref m_reactions
+/// @pre Assumes that @ref checkKartObjectCollision() has been called and returned a number of
+/// collisions greater than the specified index
+[[nodiscard]] Kart::Reaction ObjectDirector::reaction(size_t idx) const {
+    ASSERT(idx < m_reactions.size());
+    return m_reactions[idx];
+}
+
+/// @brief Gets the hit depth at the specified collision index
+/// @param idx The index of the collision to retrieve the hit depth for
+/// @return Const reference to the hit depth vector at the specified collision index in @ref
+/// m_hitDepths
+/// @pre Assumes that @ref checkKartObjectCollision() has been called and returned a number of
+/// collisions greater than the specified index
+[[nodiscard]] const EGG::Vector3f &ObjectDirector::hitDepth(size_t idx) const {
+    ASSERT(idx < m_hitDepths.size());
+    return m_hitDepths[idx];
+}
+
+/// @brief Exposes a span of the managed objects' pointers
+/// @return A span of the managed objects' pointers from @ref m_managedObjects
+[[nodiscard]] std::span<ObjectCollidable *const> ObjectDirector::managedObjects() {
+    return std::span<ObjectCollidable *>(m_managedObjects.begin(), m_managedObjects.size());
+}
+
+/// @brief Exposes the rising water object, so that @ref Kart::KartMove::calcRisingWater can
+/// know if it should run or not
+/// @return A pointer to the rising water object, @ref m_psea
+ObjectPsea *ObjectDirector::psea() const {
+    return m_psea;
+}
+
+/// @brief Sets the @ref ObjectPsea instance to expose in the director
+/// @param psea A pointer to the @ref ObjectPsea instance to set
+void ObjectDirector::setPsea(ObjectPsea *psea) {
+    m_psea = psea;
+}
+
 /// @addr{0x8082B3EC}
 /// @brief Gets the vertical distance between the kart and the rising water object
 /// @return The vertical distance between the kart and the @ref ObjectPsea
@@ -110,6 +214,43 @@ f32 ObjectDirector::risingWaterKillPlaneHeight() const {
     return m_psea->pos().y - 260.0f;
 }
 
+///< @addr{0x808C70E8}
+/// @brief Gets the maximum pitch angle of @ref ObjectWanwan based on the current stage
+/// @return The maximum pitch angle of @ref ObjectWanwan
+/// @see s_wanwanMaxPitch
+f32 ObjectDirector::WanwanMaxPitch() {
+    return s_wanwanMaxPitch;
+}
+
+/// @addr{0x8082A784}
+/// @brief Creates the singleton instances of @ref ObjectDirector and @ref
+/// ObjectDrivableDirector. Also creates all objects in the course.
+/// @return A pointer to the newly created singleton instance of @ref ObjectDirector
+ObjectDirector *ObjectDirector::CreateInstance() {
+    ASSERT(!s_instance);
+    s_instance = EGG::egg_new<ObjectDirector>();
+    ObjectDrivableDirector::CreateInstance();
+    s_instance->createObjects();
+    return s_instance;
+}
+
+/// @addr{0x8082A824}
+/// @brief Destroys the singleton instances of @ref ObjectDirector and @ref
+/// ObjectDrivableDirector
+void ObjectDirector::DestroyInstance() {
+    ASSERT(s_instance);
+    auto *instance = s_instance;
+    s_instance = nullptr;
+    EGG::egg_delete(instance);
+    ObjectDrivableDirector::DestroyInstance();
+}
+
+/// @brief Returns the singleton instance of the @ref ObjectDirector
+/// @return A pointer to the singleton instance of the @ref ObjectDirector
+ObjectDirector *ObjectDirector::Instance() {
+    return s_instance;
+}
+
 /// @addr{0x8082A38C}
 /// @brief Private constructor
 /// @details Constructs @ref m_flowTable from `ObjFlow.bin`, @ref m_hitTableKart from
@@ -127,6 +268,19 @@ ObjectDirector::ObjectDirector()
       m_collisionObjects(MAX_UNIT_COUNT),
       m_psea(nullptr),
       m_managedObjects(MAX_MANAGED_OBJECTS) {}
+
+/// @addr{0x8082A694}
+/// @brief Private virtual destructor that deletes all objects in the director
+ObjectDirector::~ObjectDirector() {
+    if (s_instance) {
+        s_instance = nullptr;
+        WARN("ObjectDirector instance not explicitly handled!");
+    }
+
+    for (auto *&obj : m_objects) {
+        EGG::egg_delete(obj);
+    }
+}
 
 /// @addr{0x80826E8C}
 /// @brief Constructs all objects defined in `course.kmp`

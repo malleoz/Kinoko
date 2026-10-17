@@ -2,6 +2,8 @@
 
 #include "game/field/StateManager.hh"
 
+#include <egg/math/Matrix.hh>
+
 namespace Kinoko {
 
 namespace Kart {

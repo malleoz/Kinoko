@@ -1,6 +1,8 @@
 #pragma once
 
-#include "game/field/obj/ObjectBase.hh"
+#include <Types.hh>
+
+#include <cstring>
 
 namespace Kinoko::Field {
 

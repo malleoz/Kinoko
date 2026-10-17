@@ -5,6 +5,32 @@
 
 namespace Kinoko::Field {
 
+/// @brief Constructor
+/// @details Sets @ref m_prev and @ref m_next to `nullptr`.
+SphereLink::SphereLink() : m_prev(nullptr), m_next(nullptr) {}
+
+/// @brief Default destructor
+SphereLink::~SphereLink() = default;
+
+/// @addr{0x806F1194}
+/// @brief Initializes the link's length and resets its internal state
+/// @param length The maximum distance between this link and the previous link
+void SphereLink::initLinkLen(f32 length) {
+    m_linkLen = length;
+    init();
+}
+
+/// @brief Resets the link's internal state
+/// @details Sets @ref m_pos, @ref m_vel, and @ref m_springForce to zero, @ref m_smoothedUp to
+/// the world up direction, and sets @ref m_touchingGround to `true`.
+void SphereLink::init() {
+    m_pos.setZero();
+    m_vel.setZero();
+    m_springForce.setZero();
+    m_smoothedUp = EGG::Vector3f::ey;
+    m_touchingGround = true;
+}
+
 /// @addr{0x806F2074}
 /// @brief Calculates the spring force between this link and its neighbors
 /// @pre This link must not be the leader (i.e., it must have a @ref m_prev link)
@@ -156,6 +182,73 @@ void SphereLink::checkCollision() {
     }
 
     m_smoothedUp += (floorNrm - m_smoothedUp) * 0.1f;
+}
+
+/// @brief Calculates the new position of the link based on its velocity and spring force
+/// @details Updates @ref m_vel based on the spring force and @ref GRAVITY with a damping
+/// factor. Updates @ref m_pos accordingly and resets @ref m_springForce to zero.
+void SphereLink::calcPos() {
+    constexpr f32 VEL_DAMPING = 0.9f;
+
+    m_vel += m_springForce - GRAVITY;
+    m_vel *= VEL_DAMPING;
+    m_pos += m_vel;
+    m_springForce.setZero();
+}
+
+/// @brief Sets the previous link that this link is connected to
+/// @param prev The previous link that this link should be connected to
+void SphereLink::setPrev(SphereLink *prev) {
+    m_prev = prev;
+}
+
+/// @brief Sets the next link that this link is connected to
+/// @param next The next link that this link should be connected to
+void SphereLink::setNext(SphereLink *next) {
+    m_next = next;
+}
+
+/// @brief Sets the position of the link in world space
+/// @param pos The new position of the link
+void SphereLink::setPos(const EGG::Vector3f &pos) {
+    m_pos = pos;
+}
+
+/// @brief Sets the velocity of the link
+/// @param vel The new velocity of the link
+void SphereLink::setVel(const EGG::Vector3f &vel) {
+    m_vel = vel;
+}
+
+/// @brief Adds a force to the link's spring force
+/// @param force The force to add to the spring force
+void SphereLink::addSpringForce(const EGG::Vector3f &force) {
+    m_springForce += force;
+}
+
+/// @brief Determines whether this link is at the front of the chain
+/// @return `true` if this link has no previous link, `false` otherwise
+bool SphereLink::isLeader() const {
+    return !m_prev;
+}
+
+/// @brief Gets the length of the link
+/// @return The maximum distance between this link and the previous (forward) link, @ref
+/// m_linkLen
+f32 SphereLink::linkLen() const {
+    return m_linkLen;
+}
+
+/// @brief Gets the current position of the link in world space
+/// @return The current position of the link, @ref m_pos
+const EGG::Vector3f &SphereLink::pos() const {
+    return m_pos;
+}
+
+/// @brief Gets the smoothed up vector of the link
+/// @return The smoothed up vector of the link, @ref m_smoothedUp
+const EGG::Vector3f &SphereLink::up() const {
+    return m_smoothedUp;
 }
 
 /// @addr{0x806F1C58}

@@ -1,10 +1,25 @@
 #include "ObjectCollisionKart.hh"
 
+#include "game/field/ObjectCollisionConvexHull.hh"
 #include "game/field/ObjectDirector.hh"
+#include "game/field/obj/ObjectCollidable.hh"
+
+#include "game/kart/KartObject.hh"
+#include "game/kart/KartObjectManager.hh"
 
 #include "game/system/RaceConfig.hh"
 
 namespace Kinoko::Field {
+
+/// @addr{0x8081E0CC}
+/// @brief Constructor
+ObjectCollisionKart::ObjectCollisionKart() : m_kartObject(nullptr) {}
+
+/// @addr{0x8081E0E4}
+/// @brief Destructor that destroys the convex hull associated with the @ref Kart::KartObject
+ObjectCollisionKart::~ObjectCollisionKart() {
+    EGG::egg_delete(m_hull);
+}
 
 /// @addr{0x8081D090}
 /// @brief Initializes the convex hull based on the provided player index's vehicle

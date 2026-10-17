@@ -7,6 +7,72 @@
 
 namespace Kinoko::Field {
 
+/// @brief Initializes @ref bbox to zero
+void CollisionInfoPartial::reset() {
+    bbox.setZero();
+}
+
+/// @brief Expands the bounding box to include the provided position vector
+/// @param offset The position offset to include in the bounding box
+void CollisionInfoPartial::updateBBox(const EGG::Vector3f &offset) {
+    bbox.min = bbox.min.minimize(offset);
+    bbox.max = bbox.max.maximize(offset);
+}
+
+/// @brief Maps the provided collision info from local to world space
+/// @param rhs The partial collision info accumulated from local space
+/// @param mtx The local-to-world transformation matrix
+/// @details Also updates the provided collision info's bbox to world space.
+void CollisionInfoPartial::transformInfo(CollisionInfoPartial &rhs, const EGG::Matrix34f &mtx) {
+    rhs.bbox.min = mtx.ps_multVector33(rhs.bbox.min);
+    rhs.bbox.max = mtx.ps_multVector33(rhs.bbox.max);
+
+    EGG::Vector3f min = rhs.bbox.min;
+    rhs.bbox.min = min.minimize(rhs.bbox.max);
+    rhs.bbox.max = min.maximize(rhs.bbox.max);
+
+    bbox.min = bbox.min.minimize(rhs.bbox.min);
+    bbox.max = bbox.max.maximize(rhs.bbox.max);
+}
+
+/// @brief Expands the bounding box to include the provided position vector
+/// @param offset The position offset to include in the bounding box
+void CollisionInfo::updateBBox(const EGG::Vector3f &offset) {
+    bbox.min = bbox.min.minimize(offset);
+    bbox.max = bbox.max.maximize(offset);
+}
+
+/// @brief Updates the floor collision info if the provided distance is closer than the
+/// currently tracked floor collision
+/// @param dist Distance from the colliding floor
+/// @param fnrm Colliding floor's up vector
+void CollisionInfo::updateFloor(f32 dist, const EGG::Vector3f &fnrm) {
+    if (dist > floorDist) {
+        floorDist = dist;
+        floorNrm = fnrm;
+    }
+}
+
+/// @brief Updates the wall collision info if the provided distance is closer than the
+/// currently tracked wall collision
+/// @param dist Distance from the colliding wall
+/// @param fnrm Colliding wall's up vector
+void CollisionInfo::updateWall(f32 dist, const EGG::Vector3f &fnrm) {
+    if (dist > wallDist) {
+        wallDist = dist;
+        wallNrm = fnrm;
+    }
+}
+
+/// @brief Initializes members to clear all collision info
+void CollisionInfo::reset() {
+    bbox.setZero();
+    movingFloorDist = -std::numeric_limits<f32>::min();
+    wallDist = -std::numeric_limits<f32>::min();
+    floorDist = -std::numeric_limits<f32>::min();
+    perpendicularity = 0.0f;
+}
+
 /// @brief Updates the internal state to reflect a new collision
 /// @param now_dist Distance from the colliding tri
 /// @param offset Position offset from the colliding tri
@@ -118,6 +184,9 @@ KColData::KColData(const void *file) {
     computeBBox();
 }
 
+/// @brief Default destructor
+KColData::~KColData() = default;
+
 /// @addr{0x807C24C0}
 /// @brief Prepares the prism cache for a sphere query and performs the query
 /// @param pos The position of the sphere
@@ -136,6 +205,62 @@ void KColData::narrowScopeLocal(const EGG::Vector3f &pos, f32 radius, KCLTypeMas
     }
 
     *m_prismCacheIter = 0;
+}
+
+/// @addr{0x807C1F80}
+/// @brief Checks for a collision at a specific point. If the previous position is valid, then
+/// it filters only to prisms for which the kart is traveling in the direction of the prism's
+/// face normal.
+/// @param distOut Output parameter for the distance to the collision point
+/// @param fnrmOut Output parameter for the face normal at the collision point
+/// @param flagsOut Output parameter for the collision flags
+/// @return `true` if a collision was detected, `false` otherwise
+bool KColData::checkPointCollision(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsOut) {
+    return checkPoint(distOut, fnrmOut, flagsOut, std::isfinite(m_prevPos.y));
+}
+
+/// @addr{0x807C2410}
+/// @brief Checks for a collision with a sphere. If the previous position is valid, then
+/// it filters only to prisms for which the kart is traveling in the direction of the prism's
+/// face normal.
+/// @param distOut Output parameter for the distance to the collision point
+/// @param fnrmOut Output parameter for the face normal at the collision point
+/// @param flagsOut Output parameter for the collision flags
+/// @return `true` if a collision was detected, `false` otherwise
+bool KColData::checkSphereCollision(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsOut) {
+    return std::isfinite(m_prevPos.y) ?
+            checkSphereImpl<CollisionCheckType::Movement>(distOut, fnrmOut, flagsOut) :
+            checkSphereImpl<CollisionCheckType::Plane>(distOut, fnrmOut, flagsOut);
+}
+
+/// @addr{0x807C1B0C}
+/// @brief Sets members in preparation of a subsequent point collision check call
+/// @param pos The position of the point to search around
+/// @param prevPos The previous position of the point
+/// @param typeMask The type mask to filter which prisms to consider for collision
+void KColData::lookupPoint(const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
+        KCLTypeMask typeMask) {
+    m_prismIter = searchBlock(pos);
+    m_pos = pos;
+    m_prevPos = prevPos;
+    m_movement = pos - prevPos;
+    m_typeMask = typeMask;
+}
+
+/// @addr{0x807C1BB4}
+/// @brief Sets members in preparation of a subsequent sphere collision check call
+/// @param radius The radius of the sphere to check for collisions
+/// @param pos The position of the sphere to search around
+/// @param prevPos The previous position of the sphere
+/// @param typeMask The type mask to filter which prisms to consider for collision
+void KColData::lookupSphere(f32 radius, const EGG::Vector3f &pos, const EGG::Vector3f &prevPos,
+        KCLTypeMask typeMask) {
+    m_prismIter = searchBlock(pos);
+    m_pos = pos;
+    m_prevPos = prevPos;
+    m_movement = pos - prevPos;
+    m_radius = std::min(radius, m_sphereRadius);
+    m_typeMask = typeMask;
 }
 
 /// @addr{0x807C1DE8}
@@ -163,6 +288,37 @@ void KColData::lookupSphereCached(f32 radius, const EGG::Vector3f &pos,
     m_prevPos = prevPos;
     m_movement = pos - prevPos;
     m_typeMask = typeMask;
+}
+
+/// @brief Gets the bounding box containing all KCL tris
+/// @return The bounding box encompassing all KCL triangles, @ref m_bbox
+const EGG::BoundBox3f &KColData::bbox() const {
+    return m_bbox;
+}
+
+/// @brief Gets the index of the prism stored in @ref m_prismCache at the specified index `idx`
+/// @param idx The index in the cache to retrieve the prism index from
+/// @return The prism index stored at the specified cache index in @ref m_prismCache.
+u16 KColData::prismCache(u32 idx) const {
+    return m_prismCache[idx];
+}
+
+/// @brief Gets a read-only span of all prisms in the KCL data
+/// @return A read-only span of all prisms in the KCL data from @ref m_prisms
+std::span<const KColData::KCollisionPrism> KColData::prisms() const {
+    return m_prisms.view();
+}
+
+/// @brief Gets a read-only span of all normal vectors in the KCL data
+/// @return A read-only span of all normal vectors in the KCL data from @ref m_nrms
+std::span<const EGG::Vector3f> KColData::nrms() const {
+    return m_nrms.view();
+}
+
+/// @brief Gets a read-only span of all vertex positions in the KCL data
+/// @return A read-only span of all vertex positions in the KCL data from @ref m_vertices
+std::span<const EGG::Vector3f> KColData::vertices() const {
+    return m_vertices.view();
 }
 
 /// @brief Creates a one-indexed byte-swapped copy of the prisms in memory
@@ -350,6 +506,108 @@ bool KColData::checkSphereSingle(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flag
 
     m_prismIter = nullptr;
     return false;
+}
+
+/// @addr{0x807C21F4} @addr{0x807C1F80}
+/// @brief Combination of two point collision check functions. Iterates the nearby triangles to see
+/// if a point is colliding with any edge of a prism
+/// @param distOut If colliding, outputs the distance between the player and the triangle
+/// @param fnrmOut If colliding, outputs the floor normal of the triangle
+/// @param attributeOut If colliding, outputs the KCL attributes for that triangle
+/// @param movement Whether to gate the collision on whether the point is driving in the direction
+/// of the prism's face normal
+/// @return Whether or not the player is colliding with any edge of a triangle
+bool KColData::checkPoint(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *attributeOut, bool movement) {
+    // If there's no list of triangles to check, there's no collision
+    if (!m_prismIter) {
+        return false;
+    }
+
+    // Check collision for all triangles, and continuously call the function until we're out
+    while (*++m_prismIter != 0) {
+        const KCollisionPrism &prism = m_prisms[parse<u16>(*m_prismIter)];
+        if (checkPointCollision(prism, distOut, fnrmOut, attributeOut, movement)) {
+            return true;
+        }
+    }
+
+    // We're out of triangles to check - another list must be prepared for subsequent calls
+    m_prismIter = nullptr;
+    return false;
+}
+
+/// @brief This is a combination of two point collision check functions that check whether a point
+/// is colliding with any edge of a prism. They only vary based on whether we are checking movement.
+/// @param prism The collision prism to check against
+/// @param distOut Output parameter for the distance to the collision point, if colliding
+/// @param fnrmOut Output parameter for the prism's face normal, if colliding
+/// @param flagsOut Output parameter for the KCL flags of the prism, if colliding
+/// @param movement Whether to gate the collision on whether the point is driving in the direction
+/// of the prism's face normal
+/// @return Whether or not a collision has occurred
+/// @details First checks to see whether the `prism` has any flags matching the query type mask @ref
+/// m_typeMask. If not, early returns `false`. This function uses a pseudo-radius of `0.01f` for
+/// determining whether a given point has collided with the prism. Thus, if the point is not within
+/// `0.01f` of any edge or the face of the prism, returns `false`. If the point (with its
+/// pseudo-radius) lies beyond @ref m_prismThickness from the prism's face, returns `false`.
+/// Finally, if the point is moving and the prism has directional flags, checks whether the point's
+/// movement is against the prism's face normal and returns `false` if so. Otherwise, returns `true`
+/// and updates the output parameters with the collision information.
+bool KColData::checkPointCollision(const KCollisionPrism &prism, f32 *distOut,
+        EGG::Vector3f *fnrmOut, u16 *flagsOut, bool movement) {
+    KCLTypeMask attrMask = KCL_ATTRIBUTE_TYPE_BIT(prism.attribute);
+    if (!(attrMask & m_typeMask)) {
+        return false;
+    }
+
+    const EGG::Vector3f relativePos = m_pos - m_vertices[prism.pos_i];
+
+    const EGG::Vector3f &enrm1 = m_nrms[prism.enrm1_i];
+    f32 dist_ca = relativePos.ps_dot(enrm1);
+    if (dist_ca >= 0.01f) {
+        return false;
+    }
+
+    const EGG::Vector3f &enrm2 = m_nrms[prism.enrm2_i];
+    f32 dist_ab = relativePos.ps_dot(enrm2);
+    if (dist_ab >= 0.01f) {
+        return false;
+    }
+
+    const EGG::Vector3f &enrm3 = m_nrms[prism.enrm3_i];
+    f32 dist_bc = relativePos.ps_dot(enrm3) - prism.height;
+    if (dist_bc >= 0.01f) {
+        return false;
+    }
+
+    const EGG::Vector3f &fnrm = m_nrms[prism.fnrm_i];
+    f32 plane_dist = relativePos.ps_dot(fnrm);
+    f32 dist_in_plane = 0.01f - plane_dist;
+    if (dist_in_plane <= 0.0f) {
+        return false;
+    }
+
+    if (m_prismThickness <= dist_in_plane && 0.02f + m_prismThickness <= dist_in_plane) {
+        return false;
+    }
+
+    if (movement && (attrMask & KCL_TYPE_DIRECTIONAL) && m_movement.dot(fnrm) < 0.0f) {
+        return false;
+    }
+
+    if (distOut) {
+        *distOut = dist_in_plane;
+    }
+
+    if (fnrmOut) {
+        *fnrmOut = fnrm;
+    }
+
+    if (flagsOut) {
+        *flagsOut = prism.attribute;
+    }
+
+    return true;
 }
 
 /// @addr{0x807C1514} @addr{0x807C0884}
@@ -612,113 +870,30 @@ bool KColData::checkSphereCollision(const KCollisionPrism &prism, f32 *distOut,
     return out(dist);
 }
 
-/// @addr{0x807C21F4} @addr{0x807C1F80}
-/// @brief Combination of two point collision check functions. Iterates the nearby triangles to see
-/// if a point is colliding with any edge of a prism
-/// @param distOut If colliding, outputs the distance between the player and the triangle
-/// @param fnrmOut If colliding, outputs the floor normal of the triangle
-/// @param attributeOut If colliding, outputs the KCL attributes for that triangle
-/// @param movement Whether to gate the collision on whether the point is driving in the direction
-/// of the prism's face normal
-/// @return Whether or not the player is colliding with any edge of a triangle
-bool KColData::checkPoint(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *attributeOut, bool movement) {
-    // If there's no list of triangles to check, there's no collision
-    if (!m_prismIter) {
-        return false;
-    }
+/// @addr{0x807BDF54}
+/// @brief Computes a prism vertex based off of the triangle's normal vectors
+/// @param height The height of the prism
+/// @param vertex1 The first vertex of the triangle
+/// @param fnrm The face normal of the triangle
+/// @param enrm3 The edge normal opposite to the third vertex
+/// @param enrm The edge normal opposite to the second vertex
+/// @return The computed vertex position based on the given parameters
+/// @details @par Triangle Vertices Formula
+/// Given a triangle with vertices \f$\vec{A}, \vec{B}, \vec{C}\f$, face normal \f$\hat{f}\f$,
+/// and height \f$h\f$, label the edge normals by: \f{aligned}{\hat{en}_1 := e_{AB}, \,\,
+/// \hat{en}_2:= e_{AC}, \,\,\hat{en}_3:=e_{BC}}\f} We can recover \f$\vec{B},
+/// \vec{C}\f$ via: \f{aligned}{ \vec{B} = \vec{A} + \dfrac{h}{(\hat{en}_2 \times \hat{f})
+/// \cdot
+/// \hat{en}_3}\left(\hat{en}_2 \times \hat{f}\right), \, \, \vec{C} = \vec{A} +
+/// \dfrac{h}{(\hat{en}_1 \times \hat{f}) \cdot \hat{en}_3}(\hat{en}_1 \times \hat{f}) \, .
+/// }\f}
+EGG::Vector3f KColData::GetVertex(f32 height, const EGG::Vector3f &vertex1,
+        const EGG::Vector3f &fnrm, const EGG::Vector3f &enrm3, const EGG::Vector3f &enrm) {
+    EGG::Vector3f cross = fnrm.cross(enrm);
+    f32 dp = cross.ps_dot(enrm3);
+    cross *= (height / dp);
 
-    // Check collision for all triangles, and continuously call the function until we're out
-    while (*++m_prismIter != 0) {
-        const KCollisionPrism &prism = m_prisms[parse<u16>(*m_prismIter)];
-        if (checkPointCollision(prism, distOut, fnrmOut, attributeOut, movement)) {
-            return true;
-        }
-    }
-
-    // We're out of triangles to check - another list must be prepared for subsequent calls
-    m_prismIter = nullptr;
-    return false;
+    return cross + vertex1;
 }
-
-/// @brief This is a combination of two point collision check functions that check whether a point
-/// is colliding with any edge of a prism. They only vary based on whether we are checking movement.
-/// @param prism The collision prism to check against
-/// @param distOut Output parameter for the distance to the collision point, if colliding
-/// @param fnrmOut Output parameter for the prism's face normal, if colliding
-/// @param flagsOut Output parameter for the KCL flags of the prism, if colliding
-/// @param movement Whether to gate the collision on whether the point is driving in the direction
-/// of the prism's face normal
-/// @return Whether or not a collision has occurred
-/// @details First checks to see whether the `prism` has any flags matching the query type mask @ref
-/// m_typeMask. If not, early returns `false`. This function uses a pseudo-radius of `0.01f` for
-/// determining whether a given point has collided with the prism. Thus, if the point is not within
-/// `0.01f` of any edge or the face of the prism, returns `false`. If the point (with its
-/// pseudo-radius) lies beyond @ref m_prismThickness from the prism's face, returns `false`.
-/// Finally, if the point is moving and the prism has directional flags, checks whether the point's
-/// movement is against the prism's face normal and returns `false` if so. Otherwise, returns `true`
-/// and updates the output parameters with the collision information.
-bool KColData::checkPointCollision(const KCollisionPrism &prism, f32 *distOut,
-        EGG::Vector3f *fnrmOut, u16 *flagsOut, bool movement) {
-    KCLTypeMask attrMask = KCL_ATTRIBUTE_TYPE_BIT(prism.attribute);
-    if (!(attrMask & m_typeMask)) {
-        return false;
-    }
-
-    const EGG::Vector3f relativePos = m_pos - m_vertices[prism.pos_i];
-
-    const EGG::Vector3f &enrm1 = m_nrms[prism.enrm1_i];
-    f32 dist_ca = relativePos.ps_dot(enrm1);
-    if (dist_ca >= 0.01f) {
-        return false;
-    }
-
-    const EGG::Vector3f &enrm2 = m_nrms[prism.enrm2_i];
-    f32 dist_ab = relativePos.ps_dot(enrm2);
-    if (dist_ab >= 0.01f) {
-        return false;
-    }
-
-    const EGG::Vector3f &enrm3 = m_nrms[prism.enrm3_i];
-    f32 dist_bc = relativePos.ps_dot(enrm3) - prism.height;
-    if (dist_bc >= 0.01f) {
-        return false;
-    }
-
-    const EGG::Vector3f &fnrm = m_nrms[prism.fnrm_i];
-    f32 plane_dist = relativePos.ps_dot(fnrm);
-    f32 dist_in_plane = 0.01f - plane_dist;
-    if (dist_in_plane <= 0.0f) {
-        return false;
-    }
-
-    if (m_prismThickness <= dist_in_plane && 0.02f + m_prismThickness <= dist_in_plane) {
-        return false;
-    }
-
-    if (movement && (attrMask & KCL_TYPE_DIRECTIONAL) && m_movement.dot(fnrm) < 0.0f) {
-        return false;
-    }
-
-    if (distOut) {
-        *distOut = dist_in_plane;
-    }
-
-    if (fnrmOut) {
-        *fnrmOut = fnrm;
-    }
-
-    if (flagsOut) {
-        *flagsOut = prism.attribute;
-    }
-
-    return true;
-}
-
-// Explicit instantiation, since checkSphereCollision() lives in the header and would otherwise be
-// unable to see this definition.
-template bool KColData::checkSphereImpl<KColData::CollisionCheckType::Plane>(f32 *distOut,
-        EGG::Vector3f *fnrmOut, u16 *flagsOut);
-template bool KColData::checkSphereImpl<KColData::CollisionCheckType::Movement>(f32 *distOut,
-        EGG::Vector3f *fnrmOut, u16 *flagsOut);
 
 } // namespace Kinoko::Field

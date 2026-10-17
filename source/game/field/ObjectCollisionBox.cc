@@ -53,6 +53,10 @@ ObjectCollisionBox::ObjectCollisionBox(f32 x, f32 y, f32 z, const EGG::Vector3f 
     m_points[7].z = m_center.z - scaledDims.z;
 }
 
+/// @addr{0x808342F0}
+/// @brief Default virtual destructor
+ObjectCollisionBox::~ObjectCollisionBox() = default;
+
 /// @addr{0x80833B00}
 /// @copybrief ObjectCollisionBase::transform(const EGG::Matrix34f &, const EGG::Vector3f &)
 /// @param mat The transformation matrix to apply to the collision object

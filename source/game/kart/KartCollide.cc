@@ -4,7 +4,9 @@
 #include "game/kart/KartHalfPipe.hh"
 
 #include "game/field/CollisionDirector.hh"
+#include "game/field/CourseColMgr.hh"
 #include "game/field/ObjectDirector.hh"
+#include "game/field/obj/ObjectCollidable.hh"
 
 namespace Kinoko::Kart {
 

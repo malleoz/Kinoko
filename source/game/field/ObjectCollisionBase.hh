@@ -57,11 +57,8 @@ class ObjectCollisionBase {
     friend class Host::Context;
 
 public:
-    /// @brief Default constructor
-    ObjectCollisionBase() = default;
-
-    /// @brief Default virtual destructor
-    virtual ~ObjectCollisionBase() = default;
+    ObjectCollisionBase();
+    virtual ~ObjectCollisionBase();
 
     /// @brief Transforms the collision object by a given matrix and scale
     /// @param mat The transformation matrix to apply to the collision object
@@ -90,12 +87,7 @@ public:
 
     /// @beginGetters
 
-    /// @addr{0x80573520}
-    /// @brief Gets the current velocity of the associated object
-    /// @return The current velocity of the associated object, @ref m_velocity
-    [[nodiscard]] const EGG::Vector3f &velocity() const {
-        return m_velocity;
-    }
+    [[nodiscard]] const EGG::Vector3f &velocity() const;
 
     /// @endGetters
 
@@ -103,47 +95,14 @@ protected:
     EGG::Vector3f m_velocity; ///< Velocity of the associated object
 
 private:
-    /// @addr{0x8083504C}
-    /// @brief Checks whether the origin's projection onto the affine hull of simplex `idx` lies
-    /// within that simplex, i.e. all of its barycentric weights (@ref GJKState::m_scales) are
-    /// positive
-    /// @param state The current state of the GJK algorithm
-    /// @param idx The index of the simplex to check
-    /// @return `true` if the origin's projection lies within the simplex, `false` otherwise
-    [[nodiscard]] bool enclosesOrigin(const GJKState &state, u32 idx) const {
-        u32 mask = 1;
-        for (u8 i = 0; i < 4; ++i, mask *= 2) {
-            if ((idx & mask) && state.m_scales[idx][i] <= 0.0f) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    void findNearestEnclosingSimplex(GJKState &state, EGG::Vector3f &v) const;
-    [[nodiscard]] bool getNearestSimplex(GJKState &state, EGG::Vector3f &v) const;
-    void getNearestPoint(GJKState &state, u32 idx, EGG::Vector3f &v0, EGG::Vector3f &v1) const;
-    [[nodiscard]] bool isValidSimplex(const GJKState &state, u32 idx) const;
-
-    /// @addr{0x808358CC}
-    /// @brief Catches scenarios where the newly computed support point `v` is identical to a point
-    /// already in the simplex, which would cause the algorithm to loop infinitely.
-    /// @param state The current state of the GJK algorithm
-    /// @param v The support point to check against the simplex
-    /// @return `true` if the support point is already in the simplex, `false` otherwise
-    [[nodiscard]] bool inSimplex(const GJKState &state, const EGG::Vector3f &v) const {
-        for (u32 i = 0, mask = 1; i < 4; ++i, mask *= 2) {
-            if ((state.m_candidateMask & mask) && state.m_minDiffPts[i] == v) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    void getNearestPoint(const GJKState &state, u32 idx, EGG::Vector3f &v) const;
     void calcSimplex(GJKState &state) const;
+    void findNearestEnclosingSimplex(GJKState &state, EGG::Vector3f &v) const;
+    void getNearestPoint(const GJKState &state, u32 idx, EGG::Vector3f &v) const;
+    void getNearestPoint(GJKState &state, u32 idx, EGG::Vector3f &v0, EGG::Vector3f &v1) const;
+    [[nodiscard]] bool enclosesOrigin(const GJKState &state, u32 idx) const;
+    [[nodiscard]] bool getNearestSimplex(GJKState &state, EGG::Vector3f &v) const;
+    [[nodiscard]] bool isValidSimplex(const GJKState &state, u32 idx) const;
+    [[nodiscard]] bool inSimplex(const GJKState &state, const EGG::Vector3f &v) const;
 
     /// @brief Scratch table for the dot products of the Minkowski difference points
     static std::array<std::array<f32, 4>, 4> s_dotProductCache;

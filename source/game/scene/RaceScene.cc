@@ -1,5 +1,6 @@
 #include "RaceScene.hh"
 
+#include "game/field/BoxColManager.hh"
 #include "game/field/CollisionDirector.hh"
 #include "game/field/ObjectDirector.hh"
 #include "game/field/RailManager.hh"
@@ -7,6 +8,7 @@
 #include "game/item/ItemDirector.hh"
 #include "game/render/KartCamera.hh"
 #include "game/system/CourseMap.hh"
+#include "game/system/RaceConfig.hh"
 #include "game/system/RaceManager.hh"
 
 #include <ScopeLock.hh>

@@ -1,5 +1,7 @@
 #include "ObjectPsea.hh"
 
+#include "game/field/ObjectDirector.hh"
+
 namespace Kinoko::Field {
 
 /// @addr{0x8082C234}

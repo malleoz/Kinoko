@@ -35,23 +35,8 @@ struct RailSplineTransition {
 /// its speed.
 class Rail {
 public:
-    /// @addr{0x806EC9A4}
-    /// @brief Constructor that initializes the rail with the provided index and map data point info
-    /// @param idx The index of the rail
-    /// @param info Pointer to the map data point info containing the rail's points and settings
-    /// @details Sets @ref m_isOscillating based on whether `info` has setting 2 set to 1. Performs
-    /// a deep copy of the points from `info` and saves to @ref m_points. Saves the provided `idx`
-    /// to @ref m_idx. Finally, initializes @ref m_hasCheckedCol to `false`.
-    Rail(u16 idx, const System::MapdataPointInfo *info)
-        : m_isOscillating(info->setting(1) == 1),
-          m_points(info->points()),
-          m_idx(idx) {
-        m_hasCheckedCol = false;
-    }
-
-    /// @addr{0x806ECC40}
-    /// @brief Default virtual destructor
-    virtual ~Rail() = default;
+    Rail(u16 idx, const System::MapdataPointInfo *info);
+    virtual ~Rail();
 
     /// @brief Gets the edges between the points in the rail
     /// @return A span of the edges if this is a @ref RailLine, or an empty span if this is a @ref
@@ -80,53 +65,12 @@ public:
 
     /// @beginGetters
 
-    /// @brief Gets the number of points along the rail
-    /// @return The number of points in the rail, aka the size of @ref m_points
-    [[nodiscard]] u16 pointCount() const {
-        return m_points.size();
-    }
-
-    /// @brief Checks whether the rail is a loop or a back-and-forth path
-    /// @return @ref m_isOscillating which is `true` if the rail is oscillating, or `false` if the
-    /// rail is a loop
-    [[nodiscard]] bool isOscillating() const {
-        return m_isOscillating;
-    }
-
-    /// @brief Gets a read-only span of the points in the rail
-    /// @return A span of the points in the rail, from @ref m_points
-    [[nodiscard]] std::span<const System::MapdataPointInfo::Point> points() const {
-        return m_points.view();
-    }
-
-    /// @addr{0x806ED150}
-    /// @brief Gets the position of the point at the given index `idx
-    /// @param idx The index of the point in the rail
-    /// @return The position of the point at the given index in @ref m_points
-    /// @pre `idx` must be less than the number of points in the rail
-    [[nodiscard]] const EGG::Vector3f &pointPos(u16 idx) const {
-        ASSERT(idx < m_points.size());
-        return m_points[idx].pos;
-    }
-
-    /// @brief Gets the up vector of the point at the given index `idx`
-    /// @param idx The index of the point in the rail
-    /// @return The up vector of the point at the given index `idx` in @ref m_floorNrms
-    /// @pre Assumes @ref checkSphereFull() has been called in order to allocate the array of floor
-    /// normals and set each element.
-    [[nodiscard]] const EGG::Vector3f &floorNrm(u16 idx) const {
-        ASSERT(!m_floorNrms.empty() && idx < m_floorNrms.size());
-        return m_floorNrms[idx];
-    }
-
-    /// @addr{0x806F09C0} @addr{0x806EF9AC}
-    /// @brief Gets the length of the edge or curve between the two points
-    /// @return The length of the edge or curve between the two points, @ref m_pathLength
-    /// @details Normally @ref m_pathLength is a member in each derived class, but by moving it to
-    /// the base class, we can devirtualize this method.
-    [[nodiscard]] f32 getPathLength() const {
-        return m_pathLength;
-    }
+    [[nodiscard]] u16 pointCount() const;
+    [[nodiscard]] bool isOscillating() const;
+    [[nodiscard]] std::span<const System::MapdataPointInfo::Point> points() const;
+    [[nodiscard]] const EGG::Vector3f &pointPos(u16 idx) const;
+    [[nodiscard]] const EGG::Vector3f &floorNrm(u16 idx) const;
+    [[nodiscard]] f32 getPathLength() const;
 
     /// @endGetters
 
@@ -148,52 +92,18 @@ private:
 /// @brief Represents a rail that is made up of straight lines between points
 /// @details @ref RailLinearInterpolator will fetch the linear transitions from this class so that
 /// it can linearly interpolate the position of an object along the rail based on its speed.
-class RailLine : public Rail {
+class RailLine final : public Rail {
 public:
     RailLine(u16 idx, const System::MapdataPointInfo *info);
+    ~RailLine() override;
 
-    /// @addr{0x806EFD6C}
-    ~RailLine() override = default;
-
-    /// @addr{0x806F09A8}
-    /// @copybrief Rail::getEstimatorSampleCount()
-    /// @return `0` since this class does not use cubic bezier curves
-    [[nodiscard]] s32 getEstimatorSampleCount() const override {
-        return 0;
-    }
-
-    /// @addr{0x806F099C}
-    /// @copybrief Rail::getEstimatorStep()
-    /// @return `0.0f` since this class does not use cubic bezier curves
-    [[nodiscard]] f32 getEstimatorStep() const override {
-        return 0.0f;
-    }
-
-    /// @addr{0x806F0994}
-    /// @copybrief Rail::getPathPercentages()
-    /// @return An empty span since this class does not use cubic bezier curves
-    /// @details In the base game we return a nullptr. To mimic this, return an empty span.
-    [[nodiscard]] std::span<const f32> getPathPercentages() const override {
-        static owning_span<f32> EMPTY_PERCENTAGES;
-        return EMPTY_PERCENTAGES.view();
-    }
+    [[nodiscard]] s32 getEstimatorSampleCount() const override;
+    [[nodiscard]] f32 getEstimatorStep() const override;
+    [[nodiscard]] std::span<const f32> getPathPercentages() const override;
 
 private:
-    /// @addr{0x806F09B8}
-    /// @copybrief Rail:getLinearTransitions()
-    /// @return A span of the edges if this is a @ref RailLine
-    [[nodiscard]] std::span<const RailLineTransition> getLinearTransitions() const override {
-        return m_transitions.view();
-    }
-
-    /// @addr{0x806F09B0}
-    /// @copybrief Rail::getSplineTransitions()
-    /// @return An empty span since this class does not use cubic bezier curves
-    /// @details In the base game we return a nullptr. To mimic this, return an empty span.
-    [[nodiscard]] std::span<const RailSplineTransition> getSplineTransitions() const override {
-        static owning_span<RailSplineTransition> EMPTY_TRANSITIONS;
-        return EMPTY_TRANSITIONS.view();
-    }
+    [[nodiscard]] std::span<const RailLineTransition> getLinearTransitions() const override;
+    [[nodiscard]] std::span<const RailSplineTransition> getSplineTransitions() const override;
 
     owning_span<RailLineTransition> m_transitions; ///< The edges between the points in the rail
 };
@@ -201,118 +111,24 @@ private:
 /// @brief Represents a rail that is made up of cubic bezier curves between points
 /// @details @ref RailSmoothInterpolator will fetch the spline transitions from this class so that
 /// it can smoothly interpolate the position of an object along the rail based on its speed.
-class RailSpline : public Rail {
+class RailSpline final : public Rail {
 public:
     RailSpline(u16 idx, const System::MapdataPointInfo *info);
+    ~RailSpline() override;
 
-    /// @addr{0x806ED828}
-    ~RailSpline() override = default;
-
-    /// @addr{0x806EF994}
-    /// @copybrief Rail::getEstimatorSampleCount()
-    /// @return The number of samples
-    [[nodiscard]] s32 getEstimatorSampleCount() const override {
-        return ESTIMATOR_SAMPLE_COUNT;
-    }
-
-    /// @addr{0x806EF98C}
-    /// @copybrief Rail::getEstimatorStep()
-    /// @return The step size for the estimator
-    [[nodiscard]] f32 getEstimatorStep() const override {
-        return ESTIMATOR_STEP;
-    }
-
-    /// @addr{0x806EF984}
-    /// @copybrief Rail::getPathPercentages()
-    /// @return A span of the path percentages for the cubic bezier curves
-    [[nodiscard]] std::span<const f32> getPathPercentages() const override {
-        return m_pathPercentages.view();
-    }
+    [[nodiscard]] s32 getEstimatorSampleCount() const override;
+    [[nodiscard]] f32 getEstimatorStep() const override;
+    [[nodiscard]] std::span<const f32> getPathPercentages() const override;
 
 private:
-    /// @addr{0x806EF9A4}
-    /// @copybrief Rail::getLinearTransitions()
-    /// @return An empty span, since this class does not use linear transitions
-    /// @details In the base game we return a nullptr. To mimic this, return an empty span.
-    [[nodiscard]] std::span<const RailLineTransition> getLinearTransitions() const override {
-        static owning_span<RailLineTransition> EMPTY_TRANSITIONS;
-        return EMPTY_TRANSITIONS.view();
-    }
-
-    /// @addr{0x806EF99C}
-    /// @copybrief Rail::getSplineTransitions()
-    /// @return A span of the cubic bezier curves
-    [[nodiscard]] std::span<const RailSplineTransition> getSplineTransitions() const override {
-        return m_transitions.view();
-    }
+    [[nodiscard]] std::span<const RailLineTransition> getLinearTransitions() const override;
+    [[nodiscard]] std::span<const RailSplineTransition> getSplineTransitions() const override;
 
     void invalidateTransitions(bool lastOnly);
-
-    /// @addr{0x806EE27C}
-    /// @brief Calculates the control points of a cubic bezier curve passing through the provided
-    /// points
-    /// @param p0 The first point of the cubic bezier curve
-    /// @param p1 The second point of the cubic bezier curve
-    /// @param p2 The third point of the cubic bezier curve
-    /// @param p3 The fourth point of the cubic bezier curve
-    /// @param count The number of samples to use for length estimation
-    /// @param transition The RailSplineTransition object to store the calculated control points and
-    /// length
     void calcCubicBezierControlPoints(const EGG::Vector3f &p0, const EGG::Vector3f &p1,
             const EGG::Vector3f &p2, const EGG::Vector3f &p3, s32 count,
-            RailSplineTransition &transition) {
-        transition.m_p0 = p1;
-        transition.m_p1 = calcCubicBezierP1(p0, p1, p2);
-        transition.m_p2 = calcCubicBezierP2(p1, p2, p3);
-        transition.m_p3 = p2;
-        transition.m_length = estimateLength(transition, count);
-        transition.m_lengthInv = 1.0f / transition.m_length;
-    }
-
+            RailSplineTransition &transition);
     [[nodiscard]] f32 estimateLength(const RailSplineTransition &transition, s32 count);
-
-    /// @addr{0x806EE408}
-    /// @brief Computes the outgoing bezier control point after p1
-    /// @param p0 The first point of the cubic bezier curve
-    /// @param p1 The second point of the cubic bezier curve
-    /// @param p2 The third point of the cubic bezier curve
-    /// @return The computed outgoing bezier control point
-    [[nodiscard]] EGG::Vector3f calcCubicBezierP1(const EGG::Vector3f &p0, const EGG::Vector3f &p1,
-            const EGG::Vector3f &p2) const {
-        EGG::Vector3f res = p2 - p0;
-        f32 len = res.length();
-        res.normalise2();
-        return p1 + res * (len * CUBIC_BEZIER_TENSION_FACTOR);
-    }
-
-    /// @addr{0x806EE4B8}
-    /// @brief Computes the incoming bezier control point before p2
-    /// @param p0 The first point of the cubic bezier curve
-    /// @param p1 The second point of the cubic bezier curve
-    /// @param p2 The third point of the cubic bezier curve
-    /// @return The computed incoming bezier control point
-    [[nodiscard]] EGG::Vector3f calcCubicBezierP2(const EGG::Vector3f &p0, const EGG::Vector3f &p1,
-            const EGG::Vector3f &p2) const {
-        EGG::Vector3f res = p0 - p2;
-        f32 len = res.length();
-        res.normalise2();
-        return p1 + res * (len * CUBIC_BEZIER_TENSION_FACTOR);
-    }
-
-    /// @addr{0x806EE72C}
-    /// @brief Evaluates a cubic bezier curve at the given parameter t
-    /// @param t The parameter along the curve to evaluate, in the range [0, 1]
-    /// @param transition The bezier curve to evaluate
-    [[nodiscard]] EGG::Vector3f cubicBezier(f32 t, const RailSplineTransition &transition) const {
-        f32 dt = 1.0f - t;
-
-        EGG::Vector3f res = transition.m_p0 * (dt * dt * dt);
-        res += transition.m_p1 * (3.0f * t * (dt * dt));
-        res += transition.m_p2 * (3.0f * (t * t) * dt);
-        res += transition.m_p3 * (t * t * t);
-
-        return res;
-    }
 
     owning_span<RailSplineTransition> m_transitions; ///< The splines between the points in the rail
 
@@ -321,6 +137,12 @@ private:
 
     /// @brief The number of sampled path percentages stored in @ref m_pathPercentages
     s32 m_pathPercentageCount;
+
+    [[nodiscard]] static EGG::Vector3f CubicBezier(f32 t, const RailSplineTransition &transition);
+    [[nodiscard]] static EGG::Vector3f CalcCubicBezierP1(const EGG::Vector3f &p0,
+            const EGG::Vector3f &p1, const EGG::Vector3f &p2);
+    [[nodiscard]] static EGG::Vector3f CalcCubicBezierP2(const EGG::Vector3f &p0,
+            const EGG::Vector3f &p1, const EGG::Vector3f &p2);
 
     /// @brief Scales how far the control points are pulled out from the curve's anchor points
     static constexpr f32 CUBIC_BEZIER_TENSION_FACTOR = 0.1f;
