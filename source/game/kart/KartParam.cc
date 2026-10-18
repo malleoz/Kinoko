@@ -4,6 +4,103 @@
 
 namespace Kinoko::Kart {
 
+/// @addr{Inlined in 0x0x8058F5B4}
+/// @brief Constructor which initializes all stats and hitboxes based on the provided
+/// character/vehicle combo
+/// @param character The character to initialize stats for
+/// @param vehicle The vehicle to initialize stats for
+/// @param playerIdx The player index of the given vehicle (always 0 in Kinoko)
+KartParam::KartParam(Character character, Vehicle vehicle, u8 playerIdx)
+    : m_playerIdx(playerIdx),
+      m_isBike(vehicle >= Vehicle::Standard_Bike_S) {
+    initStats(character, vehicle);
+    initHitboxes(vehicle);
+    m_isBike ? initBikeDispParams(vehicle) : initKartDispParams(vehicle);
+    initCameraParams(character);
+}
+
+/// @brief Default destructor
+KartParam::~KartParam() = default;
+
+/// @brief Sets the number of active tires for the kart
+/// @param tireCount The number of active tires to set
+void KartParam::setTireCount(u16 tireCount) {
+    m_tireCount = tireCount;
+}
+
+/// @brief Sets the number of active suspensions for the kart
+/// @param suspCount The number of active suspensions to set
+void KartParam::setSuspCount(u16 suspCount) {
+    m_suspCount = suspCount;
+}
+
+/// @addr{0x80591DBC}
+/// @brief Exposes the @ref BSP struct associated with the kart
+/// @return Const ref to the kart's @ref BSP data, @ref m_bsp
+const BSP &KartParam::bsp() const {
+    return m_bsp;
+}
+
+/// @addr{0x80591F4C}
+/// @brief Gets the @ref Stats struct associated with the kart
+/// @return Const ref to the kart's @ref Stats data, @ref m_stats
+const KartParam::Stats &KartParam::stats() const {
+    return m_stats;
+}
+
+/// @addr{0x80592620}
+/// @brief Gets the @ref BikeDisp struct associated with the vehicle
+/// @return Const ref to the vehicle's @ref BikeDisp data, @ref m_bikeDisp
+/// @pre Requires that the vehicle is a bike. @ref m_bikeDisp is not initialized for karts.
+const KartParam::BikeDisp &KartParam::bikeDisp() const {
+    return m_bikeDisp;
+}
+
+/// @addr{0x80592558}
+/// @brief Gets the @ref KartDisp struct associated with the vehicle
+/// @return Const ref to the vehicle's @ref KartDisp data, @ref m_kartDisp
+/// @pre Requires that the vehicle is a kart. @ref m_kartDisp is not initialized for bikes.
+const KartParam::KartDisp &KartParam::kartDisp() const {
+    return m_kartDisp;
+}
+
+/// @addr{0x805927D4}
+/// @brief Gets the @ref KartCameraParam struct associated with the vehicle
+/// @return Const ref to the vehicle's @ref KartCameraParam data, @ref m_camera
+const KartCameraParam &KartParam::camera() const {
+    return m_camera;
+}
+
+/// @brief Gets the index of the player associated with this kart
+/// @return The player index of the kart, @ref m_playerIdx
+u8 KartParam::playerIdx() const {
+    return m_playerIdx;
+}
+
+/// @brief Distinguishes whether the vehicle is a kart of bike
+/// @return `true` if the vehicle is a bike, `false` if it's a kart
+bool KartParam::isBike() const {
+    return m_isBike;
+}
+
+/// @brief Effectively checks whether this vehicle is the Quacker
+/// @return `true` if this vehicle is the Quacker, `false` for all other vehicles
+bool KartParam::isVehicleRelativeBike() const {
+    return m_stats.body == Stats::Body::Vehicle_Relative_Bike;
+}
+
+/// @brief Gets the number of active suspensions on the vehicle
+/// @return The number of active suspensions on the vehicle, @ref m_suspCount
+u16 KartParam::suspCount() const {
+    return m_suspCount;
+}
+
+/// @brief Gets the number of active tires on the vehicle
+/// @return The number of active tires on the vehicle, @ref m_tireCount
+u16 KartParam::tireCount() const {
+    return m_tireCount;
+}
+
 /// @addr{0x80591FA4}
 /// @brief Parses out the character/vehicle combo stats
 /// @param character The character to initialize stats for

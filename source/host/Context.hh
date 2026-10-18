@@ -2,7 +2,8 @@
 
 #include "Common.hh"
 
-#include <cstring>
+#include <abstract/memory/List.hh>
+
 #include <functional>
 
 namespace Kinoko {
@@ -13,10 +14,6 @@ namespace Abstract::g3d {
 class FrameCtrl;
 class ResAnmChr;
 } // namespace Abstract::g3d
-
-namespace Abstract::Memory {
-class MEMList;
-} // namespace Abstract::Memory
 
 namespace EGG {
 class Archive;
@@ -71,60 +68,12 @@ namespace Host {
 class Context {
 public:
     Context();
+    Context(const Context &c);
+    Context(Context &&c);
+    ~Context();
 
-    /// @brief Copy constructor which clones the provided context
-    /// @param c The context to copy from.
-    Context(const Context &c) {
-        m_contextMemory = malloc(MEMORY_SPACE_SIZE);
-        ASSERT(m_contextMemory && c.m_contextMemory);
-        memcpy(m_contextMemory, c.m_contextMemory, MEMORY_SPACE_SIZE);
-        m_statics = c.m_statics;
-    }
-
-    /// @brief Move constructs a context by stealing the memory block and pointers from the provided
-    /// context
-    /// @param c The context to move from.
-    Context(Context &&c) {
-        m_contextMemory = c.m_contextMemory;
-        c.m_contextMemory = nullptr;
-        m_statics = c.m_statics;
-        c.m_statics = {};
-    }
-
-    /// @brief Destructor which frees the allocated context memory.
-    /// @note This class does not manage the lifecycle of the heap that it referenced at the time of
-    /// construction; it only manages the copy.
-    ~Context() {
-        free(m_contextMemory);
-    }
-
-    /// @brief Copy assignment operator
-    /// @param rhs The context to copy from.
-    /// @return A reference to this context.
-    Context &operator=(const Context &rhs) {
-        if (*this == rhs) {
-            return *this;
-        }
-
-        ASSERT(m_contextMemory && rhs.m_contextMemory && m_contextMemory != rhs.m_contextMemory);
-        memcpy(m_contextMemory, rhs.m_contextMemory, MEMORY_SPACE_SIZE);
-        m_statics = rhs.m_statics;
-
-        return *this;
-    }
-
-    /// @brief Move assignment operator
-    /// @param rhs The context to move from.
-    /// @return A reference to this context.
-    Context &operator=(Context &&rhs) {
-        free(m_contextMemory);
-        m_contextMemory = rhs.m_contextMemory;
-        rhs.m_contextMemory = nullptr;
-        m_statics = rhs.m_statics;
-        rhs.m_statics = {};
-
-        return *this;
-    }
+    Context &operator=(const Context &rhs);
+    Context &operator=(Context &&rhs);
 
     [[nodiscard]] bool operator==(const Context &rhs) const;
 

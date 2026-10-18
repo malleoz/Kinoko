@@ -1,8 +1,18 @@
 #pragma once
 
-#include <abstract/g3d/ResFile.hh>
+#include <Types.hh>
 
-namespace Kinoko::Render {
+#include <abstract/g3d/ResAnmChr.hh>
+
+namespace Kinoko {
+
+namespace Abstract::g3d {
+
+class ResFile;
+
+} // namespace Abstract::g3d
+
+namespace Render {
 
 class DrawMdl;
 
@@ -21,25 +31,10 @@ enum class AnmType : s32 {
 /// @brief Wrapper/interface that represents a CHR0 animation bound to a model
 class AnmNodeChr {
 public:
-    /// @brief Constructor
-    /// @param anmObjChrRes The CHR0 animation resource to be wrapped by this node
-    /// @details For Kinoko, we can safely move the resource into the node, transferring ownership.
-    AnmNodeChr(Abstract::g3d::AnmObjChrRes &&anmObjChrRes)
-        : m_anmObjChrRes(std::move(anmObjChrRes)) {}
+    AnmNodeChr(Abstract::g3d::AnmObjChrRes &&anmObjChrRes);
 
-    /// @addr{0x8055AE90}
-    /// @brief Gets the total number of frames in the animation
-    /// @return The total number of frames in the animation
-    [[nodiscard]] f32 frameCount() const {
-        return static_cast<f32>(m_anmObjChrRes.frameCount());
-    }
-
-    /// @addr{0x8055ADFC}
-    /// @brief Gets the current frame of the animation
-    /// @return The current frame of the animation
-    [[nodiscard]] f32 frame() const {
-        return m_anmObjChrRes.frame();
-    }
+    [[nodiscard]] f32 frameCount() const;
+    [[nodiscard]] f32 frame() const;
 
 private:
     const Abstract::g3d::AnmObjChrRes m_anmObjChrRes; ///< The underlying resource object
@@ -48,50 +43,22 @@ private:
 /// @brief Manager class for handling different types of animations bound to a model
 class AnmMgr {
 public:
-    /// @addr{0x80555750}
-    /// @brief Constructs an animation manager tied to the provided @ref DrawMdl
-    /// @param drawMdl The model to which this animation manager is tied
-    AnmMgr(DrawMdl *drawMdl) : m_parent(drawMdl) {}
+    AnmMgr(DrawMdl *drawMdl);
+    ~AnmMgr();
 
-    /// @addr{0x8055597C}
-    /// @brief Registers the provided animation to the manager's list of animations
-    /// @details For the purposes of time trial synchronization, we only need to implement CHR0
-    /// animations.
-    /// @param resFile The resource file containing the animation
-    /// @param name The name of the animation within the resource file
-    /// @param anmType The type of the animation
-    void linkAnims(size_t /*idx*/, const Abstract::g3d::ResFile *resFile, const char *name,
-            AnmType anmType) {
-        // For now, we only care about Chr
-        switch (anmType) {
-        case AnmType::Chr:
-            m_anmList.emplace_back(resFile->resAnmChr(name));
-            break;
-        default:
-            break;
-        }
-    }
+    void linkAnims(size_t idx, const Abstract::g3d::ResFile *resFile, const char *name,
+            AnmType anmType);
 
-    /// @addr{0x805573CC}
-    /// @brief Plays the animation at the specified index in the list of registered animations
-    /// @param idx The index of the animation to play
-    void playAnim(f32 /*frame*/, f32 /*rate*/, size_t idx) {
-        ASSERT(idx < m_anmList.size());
-        AnmNodeChr *&activeChrAnim = m_activeAnims[static_cast<size_t>(AnmType::Chr)];
-        activeChrAnim = &(*std::next(m_anmList.begin(), idx));
-    }
+    void playAnim(f32 frame, f32 rate, size_t idx);
 
-    /// @addr{0x80557340}
-    /// @brief Retrieves the actively playing animation of the specified type
-    /// @param anmType The type of the animation to retrieve
-    /// @return A pointer to the actively playing animation of the specified type, or `nullptr` if
-    /// none is active
-    [[nodiscard]] const AnmNodeChr *activeAnim(AnmType anmType) const {
-        return m_activeAnims[static_cast<size_t>(anmType)];
-    }
+    /// @beginGetters
+
+    [[nodiscard]] const AnmNodeChr *activeAnim(AnmType anmType) const;
+
+    /// @endGetters
 
 private:
-    [[maybe_unused]] const DrawMdl *m_parent; ///< The model to which this animation manager is tied
+    [[maybe_unused]] const DrawMdl *const m_parent; ///< The model this animation manager is tied to
     alloc_list<AnmNodeChr> m_anmList; ///< A list of all animations registered with the manager
 
     /// @brief The currently active animations for each animation type
@@ -100,4 +67,6 @@ private:
     std::array<AnmNodeChr *, static_cast<size_t>(AnmType::Max) - 1> m_activeAnims;
 };
 
-} // namespace Kinoko::Render
+} // namespace Render
+
+} // namespace Kinoko

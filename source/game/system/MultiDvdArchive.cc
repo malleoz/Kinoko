@@ -1,5 +1,6 @@
 #include "MultiDvdArchive.hh"
 
+#include <algorithm>
 #include <cstring>
 #include <ranges>
 
@@ -26,6 +27,10 @@ MultiDvdArchive::MultiDvdArchive(u16 archiveCount)
         m_formats[i] = Format::Double;
     }
 }
+
+/// @addr{0x8052A6DC}
+/// @brief Default destructor
+MultiDvdArchive::~MultiDvdArchive() = default;
 
 /// @addr{0x8052A760}
 /// @brief Retrieves a file from the sub-archives
@@ -97,6 +102,39 @@ void MultiDvdArchive::rip(const char *filename) {
         }
         archive.rip(buffer);
     }
+}
+
+/// @addr{0x8052AC40}
+/// @brief Clears all archives and their file data from memory
+/// @details Calls @ref DvdArchive::clear() for each sub-archive.
+void MultiDvdArchive::clear() {
+    for (auto &archive : m_archives) {
+        archive.clear();
+    }
+}
+
+/// @addr{0x8052AA88}
+/// @brief Unmounts all sub-archives and clears all associated data from memory
+/// @details Calls @ref DvdArchive::unmount() for each sub-archive.
+void MultiDvdArchive::unmount() {
+    for (auto &archive : m_archives) {
+        archive.unmount();
+    }
+}
+
+/// @addr{0x8052A800}
+/// @brief Checks if any of the sub-archives are loaded
+/// @return `true` if at least one sub-archive is loaded, `false` otherwise
+bool MultiDvdArchive::isLoaded() const {
+    return std::ranges::any_of(m_archives, [](const auto &archive) { return archive.isLoaded(); });
+}
+
+/// @addr{0x8052AE08}
+/// @brief Returns the number of sub-archives that have been ripped
+/// @return The count of ripped sub-archives
+u16 MultiDvdArchive::rippedArchiveCount() const {
+    return std::ranges::count_if(m_archives,
+            [](const auto &archive) { return archive.isRipped(); });
 }
 
 } // namespace Kinoko::System

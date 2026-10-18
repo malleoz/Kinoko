@@ -2,8 +2,6 @@
 
 #include "game/field/obj/ObjectCollidable.hh"
 
-#include "game/system/RaceManager.hh"
-
 namespace Kinoko::Field {
 
 /// @brief The traffic cones on Daisy Circuit

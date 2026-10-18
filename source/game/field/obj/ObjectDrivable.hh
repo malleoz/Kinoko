@@ -1,10 +1,12 @@
 #pragma once
 
-#include "game/field/BoxColManager.hh"
-#include "game/field/CourseColMgr.hh"
+#include "game/field/KCollisionTypes.hh"
 #include "game/field/obj/ObjectBase.hh"
 
 namespace Kinoko::Field {
+
+struct CollisionInfo;
+struct CollisionInfoPartial;
 
 /// @brief Represents an object that karts can drive on, such as @ref ObjectAurora.
 /// @details Exposes collision interfaces to allow for objects to define the criteria for when and

@@ -1,11 +1,35 @@
 #include "KartHalfPipe.hh"
 
 #include "game/kart/KartCollide.hh"
+#include "game/kart/KartDynamics.hh"
+#include "game/kart/KartMove.hh"
 #include "game/kart/KartPhysics.hh"
+#include "game/kart/KartState.hh"
 
 #include "game/field/KColData.hh"
 
+#include "game/system/KPadController.hh"
+
 namespace Kinoko::Kart {
+
+/// @addr{0x80574114}
+/// @brief Constructor
+/// @details Initializes @ref m_prevPos to zero.
+KartHalfPipe::KartHalfPipe() : m_prevPos(EGG::Vector3f::zero) {}
+
+/// @addr{0x80574170}
+/// @brief Default virtual destructor
+KartHalfPipe::~KartHalfPipe() = default;
+
+/// @addr{0x805741B0}
+/// @brief Resets the half-pipe state to its default values
+/// @details Sets @ref m_stunt to `StuntType::None`, @ref m_touchingZipper to `false`, and
+/// @ref m_landingBoostDelayTimer to `0`.
+void KartHalfPipe::reset() {
+    m_stunt = StuntType::None;
+    m_touchingZipper = false;
+    m_landingBoostDelayTimer = 0;
+}
 
 /// @addr{0x80574340}
 /// @brief Runs per-frame updates for zipper interactions and trick rotation management

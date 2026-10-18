@@ -1,9 +1,15 @@
 #include "ObjectChoropu.hh"
 
+#include "game/field/ObjectCollisionSphere.hh"
 #include "game/field/ObjectDirector.hh"
+#include "game/field/Rail.hh"
+#include "game/field/RailInterpolator.hh"
 #include "game/field/RailManager.hh"
 
+#include "game/kart/Reaction.hh"
+
 #include "game/system/RaceManager.hh"
+#include "game/system/map/MapdataGeoObj.hh"
 
 namespace Kinoko::Field {
 

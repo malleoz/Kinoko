@@ -41,190 +41,58 @@ public:
     };
 
     MapdataCheckPoint(const SData *data);
+    ~MapdataCheckPoint();
 
-    /// @brief Default destructor
-    ~MapdataCheckPoint() = default;
-
-    /// @brief Reads the checkpoint data from the given stream
-    /// @param stream The stream to read from
-    void read(EGG::Stream &stream) {
-        m_left.read(stream);
-        m_right.read(stream);
-        m_jugemIndex = stream.read_s8();
-        m_type = stream.read_s8();
-        m_prevId = stream.read_u8();
-        m_nextId = stream.read_u8();
-    }
-
+    void read(EGG::RamStream &stream);
     void initCheckpointLinks(MapdataCheckPointAccessor &accessor, int id);
+
     [[nodiscard]] SectorOccupancy checkSectorAndDistanceRatio(const EGG::Vector3f &pos,
             f32 &distanceRatio) const;
     [[nodiscard]] u16 getEntryOffsetMs(const EGG::Vector2f &prevPos,
             const EGG::Vector2f &pos) const;
 
-    /// @brief Finds at what fractional millisecond of a frame the player enters the checkpoint
-    /// @param prevPos The previous position, likely not located in the checkpoint.
-    /// @param pos The current position, likely located in the checkpoint.
-    /// @return The exact offset that crosses into the checkpoint, in the range [0, 1000 / 59.94].
-    /// @details This assumes the player is entering the checkpoint as intended, and not from the
-    /// side. This function isn't in the base game, but it can be used to determine improvements to
-    /// runs.
     [[nodiscard]] f32 getEntryOffsetExact(const EGG::Vector2f &prevPos,
-            const EGG::Vector2f &pos) const {
-        constexpr f32 REFRESH_PERIOD = 1000.0f / 59.94f;
+            const EGG::Vector2f &pos) const;
 
-        EGG::Vector2f velocity = pos - prevPos;
-        velocity *= 1.0f / REFRESH_PERIOD;
-
-        // d_k = p_0 - m + kv
-        // d_k dot r = 0 => k is the exact offset to the finish line
-        // Therefore, k = ((m - p_0) dot r) / (v dot r)
-
-        f32 x = (m_midpoint - prevPos).dot(m_dir);
-        f32 y = velocity.dot(m_dir);
-
-        // y = 0 => v is parallel to the checkpoint line
-        return y != 0.0f ? x / y : 0.0f;
-    }
-
-    /// @brief Checks whether this checkpoint is a regular checkpoint
-    /// @return `true` if this checkpoint is a regular checkpoint (@ref Type::NormalCheckpoint),
-    /// `false` otherwise.
-    [[nodiscard]] bool isNormalCheckpoint() const {
-        return static_cast<Type>(m_type) == Type::NormalCheckpoint;
-    }
-
-    /// @brief Checks whether this checkpoint increments the lap count
-    /// @return `true` if this checkpoint increments the lap count (@ref Type::FinishLine), `false`
-    /// otherwise.
-    [[nodiscard]] bool isFinishLine() const {
-        return static_cast<Type>(m_type) == Type::FinishLine;
-    }
+    [[nodiscard]] bool isNormalCheckpoint() const;
+    [[nodiscard]] bool isFinishLine() const;
 
     /// @beginSetters
 
-    /// @brief Marks this checkpoint as searched in the DFS traversal this frame
-    /// @details Sets @ref m_searched to `true`.
-    void setSearched() {
-        m_searched = true;
-    }
-
-    /// @brief Clears the searched status of this checkpoint
-    /// @details Sets @ref m_searched to `false`.
-    void clearSearched() {
-        m_searched = false;
-    }
+    void setSearched();
+    void clearSearched();
 
     /// @endSetters
 
     /// @beginGetters
 
-    /// @brief Checks whether this checkpoint has been searched in the DFS traversal this frame
-    /// @return `true` if this checkpoint has been searched, `false` otherwise.
-    [[nodiscard]] bool searched() const {
-        return m_searched;
-    }
-
-    /// @brief Gets the index of the respawn point associated with this checkpoint
-    /// @return The respawn point index, @ref m_jugemIndex.
-    [[nodiscard]] s8 jugemIndex() const {
-        return m_jugemIndex;
-    }
-
-    /// @brief Gets the type of this checkpoint
-    /// @return The checkpoint's type, @ref m_type.
-    [[nodiscard]] s8 type() const {
-        return m_type;
-    }
-
-    /// @brief Gets the number of next checkpoints linked to this checkpoint
-    /// @return The number of next checkpoints, @ref m_nextCount.
-    [[nodiscard]] u16 nextCount() const {
-        return m_nextCount;
-    }
-
-    /// @brief Gets the number of previous checkpoints linked to this checkpoint
-    /// @return The number of previous checkpoints, @ref m_prevCount.
-    [[nodiscard]] u16 prevCount() const {
-        return m_prevCount;
-    }
-
-    /// @brief Gets the direction vector of this checkpoint
-    /// @return The direction vector, @ref m_dir.
-    [[nodiscard]] const EGG::Vector2f &dir() const {
-        return m_dir;
-    }
-
-    /// @brief Gets the ID of this checkpoint
-    /// @return The checkpoint's ID, @ref m_id.
-    [[nodiscard]] u16 id() const {
-        return m_id;
-    }
-
-    /// @brief Gets the previous checkpoint at the given index
-    /// @param i The index of the previous checkpoint
-    /// @return A pointer to the previous checkpoint
-    /// @pre Requires that `i` is less than the size of @ref m_prevPoints (aka @ref MAX_NEIGHBORS)
-    [[nodiscard]] MapdataCheckPoint *prevPoint(size_t i) const {
-        ASSERT(i < m_prevPoints.size());
-        return m_prevPoints[i];
-    }
-
-    /// @brief Gets the next checkpoint at the given index
-    /// @param i The index of the next checkpoint
-    /// @return A pointer to the next checkpoint
-    /// @pre Requires that `i` is less than the size of @ref m_nextPoints (aka @ref MAX_NEIGHBORS)
-    [[nodiscard]] MapdataCheckPoint *nextPoint(size_t i) const {
-        ASSERT(i < m_nextPoints.size());
-        return m_nextPoints[i].checkpoint;
-    }
+    [[nodiscard]] bool searched() const;
+    [[nodiscard]] s8 jugemIndex() const;
+    [[nodiscard]] s8 type() const;
+    [[nodiscard]] u16 nextCount() const;
+    [[nodiscard]] u16 prevCount() const;
+    [[nodiscard]] const EGG::Vector2f &dir() const;
+    [[nodiscard]] u16 id() const;
+    [[nodiscard]] MapdataCheckPoint *prevPoint(size_t i) const;
+    [[nodiscard]] MapdataCheckPoint *nextPoint(size_t i) const;
 
     /// @endGetters
 
     /// @brief Describes the type of checkpoint
-    /// @details Key checkpoints can take on values between 1 and 126. The type value represents the
-    /// index, meaning players must pass key checkpoint 1, then 2, then 3, etc.
+    /// @details Key checkpoints can take on values between 1 and 126. The type value represents
+    /// the index, meaning players must pass key checkpoint 1, then 2, then 3, etc.
     enum class Type {
         NormalCheckpoint = -1, ///< Used to calculate respawns
         FinishLine = 0,        ///< Triggers a lap change
     };
 
 private:
-    /// @addr{0x80510C74}
-    /// @brief Classifies where the player's position sits relative to the quadrilateral formed
-    /// between this checkpoint and the next checkpoint
-    /// @param next The linked checkpoint to check against
-    /// @param p0 The XZ vector from the next checkpoint's left boundary to the player
-    /// @param p1 The XZ vector from this checkpoint right boundary to the player
-    /// @param distanceRatio The distance ratio reference to set
-    /// @return The sector occupancy of the player's position relative to the checkpoint quad
     [[nodiscard]] SectorOccupancy checkSectorAndDistanceRatio(const LinkedCheckpoint &next,
-            const EGG::Vector2f &p0, const EGG::Vector2f &p1, f32 &distanceRatio) const {
-        if (!checkSector(next, p0, p1)) {
-            return SectorOccupancy::OutsideSector;
-        }
-
-        return checkDistanceRatio(next, p0, p1, distanceRatio) ? SectorOccupancy::InsideSector :
-                                                                 SectorOccupancy::BetweenSides;
-    }
-
+            const EGG::Vector2f &p0, const EGG::Vector2f &p1, f32 &distanceRatio) const;
     [[nodiscard]] bool checkSector(const LinkedCheckpoint &next, const EGG::Vector2f &p0,
             const EGG::Vector2f &p1) const;
-
-    /// @addr{0x80510BF0}
-    /// @brief Computes the the distance ratio: progress of traversal through the checkpoint quad
-    /// @param next The linked checkpoint to check against
-    /// @param p0 The XZ vector from the next checkpoint's left boundary to the player
-    /// @param p1 The XZvector from this checkpoint right boundary to the player
-    /// @param distanceRatio The distance ratio reference to set
-    /// @return Whether the distance ratio is in its valid range, [0, 1].
     [[nodiscard]] bool checkDistanceRatio(const LinkedCheckpoint &next, const EGG::Vector2f &p0,
-            const EGG::Vector2f &p1, f32 &distanceRatio) const {
-        f32 d1 = m_dir.dot(p1);
-        f32 d2 = -(next.checkpoint->m_dir.dot(p0));
-        distanceRatio = d1 / (d1 + d2);
-        return distanceRatio >= 0.0f && distanceRatio <= 1.0f;
-    }
+            const EGG::Vector2f &p1, f32 &distanceRatio) const;
 
     static constexpr size_t MAX_NEIGHBORS = 6;
 
@@ -253,26 +121,12 @@ private:
 class MapdataCheckPointAccessor
     : public MapdataAccessorBase<MapdataCheckPoint, MapdataCheckPoint::SData> {
 public:
-    /// @brief Constructor
-    /// @param header Pointer to the map section header containing the checkpoint data
-    MapdataCheckPointAccessor(const MapSectionHeader *header)
-        : MapdataAccessorBase<MapdataCheckPoint, MapdataCheckPoint::SData>(header) {
-        MapdataAccessorBase::init(
-                reinterpret_cast<const MapdataCheckPoint::SData *>(m_sectionHeader + 1),
-                parse<u16>(m_sectionHeader->count));
-        init();
-    }
-
-    /// @brief Default virtual destructor
-    ~MapdataCheckPointAccessor() override = default;
+    MapdataCheckPointAccessor(const MapSectionHeader *header);
+    ~MapdataCheckPointAccessor() override;
 
     /// @beginGetters
 
-    /// @brief Gets the type of the last key checkpoint encountered
-    /// @return The type of the last key checkpoint encountered, @ref m_lastKcpType
-    [[nodiscard]] s8 lastKcpType() const {
-        return m_lastKcpType;
-    }
+    [[nodiscard]] s8 lastKcpType() const;
 
     /// @endGetters
 

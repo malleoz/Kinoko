@@ -1,5 +1,7 @@
 #include "ObjectDirector.hh"
 
+#include "game/field/BoxColManager.hh"
+#include "game/field/ObjectCollisionConvexHull.hh"
 #include "game/field/ObjectDrivableDirector.hh"
 #include "game/field/obj/ObjectRegistry.hh"
 

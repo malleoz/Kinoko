@@ -2,7 +2,7 @@
 
 #include <Common.hh>
 
-#include "host/Context.hh"
+#include <egg/core/Disposer.hh>
 
 namespace Kinoko {
 

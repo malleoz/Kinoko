@@ -2,6 +2,9 @@
 
 #include "egg/core/Heap.hh"
 
+/// @todo I STILL NEED TO GIVE DESCRIPTION DOXYGEN COMMENTS FOR ALL ABSTRACT AND EGG CLASSES AND
+/// FUNCTIONS.
+
 namespace Kinoko::EGG {
 
 template <typename T>

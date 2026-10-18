@@ -1,15 +1,23 @@
 #pragma once
 
-#include "game/render/KartCamera.hh"
+#include <Types.hh>
 
-#include "game/system/KPadDirector.hh"
-#include "game/system/MultiDvdArchive.hh"
+#include "egg/core/Scene.hh"
 
+#ifdef BUILD_DEBUG
 #include <egg/core/ExpHeap.hh>
-#include <egg/core/SceneManager.hh>
+#endif
 
 /// @brief Pertains to scene handling.
-namespace Kinoko::Scene {
+namespace Kinoko {
+
+namespace System {
+
+class MultiDvdArchive;
+
+} // namespace System
+
+namespace Scene {
 
 /// @brief Interface for menu and race scenes.
 class GameScene : public EGG::Scene {
@@ -17,45 +25,10 @@ public:
     GameScene();
     ~GameScene() override;
 
-    /// @addr{0x8051B3C8}
-    /// @copybrief EGG::Scene::calc()
-    /// @details Manages input handling, updates all karts' physics, and updates the cameras.
-    void calc() final {
-        System::KPadDirector::Instance()->calc();
-        calcEngines();
-        calcCamera();
-    }
-
-    /// @addr{0x8051AB58}
-    /// @copybrief EGG::Scene::enter()
-    /// @details Calls @ref configure() and @ref initScene() to initialize the race.
-    void enter() final {
-        configure();
-        initScene();
-    }
-
-    /// @addr{0x8051B250}
-    /// @copybrief EGG::Scene::exit()
-    /// @details Calls @ref deinitScene() and @ref unmountResources() to properly clean up at the
-    /// end of a race.
-    void exit() final {
-        deinitScene();
-        unmountResources();
-    }
-
-    /// @addr{0x8051B7B0}
-    /// @copybrief EGG::Scene::reinit()
-    /// @details Calls @ref exit() and reinitializes the scene, either by reentering it via @ref
-    /// onReinit() or switching to the next scene.
-    void reinit() final {
-        exit();
-        if (m_nextSceneId < 0) {
-            onReinit();
-            initScene();
-        } else {
-            m_sceneMgr->changeSiblingScene(m_nextSceneId);
-        }
-    }
+    void calc() final;
+    void enter() final;
+    void exit() final;
+    void reinit() final;
 
     /// @brief Responsible for creating all singleton instances necessary for
     /// the scene to function
@@ -74,76 +47,30 @@ public:
     /// @brief Performs initial setup for the scene
     virtual void configure() = 0;
 
-    /// @brief Called when the scene is reinitialized, allowing for custom behavior during reentry
-    virtual void onReinit() {}
+    virtual void onReinit();
 
-    /// @addr{0x805A1A8C}
-    /// @brief Initializes the camera
-    /// @details In the base game, this function normally has to iterate over the cameras for all
-    /// players. For Kinoko, we simplify for one player by exposing @ref Render::KartCamera as a
-    /// singleton.
-    static void initCamera() {
-        Render::KartCamera::Instance()->init();
-    }
-
-    /// @addr{0x805A1AF0}
-    /// @brief Every frame, updates the cameras' positions and orientations
-    /// @details In the base game, this function normally has to iterate over the cameras for all
-    /// players. For Kinoko, we simplify for one player by exposing @ref Render::KartCamera as a
-    /// singleton.
-    static void calcCamera() {
-        Render::KartCamera::Instance()->calc();
-    }
+    static void InitCamera();
+    static void CalcCamera();
 
 protected:
-    /// @addr{0x8051AA58}
-    /// @brief Appends a resource to the scene's resource list so that the underlying archive can be
-    /// properly destroyed when the refcount is 0
-    /// @param archive Pointer to the archive containing the resource to be appended
-    /// @param id The ID of the resource within the archive
-    void appendResource(System::MultiDvdArchive *archive, s32 id) {
-        m_resources.push_back(EGG::egg_new<Resource>(archive, id));
-    }
+    void appendResource(System::MultiDvdArchive *archive, s32 id);
 
 private:
     /// @brief Represents a resource managed by the scene, including its archive and a unique ID
     struct Resource {
+        System::MultiDvdArchive *archive; ///< Pointer to the archive containing the resource
+        s32 id;                           ///< Unique ID of the resource within the archive
+
         /// @addr{Inlined in 0x8051AA58}
         /// @brief Constructor
         Resource(System::MultiDvdArchive *archive, s32 id) : archive(archive), id(id) {}
 
         /// @brief Default destructor
         ~Resource() = default;
-
-        System::MultiDvdArchive *archive; ///< Pointer to the archive containing the resource
-        s32 id;                           ///< Unique ID of the resource within the archive
     };
 
-    /// @addr{0x8051A4DC}
-    /// @brief Initializes the scene by creating and initializing all singletons and resetting the
-    /// player's input state
-    void initScene() {
-        createEngines();
-        System::KPadDirector::Instance()->reset();
-        initEngines();
-#ifdef BUILD_DEBUG
-        checkMemory();
-#endif // BUILD_DEBUG
-    }
-
-    /// @addr{0x8051B0F4}
-    /// @brief Called upon exiting the scene in order to clean up singletons used mid-race
-    /// @details If not transitioning to another scene, destroys all singletons and clears the
-    /// player's input state
-    void deinitScene() {
-        if (m_nextSceneId >= 0) {
-            return;
-        }
-
-        destroyEngines();
-        System::KPadDirector::Instance()->clear();
-    }
-
+    void initScene();
+    void deinitScene();
     void unmountResources();
 
 #ifdef BUILD_DEBUG
@@ -165,4 +92,6 @@ private:
 #endif // BUILD_DEBUG
 };
 
-} // namespace Kinoko::Scene
+} // namespace Scene
+
+} // namespace Kinoko

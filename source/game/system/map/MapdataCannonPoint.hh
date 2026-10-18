@@ -2,8 +2,6 @@
 
 #include "game/system/map/MapdataAccessorBase.hh"
 
-#include "game/kart/KartMove.hh"
-
 namespace Kinoko::System {
 
 /// @brief Describes a cannon's target point in the course
@@ -32,7 +30,7 @@ public:
 
     /// @brief Parses the raw cannon point data from the provided stream
     /// @param stream The stream from which to read the raw cannon point data
-    void read(EGG::Stream &stream) {
+    void read(EGG::RamStream &stream) {
         m_pos.read(stream);
         m_rot.read(stream);
         m_id = stream.read_u16();

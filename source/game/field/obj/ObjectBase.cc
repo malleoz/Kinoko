@@ -2,8 +2,17 @@
 
 #include "game/field/BoxColManager.hh"
 #include "game/field/ObjectDirector.hh"
+#include "game/field/RailInterpolator.hh"
+
+#include "game/render/DrawMdl.hh"
 
 #include "game/system/CourseMap.hh"
+#include "game/system/ResourceManager.hh"
+#include "game/system/map/MapdataGeoObj.hh"
+
+#include <abstract/g3d/ResFile.hh>
+
+#include <cstring>
 
 namespace Kinoko::Field {
 

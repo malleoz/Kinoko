@@ -3,10 +3,16 @@
 #include "game/field/StateManager.hh"
 #include "game/field/obj/ObjectCollidable.hh"
 
-#include "game/kart/KartCollide.hh"
-#include "game/kart/KartObject.hh"
+namespace Kinoko {
 
-namespace Kinoko::Field {
+namespace Kart {
+
+class KartObject;
+enum class Reaction;
+
+} // namespace Kart
+
+namespace Field {
 
 /// @brief Represents the walking Chain Chomps on DS Peach Gardens
 /// @details Chain Chomps move along a rail and bounce upwards whenever they collide with the
@@ -74,4 +80,6 @@ private:
     ObjectHwanwan *m_hwanwan; ///< Pointer to the underlying Chain Chomp object
 };
 
-} // namespace Kinoko::Field
+} // namespace Field
+
+} // namespace Kinoko

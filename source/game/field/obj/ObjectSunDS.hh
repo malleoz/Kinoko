@@ -3,8 +3,6 @@
 #include "game/field/StateManager.hh"
 #include "game/field/obj/ObjectProjectileLauncher.hh"
 
-#include "game/system/RaceManager.hh"
-
 namespace Kinoko::Field {
 
 /// @brief Represents the sun on DS Desert Hills that launches @ref ObjectFireSnake projectiles

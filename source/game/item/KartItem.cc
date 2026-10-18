@@ -2,9 +2,27 @@
 
 #include "game/kart/KartMove.hh"
 
+#include "game/system/KPadController.hh"
 #include "game/system/RaceManager.hh"
 
 namespace Kinoko::Item {
+
+/// @addr{0x8079754C}
+/// @brief Constructor
+/// @details Initializes @ref m_flags to all zeroes.
+KartItem::KartItem() {
+    m_flags.makeAllZero();
+}
+
+/// @addr{0x8079951C}
+/// @brief Default virtual destructor
+KartItem::~KartItem() = default;
+
+/// @addr{0x807976E0}
+/// @brief Initializes the @ref Kart::KartObjectProxy accessor pointer
+void KartItem::init(size_t playerIdx) {
+    apply(playerIdx);
+}
 
 /// @addr{0x80797928}
 /// @brief Calculates item activation based on the controller input state
@@ -53,10 +71,39 @@ void KartItem::calc() {
     }
 }
 
+/// @addr{0x80798848}
+/// @brief Clears the current item inventory if it is not empty
+void KartItem::clear() {
+    if (m_inventory.id() != ItemId::NONE) {
+        m_inventory.clear();
+    }
+}
+
+/// @addr{0x807A9D3C}
+/// @brief Actives a mushroom boost and decrements the item count in the inventory slot
+void KartItem::useMushroom() {
+    activateMushroom();
+    m_inventory.useItem(1);
+}
+
 /// @addr{0x8079864C}
 /// @brief Applies a mushroom boost to the kart's movement
 void KartItem::activateMushroom() {
     move()->activateMushroom();
+}
+
+/// @beginGetters
+
+/// @brief Fetches the current item inventory for the kart
+/// @return A reference to the current item inventory for the kart, @ref m_inventory
+ItemInventory &KartItem::inventory() {
+    return m_inventory;
+}
+
+/// @brief Fetches the current item inventory for the kart
+/// @return A const reference to the current item inventory for the kart, @ref m_inventory
+const ItemInventory &KartItem::inventory() const {
+    return m_inventory;
 }
 
 } // namespace Kinoko::Item

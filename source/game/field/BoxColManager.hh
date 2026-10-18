@@ -1,5 +1,6 @@
 #pragma once
 
+#include <egg/core/Heap.hh>
 #include <egg/math/Vector.hh>
 
 namespace Kinoko {
@@ -92,7 +93,7 @@ struct BoxColHighPoint {
 class BoxColManager : EGG::Disposer {
     /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
     /// state on context switch
-    friend class Host::Context;
+    friend Host::Context;
 
 public:
     void clear();

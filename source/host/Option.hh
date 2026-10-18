@@ -2,6 +2,7 @@
 
 #include <Common.hh>
 
+#include <cstring>
 #include <optional>
 
 namespace Kinoko::Host {

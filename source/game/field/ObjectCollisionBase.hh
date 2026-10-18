@@ -2,7 +2,21 @@
 
 #include <egg/math/Matrix.hh>
 
-namespace Kinoko::Field {
+namespace Kinoko {
+
+namespace EGG {
+
+struct Matrix34f;
+
+} // namespace EGG
+
+namespace Host {
+
+class Context;
+
+} // namespace Host
+
+namespace Field {
 
 /// @brief Houses the internal state of a collision check in terms of the Gilbert–Johnson–Keerthi
 /// (GJK) distance algorithm.
@@ -54,7 +68,7 @@ struct GJKState {
 class ObjectCollisionBase {
     /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
     /// state on context switch
-    friend class Host::Context;
+    friend Host::Context;
 
 public:
     ObjectCollisionBase();
@@ -108,4 +122,6 @@ private:
     static std::array<std::array<f32, 4>, 4> s_dotProductCache;
 };
 
-} // namespace Kinoko::Field
+} // namespace Field
+
+} // namespace Kinoko

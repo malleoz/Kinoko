@@ -1,6 +1,8 @@
 #include "KartObject.hh"
 
+#include "game/kart/KartBody.hh"
 #include "game/kart/KartMove.hh"
+#include "game/kart/KartPhysics.hh"
 #include "game/kart/KartSub.hh"
 #include "game/kart/KartSuspension.hh"
 #include "game/kart/KartTire.hh"
@@ -14,6 +16,14 @@
 #include <ranges>
 
 namespace Kinoko::Kart {
+
+/// @addr{0x8058DDBC}
+/// @brief Constructor
+/// @param param Pointer to the kart's stats
+/// @details Initializes KartAccessor::param with the provided `param` pointer.
+KartObject::KartObject(KartParam *param) {
+    m_pointers.param = param;
+}
 
 /// @addr{0x8058DEF0}
 /// @brief Virtual destructor that destroys the KartObject and all of its subsystems
@@ -31,6 +41,15 @@ KartObject::~KartObject() {
     for (auto *tire : m_pointers.tires) {
         EGG::egg_delete(tire);
     }
+}
+
+/// @addr{0x8058E5F8}
+/// @brief Creates a KartBody object based on the type of vehicle (kart or bike)
+/// @param physics Pointer to the kart's physics state manager
+/// @return Pointer to the created KartBody instance
+/// @details For the base class, this creates a @ref KartBodyKart.
+KartBody *KartObject::createBody(KartPhysics *physics) {
+    return EGG::egg_new<KartBodyKart>(physics);
 }
 
 /// @addr{0x8058EA0C}
@@ -152,6 +171,12 @@ void KartObject::calc() {
     model()->calc();
 }
 
+/// @brief Gets a pointer to the collection of associated kart subsystems
+/// @return Const pointer to the collection of associated kart subsystems, @ref m_pointers
+const KartAccessor *KartObject::accessor() const {
+    return &m_pointers;
+}
+
 /// @addr{0x8058F5B4}
 /// @brief Creates a @ref KartObject based on the provided character and vehicle enums
 /// @param character The character to create the kart for
@@ -231,6 +256,29 @@ void KartObject::prepareTiresAndSuspensions() {
 void KartObject::createSub() {
     m_pointers.sub = EGG::egg_new<KartSub>();
     m_pointers.sub->createSubsystems(m_pointers.param->isBike(), m_pointers.param->stats());
+}
+
+/// @addr{0x8058F20C}
+/// @brief Constructor
+/// @param param Pointer to the kart's stats
+KartObjectBike::KartObjectBike(KartParam *param) : KartObject(param) {}
+
+/// @addr{0x8058F8B0}
+/// @brief Default virtual destructor
+KartObjectBike::~KartObjectBike() = default;
+
+/// @addr{0x8058F260}
+/// @copybrief @ref KartObject::createBody()
+/// @param physics Pointer to the kart's physics state manager
+/// @return Pointer to the created KartBody instance
+/// @details Creates a @ref KartBodyBike, except for the Quacker bike which creates a @ref
+/// KartBodyQuacker.
+KartBody *KartObjectBike::createBody(KartPhysics *physics) {
+    if (m_pointers.param->isVehicleRelativeBike()) {
+        return EGG::egg_new<KartBodyQuacker>(physics);
+    } else {
+        return EGG::egg_new<KartBodyBike>(physics);
+    }
 }
 
 /// @addr{0x8058F2E8}

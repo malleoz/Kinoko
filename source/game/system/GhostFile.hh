@@ -1,12 +1,18 @@
 #pragma once
 
-#include "game/system/TimerManager.hh"
+#include "game/system/Timer.hh"
 
-#include <egg/util/Stream.hh>
+#include <array>
 
-#include <cstring>
+namespace Kinoko {
 
-namespace Kinoko::System {
+namespace EGG {
+
+class RamStream;
+
+} // namespace EGG
+
+namespace System {
 
 /// @brief The size of the `.rkg` file header
 static constexpr size_t RKG_HEADER_SIZE = 0x88;
@@ -60,30 +66,11 @@ static constexpr size_t RKG_MAX_FILE_SIZE =
 
 class RawGhostFile {
 public:
-    /// @brief Constructor that initializes the raw ghost file buffer to zero
-    RawGhostFile() {
-        memset(m_buffer, 0, sizeof(m_buffer));
-    }
+    RawGhostFile();
+    RawGhostFile(const u8 *rkg);
+    ~RawGhostFile();
 
-    /// @brief Constructor that initializes the raw ghost file buffer with the provided binary data
-    /// @param rkg Pointer to the binary data from a ghost file
-    RawGhostFile(const u8 *rkg) {
-        init(rkg);
-    }
-
-    /// @brief Default destructor
-    ~RawGhostFile() = default;
-
-    /// @brief Copy assignment operator
-    /// @param rkg Pointer to the binary data from a ghost file
-    /// @return Reference to the current `RawGhostFile` instance
-    /// @details First clears the buffer to avoid stale data before initializing it with the new
-    /// binary data.
-    RawGhostFile &operator=(const u8 *rkg) {
-        memset(m_buffer, 0, sizeof(m_buffer));
-        init(rkg);
-        return *this;
-    }
+    RawGhostFile &operator=(const u8 *rkg);
 
     void init(const u8 *rkg);
     [[nodiscard]] bool decompress(const u8 *rkg);
@@ -91,31 +78,15 @@ public:
 
     /// @beginGetters
 
-    /// @brief Gets the buffer containing the binary data of the ghost file
-    /// @return Pointer to the buffer containing the binary data of the ghost file
-    [[nodiscard]] const u8 *buffer() const {
-        return m_buffer;
-    }
+    [[nodiscard]] const u8 *buffer() const;
 
     /// @endGetters
 
-    /// @brief Parses a value of type `T` from the raw ghost file buffer at the specified offset,
-    /// keeping in mind endianness byte-swapping
-    /// @tparam T The type of data to parse from the raw ghost file buffer
-    /// @param offset The offset from the start of the buffer to read the value of type `T`
-    /// @return The value of type `T` parsed from the raw ghost file buffer at the specified offset
     template <ParseableType T>
-    [[nodiscard]] T parseAt(size_t offset) const {
-        return parse<T>(*reinterpret_cast<const T *>(m_buffer + offset));
-    }
+    [[nodiscard]] T parseAt(size_t offset) const;
 
 private:
-    /// @brief Gets the "compressed" flag bit from the provided `.rkg` file pointer
-    /// @param rkg The `.rkg` file pointer to check for the compressed flag
-    /// @return `true` if the "compressed" flag is set, `false` otherwise
-    [[nodiscard]] bool compressed(const u8 *rkg) const {
-        return ((*(rkg + 0xC) >> 3) & 1) == 1;
-    }
+    [[nodiscard]] bool compressed(const u8 *rkg) const;
 
     u8 m_buffer[RKG_MAX_FILE_SIZE]; ///< Buffer containing the binary data of the ghost file
 };
@@ -125,69 +96,20 @@ STATIC_ASSERT(sizeof(RawGhostFile) == RKG_MAX_FILE_SIZE);
 /// @see RawGhostFile
 class GhostFile {
 public:
-    /// @addr{0x8051C398}
-    /// @brief Constructor
-    /// @param raw The raw ghost file to parse and initialize the `GhostFile` instance from
-    /// @details Creates a @ref EGG::RamStream to read the header section of the raw ghost file.
-    GhostFile(const RawGhostFile &raw) : m_inputs(raw.buffer() + RKG_HEADER_SIZE) {
-        u8 *streamPtr = const_cast<u8 *>(raw.buffer());
-        EGG::RamStream stream(streamPtr, RKG_HEADER_SIZE);
-        read(stream);
-    }
-
-    /// @addr{0x8051CF90}
-    /// @brief Default destructor
-    ~GhostFile() = default;
+    GhostFile(const RawGhostFile &raw);
+    ~GhostFile();
 
     void read(EGG::RamStream &stream);
 
     /// @beginGetters
 
-    /// @brief Gets the lap timer at the provided index
-    /// @param i The index of the lap to get the timer for
-    /// @return Const ref to the lap @ref Timer for the specified lap index from @ref m_lapTimes.
-    /// @pre Requires that `i` is less than the number of laps in the race
-    [[nodiscard]] const Timer &lapTimer(size_t i) const {
-        ASSERT(i < m_lapTimes.size());
-        return m_lapTimes[i];
-    }
-
-    /// @brief Gets the total race time
-    /// @return Const ref to the total race @ref Timer, @ref m_raceTime.
-    [[nodiscard]] const Timer &raceTimer() const {
-        return m_raceTime;
-    }
-
-    /// @brief Gets the character used in the race
-    /// @return The @ref Character used in the race, @ref m_character
-    [[nodiscard]] Character character() const {
-        return m_character;
-    }
-
-    /// @brief Gets the vehicle used in the race
-    /// @return The @ref Vehicle used in the race, @ref m_vehicle
-    [[nodiscard]] Vehicle vehicle() const {
-        return m_vehicle;
-    }
-
-    /// @brief Gets the course that the race is taking place on
-    /// @return The @ref Course of the race, @ref m_course
-    [[nodiscard]] Course course() const {
-        return m_course;
-    }
-
-    /// @brief Gets the pointer to the ghost's input data section
-    /// @return Const pointer to the input data section, @ref m_inputs
-    [[nodiscard]] const u8 *inputs() const {
-        return m_inputs;
-    }
-
-    /// @brief Checks if the drift mode is automatic
-    /// @return The value of @ref m_driftIsAuto which is `true` when using automatic and `false`
-    /// when using manual
-    [[nodiscard]] bool driftIsAuto() const {
-        return m_driftIsAuto;
-    }
+    [[nodiscard]] const Timer &lapTimer(size_t i) const;
+    [[nodiscard]] const Timer &raceTimer() const;
+    [[nodiscard]] Character character() const;
+    [[nodiscard]] Vehicle vehicle() const;
+    [[nodiscard]] Course course() const;
+    [[nodiscard]] const u8 *inputs() const;
+    [[nodiscard]] bool driftIsAuto() const;
 
     /// @endGetters
 
@@ -211,4 +133,6 @@ private:
     const u8 *const m_inputs;            ///< Pointer to the ghost's input data section
 };
 
-} // namespace Kinoko::System
+} // namespace System
+
+} // namespace Kinoko

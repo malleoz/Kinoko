@@ -1,6 +1,11 @@
 #include "ObjectEscalator.hh"
 
 #include "game/field/CollisionDirector.hh"
+#include "game/field/KColData.hh"
+#include "game/field/ObjColMgr.hh"
+
+#include "game/system/RaceManager.hh"
+#include "game/system/map/MapdataGeoObj.hh"
 
 namespace Kinoko::Field {
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "game/field/ObjectCollisionSphere.hh"
 #include "game/field/SphereLink.hh"
 #include "game/field/StateManager.hh"
 #include "game/field/obj/ObjectCollidable.hh"

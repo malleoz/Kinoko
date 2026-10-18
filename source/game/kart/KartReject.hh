@@ -2,13 +2,13 @@
 
 #include "game/kart/KartObjectProxy.hh"
 
-#include "game/field/KColData.hh"
-
 namespace Kinoko {
 
 namespace Field {
+
 struct CollisionInfo;
-}
+
+} // namespace Field
 
 namespace Kart {
 
@@ -21,21 +21,10 @@ namespace Kart {
 /// limit.
 class KartReject : private KartObjectProxy {
 public:
-    /// @addr{Inlined in 0x80577FC4}
-    /// @brief Default constructor
-    KartReject() = default;
+    KartReject();
+    ~KartReject() override;
 
-    /// @addr{0x8057815C}
-    /// @brief Default virtual destructor
-    ~KartReject() override = default;
-
-    /// @addr{0x80585AE8}
-    /// @brief Resets the direction of rejection
-    /// @details Simply resets @ref m_rejectSign to zero.
-    void reset() {
-        m_rejectSign = 0.0f;
-    }
-
+    void reset();
     void calc();
     bool calcRejection();
 

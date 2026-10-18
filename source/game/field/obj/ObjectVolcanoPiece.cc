@@ -1,7 +1,10 @@
-#include "game/field/obj/ObjectVolcanoPiece.hh"
+#include "ObjectVolcanoPiece.hh"
+
+#include "game/field/ObjColMgr.hh"
 
 #include "game/system/RaceManager.hh"
 #include "game/system/ResourceManager.hh"
+#include "game/system/map/MapdataGeoObj.hh"
 
 namespace Kinoko::Field {
 

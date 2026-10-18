@@ -1,14 +1,23 @@
 #pragma once
 
+#include <Types.hh>
+
 #include "game/field/KCollisionTypes.hh"
 
 #include <egg/math/BoundBox.hh>
-#include <egg/math/Matrix.hh>
 
 // Credit: em-eight/mkw
 // Credit: stblr/Hanachan
 
-namespace Kinoko::Field {
+namespace Kinoko {
+
+namespace EGG {
+
+struct Matrix34f;
+
+} // namespace EGG
+
+namespace Field {
 
 /// @brief Stores partial information pertaining to a collision
 struct CollisionInfoPartial {
@@ -44,7 +53,9 @@ struct CollisionInfo {
     void transformInfo(CollisionInfo &rhs, const EGG::Matrix34f &mtx, const EGG::Vector3f &v);
 };
 
-/// @brief Performs lookups for KCL triangles
+/// @brief Interface that parses a `.kcl` file and allows for spatial querying of KCL triangles
+/// @details KCL triangle data is arranged in an octree which allows for more efficient spatial
+/// queries.
 class KColData {
 public:
     /// @brief Describes the type of collision check to perform
@@ -53,6 +64,24 @@ public:
         Plane,    ///< Checks if a body is colliding with a plane of the prism
         Movement, ///< Plane collisions that occur when traveling towards the face of the prism
     };
+
+    /// @brief The header of the KCL file format. It is 0x3C bytes long (for Mario %Kart Wii).
+    struct KColHeader {
+        u32 pos_data_offset;        ///< 0-indexed offset to array of position vectors.
+        u32 nrm_data_offset;        ///< 0-indexed offset to array of normal vectors.
+        u32 prism_data_offset;      ///< 1-indexed offset to array of normal vectors.
+        u32 block_data_offset;      ///< Offset to collision octree blocks
+        f32 prism_thickness;        ///< Depth of a triangular prism along its normal vector.
+        EGG::Vector3f area_min_pos; ///< Smallest possible coordinate in the model
+        u32 area_x_width_mask; ///< The x dimension of the octree's bounding box. @see searchBlock.
+        u32 area_y_width_mask; ///< The y dimension of the octree's bounding box. @see searchBlock.
+        u32 area_z_width_mask; ///< The z dimension of the octree's bounding box. @see searchBlock.
+        u32 block_width_shift; ///< Used to initialize octree navigation. @see searchBlock.
+        u32 area_x_blocks_shift;  ///< Used to initialize octree navigation. @see searchBlock.
+        u32 area_xy_blocks_shift; ///< Used to initialize octree navigation. @see searchBlock.
+        f32 sphere_radius; ///< Clamps the sphere we check collision against. @see searchBlock.
+    };
+    STATIC_ASSERT(sizeof(KColHeader) == 0x3c);
 
     /// @brief Represesnts a KCL collision prism
     struct KCollisionPrism {
@@ -174,4 +203,6 @@ private:
             const EGG::Vector3f &fnrm, const EGG::Vector3f &enrm3, const EGG::Vector3f &enrm);
 };
 
-} // namespace Kinoko::Field
+} // namespace Field
+
+} // namespace Kinoko

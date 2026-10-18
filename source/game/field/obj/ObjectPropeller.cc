@@ -1,6 +1,9 @@
 #include "ObjectPropeller.hh"
 
+#include "game/field/ObjectCollisionCylinder.hh"
 #include "game/field/ObjectDirector.hh"
+
+#include "game/system/map/MapdataGeoObj.hh"
 
 namespace Kinoko::Field {
 

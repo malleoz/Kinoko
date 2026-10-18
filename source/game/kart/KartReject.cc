@@ -1,10 +1,27 @@
 #include "KartReject.hh"
 
+#include "game/kart/KartDynamics.hh"
 #include "game/kart/KartMove.hh"
 
 #include "game/field/CollisionDirector.hh"
+#include "game/field/KColData.hh"
 
 namespace Kinoko::Kart {
+
+/// @addr{Inlined in 0x80577FC4}
+/// @brief Default constructor
+KartReject::KartReject() = default;
+
+/// @addr{0x8057815C}
+/// @brief Default virtual destructor
+KartReject::~KartReject() = default;
+
+/// @addr{0x80585AE8}
+/// @brief Resets the direction of rejection
+/// @details Simply resets @ref m_rejectSign to zero.
+void KartReject::reset() {
+    m_rejectSign = 0.0f;
+}
 
 /// @addr{0x80585AF8}
 /// @brief Runs every frame to handle reject road interactions
@@ -45,12 +62,12 @@ void KartReject::calc() {
             angle = 0.05f * (angle - 60.0f);
             EGG::Quatf rot = EGG::Quatf::FromRPY(0.0f,
                     (1.0f + angle * speedRatio()) * dVar11 * DEG2RAD * m_rejectSign, 0.0f);
-            EGG::Quatf local_78 = mainRot().multSwap(rot);
-            local_78.normalise();
+            rot = mainRot().multSwap(rot);
+            rot.normalise();
 
             dynamics()->setAngVel0(EGG::Vector3f::zero);
-            dynamics()->setFullRot(local_78);
-            dynamics()->setMainRot(local_78);
+            dynamics()->setFullRot(rot);
+            dynamics()->setMainRot(rot);
         }
 
         status.resetBit(eStatus::Hop);

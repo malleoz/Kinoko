@@ -4,9 +4,35 @@
 #include "game/system/RaceConfig.hh"
 #include "game/system/ResourceManager.hh"
 
+#include <egg/core/SceneManager.hh>
+
 #include <ScopeLock.hh>
 
 namespace Kinoko::Scene {
+
+/// @addr{0x80542878}
+/// @brief Constructor
+/// @details Sets the @ref m_heap name to `"RootSceneHeap"` for debugging/logging purposes.
+RootScene::RootScene() {
+    m_heap->setName("RootSceneHeap");
+}
+
+/// @addr{0x805429A8}
+/// @brief Default virtual destructor
+RootScene::~RootScene() = default;
+
+/// @addr{0x80543B84}
+/// @copybrief EGG::Scene::enter()
+/// @details Allocates and initializes the root singletons via @ref allocate() and @ref init().
+/// Finally, creates the child race scene (@ref RaceScene).
+void RootScene::enter() {
+    allocate();
+    init();
+#ifdef BUILD_DEBUG
+    checkMemory();
+#endif // BUILD_DEBUG
+    m_sceneMgr->createChildScene(static_cast<int>(Host::SceneId::Race), this);
+}
 
 /// @addr{0x80542D4C}
 /// @brief Creates singleton instances for @ref System::ResourceManager, @ref System::KPadDirector,

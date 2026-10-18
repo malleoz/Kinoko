@@ -4,6 +4,8 @@
 #include "game/field/KColData.hh"
 #include "game/field/ObjectDirector.hh"
 
+#include "game/system/RaceManager.hh"
+
 namespace Kinoko::Field {
 
 /// @addr{0x806C0D18}

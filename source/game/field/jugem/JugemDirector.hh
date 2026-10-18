@@ -1,10 +1,16 @@
 #pragma once
 
-#include <egg/core/Disposer.hh>
+#include <egg/core/Heap.hh>
 
-#include <host/Context.hh>
+namespace Kinoko {
 
-namespace Kinoko::Field {
+namespace Host {
+
+class Context;
+
+} // namespace Host
+
+namespace Field {
 
 class JugemUnit;
 
@@ -21,7 +27,7 @@ class JugemUnit;
 class JugemDirector : EGG::Disposer {
     /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
     /// state on context switch
-    friend class Host::Context;
+    friend Host::Context;
 
 public:
     void init();
@@ -44,4 +50,6 @@ private:
     static JugemDirector *s_instance;
 };
 
-} // namespace Kinoko::Field
+} // namespace Field
+
+} // namespace Kinoko

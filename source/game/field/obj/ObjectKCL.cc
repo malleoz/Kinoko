@@ -1,5 +1,7 @@
 #include "ObjectKCL.hh"
 
+#include "game/field/ObjColMgr.hh"
+
 #include "game/system/RaceManager.hh"
 #include "game/system/ResourceManager.hh"
 

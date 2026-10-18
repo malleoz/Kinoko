@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Types.hh>
+
 #include "game/field/ObjectCollisionBase.hh"
 
 namespace Kinoko::Field {

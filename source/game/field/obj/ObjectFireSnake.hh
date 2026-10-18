@@ -3,8 +3,6 @@
 #include "game/field/StateManager.hh"
 #include "game/field/obj/ObjectProjectile.hh"
 
-#include "game/system/RaceManager.hh"
-
 namespace Kinoko::Field {
 
 /// @brief Represents the smaller fireballs that trail behind a @ref ObjectFireSnake

@@ -1,13 +1,32 @@
 #pragma once
 
-#include "game/field/RailInterpolator.hh"
 #include "game/field/obj/ObjectId.hh"
 
-#include "game/render/DrawMdl.hh"
+#include <egg/core/BitFlag.hh>
+#include <egg/math/Matrix.hh>
 
-#include "game/system/map/MapdataGeoObj.hh"
+namespace Kinoko {
 
-namespace Kinoko::Field {
+namespace Abstract::g3d {
+
+class ResFile;
+
+} // namespace Abstract::g3d
+
+namespace Render {
+
+enum class AnmType;
+class DrawMdl;
+
+} // namespace Render
+
+namespace System {
+
+class MapdataGeoObj;
+
+} // namespace System
+
+namespace Field {
 
 class BoxColUnit;
 class RailInterpolator;
@@ -137,4 +156,6 @@ private:
     EGG::Matrix34f m_transform; ///< The 3x4 matrix representing the object's position and rotation
 };
 
-} // namespace Kinoko::Field
+} // namespace Field
+
+} // namespace Kinoko

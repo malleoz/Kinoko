@@ -27,7 +27,7 @@ public:
 
     /// @brief Reads the respawn point data from the given stream
     /// @param stream The stream to read from
-    void read(EGG::Stream &stream) {
+    void read(EGG::RamStream &stream) {
         m_pos.read(stream);
         m_rot.read(stream);
     }

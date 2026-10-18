@@ -1,8 +1,17 @@
 #pragma once
 
-#include <egg/math/Matrix.hh>
+#include <Common.hh>
+
+#include <span>
 
 namespace Kinoko {
+
+namespace EGG {
+
+struct Vector3f;
+struct Matrix34f;
+
+} // namespace EGG
 
 namespace Kart {
 

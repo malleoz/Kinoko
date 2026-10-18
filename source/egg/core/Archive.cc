@@ -1,16 +1,8 @@
 #include "Archive.hh"
 
-#include <algorithm>
-#include <cstddef>
+#include <abstract/memory/List.hh>
 
 namespace Kinoko::EGG {
-
-/// @addr{0x8020F6EC}
-/// @brief Removes the archive from the static list.
-/// @details Called when the archive's reference count becomes 0.
-Archive::~Archive() {
-    s_archiveList.remove(this);
-}
 
 /// @addr{0x8020FA38}
 void Archive::unmount() {
@@ -19,15 +11,15 @@ void Archive::unmount() {
     }
 }
 
-/// @addr{0x8020FA78}
-s32 Archive::convertPathToEntryId(const char *path) const {
-    return m_handle.convertPathToEntryId(path);
-}
-
 /// @addr{0x8020FA80}
 void *Archive::getFileFast(s32 entryId, Abstract::ArchiveHandle::FileInfo &info) const {
     m_handle.open(entryId, info);
     return m_handle.getFileAddress(info);
+}
+
+/// @addr{0x8020FA78}
+s32 Archive::convertPathToEntryId(const char *path) const {
+    return m_handle.convertPathToEntryId(path);
 }
 
 /// @addr{Inlined in 0x8020F768}
@@ -66,7 +58,21 @@ Archive *Archive::Mount(void *archiveStart) {
 }
 
 /// @addr{Inlined in 0x8020F768}
-Archive::Archive(void *archiveStart) : m_handle(archiveStart) {}
+Archive::Archive(void *archiveStart) : m_handle(archiveStart) {
+    m_refCount = 1;
+}
+
+/// @addr{0x8020F6EC}
+/// @brief Removes the archive from the static list.
+/// @details Called when the archive's reference count becomes 0.
+Archive::~Archive() {
+    s_archiveList.remove(this);
+}
+
+constexpr uintptr_t Archive::GetLinkOffset() {
+    // offsetof doesn't work, so instead of hardcoding an offset, we derive it ourselves
+    return reinterpret_cast<uintptr_t>(&reinterpret_cast<Archive *>(NULL)->m_link);
+}
 
 Abstract::Memory::MEMList Archive::s_archiveList =
         Abstract::Memory::MEMList(Archive::GetLinkOffset());

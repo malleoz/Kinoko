@@ -1,6 +1,9 @@
 #include "ObjectDossunTsuibiHolder.hh"
 
+#include "game/field/RailInterpolator.hh"
 #include "game/field/obj/ObjectDossunTsuibi.hh"
+
+#include "game/system/map/MapdataGeoObj.hh"
 
 namespace Kinoko::Field {
 

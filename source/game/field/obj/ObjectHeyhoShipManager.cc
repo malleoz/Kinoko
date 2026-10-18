@@ -1,8 +1,12 @@
 #include "ObjectHeyhoShipManager.hh"
 
 #include "game/field/ObjectDirector.hh"
-#include "game/field/RailManager.hh"
+#include "game/field/Rail.hh"
+#include "game/field/RailInterpolator.hh"
 #include "game/field/obj/ObjectHeyhoShip.hh"
+#include "game/field/obj/ObjectProjectile.hh"
+
+#include <cstring>
 
 namespace Kinoko::Field {
 

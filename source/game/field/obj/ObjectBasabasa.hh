@@ -3,7 +3,15 @@
 #include "game/field/StateManager.hh"
 #include "game/field/obj/ObjectCollidable.hh"
 
-namespace Kinoko::Field {
+namespace Kinoko {
+
+namespace Host {
+
+class Context;
+
+} // namespace Host
+
+namespace Field {
 
 /// @brief Represents a single bat. It's owned and managed by @ref ObjectBasabasa.
 class ObjectBasabasaDummy final : public ObjectCollidable, private StateManager {
@@ -50,7 +58,7 @@ private:
 class ObjectBasabasa final : public ObjectCollidable {
     /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
     /// state on context switch
-    friend class Host::Context;
+    friend Host::Context;
 
 public:
     ObjectBasabasa(const System::MapdataGeoObj &params);
@@ -84,4 +92,6 @@ private:
     static f32 s_initialYRange;
 };
 
-} // namespace Kinoko::Field
+} // namespace Field
+
+} // namespace Kinoko

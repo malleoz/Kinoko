@@ -1,5 +1,9 @@
 #include "KartScale.hh"
 
+#include "game/kart/KartObjectManager.hh"
+
+#include <abstract/g3d/ResAnmChr.hh>
+
 namespace Kinoko::Kart {
 
 /// @addr{0x8056AD44}
@@ -25,6 +29,10 @@ KartScale::KartScale(const KartParam::Stats &stats) {
         }
     }
 }
+
+/// @addr{0x8056B5A8}
+/// @brief Default virtual destructor
+KartScale::~KartScale() = default;
 
 /// @addr{0x8056AF10}
 /// @brief Resets the kart's scale-related properties to their default values
@@ -52,6 +60,32 @@ void KartScale::reset() {
 void KartScale::calc() {
     calcShrink();
     calcCrush();
+}
+
+/// @addr{0x8056B060}
+/// @brief Called when the kart starts being crushed
+/// @details Sets @ref m_crushState to @ref CrushState::Crush, resets the press scale to the
+/// default value, resets @ref m_uncrushAnmFrame to zero, and marks that crush updates should be
+/// performed by setting @ref m_calcCrush to `true`.
+void KartScale::startCrush() {
+    m_crushState = CrushState::Crush;
+    m_pressScale = EGG::Vector3f::unit;
+    m_uncrushAnmFrame = 0.0f;
+    m_calcCrush = true;
+}
+
+/// @addr{0x8056B094}
+/// @brief Called when the kart finishes being crushed
+/// @details Sets @ref m_crushState to @ref CrushState::Uncrush, resets the uncrush animation
+/// framecounter, and marks that crush updates should be performed. It also sets the press
+/// scale, which will get overwritten in @ref calcCrush on the following frame. It's set here
+/// so that @ref KartMove::calcScale() can snap the kart's scale to the correct value on the
+/// current frame.
+void KartScale::endCrush() {
+    m_crushState = CrushState::Uncrush;
+    m_pressScale = EGG::Vector3f(1.0f, CRUSH_SCALE, 1.0f);
+    m_uncrushAnmFrame = 0.0f;
+    m_calcCrush = true;
 }
 
 /// @addr{0x8056AFB4}
@@ -88,6 +122,18 @@ void KartScale::endShrink(bool inMega) {
     m_shrinkRate = (EGG::Vector3f(tmp, tmp, tmp) - m_shrinkScale) /
             (s_baseScaleTarget[typeIdx] - s_baseScaleStart[typeIdx]);
     m_shrinkOffset = m_shrinkScale - m_shrinkRate * s_baseScaleStart[typeIdx];
+}
+
+/// @brief Gets the current scale of the kart due to shrinking animations
+/// @return The current scale of the kart due to shrinking animations, @ref m_shrinkScale
+const EGG::Vector3f &KartScale::shrinkScale() const {
+    return m_shrinkScale;
+}
+
+/// @brief Gets the current scale of the kart due to crush animations
+/// @return The current scale of the kart due to crush animations, @ref m_pressScale
+const EGG::Vector3f &KartScale::pressScale() const {
+    return m_pressScale;
 }
 
 /// @brief Calculates the kart's current crush animation scale based on its shrink state
@@ -149,6 +195,16 @@ void KartScale::calcCrush() {
             m_calcCrush = false;
         }
     }
+}
+
+/// @addr{0x8056ACF4}
+/// @brief Fetches the scale of the uncrush animation at the given frame
+/// @param frame The frame of the press animation to fetch the scale for
+/// @return The scale of the press animation at the given frame
+EGG::Vector3f KartScale::GetPressAnmScale(f32 frame) {
+    const auto *scaleAnm = KartObjectManager::PressScaleUpAnmChr();
+    ASSERT(scaleAnm);
+    return scaleAnm->getAnmResult(frame, 0).scale();
 }
 
 } // namespace Kinoko::Kart

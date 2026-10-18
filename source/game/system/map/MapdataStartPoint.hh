@@ -17,19 +17,10 @@ public:
         s16 playerIndex; ///< Index of the player starting at this point
     };
 
-    /// @brief Constructor
-    /// @param data Pointer to the raw starting point data
-    /// @details Creates a @ref EGG::RamStream from the raw starting point data and reads the data
-    /// into the member variables.
-    MapdataStartPoint(const SData *data) : m_rawData(data) {
-        EGG::RamStream stream = EGG::RamStream(data, sizeof(SData));
-        read(stream);
-    }
+    MapdataStartPoint(const SData *data);
+    ~MapdataStartPoint();
 
-    /// @brief Default destructor
-    ~MapdataStartPoint() = default;
-
-    void read(EGG::Stream &stream);
+    void read(EGG::RamStream &stream);
     void findKartStartPoint(EGG::Vector3f &pos, EGG::Vector3f &rot, u8 placement,
             u8 playerCount) const;
 
@@ -45,9 +36,7 @@ class MapdataStartPointAccessor
     : public MapdataAccessorBase<MapdataStartPoint, MapdataStartPoint::SData> {
 public:
     MapdataStartPointAccessor(const MapSectionHeader *header);
-
-    /// @brief Default virtual destructor
-    ~MapdataStartPointAccessor() override = default;
+    ~MapdataStartPointAccessor() override;
 };
 
 } // namespace Kinoko::System

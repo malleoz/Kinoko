@@ -14,6 +14,8 @@ class Context;
 
 namespace Field {
 
+class KColData;
+
 /// @brief Function type that represents a particular KColData collision query
 /// @details In practice, this is one of @ref KColData::checkPointCollision or @ref
 /// KColData::checkSphereCollision.
@@ -31,7 +33,7 @@ typedef bool (
 class CourseColMgr : EGG::Disposer {
     /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
     /// state on context switch
-    friend class Host::Context;
+    friend Host::Context;
 
 public:
     /// @brief Collision info pertaining to soft walls

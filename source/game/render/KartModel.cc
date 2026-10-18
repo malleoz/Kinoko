@@ -1,10 +1,47 @@
 #include "KartModel.hh"
 
+#include "game/kart/KartBody.hh"
 #include "game/kart/KartMove.hh"
+#include "game/kart/KartState.hh"
 
+#include "game/system/KPadController.hh"
 #include "game/system/RaceConfig.hh"
 
 namespace Kinoko::Render {
+
+/// @brief Constructor
+/// @details Initializes @ref m_isLeaningLeft and @ref m_isLeaningRight to `false`. Initializes
+/// @ref m_leanWobble, @ref m_bodyLeanAngle, @ref m_bodyLeanStep, and @ref m_prevBurnoutYaw to
+/// zero. Initializes @ref m_leanAmplitude to `1.0f`.
+KartModel::KartModel() {
+    m_isLeaningLeft = false;
+    m_isLeaningRight = false;
+    m_leanWobble = 0.0f;
+    m_leanAmplitude = 1.0f;
+    m_bodyLeanAngle = 0.0f;
+    m_bodyLeanStep = 0.0f;
+    m_prevBurnoutYaw = 0.0f;
+}
+
+/// @brief Default virtual destructor
+KartModel::~KartModel() = default;
+
+/// @addr{0x807C8758}
+/// @brief Initializes the kart model with the given player index and vehicle type
+/// @details Calls @ref initModel() with the player index and vehicle type. Also sets @ref
+/// m_prevBurnoutYaw to `0.0f`.
+void KartModel::init() {
+    initModel(param()->playerIdx(), isBike());
+    m_prevBurnoutYaw = 0.0f;
+}
+
+/// @addr{0x807CB360}
+/// @brief Every frame, updates the kart model
+/// @details In Kinoko, we omit a lot of implementation since we only care about the kart's
+/// leaning behavior in @ref calcLean().
+void KartModel::calc() {
+    calcLean();
+}
 
 /// @addr{0x807CB198}
 /// @brief Calculates the leaning state of the kart based on input and drift status
@@ -146,6 +183,21 @@ void KartModel::calcLeanAngle() {
     }
 
     body()->setLeanAngle(m_bodyLeanAngle);
+}
+
+/// @addr{0x807CB530}
+/// @brief Dispatches to two helper functions to update the kart's leaning angle
+/// @details Calls @ref calcLeaning() and @ref calcLeanAngle().
+void KartModel::calcLean() {
+    calcLeaning();
+    calcLeanAngle();
+}
+
+/// @addr{0x807C7828}
+/// @brief Initializes the kart model's internal state based on the player index and vehicle
+/// @details For Kinoko, this just initializes @ref m_isInsideDrift.
+void KartModel::initModel(u8 /*playerIdx*/, bool /*isBike*/) {
+    m_isInsideDrift = vehicleType() == Kart::KartParam::Stats::DriftType::Inside_Drift_Bike;
 }
 
 } // namespace Kinoko::Render

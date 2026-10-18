@@ -4,6 +4,23 @@
 
 namespace Kinoko::Kart {
 
+/// @addr{inlined in 0x80577FC4}
+/// @brief Default constructor
+KartBurnout::KartBurnout() = default;
+
+/// @addr{0x805781DC}
+/// @brief Default virtual destructor
+KartBurnout::~KartBurnout() = default;
+
+/// @addr{0x805890B0}
+/// @brief Runs when a burnout occurs at the beginning of the race
+void KartBurnout::start() {
+    activate();
+    m_timer = 0;
+    m_phase = 0;
+    m_amplitude = 1.0f;
+}
+
 /// @addr{0x80589118}
 /// @brief Calculates the burnout rotation and checks if the burnout has ended
 /// @details If the burnout is not active, this function early returns. Otherwise, updates the
@@ -21,6 +38,12 @@ void KartBurnout::calc() {
     if (calcEnd(BURNOUT_DURATION)) {
         deactivate();
     }
+}
+
+/// @brief Gets the current yaw rotation due to burnout
+/// @return The current rotation of the kart due to the burnout, @ref m_yaw
+f32 KartBurnout::yaw() const {
+    return m_yaw;
 }
 
 /// @addr{0x80589308}
@@ -46,6 +69,31 @@ void KartBurnout::calcRotation() {
     m_yaw = DEG2RAD * (AMPLITUDE_FACTOR * sin) * m_amplitude;
 
     physics()->composeStuntRot(EGG::Quatf::FromRPY(0.0f, m_yaw, 0.0f));
+}
+
+/// @addr{0x8058920C}
+/// @brief Checks if the burnout duration has ended
+/// @param duration The duration of the burnout in frames
+bool KartBurnout::calcEnd(u32 duration) {
+    return ++m_timer >= duration;
+}
+
+/// @addr{0x80589844}
+/// @brief Sets the @ref eStatus::Burnout bit in the kart's status
+void KartBurnout::activate() {
+    status().setBit(eStatus::Burnout);
+}
+
+/// @addr{0x80589818}
+/// @brief Resets the @ref eStatus::Burnout bit in the kart's status
+void KartBurnout::deactivate() {
+    status().resetBit(eStatus::Burnout);
+}
+
+/// @addr{0x80589830}
+/// @brief Checks if the burnout is currently active
+bool KartBurnout::isActive() const {
+    return status().onBit(eStatus::Burnout);
 }
 
 } // namespace Kinoko::Kart

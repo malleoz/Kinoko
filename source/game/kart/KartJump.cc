@@ -1,7 +1,11 @@
 #include "KartJump.hh"
 
 #include "game/kart/KartCollide.hh"
+#include "game/kart/KartMove.hh"
 #include "game/kart/KartPhysics.hh"
+#include "game/kart/KartState.hh"
+
+#include "game/system/KPadController.hh"
 
 namespace Kinoko::Kart {
 
@@ -33,42 +37,24 @@ void KartJump::calcRot() {
     physics()->composeStuntRot(m_rot);
 }
 
-/// @addr{0x80576460}
-/// @brief Assigns the trick properties and target angle based on the trick type and surface variant
-/// @details Indexes into a static properties table based on the trick @ref m_variant to set both
-/// @ref m_properties and @ref m_targetAngle. @ref m_rotSpeed is initialized based on @ref
-/// TrickProperties::initRotSpeed and @ref m_decayRateDelta is initialized based on @ref
-/// TrickProperties::initDecayRateDelta. Finally, resets @ref m_angle to zero, @ref m_decayRate to
-/// `1.0f`, and @ref m_rot to the identity quaternion.
-void KartJump::setupProperties() {
-    static constexpr std::array<TrickProperties, 3> TRICK_PROPERTIES = {{
-            {11.0f, 1.5f, 0.9f, 0.0018f},
-            {14.0f, 1.5f, 0.9f, 0.0006f},
-            {7.5f, 2.5f, 0.93f, 0.05f},
-    }};
+/// @addr{0x80575A44}
+/// @brief Constructor
+/// @param move Pointer to the kart's movement state manager
+/// @details Initializes @ref m_trickDelay and @ref m_leniencyTimer to zero.
+KartJump::KartJump(KartMove *move) : m_move(move) {
+    m_trickDelay = 0;
+    m_leniencyTimer = 0;
+}
 
-    static constexpr std::array<f32, 3> FINAL_ANGLES = {{
-            360.0f,
-            720.0f,
-            180.0f,
-    }};
+/// @addr{0x80575AA8}
+/// @brief Default virtual destructor
+KartJump::~KartJump() = default;
 
-    if (m_variant == TrickVariant::SingleFlipTrick) {
-        m_properties = TRICK_PROPERTIES[0];
-        m_targetAngle = FINAL_ANGLES[0];
-    } else if (m_variant == TrickVariant::DoubleFlipTrick) {
-        m_properties = TRICK_PROPERTIES[1];
-        m_targetAngle = FINAL_ANGLES[1];
-    } else if (m_type == TrickType::BikeSideStuntTrick) {
-        m_properties = TRICK_PROPERTIES[2];
-        m_targetAngle = FINAL_ANGLES[2];
-    }
-
-    m_rotSpeed = m_properties.initRotSpeed;
-    m_decayRateDelta = m_properties.initDecayRateDelta;
-    m_angle = 0.0f;
-    m_decayRate = 1.0f;
-    m_rot = EGG::Quatf::ident;
+/// @addr{0x80575AE8}
+/// @brief Resets the cooldown timer for tricks
+/// @details Sets @ref m_trickDelay to zero, allowing a new trick to be started immediately.
+void KartJump::reset() {
+    m_trickDelay = 0;
 }
 
 /// @addr{0x80575D7C}
@@ -228,6 +214,31 @@ void KartJump::setAngle(const EGG::Vector3f &left) {
     m_move->setIntVelDir(m_move->dir());
 }
 
+/// @brief Gets whether the kart is currently in a trick resulting from a boost ramp
+/// @return The value of @ref m_boostRampTrick
+bool KartJump::isBoostRampEnabled() const {
+    return m_boostRampTrick;
+}
+
+/// @brief Gets the type of trick currently being performed
+/// @return The type of trick currently being performed, @ref m_type
+TrickType KartJump::type() const {
+    return m_type;
+}
+
+/// @brief Gets the variant of the trick currently being performed
+/// @return The variant of the trick currently being performed, @ref m_variant
+TrickVariant KartJump::variant() const {
+    return m_variant;
+}
+
+/// @brief Gets the number of frames remaining until a boost can start after a trick
+/// @return The number of frames remaining until a boost can start after a trick, @ref
+/// m_trickDelay
+s16 KartJump::trickDelay() const {
+    return m_trickDelay;
+}
+
 /// @addr{0x80575EE8}
 /// @brief Called when a trick has started
 /// @param left The left vector of the kart at the start of the trick
@@ -267,6 +278,61 @@ void KartJump::init() {
     setupProperties();
     status().setBit(eStatus::TrickRot);
 }
+
+/// @addr{0x80576460}
+/// @brief Assigns the trick properties and target angle based on the trick type and surface variant
+/// @details Indexes into a static properties table based on the trick @ref m_variant to set both
+/// @ref m_properties and @ref m_targetAngle. @ref m_rotSpeed is initialized based on @ref
+/// TrickProperties::initRotSpeed and @ref m_decayRateDelta is initialized based on @ref
+/// TrickProperties::initDecayRateDelta. Finally, resets @ref m_angle to zero, @ref m_decayRate to
+/// `1.0f`, and @ref m_rot to the identity quaternion.
+void KartJump::setupProperties() {
+    static constexpr std::array<TrickProperties, 3> TRICK_PROPERTIES = {{
+            {11.0f, 1.5f, 0.9f, 0.0018f},
+            {14.0f, 1.5f, 0.9f, 0.0006f},
+            {7.5f, 2.5f, 0.93f, 0.05f},
+    }};
+
+    static constexpr std::array<f32, 3> FINAL_ANGLES = {{
+            360.0f,
+            720.0f,
+            180.0f,
+    }};
+
+    if (m_variant == TrickVariant::SingleFlipTrick) {
+        m_properties = TRICK_PROPERTIES[0];
+        m_targetAngle = FINAL_ANGLES[0];
+    } else if (m_variant == TrickVariant::DoubleFlipTrick) {
+        m_properties = TRICK_PROPERTIES[1];
+        m_targetAngle = FINAL_ANGLES[1];
+    } else if (m_type == TrickType::BikeSideStuntTrick) {
+        m_properties = TRICK_PROPERTIES[2];
+        m_targetAngle = FINAL_ANGLES[2];
+    }
+
+    m_rotSpeed = m_properties.initRotSpeed;
+    m_decayRateDelta = m_properties.initDecayRateDelta;
+    m_angle = 0.0f;
+    m_decayRate = 1.0f;
+    m_rot = EGG::Quatf::ident;
+}
+
+/// @brief Checks whether attempted trick inputs should be ignored
+/// @return `true` if attempted trick inputs should be ignored, `false` if they should be
+/// respected
+/// @details Checks whether the kart is in an action, trick, or over a zipper
+bool KartJump::shouldIgnoreTrick() {
+    return status().onBit(eStatus::InAction, eStatus::TrickStart, eStatus::InATrick,
+            eStatus::OverZipper);
+}
+
+/// @brief Constructor
+/// @param move Pointer to the kart's movement state manager
+KartJumpBike::KartJumpBike(KartMove *move) : KartJump(move) {}
+
+/// @addr{0x80576AFC}
+/// @brief Default virtual destructor
+KartJumpBike::~KartJumpBike() = default;
 
 /// @addr{0x80576994}
 /// @brief Calculates the rotation of the bike during a trick

@@ -3,8 +3,6 @@
 #include "game/field/StateManager.hh"
 #include "game/field/obj/ObjectCollidable.hh"
 
-#include "game/system/RaceManager.hh"
-
 namespace Kinoko::Field {
 
 class RailInterpolator;

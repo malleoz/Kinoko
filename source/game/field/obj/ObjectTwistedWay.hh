@@ -2,8 +2,6 @@
 
 #include "game/field/obj/ObjectDrivable.hh"
 
-#include "game/system/RaceManager.hh"
-
 namespace Kinoko::Field {
 
 /// @brief The wavy road in Bowser's Castle

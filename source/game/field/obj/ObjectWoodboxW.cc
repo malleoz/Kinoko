@@ -1,5 +1,7 @@
 #include "ObjectWoodboxW.hh"
 
+#include "game/system/map/MapdataGeoObj.hh"
+
 namespace Kinoko::Field {
 
 /// @addr{0x8077DF24}

@@ -1,6 +1,34 @@
 #include "KartParamFileManager.hh"
 
+#include "game/kart/KartParam.hh"
+
+#include "game/system/ResourceManager.hh"
+
 namespace Kinoko::Kart {
+
+/// @addr{0x80591C9C}
+/// @brief Clears all loaded parameter files from the manager (but does not clear them from
+/// memory)
+void KartParamFileManager::clear() {
+    m_kartParam = {};
+    m_driverParam = {};
+    m_bikeDispParam = {};
+    m_kartDispParam = {};
+    m_kartCameraParam = {};
+}
+
+/// @addr{0x805919F4}
+/// @brief Loads and validates the kart parameter files.
+void KartParamFileManager::init() {
+    m_kartParam = Load("kartParam.bin");
+    m_driverParam = Load("driverParam.bin");
+    m_bikeDispParam = Load("bikePartsDispParam.bin");
+    m_kartDispParam = Load("kartPartsDispParam.bin");
+    m_kartCameraParam = Load("kartCameraParam.bin");
+    if (!validate()) {
+        PANIC("Parameter files could not be validated!");
+    }
+}
 
 /// @brief Gets a @ref EGG::RamStream for the provided character's parameters from `driverParam.bin`
 /// @param character The character to get the parameters for
@@ -155,12 +183,50 @@ EGG::RamStream KartParamFileManager::getKartCameraStream(Character character) co
         PANIC("Invalid weight class when getting KartCamera stream");
     }
 
-    auto *file = reinterpret_cast<const KartParam::KartCameraParam *>(m_kartCameraParam.data());
+    auto *file = reinterpret_cast<const KartCameraParam *>(m_kartCameraParam.data());
     ASSERT(file);
 
     // We skip 1 to get 16:9
-    return EGG::RamStream(file + static_cast<u32>(weightClass) * 4 + 1,
-            sizeof(KartParam::KartCameraParam));
+    return EGG::RamStream(file + static_cast<u32>(weightClass) * 4 + 1, sizeof(KartCameraParam));
+}
+
+/// @brief Creates the singleton instance of the @ref KartParamFileManager.
+/// @return A pointer to the newly created @ref KartParamFileManager instance.
+/// @pre Requires that the singleton instance has not already been created.
+KartParamFileManager *KartParamFileManager::CreateInstance() {
+    ASSERT(!s_instance);
+    s_instance = EGG::egg_new<KartParamFileManager>();
+    return s_instance;
+}
+
+/// @brief Destroys the singleton instance of the @ref KartParamFileManager.
+/// @pre Requires that the singleton instance has already been created.
+void KartParamFileManager::DestroyInstance() {
+    ASSERT(s_instance);
+    auto *instance = s_instance;
+    s_instance = nullptr;
+    EGG::egg_delete(instance);
+}
+
+/// @brief Returns the singleton instance of the @ref KartParamFileManager.
+/// @return The singleton instance of the @ref KartParamFileManager.
+KartParamFileManager *KartParamFileManager::Instance() {
+    return s_instance;
+}
+
+/// @brief Private constructor that loads and validates the kart parameter files
+/// @details Simply calls the @ref init() method to load and validate the kart parameter
+/// files.
+KartParamFileManager::KartParamFileManager() {
+    init();
+}
+
+/// @brief Private virtual destructor
+KartParamFileManager::~KartParamFileManager() {
+    if (s_instance) {
+        s_instance = nullptr;
+        WARN("KartParamFileManager instance not explicitly handled!");
+    }
 }
 
 /// @brief Performs checks to make sure the files were loaded successfully
@@ -225,6 +291,13 @@ bool KartParamFileManager::validate() const {
     }
 
     return true;
+}
+
+/// @brief Loads the provided filename from the core archive (`Common.szs`) into memory
+/// @param filename The name of the file to load from the core archive
+/// @return A read-only span of the file data in memory
+std::span<const u8> KartParamFileManager::Load(const char *filename) {
+    return System::ResourceManager::Instance()->getFile(filename, System::ArchiveId::Core);
 }
 
 KartParamFileManager *KartParamFileManager::s_instance = nullptr;

@@ -2,6 +2,18 @@
 
 namespace Kinoko::Kart {
 
+/// @addr{0x80588D28}
+/// @brief Constructor
+/// @details Zero-initializes @ref m_active and calls @ref init() to initializes other members.
+KartBoost::KartBoost() {
+    resetActive();
+    init();
+}
+
+/// @addr{0x8057811C}
+/// @brief Default destructor
+KartBoost::~KartBoost() = default;
+
 /// @addr{0x80588DB0}
 /// @brief Starts/restarts a boost of the given type
 /// @param type The type of boost (e.g. mini-turbo)
@@ -65,6 +77,44 @@ bool KartBoost::calc() {
     }
 
     return m_multiplier > 1.0f || m_speedLimit > 0.0f;
+}
+
+/// @addr{0x80588D74}
+/// @brief Initializes the current boost state
+/// @details Resets the timers in @ref m_timers to zero. Initializes @ref m_multiplier and @ref
+/// m_acceleration to `1.0f` and @ref m_speedLimit to `-1.0f`.
+void KartBoost::init() {
+    m_timers.fill(0);
+    m_multiplier = 1.0f;
+    m_acceleration = 1.0f;
+    m_speedLimit = -1.0f;
+}
+
+/// @addr{0x80588E18}
+/// @brief Clears the current boost state
+/// @details Sets all elements in @ref m_active to `false`.
+void KartBoost::resetActive() {
+    m_active.fill(false);
+}
+
+/// @beginGetters
+
+/// @brief Gets the current boost multiplier
+/// @return The current boost multiplier, @ref m_multiplier
+f32 KartBoost::multiplier() const {
+    return m_multiplier;
+}
+
+/// @brief Gets the current boost acceleration
+/// @return The current boost acceleration, @ref m_acceleration
+f32 KartBoost::acceleration() const {
+    return m_acceleration;
+}
+
+/// @brief Gets the current boost speed limit
+/// @return The current boost speed limit, @ref m_speedLimit
+f32 KartBoost::speedLimit() const {
+    return m_speedLimit;
 }
 
 } // namespace Kinoko::Kart

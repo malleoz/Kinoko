@@ -35,7 +35,7 @@ public:
     /// @details We skip implementing this function and opt to instead pull data directly from the
     /// raw structure since the single byte fields we fetch are not susceptible to endianness
     /// issues.
-    void read(EGG::Stream & /*stream*/) {}
+    void read(EGG::RamStream & /*stream*/) {}
 
     /// @beginGetters
 

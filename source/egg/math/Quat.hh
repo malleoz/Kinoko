@@ -1,6 +1,5 @@
 #pragma once
 
-#include "egg/math/Math.hh"
 #include "egg/math/Vector.hh"
 
 namespace Kinoko::EGG {

@@ -2,8 +2,6 @@
 
 #include "game/field/obj/ObjectCollidable.hh"
 
-#include <array>
-
 namespace Kinoko::Field {
 
 class ObjectDossunTsuibi;

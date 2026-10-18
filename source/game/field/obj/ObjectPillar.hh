@@ -4,10 +4,6 @@
 #include "game/field/obj/ObjectCollidable.hh"
 #include "game/field/obj/ObjectKCL.hh"
 
-#include "game/kart/KartCollide.hh"
-
-#include "game/system/RaceManager.hh"
-
 namespace Kinoko::Field {
 
 /// @brief The stationary base of the Dry Dry Ruins pillars

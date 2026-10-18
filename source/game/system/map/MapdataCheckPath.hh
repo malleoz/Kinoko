@@ -2,9 +2,15 @@
 
 #include "game/system/map/MapdataAccessorBase.hh"
 
-#include <egg/util/Stream.hh>
+namespace Kinoko {
 
-namespace Kinoko::System {
+namespace EGG {
+
+class RamStream;
+
+}
+
+namespace System {
 
 class MapdataCheckPathAccessor;
 
@@ -24,68 +30,22 @@ public:
     };
     STATIC_ASSERT(sizeof(SData) == 0x10);
 
-    /// @addr{0x80515098}
-    /// @brief Constructor
-    /// @param data Pointer to the raw checkpoint path data
-    /// @details Creates a @ref EGG::RamStream from the raw cannon point data and reads the data
-    /// into the member variables. Also sets @ref m_invCount to `1.0f / @ref m_size`.
-    MapdataCheckPath(const SData *data) : m_rawData(data), m_depth(-1) {
-        EGG::RamStream stream = EGG::RamStream(data, sizeof(SData));
-        read(stream);
-        m_invCount = 1.0f / m_size;
-    }
+    MapdataCheckPath(const SData *data);
+    ~MapdataCheckPath();
 
-    /// @brief Default destructor
-    ~MapdataCheckPath() = default;
-
-    void read(EGG::Stream &stream);
-
+    void read(EGG::RamStream &stream);
     void findDepth(s8 depth, const MapdataCheckPathAccessor &accessor);
 
-    /// @brief Checks if the provided checkpoint id lies within this checkpoint path
-    /// @param checkpointId The checkpoint id to check
-    /// @return `true` if the checkpoint id lies within this checkpoint path, `false` otherwise
-    [[nodiscard]] bool isPointInPath(u16 checkpointId) const {
-        return m_start <= checkpointId && checkpointId <= end();
-    }
+    [[nodiscard]] bool isPointInPath(u16 checkpointId) const;
 
     /// @beginGetters
 
-    /// @brief Gets the index of the first checkpoint in this checkpath
-    /// @return The index of the first checkpoint in this checkpath
-    [[nodiscard]] u8 start() const {
-        return m_start;
-    }
-
-    /// @brief Gets the index of the last checkpoint in this checkpath
-    /// @return The index of the last checkpoint in this checkpath
-    [[nodiscard]] u8 end() const {
-        return m_start + m_size - 1;
-    }
-
-    /// @brief Gets the indices of the next connected checkpoint paths
-    /// @return The indices of the next connected checkpoint paths
-    [[nodiscard]] const std::array<u8, MAX_NEIGHBORS> &next() const {
-        return m_next;
-    }
-
-    /// @brief Gets the indices of the previous connected checkpoint paths
-    /// @return The indices of the previous connected checkpoint paths
-    [[nodiscard]] const std::array<u8, MAX_NEIGHBORS> &prev() const {
-        return m_prev;
-    }
-
-    /// @brief Gets the depth of this checkpoint path in the traversal order
-    /// @return The depth of this checkpoint path
-    [[nodiscard]] s8 depth() const {
-        return m_depth;
-    }
-
-    /// @brief Gets the inverse of the number of checkpoints in this checkpath
-    /// @return The inverse of the number of checkpoints in this checkpath
-    [[nodiscard]] f32 invCount() const {
-        return m_invCount;
-    }
+    [[nodiscard]] u8 start() const;
+    [[nodiscard]] u8 end() const;
+    [[nodiscard]] const std::array<u8, MAX_NEIGHBORS> &next() const;
+    [[nodiscard]] const std::array<u8, MAX_NEIGHBORS> &prev() const;
+    [[nodiscard]] s8 depth() const;
+    [[nodiscard]] f32 invCount() const;
 
     /// @endGetters
 
@@ -104,32 +64,13 @@ class MapdataCheckPathAccessor
     : public MapdataAccessorBase<MapdataCheckPath, MapdataCheckPath::SData> {
 public:
     MapdataCheckPathAccessor(const MapSectionHeader *header);
+    ~MapdataCheckPathAccessor() override;
 
-    /// @brief Default virtual destructor
-    ~MapdataCheckPathAccessor() override = default;
-
-    /// @addr{0x80515014}
-    /// @brief Finds the checkpoint path that contains the specified checkpoint id
-    /// @param checkpointId The checkpoint id to search for
-    /// @return Pointer to the checkpoint path containing the checkpoint id, or `nullptr` if not
-    /// found.
-    [[nodiscard]] MapdataCheckPath *findCheckpathForCheckpoint(u16 checkpointId) const {
-        for (auto &checkpath : m_entries) {
-            if (checkpath->isPointInPath(checkpointId)) {
-                return checkpath;
-            }
-        }
-
-        return nullptr;
-    }
+    [[nodiscard]] MapdataCheckPath *findCheckpathForCheckpoint(u16 checkpointId) const;
 
     /// @beginGetters
 
-    /// @brief Gets the minimum proportion of a lap a checkpath can be
-    /// @return The minimum proportion of a lap a checkpath can be
-    [[nodiscard]] f32 lapProportion() const {
-        return m_lapProportion;
-    }
+    [[nodiscard]] f32 lapProportion() const;
 
     /// @endGetters
 
@@ -145,4 +86,6 @@ private:
     f32 m_lapProportion;
 };
 
-} // namespace Kinoko::System
+} // namespace System
+
+} // namespace Kinoko

@@ -39,11 +39,9 @@ public:
     STATIC_ASSERT(sizeof(SData) == 0x30);
 
     MapdataAreaBase(const SData *data, s16 index);
+    virtual ~MapdataAreaBase();
 
-    /// @brief Default destructor
-    virtual ~MapdataAreaBase() = default;
-
-    void read(EGG::Stream &stream);
+    void read(EGG::RamStream &stream);
 
     /// @brief Tests whether the provided position lies within the area
     /// @param pos The position to check
@@ -64,31 +62,10 @@ public:
 
     [[nodiscard]] const MapdataPointInfo *getPointInfo() const;
 
-    /// @brief Gets the type of area (e.g. @ref Type::MovingRoad)
-    /// @return The type of the area
-    [[nodiscard]] Type type() const {
-        return m_type;
-    }
-
-    /// @brief Gets the priority of the area
-    /// @return The priority of the area
-    [[nodiscard]] u8 priority() const {
-        return m_priority;
-    }
-
-    /// @brief Fetches the area setting at the specified index
-    /// @param i The index of the setting to fetch
-    /// @return The value of the specified setting
-    [[nodiscard]] s16 param(size_t i) const {
-        ASSERT(i < m_params.size());
-        return m_params[i];
-    }
-
-    /// @brief Gets the index of the entry in the AREA section of the KMP
-    /// @return The index of the entry in the AREA section of the KMP
-    [[nodiscard]] s16 index() const {
-        return m_index;
-    }
+    [[nodiscard]] Type type() const;
+    [[nodiscard]] u8 priority() const;
+    [[nodiscard]] s16 param(size_t i) const;
+    [[nodiscard]] s16 index() const;
 
     /// @endGetters
 
@@ -107,18 +84,18 @@ protected:
     EGG::Vector3f m_forward;    ///< Forward direction vector of the area
     EGG::Vector3f m_dimensions; ///< Half-length of each dimension of the area
     f32 m_ellipseRadiusSq;      ///< Square of the x-axis dimension (used for cylinders only)
-    f32 m_ellipseRatio;     ///< Ratio between the x and z-axis dimensions (used for cylinders only)
-    f32 m_boundingRadiusSq; ///< Square of the bounding sphere containing the entire area shape
-    const s16 m_index;      ///< Index of the entry in the AREA section of the KMP
+    f32 m_ellipseRatio;         ///< Ratio between the x and z-axis dimensions (used for cylinders
+                                ///< only)
+    f32 m_boundingRadiusSq;     ///< Square of the bounding sphere containing the entire area
+                                ///< shape
+    const s16 m_index;          ///< Index of the entry in the AREA section of the KMP
 };
 
 /// @brief Represents a box-shaped area in the map
 class MapdataAreaBox final : public MapdataAreaBase {
 public:
     MapdataAreaBox(const SData *data, s16 index);
-
-    /// @brief Default virtual destructor
-    ~MapdataAreaBox() override = default;
+    ~MapdataAreaBox() override;
 
     [[nodiscard]] bool testImpl(const EGG::Vector3f &pos) const override;
 };
@@ -127,9 +104,7 @@ public:
 class MapdataAreaCylinder final : public MapdataAreaBase {
 public:
     MapdataAreaCylinder(const SData *data, s16 index);
-
-    /// @brief Default virtual destructor
-    ~MapdataAreaCylinder() override = default;
+    ~MapdataAreaCylinder() override;
 
     [[nodiscard]] bool testImpl(const EGG::Vector3f &pos) const override;
 };
@@ -138,34 +113,17 @@ public:
 class MapdataAreaAccessor final
     : public MapdataAccessorBase<MapdataAreaBase, MapdataAreaBase::SData> {
 public:
-    /// @addr{0x80515E50}
-    /// @brief Constructor
-    /// @param header Pointer to the header of the AREA section
-    /// @details Constructs all entries and sorts them by priority to @ref m_sortedEntries
-    MapdataAreaAccessor(const MapSectionHeader *header)
-        : MapdataAccessorBase<MapdataAreaBase, MapdataAreaBase::SData>(header) {
-        init(reinterpret_cast<const MapdataAreaBase::SData *>(m_sectionHeader + 1),
-                parse<u16>(m_sectionHeader->count));
-
-        m_sortedEntries = owning_span<MapdataAreaBase *>(size());
-    }
-
-    /// @addr{0x80518BDC}
-    /// @brief Default virtual destructor
-    ~MapdataAreaAccessor() override = default;
+    MapdataAreaAccessor(const MapSectionHeader *header);
+    ~MapdataAreaAccessor() override;
 
     void init(const MapdataAreaBase::SData *start, u16 count);
     void sort();
 
-    /// @brief Gets the sorted entry at the specified index
-    /// @param i The index of the sorted entry to retrieve
-    /// @return A pointer to the sorted entry at the specified index, or `nullptr` if the index is
-    /// out of bounds
-    /// @pre Requires that @ref m_sortedEntries has already been initialized.
-    [[nodiscard]] MapdataAreaBase *getSorted(u16 i) const {
-        ASSERT(!m_sortedEntries.empty());
-        return i < m_sortedEntries.size() ? m_sortedEntries[i] : nullptr;
-    }
+    /// @beginGetters
+
+    [[nodiscard]] MapdataAreaBase *getSorted(u16 i) const;
+
+    /// @endGetters
 
 private:
     /// @brief Array of sorted entries in the AREA (higher priority first)

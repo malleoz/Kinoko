@@ -1,8 +1,10 @@
 #include "game/field/obj/ObjectKoopaFigure64.hh"
 
+#include "game/field/ObjectCollisionBase.hh"
 #include "game/field/ObjectDirector.hh"
 
 #include "game/system/RaceManager.hh"
+#include "game/system/map/MapdataGeoObj.hh"
 
 namespace Kinoko::Field {
 

@@ -8,60 +8,25 @@ namespace Kinoko::Kart {
 /// when holding acceleration too long during the race countdown.
 class KartBurnout : private KartObjectProxy {
 public:
-    /// @addr{inlined in 0x80577FC4}
-    /// @brief Default constructor
-    KartBurnout() = default;
+    KartBurnout();
+    ~KartBurnout() override;
 
-    /// @addr{0x805781DC}
-    /// @brief Default virtual destructor
-    ~KartBurnout() override = default;
-
-    /// @addr{0x805890B0}
-    /// @brief Runs when a burnout occurs at the beginning of the race
-    void start() {
-        activate();
-        m_timer = 0;
-        m_phase = 0;
-        m_amplitude = 1.0f;
-    }
-
+    void start();
     void calc();
 
     /// @beginGetters
 
-    [[nodiscard]] f32 yaw() const {
-        return m_yaw;
-    }
+    [[nodiscard]] f32 yaw() const;
 
     /// @endGetters
 
 private:
     void calcRotation();
+    bool calcEnd(u32 duration);
+    void activate();
+    void deactivate();
 
-    /// @addr{0x8058920C}
-    /// @brief Checks if the burnout duration has ended
-    /// @param duration The duration of the burnout in frames
-    bool calcEnd(u32 duration) {
-        return ++m_timer >= duration;
-    }
-
-    /// @addr{0x80589844}
-    /// @brief Sets the @ref eStatus::Burnout bit in the kart's status
-    void activate() {
-        status().setBit(eStatus::Burnout);
-    }
-
-    /// @addr{0x80589818}
-    /// @brief Resets the @ref eStatus::Burnout bit in the kart's status
-    void deactivate() {
-        status().resetBit(eStatus::Burnout);
-    }
-
-    /// @addr{0x80589830}
-    /// @brief Checks if the burnout is currently active
-    [[nodiscard]] bool isActive() const {
-        return status().onBit(eStatus::Burnout);
-    }
+    [[nodiscard]] bool isActive() const;
 
     u32 m_timer;     ///< The number of frames that have passed since the burnout started
     u16 m_phase;     ///< The phase of the burnout rotation, used to calculate the yaw

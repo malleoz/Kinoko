@@ -1,9 +1,10 @@
 #pragma once
 
-#include "game/field/ObjectCollisionCylinder.hh"
 #include "game/field/obj/ObjectCollidable.hh"
 
 namespace Kinoko::Field {
+
+class ObjectCollisionCylinder;
 
 /// @brief Represents the ship on N64 DK's Jungle Parkway
 /// @details Follows a rail path, interpolating its forward position along the way to smoothen

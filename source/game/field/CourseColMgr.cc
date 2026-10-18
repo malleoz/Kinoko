@@ -4,6 +4,8 @@
 
 #include "game/system/ResourceManager.hh"
 
+#include <egg/math/Matrix.hh>
+
 // Credit: em-eight/mkw
 
 namespace Kinoko::Field {

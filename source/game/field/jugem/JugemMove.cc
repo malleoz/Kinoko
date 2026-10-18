@@ -1,5 +1,7 @@
 #include "JugemMove.hh"
 
+#include "game/kart/KartObject.hh"
+
 namespace Kinoko::Field {
 
 /// @addr{0x8071E9B4}

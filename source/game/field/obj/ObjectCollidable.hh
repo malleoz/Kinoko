@@ -1,7 +1,5 @@
 #pragma once
 
-#include "game/field/BoxColManager.hh"
-#include "game/field/ObjectCollisionBase.hh"
 #include "game/field/obj/ObjectBase.hh"
 
 namespace Kinoko {
@@ -14,6 +12,8 @@ enum class Reaction;
 } // namespace Kart
 
 namespace Field {
+
+class ObjectCollisionBase;
 
 /// @brief %Abstract base class for all objects that can collide with karts
 /// @param params The parameters used to initialize the object

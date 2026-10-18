@@ -1,8 +1,36 @@
 #include "GhostFile.hh"
 
 #include <egg/core/Decomp.hh>
+#include <egg/util/Stream.hh>
+
+#include <cstring>
 
 namespace Kinoko::System {
+
+/// @brief Constructor that initializes the raw ghost file buffer to zero
+RawGhostFile::RawGhostFile() {
+    memset(m_buffer, 0, sizeof(m_buffer));
+}
+
+/// @brief Constructor that initializes the raw ghost file buffer with the provided binary data
+/// @param rkg Pointer to the binary data from a ghost file
+RawGhostFile::RawGhostFile(const u8 *rkg) {
+    init(rkg);
+}
+
+/// @brief Default destructor
+RawGhostFile::~RawGhostFile() = default;
+
+/// @brief Copy assignment operator
+/// @param rkg Pointer to the binary data from a ghost file
+/// @return Reference to the current `RawGhostFile` instance
+/// @details First clears the buffer to avoid stale data before initializing it with the new
+/// binary data.
+RawGhostFile &RawGhostFile::operator=(const u8 *rkg) {
+    memset(m_buffer, 0, sizeof(m_buffer));
+    init(rkg);
+    return *this;
+}
 
 /// @brief Initializes the raw ghost file
 /// @param rkg Pointer to the binary data from a ghost file
@@ -104,6 +132,43 @@ bool RawGhostFile::isValid(const u8 *rkg) const {
     return true;
 }
 
+/// @brief Gets the buffer containing the binary data of the ghost file
+/// @return Pointer to the buffer containing the binary data of the ghost file
+const u8 *RawGhostFile::buffer() const {
+    return m_buffer;
+}
+
+/// @brief Parses a value of type `T` from the raw ghost file buffer at the specified offset,
+/// keeping in mind endianness byte-swapping
+/// @tparam T The type of data to parse from the raw ghost file buffer
+/// @param offset The offset from the start of the buffer to read the value of type `T`
+/// @return The value of type `T` parsed from the raw ghost file buffer at the specified offset
+template <ParseableType T>
+T RawGhostFile::parseAt(size_t offset) const {
+    return parse<T>(*reinterpret_cast<const T *>(m_buffer + offset));
+}
+
+/// @brief Gets the "compressed" flag bit from the provided `.rkg` file pointer
+/// @param rkg The `.rkg` file pointer to check for the compressed flag
+/// @return `true` if the "compressed" flag is set, `false` otherwise
+bool RawGhostFile::compressed(const u8 *rkg) const {
+    return ((*(rkg + 0xC) >> 3) & 1) == 1;
+}
+
+/// @addr{0x8051C398}
+/// @brief Constructor
+/// @param raw The raw ghost file to parse and initialize the `GhostFile` instance from
+/// @details Creates a @ref EGG::RamStream to read the header section of the raw ghost file.
+GhostFile::GhostFile(const RawGhostFile &raw) : m_inputs(raw.buffer() + RKG_HEADER_SIZE) {
+    u8 *streamPtr = const_cast<u8 *>(raw.buffer());
+    EGG::RamStream stream(streamPtr, RKG_HEADER_SIZE);
+    read(stream);
+}
+
+/// @addr{0x8051CF90}
+/// @brief Default destructor
+GhostFile::~GhostFile() = default;
+
 /// @addr{0x8051C530}
 /// @brief Reads and parses the ghost file data from the provided @ref EGG::RamStream
 /// @param stream The stream containing the raw ghost file data
@@ -148,6 +213,52 @@ void GhostFile::read(EGG::RamStream &stream) {
     m_location = stream.read_u8();
     stream.skip(0x7);
     stream.read(m_miiData.data(), RKG_MII_DATA_SIZE);
+}
+
+/// @brief Gets the lap timer at the provided index
+/// @param i The index of the lap to get the timer for
+/// @return Const ref to the lap @ref Timer for the specified lap index from @ref m_lapTimes.
+/// @pre Requires that `i` is less than the number of laps in the race
+const Timer &GhostFile::lapTimer(size_t i) const {
+    ASSERT(i < m_lapTimes.size());
+    return m_lapTimes[i];
+}
+
+/// @brief Gets the total race time
+/// @return Const ref to the total race @ref Timer, @ref m_raceTime.
+const Timer &GhostFile::raceTimer() const {
+    return m_raceTime;
+}
+
+/// @brief Gets the character used in the race
+/// @return The @ref Character used in the race, @ref m_character
+Character GhostFile::character() const {
+    return m_character;
+}
+
+/// @brief Gets the vehicle used in the race
+/// @return The @ref Vehicle used in the race, @ref m_vehicle
+Vehicle GhostFile::vehicle() const {
+    return m_vehicle;
+}
+
+/// @brief Gets the course that the race is taking place on
+/// @return The @ref Course of the race, @ref m_course
+Course GhostFile::course() const {
+    return m_course;
+}
+
+/// @brief Gets the pointer to the ghost's input data section
+/// @return Const pointer to the input data section, @ref m_inputs
+const u8 *GhostFile::inputs() const {
+    return m_inputs;
+}
+
+/// @brief Checks if the drift mode is automatic
+/// @return The value of @ref m_driftIsAuto which is `true` when using automatic and `false`
+/// when using manual
+bool GhostFile::driftIsAuto() const {
+    return m_driftIsAuto;
 }
 
 } // namespace Kinoko::System

@@ -3,7 +3,48 @@
 #include "game/field/CollisionDirector.hh"
 #include "game/field/KColData.hh"
 
+#include "game/kart/KartMove.hh"
+#include "game/kart/KartObject.hh"
+#include "game/kart/KartObjectManager.hh"
+
+#include <egg/math/Matrix.hh>
+
 namespace Kinoko::Render {
+
+/// @brief Constructor
+/// @details Zero-intiailzies all members.
+KartCameraState::KartCameraState() {
+    m_pos.setZero();
+    m_bigAirHeight = 0.0f;
+    m_downPitchRatio = 0.0f;
+    m_prevPos.setZero();
+    m_dist = 0.0f;
+    m_bigAirFallPitch = 0.0f;
+    m_targetPos.setZero();
+}
+
+/// @brief Default destructor
+KartCameraState::~KartCameraState() = default;
+
+/// @addr{0x805A1C3C}
+/// @brief Initializes the camera state to default values
+/// @details Resets @ref m_dist and @ref m_bigAirFallPitch to zero.
+void KartCameraState::init() {
+    m_dist = 0.0f;
+    m_bigAirFallPitch = 0.0f;
+}
+
+/// @addr{0x805A2034}
+/// @brief Initializes the camera with the default parameters and position
+/// @details Gets the camera parameters from the first kart object (since we assume only one
+/// player in Kinoko) and stores the pointer to @ref m_camParams. Then calls @ref initPos() to
+/// initialize the camera's position.
+void KartCamera::init() {
+    auto *param = Kart::KartObjectManager::Instance()->object(0)->param();
+    m_camParams = &param->camera();
+
+    initPos();
+}
 
 /// @addr{0x805A21D0}
 /// @brief Every frame, updates the front and rear cameras to reflect the kart's position and state
@@ -35,6 +76,69 @@ void KartCamera::calc() {
 
     calcCollision(m_forwardCamera, false);
     calcCollision(m_backwardCamera, true);
+}
+
+/// @brief Creates the singleton instance of the @ref KartCamera
+/// @return A pointer to the newly created @ref KartCamera instance
+/// @pre The singleton instance must not already exist.
+KartCamera *KartCamera::CreateInstance() {
+    ASSERT(!s_instance);
+    s_instance = EGG::egg_new<KartCamera>();
+    return s_instance;
+}
+
+/// @brief Destroys the singleton instance of the @ref KartCamera
+/// @pre The singleton instance must exist.
+void KartCamera::DestroyInstance() {
+    ASSERT(s_instance);
+    auto *instance = s_instance;
+    s_instance = nullptr;
+    EGG::egg_delete(instance);
+}
+
+/// @brief Returns the singleton instance of the @ref KartCamera
+/// @return A pointer to the singleton instance of the @ref KartCamera
+KartCamera *KartCamera::Instance() {
+    return s_instance;
+}
+
+/// @addr{0x805A1D10}
+/// @brief Private constructor
+/// @details Sets @ref m_hopPosY and @ref m_forward to zero and initializes @ref m_camParams to
+/// `nullptr`.
+KartCamera::KartCamera() : m_hopPosY(0), m_forward(EGG::Vector3f::zero), m_camParams(nullptr) {}
+
+/// @addr{0x805A8F7C}
+/// @brief Private default destructor
+KartCamera::~KartCamera() = default;
+
+/// @addr{0x805A49BC}
+/// @brief Initializes the camera's position and orientation to the default state
+void KartCamera::initPos() {
+    constexpr f32 FORWARD_INTERP_RATE = 1.0f;
+    constexpr f32 HORIZ_POS_INTERP_RATE = 1.0f;
+    constexpr f32 VERT_POS_INTERP_RATE = 1.0f;
+    constexpr f32 FAST_VERT_POS_INTERP_RATE = 1.0f;
+
+    m_driftYaw = 0.0f;
+    m_forwardCamera.init();
+    m_backwardCamera.init();
+    m_backwardCamera.m_dist = m_camParams->dist;
+    m_forwardCamera.m_dist = m_camParams->dist;
+
+    const auto *kartObj = Kart::KartObjectManager::Instance()->object(0);
+    calcForward(FORWARD_INTERP_RATE, kartObj);
+    calcCamera(HORIZ_POS_INTERP_RATE, VERT_POS_INTERP_RATE, FAST_VERT_POS_INTERP_RATE,
+            m_forwardCamera, false, kartObj, kartObj->pos());
+}
+
+/// @addr{0x805A2B84}
+/// @brief Interpolates the camera's orientation based on the kart's smoothed forward vector
+/// @param t Interpolation factor
+/// @param proxy Pointer to the kart object proxy
+void KartCamera::calcForward(f32 t, const Kart::KartObjectProxy *proxy) {
+    m_forward = m_forward.interpolate(t, proxy->move()->smoothedForward());
+    m_right = EGG::Vector3f::ey.perpInPlane(m_forward, true);
 }
 
 /// @addr{0x805A3070}
@@ -174,26 +278,6 @@ void KartCamera::calcAirtime(KartCameraState &state, const Kart::KartObjectProxy
     }
 
     state.m_bigAirFallPitch += interpRate * (targetPitch - state.m_bigAirFallPitch);
-}
-
-/// @addr{0x805A49BC}
-/// @brief Initializes the camera's position and orientation to the default state
-void KartCamera::initPos() {
-    constexpr f32 FORWARD_INTERP_RATE = 1.0f;
-    constexpr f32 HORIZ_POS_INTERP_RATE = 1.0f;
-    constexpr f32 VERT_POS_INTERP_RATE = 1.0f;
-    constexpr f32 FAST_VERT_POS_INTERP_RATE = 1.0f;
-
-    m_driftYaw = 0.0f;
-    m_forwardCamera.init();
-    m_backwardCamera.init();
-    m_backwardCamera.m_dist = m_camParams->dist;
-    m_forwardCamera.m_dist = m_camParams->dist;
-
-    const auto *kartObj = Kart::KartObjectManager::Instance()->object(0);
-    calcForward(FORWARD_INTERP_RATE, kartObj);
-    calcCamera(HORIZ_POS_INTERP_RATE, VERT_POS_INTERP_RATE, FAST_VERT_POS_INTERP_RATE,
-            m_forwardCamera, false, kartObj, kartObj->pos());
 }
 
 /// @addr{0x805A5D70}

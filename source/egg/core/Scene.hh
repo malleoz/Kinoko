@@ -2,6 +2,8 @@
 
 #include <Common.hh>
 
+#include "egg/core/Disposer.hh"
+
 namespace Kinoko::EGG {
 
 class SceneManager;
@@ -14,83 +16,36 @@ class SceneManager;
 /// While this is not an abstract class, you'll never see an instance of this base class.
 class Scene : Disposer {
 public:
-    /*------------*
-        Lifecycle
-     *------------*/
-
     Scene();
+    virtual ~Scene();
 
-    /// @addr{0x8023AD84}
-    virtual ~Scene() = default;
-
-    /*----------*
-        Virtual
-     *----------*/
-
-    /// @brief Responsible for performing per-frame updates for the scene
-    virtual void calc() {}
-
-    /// @brief Called when the scene is entered, performing necessary setup
-    virtual void enter() {}
-
-    /// @brief Called when the scene is exited, responsible for performing necessary cleanup
-    virtual void exit() {}
-
-    /// @brief Responsible for reinitializing the scene
-    virtual void reinit() {}
-
-    virtual void incoming_childDestroy() {}
-    virtual void outgoing_childCreate() {}
+    virtual void calc();
+    virtual void enter();
+    virtual void exit();
+    virtual void reinit();
+    virtual void incoming_childDestroy();
+    virtual void outgoing_childCreate();
 
     /// @beginSetters
 
-    void setParent(Scene *parent) {
-        m_parent = parent;
-    }
-
-    void setChild(Scene *child) {
-        m_child = child;
-    }
-
-    void setId(int id) {
-        m_id = id;
-    }
-
-    void setSceneMgr(SceneManager *sceneMgr) {
-        m_sceneMgr = sceneMgr;
-    }
+    void setParent(Scene *parent);
+    void setChild(Scene *child);
+    void setId(int id);
+    void setSceneMgr(SceneManager *sceneMgr);
 
     /// @endSetters
 
     /// @beginGetters
 
-    [[nodiscard]] Heap *heap() const {
-        return m_heap;
-    }
-
-    [[nodiscard]] Scene *parent() const {
-        return m_parent;
-    }
-
-    [[nodiscard]] Scene *child() const {
-        return m_child;
-    }
-
-    [[nodiscard]] int id() const {
-        return m_id;
-    }
-
-    [[nodiscard]] SceneManager *sceneMgr() const {
-        return m_sceneMgr;
-    }
+    [[nodiscard]] Heap *heap() const;
+    [[nodiscard]] Scene *parent() const;
+    [[nodiscard]] Scene *child() const;
+    [[nodiscard]] int id() const;
+    [[nodiscard]] SceneManager *sceneMgr() const;
 
     /// @endGetters
 
 protected:
-    /*-----------*
-        Members
-     *-----------*/
-
     Heap *m_heap;
     Scene *m_parent;
     Scene *m_child;

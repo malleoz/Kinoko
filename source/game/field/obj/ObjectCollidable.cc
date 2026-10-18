@@ -1,12 +1,13 @@
 #include "ObjectCollidable.hh"
 
+#include "game/field/BoxColManager.hh"
 #include "game/field/ObjectCollisionBox.hh"
 #include "game/field/ObjectCollisionCylinder.hh"
 #include "game/field/ObjectCollisionSphere.hh"
 #include "game/field/ObjectDirector.hh"
 
-#include "game/kart/KartCollide.hh"
 #include "game/kart/KartObject.hh"
+#include "game/kart/Reaction.hh"
 
 namespace Kinoko::Field {
 

@@ -11,55 +11,19 @@ namespace Kinoko::Item {
 /// whether the user is able to use an item (countdown, burnout, in cannon, etc).
 class KartItem final : Kart::KartObjectProxy {
 public:
-    /// @addr{0x8079754C}
-    /// @brief Constructor
-    /// @details Initializes @ref m_flags to all zeroes.
-    KartItem() {
-        m_flags.makeAllZero();
-    }
+    KartItem();
+    ~KartItem() override;
 
-    /// @addr{0x8079951C}
-    /// @brief Default virtual destructor
-    ~KartItem() override = default;
-
-    /// @addr{0x807976E0}
-    /// @brief Initializes the @ref Kart::KartObjectProxy accessor pointer
-    void init(size_t playerIdx) {
-        apply(playerIdx);
-    }
-
+    void init(size_t playerIdx);
     void calc();
-
-    /// @addr{0x80798848}
-    /// @brief Clears the current item inventory if it is not empty
-    void clear() {
-        if (m_inventory.id() != ItemId::NONE) {
-            m_inventory.clear();
-        }
-    }
-
+    void clear();
+    void useMushroom();
     void activateMushroom();
-
-    /// @addr{0x807A9D3C}
-    /// @brief Actives a mushroom boost and decrements the item count in the inventory slot
-    void useMushroom() {
-        activateMushroom();
-        m_inventory.useItem(1);
-    }
 
     /// @beginGetters
 
-    /// @brief Fetches the current item inventory for the kart
-    /// @return A reference to the current item inventory for the kart, @ref m_inventory
-    [[nodiscard]] ItemInventory &inventory() {
-        return m_inventory;
-    }
-
-    /// @brief Fetches the current item inventory for the kart (const version)
-    /// @return A const reference to the current item inventory for the kart, @ref m_inventory
-    [[nodiscard]] const ItemInventory &inventory() const {
-        return m_inventory;
-    }
+    [[nodiscard]] ItemInventory &inventory();
+    [[nodiscard]] const ItemInventory &inventory() const;
 
     /// @endGetters
 

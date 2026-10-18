@@ -1,7 +1,6 @@
 #pragma once
 
-#include "egg/core/Scene.hh"
-#include "egg/core/SceneCreator.hh"
+#include <Common.hh>
 
 namespace Kinoko {
 
@@ -13,132 +12,51 @@ class Context;
 
 namespace EGG {
 
+class Heap;
+class Scene;
+class SceneCreator;
+
 /// @brief Manages the scene stack and transitions between scenes.
 class SceneManager {
     /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
     /// state on context switch
-    friend class Host::Context;
+    friend Host::Context;
 
 public:
-    /*------------*
-        Lifecycle
-     *------------*/
+    SceneManager(SceneCreator *creator);
+    virtual ~SceneManager();
 
-    /// @addr{0x8023ADDC}
-    SceneManager(SceneCreator *creator) {
-        m_creator = creator;
-        m_currentScene = nullptr;
-    }
+    virtual void calc();
+    virtual void calcCurrentScene();
 
-    virtual ~SceneManager() = default;
-
-    /*----------*
-        Virtual
-     *----------*/
-
-    /// @addr{0x8023AE60}
-    virtual void calc() {
-        calcCurrentScene();
-    }
-
-    /// @addr{0x8023B588}
-    virtual void calcCurrentScene() {
-        if (!m_currentScene) {
-            return;
-        }
-
-        m_currentScene->calc();
-    }
-
-    /*----------*
-        Methods
-     *----------*/
-
-    /// @addr{0x8023B248}
-    void createChildScene(int id, Scene *parent) {
-        outgoingParentScene(parent);
-        setNextSceneId(id);
-        setupNextSceneId();
-        createScene(id, parent);
-    }
-
+    void createChildScene(int id, Scene *parent);
     void createScene(int nextSceneId, Scene *parent);
     void destroyScene(Scene *scene);
-
-    /// @addr{0x8023AF84}
-    void changeScene(int nextSceneId) {
-        while (m_currentScene) {
-            destroyCurrentSceneNoIncoming(true);
-        }
-
-        changeSiblingScene(nextSceneId);
-    }
-
-    /// @addr{0x8023AFE0}
-    void changeSiblingScene(int nextSceneId) {
-        setNextSceneId(nextSceneId);
-        changeSiblingScene();
-    }
-
+    void changeScene(int nextSceneId);
+    void changeSiblingScene(int nextSceneId);
     void changeSiblingScene();
-
-    /// @addr{0x8023B568}
-    void incomingCurrentScene() {
-        if (m_currentScene) {
-            m_currentScene->incoming_childDestroy();
-        }
-    }
-
-    /// @addr{0x8023B92C}
-    void outgoingParentScene(Scene *parent) {
-        parent->outgoing_childCreate();
-    }
-
-    /// @addr{0x8023AEF8}
-    void reinitCurrentScene() {
-        if (m_currentScene) {
-            m_currentScene->reinit();
-        }
-    }
-
+    void incomingCurrentScene();
+    void outgoingParentScene(Scene *parent);
+    void reinitCurrentScene();
     bool destroyCurrentSceneNoIncoming(bool destroyRootIfNoParent);
     bool destroyToSelectSceneId(int nextSceneId);
     [[nodiscard]] Scene *findParentScene(int id) const;
+    void setupNextSceneId();
 
-    /// @addr{0x8023B910}
-    void setupNextSceneId() {
-        m_prevSceneId = m_currentSceneId;
-        m_currentSceneId = m_nextSceneId;
-        m_nextSceneId = -1;
-    }
+    /// @beginGetters
 
-    /*----------*
-        Getters
-     *----------*/
+    [[nodiscard]] Scene *currentScene() const;
+    [[nodiscard]] int currentSceneId() const;
+    [[nodiscard]] static Heap *heapForCreateScene();
 
-    [[nodiscard]] Scene *currentScene() const {
-        return m_currentScene;
-    }
+    /// @endGetters
 
-    [[nodiscard]] int currentSceneId() const {
-        return m_currentSceneId;
-    }
+    /// @beginSetters
 
-    [[nodiscard]] static Heap *heapForCreateScene() {
-        return s_heapForCreateScene;
-    }
+    void setNextSceneId(int id);
+    static void SetRootHeap(Heap *heap);
 
-    /*----------*
-        Setters
-     *----------*/
-
-    void setNextSceneId(int id) {
-        m_nextSceneId = id;
-    }
-
-    static void SetRootHeap(Heap *heap) {
-        s_rootHeap = heap;
-    }
+    /// @endSetters
 
 private:
     /*----------*

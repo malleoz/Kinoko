@@ -2,6 +2,8 @@
 
 #include "game/system/GhostFile.hh"
 
+#include <egg/core/Heap.hh>
+
 #include <functional>
 
 namespace Kinoko {
@@ -22,7 +24,7 @@ namespace System {
 class RaceConfig : EGG::Disposer {
     /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
     /// state on context switch
-    friend class Host::Context;
+    friend Host::Context;
 
 public:
     /// @brief Describes information about a player's configuration in the race
@@ -42,105 +44,46 @@ public:
 
     /// @brief Describes information about the race configuration
     struct Scenario {
-        void init();
-
         std::array<Player, MAX_PLAYERS> players; ///< The array of @ref Player objects in the race
         u8 playerCount;                          ///< The number of players in the race
         Course course;                           ///< The course for the race
+
+        void init();
     };
 
     /// @brief Describes the type of callback function used to initialize the RaceConfig instance
     /// @details The callback function is called after the RaceConfig instance has been initialized
     typedef std::function<void(RaceConfig *, void *)> InitCallback;
 
-    /// @addr{0x8052DD40}
-    /// @brief Initializes the @ref Scenario data for the race
-    /// @details Simply calls @ref Scenario::init() on @ref m_raceScenario.
-    void init() {
-        m_raceScenario.init();
-    }
-
+    void init();
     void initRace();
     void initControllers();
     void initGhost();
 
     /// @beginSetters
 
-    /// @brief Sets the ghost data for the race
-    /// @param rkg Pointer to the raw (possibly uncompressed) ghost `.rkg` file buffer
-    /// @details Creates a @ref RawGhostFile instance from the provided raw ghost file buffer and
-    /// stores it in @ref m_ghost.
-    void setGhost(const u8 *rkg) {
-        m_ghost = RawGhostFile(rkg);
-    }
+    void setGhost(const u8 *rkg);
 
     /// @endSetters
 
     /// @beginGetters
 
-    /// @brief Gets the current race scenario
-    /// @return A non-const ref to the current race scenario, @ref m_raceScenario
-    [[nodiscard]] Scenario &raceScenario() {
-        return m_raceScenario;
-    }
-
-    /// @brief Gets the current race scenario
-    /// @return A const ref to the current race scenario, @ref m_raceScenario
-    [[nodiscard]] const Scenario &raceScenario() const {
-        return m_raceScenario;
-    }
+    [[nodiscard]] Scenario &raceScenario();
+    [[nodiscard]] const Scenario &raceScenario() const;
 
     /// @endGetters
 
-    /// @brief Sets the initialization callback for the RaceConfig instance
-    /// @param callback The callback function to call after initialization
-    /// @param arg The argument(s) to pass to the callback function
-    static void RegisterInitCallback(const InitCallback &callback, void *arg) {
-        s_onInitCallback = callback;
-        s_onInitCallbackArg = arg;
-    }
+    static void RegisterInitCallback(const InitCallback &callback, void *arg);
 
-    /// @addr{0x8052FE58}
-    /// @brief Creates the singleton instance of the @ref RaceConfig
-    /// @return A pointer to the newly created @ref RaceConfig instance
-    /// @pre The singleton instance of the RaceConfig must not already exist.
-    static RaceConfig *CreateInstance() {
-        ASSERT(!s_instance);
-        s_instance = EGG::egg_new<RaceConfig>();
-        return s_instance;
-    }
-
-    /// @addr{0x8052FFE8}
-    /// @brief Destroys the singleton instance of the @ref RaceConfig
-    /// @pre The singleton instance of the RaceConfig must already exist.
-    static void DestroyInstance() {
-        ASSERT(s_instance);
-        auto *instance = s_instance;
-        s_instance = nullptr;
-        EGG::egg_delete(instance);
-    }
-
-    /// @brief Returns the singleton instance of the @ref RaceConfig
-    /// @return A pointer to the singleton instance of the @ref RaceConfig
-    [[nodiscard]] static RaceConfig *Instance() {
-        return s_instance;
-    }
+    static RaceConfig *CreateInstance();
+    static void DestroyInstance();
+    [[nodiscard]] static RaceConfig *Instance();
 
 private:
     EGG_NEW_DELETE_FRIEND
 
-    /// @addr{0x8053015C}
-    /// @brief Private default constructor
-    RaceConfig() = default;
-
-    /// @addr{0x80530038}
-    /// @brief Private virtual destructor
-    ~RaceConfig() override {
-        if (s_instance) {
-            s_instance = nullptr;
-            WARN("RaceConfig instance not explicitly handled!");
-        }
-    }
+    RaceConfig();
+    ~RaceConfig() override;
 
     Scenario m_raceScenario; ///< The race scenario containing course and player information
     RawGhostFile m_ghost;    ///< The ghost data for the race

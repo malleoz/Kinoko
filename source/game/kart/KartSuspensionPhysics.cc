@@ -1,10 +1,52 @@
 #include "KartSuspensionPhysics.hh"
 
+#include "game/kart/CollisionGroup.hh"
+#include "game/kart/KartBody.hh"
 #include "game/kart/KartCollide.hh"
+#include "game/kart/KartDynamics.hh"
+#include "game/kart/KartMove.hh"
 #include "game/kart/KartSub.hh"
 #include "game/kart/KartTire.hh"
 
 namespace Kinoko::Kart {
+
+/// @addr{0x8059940C}
+/// @brief Constructor
+/// @param wheelIdx The index of the wheel
+/// @param bspWheelIdx The index of the wheel in the @ref BSP::wheels array
+/// @details Sets @ref m_wheelIdx and @ref m_bspWheelIdx to the provided `wheelIdx` and
+/// `bspWheelIdx`. Initializes @ref m_bspWheel to `nullptr`.
+WheelPhysics::WheelPhysics(u16 wheelIdx, u16 bspWheelIdx)
+    : m_wheelIdx(wheelIdx),
+      m_bspWheelIdx(bspWheelIdx),
+      m_bspWheel(nullptr) {}
+
+/// @addr{0x8059A9C4}
+/// @brief Virtual destructor that destroys the underlying @ref CollisionGroup subsystem for
+/// this wheel
+WheelPhysics::~WheelPhysics() {
+    EGG::egg_delete(m_hitboxGroup);
+}
+
+/// @addr{0x80599470}
+/// @brief Creates and initializes the wheel's @ref m_hitboxGroup and creates a single hitbox
+/// for the tire
+/// @details Calls @ref CollisionGroup::createSingleHitbox() to create a hitbox with radius
+/// `10.0f` for the tire.
+void WheelPhysics::init() {
+    constexpr f32 RADIUS = 10.0f;
+
+    m_hitboxGroup = EGG::egg_new<CollisionGroup>();
+    m_hitboxGroup->createSingleHitbox(RADIUS, EGG::Vector3f::zero);
+}
+
+/// @addr{0x805994D4}
+/// @brief Fetches the @ref BSP::Wheel pointer corresponding to this wheel
+/// @details Sets @ref m_bspWheel to the wheel in the kart's @ref BSP::wheels array at index
+/// @ref m_bspWheelIdx.
+void WheelPhysics::initBsp() {
+    m_bspWheel = &bsp().wheels[m_bspWheelIdx];
+}
 
 /// @addr{0x80599508}
 /// @brief Resets the wheel physics to its initial state
@@ -139,6 +181,121 @@ void WheelPhysics::calcSuspension(const EGG::Vector3f &forward) {
             true, true, status().offBit(eStatus::LargeFlipHit, eStatus::WheelieRot));
 }
 
+/// @brief Sets the current suspension travel distance
+/// @param suspTravel The new suspension travel distance to set
+void WheelPhysics::setSuspTravel(f32 suspTravel) {
+    m_suspTravel = suspTravel;
+}
+
+/// @brief Sets the current position of the wheel
+/// @param pos The new position to set
+void WheelPhysics::setPos(const EGG::Vector3f &pos) {
+    m_pos = pos;
+}
+
+/// @brief Sets the last position of the wheel
+/// @param pos The new last position to set
+void WheelPhysics::setLastPos(const EGG::Vector3f &pos) {
+    m_lastPos = pos;
+}
+
+/// @brief Sets the distance between the tire's position and the topmost point of the suspension
+/// @param pos The new distance to set
+void WheelPhysics::setLastTopDiff(const EGG::Vector3f &pos) {
+    m_lastTopDiff = pos;
+}
+
+/// @brief Sets the position at the bottom outer edge of the wheel
+/// @param pos The new wheel edge position to set
+void WheelPhysics::setWheelEdgePos(const EGG::Vector3f &pos) {
+    m_wheelEdgePos = pos;
+}
+
+/// @brief Sets the velocity of the wheel
+/// @param vec The new velocity to set
+void WheelPhysics::setColVel(const EGG::Vector3f &vec) {
+    m_colVel = vec;
+}
+
+/// @brief Gets the current position of the tire
+/// @return The current world position of the tire, @ref m_pos
+const EGG::Vector3f &WheelPhysics::pos() const {
+    return m_pos;
+}
+
+/// @brief Gets the distance between the tire and its topmost point of the suspension
+/// @return The distance between the tire and the topmost point of the suspension, @ref
+/// m_lastTopDiff
+const EGG::Vector3f &WheelPhysics::lastTopDiff() const {
+    return m_lastTopDiff;
+}
+
+/// @brief Gets the current suspension travel distance
+/// @return The current suspension travel distance, @ref m_suspTravel
+f32 WheelPhysics::suspTravel() const {
+    return m_suspTravel;
+}
+
+/// @brief Gets the topmost point of the suspension
+/// @return The topmost point of the suspension, @ref m_topmostPos
+const EGG::Vector3f &WheelPhysics::topmostPos() const {
+    return m_topmostPos;
+}
+
+/// @brief Gets the collision group associated with this wheel
+/// @return Ref to the collision group, @ref m_hitboxGroup
+CollisionGroup *WheelPhysics::hitboxGroup() {
+    return m_hitboxGroup;
+}
+
+/// @brief Gets the collision group associated with this wheel
+/// @return Const ref to the collision group, @ref m_hitboxGroup
+const CollisionGroup *WheelPhysics::hitboxGroup() const {
+    return m_hitboxGroup;
+}
+
+/// @brief Gets the wheel's velocity relative to the vehicle body
+/// @return The wheel's relative velocity, @ref m_relVel
+const EGG::Vector3f &WheelPhysics::relVel() const {
+    return m_relVel;
+}
+
+/// @brief Gets the position at the bottom outer edge of the wheel
+/// @return The position at the bottom outer edge of the wheel, @ref m_wheelEdgePos
+const EGG::Vector3f &WheelPhysics::wheelEdgePos() const {
+    return m_wheelEdgePos;
+}
+
+/// @brief Gets the current smoothed wheel radius
+/// @return The current smoothed wheel radius, @ref m_effectiveRadius
+f32 WheelPhysics::effectiveRadius() const {
+    return m_effectiveRadius;
+}
+
+/// @brief Checks if the suspension has travel
+/// @return The value of @ref m_hasSuspTravel
+f32 WheelPhysics::hasSuspTravel() const {
+    return m_hasSuspTravel;
+}
+
+/// @addr{0x80599ED4}
+/// @brief Constructor
+/// @param wheelIdx The index of the wheel
+/// @param tireType The type of tire
+/// @param bspWheelIdx The index of the wheel in the @ref BSP::wheels array
+/// @details Sets @ref m_tireType, @ref m_bspWheelIdx, and @ref m_wheelIdx to the provided
+/// `tireType`, `bspWheelIdx`, and `wheelIdx` respectively. Initializes @ref m_bspWheel to
+/// `nullptr`.
+KartSuspensionPhysics::KartSuspensionPhysics(u16 wheelIdx, TireType tireType, u16 bspWheelIdx)
+    : m_tirePhysics(nullptr),
+      m_tireType(tireType),
+      m_bspWheelIdx(bspWheelIdx),
+      m_wheelIdx(wheelIdx) {}
+
+/// @addr{0x8059AA04}
+/// @brief Default virtual destructor
+KartSuspensionPhysics::~KartSuspensionPhysics() = default;
+
 /// @addr{0x80599FA0}
 /// @brief Initializes the @ref WheelPhysics and @ref BSP::Wheel pointers for this suspension
 /// @details @ref m_tirePhysics is set by indexing into the kart's tire array using @ref m_wheelIdx,
@@ -146,6 +303,15 @@ void WheelPhysics::calcSuspension(const EGG::Vector3f &forward) {
 void KartSuspensionPhysics::init() {
     m_tirePhysics = tire(m_wheelIdx)->wheelPhysics();
     m_bspWheel = &bsp().wheels[m_bspWheelIdx];
+}
+
+/// @addr{0x80599F54}
+/// @brief Resets the suspension physics to its initial state
+/// @details Resets @ref m_topmostPos, @ref m_maxTravelScaled, and @ref m_bottomDir to zero.
+void KartSuspensionPhysics::reset() {
+    m_topmostPos.setZero();
+    m_maxTravelScaled = 0.0f;
+    m_bottomDir.setZero();
 }
 
 /// @addr{0x8059A02C}

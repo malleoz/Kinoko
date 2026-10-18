@@ -2,7 +2,17 @@
 
 #include "game/kart/KartObjectProxy.hh"
 
-namespace Kinoko::Kart {
+#include <egg/math/Quat.hh>
+
+namespace Kinoko {
+
+namespace System {
+
+enum class Trick;
+
+} // namespace System
+
+namespace Kart {
 
 /// @brief Determined by the KCL, represents the variation of the trick that is performed.
 /// @details This is also directly used to determine the duration of the trick boost.
@@ -44,26 +54,10 @@ public:
         f32 rotAngle; ///< Pitch correction applied at the start of the trick towards the max angle
     };
 
-    /// @addr{0x80575A44}
-    /// @brief Constructor
-    /// @param move Pointer to the kart's movement state manager
-    /// @details Initializes @ref m_trickDelay and @ref m_leniencyTimer to zero.
-    KartJump(KartMove *move) : m_move(move) {
-        m_trickDelay = 0;
-        m_leniencyTimer = 0;
-    }
+    KartJump(KartMove *move);
+    ~KartJump() override;
 
-    /// @addr{0x80575AA8}
-    /// @brief Default virtual destructor
-    ~KartJump() override = default;
-
-    /// @addr{0x80575AE8}
-    /// @brief Resets the cooldown timer for tricks
-    /// @details Sets @ref m_trickDelay to zero, allowing a new trick to be started immediately.
-    void reset() {
-        m_trickDelay = 0;
-    }
-
+    void reset();
     void tryStart(const EGG::Vector3f &left);
     void calc();
     void calcInput();
@@ -72,30 +66,10 @@ public:
 
     /// @beginGetters
 
-    /// @brief Gets whether the kart is currently in a trick resulting from a boost ramp
-    /// @return The value of @ref m_boostRampTrick
-    [[nodiscard]] bool isBoostRampEnabled() const {
-        return m_boostRampTrick;
-    }
-
-    /// @brief Gets the type of trick currently being performed
-    /// @return The type of trick currently being performed, @ref m_type
-    [[nodiscard]] TrickType type() const {
-        return m_type;
-    }
-
-    /// @brief Gets the variant of the trick currently being performed
-    /// @return The variant of the trick currently being performed, @ref m_variant
-    [[nodiscard]] TrickVariant variant() const {
-        return m_variant;
-    }
-
-    /// @brief Gets the number of frames remaining until a boost can start after a trick
-    /// @return The number of frames remaining until a boost can start after a trick, @ref
-    /// m_trickDelay
-    [[nodiscard]] s16 trickDelay() const {
-        return m_trickDelay;
-    }
+    [[nodiscard]] bool isBoostRampEnabled() const;
+    [[nodiscard]] TrickType type() const;
+    [[nodiscard]] TrickVariant variant() const;
+    [[nodiscard]] s16 trickDelay() const;
 
     /// @endGetters
 
@@ -121,14 +95,7 @@ protected:
     KartMove *const m_move;       ///< Pointer to the @ref KartMove subsystem
 
 private:
-    /// @brief Checks whether attempted trick inputs should be ignored
-    /// @return `true` if attempted trick inputs should be ignored, `false` if they should be
-    /// respected
-    /// @details Checks whether the kart is in an action, trick, or over a zipper
-    [[nodiscard]] bool shouldIgnoreTrick() {
-        return status().onBit(eStatus::InAction, eStatus::TrickStart, eStatus::InATrick,
-                eStatus::OverZipper);
-    }
+    [[nodiscard]] bool shouldIgnoreTrick();
 
     s16 m_leniencyTimer;   ///< Frames remaining before the buffered trick input will be dropped
     bool m_boostRampTrick; ///< True if in the middle of a trick from a boost ramp
@@ -139,13 +106,8 @@ private:
 /// @copydetails KartJump
 class KartJumpBike final : public KartJump {
 public:
-    /// @brief Constructor
-    /// @param move Pointer to the kart's movement state manager
-    KartJumpBike(KartMove *move) : KartJump(move) {}
-
-    /// @addr{0x80576AFC}
-    /// @brief Default virtual destructor
-    ~KartJumpBike() override = default;
+    KartJumpBike(KartMove *move);
+    ~KartJumpBike() override;
 
 private:
     void calcRot() override;
@@ -153,4 +115,6 @@ private:
     void init() override;
 };
 
-} // namespace Kinoko::Kart
+} // namespace Kart
+
+} // namespace Kinoko

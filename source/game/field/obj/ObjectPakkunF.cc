@@ -1,5 +1,12 @@
 #include "ObjectPakkunF.hh"
 
+#include "game/field/ObjectCollisionBase.hh"
+
+#include "game/render/AnmMgr.hh"
+#include "game/render/DrawMdl.hh"
+
+#include "game/system/map/MapdataGeoObj.hh"
+
 namespace Kinoko::Field {
 
 /// @addr{0x807743A4}

@@ -1,8 +1,14 @@
 #include "Context.hh"
 
+#include <abstract/g3d/AnmObj.hh>
+
+#include <egg/core/Archive.hh>
 #include <egg/core/SceneManager.hh>
 
+#include <game/field/BoxColManager.hh>
 #include <game/field/CollisionDirector.hh>
+#include <game/field/CourseColMgr.hh>
+#include <game/field/ObjectCollisionBase.hh>
 #include <game/field/ObjectDirector.hh>
 #include <game/field/ObjectDrivableDirector.hh>
 #include <game/field/RailManager.hh>
@@ -12,6 +18,7 @@
 
 #include <game/item/ItemDirector.hh>
 
+#include <game/kart/KartObjectManager.hh>
 #include <game/kart/KartParamFileManager.hh>
 
 #include <game/render/KartCamera.hh>
@@ -19,15 +26,18 @@
 #include <game/system/CourseMap.hh>
 #include <game/system/KPadDirector.hh>
 #include <game/system/RaceConfig.hh>
+#include <game/system/RaceManager.hh>
+#include <game/system/ResourceManager.hh>
 
 namespace Kinoko::Host {
 
 /// @brief Constructor which allocates memory for the context and `memcpy`'s the entire heap and
 /// copies all static pointers
 Context::Context() {
-    m_contextMemory = malloc(MEMORY_SPACE_SIZE);
+    m_contextMemory = malloc(Abstract::Memory::MEMORY_SPACE_SIZE);
     ASSERT(m_contextMemory && EGG::SceneManager::s_rootHeap);
-    memcpy(m_contextMemory, static_cast<void *>(EGG::SceneManager::s_rootHeap), MEMORY_SPACE_SIZE);
+    memcpy(m_contextMemory, static_cast<void *>(EGG::SceneManager::s_rootHeap),
+            Abstract::Memory::MEMORY_SPACE_SIZE);
 
     m_statics.m_rootList = Abstract::Memory::MEMiHeapHead::s_rootList;
     m_statics.m_archiveList = EGG::Archive::s_archiveList;
@@ -62,6 +72,60 @@ Context::Context() {
     m_statics.m_basabasaInitialXRange = Field::ObjectBasabasa::s_initialXRange;
     m_statics.m_basabasaInitialYRange = Field::ObjectBasabasa::s_initialYRange;
     m_statics.m_flamePoleCount = Field::ObjectFlamePoleFoot::s_flamePoleCount;
+}
+
+/// @brief Copy constructor which clones the provided context
+/// @param c The context to copy from.
+Context::Context(const Context &c) {
+    m_contextMemory = malloc(Abstract::Memory::MEMORY_SPACE_SIZE);
+    ASSERT(m_contextMemory && c.m_contextMemory);
+    memcpy(m_contextMemory, c.m_contextMemory, Abstract::Memory::MEMORY_SPACE_SIZE);
+    m_statics = c.m_statics;
+}
+
+/// @brief Move constructs a context by stealing the memory block and pointers from the provided
+/// context
+/// @param c The context to move from.
+Context::Context(Context &&c) {
+    m_contextMemory = c.m_contextMemory;
+    c.m_contextMemory = nullptr;
+    m_statics = c.m_statics;
+    c.m_statics = {};
+}
+
+/// @brief Destructor which frees the allocated context memory.
+/// @note This class does not manage the lifecycle of the heap that it referenced at the time of
+/// construction; it only manages the copy.
+Context::~Context() {
+    free(m_contextMemory);
+}
+
+/// @brief Copy assignment operator
+/// @param rhs The context to copy from.
+/// @return A reference to this context.
+Context &Context::operator=(const Context &rhs) {
+    if (*this == rhs) {
+        return *this;
+    }
+
+    ASSERT(m_contextMemory && rhs.m_contextMemory && m_contextMemory != rhs.m_contextMemory);
+    memcpy(m_contextMemory, rhs.m_contextMemory, Abstract::Memory::MEMORY_SPACE_SIZE);
+    m_statics = rhs.m_statics;
+
+    return *this;
+}
+
+/// @brief Move assignment operator
+/// @param rhs The context to move from.
+/// @return A reference to this context.
+Context &Context::operator=(Context &&rhs) {
+    free(m_contextMemory);
+    m_contextMemory = rhs.m_contextMemory;
+    rhs.m_contextMemory = nullptr;
+    m_statics = rhs.m_statics;
+    rhs.m_statics = {};
+
+    return *this;
 }
 
 /// @brief Equality comparison operator to check equivalence between two contexts
@@ -115,7 +179,7 @@ bool Context::operator==(const Context &rhs) const {
 void Context::SetActiveContext(const Context &rhs) {
     ASSERT(EGG::SceneManager::s_rootHeap && rhs.m_contextMemory);
     memcpy(reinterpret_cast<void *>(EGG::SceneManager::s_rootHeap), rhs.m_contextMemory,
-            MEMORY_SPACE_SIZE);
+            Abstract::Memory::MEMORY_SPACE_SIZE);
 
     Abstract::Memory::MEMiHeapHead::s_rootList = rhs.m_statics.m_rootList;
     EGG::Archive::s_archiveList = rhs.m_statics.m_archiveList;

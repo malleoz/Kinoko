@@ -1,10 +1,12 @@
 #pragma once
 
-#include "game/field/Rail.hh"
+#include "game/system/map/MapdataPointInfo.hh"
 
 namespace Kinoko::Field {
 
 class Rail;
+struct RailLineTransition;
+struct RailSplineTransition;
 
 /// @brief Base class for interpolating along a rail. This class is responsible for calculating the
 /// current position and tangent direction along the rail based on a given speed. It supports both

@@ -2,10 +2,8 @@
 
 #include "abstract/g3d/AnmObj.hh"
 #include "abstract/g3d/ResCommon.hh"
-#include "abstract/g3d/ResDic.hh"
 
 #include <egg/math/Matrix.hh>
-#include <egg/util/Stream.hh>
 
 // Credit: kiwi515/ogws
 
@@ -31,15 +29,15 @@ struct ChrAnmResult {
         FLAG_XSI_SCALING = (1 << 12),
     };
 
-    /// @addr{0x800555C0}
-    [[nodiscard]] EGG::Vector3f scale() const {
-        return s;
-    }
-
     u32 flags;
     EGG::Vector3f s;
     EGG::Vector3f rawR;
     EGG::Matrix34f rt;
+
+    /// @addr{0x800555C0}
+    [[nodiscard]] EGG::Vector3f scale() const {
+        return s;
+    }
 };
 
 /// @brief Represents the CHR0 file format, which pertains to model movement animations.
@@ -168,17 +166,17 @@ public:
     STATIC_ASSERT(sizeof(NodeData) == 0xC);
 
     struct InfoData {
+        u16 numFrame;
+        u16 numNode;
+        AnmPolicy policy;
+        u32 scalingRule;
+
         void read(EGG::Stream &stream) {
             numFrame = stream.read_u16();
             numNode = stream.read_u16();
             policy = static_cast<AnmPolicy>(stream.read_u32());
             scalingRule = stream.read_u32();
         }
-
-        u16 numFrame;
-        u16 numNode;
-        AnmPolicy policy;
-        u32 scalingRule;
     };
     STATIC_ASSERT(sizeof(InfoData) == 0xC);
 
@@ -194,25 +192,19 @@ public:
     };
     STATIC_ASSERT(sizeof(Data) == 0x2C);
 
-    ResAnmChr(const void *data) : m_rawData(reinterpret_cast<const Data *>(data)) {
-        EGG::RamStream stream = EGG::RamStream(data, sizeof(Data));
-        read(stream);
-    }
+    ResAnmChr(const void *data);
+    ~ResAnmChr();
 
-    void read(EGG::Stream &stream) {
-        stream.jump(offsetof(Data, info));
-        m_infoData.read(stream);
-    }
+    void read(EGG::Stream &stream);
 
     [[nodiscard]] ChrAnmResult getAnmResult(f32 frame, size_t idx) const;
 
-    [[nodiscard]] u16 frameCount() const {
-        return m_infoData.numFrame;
-    }
+    /// @beginGetters
 
-    [[nodiscard]] AnmPolicy policy() const {
-        return m_infoData.policy;
-    }
+    [[nodiscard]] u16 frameCount() const;
+    [[nodiscard]] AnmPolicy policy() const;
+
+    /// @endGetters
 
 private:
     typedef void (*GetAnmResultFunc)(f32 frame, ChrAnmResult &result,
@@ -231,9 +223,15 @@ public:
         : FrameCtrl(0.0f, chr.frameCount(), GetAnmPlayPolicy(chr.policy())),
           m_resAnmChr(chr) {}
 
+    ~AnmObjChrRes() = default;
+
+    /// @beginGetters
+
     [[nodiscard]] u16 frameCount() const {
         return m_resAnmChr.frameCount();
     }
+
+    /// @endGetters
 
 private:
     ResAnmChr m_resAnmChr;

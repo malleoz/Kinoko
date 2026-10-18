@@ -1,9 +1,10 @@
 #pragma once
 
-#include "game/field/ObjColMgr.hh"
 #include "game/field/obj/ObjectDrivable.hh"
 
 namespace Kinoko::Field {
+
+class ObjColMgr;
 
 /// @brief %Abstract class that represents a drivable object with KCL collision data
 /// @details Rather than representing an object's collision with @ref ObjectCollisionBase and

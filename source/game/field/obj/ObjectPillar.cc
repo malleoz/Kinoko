@@ -1,6 +1,13 @@
 
 #include "ObjectPillar.hh"
 
+#include "game/field/ObjectCollisionBase.hh"
+
+#include "game/kart/Reaction.hh"
+
+#include "game/system/RaceManager.hh"
+#include "game/system/map/MapdataGeoObj.hh"
+
 namespace Kinoko::Field {
 
 /// @addr{Inlined in 0x807FED80}

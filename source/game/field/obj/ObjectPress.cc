@@ -7,6 +7,11 @@
 
 #include "game/kart/KartObject.hh"
 
+#include "game/render/AnmMgr.hh"
+#include "game/render/DrawMdl.hh"
+
+#include "game/system/map/MapdataGeoObj.hh"
+
 namespace Kinoko::Field {
 
 /// @addr{0x80777564}

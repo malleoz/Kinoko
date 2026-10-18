@@ -9,6 +9,8 @@
 
 #include "game/system/RaceConfig.hh"
 
+#include <egg/math/Matrix.hh>
+
 namespace Kinoko::Field {
 
 /// @addr{0x8081E0CC}

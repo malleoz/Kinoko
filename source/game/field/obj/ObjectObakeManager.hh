@@ -1,11 +1,14 @@
 #pragma once
 
-#include "game/field/ObjectCollisionBox.hh"
-#include "game/field/ObjectCollisionSphere.hh"
+#include <Types.hh>
+
 #include "game/field/obj/ObjectDrivable.hh"
-#include "game/field/obj/ObjectObakeBlock.hh"
 
 namespace Kinoko::Field {
+
+class ObjectObakeBlock;
+class ObjectCollisionBox;
+class ObjectCollisionSphere;
 
 /// @brief The manager class for SNES Ghost Valley 2 blocks
 /// @details Blocks are constructed via this manager. When blocks are added, they're placed in a

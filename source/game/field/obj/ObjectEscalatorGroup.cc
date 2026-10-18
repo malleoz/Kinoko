@@ -1,5 +1,9 @@
 #include "ObjectEscalatorGroup.hh"
 
+#include "game/field/obj/ObjectEscalator.hh"
+
+#include <egg/core/Heap.hh>
+
 namespace Kinoko::Field {
 
 /// @addr{0x8080178C}

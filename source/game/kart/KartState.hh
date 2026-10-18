@@ -10,30 +10,10 @@ namespace Kinoko::Kart {
 /// managing calculations of the start boost duration.
 class KartState : private KartObjectProxy {
 public:
-    /// @addr{0x805943B4}
-    /// @brief Constructor that initializes all @ref m_status bits to 0, except for @ref
-    /// eStatus::AutoDrift which is set if the kart is using automatic transmission. Initializes
-    /// @ref m_airtime, @ref m_cannonPointIdx, and @ref m_startBoostIdx to zero.
-    KartState() {
-        m_status.makeAllZero();
-        m_status.changeBit(inputs()->driftIsAuto(), eStatus::AutoDrift);
+    KartState();
+    ~KartState() override;
 
-        m_airtime = 0;
-        m_cannonPointId = 0;
-        m_startBoostIdx = 0;
-    }
-
-    /// @addr{0x80595CC4}
-    /// @brief Default virtual destructor
-    ~KartState() override = default;
-
-    /// @addr{0x8059455C}
-    /// @brief Initializes the kart
-    /// @details Simply calls @ref reset().
-    void init() {
-        reset();
-    }
-
+    void init();
     void reset();
     void calcInput();
     void calc();
@@ -42,136 +22,34 @@ public:
     void calcStartBoost();
     void calcHandleStartBoost();
     void handleStartBoost(size_t idx);
-
-    /// @addr{0x805958F0}
-    /// @brief Resets bitfields pertaining to ejections (reject road, half pipe zippers, etc.)
-    /// @details Resets the @ref eStatus::HalfPipeRamp and @ref eStatus::RejectRoad flags in the
-    /// kart's @ref Status.
-    void resetEjection() {
-        m_status.resetBit(eStatus::HalfPipeRamp, eStatus::RejectRoad);
-    }
+    void resetEjection();
 
     /// @beginSetters
 
-    /// @brief Sets the ID of the cannon the kart is currently in
-    /// @param val The ID of the cannon point to set
-    void setCannonPointId(u16 val) {
-        m_cannonPointId = val;
-    }
-
-    /// @brief Sets the type of boost ramp the kart is currently on
-    /// @param val The boost ramp type to set
-    void setBoostRampType(s32 val) {
-        m_boostRampType = val;
-    }
-
-    /// @brief Sets the variant of the jump pad the kart is currently on
-    /// @param val The jump pad variant to set
-    void setJumpPadVariant(s32 val) {
-        m_jumpPadVariant = val;
-    }
-
-    /// @brief Sets the half pipe invisibility timer
-    /// @param val The value to set the timer to
-    void setHalfPipeInvisibilityTimer(s16 val) {
-        m_halfPipeInvisibilityTimer = val;
-    }
-
-    /// @brief Sets the trickable grace period timer
-    /// @param val The value to set the trickable grace period timer to
-    void setTrickableTimer(s16 val) {
-        m_trickableTimer = val;
-    }
+    void setCannonPointId(u16 val);
+    void setBoostRampType(s32 val);
+    void setJumpPadVariant(s32 val);
+    void setHalfPipeInvisibilityTimer(s16 val);
+    void setTrickableTimer(s16 val);
 
     /// @endSetters
 
     /// @beginGetters
 
-    /// @brief Checks if the kart is currently drifting
-    /// @return `true` if the kart is drifting, `false` otherwise
-    /// @details The kart is drifting if either @ref eStatus::DriftManual or @ref eStatus::DriftAuto
-    /// is set in the kart's @ref Status.
-    [[nodiscard]] bool isDrifting() const {
-        return m_status.onBit(eStatus::DriftManual, eStatus::DriftAuto);
-    }
-
-    /// @brief Retrieves the ID of the cannon the kart is currently in
-    /// @return The ID of the cannon point, @ref m_cannonPointId
-    [[nodiscard]] u16 cannonPointId() const {
-        return m_cannonPointId;
-    }
-
-    /// @brief Gets the type of boost ramp the kart is currently on
-    /// @return The boost ramp type, @ref m_boostRampType
-    [[nodiscard]] s32 boostRampType() const {
-        return m_boostRampType;
-    }
-
-    /// @brief Gets the variant of the jump pad the kart is currently on
-    /// @return The jump pad variant, @ref m_jumpPadVariant
-    [[nodiscard]] s32 jumpPadVariant() const {
-        return m_jumpPadVariant;
-    }
-
-    /// @brief Gets the X-axis stick input the player is inputting
-    /// @return The X-axis stick input, @ref m_stickX
-    [[nodiscard]] f32 stickX() const {
-        return m_stickX;
-    }
-
-    /// @brief Gets the Y-axis stick input the player is inputting
-    /// @return The Y-axis stick input, @ref m_stickY
-    [[nodiscard]] f32 stickY() const {
-        return m_stickY;
-    }
-
-    /// @brief Gets the number of frames the kart has been airborne
-    /// @return The number of frames the kart has been airborne, @ref m_airtime
-    [[nodiscard]] u32 airtime() const {
-        return m_airtime;
-    }
-
-    /// @brief Gets the up direction vector of the kart based on collision normals
-    /// @return The up direction vector, @ref m_up
-    [[nodiscard]] const EGG::Vector3f &up() const {
-        return m_up;
-    }
-
-    /// @brief Gets the direction of the soft wall collision
-    /// @return The soft wall normal vector, @ref m_softWallNrm
-    [[nodiscard]] const EGG::Vector3f &softWallNrm() const {
-        return m_softWallNrm;
-    }
-
-    /// @brief Gets the current start boost charge
-    /// @return The start boost charge, @ref m_startBoostCharge
-    [[nodiscard]] f32 startBoostCharge() const {
-        return m_startBoostCharge;
-    }
-
-    /// @brief Gets the wall bonk timer
-    /// @return The wall bonk timer, @ref m_wallBonkTimer
-    [[nodiscard]] s16 wallBonkTimer() const {
-        return m_wallBonkTimer;
-    }
-
-    /// @brief Gets the trickable grace period timer
-    /// @return The trickable grace period timer, @ref m_trickableTimer
-    [[nodiscard]] s16 trickableTimer() const {
-        return m_trickableTimer;
-    }
-
-    /// @brief Gets the current status flags of the kart
-    /// @return Ref to the current status, @ref m_status
-    [[nodiscard]] Status &status() {
-        return m_status;
-    }
-
-    /// @brief Gets the current status flags of the kart
-    /// @return Const ref to the current status, @ref m_status
-    [[nodiscard]] const Status &status() const {
-        return m_status;
-    }
+    [[nodiscard]] bool isDrifting() const;
+    [[nodiscard]] u16 cannonPointId() const;
+    [[nodiscard]] s32 boostRampType() const;
+    [[nodiscard]] s32 jumpPadVariant() const;
+    [[nodiscard]] f32 stickX() const;
+    [[nodiscard]] f32 stickY() const;
+    [[nodiscard]] u32 airtime() const;
+    [[nodiscard]] const EGG::Vector3f &up() const;
+    [[nodiscard]] const EGG::Vector3f &softWallNrm() const;
+    [[nodiscard]] f32 startBoostCharge() const;
+    [[nodiscard]] s16 wallBonkTimer() const;
+    [[nodiscard]] s16 trickableTimer() const;
+    [[nodiscard]] Status &status();
+    [[nodiscard]] const Status &status() const;
 
     /// @endGetters
 

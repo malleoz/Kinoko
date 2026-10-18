@@ -2,7 +2,17 @@
 
 #include "game/kart/KartObjectProxy.hh"
 
-namespace Kinoko::Kart {
+#include <egg/math/Quat.hh>
+
+namespace Kinoko {
+
+namespace System {
+
+enum class Trick;
+
+} // namespace System
+
+namespace Kart {
 
 /// @brief Handles the physics and boosts associated with zippers.
 /// @details Responsible for managing collision checks against half-pipe zippers, deriving the
@@ -10,25 +20,10 @@ namespace Kinoko::Kart {
 /// while performing a trick, and applying variable length boosts after landing from the zipper.
 class KartHalfPipe : private KartObjectProxy {
 public:
-    /// @addr{0x80574114}
-    /// @brief Constructor
-    /// @details Initializes @ref m_prevPos to zero.
-    KartHalfPipe() : m_prevPos(EGG::Vector3f::zero) {}
+    KartHalfPipe();
+    ~KartHalfPipe() override;
 
-    /// @addr{0x80574170}
-    /// @brief Default virtual destructor
-    ~KartHalfPipe() override = default;
-
-    /// @addr{0x805741B0}
-    /// @brief Resets the half-pipe state to its default values
-    /// @details Sets @ref m_stunt to `StuntType::None`, @ref m_touchingZipper to `false`, and
-    /// @ref m_landingBoostDelayTimer to `0`.
-    void reset() {
-        m_stunt = StuntType::None;
-        m_touchingZipper = false;
-        m_landingBoostDelayTimer = 0;
-    }
-
+    void reset();
     void calc();
     void end(bool boost);
 
@@ -66,13 +61,13 @@ private:
     /// rotation angle based on the properties. Once the angle decay threshold has been reached,
     /// begins decaying rotation towards the target rotation angle.
     struct StuntManager {
-        void calcAngle();
-        void setProperties(size_t idx);
-
         f32 angle;                  ///< Accumulated rotation angle from the current trick
         f32 rotSpeed;               ///< Current change in angle per frame
         f32 decayRate;              ///< Current rate at which the rotational speed decays per frame
         StuntProperties properties; ///< Properties of the current trick's rotation
+
+        void calcAngle();
+        void setProperties(size_t idx);
     };
 
     void calcTrick();
@@ -94,4 +89,6 @@ private:
     StuntManager m_stuntManager; ///< Manages the current state of a trick's rotation
 };
 
-} // namespace Kinoko::Kart
+} // namespace Kart
+
+} // namespace Kinoko

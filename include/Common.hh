@@ -3,16 +3,26 @@
 
 #pragma once
 
-#include <Types.hh>
+#include <Logger.hh>
 
-#include <egg/core/Heap.hh>
-
-#include <array>
 #include <bit>
+#include <cstdint>
 #include <limits>
-#include <utility>
 
 namespace Kinoko {
+
+typedef int8_t s8;
+typedef int16_t s16;
+typedef int32_t s32;
+typedef int64_t s64;
+
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+
+typedef float f32;
+typedef double f64;
 
 /// @brief Maps between a course and its internal ID
 enum class Course {
@@ -436,16 +446,5 @@ static inline constexpr u32 f2u(f32 val) {
 
 /// @brief The maximum number of players in a race
 static constexpr size_t MAX_PLAYERS = 12;
-
-/// @brief The size of memory blocks that are allocated for game heap space.
-static constexpr size_t MEMORY_SPACE_SIZE = 0x1000000;
-
-#ifdef BUILD_DEBUG
-static constexpr auto DEFAULT_OPT = Abstract::Memory::MEMiHeapHead::OptFlag().setBit(
-        Abstract::Memory::MEMiHeapHead::eOptFlag::DebugFillAlloc);
-#else
-static constexpr auto DEFAULT_OPT = Abstract::Memory::MEMiHeapHead::OptFlag().setBit(
-        Abstract::Memory::MEMiHeapHead::eOptFlag::ZeroFillAlloc);
-#endif
 
 } // namespace Kinoko

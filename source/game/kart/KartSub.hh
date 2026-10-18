@@ -10,26 +10,11 @@ class KartObject;
 /// two-pass physics calculations.
 class KartSub : private KartObjectProxy {
 public:
-    /// @brief Default constructor
-    KartSub() = default;
-
+    KartSub();
     ~KartSub() override;
 
     void createSubsystems(bool isBike, const KartParam::Stats &stats);
-
-    /// @addr{0x80596454}
-    /// @brief Called during static construction of KartObject to synchronize the pointers
-    /// @param pointers The KartAccessor to synchronize the kart's subsystem pointers with
-    /// @details Copies the internal subsystem pointers from this @ref KartSub instance to the
-    /// provided @ref KartAccessor, ensuring that the accessor has up-to-date references to the
-    /// kart's subsystems.
-    void copyPointers(KartAccessor &pointers) {
-        pointers.collide = m_collide;
-        pointers.state = m_state;
-        pointers.move = m_move;
-        pointers.action = m_action;
-    }
-
+    void copyPointers(KartAccessor &pointers);
     void init();
     void initAABB(KartAccessor &accessor, KartObject *object);
     void initPhysicsValues();
@@ -39,27 +24,14 @@ public:
     void calcPass1();
     void resizeAABB(f32 radiusScale);
     void addFloor(const CollisionData &, bool);
-
-    /// @addr{0x805979EC}
-    /// @brief Updates the maximum and minimum suspension overtravel values based on the provided
-    /// suepension overtravel
-    /// @param suspOvertravel The suspension overtravel vector to update the max and min values with
-    void updateSuspOvertravel(const EGG::Vector3f &suspOvertravel) {
-        m_maxSuspOvertravel = m_maxSuspOvertravel.minimize(suspOvertravel);
-        m_minSuspOvertravel = m_minSuspOvertravel.maximize(suspOvertravel);
-    }
-
+    void updateSuspOvertravel(const EGG::Vector3f &suspOvertravel);
     void calcSoftWall();
     void calcMovingObj();
     void calcMovingWater();
 
     /// @beginGetters
 
-    /// @brief Gets the suspension scale for the kart
-    /// @return The current suspension scale value, @ref m_suspScale
-    [[nodiscard]] f32 suspScale() {
-        return m_suspScale;
-    }
+    [[nodiscard]] f32 suspScale();
 
     /// @endGetters
 

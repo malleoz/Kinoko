@@ -1,5 +1,6 @@
 #include "RailInterpolator.hh"
 
+#include "game/field/Rail.hh"
 #include "game/field/RailManager.hh"
 
 namespace Kinoko::Field {

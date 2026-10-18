@@ -1,12 +1,53 @@
 #include "KartObjectProxy.hh"
 
+#include "game/kart/CollisionGroup.hh"
+#include "game/kart/KartBody.hh"
+#include "game/kart/KartDynamics.hh"
+#include "game/kart/KartMove.hh"
+#include "game/kart/KartObject.hh"
+#include "game/kart/KartObjectManager.hh"
+#include "game/kart/KartPhysics.hh"
+#include "game/kart/KartState.hh"
 #include "game/kart/KartSuspension.hh"
 #include "game/kart/KartTire.hh"
 
 #include "game/system/CourseMap.hh"
+#include "game/system/KPadController.hh"
 #include "game/system/RaceManager.hh"
+#include "game/system/map/MapdataCannonPoint.hh"
 
 namespace Kinoko::Kart {
+
+/// @addr{0x8059018C}
+/// @brief Constructor which adds `this` to the static proxy list so it can be shared later
+KartObjectProxy::KartObjectProxy() : m_accessor(nullptr) {
+    s_proxyList.push_back(this);
+}
+
+/// @brief Default virtual destructor
+KartObjectProxy::~KartObjectProxy() = default;
+
+/// @beginSetters
+
+/// @addr{0x80590238}
+/// @brief Sets the kart's position in the kart's @ref KartDynamics subsystem
+void KartObjectProxy::setPos(const EGG::Vector3f &pos) {
+    dynamics()->setPos(pos);
+}
+
+/// @addr{0x80590288}
+/// @brief Sets the kart's rotation in the kart's @ref KartDynamics subsystem
+void KartObjectProxy::setRot(const EGG::Quatf &q) {
+    dynamics()->setFullRot(q);
+    dynamics()->setMainRot(q);
+}
+
+/// @addr{0x80591664}
+/// @brief Sets the kart's inertia scale in the kart's @ref KartDynamics subsystem
+void KartObjectProxy::setInertiaScale(const EGG::Vector3f &scale) {
+    const EGG::Vector3f *cuboids = bsp().cuboids;
+    dynamics()->setInertia(cuboids[0] * scale, cuboids[1] * scale);
+}
 
 /// @addr{0x80590D20}
 /// @brief Gets a pointer to the kart's @ref KartAction subsystem
@@ -485,11 +526,137 @@ s32 KartObjectProxy::hopStickX() const {
     return move()->hopStickX();
 }
 
+/// @addr{0x80590C44}
+/// @brief Computes the right direction vector of the kart's body from the kart's pose matrix
+/// @return The right direction vector of the kart's body
+EGG::Vector3f KartObjectProxy::bodyRight() const {
+    const EGG::Matrix34f &mtx = pose();
+    return EGG::Vector3f(mtx[0, 0], mtx[1, 0], mtx[2, 0]);
+}
+
+/// @addr{0x80590C6C}
+/// @brief Computes the up direction vector of the kart's body from the kart's pose matrix
+/// @return The up direction vector of the kart's body
+EGG::Vector3f KartObjectProxy::bodyUp() const {
+    const EGG::Matrix34f &mtx = pose();
+    return EGG::Vector3f(mtx[0, 1], mtx[1, 1], mtx[2, 1]);
+}
+
+/// @addr{0x80590C94}
+/// @brief Computes the forward direction vector of the kart's body from the kart's pose matrix
+/// @return The forward direction vector of the kart's body
+EGG::Vector3f KartObjectProxy::bodyForward() const {
+    const EGG::Matrix34f &mtx = pose();
+    return EGG::Vector3f(mtx[0, 2], mtx[1, 2], mtx[2, 2]);
+}
+
+/// @addr{0x8059020C}
+/// @brief Gets the kart's position from the @ref KartDynamics subsystem
+/// @return Const ref to the kart's position vector, @ref KartDynamics::m_pos
+const EGG::Vector3f &KartObjectProxy::pos() const {
+    return dynamics()->pos();
+}
+
+/// @brief Gets the kart's main rotation quaternion from the kart's @ref KartDynamics subsystem
+/// @return Const ref to the kart's main rotation quaternion, @ref KartDynamics::m_mainRot
+const EGG::Quatf &KartObjectProxy::mainRot() const {
+    return dynamics()->mainRot();
+}
+
+/// @brief Gets the kart's full rotation quaternion from the kart's @ref KartDynamics subsystem
+/// @return Const ref to the kart's full rotation quaternion, @ref KartDynamics::m_fullRot
+const EGG::Quatf &KartObjectProxy::fullRot() const {
+    return dynamics()->fullRot();
+}
+
+/// @brief Gets the kart's main rotation quaternion from the kart's @ref KartDynamics subsystem
+/// @return Const ref to the kart's main rotation quaternion, @ref KartDynamics::m_extVel
+const EGG::Vector3f &KartObjectProxy::extVel() const {
+    return dynamics()->extVel();
+}
+
+/// @brief Gets the kart's internal velocity vector from the kart's @ref KartDynamics subsystem
+/// @return Const ref to the kart's internal velocity vector, @ref KartDynamics::m_intVel
+const EGG::Vector3f &KartObjectProxy::intVel() const {
+    return dynamics()->intVel();
+}
+
+/// @brief Gets the kart's overall velocity vector from the kart's @ref KartDynamics subsystem
+/// @return Const ref to the kart's overall velocity vector, @ref KartDynamics::m_velocity
+const EGG::Vector3f &KartObjectProxy::velocity() const {
+    return dynamics()->velocity();
+}
+
+/// @brief Gets the main component of the kart's angular velocity from the @ref KartDynamics
+/// subsystem
+/// @return Const ref to the kart's angVel2 vector, @ref KartDynamics::m_angVel2
+/// @rename
+const EGG::Vector3f &KartObjectProxy::angVel2() const {
+    return dynamics()->angVel2();
+}
+
+/// @addr{0x80590A6C}
+/// @brief Checks if the vehicle is a bike
+/// @return `true` if the vehicle is a bike, `false` if it's a kart
+bool KartObjectProxy::isBike() const {
+    return param()->isBike();
+}
+
+/// @addr{0x805902DC}
+/// @brief Gets the number of suspensions in the kart from the kart's @ref KartParam subsystem
+/// @return The number of suspensions in the kart, @ref KartParam::m_suspCount
+u16 KartObjectProxy::suspCount() const {
+    return param()->suspCount();
+}
+
+/// @addr{0x805902EC}
+/// @brief Gets the number of tires in the kart from the kart's @ref KartParam subsystem
+/// @return The number of tires in the kart, @ref KartParam::m_tireCount
+u16 KartObjectProxy::tireCount() const {
+    return param()->tireCount();
+}
+
+/// @addr{0x805909C8}
+/// @brief Gets the camera Y-axis distance for the kart based on its parameters
+/// @return The camera Y-axis distance for the kart
+f32 KartObjectProxy::cameraDistY() const {
+    if (isBike()) {
+        return param()->bikeDisp().m_cameraDistY;
+    } else {
+        return param()->kartDisp().m_cameraDistY;
+    }
+}
+
+/// @addr{0x80590A10}
+/// @brief Gets the @ref KartParam::Stats::DriftType of the kart from its parameters
+/// @return The drift type of the kart, @ref KartParam::Stats::driftType
+KartParam::Stats::DriftType KartObjectProxy::vehicleType() const {
+    return param()->stats().driftType;
+}
+
+/// @brief Gets a reference to the static list of all KartObjectProxy children
+/// @return A reference to the static list of all KartObjectProxy children
+alloc_list<KartObjectProxy *> &KartObjectProxy::ProxyList() {
+    return s_proxyList;
+}
+
 /// @addr{0x805901D0}
 /// @brief Copies over the @ref KartAccessor pointers from the kart object at the given index
 /// @param idx The index of the kart object to copy the @ref KartAccessor pointers from
 void KartObjectProxy::apply(size_t idx) {
     m_accessor = KartObjectManager::Instance()->object(idx)->accessor();
+}
+
+/// @addr{0x80590138}
+/// @brief For all proxies in the static list, synchronizes all pointers to the KartAccessor.
+/// @param pointers The pointer to synchronize all other proxies to.
+/// @details Iterates the @ref s_proxyList and sets each proxy's @ref m_accessor to the provided
+/// `pointers`. This effectively allows all proxies to share the same pointers to the other
+/// subsystems.
+void KartObjectProxy::ApplyAll(const KartAccessor *pointers) {
+    for (auto iter = s_proxyList.begin(); iter != s_proxyList.end(); ++iter) {
+        (*iter)->m_accessor = pointers;
+    }
 }
 
 alloc_list<KartObjectProxy *> KartObjectProxy::s_proxyList; ///< @addr{0x809C1900}

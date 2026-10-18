@@ -20,78 +20,20 @@ public:
         u16 presenceFlag; ///< Controls whether the object is loaded depending on number of players
     };
 
-    /// @brief Constructor
-    /// @param data Pointer to the raw KMP object data
-    /// @details Creates a @ref EGG::RamStream from the raw object data and reads the data into the
-    /// member variables.
-    MapdataGeoObj(const SData *data) : m_rawData(data) {
-        EGG::RamStream stream = EGG::RamStream(data, sizeof(SData));
-        read(stream);
-    }
+    MapdataGeoObj(const SData *data);
+    ~MapdataGeoObj();
 
-    /// @brief Reads the object data from the given stream
-    /// @param stream The stream to read from
-    void read(EGG::Stream &stream) {
-        m_id = stream.read_u16();
-        stream.skip(2);
-        m_pos.read(stream);
-        m_rot.read(stream);
-        m_scale.read(stream);
-        m_pathId = stream.read_s16();
-
-        for (auto &setting : m_settings) {
-            setting = stream.read_u16();
-        }
-
-        m_presenceFlag = stream.read_u16();
-    }
+    void read(EGG::RamStream &stream);
 
     /// @beginGetters
 
-    /// @brief Gets the ID of the object
-    /// @return The ID of the object
-    [[nodiscard]] u16 id() const {
-        return m_id;
-    }
-
-    /// @brief Gets the position of the object
-    /// @return The position of the object
-    [[nodiscard]] const EGG::Vector3f &pos() const {
-        return m_pos;
-    }
-
-    /// @brief Gets the rotation of the object
-    /// @return The rotation of the object
-    [[nodiscard]] const EGG::Vector3f &rot() const {
-        return m_rot;
-    }
-
-    /// @brief Gets the scale of the object
-    /// @return The scale of the object
-    [[nodiscard]] const EGG::Vector3f &scale() const {
-        return m_scale;
-    }
-
-    /// @brief Gets the path ID of the object
-    /// @return The path ID of the object
-    [[nodiscard]] s16 pathId() const {
-        return m_pathId;
-    }
-
-    /// @brief Gets the setting of the object at the specified index
-    /// @param idx The index of the setting to retrieve
-    /// @return The setting of the object at the specified index
-    /// @pre `idx` must be less than the number of settings (8).
-    [[nodiscard]] u16 setting(size_t idx) const {
-        ASSERT(idx < m_settings.size());
-        return m_settings[idx];
-    }
-
-    /// @brief Gets the presence flag of the object
-    /// @return The presence flag of the object
-    [[nodiscard]] u16 presenceFlag() const {
-        return m_presenceFlag;
-    }
+    [[nodiscard]] u16 id() const;
+    [[nodiscard]] const EGG::Vector3f &pos() const;
+    [[nodiscard]] const EGG::Vector3f &rot() const;
+    [[nodiscard]] const EGG::Vector3f &scale() const;
+    [[nodiscard]] s16 pathId() const;
+    [[nodiscard]] u16 setting(size_t idx) const;
+    [[nodiscard]] u16 presenceFlag() const;
 
     /// @endGetters
 
@@ -109,16 +51,8 @@ private:
 /// @brief Provides access to entries in the `GOBJ` section of the course KMP
 class MapdataGeoObjAccessor : public MapdataAccessorBase<MapdataGeoObj, MapdataGeoObj::SData> {
 public:
-    /// @brief Constructor
-    /// @param header Pointer to the section header of the GOBJ section
-    MapdataGeoObjAccessor(const MapSectionHeader *header)
-        : MapdataAccessorBase<MapdataGeoObj, MapdataGeoObj::SData>(header) {
-        init(reinterpret_cast<const MapdataGeoObj::SData *>(m_sectionHeader + 1),
-                parse<u16>(m_sectionHeader->count));
-    }
-
-    /// @brief Default virtual destructor
-    ~MapdataGeoObjAccessor() override = default;
+    MapdataGeoObjAccessor(const MapSectionHeader *header);
+    ~MapdataGeoObjAccessor() override;
 };
 
 } // namespace Kinoko::System

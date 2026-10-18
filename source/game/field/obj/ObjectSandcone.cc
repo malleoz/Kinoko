@@ -1,5 +1,10 @@
 #include "ObjectSandcone.hh"
 
+#include "game/field/ObjColMgr.hh"
+
+#include "game/system/RaceManager.hh"
+#include "game/system/map/MapdataGeoObj.hh"
+
 namespace Kinoko::Field {
 
 /// @addr{0x80686F84}

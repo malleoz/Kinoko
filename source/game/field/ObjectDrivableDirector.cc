@@ -1,5 +1,6 @@
 #include "ObjectDrivableDirector.hh"
 
+#include "game/field/BoxColManager.hh"
 #include "game/field/obj/ObjectObakeManager.hh"
 
 namespace Kinoko::Field {

@@ -1,6 +1,6 @@
 #include "ExpHeap.hh"
 
-#include <limits>
+#include <abstract/memory/ExpHeap.hh>
 
 namespace Kinoko::EGG {
 
@@ -136,13 +136,17 @@ void ExpHeap::GroupSizeRecord::reset() {
     }
 }
 
-size_t ExpHeap::GroupSizeRecord::getGroupSize(u16 groupID) const {
-    return m_entries[groupID];
-}
-
 /// @addr{0x80226E98}
 void ExpHeap::GroupSizeRecord::addSize(u16 groupID, size_t size) {
     m_entries[groupID] += size;
+}
+
+size_t ExpHeap::GroupSizeRecord::size() const {
+    return m_entries.size();
+}
+
+size_t ExpHeap::GroupSizeRecord::getGroupSize(u16 groupID) const {
+    return m_entries[groupID];
 }
 
 } // namespace Kinoko::EGG

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Types.hh>
+
 #include "game/field/obj/ObjectFireball.hh"
 
 namespace Kinoko::Field {

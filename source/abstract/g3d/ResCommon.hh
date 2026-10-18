@@ -4,6 +4,9 @@
 
 namespace Kinoko::Abstract::g3d {
 
+typedef uint16_t u16;
+typedef uint32_t u32;
+
 struct ResBlockHeaderData {
     u32 signature;
     u32 size;

@@ -2,6 +2,8 @@
 
 #include "game/system/CourseMap.hh"
 
+#include <egg/math/Quat.hh>
+
 namespace Kinoko::System {
 
 /// @addr{0x80516050}
@@ -26,11 +28,14 @@ MapdataAreaBase::MapdataAreaBase(const SData *data, s16 index) : m_rawData(data)
     m_forward = EGG::Vector3f::zero;
 }
 
+/// @brief Default destructor
+MapdataAreaBase::~MapdataAreaBase() = default;
+
 /// @brief Parses the raw area data from the provided stream
 /// @param stream The stream from which to read the raw area data
 /// @note Earlier revisions of the KMP file format do not include the rail ID field. Even though all
 /// vanilla course KMP files have revision 2520, we add this check for posterity's sake.
-void MapdataAreaBase::read(EGG::Stream &stream) {
+void MapdataAreaBase::read(EGG::RamStream &stream) {
     stream.skip(1);
     m_type = static_cast<Type>(stream.read_s8());
     stream.skip(1);
@@ -63,6 +68,32 @@ const MapdataPointInfo *MapdataAreaBase::getPointInfo() const {
     return courseMap->getPointInfo(m_railId);
 }
 
+/// @brief Gets the type of area (e.g. @ref Type::MovingRoad)
+/// @return The type of the area
+MapdataAreaBase::Type MapdataAreaBase::type() const {
+    return m_type;
+}
+
+/// @brief Gets the priority of the area
+/// @return The priority of the area
+u8 MapdataAreaBase::priority() const {
+    return m_priority;
+}
+
+/// @brief Fetches the area setting at the specified index
+/// @param i The index of the setting to fetch
+/// @return The value of the specified setting
+s16 MapdataAreaBase::param(size_t i) const {
+    ASSERT(i < m_params.size());
+    return m_params[i];
+}
+
+/// @brief Gets the index of the entry in the AREA section of the KMP
+/// @return The index of the entry in the AREA section of the KMP
+s16 MapdataAreaBase::index() const {
+    return m_index;
+}
+
 /// @addr{0x80516220}
 /// @brief Constructor
 /// @param data Pointer to the raw area data
@@ -88,6 +119,9 @@ MapdataAreaBox::MapdataAreaBox(const SData *data, s16 index) : MapdataAreaBase(d
     m_up = rotation.rotateVector(EGG::Vector3f::ey);
     m_forward = rotation.rotateVector(EGG::Vector3f::ez);
 }
+
+/// @brief Default virtual destructor
+MapdataAreaBox::~MapdataAreaBox() = default;
 
 /// @addr{0x805163F4}
 /// @copydoc MapdataAreaBase::testImpl()
@@ -138,6 +172,9 @@ MapdataAreaCylinder::MapdataAreaCylinder(const SData *data, s16 index)
     m_forward = rotation.rotateVector(EGG::Vector3f::ez);
 }
 
+/// @brief Default virtual destructor
+MapdataAreaCylinder::~MapdataAreaCylinder() = default;
+
 /// @addr{0x80516688}
 /// @copydoc MapdataAreaBase::testImpl()
 /// @details Computes the relative position of @ref pos with respect to @ref m_position. If the
@@ -158,6 +195,22 @@ bool MapdataAreaCylinder::testImpl(const EGG::Vector3f &pos) const {
 
     return true;
 }
+
+/// @addr{0x80515E50}
+/// @brief Constructor
+/// @param header Pointer to the header of the AREA section
+/// @details Constructs all entries and sorts them by priority to @ref m_sortedEntries
+MapdataAreaAccessor::MapdataAreaAccessor(const MapSectionHeader *header)
+    : MapdataAccessorBase<MapdataAreaBase, MapdataAreaBase::SData>(header) {
+    init(reinterpret_cast<const MapdataAreaBase::SData *>(m_sectionHeader + 1),
+            parse<u16>(m_sectionHeader->count));
+
+    m_sortedEntries = owning_span<MapdataAreaBase *>(size());
+}
+
+/// @addr{0x80518BDC}
+/// @brief Default virtual destructor
+MapdataAreaAccessor::~MapdataAreaAccessor() = default;
 
 /// @brief Constructs all AREA entries based off the raw AREA section data
 /// @param start Pointer to the start of the raw data
@@ -210,6 +263,16 @@ void MapdataAreaAccessor::sort() {
             m_sortedEntries[j] = m_sortedEntries[j - 1];
         }
     }
+}
+
+/// @brief Gets the sorted entry at the specified index
+/// @param i The index of the sorted entry to retrieve
+/// @return A pointer to the sorted entry at the specified index, or `nullptr` if the
+/// index is out of bounds
+/// @pre Requires that @ref m_sortedEntries has already been initialized.
+MapdataAreaBase *MapdataAreaAccessor::getSorted(u16 i) const {
+    ASSERT(!m_sortedEntries.empty());
+    return i < m_sortedEntries.size() ? m_sortedEntries[i] : nullptr;
 }
 
 } // namespace Kinoko::System

@@ -1,12 +1,43 @@
 #include "KartAction.hh"
 
+#include "game/kart/KartDynamics.hh"
 #include "game/kart/KartMove.hh"
 #include "game/kart/KartPhysics.hh"
+#include "game/kart/KartState.hh"
 
 #include "game/item/ItemDirector.hh"
 #include "game/item/KartItem.hh"
 
 namespace Kinoko::Kart {
+
+/// @addr{0x805672CC}
+/// @brief Constructor
+/// @details Initializes @ref m_currentAction to @ref Action::None, @ref m_hitDepth to zero, and
+/// @ref m_velocity to the forward vector. Sets @ref m_onStart, @ref m_onCalc, @ref m_onEnd,
+/// @ref m_actionParams, and @ref m_rotationParams all to `nullptr`. Finally, initializes @ref
+/// m_priority to zero.
+KartAction::KartAction()
+    : m_currentAction(Action::None),
+      m_hitDepth(EGG::Vector3f::zero),
+      m_velocity(EGG::Vector3f::ez),
+      m_onStart(nullptr),
+      m_onCalc(nullptr),
+      m_onEnd(nullptr),
+      m_actionParams(nullptr),
+      m_rotationParams(nullptr),
+      m_priority(0) {}
+
+/// @addr{0x8056A1A8}
+/// @brief Default virtual destructor
+KartAction::~KartAction() = default;
+
+/// @addr{0x8056739C}
+/// @brief Resets the current action and clears all flags
+/// @details Sets @ref m_currentAction to @ref Action::None and clears all bits in @ref m_flags.
+void KartAction::init() {
+    m_currentAction = Action::None;
+    m_flags.makeAllZero();
+}
 
 /// @addr{0x805673B0}
 /// @brief Every frame, evaluates the current action (if any) and checks if it has ended
@@ -89,6 +120,24 @@ bool KartAction::start(Action action) {
     return true;
 }
 
+/// @brief Sets the hit depth for the current action
+/// @param hitDepth The new hit depth vector
+void KartAction::setHitDepth(const EGG::Vector3f &hitDepth) {
+    m_hitDepth = hitDepth;
+}
+
+/// @brief Sets the velocity for the current action
+/// @param v The new velocity vector
+void KartAction::setVelocity(const EGG::Vector3f &v) {
+    m_velocity = v;
+}
+
+/// @brief Gets the flags for the current state of the active action
+/// @return The current flags for the active action
+const KartAction::Flags &KartAction::flags() const {
+    return m_flags;
+}
+
 /// @addr{0x80567D3C}
 /// @brief Initializes rotation parameters when a spinout action begins
 /// @param idx The index for the rotation parameters.
@@ -163,23 +212,30 @@ void KartAction::startLaunch(f32 extVelScalar, f32 extVelKart, f32 extVelBike, f
     dynamics()->setExtVel(extVel() + newExtVel);
 }
 
-/// @addr{0x805696CC}
-/// @brief Activates the kart's crush state for a given duration and clears the player's items
-/// @param timer How long the kart remains crushed after the action ends
-void KartAction::activateCrush(u16 timer) {
-    move()->activateCrush(m_crushActionDuration + timer);
-    Item::ItemDirector::Instance()->kartItem(0).clear();
+/// @addr{0x80567A54}
+/// @brief Executes a frame of the current action.
+/// @return Whether or not the action should end.
+/// @details Increments @ref m_frame and calls @ref m_onCalc.
+bool KartAction::calcCurrentAction() {
+    ++m_frame;
+    return (this->*m_onCalc)();
 }
 
-/// @addr{0x80567C68}
-/// @brief Applies the initial start speed multiplier to the kart for the action that just started
-/// @details Applies the initial start speed multiplier (@ref ActionParams::startSpeedMult) to the
-/// kart's speed. If the multiplier is zero, the kart's drift is cleared via @ref
-/// KartMove::clearDrift().
-void KartAction::applyStartSpeed() {
-    move()->setSpeed(m_actionParams->startSpeedMult * speed());
-    if (m_actionParams->startSpeedMult == 0.0f) {
-        move()->clearDrift();
+/// @addr{0x80567A88}
+/// @brief Runs the end function for the current action, if any, and resets the current action
+/// @param newActionStarting `true` if this action ended because a higher priority action is
+/// starting
+/// @details Does nothing if @ref m_currentAction is @ref Action::None. If an end function is set
+/// for the current action, it is called with `newActionStarting` as the argument, and then @ref
+/// end() is called to reset the action.
+void KartAction::calcEndAction(bool newActionStarting) {
+    if (m_currentAction == Action::None) {
+        return;
+    }
+
+    if (m_onEnd) {
+        (this->*m_onEnd)(newActionStarting);
+        end();
     }
 }
 
@@ -279,6 +335,26 @@ void KartAction::calcLanding() {
     physics()->composeDecayingExtraRot(m_rotation);
 }
 
+/// @addr{0x805696CC}
+/// @brief Activates the kart's crush state for a given duration and clears the player's items
+/// @param timer How long the kart remains crushed after the action ends
+void KartAction::activateCrush(u16 timer) {
+    move()->activateCrush(m_crushActionDuration + timer);
+    Item::ItemDirector::Instance()->kartItem(0).clear();
+}
+
+/// @addr{0x80567C68}
+/// @brief Applies the initial start speed multiplier to the kart for the action that just started
+/// @details Applies the initial start speed multiplier (@ref ActionParams::startSpeedMult) to the
+/// kart's speed. If the multiplier is zero, the kart's drift is cleared via @ref
+/// KartMove::clearDrift().
+void KartAction::applyStartSpeed() {
+    move()->setSpeed(m_actionParams->startSpeedMult * speed());
+    if (m_actionParams->startSpeedMult == 0.0f) {
+        move()->clearDrift();
+    }
+}
+
 /// @addr{0x80567B98}
 /// @brief Runs when an action ends, resetting the current action and clearing all flags
 /// @details Clears the @ref eStatus::InAction and @ref eStatus::LargeFlipHit @ref Status flags.
@@ -294,27 +370,20 @@ void KartAction::end() {
     m_flags.makeAllZero();
 }
 
-/// @addr{0x80567A88}
-/// @brief Runs the end function for the current action, if any, and resets the current action
-/// @param newActionStarting `true` if this action ended because a higher priority action is
-/// starting
-/// @details Does nothing if @ref m_currentAction is @ref Action::None. If an end function is set
-/// for the current action, it is called with `newActionStarting` as the argument, and then @ref
-/// end() is called to reset the action.
-void KartAction::calcEndAction(bool newActionStarting) {
-    if (m_currentAction == Action::None) {
-        return;
-    }
-
-    if (m_onEnd) {
-        (this->*m_onEnd)(newActionStarting);
-        end();
-    }
-}
-
 /* ================================ *
  *     START FUNCTIONS
  * ================================ */
+
+/// @brief A stub function that does nothing when starting an action.
+/// @details This is used when the implementation can be omitted for Kinoko.
+void KartAction::startStub() {}
+
+/// @addr{0x80567FB4}
+/// @brief Called when the kart begins to spin out and rotates 720 degrees
+/// @details Calls @ref startRotation() to initiate the spin rotation.
+void KartAction::startSpinTwice() {
+    startRotation(2);
+}
 
 /// @addr{0x8056865C}
 /// @brief Starts a small launch action
@@ -423,9 +492,30 @@ void KartAction::startShortPressAction() {
     activateCrush(CRUSH_DURATION);
 }
 
+/// @addr{0x80568000}
+/// @brief Called when the kart begins to spin out from a fireball and rotates 720 degrees
+/// @details Calls @ref startRotation() to initiate the spin rotation.
+void KartAction::startFireSpin() {
+    startRotation(2);
+}
+
+/// @addr{0x80568058}
+/// @brief Called when the kart begins to spin out and shrink in size temporarily
+/// @details Calls @ref startRotation() to initiate the spin rotation.
+void KartAction::startSpinShrinkAction() {
+    startRotation(1);
+}
+
 /* ================================ *
  *     CALC FUNCTIONS
  * ================================ */
+
+/// @brief A stub function that does nothing when calculating an action every frame.
+/// @return Always returns `false`.
+/// @details This is used when the implementation can be omitted for Kinoko.
+bool KartAction::calcStub() {
+    return false;
+}
 
 /// @addr{0x80568204}
 /// @brief Runs every frame while a spinout action is active
@@ -614,6 +704,10 @@ bool KartAction::calcPressAction() {
 /* ================================ *
  *     END FUNCTIONS
  * ================================ */
+
+/// @brief A stub function that does nothing when ending an action.
+/// @details This is used when the implementation can be omitted for Kinoko.
+void KartAction::endStub(bool /*newActionStarting*/) {}
 
 /// @addr{0x8056837C}
 /// @brief Runs when a spinout action ends

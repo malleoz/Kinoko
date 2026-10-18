@@ -117,6 +117,40 @@ struct BSP {
 };
 STATIC_ASSERT(sizeof(BSP) == 0x25c);
 
+/// @brief Parsed from `kartCameraParam.bin`. Stores camera parameters for a given weight class.
+/// @note The camera parameters are implemented in Kinoko because the camera performs collision
+/// checks during the race and this can result in an @ref Field::ObjColMgr transformation matrix
+/// update. This can cause desyncs on DS Delfino Square if not implemented.
+struct KartCameraParam {
+    /// @brief Uninitialized default constructor
+    KartCameraParam() = default;
+
+    /// @brief Constructor which parses out the camera parameters for a given
+    /// `KartCameraParam.bin` stream
+    /// @param stream A @ref EGG::RamStream of data from `kartCameraParam.bin`
+    KartCameraParam(EGG::RamStream &stream) {
+        read(stream);
+    }
+
+    /// @brief Default destructor
+    ~KartCameraParam() = default;
+
+    /// @brief Parses out the camera parameters for a given `kartCameraParam.bin` stream
+    /// @param stream A @ref EGG::RamStream of data from `kartCameraParam.bin`
+    void read(EGG::RamStream &stream) {
+        fov = stream.read_f32();
+        dist = stream.read_f32();
+        posY = stream.read_f32();
+        targetPosY = stream.read_f32();
+    }
+
+    f32 fov;        ///< Camera lens / field of view
+    f32 dist;       ///< Camera distance from the vehicle's origin
+    f32 posY;       ///< Camera Y position offset
+    f32 targetPosY; ///< Unused
+};
+STATIC_ASSERT(sizeof(KartCameraParam) == 0x10);
+
 /// @brief Houses stats regarding a given character/vehicle combo.
 class KartParam {
 public:
@@ -252,142 +286,28 @@ public:
     };
     STATIC_ASSERT(sizeof(Stats) == 0x18c);
 
-    /// @brief Parsed from `kartCameraParam.bin`. Stores camera parameters for a given weight class.
-    /// @note The camera parameters are implemented in Kinoko because the camera performs collision
-    /// checks during the race and this can result in an @ref Field::ObjColMgr transformation matrix
-    /// update. This can cause desyncs on DS Delfino Square if not implemented.
-    struct KartCameraParam {
-        /// @brief Uninitialized default constructor
-        KartCameraParam() = default;
-
-        /// @brief Constructor which parses out the camera parameters for a given
-        /// `KartCameraParam.bin` stream
-        /// @param stream A @ref EGG::RamStream of data from `kartCameraParam.bin`
-        KartCameraParam(EGG::RamStream &stream) {
-            read(stream);
-        }
-
-        /// @brief Default destructor
-        ~KartCameraParam() = default;
-
-        /// @brief Parses out the camera parameters for a given `kartCameraParam.bin` stream
-        /// @param stream A @ref EGG::RamStream of data from `kartCameraParam.bin`
-        void read(EGG::RamStream &stream) {
-            fov = stream.read_f32();
-            dist = stream.read_f32();
-            posY = stream.read_f32();
-            targetPosY = stream.read_f32();
-        }
-
-        f32 fov;        ///< Camera lens / field of view
-        f32 dist;       ///< Camera distance from the vehicle's origin
-        f32 posY;       ///< Camera Y position offset
-        f32 targetPosY; ///< Unused
-    };
-    STATIC_ASSERT(sizeof(KartCameraParam) == 0x10);
-
-    /// @addr{Inlined in 0x0x8058F5B4}
-    /// @brief Constructor which initializes all stats and hitboxes based on the provided
-    /// character/vehicle combo
-    /// @param character The character to initialize stats for
-    /// @param vehicle The vehicle to initialize stats for
-    /// @param playerIdx The player index of the given vehicle (always 0 in Kinoko)
-    KartParam(Character character, Vehicle vehicle, u8 playerIdx)
-        : m_playerIdx(playerIdx),
-          m_isBike(vehicle >= Vehicle::Standard_Bike_S) {
-        initStats(character, vehicle);
-        initHitboxes(vehicle);
-        m_isBike ? initBikeDispParams(vehicle) : initKartDispParams(vehicle);
-        initCameraParams(character);
-    }
-
-    /// @brief Default destructor
-    ~KartParam() = default;
+    KartParam(Character character, Vehicle vehicle, u8 playerIdx);
+    ~KartParam();
 
     /// @beginSetters
 
-    /// @brief Sets the number of active tires for the kart
-    /// @param tireCount The number of active tires to set
-    void setTireCount(u16 tireCount) {
-        m_tireCount = tireCount;
-    }
-
-    /// @brief Sets the number of active suspensions for the kart
-    /// @param suspCount The number of active suspensions to set
-    void setSuspCount(u16 suspCount) {
-        m_suspCount = suspCount;
-    }
+    void setTireCount(u16 tireCount);
+    void setSuspCount(u16 suspCount);
 
     /// @endSetters
 
     /// @beginGetters
 
-    /// @addr{0x80591DBC}
-    /// @brief Exposes the @ref BSP struct associated with the kart
-    /// @return Const ref to the kart's @ref BSP data, @ref m_bsp
-    [[nodiscard]] const BSP &bsp() const {
-        return m_bsp;
-    }
-
-    /// @addr{0x80591F4C}
-    /// @brief Gets the @ref Stats struct associated with the kart
-    /// @return Const ref to the kart's @ref Stats data, @ref m_stats
-    [[nodiscard]] const Stats &stats() const {
-        return m_stats;
-    }
-
-    /// @addr{0x80592620}
-    /// @brief Gets the @ref BikeDisp struct associated with the vehicle
-    /// @return Const ref to the vehicle's @ref BikeDisp data, @ref m_bikeDisp
-    /// @pre Requires that the vehicle is a bike. @ref m_bikeDisp is not initialized for karts.
-    [[nodiscard]] const BikeDisp &bikeDisp() const {
-        return m_bikeDisp;
-    }
-
-    /// @addr{0x80592558}
-    /// @brief Gets the @ref KartDisp struct associated with the vehicle
-    /// @return Const ref to the vehicle's @ref KartDisp data, @ref m_kartDisp
-    /// @pre Requires that the vehicle is a kart. @ref m_kartDisp is not initialized for bikes.
-    [[nodiscard]] const KartDisp &kartDisp() const {
-        return m_kartDisp;
-    }
-
-    /// @addr{0x805927D4}
-    /// @brief Gets the @ref KartCameraParam struct associated with the vehicle
-    /// @return Const ref to the vehicle's @ref KartCameraParam data, @ref m_camera
-    [[nodiscard]] const KartCameraParam &camera() const {
-        return m_camera;
-    }
-
-    /// @brief Gets the index of the player associated with this kart
-    /// @return The player index of the kart, @ref m_playerIdx
-    [[nodiscard]] u8 playerIdx() const {
-        return m_playerIdx;
-    }
-
-    /// @brief Distinguishes whether the vehicle is a kart of bike
-    /// @return `true` if the vehicle is a bike, `false` if it's a kart
-    [[nodiscard]] bool isBike() const {
-        return m_isBike;
-    }
-
-    /// @brief Effectively checks whether this vehicle is the Quacker
-    /// @return `true` if this vehicle is the Quacker, `false` for all other vehicles
-    [[nodiscard]] bool isVehicleRelativeBike() const {
-        return m_stats.body == Stats::Body::Vehicle_Relative_Bike;
-    }
-
-    /// @brief Gets the number of active suspensions on the vehicle
-    /// @return The number of active suspensions on the vehicle, @ref m_suspCount
-    [[nodiscard]] u16 suspCount() const {
-        return m_suspCount;
-    }
-
-    /// @brief Gets the number of active tires on the vehicle
-    /// @return The number of active tires on the vehicle, @ref m_tireCount
-    [[nodiscard]] u16 tireCount() const {
-        return m_tireCount;
-    }
+    [[nodiscard]] const BSP &bsp() const;
+    [[nodiscard]] const Stats &stats() const;
+    [[nodiscard]] const BikeDisp &bikeDisp() const;
+    [[nodiscard]] const KartDisp &kartDisp() const;
+    [[nodiscard]] const KartCameraParam &camera() const;
+    [[nodiscard]] u8 playerIdx() const;
+    [[nodiscard]] bool isBike() const;
+    [[nodiscard]] bool isVehicleRelativeBike() const;
+    [[nodiscard]] u16 suspCount() const;
+    [[nodiscard]] u16 tireCount() const;
 
     /// @endGetters
 

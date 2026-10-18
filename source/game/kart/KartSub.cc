@@ -1,15 +1,25 @@
 #include "KartSub.hh"
 
+#include "game/kart/CollisionGroup.hh"
+#include "game/kart/KartAction.hh"
+#include "game/kart/KartBody.hh"
 #include "game/kart/KartCollide.hh"
+#include "game/kart/KartDynamics.hh"
+#include "game/kart/KartMove.hh"
+#include "game/kart/KartPhysics.hh"
+#include "game/kart/KartState.hh"
 #include "game/kart/KartSuspensionPhysics.hh"
 
-#include "game/field/CollisionDirector.hh"
 #include "game/field/BoxColManager.hh"
+#include "game/field/CollisionDirector.hh"
 
 #include "game/system/RaceConfig.hh"
 #include "game/system/RaceManager.hh"
 
 namespace Kinoko::Kart {
+
+/// @brief Default constructor
+KartSub::KartSub() = default;
 
 /// @addr{0x80598AC8}
 /// @brief Virtual destructor that destroys all underyling subsystems
@@ -36,6 +46,19 @@ void KartSub::createSubsystems(bool isBike, const KartParam::Stats &stats) {
     m_collide = EGG::egg_new<KartCollide>();
 }
 
+/// @addr{0x80596454}
+/// @brief Called during static construction of KartObject to synchronize the pointers
+/// @param pointers The KartAccessor to synchronize the kart's subsystem pointers with
+/// @details Copies the internal subsystem pointers from this @ref KartSub instance to the
+/// provided @ref KartAccessor, ensuring that the accessor has up-to-date references to the
+/// kart's subsystems.
+void KartSub::copyPointers(KartAccessor &pointers) {
+    pointers.collide = m_collide;
+    pointers.state = m_state;
+    pointers.move = m_move;
+    pointers.action = m_action;
+}
+
 /// @addr{0x80595F78}
 /// @brief Initializes the Kart subsystems and resets their physics states
 /// @details Calls @ref resetPhysics() to initialize the kart's physics to their default state. Also
@@ -45,8 +68,8 @@ void KartSub::init() {
     resetPhysics();
     body()->reset();
     m_state->init();
-    move()->setTurnParams();
-    action()->init();
+    m_move->setTurnParams();
+    m_action->init();
     m_collide->init();
 }
 
@@ -57,8 +80,8 @@ void KartSub::init() {
 /// @details Calls to @ref Field::BoxColManager::insertDriver() with a radius of `25.0f` times @ref
 /// KartCollide:m_boundingRadius and a max speed of @ref KartCollide::m_hardSpeedLimit.
 void KartSub::initAABB(KartAccessor &accessor, KartObject *object) {
-    f32 radius = 25.0f + collide()->boundingRadius();
-    f32 hardSpeedLimit = move()->hardSpeedLimit();
+    f32 radius = 25.0f + m_collide->boundingRadius();
+    f32 hardSpeedLimit = m_move->hardSpeedLimit();
 
     accessor.boxColUnit = Field::BoxColManager::Instance()->insertDriver(radius, hardSpeedLimit,
             &pos(), true, object);
@@ -69,7 +92,7 @@ void KartSub::initAABB(KartAccessor &accessor, KartObject *object) {
 /// @details Dispatches to @ref KartPhysics::updatePose() and @ref KartCollide::setHitboxLastPos().
 void KartSub::initPhysicsValues() {
     physics()->updatePose();
-    collide()->setHitboxLastPos();
+    m_collide->setHitboxLastPos();
 }
 
 /// @addr{0x8059617C}
@@ -144,17 +167,17 @@ void KartSub::calcPass0() {
         for (size_t i = 0; i < tireCount(); ++i) {
             tirePhysics(i)->hitboxGroup()->reset();
         }
-        move()->enterCannon();
+        m_move->enterCannon();
     }
 
-    state()->calc();
+    m_state->calc();
 
     if (status.onBit(eStatus::TriggerRespawn)) {
         setInertiaScale(EGG::Vector3f::unit);
         resetPhysics();
-        state()->reset();
-        move()->setTurnParams();
-        move()->calcRespawnTrigger();
+        m_state->reset();
+        m_move->setTurnParams();
+        m_move->calcRespawnTrigger();
     }
 
     physics()->setPos(dynamics()->pos());
@@ -162,9 +185,9 @@ void KartSub::calcPass0() {
     dynamics()->setGravity(GRAVITY);
     dynamics()->setAngVel0YFactor(0.9f);
 
-    state()->calcInput();
-    move()->calc();
-    action()->calc();
+    m_state->calcInput();
+    m_move->calc();
+    m_action->calc();
     collide()->pullPath().calc();
 
     if (status.onBit(eStatus::SkipWheelCalc)) {
@@ -176,7 +199,7 @@ void KartSub::calcPass0() {
 
     calcSoftWall();
 
-    dynamics()->setUp(move()->up());
+    dynamics()->setUp(m_move->up());
 
     // Pertains to startslides / leaning in stage 0 and 1
     const auto *raceManager = System::RaceManager::Instance();
@@ -185,7 +208,7 @@ void KartSub::calcPass0() {
 
         EGG::Vector3f killExtVel = extVel();
         if (isBike()) {
-            killExtVel = killExtVel.rej(move()->smoothedUp());
+            killExtVel = killExtVel.rej(m_move->smoothedUp());
         } else {
             killExtVel.x = 0.0f;
             killExtVel.z = 0.0f;
@@ -194,14 +217,14 @@ void KartSub::calcPass0() {
         dynamics()->setExtVel(killExtVel);
     }
 
-    f32 maxSpeed = move()->hardSpeedLimit();
+    f32 maxSpeed = m_move->hardSpeedLimit();
     physics()->calc(DT, maxSpeed, scale(), status.offBit(eStatus::TouchingGround));
 
-    move()->calcRejectRoad();
+    m_move->calcRejectRoad();
 
     if (status.offBit(eStatus::InCannon)) {
         collide()->calcHitboxes();
-        collisionGroup()->setHitboxScale(move()->totalScale());
+        collisionGroup()->setHitboxScale(m_move->totalScale());
     }
 }
 
@@ -267,7 +290,7 @@ void KartSub::calcPass0() {
 void KartSub::calcPass1() {
     constexpr s16 SIDE_COLLISION_TIME = 5;
 
-    state()->resetEjection();
+    m_state->resetEjection();
 
     m_movingWaterCollisionCount = 0;
     m_movingObjCollisionCount = 0;
@@ -287,7 +310,7 @@ void KartSub::calcPass1() {
     auto &status = KartObjectProxy::status();
 
     if (status.onBit(eStatus::SoftWallPush)) {
-        const EGG::Vector3f &softWallNrm = state()->softWallNrm();
+        const EGG::Vector3f &softWallNrm = m_state->softWallNrm();
         f32 speedFactor = 5.0f;
         EGG::Vector3f effectiveSpeed;
 
@@ -295,8 +318,8 @@ void KartSub::calcPass1() {
             speedFactor = 10.0f;
             effectiveSpeed = softWallNrm;
         } else {
-            effectiveSpeed = softWallNrm.perpInPlane(move()->smoothedUp(), true);
-            f32 speedDotUp = softWallNrm.dot(move()->smoothedUp());
+            effectiveSpeed = softWallNrm.perpInPlane(m_move->smoothedUp(), true);
+            f32 speedDotUp = softWallNrm.dot(m_move->smoothedUp());
             if (speedDotUp < 0.0f) {
                 speedFactor += -speedDotUp * 10.0f;
             }
@@ -410,7 +433,7 @@ void KartSub::calcPass1() {
             suspensionPhysics(wheelIdx)->calcSuspension(forward, vehicleCompensation);
         }
 
-        move()->calcHop();
+        m_move->calcHop();
     }
 
     if (status.onBit(eStatus::CollidingOffroad)) {
@@ -418,10 +441,10 @@ void KartSub::calcPass1() {
         handlingFactor = stats.kclRot[3];
     }
 
-    move()->setKCLWheelSpeedFactor(speedFactor);
-    move()->setKCLWheelRotFactor(handlingFactor);
+    m_move->setKCLWheelSpeedFactor(speedFactor);
+    m_move->setKCLWheelRotFactor(handlingFactor);
 
-    move()->setFloorCollisionCount(m_floorCollisionCount);
+    m_move->setFloorCollisionCount(m_floorCollisionCount);
 
     calcMovingObj();
     calcMovingWater();
@@ -441,7 +464,7 @@ void KartSub::calcPass1() {
 /// CollisionGroup::m_boundingRadius.
 void KartSub::resizeAABB(f32 radiusScale) {
     f32 radius = radiusScale * collisionGroup()->boundingRadius();
-    boxColUnit()->resize(radius + 25.0f, move()->hardSpeedLimit());
+    boxColUnit()->resize(radius + 25.0f, m_move->hardSpeedLimit());
 }
 
 /// @addr{0x805980D8}
@@ -471,6 +494,15 @@ void KartSub::addFloor(const CollisionData &colData, bool) {
     }
 
     status.changeBit(colData.bMovingWaterStickyRoad, eStatus::MovingWaterStickyRoad);
+}
+
+/// @addr{0x805979EC}
+/// @brief Updates the maximum and minimum suspension overtravel values based on the provided
+/// suepension overtravel
+/// @param suspOvertravel The suspension overtravel vector to update the max and min values with
+void KartSub::updateSuspOvertravel(const EGG::Vector3f &suspOvertravel) {
+    m_maxSuspOvertravel = m_maxSuspOvertravel.minimize(suspOvertravel);
+    m_minSuspOvertravel = m_minSuspOvertravel.maximize(suspOvertravel);
 }
 
 /// @addr{0x80598744}
@@ -523,7 +555,7 @@ void KartSub::calcMovingObj() {
     constexpr f32 NO_MOVING_OBJ_INTERP_RATE = 0.2f;
 
     if (m_movingObjCollisionCount == 0) {
-        f32 scalar = state()->airtime() < 20 ? SHORT_AIR_DECAY_FACTOR : LONG_AIR_DECAY_FACTOR;
+        f32 scalar = m_state->airtime() < 20 ? SHORT_AIR_DECAY_FACTOR : LONG_AIR_DECAY_FACTOR;
         physics()->composeDecayingMovingObjVel(FLOOR_DECAY_FACTOR, scalar,
                 m_floorCollisionCount != 0);
     } else {
@@ -555,7 +587,7 @@ void KartSub::calcMovingWater() {
     if (m_movingWaterCollisionCount > 0) {
         f32 ratio = static_cast<f32>(m_movingWaterCollisionCount) /
                 static_cast<f32>(m_floorCollisionCount);
-        EGG::Vector3f dir = pullPath.pullDirection().perpInPlane(move()->smoothedUp(), true);
+        EGG::Vector3f dir = pullPath.pullDirection().perpInPlane(m_move->smoothedUp(), true);
 
         if (status.offBit(eStatus::MovingWaterDecaySpeed)) {
             EGG::Vector3f vel = pullPath.pullSpeed() * dir * ratio;
@@ -575,11 +607,17 @@ void KartSub::calcMovingWater() {
     }
 
     if (status.onBit(eStatus::MovingWaterStickyRoad)) {
-        EGG::Vector3f dir = pullPath.pullDirection().perpInPlane(move()->smoothedUp(), true);
+        EGG::Vector3f dir = pullPath.pullDirection().perpInPlane(m_move->smoothedUp(), true);
         dir.y *= STICKY_ROAD_SCALAR;
         const EGG::Vector3f &vel = dynamics()->movingRoadVel();
         dynamics()->setMovingRoadVel(EGG::Vector3f(vel.x, dir.y, vel.z));
     }
+}
+
+/// @brief Gets the suspension scale for the kart
+/// @return The current suspension scale value, @ref m_suspScale
+f32 KartSub::suspScale() {
+    return m_suspScale;
 }
 
 } // namespace Kinoko::Kart

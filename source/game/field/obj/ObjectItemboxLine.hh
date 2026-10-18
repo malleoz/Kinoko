@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Types.hh>
+
 #include "game/field/obj/ObjectItemboxPress.hh"
 
 namespace Kinoko::Field {

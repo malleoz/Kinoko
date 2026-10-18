@@ -1,10 +1,43 @@
 #include "KartState.hh"
 
+#include "game/kart/CollisionGroup.hh"
+#include "game/kart/KartAction.hh"
 #include "game/kart/KartCollide.hh"
+#include "game/kart/KartDynamics.hh"
+#include "game/kart/KartHalfPipe.hh"
+#include "game/kart/KartJump.hh"
+#include "game/kart/KartMove.hh"
 
+#include "game/system/KPadController.hh"
 #include "game/system/RaceManager.hh"
 
+#include <algorithm>
+
 namespace Kinoko::Kart {
+
+/// @addr{0x805943B4}
+/// @brief Constructor that initializes all @ref m_status bits to 0, except for @ref
+/// eStatus::AutoDrift which is set if the kart is using automatic transmission. Initializes
+/// @ref m_airtime, @ref m_cannonPointIdx, and @ref m_startBoostIdx to zero.
+KartState::KartState() {
+    m_status.makeAllZero();
+    m_status.changeBit(inputs()->driftIsAuto(), eStatus::AutoDrift);
+
+    m_airtime = 0;
+    m_cannonPointId = 0;
+    m_startBoostIdx = 0;
+}
+
+/// @addr{0x80595CC4}
+/// @brief Default virtual destructor
+KartState::~KartState() = default;
+
+/// @addr{0x8059455C}
+/// @brief Initializes the kart
+/// @details Simply calls @ref reset().
+void KartState::init() {
+    reset();
+}
 
 /// @addr{0x80594594}
 /// @brief Resets the kart's state to its initial values
@@ -395,6 +428,130 @@ void KartState::handleStartBoost(size_t idx) {
     } else {
         move()->applyStartBoost(START_BOOST_ENTRIES[idx].frames);
     }
+}
+
+/// @addr{0x805958F0}
+/// @brief Resets bitfields pertaining to ejections (reject road, half pipe zippers, etc.)
+/// @details Resets the @ref eStatus::HalfPipeRamp and @ref eStatus::RejectRoad flags in the
+/// kart's @ref Status.
+void KartState::resetEjection() {
+    m_status.resetBit(eStatus::HalfPipeRamp, eStatus::RejectRoad);
+}
+
+/// @brief Sets the ID of the cannon the kart is currently in
+/// @param val The ID of the cannon point to set
+void KartState::setCannonPointId(u16 val) {
+    m_cannonPointId = val;
+}
+
+/// @brief Sets the type of boost ramp the kart is currently on
+/// @param val The boost ramp type to set
+void KartState::setBoostRampType(s32 val) {
+    m_boostRampType = val;
+}
+
+/// @brief Sets the variant of the jump pad the kart is currently on
+/// @param val The jump pad variant to set
+void KartState::setJumpPadVariant(s32 val) {
+    m_jumpPadVariant = val;
+}
+
+/// @brief Sets the half pipe invisibility timer
+/// @param val The value to set the timer to
+void KartState::setHalfPipeInvisibilityTimer(s16 val) {
+    m_halfPipeInvisibilityTimer = val;
+}
+
+/// @brief Sets the trickable grace period timer
+/// @param val The value to set the trickable grace period timer to
+void KartState::setTrickableTimer(s16 val) {
+    m_trickableTimer = val;
+}
+
+/// @brief Checks if the kart is currently drifting
+/// @return `true` if the kart is drifting, `false` otherwise
+/// @details The kart is drifting if either @ref eStatus::DriftManual or @ref eStatus::DriftAuto
+/// is set in the kart's @ref Status.
+bool KartState::isDrifting() const {
+    return m_status.onBit(eStatus::DriftManual, eStatus::DriftAuto);
+}
+
+/// @brief Retrieves the ID of the cannon the kart is currently in
+/// @return The ID of the cannon point, @ref m_cannonPointId
+u16 KartState::cannonPointId() const {
+    return m_cannonPointId;
+}
+
+/// @brief Gets the type of boost ramp the kart is currently on
+/// @return The boost ramp type, @ref m_boostRampType
+s32 KartState::boostRampType() const {
+    return m_boostRampType;
+}
+
+/// @brief Gets the variant of the jump pad the kart is currently on
+/// @return The jump pad variant, @ref m_jumpPadVariant
+s32 KartState::jumpPadVariant() const {
+    return m_jumpPadVariant;
+}
+
+/// @brief Gets the X-axis stick input the player is inputting
+/// @return The X-axis stick input, @ref m_stickX
+f32 KartState::stickX() const {
+    return m_stickX;
+}
+
+/// @brief Gets the Y-axis stick input the player is inputting
+/// @return The Y-axis stick input, @ref m_stickY
+f32 KartState::stickY() const {
+    return m_stickY;
+}
+
+/// @brief Gets the number of frames the kart has been airborne
+/// @return The number of frames the kart has been airborne, @ref m_airtime
+u32 KartState::airtime() const {
+    return m_airtime;
+}
+
+/// @brief Gets the up direction vector of the kart based on collision normals
+/// @return The up direction vector, @ref m_up
+const EGG::Vector3f &KartState::up() const {
+    return m_up;
+}
+
+/// @brief Gets the direction of the soft wall collision
+/// @return The soft wall normal vector, @ref m_softWallNrm
+const EGG::Vector3f &KartState::softWallNrm() const {
+    return m_softWallNrm;
+}
+
+/// @brief Gets the current start boost charge
+/// @return The start boost charge, @ref m_startBoostCharge
+f32 KartState::startBoostCharge() const {
+    return m_startBoostCharge;
+}
+
+/// @brief Gets the wall bonk timer
+/// @return The wall bonk timer, @ref m_wallBonkTimer
+s16 KartState::wallBonkTimer() const {
+    return m_wallBonkTimer;
+}
+
+/// @brief Gets the trickable grace period timer
+/// @return The trickable grace period timer, @ref m_trickableTimer
+s16 KartState::trickableTimer() const {
+    return m_trickableTimer;
+}
+
+/// @brief Gets the current status flags of the kart
+/// @return Ref to the current status, @ref m_status
+Status &KartState::status() {
+    return m_status;
+}
+
+/// @brief Gets the current status flags of the kart
+/// @return Const ref to the current status, @ref m_status
+const Status &KartState::status() const {
+    return m_status;
 }
 
 } // namespace Kinoko::Kart

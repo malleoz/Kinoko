@@ -2,6 +2,8 @@
 
 #include "game/field/KCollisionTypes.hh"
 
+#include <egg/core/Heap.hh>
+
 namespace Kinoko {
 
 namespace Host {
@@ -30,7 +32,7 @@ class ObjectDrivableDirector;
 class CollisionDirector : EGG::Disposer {
     /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
     /// state on context switch
-    friend class Host::Context;
+    friend Host::Context;
 
 public:
     /// @brief Collision Entry Attribute fields

@@ -1,13 +1,26 @@
 #include "KartObjectManager.hh"
 
 #include "game/kart/KartCollide.hh"
+#include "game/kart/KartObject.hh"
 #include "game/kart/KartParamFileManager.hh"
 
 #include "game/system/RaceConfig.hh"
+#include "game/system/ResourceManager.hh"
 
 #include <abstract/g3d/ResFile.hh>
 
 namespace Kinoko::Kart {
+
+/// @addr{0x8058FEE0}
+/// @brief Initializes each object's collision and physics subsystems
+/// @details Simply calls @ref KartObject::initCollision() and @ref KartObject::initPhysics()
+/// for each object.
+void KartObjectManager::init() {
+    for (auto *&object : m_objects) {
+        object->initCollision();
+        object->initPhysics();
+    }
+}
 
 /// @addr{0x8058FFE8}
 /// @brief Performs two passes of calculations for each kart object
@@ -23,6 +36,59 @@ void KartObjectManager::calc() {
         object->calcSub();
         object->calc();
     }
+}
+
+/// @addr{0x80590100}
+/// @brief Returns the @ref KartObject for the given player index
+/// @param i The player index
+/// @return A pointer to the @ref KartObject for the given player index
+KartObject *KartObjectManager::object(size_t i) const {
+    return m_objects[i];
+}
+
+/// @brief Gets the shock unshrink animation's data
+/// @return Pointer to the shock unshrink animation's data, @ref s_thunderScaleUpAnmChr
+const Abstract::g3d::ResAnmChr *KartObjectManager::ThunderScaleUpAnmChr() {
+    return s_thunderScaleUpAnmChr;
+}
+
+/// @brief Gets the shock shrink animation's data
+/// @return Pointer to the shock shrink animation's data, @ref s_thunderScaleDownAnmChr
+const Abstract::g3d::ResAnmChr *KartObjectManager::ThunderScaleDownAnmChr() {
+    return s_thunderScaleDownAnmChr;
+}
+
+/// @brief Gets the stomper uncrush animation's data
+/// @return Pointer to the stomper uncrash animation's data, @ref s_pressScaleUpAnmChr
+const Abstract::g3d::ResAnmChr *KartObjectManager::PressScaleUpAnmChr() {
+    return s_pressScaleUpAnmChr;
+}
+
+/// @addr{0x8058FAA8}
+/// @brief Creates the singleton instance of the @ref KartObjectManager
+/// @return A pointer to the newly created singleton instance of the @ref KartObjectManager
+/// @pre The singleton instance of the @ref KartObjectManager must not already exist.
+KartObjectManager *KartObjectManager::CreateInstance() {
+    ASSERT(!s_instance);
+    s_instance = EGG::egg_new<KartObjectManager>();
+    return s_instance;
+}
+
+/// @addr{0x8058FAF8}
+/// @brief Destroys the singleton instance of the @ref KartObjectManager
+/// @pre The singleton instance of the @ref KartObjectManager must already exist.
+void KartObjectManager::DestroyInstance() {
+    ASSERT(s_instance);
+    auto *instance = s_instance;
+    s_instance = nullptr;
+    EGG::egg_delete(instance);
+}
+
+/// @addr{0x809C18F8}
+/// @brief Returns the singleton instance of the @ref KartObjectManager
+/// @return The singleton instance of the @ref KartObjectManager
+KartObjectManager *KartObjectManager::Instance() {
+    return s_instance;
 }
 
 /// @addr{0x8058FB2C}
@@ -69,7 +135,7 @@ KartObjectManager::~KartObjectManager() {
     EGG::egg_delete(s_thunderScaleDownAnmChr);
     EGG::egg_delete(s_pressScaleUpAnmChr);
 
-    KartObjectProxy::proxyList().clear();
+    KartObjectProxy::ProxyList().clear();
 }
 
 /// @addr{0x8056AB6C}

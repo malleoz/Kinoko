@@ -1,5 +1,6 @@
 #include "JugemSwitch.hh"
 
+#include "game/kart/KartObject.hh"
 #include "game/kart/KartObjectManager.hh"
 
 #include "game/system/RaceManager.hh"

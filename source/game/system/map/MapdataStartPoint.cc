@@ -1,6 +1,9 @@
 #include "MapdataStartPoint.hh"
 
 #include "game/system/CourseMap.hh"
+#include "game/system/map/MapdataStageInfo.hh"
+
+#include <egg/math/Quat.hh>
 
 namespace Kinoko::System {
 
@@ -34,9 +37,21 @@ static constexpr s8 Z_TRANSLATION_TABLE[MAX_PLAYERS][MAX_PLAYERS] = {
         {0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3},
 };
 
+/// @brief Constructor
+/// @param data Pointer to the raw starting point data
+/// @details Creates a @ref EGG::RamStream from the raw starting point data and reads the data
+/// into the member variables.
+MapdataStartPoint::MapdataStartPoint(const SData *data) : m_rawData(data) {
+    EGG::RamStream stream = EGG::RamStream(data, sizeof(SData));
+    read(stream);
+}
+
+/// @brief Default destructor
+MapdataStartPoint::~MapdataStartPoint() = default;
+
 /// @brief Reads the starting point data from the given stream
 /// @param stream The stream to read the starting point data from
-void MapdataStartPoint::read(EGG::Stream &stream) {
+void MapdataStartPoint::read(EGG::RamStream &stream) {
     m_position.read(stream);
     m_rotation.read(stream);
     m_playerIndex = CourseMap::Instance()->hasPlayerIdx() ? stream.read_s16() : 0;
@@ -109,5 +124,8 @@ MapdataStartPointAccessor::MapdataStartPointAccessor(const MapSectionHeader *hea
                 1);
     }
 }
+
+/// @brief Default virtual destructor
+MapdataStartPointAccessor::~MapdataStartPointAccessor() = default;
 
 } // namespace Kinoko::System

@@ -1,8 +1,5 @@
 #include "ExpHeap.hh"
 
-#include <limits>
-#include <new> // placement new
-
 namespace Kinoko::Abstract::Memory {
 
 Region::Region(void *start, void *end) : start(start), end(end) {}

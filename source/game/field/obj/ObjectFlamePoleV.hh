@@ -3,8 +3,6 @@
 #include "game/field/StateManager.hh"
 #include "game/field/obj/ObjectCollidable.hh"
 
-#include "game/system/RaceManager.hh"
-
 namespace Kinoko::Field {
 
 /// @brief Lava eruptions without any hump (@ref ObjectFlamePoleFoot) like on N64 Bowser's Castle

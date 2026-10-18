@@ -2,8 +2,6 @@
 
 #include "game/field/obj/ObjectCollidable.hh"
 
-#include "game/field/obj/ObjectEscalator.hh"
-
 namespace Kinoko::Field {
 
 class ObjectEscalator;

@@ -1,8 +1,16 @@
 #pragma once
 
-#include "game/kart/KartObject.hh"
+#include <egg/math/Matrix.hh>
 
-namespace Kinoko::Field {
+namespace Kinoko {
+
+namespace Kart {
+
+class KartObject;
+
+} // namespace Kart
+
+namespace Field {
 
 /// @brief Manages state information related to Lakitu movement
 class JugemMove {
@@ -60,4 +68,6 @@ private:
     bool m_isRising;                ///< True if Lakitu is rising up into the sky (despawning)
 };
 
-} // namespace Kinoko::Field
+} // namespace Field
+
+} // namespace Kinoko

@@ -1,12 +1,17 @@
 #pragma once
 
 #include "game/field/StateManager.hh"
-#include "game/field/obj/ObjectFlamePole.hh"
 #include "game/field/obj/ObjectKCL.hh"
 
-#include "game/system/RaceManager.hh"
+namespace Kinoko {
 
-namespace Kinoko::Field {
+namespace Host {
+
+class Context;
+
+} // namespace Host
+
+namespace Field {
 
 class ObjectFlamePole;
 
@@ -61,7 +66,7 @@ class ObjectFlamePole;
 class ObjectFlamePoleFoot final : public ObjectKCL, private StateManager {
     /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
     /// state on context switch
-    friend class Host::Context;
+    friend Host::Context;
 
 public:
     ObjectFlamePoleFoot(const System::MapdataGeoObj &params);
@@ -144,4 +149,6 @@ private:
     static constexpr std::array<s32, 6> STATE_STARTS = FlamePoleFootStateFrameBoundaries();
 };
 
-} // namespace Kinoko::Field
+} // namespace Field
+
+} // namespace Kinoko

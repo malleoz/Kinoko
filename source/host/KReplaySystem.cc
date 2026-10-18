@@ -1,12 +1,36 @@
 #include "KReplaySystem.hh"
 
-#include "host/Option.hh"
+#include "egg/core/Scene.hh"
+#include <egg/core/SceneManager.hh>
 
+#include "host/Option.hh"
+#include "host/SceneCreatorDynamic.hh"
+
+#include <game/system/RaceConfig.hh>
 #include <game/system/RaceManager.hh>
 
+#include <abstract/File.hh>
+
+#include <filesystem>
 #include <iomanip>
 
 namespace Kinoko {
+
+/// @brief Initializes the system by creating the scene manager and setting up the race
+/// configuration callback
+void KReplaySystem::init() {
+    auto *sceneCreator = EGG::egg_new<Host::SceneCreatorDynamic>();
+    m_sceneMgr = EGG::egg_new<EGG::SceneManager>(sceneCreator);
+
+    System::RaceConfig::RegisterInitCallback(OnInit, nullptr);
+    Abstract::File::Remove("results.txt");
+}
+
+/// @copybrief KSystem::calc()
+/// @details Simply calls @ref EGG::SceneManager::calc() on @ref m_sceneMgr.
+void KReplaySystem::calc() {
+    m_sceneMgr->calc();
+}
 
 /// @brief Executes a run.
 /// @return Whether the run was successful or not.
@@ -91,23 +115,58 @@ void KReplaySystem::parseOptions(int argc, char **argv) {
     }
 }
 
-/// @brief Determines whether or not the ghost simulation should end.
-/// @return `true` if the ghost should end or not, `false` if not
-/// @details The simulation ends if the race has been finished or if 10 minutes have elapsed in the
-/// race.
-bool KReplaySystem::calcEnd() const {
-    constexpr u16 MAX_MINUTE_COUNT = 10;
+/// @brief Creates the singleton instance of the @ref KReplaySystem
+/// @return A pointer to the newly created @ref KReplaySystem instance
+/// @pre The singleton instance of the @ref KReplaySystem must not already exist.
+KReplaySystem *KReplaySystem::CreateInstance() {
+    ASSERT(!s_instance);
+    s_instance = EGG::egg_new<KReplaySystem>();
+    return static_cast<KReplaySystem *>(s_instance);
+}
 
-    const auto *raceManager = System::RaceManager::Instance();
-    if (raceManager->stage() == System::RaceManager::Stage::FinishGlobal) {
-        return true;
+/// @brief Destroys the singleton instance of the @ref KReplaySystem
+/// @pre The singleton instance of the @ref KReplaySystem must exist.
+void KReplaySystem::DestroyInstance() {
+    ASSERT(s_instance);
+    auto *instance = s_instance;
+    s_instance = nullptr;
+    EGG::egg_delete(instance);
+}
+
+/// @brief Returns the singleton instance of the @ref KReplaySystem
+/// @return A pointer to the singleton instance of the @ref KReplaySystem
+KReplaySystem *KReplaySystem::Instance() {
+    return static_cast<KReplaySystem *>(s_instance);
+}
+
+/// @brief Default private constructor
+/// @details Initializes @ref m_progressInterval, @ref m_replaysPlayed, and @ref m_replaysSynced
+/// to zero and @ref m_currentGhost to `nullptr`.
+KReplaySystem::KReplaySystem()
+    : m_progressInterval(0),
+      m_replaysPlayed(0),
+      m_replaysSynced(0),
+      m_currentGhost(nullptr) {}
+
+/// @brief Default virtual destructor that destroys the associated @ref EGG::SceneManager, @ref
+/// System::GhostFile and frees the raw ghost data buffer
+KReplaySystem::~KReplaySystem() {
+    if (s_instance) {
+        s_instance = nullptr;
+        WARN("KReplaySystem instance not explicitly handled!");
     }
 
-    if (raceManager->timerManager().currentTimer().min >= MAX_MINUTE_COUNT) {
-        return true;
-    }
+    EGG::egg_delete(m_sceneMgr);
+    EGG::egg_delete(m_currentGhost);
+    EGG::egg_free(const_cast<u8 *>(m_currentRawGhost.data()));
+}
 
-    return false;
+/// @brief Reports failure to file.
+/// @param msg The message to report.
+void KReplaySystem::reportFail(const std::string &msg) const {
+    std::string report(m_currentGhostPath.string());
+    report += "\n" + std::string(msg);
+    Abstract::File::Append("results.txt", report.c_str(), report.size());
 }
 
 /// @brief Runs replays for all ghost files within a specified directory (and its subdirectories)
@@ -246,6 +305,25 @@ bool KReplaySystem::success() const {
     return true;
 }
 
+/// @brief Determines whether or not the ghost simulation should end.
+/// @return `true` if the ghost should end or not, `false` if not
+/// @details The simulation ends if the race has been finished or if 10 minutes have elapsed in the
+/// race.
+bool KReplaySystem::calcEnd() const {
+    constexpr u16 MAX_MINUTE_COUNT = 10;
+
+    const auto *raceManager = System::RaceManager::Instance();
+    if (raceManager->stage() == System::RaceManager::Stage::FinishGlobal) {
+        return true;
+    }
+
+    if (raceManager->timerManager().currentTimer().min >= MAX_MINUTE_COUNT) {
+        return true;
+    }
+
+    return false;
+}
+
 /// @brief Finds the desyncing timer index, if one exists.
 /// @return -1 if there's no desync, 0 if the final timer desyncs, and 1+ if a lap timer desyncs.
 s32 KReplaySystem::getDesyncingTimerIdx() const {
@@ -285,6 +363,13 @@ KReplaySystem::DesyncingTimerPair KReplaySystem::getDesyncingTimer(s32 i) const 
 
     // This is unreachable
     return DesyncingTimerPair(System::Timer(), System::Timer());
+}
+
+/// @brief Initializes the race configuration as needed for replays.
+/// @param config The race configuration instance.
+void KReplaySystem::OnInit(System::RaceConfig *config, void * /* arg */) {
+    config->setGhost(Instance()->m_currentRawGhost.data());
+    config->raceScenario().players[0].type = System::RaceConfig::Player::Type::Ghost;
 }
 
 } // namespace Kinoko

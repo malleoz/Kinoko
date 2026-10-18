@@ -1,6 +1,6 @@
 #pragma once
 
-#include "game/kart/KartObjectManager.hh"
+#include "game/kart/KartObjectProxy.hh"
 
 namespace Kinoko::Kart {
 
@@ -10,56 +10,20 @@ namespace Kinoko::Kart {
 class KartScale : private KartObjectProxy {
 public:
     KartScale(const KartParam::Stats &stats);
-
-    /// @addr{0x8056B5A8}
-    /// @brief Default virtual destructor
-    ~KartScale() override = default;
+    ~KartScale() override;
 
     void reset();
     void calc();
 
-    /// @addr{0x8056B060}
-    /// @brief Called when the kart starts being crushed
-    /// @details Sets @ref m_crushState to @ref CrushState::Crush, resets the press scale to the
-    /// default value, resets @ref m_uncrushAnmFrame to zero, and marks that crush updates should be
-    /// performed by setting @ref m_calcCrush to `true`.
-    void startCrush() {
-        m_crushState = CrushState::Crush;
-        m_pressScale = EGG::Vector3f::unit;
-        m_uncrushAnmFrame = 0.0f;
-        m_calcCrush = true;
-    }
-
-    /// @addr{0x8056B094}
-    /// @brief Called when the kart finishes being crushed
-    /// @details Sets @ref m_crushState to @ref CrushState::Uncrush, resets the uncrush animation
-    /// framecounter, and marks that crush updates should be performed. It also sets the press
-    /// scale, which will get overwritten in @ref calcCrush on the following frame. It's set here
-    /// so that @ref KartMove::calcScale() can snap the kart's scale to the correct value on the
-    /// current frame.
-    void endCrush() {
-        m_crushState = CrushState::Uncrush;
-        m_pressScale = EGG::Vector3f(1.0f, CRUSH_SCALE, 1.0f);
-        m_uncrushAnmFrame = 0.0f;
-        m_calcCrush = true;
-    }
-
+    void startCrush();
+    void endCrush();
     void startShrink(bool inMega);
     void endShrink(bool inMega);
 
     /// @beginGetters
 
-    /// @brief Gets the current scale of the kart due to shrinking animations
-    /// @return The current scale of the kart due to shrinking animations, @ref m_shrinkScale
-    [[nodiscard]] const EGG::Vector3f &shrinkScale() const {
-        return m_shrinkScale;
-    }
-
-    /// @brief Gets the current scale of the kart due to crush animations
-    /// @return The current scale of the kart due to crush animations, @ref m_pressScale
-    [[nodiscard]] const EGG::Vector3f &pressScale() const {
-        return m_pressScale;
-    }
+    [[nodiscard]] const EGG::Vector3f &shrinkScale() const;
+    [[nodiscard]] const EGG::Vector3f &pressScale() const;
 
     /// @endGetters
 
@@ -84,16 +48,6 @@ private:
     void calcShrink();
     void calcCrush();
 
-    /// @addr{0x8056ACF4}
-    /// @brief Fetches the scale of the uncrush animation at the given frame
-    /// @param frame The frame of the press animation to fetch the scale for
-    /// @return The scale of the press animation at the given frame
-    [[nodiscard]] static EGG::Vector3f GetPressAnmScale(f32 frame) {
-        const auto *scaleAnm = KartObjectManager::PressScaleUpAnmChr();
-        ASSERT(scaleAnm);
-        return scaleAnm->getAnmResult(frame, 0).scale();
-    }
-
     ThunderScaleType m_shrinkType;    ///< Which of the four shrink scale animations is active
     EGG::Vector3f m_shrinkOffset;     ///< Additive coefficient when calculating the shrink scale
     EGG::Vector3f m_shrinkRate;       ///< Linear slope coefficient to change the shrink scale
@@ -105,6 +59,8 @@ private:
     bool m_calcCrush;                 ///< Set while crush scaling is occurring
     f32 m_uncrushAnmFrame;            ///< Current frame of the unsquish animation
     EGG::Vector3f m_pressScale;       ///< The current scale of the kart due to crush animation
+
+    [[nodiscard]] static EGG::Vector3f GetPressAnmScale(f32 frame);
 
     static constexpr f32 CRUSH_SCALE = 0.3f; ///< The Y-scale of the kart when it is fully squished
 

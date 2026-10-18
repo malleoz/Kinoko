@@ -1,6 +1,7 @@
 #include "KColData.hh"
 
 #include <egg/geom/Sphere.hh>
+#include <egg/math/Matrix.hh>
 
 // Credit: em-eight/mkw
 // Credit: stblr/Hanachan

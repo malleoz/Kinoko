@@ -4,8 +4,6 @@
 
 #include <egg/core/BitFlag.hh>
 
-#include <array>
-
 namespace Kinoko {
 
 namespace Host {
@@ -21,7 +19,7 @@ namespace Abstract::Memory {
 class MEMiHeapHead {
     /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
     /// state on context switch
-    friend class Host::Context;
+    friend Host::Context;
 
 public:
     enum class FillType {
@@ -74,6 +72,17 @@ private:
             0xD3D3D3D3,
     }};
 };
+
+/// @brief The size of memory blocks that are allocated for game heap space.
+static constexpr size_t MEMORY_SPACE_SIZE = 0x1000000;
+
+#ifdef BUILD_DEBUG
+static constexpr auto DEFAULT_OPT =
+        MEMiHeapHead::OptFlag().setBit(MEMiHeapHead::eOptFlag::DebugFillAlloc);
+#else
+static constexpr auto DEFAULT_OPT =
+        MEMiHeapHead::OptFlag().setBit(MEMiHeapHead::eOptFlag::ZeroFillAlloc);
+#endif
 
 } // namespace Abstract::Memory
 

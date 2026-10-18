@@ -1,5 +1,10 @@
 #include "ObjectSniper.hh"
 
+#include "game/field/Rail.hh"
+#include "game/field/RailInterpolator.hh"
+#include "game/field/obj/ObjectProjectile.hh"
+#include "game/field/obj/ObjectProjectileLauncher.hh"
+
 namespace Kinoko::Field {
 
 /// @addr{0x806DDA84}

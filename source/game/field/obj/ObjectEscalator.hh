@@ -2,8 +2,6 @@
 
 #include "game/field/obj/ObjectKCL.hh"
 
-#include "game/system/RaceManager.hh"
-
 namespace Kinoko::Field {
 
 /// @brief Represents an individual escalator on Coconut Mall.

@@ -2,10 +2,16 @@
 
 #include "game/field/CollisionDirector.hh"
 #include "game/field/KColData.hh"
+#include "game/field/RailInterpolator.hh"
 
-#include "game/kart/KartCollide.hh"
+#include "game/kart/Reaction.hh"
+
+#include "game/render/AnmMgr.hh"
+#include "game/render/DrawMdl.hh"
 
 #include "game/system/ResourceManager.hh"
+
+#include <abstract/g3d/ResFile.hh>
 
 namespace Kinoko::Field {
 

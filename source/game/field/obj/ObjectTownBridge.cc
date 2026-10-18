@@ -1,7 +1,10 @@
 #include "ObjectTownBridge.hh"
 
+#include "game/field/ObjColMgr.hh"
+
 #include "game/system/RaceManager.hh"
 #include "game/system/ResourceManager.hh"
+#include "game/system/map/MapdataGeoObj.hh"
 
 namespace Kinoko::Field {
 

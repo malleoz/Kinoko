@@ -1,8 +1,24 @@
 #pragma once
 
-#include "game/kart/KartMove.hh"
+#include <egg/core/Heap.hh>
+#include <egg/math/Vector.hh>
 
-namespace Kinoko::Render {
+namespace Kinoko {
+
+namespace Host {
+
+class Context;
+
+} // namespace Host
+
+namespace Kart {
+
+struct KartCameraParam;
+class KartObjectProxy;
+
+} // namespace Kart
+
+namespace Render {
 
 /// @brief Tracks the current state of a camera (either the front or backwards player cameras)
 class KartCameraState {
@@ -11,28 +27,10 @@ class KartCameraState {
     friend class KartCamera;
 
 public:
-    /// @brief Constructor
-    /// @details Zero-intiailzies all members.
-    KartCameraState() {
-        m_pos.setZero();
-        m_bigAirHeight = 0.0f;
-        m_downPitchRatio = 0.0f;
-        m_prevPos.setZero();
-        m_dist = 0.0f;
-        m_bigAirFallPitch = 0.0f;
-        m_targetPos.setZero();
-    }
+    KartCameraState();
+    ~KartCameraState();
 
-    /// @brief Default destructor
-    ~KartCameraState() = default;
-
-    /// @addr{0x805A1C3C}
-    /// @brief Initializes the camera state to default values
-    /// @details Resets @ref m_dist and @ref m_bigAirFallPitch to zero.
-    void init() {
-        m_dist = 0.0f;
-        m_bigAirFallPitch = 0.0f;
-    }
+    void init();
 
 private:
     EGG::Vector3f m_pos;       ///< The current position of the camera
@@ -58,84 +56,38 @@ private:
 class KartCamera {
     /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
     /// state on context switch
-    friend class Host::Context;
+    friend Host::Context;
 
 public:
-    /// @addr{0x805A2034}
-    /// @brief Initializes the camera with the default parameters and position
-    /// @details Gets the camera parameters from the first kart object (since we assume only one
-    /// player in Kinoko) and stores the pointer to @ref m_camParams. Then calls @ref initPos() to
-    /// initialize the camera's position.
-    void init() {
-        auto *param = Kart::KartObjectManager::Instance()->object(0)->param();
-        m_camParams = &param->camera();
-
-        initPos();
-    }
-
+    void init();
     void calc();
 
-    /// @brief Creates the singleton instance of the @ref KartCamera
-    /// @return A pointer to the newly created @ref KartCamera instance
-    /// @pre The singleton instance must not already exist.
-    static KartCamera *CreateInstance() {
-        ASSERT(!s_instance);
-        s_instance = EGG::egg_new<KartCamera>();
-        return s_instance;
-    }
-
-    /// @brief Destroys the singleton instance of the @ref KartCamera
-    /// @pre The singleton instance must exist.
-    static void DestroyInstance() {
-        ASSERT(s_instance);
-        auto *instance = s_instance;
-        s_instance = nullptr;
-        EGG::egg_delete(instance);
-    }
-
-    /// @brief Returns the singleton instance of the @ref KartCamera
-    /// @return A pointer to the singleton instance of the @ref KartCamera
-    [[nodiscard]] static KartCamera *Instance() {
-        return s_instance;
-    }
+    static KartCamera *CreateInstance();
+    static void DestroyInstance();
+    [[nodiscard]] static KartCamera *Instance();
 
 private:
     EGG_NEW_DELETE_FRIEND
 
-    /// @addr{0x805A1D10}
-    /// @brief Private constructor
-    /// @details Sets @ref m_hopPosY and @ref m_forward to zero and initializes @ref m_camParams to
-    /// `nullptr`.
-    KartCamera() : m_hopPosY(0), m_forward(EGG::Vector3f::zero), m_camParams(nullptr) {}
+    KartCamera();
+    ~KartCamera();
 
-    /// @addr{0x805A8F7C}
-    /// @brief Private default destructor
-    ~KartCamera() = default;
-
-    /// @addr{0x805A2B84}
-    /// @brief Interpolates the camera's orientation based on the kart's smoothed forward vector
-    /// @param t Interpolation factor
-    /// @param proxy Pointer to the kart object proxy
-    void calcForward(f32 t, const Kart::KartObjectProxy *proxy) {
-        m_forward = m_forward.interpolate(t, proxy->move()->smoothedForward());
-        m_right = EGG::Vector3f::ey.perpInPlane(m_forward, true);
-    }
-
+    void initPos();
+    void calcForward(f32 t, const Kart::KartObjectProxy *proxy);
     void calcManualDriftOffset(const Kart::KartObjectProxy *proxy);
+
     void calcCamera(f32 param1, f32 param2, f32 param3, KartCameraState &state, bool isBackwards,
             const Kart::KartObjectProxy *proxy, const EGG::Vector3f &targetPos) const;
     void calcAirtime(KartCameraState &state, const Kart::KartObjectProxy *proxy) const;
-    void initPos();
-
     void calcCollision(KartCameraState &state, bool isRear) const;
 
-    f32 m_driftYaw;                                      ///< Rotation induced when drifting
-    f32 m_hopPosY;                                       ///< Tracks the hop height of the vehicle
-    EGG::Vector3f m_forward;                             ///< Forward direction of the camera
-    EGG::Vector3f m_right;                               ///< Right direction of the camera
-    const Kart::KartParam::KartCameraParam *m_camParams; ///< The camera parameters for the kart
-    KartCameraState m_forwardCamera;                     ///< Forward camera state
-    KartCameraState m_backwardCamera;                    ///< Rear camera state
+    f32 m_driftYaw;                           ///< Rotation induced when drifting
+    f32 m_hopPosY;                            ///< Tracks the hop height of the vehicle
+    EGG::Vector3f m_forward;                  ///< Forward direction of the camera
+    EGG::Vector3f m_right;                    ///< Right direction of the camera
+    const Kart::KartCameraParam *m_camParams; ///< The camera parameters for the kart
+    KartCameraState m_forwardCamera;          ///< Forward camera state
+    KartCameraState m_backwardCamera;         ///< Rear camera state
 
     /// @brief Singleton instance of the @ref KartCamera
     /// @note In the base game, there is a @ref KartCamera instance for each player. Since we only
@@ -143,4 +95,6 @@ private:
     static KartCamera *s_instance;
 };
 
-} // namespace Kinoko::Render
+} // namespace Render
+
+} // namespace Kinoko

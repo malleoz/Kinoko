@@ -1,11 +1,12 @@
 #include "ObjectDossunc.hh"
 
+#include "game/field/ObjectDirector.hh"
 #include "game/field/obj/ObjectDossunNormal.hh"
 #include "game/field/obj/ObjectDossunSyuukai.hh"
 #include "game/field/obj/ObjectDossunTsuibiHolder.hh"
 #include "game/field/obj/ObjectDossunYokoMove.hh"
 
-#include "game/field/ObjectDirector.hh"
+#include "game/system/map/MapdataGeoObj.hh"
 
 namespace Kinoko::Field {
 

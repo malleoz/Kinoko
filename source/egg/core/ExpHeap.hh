@@ -2,9 +2,16 @@
 
 #include "egg/core/Heap.hh"
 
-#include <abstract/memory/ExpHeap.hh>
+namespace Kinoko {
 
-namespace Kinoko::EGG {
+namespace Abstract::Memory {
+
+class ExpHeap;
+class MEMiExpHeapHead;
+
+} // namespace Abstract::Memory
+
+namespace EGG {
 
 /// @brief High-level implementation of a memory heap for managing dynamic memory allocation.
 /// Allocation may occur anywhere within the memory space the heap is created from.
@@ -22,12 +29,14 @@ public:
     public:
         GroupSizeRecord();
         void reset();
-        [[nodiscard]] size_t getGroupSize(u16 groupID) const;
         void addSize(u16 groupID, size_t size);
 
-        [[nodiscard]] constexpr size_t size() const {
-            return m_entries.size();
-        }
+        /// @beginGetters
+
+        [[nodiscard]] size_t size() const;
+        [[nodiscard]] size_t getGroupSize(u16 groupID) const;
+
+        /// @endGetters
 
     private:
         std::array<size_t, 256> m_entries;
@@ -61,4 +70,6 @@ private:
     ExpHeap(Abstract::Memory::MEMiHeapHead *handle);
 };
 
-} // namespace Kinoko::EGG
+} // namespace EGG
+
+} // namespace Kinoko

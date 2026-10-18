@@ -3,6 +3,8 @@
 #include "game/field/CollisionDirector.hh"
 #include "game/field/KColData.hh"
 
+#include <egg/math/Matrix.hh>
+
 namespace Kinoko::Field {
 
 /// @brief Constructor

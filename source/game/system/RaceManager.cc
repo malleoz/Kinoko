@@ -2,6 +2,12 @@
 
 #include "game/system/CourseMap.hh"
 #include "game/system/KPadDirector.hh"
+#include "game/system/map/MapdataCheckPath.hh"
+#include "game/system/map/MapdataCheckPoint.hh"
+#include "game/system/map/MapdataStartPoint.hh"
+
+#include "game/kart/KartObject.hh"
+#include "game/kart/KartObjectManager.hh"
 
 namespace Kinoko::System {
 
@@ -25,7 +31,7 @@ RaceManager::Player::Player() {
     auto *courseMap = CourseMap::Instance();
 
     if (courseMap->getCheckPointCount() > 0 && courseMap->getCheckPathCount() > 0) {
-        m_maxKcp = courseMap->checkPoint()->lastKcpType();
+        m_maxKcp = courseMap->checkPointAccessor()->lastKcpType();
     } else {
         m_maxKcp = -1;
     }
@@ -35,6 +41,9 @@ RaceManager::Player::Player() {
     m_drivingWrongWay = false;
     m_inputs = &KPadDirector::Instance()->playerInput();
 }
+
+/// @brief Default destructor
+RaceManager::Player::~Player() = default;
 
 /// @addr{0x80534194}
 /// @brief Initializes the player instance
@@ -119,6 +128,56 @@ Timer RaceManager::Player::getLapSplit(size_t lap) const {
     return currentLap - previousLap;
 }
 
+/// @brief Gets the current checkpoint ID
+/// @return The ID of the current checkpoint, @ref m_checkpointId
+u16 RaceManager::Player::checkpointId() const {
+    return m_checkpointId;
+}
+
+/// @brief Gets the player's overall race completion percentage
+/// @return The player's progress through the race, @ref m_raceCompletion
+f32 RaceManager::Player::raceCompletion() const {
+    return m_raceCompletion;
+}
+
+/// @brief Gets the current respawn point ID
+/// @return The ID of the current respawn point, @ref m_jugemId
+s8 RaceManager::Player::jugemId() const {
+    return m_jugemId;
+}
+
+/// @brief Checks if the player is driving the wrong way
+/// @return `true` if the player is driving the wrong way, `false` otherwise
+bool RaceManager::Player::drivingWrongWay() const {
+    return m_drivingWrongWay;
+}
+
+/// @brief Gets the player's lap timers
+/// @return A const ref to the array of lap timers, @ref m_lapTimers
+const std::array<Timer, 3> &RaceManager::Player::lapTimers() const {
+    return m_lapTimers;
+}
+
+/// @brief Gets a specific lap timer by index
+/// @param idx The index of the lap timer
+/// @return A const ref to the lap timer at the specified index in @ref m_lapTimers
+const Timer &RaceManager::Player::lapTimer(size_t idx) const {
+    ASSERT(idx < m_lapTimers.size());
+    return m_lapTimers[idx];
+}
+
+/// @brief Gets the overall race timer
+/// @return A const ref to the overall race timer, @ref m_raceTimer
+const Timer &RaceManager::Player::raceTimer() const {
+    return m_raceTimer;
+}
+
+/// @brief Gets the player's @ref KPad
+/// @return A const pointer to the player's @ref KPad, @ref m_inputs
+const KPad *RaceManager::Player::inputs() const {
+    return m_inputs;
+}
+
 /// @addr{0x80534DF8}
 /// @brief Calculates the checkpoint data for the player based on the given checkpoint ID and
 /// the percentage of the checkpoint that has been traversed
@@ -136,8 +195,9 @@ MapdataCheckPoint *RaceManager::Player::calcCheckpoint(u16 checkpointId, f32 dis
     u16 oldCheckpointId = m_checkpointId;
     m_checkpointId = checkpointId;
 
-    f32 lapProportion = courseMap->checkPath()->lapProportion();
-    MapdataCheckPath *checkPath = courseMap->checkPath()->findCheckpathForCheckpoint(checkpointId);
+    f32 lapProportion = courseMap->checkPathAccessor()->lapProportion();
+    MapdataCheckPath *checkPath =
+            courseMap->checkPathAccessor()->findCheckpathForCheckpoint(checkpointId);
     m_checkpointFactor = checkPath->invCount() * lapProportion;
 
     m_checkpointStartLapCompletion = static_cast<f32>(checkPath->depth()) * lapProportion +
@@ -157,7 +217,7 @@ MapdataCheckPoint *RaceManager::Player::calcCheckpoint(u16 checkpointId, f32 dis
     if (!newCheckpoint->isNormalCheckpoint()) {
         if (newCheckpoint->type() > m_maxKcp) {
             m_maxKcp = newCheckpoint->type();
-        } else if (m_maxKcp == courseMap->checkPoint()->lastKcpType()) {
+        } else if (m_maxKcp == courseMap->checkPointAccessor()->lastKcpType()) {
             if ((newCheckpoint->isFinishLine() &&
                         AreCheckpointsSubsequent(oldCheckpoint, checkpointId)) ||
                     deltaLapCompletion > 0.95f) {
@@ -184,7 +244,7 @@ MapdataCheckPoint *RaceManager::Player::calcCheckpoint(u16 checkpointId, f32 dis
 void RaceManager::Player::decrementLap() {
     auto *courseMap = CourseMap::Instance();
     if (courseMap->getCheckPointCount() > 0 && courseMap->getCheckPathCount() > 0) {
-        m_maxKcp = courseMap->checkPoint()->lastKcpType();
+        m_maxKcp = courseMap->checkPointAccessor()->lastKcpType();
     } else {
         m_maxKcp = -1;
     }
@@ -218,6 +278,41 @@ void RaceManager::Player::incrementLap() {
     } else {
         m_maxLap = m_currentLap;
     }
+}
+
+/// @addr{0x805347F4}
+/// @brief Ends the race for the player and records the finish time
+/// @param finishTime The time at which the player finished the race
+/// @details Saves the timer to @ref m_raceTimer and calls @ref
+/// RaceManager::endPlayerRace().
+void RaceManager::Player::endRace(const Timer &finishTime) {
+    m_raceTimer = finishTime;
+    RaceManager::Instance()->endPlayerRace(0);
+}
+
+/// @addr{Inlined in 0x80534DF8}
+/// @brief Checks if two checkpoints are adjacent to one another
+/// @param checkpoint The current checkpoint
+/// @param nextCheckpointId The ID of the next checkpoint
+/// @return `true` if the next checkpoint is adjacent to the current checkpoint, `false`
+/// otherwise
+bool RaceManager::Player::AreCheckpointsSubsequent(const MapdataCheckPoint *checkpoint,
+        u16 nextCheckpointId) {
+    for (size_t i = 0; i < checkpoint->nextCount(); ++i) {
+        if (nextCheckpointId == checkpoint->nextPoint(i)->id()) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/// @addr{0x80532F88}
+/// @brief Initializes all player instances
+/// @details For Kinoko, we only have one player, so this function initializes that single
+/// player instance.
+void RaceManager::init() {
+    m_player.init();
 }
 
 /// @addr{0x805362DC}
@@ -272,6 +367,24 @@ void RaceManager::calc() {
     }
 }
 
+/// @addr{0x80533C6C}
+/// @brief Ends the race for the specified player
+/// @details For Kinoko, we only have one player, so this function simply sets the race stage to
+/// @ref Stage::FinishGlobal.
+void RaceManager::endPlayerRace(u32 /*idx*/) {
+    m_stage = Stage::FinishGlobal;
+}
+
+/// @addr{0x80536230}
+/// @brief Checks if the specified race stage has been reached
+/// @param stage The race stage to check
+/// @return `true` if the current race stage is greater than or equal to the specified stage,
+/// `false` otherwise
+bool RaceManager::isStageReached(Stage stage) const {
+    return static_cast<std::underlying_type_t<Stage>>(m_stage) >=
+            static_cast<std::underlying_type_t<Stage>>(stage);
+}
+
 /// @addr{0x8053621C}
 /// @brief Retrieves the respawn point associated with the player's current respawn ID
 /// @return A pointer to the corresponding @ref MapdataJugemPoint, or `nullptr` if no valid respawn
@@ -279,6 +392,88 @@ void RaceManager::calc() {
 const MapdataJugemPoint *RaceManager::jugemPoint() const {
     s8 jugemId = std::max<s8>(m_player.jugemId(), 0);
     return System::CourseMap::Instance()->getJugemPoint(static_cast<u16>(jugemId));
+}
+
+/// @addr{0x80533090}
+/// @brief Gets the frames remaining for the @ref Stage::Countdown phase of the race
+/// @return The number of frames remaining for the countdown phase
+int RaceManager::getCountdownTimer() const {
+    return STAGE_COUNTDOWN_DURATION - m_timer;
+}
+
+/// @brief Gets the random number generator instance
+/// @return A reference to the random number generator instance, @ref m_random
+Random &RaceManager::random() {
+    return m_random;
+}
+
+/// @brief Gets the player instance
+/// @return A const ref to the player instance, @ref m_player
+const RaceManager::Player &RaceManager::player() const {
+    return m_player;
+}
+
+/// @brief Gets the timer manager instance
+/// @return A const ref to the timer manager instance, @ref m_timerManager
+const TimerManager &RaceManager::timerManager() const {
+    return m_timerManager;
+}
+
+/// @brief Gets the current race stage
+/// @return The current race stage, @ref m_stage
+RaceManager::Stage RaceManager::stage() const {
+    return m_stage;
+}
+
+/// @brief Gets the current value of the race timer
+/// @return The current value of the race timer, @ref m_timer
+u32 RaceManager::timer() const {
+    return m_timer;
+}
+
+/// @addr{0x80532084}
+/// @brief Creates the singleton instance of the @ref RaceManager
+/// @return A pointer to the newly created @ref RaceManager instance
+/// @pre The singleton instance of the @ref RaceManager must not already exist.
+RaceManager *RaceManager::CreateInstance() {
+    ASSERT(!s_instance);
+    s_instance = EGG::egg_new<RaceManager>();
+    return s_instance;
+}
+
+/// @addr{0x805320D4}
+/// @brief Destroys the singleton instance of the @ref RaceManager
+/// @pre The singleton instance of the @ref RaceManager must already exist.
+void RaceManager::DestroyInstance() {
+    ASSERT(s_instance);
+    auto *instance = s_instance;
+    s_instance = nullptr;
+    EGG::egg_delete(instance);
+}
+
+/// @brief Returns the singleton instance of the @ref RaceManager
+/// @return A pointer to the singleton instance of the @ref RaceManager
+RaceManager *RaceManager::Instance() {
+    return s_instance;
+}
+
+/// @addr{0x805327A0}
+/// @brief Private constructor
+/// @details Initializes the random number generator with the predefined seed, sets the initial
+/// stage to Intro, and resets the intro and main timers.
+RaceManager::RaceManager()
+    : m_random(RNG_SEED),
+      m_stage(Stage::Intro),
+      m_introTimer(0),
+      m_timer(0) {}
+
+/// @addr{0x80532E3C}
+/// @brief Private virtual destructor
+RaceManager::~RaceManager() {
+    if (s_instance) {
+        s_instance = nullptr;
+        WARN("RaceManager instance not explicitly handled!");
+    }
 }
 
 RaceManager *RaceManager::s_instance = nullptr;

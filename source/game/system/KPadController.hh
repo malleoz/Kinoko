@@ -4,9 +4,6 @@
 
 #include <egg/math/Vector.hh>
 
-#include <algorithm>
-#include <cstring>
-
 namespace Kinoko::System {
 
 /// @brief Converts a raw stick input into the range used by @ref RaceInputState.
@@ -49,105 +46,6 @@ enum class Trick {
 
 /// @brief Represents the state of controller inputs
 struct RaceInputState {
-    /// @brief Constructor that initializes the input state by resetting all values
-    RaceInputState() {
-        reset();
-    }
-
-    /// @brief Default virtual destructor
-    virtual ~RaceInputState() = default;
-
-    /// @addr{0x8051E85C}
-    /// @brief Resets the input state to its default values
-    /// @details Sets @ref buttons, @ref buttonsRaw, and @ref stick to zero. Sets @ref stickXRaw and
-    /// @ref stickYRaw to 7. Sets @ref trick to @ref Trick::None and @ref trickRaw to zero.
-    void reset() {
-        buttons = buttonsRaw = 0;
-        stick = EGG::Vector2f::zero;
-        stickXRaw = stickYRaw = 7;
-        trick = Trick::None;
-        trickRaw = 0;
-    }
-
-    /// @brief Checks if the input state is valid.
-    /// @return `true` if the input state is valid, `false` otherwise.
-    /// @details The input state is valid if no invalid buttons are being pressed, the stick values
-    /// are one of 15 discrete values, and the trick bit is one of the 5 valid values.
-    [[nodiscard]] bool isValid() const {
-        bool isValid = isButtonsValid();
-        isValid = isValid && IsStickValid(stick.x);
-        isValid = isValid && IsStickValid(stick.y);
-        isValid = isValid && isTrickValid();
-
-        return isValid;
-    }
-
-    /// @brief Checks if there are any invalid buttons
-    /// @return `true` if no invalid buttons are present, `false` otherwise.
-    /// @details Validation with the previous input state doesn't happen because it doesn't exist.
-    /// Therefore, we cannot check here if e.g. the drift button is pressed when it shouldn't be.
-    [[nodiscard]] bool isButtonsValid() const {
-        return !(buttons & ~0xf);
-    }
-
-    /// @brief Checks if the trick input is valid.
-    /// @return `true` if the trick input is valid, `false` otherwise.
-    [[nodiscard]] bool isTrickValid() const {
-        switch (trick) {
-        case Trick::None:
-        case Trick::Up:
-        case Trick::Down:
-        case Trick::Left:
-        case Trick::Right:
-            return true;
-        default:
-            return false;
-        }
-    }
-
-    /// @brief Checks if the acceleration button is being pressed
-    /// @return `true` if the acceleration button is being pressed, `false` otherwise.
-    /// @details The accelerate button is the first button in the bitmask (0x01).
-    [[nodiscard]] bool accelerate() const {
-        return !!(buttons & 0x1);
-    }
-
-    /// @brief Checks if the brake button is being pressed
-    /// @return `true` if the brake button is being pressed, `false` otherwise.
-    /// @details The brake button is the second button in the bitmask (0x02).
-    [[nodiscard]] bool brake() const {
-        return !!(buttons & 0x2);
-    }
-
-    /// @brief Checks if the item button is being pressed
-    /// @return `true` if the item button is being pressed, `false` otherwise.
-    /// @details The item button is the third button in the bitmask (0x04).
-    [[nodiscard]] bool item() const {
-        return !!(buttons & 0x4);
-    }
-
-    /// @brief Checks if the drift button is being pressed
-    /// @return `true` if the drift button is being pressed, `false` otherwise.
-    /// @details The drift button is the fourth button in the bitmask (0x08).
-    /// @warning When set, the game will register a hop regardless of whether or not the
-    /// acceleration button is pressed. This can lead to "successful" synchronization of ghosts
-    /// which could not have been created legitimately in the first place.
-    [[nodiscard]] bool drift() const {
-        return !!(buttons & 0x8);
-    }
-
-    /// @brief Checks if the up trick button is being pressed
-    /// @return `true` if the up @ref trick button is being pressed, `false` otherwise.
-    [[nodiscard]] bool trickUp() const {
-        return trick == Trick::Up;
-    }
-
-    /// @brief Checks if the down trick button is being pressed
-    /// @return `true` if the down @ref trick button is being pressed, `false` otherwise.
-    [[nodiscard]] bool trickDown() const {
-        return trick == Trick::Down;
-    }
-
     u16 buttons;         ///< A bitfield of the buttons being pressed
     u16 buttonsRaw;      ///< Raw representation of button presses
     EGG::Vector2f stick; ///< The X and Y components of the analog stick `[-1.0f, 1.0f]`
@@ -156,15 +54,22 @@ struct RaceInputState {
     Trick trick;         ///< The current @ref Trick being performed
     u8 trickRaw;         ///< Raw representation of the trick being performed
 
-    /// @brief Checks if the provided stick value is within the domain of the physics engine.
-    /// @param stick The stick value to check
-    /// @return `true` if the stick value is valid, `false` otherwise.
-    /// @details The set of valid stick values is \f$\{\frac{x-7}{7}|0\leq x\leq
-    /// 14,\in\mathbb{Z}\}\f$. It's possible for the stick input to be 8/7 with x = 15, but only
-    /// with ghost controllers.
-    [[nodiscard]] static bool IsStickValid(f32 stick) {
-        return std::ranges::any_of(STICK_STATES, [stick](f32 val) { return stick == val; });
-    }
+    RaceInputState();
+    virtual ~RaceInputState();
+
+    void reset();
+
+    [[nodiscard]] bool isValid() const;
+    [[nodiscard]] bool isButtonsValid() const;
+    [[nodiscard]] bool isTrickValid() const;
+    [[nodiscard]] bool accelerate() const;
+    [[nodiscard]] bool brake() const;
+    [[nodiscard]] bool item() const;
+    [[nodiscard]] bool drift() const;
+    [[nodiscard]] bool trickUp() const;
+    [[nodiscard]] bool trickDown() const;
+
+    [[nodiscard]] static bool IsStickValid(f32 stick);
 
     /// @brief The discrete analog stick inputs in the range `[-1.0f, 1.0f]`
     static constexpr std::array<f32, 15> STICK_STATES = StickStates();
@@ -176,32 +81,18 @@ struct RaceInputState {
 /// frame's input, this struct is responsible for tracking how much time has elapsed in the current
 /// tuple and detecting when the next tuple should be read.
 struct KPadGhostButtonsStream {
-    /// @brief Default constructor
-    KPadGhostButtonsStream() : currentSequence(std::numeric_limits<u16>::max()), state(2) {}
-
-    /// @brief Default virtual destructor
-    virtual ~KPadGhostButtonsStream() = default;
-
-    [[nodiscard]] u8 readFrame();
-
-    /// @addr{0x8052502C} @addr{0x80524FC4}
-    /// @brief Checks if the current sequence has reached a new input tuple
-    /// @return `true` if the current sequence has reached a new input tuple, `false` otherwise.
-    [[nodiscard]] virtual bool readIsNewSequence() const {
-        return readSequenceFrames >= (currentSequence & 0xFF);
-    }
-
-    /// @addr{0x80525024} @addr{0x80524FBC}
-    /// @brief Reads the current input value from the sequence
-    /// @return The current input value from the @ref currentSequence tuple
-    [[nodiscard]] virtual u8 readVal() const {
-        return currentSequence >> 8;
-    }
-
     EGG::RamStream buffer;  ///< The underlying buffer storing the button input tuples
     u16 currentSequence;    ///< The current input sequence being read
     u16 readSequenceFrames; ///< The number of frames elapsed in the current input tuple
     u32 state;              ///< The state of the stream (1 = active, 2 = end-of-stream)
+
+    KPadGhostButtonsStream();
+    virtual ~KPadGhostButtonsStream();
+
+    [[nodiscard]] virtual bool readIsNewSequence() const;
+    [[nodiscard]] virtual u8 readVal() const;
+
+    [[nodiscard]] u8 readFrame();
 };
 
 /// @brief A specialized stream for button presses (not tricks).
@@ -273,57 +164,25 @@ struct KPadGhostTrickButtonsStream final : public KPadGhostButtonsStream {
 /// @brief An abstraction for a controller object. It is associated with an input state.
 class KPadController {
 public:
-    /// @addr{0x8051EBA8}
-    /// @brief Constructor
-    KPadController() : m_connected(false) {}
+    KPadController();
+    virtual ~KPadController();
 
-    /// @brief Default virtual destructor
-    virtual ~KPadController() = default;
+    virtual void reset(bool driftIsAuto);
+    virtual void calcImpl();
 
-    /// @brief Resets the state of the controller
-    virtual void reset(bool /*driftIsAuto*/) {}
-
-    /// @brief Responsible for handling the current frame's input state calculation
-    virtual void calcImpl() {}
-
-    /// @addr{0x8051ED14}
-    /// @brief Runs every frame to update the controller state for the current frame
-    void calc() {
-        calcImpl();
-    }
+    void calc();
 
     /// @beginSetters
 
-    /// @addr{0x8051F37C}
-    /// @brief Sets whether the drift is automatic or manual.
-    /// @param driftIsAuto `true` for automatic drift, `false` for manual.
-    void setDriftIsAuto(bool driftIsAuto) {
-        m_driftIsAuto = driftIsAuto;
-    }
+    void setDriftIsAuto(bool driftIsAuto);
 
     /// @endSetters
 
     /// @beginGetters
 
-    /// @addr{0x8051CE7C}
-    /// @brief Gets the source of the control input.
-    /// @return The source of the control input, @ref ControlSource::Unknown for the base class.
-    [[nodiscard]] virtual ControlSource controlSource() const {
-        return ControlSource::Unknown;
-    }
-
-    /// @brief Gets the current race input state.
-    /// @return The current race input state, @ref m_raceInputState
-    [[nodiscard]] const RaceInputState &raceInputState() const {
-        return m_raceInputState;
-    }
-
-    /// @brief Gets whether the drift is automatic or manual.
-    /// @return The value of @ref m_driftIsAuto, which is `true` if the drift is automatic, `false`
-    /// if manual.
-    [[nodiscard]] bool driftIsAuto() const {
-        return m_driftIsAuto;
-    }
+    [[nodiscard]] virtual ControlSource controlSource() const;
+    [[nodiscard]] const RaceInputState &raceInputState() const;
+    [[nodiscard]] bool driftIsAuto() const;
 
     /// @endGetters
 
@@ -347,40 +206,20 @@ protected:
 /// 0x08   |         | End of header, beginning of face button input data. |
 class KPadGhostController final : public KPadController {
 public:
-    /// @addr{0x80520730}
-    /// @brief Default constructor that creates streams for the buttons, trick buttons, and analog
-    /// stick
-    /// @details Initializes @ref m_acceptingInputs to `false`.
-    KPadGhostController() : m_acceptingInputs(false) {
-        m_buttonsStreams[0] = EGG::egg_new<KPadGhostFaceButtonsStream>();
-        m_buttonsStreams[1] = EGG::egg_new<KPadGhostDirectionButtonsStream>();
-        m_buttonsStreams[2] = EGG::egg_new<KPadGhostTrickButtonsStream>();
-    }
+    KPadGhostController();
+    ~KPadGhostController() override;
 
-    /// @addr{0x80520924}
-    /// @brief Default virtual destructor
-    ~KPadGhostController() override = default;
-
-    /// @addr{0x8052282C}
-    /// @copybrief KPadController::controlSource()
-    /// @return The source of the control input, @ref ControlSource::Ghost
-    [[nodiscard]] ControlSource controlSource() const override {
-        return ControlSource::Ghost;
-    }
-
+    [[nodiscard]] ControlSource controlSource() const override;
     void reset(bool driftIsAuto) override;
+    void calcImpl() override;
 
     void readGhostBuffer(const u8 *buffer, bool driftIsAuto);
 
-    void calcImpl() override;
+    /// @beginSetters
 
-    /// @brief Sets whether the controller should accept inputs.
-    /// @param set `true` to accept inputs, `false` to ignore them.
-    /// @details Sets @ref m_acceptingInputs accordingly. Effectively, this signals when the
-    /// countdown has started so that inputs should start being read from the ghost buffer.
-    void setAcceptingInputs(bool set) {
-        m_acceptingInputs = set;
-    }
+    void setAcceptingInputs(bool set);
+
+    /// @endSetters
 
 private:
     const u8 *m_ghostBuffer; ///< Pointer to the uncompressed ghost input data buffer
@@ -392,135 +231,33 @@ private:
 /// @details The input state is managed externally by programs interfacing with Kinoko.
 class KPadHostController final : public KPadController {
 public:
-    /// @brief Default constructor
-    KPadHostController() = default;
+    KPadHostController();
+    ~KPadHostController() override;
 
-    /// @brief Default virtual destructor
-    ~KPadHostController() override = default;
+    [[nodiscard]] ControlSource controlSource() const override;
+    void reset(bool driftIsAuto) override;
 
-    /// @copybrief KPadController::controlSource()
-    /// @return The source of the control input, @ref ControlSource::Host
-    [[nodiscard]] ControlSource controlSource() const override {
-        return ControlSource::Host;
-    }
-
-    /// @copybrief KPadController::reset()
-    /// @param driftIsAuto Indicates whether the controller should be set to auto drift mode.
-    /// @details Sets @ref m_driftIsAuto based on the provided boolean. Resets @ref m_raceInputState
-    /// and sets @ref m_connected to `true`.
-    void reset(bool driftIsAuto) override {
-        m_driftIsAuto = driftIsAuto;
-        m_raceInputState.reset();
-        m_connected = true;
-    }
-
-    /// @brief Sets the inputs of the controller.
-    /// @param state The input state to set
-    /// @return `true` if the input state is valid, `false` otherwise
-    bool setInputs(const RaceInputState &state) {
-        return setInputs(state.buttons, state.stick, state.trick);
-    }
-
-    /// @brief Sets the inputs of the controller.
-    /// @param buttons The button inputs.
-    /// @param stick The stick inputs, as a 2D vector.
-    /// @param trick The trick input.
-    /// @return `true` if the input state is valid, `false` otherwise
-    bool setInputs(u16 buttons, const EGG::Vector2f &stick, Trick trick) {
-        m_raceInputState.buttons = buttons;
-        m_raceInputState.stick = stick;
-        m_raceInputState.trick = trick;
-
-        return m_raceInputState.isValid();
-    }
-
-    /// @brief Sets the inputs of the controller.
-    /// @param buttons The button inputs.
-    /// @param stickX The stick input on the X axis.
-    /// @param stickY The stick input on the Y axis.
-    /// @param trick The trick input.
-    /// @return `true` if the input state is valid, `false` otherwise
-    bool setInputs(u16 buttons, f32 stickX, f32 stickY, Trick trick) {
-        m_raceInputState.buttons = buttons;
-        m_raceInputState.stick.x = stickX;
-        m_raceInputState.stick.y = stickY;
-        m_raceInputState.trick = trick;
-
-        return m_raceInputState.isValid();
-    }
-
-    /// @brief Sets the inputs of the controller.
-    /// @details A different name is specified to avoid any ambiguity with the parameters.
-    /// @param buttons The button inputs.
-    /// @param stickXRaw The 7-centered raw stick input on the X axis.
-    /// @param stickYRaw The 7-centered raw stick input on the Y axis.
-    /// @param trick The trick input.
-    /// @return `true` if the input state is valid, `false` otherwise
-    bool setInputsRawStick(u16 buttons, u8 stickXRaw, u8 stickYRaw, Trick trick) {
-        return setInputs(buttons, RawStickToState(stickXRaw), RawStickToState(stickYRaw), trick);
-    }
-
-    /// @brief Sets the inputs of the controller.
-    /// @details A different name is specified to avoid any ambiguity with the parameters.
-    /// @param buttons The button inputs.
-    /// @param stickXRaw The 0-centered raw stick input on the X axis.
-    /// @param stickYRaw The 0-centered raw stick input on the Y axis.
-    /// @param trick The trick input.
-    /// @return `true` if the input state is valid, `false` otherwise
-    bool setInputsRawStickZeroCenter(u16 buttons, s8 stickXRaw, s8 stickYRaw, Trick trick) {
-        return setInputsRawStick(buttons, stickXRaw + 7, stickYRaw + 7, trick);
-    }
+    bool setInputs(const RaceInputState &state);
+    bool setInputs(u16 buttons, const EGG::Vector2f &stick, Trick trick);
+    bool setInputs(u16 buttons, f32 stickX, f32 stickY, Trick trick);
+    bool setInputsRawStick(u16 buttons, u8 stickXRaw, u8 stickYRaw, Trick trick);
+    bool setInputsRawStickZeroCenter(u16 buttons, s8 stickXRaw, s8 stickYRaw, Trick trick);
 };
 
 /// @brief A wrapper class which holds a @ref KPadController and manages a player's input state
 class KPad {
 public:
-    /// @addr{0x80520F64}
-    /// @brief Constructor
-    /// @details Initializes the controller pointer to `nullptr` and resets the input state.
-    KPad() : m_controller(nullptr) {
-        reset();
-    }
+    KPad();
+    virtual ~KPad();
 
-    /// @addr{0x805222B4}
-    /// @brief Default virtual destructor
-    virtual ~KPad() = default;
-
-    /// @addr{0x80521198}
-    /// @brief Updates @ref m_lastInputState and @ref m_currentInputState to reflect the state of
-    /// the controller
-    void calc() {
-        m_lastInputState = m_currentInputState;
-        m_currentInputState = m_controller->raceInputState();
-    }
-
-    /// @addr{0x80521110}
-    /// @brief Resets the controller and its input state
-    void reset() {
-        if (m_controller) {
-            m_controller->reset(m_controller->driftIsAuto());
-        }
-    }
+    void calc();
+    void reset();
 
     /// @beginGetters
 
-    /// @brief Gets the current input state of the pad
-    /// @return The current input state of the pad, @ref m_currentInputState
-    [[nodiscard]] const RaceInputState &currentState() const {
-        return m_currentInputState;
-    }
-
-    /// @brief Gets the last input state of the pad
-    /// @return The last input state of the pad, @ref m_lastInputState
-    [[nodiscard]] const RaceInputState &lastState() const {
-        return m_lastInputState;
-    }
-
-    /// @brief Checks if the drift is set to automatic
-    /// @return `true` if the drift is automatic, `false` otherwise
-    [[nodiscard]] bool driftIsAuto() const {
-        return m_controller->driftIsAuto();
-    }
+    [[nodiscard]] const RaceInputState &currentState() const;
+    [[nodiscard]] const RaceInputState &lastState() const;
+    [[nodiscard]] bool driftIsAuto() const;
 
     /// @endGetters
 
@@ -533,63 +270,14 @@ protected:
 /// @brief A specialized KPad for player input, as opposed to CPU players for example.
 class KPadPlayer final : public KPad {
 public:
-    /// @addr{0x805220BC}
-    /// @brief Default constructor
-    KPadPlayer() = default;
+    KPadPlayer();
+    ~KPadPlayer() override;
 
-    /// @addr{0x805222F4}
-    /// @brief Default virtual destructor
-    ~KPadPlayer() override = default;
+    void setGhostController(KPadGhostController *controller, const u8 *inputs, bool driftIsAuto);
+    void setHostController(KPadHostController *controller, bool driftIsAuto);
 
-    /// @addr{0x80521844}
-    /// @brief Sets the ghost controller and copies input data into the ghost buffer
-    /// @param controller Pointer to the ghost controller to drive this pad
-    /// @param inputs Pointer to the input data to copy into the ghost buffer
-    /// @param driftIsAuto Whether the drift is set to automatic
-    void setGhostController(KPadGhostController *controller, const u8 *inputs, bool driftIsAuto) {
-        m_controller = controller;
-
-        if (inputs) {
-            memcpy(m_ghostBuffer, inputs, RKG_UNCOMPRESSED_INPUT_DATA_SECTION_SIZE);
-        }
-
-        controller->readGhostBuffer(m_ghostBuffer, driftIsAuto);
-    }
-
-    /// @brief Sets the host controller to drive this pad
-    /// @param controller Pointer to the host controller to drive this pad
-    /// @param driftIsAuto Whether the drift is set to automatic
-    void setHostController(KPadHostController *controller, bool driftIsAuto) {
-        m_controller = controller;
-        m_controller->setDriftIsAuto(driftIsAuto);
-    }
-
-    /// @addr{0x805215D4}
-    /// @brief Starts the ghost proxy, allowing the ghost controller to accept inputs
-    /// @details Effectively, this signals when the countdown has started so that inputs should
-    /// start being read from the ghost buffer.
-    void startGhostProxy() {
-        if (!m_controller || m_controller->controlSource() != ControlSource::Ghost) {
-            return;
-        }
-
-        KPadGhostController *ghostController =
-                reinterpret_cast<KPadGhostController *>(m_controller);
-        ghostController->setAcceptingInputs(true);
-    }
-
-    /// @addr{0x80521688}
-    /// @brief Ends the ghost proxy, preventing the ghost controller from accepting inputs
-    /// @details Effectively, this signals when the race has ended.
-    void endGhostProxy() {
-        if (!m_controller || m_controller->controlSource() != ControlSource::Ghost) {
-            return;
-        }
-
-        KPadGhostController *ghostController =
-                reinterpret_cast<KPadGhostController *>(m_controller);
-        ghostController->setAcceptingInputs(false);
-    }
+    void startGhostProxy();
+    void endGhostProxy();
 
 private:
     u8 m_ghostBuffer[RKG_UNCOMPRESSED_INPUT_DATA_SECTION_SIZE]; ///< Buffer storing ghost input data

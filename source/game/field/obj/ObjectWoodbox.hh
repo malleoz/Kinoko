@@ -1,5 +1,6 @@
 #pragma once
 
+#include "game/field/ObjectCollisionBase.hh"
 #include "game/field/obj/ObjectBreakable.hh"
 
 namespace Kinoko::Field {

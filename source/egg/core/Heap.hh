@@ -5,7 +5,6 @@
 #include <abstract/memory/HeapCommon.hh>
 
 #include <list>
-#include <new>
 
 namespace Kinoko {
 
@@ -24,7 +23,7 @@ class ExpHeap;
 class Heap : Disposer {
     /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
     /// state on context switch
-    friend class Host::Context;
+    friend Host::Context;
 
 public:
     enum class Kind {
@@ -36,11 +35,7 @@ public:
     };
 
     Heap(Abstract::Memory::MEMiHeapHead *handle);
-
-    /// @addr{0x80229780}
-    ~Heap() override {
-        s_heapList.remove(this);
-    }
+    ~Heap() override;
 
     virtual void destroy() = 0;
     virtual Kind getHeapKind() const = 0;
@@ -50,72 +45,34 @@ public:
 
     void dispose();
 
-    void disableAllocation() {
-        m_flags.setBit(eFlags::Lock);
-    }
+    void disableAllocation();
+    void enableAllocation();
 
-    void enableAllocation() {
-        m_flags.resetBit(eFlags::Lock);
-    }
+    [[nodiscard]] bool tstDisableAllocation() const;
 
-    [[nodiscard]] bool tstDisableAllocation() const {
-        return m_flags.onBit(eFlags::Lock);
-    }
-
-    void appendDisposer(Disposer *disposer) {
-        m_children.append(disposer);
-    }
-
-    void removeDisposer(Disposer *disposer) {
-        m_children.remove(disposer);
-    }
+    void appendDisposer(Disposer *disposer);
+    void removeDisposer(Disposer *disposer);
 
     Heap *becomeAllocatableHeap();
     Heap *becomeCurrentHeap();
 
-    void registerHeapBuffer(void *buffer) {
-        m_block = buffer;
-    }
+    void registerHeapBuffer(void *buffer);
+    [[nodiscard]] void *getStartAddress();
+    [[nodiscard]] void *getEndAddress();
+    [[nodiscard]] const char *getName() const;
+    [[nodiscard]] Heap *getParentHeap() const;
 
-    [[nodiscard]] void *getStartAddress() {
-        return this;
-    }
+    void setName(const char *name);
+    void setParentHeap(Heap *heap);
 
-    [[nodiscard]] void *getEndAddress() {
-        return m_handle->getHeapEnd();
-    }
-
-    [[nodiscard]] const char *getName() const {
-        return m_name;
-    }
-
-    /// @addr{0x80229AD4}
-    [[nodiscard]] Heap *getParentHeap() const {
-        return m_parentHeap;
-    }
-
-    void setName(const char *name) {
-        m_name = name;
-    }
-
-    void setParentHeap(Heap *heap) {
-        m_parentHeap = heap;
-    }
-
-    static void initialize();
     [[nodiscard]] static void *alloc(size_t size, int align, Heap *pHeap);
     static void free(void *block, Heap *pHeap);
 
     [[nodiscard]] static Heap *findHeap(Abstract::Memory::MEMiHeapHead *handle);
     [[nodiscard]] static Heap *findContainHeap(const void *block);
 
-    [[nodiscard]] static ExpHeap *dynamicCastToExp(Heap *heap) {
-        return heap->getHeapKind() == Kind::Expanded ? reinterpret_cast<ExpHeap *>(heap) : nullptr;
-    }
-
-    [[nodiscard]] static Heap *getCurrentHeap() {
-        return s_currentHeap;
-    }
+    [[nodiscard]] static ExpHeap *dynamicCastToExp(Heap *heap);
+    [[nodiscard]] static Heap *getCurrentHeap();
 
     [[nodiscard]] static constexpr uintptr_t getOffset() {
         // offsetof doesn't work, so instead of hardcoding an offset, we derive it ourselves

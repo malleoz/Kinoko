@@ -2,8 +2,6 @@
 
 #include "game/field/obj/ObjectKCL.hh"
 
-#include "game/system/RaceManager.hh"
-
 namespace Kinoko::Field {
 
 /// @brief Represents the sandcones that grow from the falling sand in the Dry Dry Ruins temple

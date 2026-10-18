@@ -3,6 +3,10 @@
 #include "host/Option.hh"
 
 #include <egg/core/ExpHeap.hh>
+#include <egg/core/SceneManager.hh>
+
+#include <functional>
+#include <unordered_map>
 
 using namespace Kinoko;
 
@@ -26,8 +30,9 @@ static EGG::Heap *s_rootHeap = nullptr; ///< Pointer to the root heap
 
 /// @brief Creates the memory arena and initializes the root heap
 static void InitMemory() {
-    s_memorySpace = malloc(MEMORY_SPACE_SIZE);
-    s_rootHeap = EGG::ExpHeap::create(s_memorySpace, MEMORY_SPACE_SIZE, DEFAULT_OPT);
+    s_memorySpace = malloc(Abstract::Memory::MEMORY_SPACE_SIZE);
+    s_rootHeap = EGG::ExpHeap::create(s_memorySpace, Abstract::Memory::MEMORY_SPACE_SIZE,
+            Abstract::Memory::DEFAULT_OPT);
     s_rootHeap->setName("EGGRoot");
     s_rootHeap->becomeCurrentHeap();
 

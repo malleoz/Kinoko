@@ -2,8 +2,9 @@
 
 #include <Common.hh>
 
+#include "egg/core/Heap.hh"
+
 #include <abstract/Archive.hh>
-#include <abstract/memory/List.hh>
 
 namespace Kinoko {
 
@@ -25,13 +26,12 @@ namespace EGG {
 class Archive : Disposer {
     /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
     /// state on context switch
-    friend class Host::Context;
+    friend Host::Context;
 
 public:
     void unmount();
-    [[nodiscard]] s32 convertPathToEntryId(const char *path) const;
     void *getFileFast(s32 entryId, Abstract::ArchiveHandle::FileInfo &info) const;
-
+    [[nodiscard]] s32 convertPathToEntryId(const char *path) const;
     [[nodiscard]] static Archive *FindArchive(void *archiveStart);
     [[nodiscard]] static Archive *Mount(void *archiveStart);
 
@@ -41,13 +41,10 @@ private:
     Archive(void *archiveStart);
     ~Archive();
 
-    [[nodiscard]] static constexpr uintptr_t GetLinkOffset() {
-        // offsetof doesn't work, so instead of hardcoding an offset, we derive it ourselves
-        return reinterpret_cast<uintptr_t>(&reinterpret_cast<Archive *>(NULL)->m_link);
-    }
+    [[nodiscard]] static constexpr uintptr_t GetLinkOffset();
 
-    Abstract::ArchiveHandle m_handle;
-    s32 m_refCount = 1;
+    const Abstract::ArchiveHandle m_handle;
+    s32 m_refCount;
     Abstract::Memory::MEMLink m_link;
 
     static Abstract::Memory::MEMList s_archiveList; ///< The linked list of all mounted archives.

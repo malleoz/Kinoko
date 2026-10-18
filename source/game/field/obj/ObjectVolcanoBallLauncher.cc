@@ -1,9 +1,12 @@
 #include "ObjectVolcanoBallLauncher.hh"
 
+#include "game/field/Rail.hh"
+#include "game/field/RailInterpolator.hh"
 #include "game/field/RailManager.hh"
 #include "game/field/obj/ObjectVolcanoBall.hh"
 
 #include "game/system/RaceManager.hh"
+#include "game/system/map/MapdataGeoObj.hh"
 
 namespace Kinoko::Field {
 

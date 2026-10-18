@@ -1,8 +1,10 @@
 #include "ObjectHitTable.hh"
 
-#include "game/kart/KartCollide.hh"
+#include "game/kart/Reaction.hh"
 
 #include "game/system/ResourceManager.hh"
+
+#include <egg/util/Stream.hh>
 
 namespace Kinoko::Field {
 

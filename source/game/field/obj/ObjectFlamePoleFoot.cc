@@ -1,6 +1,11 @@
 #include "ObjectFlamePoleFoot.hh"
 
 #include "game/field/CollisionDirector.hh"
+#include "game/field/ObjColMgr.hh"
+#include "game/field/obj/ObjectFlamePole.hh"
+
+#include "game/system/RaceManager.hh"
+#include "game/system/map/MapdataGeoObj.hh"
 
 #include <algorithm>
 

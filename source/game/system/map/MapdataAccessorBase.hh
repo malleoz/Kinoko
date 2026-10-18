@@ -1,8 +1,7 @@
 #pragma once
 
 #include <Common.hh>
-
-#include <egg/core/Heap.hh>
+#include <Types.hh>
 
 namespace Kinoko::System {
 

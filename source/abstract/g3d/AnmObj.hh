@@ -4,7 +4,15 @@
 
 // Credit: kiwi515/ogws
 
-namespace Kinoko::Abstract::g3d {
+namespace Kinoko {
+
+namespace Host {
+
+class Context;
+
+} // namespace Host
+
+namespace Abstract::g3d {
 
 enum class AnmPolicy : u32 {
     OneTime = 0,
@@ -32,7 +40,7 @@ typedef f32 (*PlayPolicyFunc)(f32 start, f32 end, f32 frame);
 class FrameCtrl {
     /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
     /// state on context switch
-    friend class Host::Context;
+    friend Host::Context;
 
 public:
     FrameCtrl(f32 start, f32 end, PlayPolicyFunc policy)
@@ -78,7 +86,7 @@ public:
         ASSERT(func);
         m_playPolicy = func;
     }
-    
+
     /// @endSetters
 
 private:
@@ -91,4 +99,6 @@ private:
     static f32 s_baseUpdateRate;
 };
 
-} // namespace Kinoko::Abstract::g3d
+} // namespace Abstract::g3d
+
+} // namespace Kinoko

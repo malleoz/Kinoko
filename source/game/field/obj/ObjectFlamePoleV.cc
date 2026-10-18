@@ -1,5 +1,8 @@
 #include "ObjectFlamePoleV.hh"
 
+#include "game/system/RaceManager.hh"
+#include "game/system/map/MapdataGeoObj.hh"
+
 namespace Kinoko::Field {
 
 /// @addr{0x806C3AA4}

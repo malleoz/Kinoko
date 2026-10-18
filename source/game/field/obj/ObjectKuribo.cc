@@ -2,6 +2,12 @@
 
 #include "game/field/CollisionDirector.hh"
 #include "game/field/KColData.hh"
+#include "game/field/RailInterpolator.hh"
+
+#include "game/render/AnmMgr.hh"
+#include "game/render/DrawMdl.hh"
+
+#include "game/system/map/MapdataGeoObj.hh"
 
 namespace Kinoko::Field {
 

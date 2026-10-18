@@ -2,6 +2,7 @@
 
 #include <Common.hh>
 
+#include <array>
 #include <cmath>
 
 // frsqrte matching courtesy of Geotale, with reference to https://achurch.org/cpu-tests/ppc750cl.s

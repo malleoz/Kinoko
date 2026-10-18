@@ -1,5 +1,17 @@
 #include "CourseMap.hh"
 
+#include "game/system/ResourceManager.hh"
+#include "game/system/map/MapdataArea.hh"
+#include "game/system/map/MapdataCannonPoint.hh"
+#include "game/system/map/MapdataCheckPath.hh"
+#include "game/system/map/MapdataCheckPoint.hh"
+#include "game/system/map/MapdataFileAccessor.hh"
+#include "game/system/map/MapdataGeoObj.hh"
+#include "game/system/map/MapdataJugemPoint.hh"
+#include "game/system/map/MapdataPointInfo.hh"
+#include "game/system/map/MapdataStageInfo.hh"
+#include "game/system/map/MapdataStartPoint.hh"
+
 namespace Kinoko::System {
 
 /// @addr{0x805127EC}
@@ -92,6 +104,346 @@ s16 CourseMap::findSector(const EGG::Vector3f &pos, u16 checkpointIdx, f32 &dist
     return id > -1 ? id : findSectorRegional(pos, checkpoint, distanceRatio);
 }
 
+/// @addr{0x80511E7C}
+/// @brief Finds at what frame subdivision of a frame the kart entered the checkpoint
+/// @param i Index of the checkpoint.
+/// @param pos Current position of the kart.
+/// @param prevPos Previous position of the kart.
+/// @return Entry offset in milliseconds for the specified checkpoint.
+/// @details This assumes the player is entering the checkpoint as intended, and not from the
+/// side.
+u16 CourseMap::getCheckPointEntryOffsetMs(u16 i, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos) const {
+    EGG::Vector2f prevPosXZ = EGG::Vector2f(prevPos.x, prevPos.z);
+    EGG::Vector2f posXZ = EGG::Vector2f(pos.x, pos.z);
+
+    const MapdataCheckPoint *checkPoint = getCheckPoint(i);
+    ASSERT(checkPoint);
+    return checkPoint->getEntryOffsetMs(prevPosXZ, posXZ);
+}
+
+/// @brief Finds at what fractional millisecond of a frame the player enters the checkpoint
+/// @param i Index of the checkpoint.
+/// @param pos Current position of the kart.
+/// @param prevPos Previous position of the kart.
+/// @return Entry offset in fractional milliseconds for the specified checkpoint.
+/// @details This assumes the player is entering the checkpoint as intended, and not from the
+/// side. This function isn't in the base game, but it can be used to determine improvements to
+/// runs.
+f32 CourseMap::getCheckPointEntryOffsetExact(u16 i, const EGG::Vector3f &pos,
+        const EGG::Vector3f &prevPos) const {
+    EGG::Vector2f prevPosXZ = EGG::Vector2f(prevPos.x, prevPos.z);
+    EGG::Vector2f posXZ = EGG::Vector2f(pos.x, pos.z);
+
+    const MapdataCheckPoint *checkPoint = getCheckPoint(i);
+    ASSERT(checkPoint);
+    return checkPoint->getEntryOffsetExact(prevPosXZ, posXZ);
+}
+
+/// @addr{0x80516808}
+/// @brief Gets the ID of the current area that contains the given position, if any
+/// @param i The index of the area to check first
+/// @param pos The position to check
+/// @param type The type of area to search for
+/// @return The ID of the area containing the position, or -1 if not found
+s16 CourseMap::getCurrentAreaID(s16 i, const EGG::Vector3f &pos, MapdataAreaBase::Type type) const {
+    // Check if we're colliding with the provided area ID
+    if (i >= 0) {
+        const MapdataAreaBase *area = getArea(i);
+        if (area->type() == type && area->test(pos)) {
+            return i;
+        }
+    }
+
+    // Search all areas of the same type
+    for (i = 0; i < getAreaCount(); ++i) {
+        const MapdataAreaBase *area = getAreaSorted(i);
+        if (area->type() == type && area->test(pos)) {
+            return area->index();
+        }
+    }
+
+    return -1;
+}
+
+/// @brief Identifies whether the entries in the `KTPT` section of the KMP contain a player
+/// index
+/// @return `true` if the KMP version is @ref REVISION_PLAYER_IDX or later, `false` otherwise.
+/// @details Player indices were introduced to this section starting from revision 1830 of the
+/// KMP file format.
+bool CourseMap::hasPlayerIdx() const {
+    return version() >= REVISION_PLAYER_IDX;
+}
+
+/// @brief Identifies whether the entries in the `AREA` section of the KMP contain a rail index
+/// @return `true` if the KMP version is @ref REVISION_RAIL_IDX or later, `false` otherwise.
+/// @details Rail indices were introduced to this section starting from revision 2200 of the KMP
+/// file format.
+bool CourseMap::hasRailIdx() const {
+    return version() >= REVISION_RAIL_IDX;
+}
+
+/// @brief Fetches the check path accessor
+/// @return A pointer to the check path accessor, @ref m_checkPath
+MapdataCheckPathAccessor *CourseMap::checkPathAccessor() const {
+    return m_checkPath;
+}
+
+/// @brief Fetches the check point accessor
+/// @return A pointer to the check point accessor, @ref m_checkPoint
+MapdataCheckPointAccessor *CourseMap::checkPointAccessor() const {
+    return m_checkPoint;
+}
+
+/// @addr{0x80518AE0}
+/// @brief Fetches the cannon point at the given index
+/// @param i Index of the cannon point
+/// @return A const pointer to the cannon point at the given index in @ref m_cannonPoint
+const MapdataCannonPoint *CourseMap::getCannonPoint(u16 i) const {
+    return i < getCannonPointCount() ? m_cannonPoint->get(i) : nullptr;
+}
+
+/// @addr{0x80515C70}
+/// @brief Fetches the check path at the given index
+/// @param i Index of the check path
+/// @return A const pointer to the check path at the given index in @ref m_checkPath
+const MapdataCheckPath *CourseMap::getCheckPath(u16 i) const {
+    return i < getCheckPathCount() ? m_checkPath->get(i) : nullptr;
+}
+
+/// @addr{0x80515C24}
+/// @brief Fetches the check point at the given index
+/// @param i Index of the check point
+/// @return A pointer to the check point at the given index in @ref m_checkPoint
+MapdataCheckPoint *CourseMap::getCheckPoint(u16 i) {
+    return i < getCheckPointCount() ? m_checkPoint->get(i) : nullptr;
+}
+
+/// @addr{0x80515C24}
+/// @brief Fetches the check point at the given index
+/// @param i Index of the check point
+/// @return A const pointer to the check point at the given index in @ref m_checkPoint
+const MapdataCheckPoint *CourseMap::getCheckPoint(u16 i) const {
+    return i < getCheckPointCount() ? m_checkPoint->get(i) : nullptr;
+}
+
+/// @addr{0x80514148}
+/// @brief Fetches the geo object at the given index
+/// @param i Index of the geo object
+/// @return A const pointer to the geo object at the given index in @ref m_geoObj
+const MapdataGeoObj *CourseMap::getGeoObj(u16 i) const {
+    return i < getGeoObjCount() ? m_geoObj->get(i) : nullptr;
+}
+
+/// @addr{0x80516768}
+/// @brief Fetches the area at the given index
+/// @param i Index of the area
+/// @return A const pointer to the area at the given index in @ref m_area
+const MapdataAreaBase *CourseMap::getArea(u16 i) const {
+    return i < getAreaCount() ? m_area->get(i) : nullptr;
+}
+
+/// @addr{0x805167B4}
+/// @brief Fetches the sorted area at the given index
+/// @param i Index of the sorted area
+/// @return A const pointer to the sorted area at the given index in @ref m_area
+const MapdataAreaBase *CourseMap::getAreaSorted(u16 i) const {
+    return i < getAreaCount() ? m_area->getSorted(i) : nullptr;
+}
+
+/// @addr{0x80515E04}
+/// @brief Fetches the point info at the given index
+/// @param i Index of the point info
+/// @return A const pointer to the point info at the given index in @ref m_pointInfo
+const MapdataPointInfo *CourseMap::getPointInfo(u16 i) const {
+    return i < getPointInfoCount() ? m_pointInfo->get(i) : nullptr;
+}
+
+/// @addr{0x80518920}
+/// @brief Fetches the respawn point at the given index
+/// @param i Index of the respawn point
+/// @return A const pointer to the respawn point at the given index in @ref m_jugemPoint
+const MapdataJugemPoint *CourseMap::getJugemPoint(u16 i) const {
+    return i < getJugemPointCount() ? m_jugemPoint->get(i) : nullptr;
+}
+
+/// @addr{0x80518B78}
+/// @brief Fetches the stage info
+/// @return A const pointer to the stage info at index 0 in @ref m_stageInfo
+const MapdataStageInfo *CourseMap::getStageInfo() const {
+    return getStageInfoCount() != 0 ? m_stageInfo->get(0) : nullptr;
+}
+
+/// @addr{0x80514B30}
+/// @brief Fetches the start point at the given index
+/// @param i Index of the start point
+/// @return A const pointer to the start point at the given index in @ref m_startPoint
+const MapdataStartPoint *CourseMap::getStartPoint(u16 i) const {
+    return i < getStartPointCount() ? m_startPoint->get(i) : nullptr;
+}
+
+/// @brief Fetches the number of cannon points
+/// @return The number of cannon points in @ref m_cannonPoint
+u16 CourseMap::getCannonPointCount() const {
+    return m_cannonPoint ? m_cannonPoint->size() : 0;
+}
+
+/// @brief Fetches the number of check paths
+/// @return The number of check paths in @ref m_checkPath
+u16 CourseMap::getCheckPathCount() const {
+    return m_checkPath ? m_checkPath->size() : 0;
+}
+
+/// @brief Fetches the number of check points
+/// @return The number of check points in @ref m_checkPoint
+u16 CourseMap::getCheckPointCount() const {
+    return m_checkPoint ? m_checkPoint->size() : 0;
+}
+
+/// @brief Fetches the number of geo objects
+/// @return The number of geo objects in @ref m_geoObj
+u16 CourseMap::getGeoObjCount() const {
+    return m_geoObj ? m_geoObj->size() : 0;
+}
+
+/// @addr{0x80512CB4}
+/// @brief Fetches the number of areas
+/// @return The number of areas in @ref m_area
+u16 CourseMap::getAreaCount() const {
+    return m_area ? m_area->size() : 0;
+}
+
+/// @brief Fetches the number of point infos
+/// @return The number of point infos in @ref m_pointInfo
+u16 CourseMap::getPointInfoCount() const {
+    return m_pointInfo ? m_pointInfo->size() : 0;
+}
+
+/// @brief Fetches the number of respawn points
+/// @return The number of respawn points in @ref m_jugemPoint
+u16 CourseMap::getJugemPointCount() const {
+    return m_jugemPoint ? m_jugemPoint->size() : 0;
+}
+
+/// @brief Fetches the number of stage infos
+/// @return The number of stage infos in @ref m_stageInfo
+u16 CourseMap::getStageInfoCount() const {
+    return m_stageInfo ? m_stageInfo->size() : 0;
+}
+
+/// @brief Fetches the number of start points
+/// @return The number of start points in @ref m_startPoint
+u16 CourseMap::getStartPointCount() const {
+    return m_startPoint ? m_startPoint->size() : 0;
+}
+
+/// @brief Gets the version of this KMP file
+/// @return The version of this KMP file
+u32 CourseMap::version() const {
+    return m_header->version();
+}
+
+/// @brief Gets the angle of diagonal rows relative to the pole position
+/// @return The angle of diagonal rows relative to the pole position
+f32 CourseMap::skewAngle() const {
+    return m_skewAngle;
+}
+
+/// @brief Fetches the side-to-side spacing between karts in the same starting row
+/// @return The side-to-side spacing between karts in the same starting row
+f32 CourseMap::lateralSpacing() const {
+    return m_lateralSpacing;
+}
+
+/// @brief Fetches the front-to-back spacing between karts in the same starting row
+/// @return The front-to-back spacing between karts in the same starting row
+f32 CourseMap::longitudinalSpacing() const {
+    return m_longitudinalSpacing;
+}
+
+/// @brief Fetches the front-to-back offset of the starting row
+/// @return The front-to-back offset of the starting row
+f32 CourseMap::longitudinalOffset() const {
+    return m_longitudinalOffset;
+}
+
+/// @brief Fetches the wide front-to-back offset of the starting row
+/// @return The wide front-to-back offset of the starting row
+f32 CourseMap::longitudinalWideOffset() const {
+    return m_longitudinalWideOffset;
+}
+
+/// @addr{0x80512694}
+/// @brief Creates the singleton instance of the @ref CourseMap
+/// @return A pointer to the newly created @ref CourseMap instance
+/// @pre The singleton instance of the @ref CourseMap does not already exist
+CourseMap *CourseMap::CreateInstance() {
+    ASSERT(!s_instance);
+    s_instance = EGG::egg_new<CourseMap>();
+    return s_instance;
+}
+
+/// @addr{0x8051271C}
+/// @brief Destroys the singleton instance of the @ref CourseMap
+/// @pre The singleton instance of the @ref CourseMap exists
+void CourseMap::DestroyInstance() {
+    ASSERT(s_instance);
+    auto *instance = s_instance;
+    s_instance = nullptr;
+    EGG::egg_delete(instance);
+}
+
+/// @brief Returns the singleton instance of the @ref CourseMap
+/// @return A pointer to the singleton instance of the @ref CourseMap
+CourseMap *CourseMap::Instance() {
+    return s_instance;
+}
+
+/// @addr{0x8051276C}
+/// @brief Private constructor
+/// @details Initializes @ref m_header, @ref m_startPoint, and @ref m_stageInfo to `nullptr`.
+/// Sets @ref m_skewAngle, @ref m_lateralSpacing, @ref m_longitudinalSpacing, @ref
+/// m_longitudinalOffset, and @ref m_longitudinalWideOffset to zero.
+CourseMap::CourseMap()
+    : m_header(nullptr),
+      m_startPoint(nullptr),
+      m_stageInfo(nullptr),
+      m_skewAngle(0.0f),
+      m_lateralSpacing(0.0f),
+      m_longitudinalSpacing(0.0f),
+      m_longitudinalOffset(0.0f),
+      m_longitudinalWideOffset(0.0f) {}
+
+/// @addr{0x805127AC}
+/// @brief Private destructor that destroys the accessors to the `course.kmp` sections
+CourseMap::~CourseMap() {
+    if (s_instance) {
+        s_instance = nullptr;
+        WARN("CourseMap instance not explicitly handled!");
+    }
+
+    EGG::egg_delete(m_header);
+    EGG::egg_delete(m_startPoint);
+    EGG::egg_delete(m_checkPath);
+    EGG::egg_delete(m_checkPoint);
+    EGG::egg_delete(m_pointInfo);
+    EGG::egg_delete(m_geoObj);
+    EGG::egg_delete(m_area);
+    EGG::egg_delete(m_jugemPoint);
+    EGG::egg_delete(m_cannonPoint);
+    EGG::egg_delete(m_stageInfo);
+}
+
+/// @addr{0x80511E00}
+/// @brief Clears the sector checked status for all checkpoints
+/// @details Iterates all checkpoints, calling @ref
+/// MapdataCheckPointAccessor::clearSearched() on each one.
+void CourseMap::clearSectorChecked() {
+    for (size_t i = 0; i < m_checkPoint->size(); ++i) {
+        getCheckPoint(i)->clearSearched();
+    }
+}
+
 /// @addr{0x80511110}
 /// @brief Recursively depth-first searches for the sector (checkpoint) that contains the position
 /// @param pos The position to check
@@ -181,52 +533,6 @@ s16 CourseMap::findRecursiveSector(const EGG::Vector3f &pos, s16 depth, bool sea
     // If that fails, search forwards, excluding checkpoints already searched
     return id == -1 ? searchNextCheckpoint(pos, depth, checkpoint, distanceRatio, forward, true) :
                       id;
-}
-
-/// @addr{0x80516808}
-/// @brief Gets the ID of the current area that contains the given position, if any
-/// @param i The index of the area to check first
-/// @param pos The position to check
-/// @param type The type of area to search for
-/// @return The ID of the area containing the position, or -1 if not found
-s16 CourseMap::getCurrentAreaID(s16 i, const EGG::Vector3f &pos, MapdataAreaBase::Type type) const {
-    // Check if we're colliding with the provided area ID
-    if (i >= 0) {
-        const MapdataAreaBase *area = getArea(i);
-        if (area->type() == type && area->test(pos)) {
-            return i;
-        }
-    }
-
-    // Search all areas of the same type
-    for (i = 0; i < getAreaCount(); ++i) {
-        const MapdataAreaBase *area = getAreaSorted(i);
-        if (area->type() == type && area->test(pos)) {
-            return area->index();
-        }
-    }
-
-    return -1;
-}
-
-/// @addr{0x805127AC}
-/// @brief Private destructor that destroys the accessors to the `course.kmp` sections
-CourseMap::~CourseMap() {
-    if (s_instance) {
-        s_instance = nullptr;
-        WARN("CourseMap instance not explicitly handled!");
-    }
-
-    EGG::egg_delete(m_header);
-    EGG::egg_delete(m_startPoint);
-    EGG::egg_delete(m_checkPath);
-    EGG::egg_delete(m_checkPoint);
-    EGG::egg_delete(m_pointInfo);
-    EGG::egg_delete(m_geoObj);
-    EGG::egg_delete(m_area);
-    EGG::egg_delete(m_jugemPoint);
-    EGG::egg_delete(m_cannonPoint);
-    EGG::egg_delete(m_stageInfo);
 }
 
 /// @brief Searches for the sector containing the given position when the player is @ref
@@ -497,6 +803,28 @@ s16 CourseMap::searchPrevCheckpoint(const EGG::Vector3f &pos, s16 depth,
     }
 
     return id;
+}
+
+/// @brief Parses a section of the `course.kmp` file and returns an instance of the
+/// specified map data accessor type
+/// @tparam T The type of map data accessor to parse. Must be derived from @ref
+/// MapdataAccessorBase.
+/// @param sectionName Signature of the section to parse.
+/// @return Pointer to an instance of the specified map data accessor type, or `nullptr` if
+/// the section is not found.
+template <MapdataDerived T>
+T *CourseMap::parseMapdata(u32 sectionName) const {
+    const MapSectionHeader *sectionPtr = m_header->findSection(sectionName);
+    return sectionPtr ? EGG::egg_new<T>(sectionPtr) : nullptr;
+}
+
+/// @addr{0x80512C10}
+/// @brief Loads a course KMP file into memory
+/// @param filename The name of the course KMP file to load
+/// @return A span over the loaded file data, or an empty span if the file could not be
+/// loaded
+std::span<const u8> CourseMap::LoadFile(const char *filename) {
+    return ResourceManager::Instance()->getFile(filename, ArchiveId::Course);
 }
 
 CourseMap *CourseMap::s_instance = nullptr;

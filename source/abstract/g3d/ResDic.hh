@@ -2,8 +2,6 @@
 
 #include <Common.hh>
 
-#include <cstring>
-
 // Credit: kiwi515/ogws
 
 namespace Kinoko::Abstract::g3d {
@@ -28,33 +26,10 @@ public:
     };
 
     ResDic(const void *data);
+    ~ResDic();
 
-    /// @addr{0x8004C050}
-    [[nodiscard]] void *operator[](const char *name) const {
-        if (!m_data || !name) {
-            return nullptr;
-        }
-
-        const NodeData *node = get(name, std::strlen(name));
-
-        if (node) {
-            return reinterpret_cast<void *>(
-                    reinterpret_cast<uintptr_t>(m_data) + parse<s32>(node->ofsData));
-        }
-
-        return nullptr;
-    }
-
-    [[nodiscard]] void *operator[](size_t idx) const {
-        if (!m_data) {
-            return nullptr;
-        }
-
-        const NodeData *node = &m_data->data[idx + 1];
-
-        return reinterpret_cast<void *>(
-                reinterpret_cast<uintptr_t>(m_data) + parse<s32>(node->ofsData));
-    }
+    [[nodiscard]] void *operator[](const char *name) const;
+    [[nodiscard]] void *operator[](size_t idx) const;
 
 private:
     [[nodiscard]] const NodeData *get(const char *pName, u32 len) const;

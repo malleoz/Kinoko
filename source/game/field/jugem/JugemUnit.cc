@@ -6,6 +6,7 @@
 #include "game/field/jugem/JugemSwitch.hh"
 
 #include "game/kart/KartMove.hh"
+#include "game/kart/KartObject.hh"
 
 namespace Kinoko::Field {
 

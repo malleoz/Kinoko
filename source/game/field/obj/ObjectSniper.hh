@@ -1,10 +1,13 @@
 #pragma once
 
-#include "game/field/RailManager.hh"
-#include "game/field/obj/ObjectProjectile.hh"
-#include "game/field/obj/ObjectProjectileLauncher.hh"
+#include <Types.hh>
+
+#include "game/field/obj/ObjectCollidable.hh"
 
 namespace Kinoko::Field {
+
+class ObjectProjectile;
+class ObjectProjectileLauncher;
 
 /// @brief The base class for a manager object which is responsible for synchronizing a set of
 /// projectiles and a projectile launcher.

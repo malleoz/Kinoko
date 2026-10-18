@@ -1,12 +1,17 @@
 #pragma once
 
-#include "game/field/ObjectCollisionSphere.hh"
 #include "game/field/StateManager.hh"
 #include "game/field/obj/ObjectCollidable.hh"
 
-#include "game/kart/KartCollide.hh"
+namespace Kinoko {
 
-namespace Kinoko::Field {
+namespace Kart {
+
+enum class Reaction;
+
+} // namespace Kart
+
+namespace Field {
 
 class ObjectChoropuGround;
 class ObjectChoropuHoll;
@@ -104,4 +109,6 @@ private:
     static constexpr f32 RADIUS = 300.0f; ///< Radius of the collision sphere for the mole's hole
 };
 
-} // namespace Kinoko::Field
+} // namespace Field
+
+} // namespace Kinoko

@@ -1,8 +1,22 @@
 #include "ResAnmChr.hh"
 
+#include "abstract/g3d/ResDic.hh"
+
 // Credit: kiwi515/ogws
 
 namespace Kinoko::Abstract::g3d {
+
+ResAnmChr::ResAnmChr(const void *data) : m_rawData(reinterpret_cast<const Data *>(data)) {
+    EGG::RamStream stream = EGG::RamStream(data, sizeof(Data));
+    read(stream);
+}
+
+ResAnmChr::~ResAnmChr() = default;
+
+void ResAnmChr::read(EGG::Stream &stream) {
+    stream.jump(offsetof(Data, info));
+    m_infoData.read(stream);
+}
 
 /// @addr{0x80055540}
 ChrAnmResult ResAnmChr::getAnmResult(f32 frame, size_t idx) const {
@@ -29,6 +43,14 @@ ChrAnmResult ResAnmChr::getAnmResult(f32 frame, size_t idx) const {
     (*s_getAnmResultTable[index])(frame, result, m_infoData, data);
 
     return result;
+}
+
+u16 ResAnmChr::frameCount() const {
+    return m_infoData.numFrame;
+}
+
+AnmPolicy ResAnmChr::policy() const {
+    return m_infoData.policy;
 }
 
 /// @brief Animation keyframe

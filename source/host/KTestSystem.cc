@@ -2,7 +2,15 @@
 
 #include "host/SceneCreatorDynamic.hh"
 
+#include <abstract/File.hh>
+
+#include "egg/core/Scene.hh"
+#include <egg/core/SceneManager.hh>
+
+#include <game/kart/KartObject.hh>
 #include <game/kart/KartObjectManager.hh>
+
+#include <game/system/RaceConfig.hh>
 #include <game/system/RaceManager.hh>
 
 namespace Kinoko {
@@ -36,6 +44,11 @@ void KTestSystem::init() {
 
     startNextTestCase();
     m_sceneMgr->changeScene(0);
+}
+
+/// @brief Executes a frame
+void KTestSystem::calc() {
+    m_sceneMgr->calc();
 }
 
 /// @brief Executes a run
@@ -161,6 +174,131 @@ void KTestSystem::parseOptions(int argc, char **argv) {
     }
 }
 
+/// @brief Creates the singleton instance of the @ref KTestSystem
+/// @return A pointer to the newly created @ref KTestSystem instance
+/// @pre The singleton instance of the @ref KTestSystem has not been created yet.
+KTestSystem *KTestSystem::CreateInstance() {
+    ASSERT(!s_instance);
+    s_instance = EGG::egg_new<KTestSystem>();
+    return static_cast<KTestSystem *>(s_instance);
+}
+
+/// @brief Destroys the singleton instance of the @ref KTestSystem
+/// @pre The singleton instance of the @ref KTestSystem has already been created.
+void KTestSystem::DestroyInstance() {
+    ASSERT(s_instance);
+    auto *instance = s_instance;
+    s_instance = nullptr;
+    EGG::egg_delete(instance);
+}
+
+/// @brief Returns the singleton instance of the @ref KTestSystem
+/// @return A pointer to the singleton instance of the @ref KTestSystem
+KTestSystem *KTestSystem::Instance() {
+    return static_cast<KTestSystem *>(s_instance);
+}
+
+/// @brief Default private constructor
+/// @details Initializes @ref m_testMode to @ref Host::EOption::Invalid.
+KTestSystem::KTestSystem() : m_testMode(Host::EOption::Invalid) {}
+
+/// @brief Private virtual destructor
+KTestSystem::~KTestSystem() {
+    if (s_instance) {
+        s_instance = nullptr;
+        WARN("KTestSystem instance not explicitly handled!");
+    }
+}
+
+/// @brief Checks for equivalence between two values of integral type `T` and reports a
+/// desynchronization if they differ
+/// @tparam T The integral type of the values to check for equivalence
+/// @param t0 The first value to compare
+/// @param t1 The second value to compare
+/// @param name The name of the datapoint being checked
+/// @details If the two types do not match, then reports the desync and sets @ref m_sync to
+/// false.
+template <IntegralType T>
+void KTestSystem::checkDesync(const T &t0, const T &t1, const char *name) {
+    if (t0 == t1) {
+        return;
+    }
+
+    if (m_sync) {
+        REPORT("Test Case Failed: %s [%d / %d]", getCurrentTestCase().name.c_str(), m_currentFrame,
+                m_frameCount);
+    }
+
+    REPORT("DESYNC! Name: %s", name);
+    REPORT("Expected: %d", t0);
+    REPORT("Observed: %d", t1);
+
+    m_sync = false;
+}
+
+/// @brief Checks for equivalence between two values of type `T` and reports a
+/// desynchronization if they differ
+/// @tparam T The type of the values to check for equivalence
+/// @param t0 The first value to compare
+/// @param t1 The second value to compare
+/// @param name The name of the datapoint being checked
+/// @details If the two types do not match, then reports the desync and sets @ref m_sync to
+/// false. This function differs from the other templated version in that it handles
+/// non-integral types that can be converted to `std::string`.
+template <typename T>
+void KTestSystem::checkDesync(const T &t0, const T &t1, const char *name) {
+    if (t0 == t1) {
+        return;
+    }
+
+    m_sceneMgr->currentScene()->heap()->enableAllocation();
+
+    if (m_sync) {
+        REPORT("Test Case Failed: %s [%d / %d]", getCurrentTestCase().name.c_str(), m_currentFrame,
+                m_frameCount);
+    }
+
+    REPORT("DESYNC! Name: %s", name);
+    std::string s0(t0);
+    std::string s1(t1);
+    REPORT("Expected: %s", s0.c_str());
+    REPORT("Observed: %s", s1.c_str());
+
+    m_sceneMgr->currentScene()->heap()->disableAllocation();
+
+    m_sync = false;
+}
+
+/// @brief Checks for equivalence between two floating point numbers and reports a
+/// desynchronization if they differ
+/// @param t0 The first value to compare
+/// @param t1 The second value to compare
+/// @param name The name of the datapoint being checked
+/// @details If the two types do not match, then reports the desync and sets @ref m_sync to
+/// false. Reports the value of the floats both as raw hexadecimal and as a numeric string.
+void KTestSystem::checkDesync(const f32 &t0, const f32 &t1, const char *name) {
+    if (t0 == t1) {
+        return;
+    }
+
+    m_sceneMgr->currentScene()->heap()->enableAllocation();
+
+    if (m_sync) {
+        REPORT("Test Case Failed: %s [%d / %d]", getCurrentTestCase().name.c_str(), m_currentFrame,
+                m_frameCount);
+    }
+
+    REPORT("DESYNC! Name: %s", name);
+    std::string s0 = std::to_string(t0);
+    std::string s1 = std::to_string(t1);
+    REPORT("Expected: 0x%08X | %s", f2u(t0), s0.c_str());
+    REPORT("Observed: 0x%08X | %s", f2u(t1), s1.c_str());
+
+    m_sceneMgr->currentScene()->heap()->disableAllocation();
+
+    m_sync = false;
+}
+
 /// @brief Initializes the test suite by reading the KRKG file and generating the list of test cases
 /// @details Validates that the header and footer signatures are present in the file. Validates that
 /// the `.krkg` file version is supported by the Kinoko executable. Validates that `.rkg` and
@@ -256,6 +394,16 @@ void KTestSystem::startNextTestCase() {
 
         front.targetFrame = std::min(front.targetFrame, m_frameCount);
     }
+}
+
+/// @brief Pops the current test case and frees the KRKG buffer.
+/// @return `true` if the queue still has elements remaining, `false` otherwise
+bool KTestSystem::popTestCase() {
+    ASSERT(m_testCases.size() > 0);
+    m_testCases.pop();
+    EGG::egg_free(m_stream.data());
+
+    return !m_testCases.empty();
 }
 
 /// @brief Checks one frame in the test.
@@ -387,6 +535,54 @@ void KTestSystem::testFrame(const TestData &data) {
         checkDesync(data.pos, pos, "pos");
         checkDesync(data.fullRot, fullRot, "fullRot");
     }
+}
+
+/// @brief Runs a single test case, and ends when the test is finished or when a desync is
+/// found.
+/// @return `true` if the run synchronized, `false` is the run desynced.
+/// @details This will also accumulate results in results.txt.
+bool KTestSystem::runTest() {
+    while (calcTest()) {
+        calc();
+    }
+
+    // TODO: Use a system heap! std::string relies on heap allocation
+    // The heap is destroyed after this and there is no further allocation, so it's not
+    // re-disabled
+    m_sceneMgr->currentScene()->heap()->enableAllocation();
+    writeTestOutput();
+    return m_sync;
+}
+
+/// @brief Writes details about the current test to file.
+/// @details This is designed to be cumulative across multiple tests.
+void KTestSystem::writeTestOutput() const {
+    std::string outStr(getCurrentTestCase().name.data());
+    outStr += "\n" + std::string(m_sync ? "1" : "0") + "\n";
+    outStr += std::to_string(getCurrentTestCase().targetFrame) + "\n";
+    outStr += std::to_string(m_frameCount) + "\n";
+    Abstract::File::Append("results.txt", outStr.c_str(), outStr.size());
+}
+
+/// @brief Gets the current test case.
+/// @return The current test case.
+/// @details In the event that there is no active test case, this gets the next test case.
+/// @pre There is at least one test case in the queue.
+const KTestSystem::TestCase &KTestSystem::getCurrentTestCase() const {
+    ASSERT(!m_testCases.empty());
+    return m_testCases.front();
+}
+
+/// @brief Initializes the race configuration as needed for test cases.
+/// @param config The race configuration instance.
+/// @details Calls @ref System::RaceConfig::setGhost() with the current test case's RKG
+/// filepath and changes the player type to `Ghost`.
+void KTestSystem::OnInit(System::RaceConfig *config, void * /* arg */) {
+    std::span<const u8> rkg = Abstract::File::Load(Instance()->getCurrentTestCase().rkgPath.data());
+    config->setGhost(rkg.data());
+    EGG::egg_free(const_cast<u8 *>(rkg.data()));
+
+    config->raceScenario().players[0].type = System::RaceConfig::Player::Type::Ghost;
 }
 
 } // namespace Kinoko

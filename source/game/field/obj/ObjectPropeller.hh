@@ -1,9 +1,10 @@
 #pragma once
 
-#include "game/field/ObjectCollisionCylinder.hh"
 #include "game/field/obj/ObjectCollidable.hh"
 
 namespace Kinoko::Field {
+
+class ObjectCollisionCylinder;
 
 /// @brief Rotating Koopa shell lasers on Koopa Cape
 /// @details The shell itself has cylindrical collision, and each of the three blades has its own

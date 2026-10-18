@@ -3,16 +3,10 @@
 /// @file Types.hh
 /// @brief Defines common types used throughout the Kinoko project
 
-#include <Logger.hh>
-
 #include <egg/core/Allocator.hh>
 
-#include <cstdint>
 #include <deque>
-#include <list>
 #include <span>
-#include <type_traits>
-#include <utility>
 
 namespace Kinoko {
 
@@ -358,28 +352,28 @@ public:
 
     /// @brief Gets the first element in the array.
     /// @return A reference to the first element in the array.
-    T &front() {
+    [[nodiscard]] T &front() {
         ASSERT(m_size > 0);
         return *m_data;
     }
 
     /// @brief Gets the first element in the array.
     /// @return A const reference to the first element in the array.
-    const T &front() const {
+    [[nodiscard]] const T &front() const {
         ASSERT(m_size > 0);
         return *m_data;
     }
 
     /// @brief Gets the last existing element in the array.
     /// @return A reference to the last existing element in the array.
-    T &back() {
+    [[nodiscard]] T &back() {
         ASSERT(m_size > 0);
         return m_data[m_size - 1];
     }
 
     /// @brief Gets the last existing element in the array.
     /// @return A const reference to the last existing element in the array.
-    const T &back() const {
+    [[nodiscard]] const T &back() const {
         ASSERT(m_size > 0);
         return m_data[m_size - 1];
     }
@@ -387,7 +381,7 @@ public:
     /// @brief Indexes the array. Validates that the object exists.
     /// @param idx The index to the array.
     /// @return A reference to the object at the corresponding index.
-    T &operator[](size_t idx) {
+    [[nodiscard]] T &operator[](size_t idx) {
         ASSERT(idx < m_size);
         return m_data[idx];
     }
@@ -395,35 +389,35 @@ public:
     /// @brief Indexes the array. Validates that the object exists.
     /// @param idx The index to the array.
     /// @return A const reference to the object at the corresponding index.
-    const T &operator[](size_t idx) const {
+    [[nodiscard]] const T &operator[](size_t idx) const {
         ASSERT(idx < m_size);
         return m_data[idx];
     }
 
     /// @brief Iterator for the beginning of the existing array.
     /// @return Iterator.
-    T *begin() noexcept {
+    [[nodiscard]] T *begin() noexcept {
         ASSERT(initialized());
         return m_data;
     }
 
     /// @brief Iterator for the beginning of the existing array.
     /// @return Const iterator.
-    const T *begin() const noexcept {
+    [[nodiscard]] const T *begin() const noexcept {
         ASSERT(initialized());
         return m_data;
     }
 
     /// @brief Iterator for the end of the existing array.
     /// @return Iterator.
-    T *end() noexcept {
+    [[nodiscard]] T *end() noexcept {
         ASSERT(initialized());
         return m_data + m_size;
     }
 
     /// @brief Iterator for the end of the existing array.
     /// @return Const iterator.
-    const T *end() const noexcept {
+    [[nodiscard]] const T *end() const noexcept {
         ASSERT(initialized());
         return m_data + m_size;
     }
