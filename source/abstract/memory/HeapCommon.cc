@@ -27,8 +27,8 @@ u32 MEMiHeapHead::getFillVal(FillType type) {
 }
 
 /// @addr{0x80198658}
-MEMiHeapHead *MEMiHeapHead::findContainHeap(const void *block) {
-    return findContainHeap(&s_rootList, block);
+MEMiHeapHead *MEMiHeapHead::FindContainHeap(const void *block) {
+    return FindContainHeap(&s_rootList, block);
 }
 
 /// @addr{0x8019832C}
@@ -71,7 +71,7 @@ void MEMiHeapHead::fillFreeMemory(void *address, u32 size) {
 }
 
 /// @addr{0x801981EC}
-MEMiHeapHead *MEMiHeapHead::findContainHeap(MEMList *list, const void *block) {
+MEMiHeapHead *MEMiHeapHead::FindContainHeap(MEMList *list, const void *block) {
     MEMiHeapHead *heap = nullptr;
 
     while ((heap = reinterpret_cast<MEMiHeapHead *>(list->getNext(heap)))) {
@@ -80,7 +80,7 @@ MEMiHeapHead *MEMiHeapHead::findContainHeap(MEMList *list, const void *block) {
             continue;
         }
 
-        MEMiHeapHead *search = findContainHeap(&heap->m_childList, block);
+        MEMiHeapHead *search = FindContainHeap(&heap->m_childList, block);
         if (search) {
             return search;
         }
@@ -92,7 +92,7 @@ MEMiHeapHead *MEMiHeapHead::findContainHeap(MEMList *list, const void *block) {
 }
 
 MEMList &MEMiHeapHead::findListContainHeap() const {
-    MEMiHeapHead *containHeap = findContainHeap(this);
+    MEMiHeapHead *containHeap = FindContainHeap(this);
     return containHeap ? containHeap->getChildList() : getRootList();
 }
 

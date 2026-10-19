@@ -31,7 +31,7 @@ static EGG::Heap *s_rootHeap = nullptr; ///< Pointer to the root heap
 /// @brief Creates the memory arena and initializes the root heap
 static void InitMemory() {
     s_memorySpace = malloc(Abstract::Memory::MEMORY_SPACE_SIZE);
-    s_rootHeap = EGG::ExpHeap::create(s_memorySpace, Abstract::Memory::MEMORY_SPACE_SIZE,
+    s_rootHeap = EGG::ExpHeap::Create(s_memorySpace, Abstract::Memory::MEMORY_SPACE_SIZE,
             Abstract::Memory::DEFAULT_OPT);
     s_rootHeap->setName("EGGRoot");
     s_rootHeap->becomeCurrentHeap();

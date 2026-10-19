@@ -11,6 +11,13 @@ struct MEMLink {
 };
 
 /// @brief Intrusive doubly-linked list. Links are placed within the corresponding object.
+/// @details This implementation is better than using `std::list` due to the following reasons:
+/// 1. This implementation never performs allocation when adding or removing elements, as the links
+/// are embedded within the objects themselves.
+/// 2. This implementation is safer for savestates. @ref Host::Context can `memcpy` this
+/// implementation, whereas `std-list` has implementation-defined internals which may not work
+/// across sessions or machines.
+/// 3. Removals are O(1). `std::list` requires iterating through the list which is O(n).
 struct MEMList {
     MEMList();
     MEMList(u16 offset);

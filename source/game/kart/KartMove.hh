@@ -45,12 +45,11 @@ public:
 
     void setInitialPhysicsValues(const EGG::Vector3f &position, const EGG::Vector3f &angles);
     void setKartSpeedLimit();
+    void clearDrift();
+    void clearRejectRoad();
 
     void calc();
     void calcRespawnTrigger();
-    bool calcCollisions(f32 radius, f32 scale, EGG::Vector3f &pos, EGG::Vector3f &upLocal,
-            const EGG::Vector3f &prevPos, Field::CollisionInfo *colInfo,
-            Field::KCLTypeMask *maskOut, Field::KCLTypeMask flags) const;
     void calcHop();
     void calcRejectRoad();
     void calcTrickBoost();
@@ -63,8 +62,10 @@ public:
     void activateCrush(u16 timer);
     void activateShrink();
     void triggerRespawn();
-    void clearDrift();
-    void clearRejectRoad();
+
+    bool calcCollisions(f32 radius, f32 scale, EGG::Vector3f &pos, EGG::Vector3f &upLocal,
+            const EGG::Vector3f &prevPos, Field::CollisionInfo *colInfo,
+            Field::KCLTypeMask *maskOut, Field::KCLTypeMask flags) const;
 
     /// @beginSetters
 
@@ -280,54 +281,65 @@ private:
     [[nodiscard]] virtual f32 getWheelieSoftSpeedLimitBonus() const;
 
     void calcInRespawn();
-    void calcRespawnBoost();
     void calcTop();
     void calcAirtimeTop();
-    void calcSpecialFloor();
     void calcDirs();
-    void calcStickyRoad();
-    void calcOffroad();
-    void calcRisingWater();
-    void calcSsmtCharge();
-    bool calcPreDrift();
-    void calcAutoDrift();
-    void calcManualDrift();
-    void startManualDrift();
-    void releaseMt();
-    void calcDrift();
     void calcRotation();
     void calcVehicleSpeed();
     void calcSpeed();
     void calcWallCollisionStart(f32 walColSeverity);
-    void tryStartJumpPad();
-    void tryEndJumpPad();
-    void calcZipperBoost();
+    void calcDisableBackwardsAccel();
+    void calcSlopeAccel();
+
     void calcScale();
-    void applyShrink(u16 timer);
+    void calcCrushed();
+    void calcShock();
+
+    void calcSpecialFloor();
+    void calcStickyRoad();
+    void calcOffroad();
+    void calcRisingWater();
+
     void calcCannon();
     void calcRotCannon(const EGG::Vector3f &forward);
     void exitCannon();
-    void resetDriftManual();
-    void calcBoost();
-    void calcRampBoost();
-    void calcDisableBackwardsAccel();
-    void clearJumpPad();
-    void clearRampBoost();
-    void clearZipperBoost();
-    void clearBoost();
-    void clearSsmt();
+
     void clearOffroadInvincibility();
+    void setOffroadInvincibility(s16 timer);
+    void calcOffroadInvincibility();
+
+    void applyShrink(u16 timer);
     void clearShock(bool resetSpeed);
-    void calcSlopeAccel();
+
+    void tryStartJumpPad();
+    void tryEndJumpPad();
+    void clearJumpPad();
+
+    bool calcPreDrift();
+    void calcAutoDrift();
+    void calcManualDrift();
+    void startManualDrift();
+    void calcDrift();
+    void resetDriftManual();
+
     void calcSsmt();
+    void calcSsmtCharge();
+    void releaseMt();
+    void clearSsmt();
+
     void tryStartBoostPanel();
     void tryStartBoostRamp();
     void activateBoost(KartBoost::Type type, s16 frames);
-    void setOffroadInvincibility(s16 timer);
-    void calcOffroadInvincibility();
+
+    void calcBoost();
+    void calcRespawnBoost();
+    void calcZipperBoost();
+    void calcRampBoost();
     void calcMushroomBoost();
-    void calcCrushed();
-    void calcShock();
+
+    void clearBoost();
+    void clearZipperBoost();
+    void clearRampBoost();
 
     [[nodiscard]] bool canHop() const;
     [[nodiscard]] bool canStartDrift() const;

@@ -5,7 +5,7 @@ namespace Kinoko::Abstract::Memory {
 MEMList::MEMList() : MEMList(0) {}
 
 /// @addr{0x80199BF0}
-MEMList::MEMList(u16 offset) {
+MEMList::MEMList(u16 offset) : m_offset(offset) {
     m_headObject = nullptr;
     m_tailObject = nullptr;
     m_numObjects = 0;

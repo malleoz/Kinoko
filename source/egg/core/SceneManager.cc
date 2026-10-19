@@ -6,20 +6,30 @@
 
 namespace Kinoko::EGG {
 
+/// @todo FINISH DOCUMENTING
+
 /// @addr{0x8023ADDC}
-SceneManager::SceneManager(SceneCreator *creator) {
-    m_creator = creator;
+/// @brief Constructor
+/// @param creator The scene creator used to instantiate new scenes
+/// @details Sets @ref m_creator to the provided `creator` and initializes @ref m_currentScene to
+/// `nullptr`.
+SceneManager::SceneManager(SceneCreator *creator) : m_creator(creator) {
     m_currentScene = nullptr;
 }
 
+/// @brief Default virtual destructor
 SceneManager::~SceneManager() = default;
 
 /// @addr{0x8023AE60}
+/// @brief Processes the current scene
+/// @details Dispatches to @ref calcCurrentScene() to process the current scene.
 void SceneManager::calc() {
     calcCurrentScene();
 }
 
 /// @addr{0x8023B588}
+/// @brief Calculates the current scene if it exists
+/// @details If @ref m_currentScene is not `nullptr`, then calls @ref Scene::calc().
 void SceneManager::calcCurrentScene() {
     if (!m_currentScene) {
         return;
@@ -30,7 +40,6 @@ void SceneManager::calcCurrentScene() {
 
 /// @addr{0x8023B248}
 void SceneManager::createChildScene(int id, Scene *parent) {
-    outgoingParentScene(parent);
     setNextSceneId(id);
     setupNextSceneId();
     createScene(id, parent);
@@ -46,7 +55,7 @@ void SceneManager::createScene(int id, Scene *parent) {
         parentHeap->enableAllocation();
     }
 
-    ExpHeap *newHeap = ExpHeap::create(-1, parentHeap, s_heapOptionFlg);
+    ExpHeap *newHeap = ExpHeap::Create(-1, parentHeap, s_heapOptionFlg);
     s_heapForCreateScene = newHeap;
 
     if (locked) {
@@ -125,18 +134,6 @@ void SceneManager::changeSiblingScene() {
     createScene(nextSceneId, parentScene);
 }
 
-/// @addr{0x8023B568}
-void SceneManager::incomingCurrentScene() {
-    if (m_currentScene) {
-        m_currentScene->incoming_childDestroy();
-    }
-}
-
-/// @addr{0x8023B92C}
-void SceneManager::outgoingParentScene(Scene *parent) {
-    parent->outgoing_childCreate();
-}
-
 /// @addr{0x8023AEF8}
 void SceneManager::reinitCurrentScene() {
     if (m_currentScene) {
@@ -176,7 +173,6 @@ bool SceneManager::destroyToSelectSceneId(int id) {
     while (parent->id() != currentSceneId()) {
         destroyCurrentSceneNoIncoming(false);
     }
-    incomingCurrentScene();
     return true;
 }
 

@@ -9,11 +9,10 @@ namespace Kinoko::EGG {
 class SceneManager;
 
 /// @brief Base class for all scenes.
-/// @details A scene compartmentalizes certain elements of the game,
-/// such as the menu, the race, the credits, etc.
-/// This allows for easy cleanup when transitioning to a different scene,
-/// as scenes destroy instances of classes used only during the scene lifetime.
-/// While this is not an abstract class, you'll never see an instance of this base class.
+/// @details A scene compartmentalizes certain elements of the game, such as the menu, the race, the
+/// credits, etc. This allows for easy cleanup when transitioning to a different scene, as scenes
+/// destroy instances of classes used only during the scene lifetime. While this is not an abstract
+/// class, you'll never see an instance of this base class.
 class Scene : Disposer {
 public:
     Scene();
@@ -23,8 +22,6 @@ public:
     virtual void enter();
     virtual void exit();
     virtual void reinit();
-    virtual void incoming_childDestroy();
-    virtual void outgoing_childCreate();
 
     /// @beginSetters
 
@@ -46,11 +43,11 @@ public:
     /// @endGetters
 
 protected:
-    Heap *m_heap;
-    Scene *m_parent;
-    Scene *m_child;
-    int m_id;
-    SceneManager *m_sceneMgr;
+    Heap *const m_heap;       ///< The heap associated with this scene
+    Scene *m_parent;          ///< The parent scene, or `nullptr` if this is the root scene
+    Scene *m_child;           ///< The child scene, or `nullptr` if there is no child
+    int m_id;                 ///< The ID of the scene
+    SceneManager *m_sceneMgr; ///< The scene manager associated with this scene
 };
 
 } // namespace Kinoko::EGG

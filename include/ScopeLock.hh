@@ -20,7 +20,7 @@ public:
     /// @brief Constructor
     /// @param newID The @ref GroupID to assign to the heap for the duration of the current scope
     ScopeLock(GroupID newID) {
-        EGG::ExpHeap *heap = EGG::Heap::dynamicCastToExp(EGG::Heap::getCurrentHeap());
+        EGG::ExpHeap *heap = EGG::Heap::DynamicCastToExp(EGG::Heap::GetCurrentHeap());
         ASSERT(heap);
         GroupID prevID = static_cast<GroupID>(heap->getGroupID());
 
@@ -33,7 +33,7 @@ public:
 
     /// @brief Destructor that resets the @ref GroupID for the current heap to the default value
     ~ScopeLock() {
-        EGG::ExpHeap *heap = EGG::Heap::dynamicCastToExp(EGG::Heap::getCurrentHeap());
+        EGG::ExpHeap *heap = EGG::Heap::DynamicCastToExp(EGG::Heap::GetCurrentHeap());
         ASSERT(heap);
         heap->setGroupID(static_cast<u16>(GroupID::None));
     }

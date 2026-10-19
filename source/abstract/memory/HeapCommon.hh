@@ -40,7 +40,7 @@ public:
 
     [[nodiscard]] static MEMList &getRootList();
     [[nodiscard]] static u32 getFillVal(FillType type);
-    [[nodiscard]] static MEMiHeapHead *findContainHeap(const void *block);
+    [[nodiscard]] static MEMiHeapHead *FindContainHeap(const void *block);
 
     [[nodiscard]] static constexpr u16 getLinkOffset() {
         return offsetof(MEMiHeapHead, m_link);
@@ -55,7 +55,7 @@ protected:
     void fillFreeMemory(void *address, u32 size);
 
 private:
-    [[nodiscard]] static MEMiHeapHead *findContainHeap(MEMList *list, const void *block);
+    [[nodiscard]] static MEMiHeapHead *FindContainHeap(MEMList *list, const void *block);
     [[nodiscard]] MEMList &findListContainHeap() const;
 
     u32 m_signature;

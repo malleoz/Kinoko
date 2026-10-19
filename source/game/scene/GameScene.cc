@@ -21,7 +21,7 @@ GameScene::GameScene() {
 
 #ifdef BUILD_DEBUG
     m_totalMemoryUsed = 0;
-    EGG::ExpHeap *heap = EGG::Heap::dynamicCastToExp(m_heap);
+    EGG::ExpHeap *heap = EGG::Heap::DynamicCastToExp(m_heap);
     ASSERT(heap);
 
     heap->calcGroupSize(&m_groupSizeRecord);
@@ -37,7 +37,7 @@ GameScene::~GameScene() {
     m_resources.clear();
 
 #ifdef BUILD_DEBUG
-    EGG::ExpHeap *heap = EGG::Heap::dynamicCastToExp(m_heap);
+    EGG::ExpHeap *heap = EGG::Heap::DynamicCastToExp(m_heap);
     ASSERT(heap);
 
     heap->calcGroupSize(&m_groupSizeRecord);
@@ -162,7 +162,7 @@ void GameScene::unmountResources() {
 
 #ifdef BUILD_DEBUG
 void GameScene::checkMemory() {
-    EGG::ExpHeap *heap = EGG::Heap::dynamicCastToExp(m_heap);
+    EGG::ExpHeap *heap = EGG::Heap::DynamicCastToExp(m_heap);
     ASSERT(heap);
 
     heap->calcGroupSize(&m_groupSizeRecord);
@@ -204,7 +204,7 @@ void GameScene::getMemoryLeakTags() {
         tag = 0; // empty tag
     }
 
-    EGG::Heap::dynamicCastToExp(m_heap)->dynamicCastHandleToExp()->visitAllocated(ViewTags,
+    EGG::Heap::DynamicCastToExp(m_heap)->dynamicCastHandleToExp()->visitAllocated(ViewTags,
             GetAddrNum(&tags));
 
     DEBUG("TAGGED MEMORY BLOCKS:");
@@ -217,7 +217,7 @@ void GameScene::getMemoryLeakTags() {
 
 size_t GameScene::getMemoryLeakTagCount() {
     size_t count = 0;
-    EGG::Heap::dynamicCastToExp(m_heap)->dynamicCastHandleToExp()->visitAllocated(IncreaseTagCount,
+    EGG::Heap::DynamicCastToExp(m_heap)->dynamicCastHandleToExp()->visitAllocated(IncreaseTagCount,
             GetAddrNum(&count));
     return count;
 }

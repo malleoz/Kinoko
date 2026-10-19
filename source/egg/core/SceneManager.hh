@@ -35,8 +35,6 @@ public:
     void changeScene(int nextSceneId);
     void changeSiblingScene(int nextSceneId);
     void changeSiblingScene();
-    void incomingCurrentScene();
-    void outgoingParentScene(Scene *parent);
     void reinitCurrentScene();
     bool destroyCurrentSceneNoIncoming(bool destroyRootIfNoParent);
     bool destroyToSelectSceneId(int nextSceneId);
@@ -59,11 +57,7 @@ public:
     /// @endSetters
 
 private:
-    /*----------*
-        Members
-     *----------*/
-
-    SceneCreator *m_creator;
+    SceneCreator *const m_creator;
     Scene *m_currentScene;
     int m_nextSceneId;
     int m_currentSceneId;

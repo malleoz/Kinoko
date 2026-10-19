@@ -65,7 +65,7 @@ void RootScene::init() {
 
 #ifdef BUILD_DEBUG
 void RootScene::checkMemory() {
-    EGG::ExpHeap *heap = EGG::Heap::dynamicCastToExp(m_heap);
+    EGG::ExpHeap *heap = EGG::Heap::DynamicCastToExp(m_heap);
     ASSERT(heap);
 
     heap->calcGroupSize(&m_groupSizeRecord);

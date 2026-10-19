@@ -6,7 +6,7 @@ namespace Kinoko::EGG {
 
 /// @addr{0x8021A0F0}
 Disposer::Disposer() {
-    m_heap = Heap::findContainHeap(this);
+    m_heap = Heap::FindContainHeap(this);
     if (m_heap) {
         m_heap->appendDisposer(this);
     }
