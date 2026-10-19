@@ -7,39 +7,42 @@ namespace Kinoko::EGG {
 using namespace Abstract::Memory;
 
 /// @addr{0x80226DD0}
+/// @brief Constructor
+/// @details Initializes @ref m_entries via @ref reset().
 ExpHeap::GroupSizeRecord::GroupSizeRecord() {
     reset();
 }
 
 /// @addr{0x80226E00}
+/// @brief Resets the size for all entries to zero
 void ExpHeap::GroupSizeRecord::reset() {
-    for (auto &entry : m_entries) {
-        entry = 0;
-    }
+    m_entries.fill(0);
 }
 
 /// @addr{0x80226E98}
+/// @brief Adds the provided `size` to the entry for the provided `groupID`
+/// @param groupID The ID of the entry to track the size for
+/// @param size The size to add to the group's entry
 void ExpHeap::GroupSizeRecord::addSize(u16 groupID, size_t size) {
     m_entries[groupID] += size;
 }
 
+/// @brief Gets the number of groups
+/// @return The number of group entries (i.e. the size of @ref m_entries)
 size_t ExpHeap::GroupSizeRecord::size() const {
     return m_entries.size();
 }
 
+/// @brief Gets the size of the memory block for the provided group ID
+/// @param groupID The group to get the memory block size for
+/// @return The size of the memory block for the provided group ID
 size_t ExpHeap::GroupSizeRecord::getGroupSize(u16 groupID) const {
     return m_entries[groupID];
 }
 
-ExpHeap::ExpHeap(MEMiHeapHead *handle) : Heap(handle) {}
-
-/// @addr{0x802269A8}
-ExpHeap::~ExpHeap() {
-    dispose();
-    dynamicCastHandleToExp()->destroy();
-}
-
 /// @addr{0x80226B94}
+/// @brief Public method to destroy this heap
+/// @details Calls this heap's destructor and frees the heap's memory block via @ref free().
 void ExpHeap::destroy() {
     Heap *pParent = getParentHeap();
     this->~ExpHeap();
@@ -49,11 +52,19 @@ void ExpHeap::destroy() {
 }
 
 /// @addr{0x80226EFC}
+/// @copybrief Heap::getHeapKind()
+/// @return @ref Kind::Expanded
 Heap::Kind ExpHeap::getHeapKind() const {
-    return Heap::Kind::Expanded;
+    return Kind::Expanded;
 }
 
 /// @addr{0x80226C04}
+/// @brief Allocates a memory block of the provided size and alignment
+/// @param size The size of the memory block to allocate
+/// @param align The alignment requirement for the memory block
+/// @return Pointer to the allocated memory block
+/// @warning This function will `PANIC` is the heap is locked (indicated via the @ref eFlags::Lock
+/// bit in @ref m_flags).
 void *ExpHeap::alloc(size_t size, s32 align) {
     if (tstDisableAllocation()) {
         PANIC("HEAP ALLOC FAIL (%p, %s): Heap is locked", this, m_name);
@@ -150,6 +161,19 @@ ExpHeap *ExpHeap::Create(size_t size, Heap *pHeap, u16 opt) {
     }
 
     return heap;
+}
+
+/// @brief Private constructor
+/// @param handle The handle for the memory heap
+ExpHeap::ExpHeap(MEMiHeapHead *handle) : Heap(handle) {}
+
+/// @addr{0x802269A8}
+/// @brief Private virtual destructor
+/// @details Destroys all children @ref Disposer objects via @ref dispose() and destroys @ref
+/// m_handle.
+ExpHeap::~ExpHeap() {
+    dispose();
+    dynamicCastHandleToExp()->destroy();
 }
 
 } // namespace Kinoko::EGG

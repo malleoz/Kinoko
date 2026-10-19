@@ -42,7 +42,6 @@ public:
         std::array<size_t, 256> m_entries; ///< The total size of memory blocks for each group ID
     };
 
-    ~ExpHeap() override;
     void destroy() override;
 
     [[nodiscard]] Kind getHeapKind() const override;
@@ -65,6 +64,7 @@ public:
 
 private:
     ExpHeap(Abstract::Memory::MEMiHeapHead *handle);
+    ~ExpHeap() override;
 };
 
 } // namespace EGG
