@@ -8,59 +8,60 @@ namespace Kinoko::Abstract::Memory {
 
 /// @brief Represents a region of memory.
 struct Region {
-    Region(void *start, void *end);
-    [[nodiscard]] uintptr_t getRange() const;
+    void *start; ///< Pointer to the start of the region
+    void *end;   ///< Pointer to the end of the region
 
-    void *start;
-    void *end;
+    Region(void *start_, void *end_);
+    [[nodiscard]] uintptr_t getRange() const;
 };
 
 struct MEMiExpBlockHead;
 
-/// @brief Link of a non-intrusive doubly-linked list.
+/// @brief Link of a non-intrusive doubly-linked list of memory blocks.
 struct MEMiExpBlockLink {
-    MEMiExpBlockHead *m_prev;
-    MEMiExpBlockHead *m_next;
+    MEMiExpBlockHead *m_prev; ///< Pointer to the previous block in the list
+    MEMiExpBlockHead *m_next; ///< Pointer to the next block in the list
 };
 
-/// @brief Non-intrusive doubly-linked list.
+/// @brief Non-intrusive doubly-linked list of memory blocks
 struct MEMiExpBlockList {
+    MEMiExpBlockHead *m_head;
+    MEMiExpBlockHead *m_tail;
+
     MEMiExpBlockHead *insert(MEMiExpBlockHead *block, MEMiExpBlockHead *prev);
     MEMiExpBlockHead *append(MEMiExpBlockHead *block);
     MEMiExpBlockHead *remove(MEMiExpBlockHead *block);
-
-    MEMiExpBlockHead *m_head;
-    MEMiExpBlockHead *m_tail;
 };
 
 /// @brief Head of the memory block. Contains information about the block and a link in the
 /// corresponding used/free linked lists.
 struct MEMiExpBlockHead {
-private:
-    MEMiExpBlockHead(const Region &region, u16 signature);
-
 public:
-    [[nodiscard]] static MEMiExpBlockHead *createFree(const Region &region);
-    [[nodiscard]] static MEMiExpBlockHead *createUsed(const Region &region);
+    u16 m_signature; ///< Signature of the memory block, "FR" for free, "UD" for used
+    union {
+        u16 val; ///< Raw 2-byte value representing the block attributes
+        struct {
+            u16 direction : 1; ///< Allocation direction, 0 for head, 1 for tail
+            u16 alignment : 7; ///< Alignment of the memory block
+            u16 groupId : 8;   ///< The @ref GroupID of the memory block
+        } fields;              ///< Structured view of the block attributes
+    } m_attribute;             ///< Union of block attributes
+    u32 m_size;                ///< Size of the memory block
+#ifdef BUILD_DEBUG
+    u32 m_tag;
+#endif
+    MEMiExpBlockLink m_link; ///< This block's link in the used/free linked list
 
     [[nodiscard]] Region getRegion() const;
     [[nodiscard]] void *getMemoryStart() const;
     [[nodiscard]] void *getMemoryEnd() const;
 
-    u16 m_signature;
-    union {
-        u16 val;
-        struct {
-            u16 direction : 1;
-            u16 alignment : 7;
-            u16 groupId : 8;
-        } fields;
-    } m_attribute;
-    u32 m_size;
-#ifdef BUILD_DEBUG
-    u32 m_tag;
-#endif // BUILD_DEBUG
-    MEMiExpBlockLink m_link;
+    [[nodiscard]] static MEMiExpBlockHead *createFree(const Region &region);
+    [[nodiscard]] static MEMiExpBlockHead *createUsed(const Region &region);
+
+private:
+    MEMiExpBlockHead(const Region &region, u16 signature);
+    ~MEMiExpBlockHead();
 };
 
 /// @brief Low-level implementation of a memory heap for managing dynamic memory allocation.
@@ -75,7 +76,11 @@ private:
     ~MEMiExpHeapHead();
 
 public:
-    typedef std::function<void(void *, MEMiHeapHead *, uintptr_t)> Visitor;
+    /// @brief Visitor function type for iterating over allocated memory blocks
+    /// @param void* Pointer to the memory block
+    /// @param MEMiHeapHead* Pointer to the heap containing the block
+    /// @param uintptr_t User-defined parameter passed to the visitor function
+    typedef std::function<void(void *startAddress, MEMiHeapHead *heap, uintptr_t param)> Visitor;
 
     static MEMiExpHeapHead *create(void *startAddress, size_t size, u16 flag);
     void destroy();
@@ -100,15 +105,15 @@ private:
             u32 size, s32 direction);
     bool recycleRegion(const Region &initialRegion);
 
-    MEMiExpBlockList m_freeBlocks;
-    MEMiExpBlockList m_usedBlocks;
-    u16 m_groupId;
+    MEMiExpBlockList m_freeBlocks; ///< Linked list of free memory blocks
+    MEMiExpBlockList m_usedBlocks; ///< Linked list of used memory blocks
+    u16 m_groupId;                 ///< The @ref GroupID of this heap
 #ifdef BUILD_DEBUG
     u32 m_tag;
 #endif // BUILD_DEBUG
     Attribute m_attribute;
 
-    static constexpr u32 EXP_HEAP_SIGNATURE = 0x45585048; // EXPH
+    static constexpr u32 EXP_HEAP_SIGNATURE = 0x45585048; ///< Signature of an expanded heap, "EXPH"
 };
 
 } // namespace Kinoko::Abstract::Memory

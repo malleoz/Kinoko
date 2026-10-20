@@ -3,12 +3,24 @@
 /// @brief Houses various memory management utilities including heaps and their allocators.
 namespace Kinoko::Abstract::Memory {
 
-Region::Region(void *start, void *end) : start(start), end(end) {}
+/// @brief Constructor
+/// @param start Pointer to the start of the region
+/// @param end Pointer to the end of the region
+/// @details Sets @ref start to `start_` and `end` to `end_`
+Region::Region(void *start_, void *end_) : start(start_), end(end_) {}
 
+/// @brief Calculates the number of bytes in the memory region
+/// @return The number of bytes in the memory region
 uintptr_t Region::getRange() const {
     return GetAddrNum(end) - GetAddrNum(start);
 }
 
+/// @brief Inserts a memory block after the specified `prev` block in the list
+/// @param block The memory block to insert
+/// @param prev The memory block to insert this new block after
+/// @return The inserted memory block
+/// @details If `prev` is `nullptr`, then the block becomes the @ref m_head of the list. If `block`
+/// does not have a next block, it becomes the @ref m_tail of the list.
 MEMiExpBlockHead *MEMiExpBlockList::insert(MEMiExpBlockHead *block, MEMiExpBlockHead *prev) {
     MEMiExpBlockHead *next;
 
@@ -31,10 +43,19 @@ MEMiExpBlockHead *MEMiExpBlockList::insert(MEMiExpBlockHead *block, MEMiExpBlock
     return block;
 }
 
+/// @brief Appends a memory block to the end of the list
+/// @param block The memory block to append
+/// @return The appended memory block
+/// @details Calls @ref insert() with `prev` set to the current @ref m_tail of the list.
 MEMiExpBlockHead *MEMiExpBlockList::append(MEMiExpBlockHead *block) {
     return insert(block, m_tail);
 }
 
+/// @brief Removes a memory block from its containing block list
+/// @param block The memory block to remove
+/// @return The previous memory block in the list, or `nullptr` if `block` was the head of the list
+/// @details If `block` is the head of the list, the next block becomes the new head. If `block` is
+/// the tail of the list, the previous block becomes the new tail.
 MEMiExpBlockHead *MEMiExpBlockList::remove(MEMiExpBlockHead *block) {
     MEMiExpBlockHead *prev = block->m_link.m_prev;
     MEMiExpBlockHead *next = block->m_link.m_next;
@@ -63,6 +84,8 @@ MEMiExpBlockHead::MEMiExpBlockHead(const Region &region, u16 signature) {
     m_link.m_prev = nullptr;
     m_link.m_next = nullptr;
 }
+
+MEMiExpBlockHead::~MEMiExpBlockHead() = default;
 
 MEMiExpBlockHead *MEMiExpBlockHead::createFree(const Region &region) {
     constexpr u16 FREE_BLOCK_SIGNATURE = 0x4652; // FR
@@ -219,11 +242,7 @@ void *MEMiExpHeapHead::allocFromHead(size_t size, s32 alignment) {
         void *const address = RoundUp(memptr, alignment);
         size_t offset = GetAddrNum(address) - GetAddrNum(memptr);
 
-        if (block->m_size < size + offset) {
-            continue;
-        }
-
-        if (blockSize <= block->m_size) {
+        if (block->m_size < size + offset || blockSize <= block->m_size) {
             continue;
         }
 
@@ -255,11 +274,7 @@ void *MEMiExpHeapHead::allocFromTail(size_t size, s32 alignment) {
         void *const endAddr = AddOffset(start, block->m_size);
         void *const end = RoundDown(SubOffset(endAddr, size), alignment);
 
-        if (static_cast<intptr_t>(GetAddrNum(end) - GetAddrNum(start)) < 0) {
-            continue;
-        }
-
-        if (blockSize <= block->m_size) {
+        if (GetAddrNum(end) < GetAddrNum(start) || blockSize <= block->m_size) {
             continue;
         }
 

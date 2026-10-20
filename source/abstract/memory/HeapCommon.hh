@@ -42,14 +42,24 @@ public:
     [[nodiscard]] void *getHeapStart();
     [[nodiscard]] void *getHeapEnd();
 
-    [[nodiscard]] static MEMList &getRootList();
-    [[nodiscard]] static u32 getFillVal(FillType type);
+    [[nodiscard]] static MEMList &GetRootList();
     [[nodiscard]] static MEMiHeapHead *FindContainHeap(const void *block);
 
     /// @brief Gets the offset of the link member within the @ref Archive class
     /// @return The offset of the link member within the @ref Archive class
     [[nodiscard]] static constexpr u16 getLinkOffset() {
         return offsetof(MEMiHeapHead, m_link);
+    }
+
+    /// @brief Maps the provided @ref FillType to a unique 4-byte fill value
+    /// @param type The type of byte pattern to fill with
+    /// @return The 4-byte fill value corresponding to the provided @ref FillType
+    /// @details This is used for easier debugging in Kinoko. If an invalid memory read-write
+    /// occurs, the fill values help identify the type of memory involved.
+    [[nodiscard]] static constexpr u32 GetFillVal(FillType type) {
+        size_t t = static_cast<std::underlying_type_t<FillType>>(type);
+        ASSERT(t < 3);
+        return s_fillVals[t];
     }
 
 protected:
@@ -64,14 +74,16 @@ private:
     [[nodiscard]] static MEMiHeapHead *FindContainHeap(MEMList *list, const void *block);
     [[nodiscard]] MEMList &findListContainHeap() const;
 
-    u32 m_signature;     ///< The signature of the heap
-    OptFlag m_optFlag;   ///< Options for the heap
-    MEMLink m_link;      ///< This heap's link in the linked list of heaps
-    MEMList m_childList; ///< List of all heap children
-    void *m_heapStart;   ///< Pointer to the start of this heap
-    void *m_heapEnd;     ///< Pointer to the end of this heap
+    const u32 m_signature;   ///< Unique signature indicating the type of heap
+    const OptFlag m_optFlag; ///< Options for the heap
+    MEMLink m_link;          ///< This heap's link in the linked list of heaps
+    MEMList m_childList;     ///< List of all heap children
+    void *const m_heapStart; ///< Pointer to the start of this heap
+    void *const m_heapEnd;   ///< Pointer to the end of this heap
 
-    static MEMList s_rootList; ///< Global list of all heaps
+    /// @brief Global list of all root heaps
+    /// @details For Kinoko, this will only ever contain the "EGGRoot" heap.
+    static MEMList s_rootList;
 
     /// @brief Array of values to write to heap blocks when @ref eOptFlag::DebugFillAlloc is set,
     /// indexed by @ref FillType
