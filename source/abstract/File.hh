@@ -4,6 +4,8 @@
 
 #include <filesystem>
 
+/// @brief Provides file-related utility functions for constructing paths, loading, appending, and
+/// removing files
 namespace Kinoko::Abstract::File {
 
 [[nodiscard]] std::filesystem::path Path(const char *path);

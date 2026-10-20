@@ -66,8 +66,8 @@ struct GJKState {
 ///
 /// @copydetails GJKState
 class ObjectCollisionBase {
-    /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
-    /// state on context switch
+    /// @brief Grants access to @ref s_dotProductCache so a @ref Host::Context can restore the cache
+    /// on context switch
     friend Host::Context;
 
 public:

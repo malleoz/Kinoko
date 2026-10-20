@@ -56,7 +56,7 @@ void ObjectBasabasaDummy::calc() {
 /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
 /// calculated every frame
 ObjectBase::LoadFlags ObjectBasabasaDummy::loadFlags() const {
-    return LoadFlags().setBit(eLoadFlags::Calc, eLoadFlags::Draw);
+    return LoadFlags(eLoadFlags::Calc, eLoadFlags::Draw);
 }
 
 /// @addr{0x806B76F4}
@@ -201,7 +201,7 @@ void ObjectBasabasa::calc() {
 /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
 /// calculated every frame
 ObjectBase::LoadFlags ObjectBasabasa::loadFlags() const {
-    return LoadFlags().setBit(eLoadFlags::Calc, eLoadFlags::Draw);
+    return LoadFlags(eLoadFlags::Calc, eLoadFlags::Draw);
 }
 
 /// @addr{0x806B761C}

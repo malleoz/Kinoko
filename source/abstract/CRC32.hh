@@ -2,10 +2,15 @@
 
 #include "Common.hh"
 
+#include <span>
+
 namespace Kinoko::Abstract {
 
 /// @addr{0x801D1CA0}
-[[nodiscard]] constexpr u32 CalcCRC32(u8 *data, u32 size) {
+/// @brief Computes the CRC32 checksum of the provided data buffer
+/// @param data The data buffer for which to compute the CRC32 checksum
+/// @return The computed CRC32 checksum of the provided data buffer
+[[nodiscard]] constexpr u32 CalcCRC32(std::span<const u8> data) {
     /// @addr{0x80252F50}
     constexpr u32 LOOKUP_TABLE[16] = {
             0x00000000,
@@ -28,7 +33,7 @@ namespace Kinoko::Abstract {
 
     u32 ret = std::numeric_limits<u32>::max();
 
-    for (u32 i = 0; i < size; ++i) {
+    for (u32 i = 0; i < data.size(); ++i) {
         ret = (ret >> 4) ^ LOOKUP_TABLE[(ret ^ data[i]) & 0xF];
         ret = (ret >> 4) ^ LOOKUP_TABLE[(ret ^ (data[i] >> 4)) & 0xF];
     }

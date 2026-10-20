@@ -50,7 +50,7 @@ std::span<const u8> DvdArchive::getFile(const char *filename) const {
         return {};
     }
 
-    void *file = m_archive->getFileFast(entryId, fileInfo);
+    const void *file = m_archive->getFileFast(entryId, fileInfo);
     if (!file) {
         return {};
     }

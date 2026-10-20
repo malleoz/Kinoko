@@ -7,6 +7,10 @@
 namespace Kinoko::EGG::Decomp {
 
 /// @addr{0x8021997C}
+/// @brief Gets the expanded size of a YAZ0 compressed buffer
+/// @param src Pointer to the YAZ0 compressed buffer
+/// @return The expanded size of the buffer, or `-1` if the buffer is not a valid YAZ0 compressed
+/// buffer
 [[nodiscard]] inline constexpr s32 GetExpandSize(const u8 *src) {
     if (src[0] == 'Y' && src[1] == 'a' && src[2] == 'z') {
         s32 val;
@@ -17,9 +21,14 @@ namespace Kinoko::EGG::Decomp {
     return -1;
 }
 
-/// @brief Performs YAZ0 decompression on a given buffer.
-/// @return The size of the decompressed data.
 /// @addr{0x80218C2C}
+/// @brief Performs YAZ0 decompression on a given buffer
+/// @param src Pointer to the YAZ0 compressed buffer
+/// @param dst Pointer to the buffer where the decompressed data will be stored
+/// @return The size of the decompressed data.
+/// @bug In the base game, this function can lead to arbitrary code execution if the decompressed
+/// buffer exceeds the size specified by @ref GetExpandSize(). To prevent this buffer overflow, we
+/// `PANIC` in Kinoko if the decompressed data exceeds the expected size.
 s32 inline constexpr DecodeSZS(const u8 *src, u8 *dst) {
     s32 expandSize = GetExpandSize(src);
     s32 srcIdx = 0x10;

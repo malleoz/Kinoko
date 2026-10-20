@@ -56,8 +56,8 @@ private:
 /// @details Spawns bats in small groups, whose size is determined by @ref m_batsPerGroup. After
 /// that many bats have been spawned, it resets the @ref m_cycleTimer.
 class ObjectBasabasa final : public ObjectCollidable {
-    /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
-    /// state on context switch
+    /// @brief Grants access to static member variables so a @ref Host::Context can restore their
+    /// values on context switch
     friend Host::Context;
 
 public:

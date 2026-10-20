@@ -14,11 +14,10 @@ class Context;
 
 namespace Abstract::Memory {
 
-/// @brief A low-level representation of a memory heap for managing dynamic memory allocation.
-/// Interface for allocating and freeing memory blocks.
+/// @brief A handler for accessing and managing a @ref Heap
 class MEMiHeapHead {
-    /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
-    /// state on context switch
+    /// @brief Grants access to @ref s_rootList so a @ref Host::Context can reload the list on
+    /// context switch
     friend Host::Context;
 
 public:
@@ -32,7 +31,7 @@ public:
         ZeroFillAlloc = 0,
         DebugFillAlloc = 1,
     };
-    typedef EGG::TBitFlag<u16, eOptFlag> OptFlag;
+    typedef EGG::TBitFlag<u8, eOptFlag> OptFlag;
 
     [[nodiscard]] MEMList &getChildList();
     [[nodiscard]] void *getHeapStart();
@@ -77,11 +76,9 @@ private:
 static constexpr size_t MEMORY_SPACE_SIZE = 0x1000000;
 
 #ifdef BUILD_DEBUG
-static constexpr auto DEFAULT_OPT =
-        MEMiHeapHead::OptFlag().setBit(MEMiHeapHead::eOptFlag::DebugFillAlloc);
+static constexpr auto DEFAULT_OPT = MEMiHeapHead::OptFlag(MEMiHeapHead::eOptFlag::DebugFillAlloc);
 #else
-static constexpr auto DEFAULT_OPT =
-        MEMiHeapHead::OptFlag().setBit(MEMiHeapHead::eOptFlag::ZeroFillAlloc);
+static constexpr auto DEFAULT_OPT = MEMiHeapHead::OptFlag(MEMiHeapHead::eOptFlag::ZeroFillAlloc);
 #endif
 
 } // namespace Abstract::Memory

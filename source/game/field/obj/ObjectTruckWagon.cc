@@ -474,7 +474,7 @@ void ObjectTruckWagon::loadRail() {}
 /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
 /// calculated every frame
 ObjectBase::LoadFlags ObjectTruckWagon::loadFlags() const {
-    return LoadFlags().setBit(eLoadFlags::Calc, eLoadFlags::Draw);
+    return LoadFlags(eLoadFlags::Calc, eLoadFlags::Draw);
 }
 
 } // namespace Kinoko::Field

@@ -11,6 +11,8 @@
 
 namespace Kinoko::Scene {
 
+using namespace Abstract::Memory;
+
 /// @addr{0x8051A1E0}
 /// @brief Constructor
 /// @details Sets the @ref m_heap name to `"DefaultGameSceneHeap"` for logging purposes and
@@ -172,9 +174,7 @@ void GameScene::checkMemory() {
     // it's possible that derived classes can have a different size compared to GameScene
     // We don't need to know the exact derived class, though, as we have the memory block head
     // The scene is the first, always group ID 0 allocation to happen in the scene's heap
-    Abstract::Memory::MEMiExpBlockHead *blockHead =
-            static_cast<Abstract::Memory::MEMiExpBlockHead *>(
-                    SubOffset(this, sizeof(Abstract::Memory::MEMiExpBlockHead)));
+    auto *blockHead = static_cast<MEMiExpBlockHead *>(SubOffset(this, sizeof(MEMiExpBlockHead)));
     size_t initialAllocSize = blockHead->m_size;
     ASSERT(defaultSize >= initialAllocSize);
 
@@ -222,10 +222,8 @@ size_t GameScene::getMemoryLeakTagCount() {
     return count;
 }
 
-void GameScene::ViewTags(void *block, Abstract::Memory::MEMiHeapHead * /*heap*/, uintptr_t param) {
-    Abstract::Memory::MEMiExpBlockHead *blockHead =
-            static_cast<Abstract::Memory::MEMiExpBlockHead *>(
-                    SubOffset(block, sizeof(Abstract::Memory::MEMiExpBlockHead)));
+void GameScene::ViewTags(void *block, MEMiHeapHead * /*heap*/, uintptr_t param) {
+    auto *blockHead = static_cast<MEMiExpBlockHead *>(SubOffset(block, sizeof(MEMiExpBlockHead)));
     owning_span<u32> *span = reinterpret_cast<owning_span<u32> *>(param);
     for (auto &tag : *span) {
         if (tag == 0) {
@@ -235,8 +233,7 @@ void GameScene::ViewTags(void *block, Abstract::Memory::MEMiHeapHead * /*heap*/,
     }
 }
 
-void GameScene::IncreaseTagCount(void * /*block*/, Abstract::Memory::MEMiHeapHead * /*heap*/,
-        uintptr_t param) {
+void GameScene::IncreaseTagCount(void * /*block*/, MEMiHeapHead * /*heap*/, uintptr_t param) {
     size_t &count = *reinterpret_cast<size_t *>(param);
     ++count;
 }

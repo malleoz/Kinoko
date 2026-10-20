@@ -5,6 +5,8 @@
 #include <array>
 #include <cmath>
 
+/// @todo FINISH DOCUMENTING
+
 // frsqrte matching courtesy of Geotale, with reference to https://achurch.org/cpu-tests/ppc750cl.s
 
 namespace Kinoko {

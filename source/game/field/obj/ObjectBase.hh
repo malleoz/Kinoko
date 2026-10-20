@@ -48,7 +48,7 @@ public:
     };
 
     /// @brief A bitfield of @ref eFlags that represents the state of the object
-    typedef EGG::TBitFlag<u16, eFlags> Flags;
+    typedef EGG::TBitFlag<u8, eFlags> Flags;
 
     /// @brief Describes whether the object needs to be updated every frame
     enum class eLoadFlags {
@@ -58,7 +58,7 @@ public:
     };
 
     /// @brief A bitfield of @ref eLoadFlags that represents the update requirements of the object
-    typedef EGG::TBitFlag<u16, eLoadFlags> LoadFlags;
+    typedef EGG::TBitFlag<u8, eLoadFlags> LoadFlags;
 
     ObjectBase(const System::MapdataGeoObj &params);
     ObjectBase(const char *name, const EGG::Vector3f &pos, const EGG::Vector3f &rot,

@@ -18,8 +18,8 @@ class SceneCreator;
 
 /// @brief Manages the scene stack and transitions between scenes.
 class SceneManager {
-    /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
-    /// state on context switch
+    /// @brief Grants access to static member variables so a @ref Host::Context can restore their
+    /// values on context switch
     friend Host::Context;
 
 public:

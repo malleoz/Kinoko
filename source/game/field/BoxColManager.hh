@@ -36,7 +36,7 @@ enum class eBoxColFlag {
 };
 
 /// @brief A bitfield of @ref eBoxColFlag that represents the state and type of a given BoxColUnit
-typedef EGG::TBitFlag<u32, eBoxColFlag> BoxColFlag;
+typedef EGG::TBitFlag<u16, eBoxColFlag> BoxColFlag;
 
 /// @brief A representation of the boundaries of an entity that has dynamic collision
 /// @details Used by the @ref BoxColManager which spatially indexes these units to allow for more

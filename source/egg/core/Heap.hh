@@ -21,8 +21,8 @@ class ExpHeap;
 /// @brief A high-level representation of a memory heap for managing dynamic memory allocation.
 /// Interface for allocating and freeing memory blocks.
 class Heap : Disposer {
-    /// @brief Grants access to the singleton so a @ref Host::Context can restore the instance's
-    /// state on context switch
+    /// @brief Grants access to static member variables so a @ref Host::Context can restore their
+    /// values on context switch
     friend Host::Context;
 
 public:
@@ -106,7 +106,7 @@ protected:
     };
 
     /// @brief A bitfield of @ref eFlags used to control heap behavior
-    typedef TBitFlag<u16, eFlags> Flags;
+    typedef TBitFlag<u8, eFlags> Flags;
 
     Abstract::Memory::MEMiHeapHead *const m_handle; /// @todo DOCUMENT
     Heap *m_parentHeap;                             ///< The parent heap, or `nullptr` if no parent

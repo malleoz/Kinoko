@@ -42,7 +42,7 @@ public:
     };
 
     /// @brief A bitfield of @ref eFlags that represents the state of the current action
-    typedef EGG::TBitFlag<u32, eFlags> Flags;
+    typedef EGG::TBitFlag<u8, eFlags> Flags;
 
     KartAction();
     ~KartAction() override;

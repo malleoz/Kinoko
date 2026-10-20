@@ -74,39 +74,58 @@ void *ExpHeap::alloc(size_t size, s32 align) {
 }
 
 /// @addr{0x80226C78}
+/// @brief Frees the provided memory block
+/// @param block Pointer to the memory block to free
 void ExpHeap::free(void *block) {
     dynamicCastHandleToExp()->free(block);
 }
 
 /// @addr{0x80226C90}
+/// @brief Gets the maximum size of memory that can be allocated with the specified alignment
+/// @param align The alignment requirement for the memory block
+/// @return The maximum size of memory that can be allocated with the specified alignment
 u32 ExpHeap::getAllocatableSize(s32 align) const {
     return dynamicCastHandleToExp()->getAllocatableSize(align);
 }
 
 /// @addr{0x80226CFC}
+/// @brief Calculates the total size of memory blocks for each group ID in this heap and stores it
+/// in the provided record
+/// @param record Pointer to the @ref GroupSizeRecord to store the calculated sizes
 void ExpHeap::calcGroupSize(GroupSizeRecord *record) {
     record->reset();
     dynamicCastHandleToExp()->visitAllocated(addGroupSize, GetAddrNum(record));
 }
 
 /// @addr{0x80226C98}
+/// @brief Sets the group ID for this heap
+/// @param groupID The group ID to set for this heap
 void ExpHeap::setGroupID(u16 groupID) {
-    return dynamicCastHandleToExp()->setGroupID(groupID);
+    dynamicCastHandleToExp()->setGroupID(groupID);
 }
 
+/// @brief Gets the group ID for this heap
+/// @return The group ID of this heap
 u16 ExpHeap::getGroupID() const {
     return dynamicCastHandleToExp()->getGroupID();
 }
 
+/// @brief Reinterpret casts @ref m_handle to @ref MEMiExpHeapHead
+/// @return Pointer to the memory heap handle, @ref m_handle, as a @ref MEMiExpHeapHead
 MEMiExpHeapHead *ExpHeap::dynamicCastHandleToExp() {
     return reinterpret_cast<MEMiExpHeapHead *>(m_handle);
 }
 
+/// @brief Reinterpret casts @ref m_handle to @ref MEMiExpHeapHead
+/// @return Const pointer to the memory heap handle, @ref m_handle, as a @ref MEMiExpHeapHead
 const MEMiExpHeapHead *ExpHeap::dynamicCastHandleToExp() const {
     return reinterpret_cast<MEMiExpHeapHead *>(m_handle);
 }
 
 /// @addr{0x80226CA0}
+/// @brief Adds the size of a memory block to the corresponding group ID in the provided record
+/// @param block Pointer to the memory block
+/// @param param Pointer to the @ref GroupSizeRecord to update
 void ExpHeap::addGroupSize(void *block, MEMiHeapHead * /* heap */, uintptr_t param) {
     MEMiExpBlockHead *blockHead =
             static_cast<MEMiExpBlockHead *>(SubOffset(block, sizeof(MEMiExpBlockHead)));
@@ -117,6 +136,11 @@ void ExpHeap::addGroupSize(void *block, MEMiHeapHead * /* heap */, uintptr_t par
 }
 
 /// @addr{0x80226A1C}
+/// @brief Creates an expanded heap at the specified start address with the given size and options
+/// @param startAddress The starting address of the memory block for the heap
+/// @param size The size of the memory block for the heap
+/// @param opt Options for the expanded heap
+/// @return Pointer to the created expanded heap, or `nullptr` if creation failed
 ExpHeap *ExpHeap::Create(void *startAddress, size_t size, u16 opt) {
     ExpHeap *heap = nullptr;
 
@@ -139,6 +163,13 @@ ExpHeap *ExpHeap::Create(void *startAddress, size_t size, u16 opt) {
 }
 
 /// @addr{0x80226AC8}
+/// @brief Creates an expanded heap with the specified size, parent heap, and options
+/// @param size The size of the memory block for the heap
+/// @param pHeap Pointer to the parent heap, or `nullptr` to use the current heap
+/// @param opt Options for the expanded heap
+/// @return Pointer to the created expanded heap, or `nullptr` if creation failed
+/// @details If `size` is `std::numeric_limits<size_t>::max()`, the heap will attempt to allocate
+/// the maximum possible size from the parent heap.
 ExpHeap *ExpHeap::Create(size_t size, Heap *pHeap, u16 opt) {
     ExpHeap *heap = nullptr;
 

@@ -1,5 +1,6 @@
 #include "ExpHeap.hh"
 
+/// @brief Houses various memory management utilities including heaps and their allocators.
 namespace Kinoko::Abstract::Memory {
 
 Region::Region(void *start, void *end) : start(start), end(end) {}

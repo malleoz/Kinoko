@@ -23,7 +23,7 @@ public:
     };
 
     /// @brief Represents a bit flag for the type of pads the kart is interacting with
-    typedef EGG::TBitFlag<u32, ePadType> PadType;
+    typedef EGG::TBitFlag<u8, ePadType> PadType;
 
     /// @brief Describes the current drift state of the kart
     enum class DriftState {

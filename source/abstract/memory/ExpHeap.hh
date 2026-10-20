@@ -92,7 +92,7 @@ private:
     enum class eAttribute {
         BestFitAlloc = 0,
     };
-    typedef EGG::TBitFlag<u16, eAttribute> Attribute;
+    typedef EGG::TBitFlag<u8, eAttribute> Attribute;
 
     [[nodiscard]] void *allocFromHead(size_t size, s32 alignment);
     [[nodiscard]] void *allocFromTail(size_t size, s32 alignment);

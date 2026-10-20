@@ -179,7 +179,7 @@ void ObjectWanwan::calc() {
 /// @return Returns @ref eLoadFlags::Calc and @ref eLoadFlags::Draw so that the object is
 /// calculated every frame
 ObjectBase::LoadFlags ObjectWanwan::loadFlags() const {
-    return LoadFlags().setBit(eLoadFlags::Calc, eLoadFlags::Draw);
+    return LoadFlags(eLoadFlags::Calc, eLoadFlags::Draw);
 }
 
 /// @addr{0x806E526C}
