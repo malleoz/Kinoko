@@ -25,8 +25,8 @@ struct MEMiExpBlockLink {
 
 /// @brief Non-intrusive doubly-linked list of memory blocks
 struct MEMiExpBlockList {
-    MEMiExpBlockHead *m_head;
-    MEMiExpBlockHead *m_tail;
+    MEMiExpBlockHead *m_head; ///< Pointer to the first block in the list
+    MEMiExpBlockHead *m_tail; ///< Pointer to the last block in the list
 
     MEMiExpBlockHead *insert(MEMiExpBlockHead *block, MEMiExpBlockHead *prev);
     MEMiExpBlockHead *append(MEMiExpBlockHead *block);
