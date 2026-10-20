@@ -37,7 +37,7 @@ struct MEMiExpBlockList {
 /// corresponding used/free linked lists.
 struct MEMiExpBlockHead {
 public:
-    u16 m_signature; ///< Signature of the memory block, "FR" for free, "UD" for used
+    const u16 m_signature; ///< Signature of the memory block, "FR" for free, "UD" for used
     union {
         u16 val; ///< Raw 2-byte value representing the block attributes
         struct {
@@ -46,7 +46,7 @@ public:
             u16 groupId : 8;   ///< The @ref GroupID of the memory block
         } fields;              ///< Structured view of the block attributes
     } m_attribute;             ///< Union of block attributes
-    u32 m_size;                ///< Size of the memory block
+    const u32 m_size;          ///< Size of the memory block (minus `sizeof(MEMiExpBlockHead)`)
 #ifdef BUILD_DEBUG
     u32 m_tag;
 #endif
@@ -71,10 +71,6 @@ private:
 /// tail, and scene-permanent blocks from the head, is recommended. The memory overhead per
 /// allocation is `sizeof(MEMiExpBlockHead)`.
 class MEMiExpHeapHead : public MEMiHeapHead {
-private:
-    MEMiExpHeapHead(void *end, u16 opt);
-    ~MEMiExpHeapHead();
-
 public:
     /// @brief Visitor function type for iterating over allocated memory blocks
     /// @param void* Pointer to the memory block
@@ -82,22 +78,37 @@ public:
     /// @param uintptr_t User-defined parameter passed to the visitor function
     typedef std::function<void(void *startAddress, MEMiHeapHead *heap, uintptr_t param)> Visitor;
 
-    static MEMiExpHeapHead *create(void *startAddress, size_t size, u16 flag);
     void destroy();
-
     void *alloc(size_t size, s32 align);
     void free(void *block);
     [[nodiscard]] u32 getAllocatableSize(s32 align) const;
     void visitAllocated(Visitor visitor, uintptr_t param);
 
+    /// @beginGetters
+
     [[nodiscard]] u16 getGroupID() const;
+
+    /// @endGetters
+
+    /// @beginSetters
+
     void setGroupID(u16 groupID);
 
+    /// @endSetters
+
+    static MEMiExpHeapHead *Create(void *startAddress, size_t size, u16 flag);
+
 private:
+    /// @brief Attributes controlling the behavior of the expanded heap
     enum class eAttribute {
-        BestFitAlloc = 0,
+        BestFitAlloc = 0, ///< Reduces internal fragmentation by selecting the best-fit free block
     };
+
+    /// @brief Bitfield of @ref eAttribute flags representing the attributes of the expanded heap
     typedef EGG::TBitFlag<u8, eAttribute> Attribute;
+
+    MEMiExpHeapHead(void *end, u16 opt);
+    ~MEMiExpHeapHead();
 
     [[nodiscard]] void *allocFromHead(size_t size, s32 alignment);
     [[nodiscard]] void *allocFromTail(size_t size, s32 alignment);
@@ -110,8 +121,8 @@ private:
     u16 m_groupId;                 ///< The @ref GroupID of this heap
 #ifdef BUILD_DEBUG
     u32 m_tag;
-#endif // BUILD_DEBUG
-    Attribute m_attribute;
+#endif
+    Attribute m_attribute; ///< Attributes controlling the behavior of the expanded heap
 
     static constexpr u32 EXP_HEAP_SIGNATURE = 0x45585048; ///< Signature of an expanded heap, "EXPH"
 };

@@ -75,23 +75,40 @@ MEMiExpBlockHead *MEMiExpBlockList::remove(MEMiExpBlockHead *block) {
     return prev;
 }
 
-MEMiExpBlockHead::MEMiExpBlockHead(const Region &region, u16 signature) {
-    m_signature = signature;
+/// @brief Private constructor
+/// @param region The region of the memory block
+/// @param signature The signature of the memory block ("FR" for free, "UD" for used)
+/// @details Sets @ref m_signature to the provided `signature`. Sets @ref m_size to the size of the
+/// `region` minus `sizeof(MEMiExpBlockHead)`. Initializes the block's attributes to zero and the
+/// block's link pointers to `nullptr`.
+MEMiExpBlockHead::MEMiExpBlockHead(const Region &region, u16 signature)
+    : m_signature(signature),
+      m_size(region.getRange() - sizeof(MEMiExpBlockHead)) {
     m_attribute.val = 0;
-
-    m_size = region.getRange() - sizeof(MEMiExpBlockHead);
 
     m_link.m_prev = nullptr;
     m_link.m_next = nullptr;
 }
 
+/// @brief Default destructor
 MEMiExpBlockHead::~MEMiExpBlockHead() = default;
 
+/// @brief Creates a free block of memory
+/// @param region The region of the block to designate as free
+/// @return Pointer to the created free memory block
+/// @details Constructs a `MEMiExpBlockHead` with the signature for a free block ("FR") at the start
+/// of the provided `region`. Free blocks are designated as available blocks that can be allocated
+/// for future use.
 MEMiExpBlockHead *MEMiExpBlockHead::createFree(const Region &region) {
     constexpr u16 FREE_BLOCK_SIGNATURE = 0x4652; // FR
     return new (region.start) MEMiExpBlockHead(region, FREE_BLOCK_SIGNATURE);
 }
 
+/// @brief Creates a used block of memory
+/// @param region The region of the block to designate as used
+/// @return Pointer to the created used memory block
+/// @details Constructs a `MEMiExpBlockHead` with the signature for a used block ("UD") at the start
+/// of the provided `region`. Used blocks represent heaps that are currently allocated and in use.
 MEMiExpBlockHead *MEMiExpBlockHead::createUsed(const Region &region) {
     constexpr u16 USED_BLOCK_SIGNATURE = 0x5544; // UD
     return new (region.start) MEMiExpBlockHead(region, USED_BLOCK_SIGNATURE);
@@ -107,47 +124,6 @@ void *MEMiExpBlockHead::getMemoryStart() const {
 
 void *MEMiExpBlockHead::getMemoryEnd() const {
     return AddOffset(getMemoryStart(), m_size);
-}
-
-MEMiExpHeapHead::MEMiExpHeapHead(void *end, u16 opt)
-    : MEMiHeapHead(EXP_HEAP_SIGNATURE, AddOffset(this, sizeof(MEMiExpHeapHead)), end, opt) {
-    m_groupId = 0;
-#ifdef BUILD_DEBUG
-    m_tag = 0;
-#endif // BUILD_DEBUG
-    m_attribute.makeAllZero();
-
-    Region region = Region(getHeapStart(), getHeapEnd());
-    MEMiExpBlockHead *block = MEMiExpBlockHead::createFree(region);
-
-    m_freeBlocks.m_head = block;
-    m_freeBlocks.m_tail = block;
-    m_usedBlocks.m_head = nullptr;
-    m_usedBlocks.m_tail = nullptr;
-}
-
-/// @addr{0x80198D58}
-MEMiExpHeapHead::~MEMiExpHeapHead() = default;
-
-/// @addr{0x80198CA8}
-MEMiExpHeapHead *MEMiExpHeapHead::create(void *startAddress, size_t size, u16 flag) {
-    void *endAddress = AddOffset(startAddress, size);
-
-    startAddress = RoundUp(startAddress, 4);
-    endAddress = RoundDown(endAddress, 4);
-
-    uintptr_t startAddrNum = GetAddrNum(startAddress);
-    uintptr_t endAddrNum = GetAddrNum(endAddress);
-
-    if (startAddrNum > endAddrNum) {
-        return nullptr;
-    }
-
-    if (endAddrNum - startAddrNum < sizeof(MEMiExpHeapHead) + sizeof(MEMiExpBlockHead) + 4) {
-        return nullptr;
-    }
-
-    return new (startAddress) MEMiExpHeapHead(endAddress, flag);
 }
 
 void MEMiExpHeapHead::destroy() {
@@ -230,6 +206,47 @@ u16 MEMiExpHeapHead::getGroupID() const {
 void MEMiExpHeapHead::setGroupID(u16 groupID) {
     m_groupId = groupID;
 }
+
+/// @addr{0x80198CA8}
+MEMiExpHeapHead *MEMiExpHeapHead::Create(void *startAddress, size_t size, u16 flag) {
+    void *endAddress = AddOffset(startAddress, size);
+
+    startAddress = RoundUp(startAddress, 4);
+    endAddress = RoundDown(endAddress, 4);
+
+    uintptr_t startAddrNum = GetAddrNum(startAddress);
+    uintptr_t endAddrNum = GetAddrNum(endAddress);
+
+    if (startAddrNum > endAddrNum) {
+        return nullptr;
+    }
+
+    if (endAddrNum - startAddrNum < sizeof(MEMiExpHeapHead) + sizeof(MEMiExpBlockHead) + 4) {
+        return nullptr;
+    }
+
+    return new (startAddress) MEMiExpHeapHead(endAddress, flag);
+}
+
+MEMiExpHeapHead::MEMiExpHeapHead(void *end, u16 opt)
+    : MEMiHeapHead(EXP_HEAP_SIGNATURE, AddOffset(this, sizeof(MEMiExpHeapHead)), end, opt) {
+    m_groupId = 0;
+#ifdef BUILD_DEBUG
+    m_tag = 0;
+#endif // BUILD_DEBUG
+    m_attribute.makeAllZero();
+
+    Region region = Region(getHeapStart(), getHeapEnd());
+    MEMiExpBlockHead *block = MEMiExpBlockHead::createFree(region);
+
+    m_freeBlocks.m_head = block;
+    m_freeBlocks.m_tail = block;
+    m_usedBlocks.m_head = nullptr;
+    m_usedBlocks.m_tail = nullptr;
+}
+
+/// @addr{0x80198D58}
+MEMiExpHeapHead::~MEMiExpHeapHead() = default;
 
 /// @addr{0x8019899C}
 void *MEMiExpHeapHead::allocFromHead(size_t size, s32 alignment) {

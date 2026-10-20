@@ -154,7 +154,7 @@ ExpHeap *ExpHeap::Create(void *startAddress, size_t size, u16 opt) {
 
     void *handleStart = AddOffset(startAddress, sizeof(ExpHeap));
     MEMiExpHeapHead *handle =
-            MEMiExpHeapHead::create(handleStart, addrRange - sizeof(ExpHeap), opt);
+            MEMiExpHeapHead::Create(handleStart, addrRange - sizeof(ExpHeap), opt);
     if (handle) {
         heap = new (startAddress) ExpHeap(handle);
     }
