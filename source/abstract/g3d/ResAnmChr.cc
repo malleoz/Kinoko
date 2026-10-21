@@ -299,12 +299,20 @@ void GetAnmResult_S(f32 frame, ChrAnmResult &result, const ResAnmChr::InfoData &
     result.rt = EGG::Matrix34f::ident;
 }
 
+/// @brief Constructor
+/// @param chr The `CHR0` resource data to be used for the animation object
+/// @details Initializes @ref m_startFrame to zero and @ref m_endFrame to the total number of frames
+/// in the animation. Sets @ref m_playPolicy based on the animation policy of the `CHR0` resource.
+/// Finally, sets @ref m_resAnmChr to the provided `chr`.
 AnmObjChrRes::AnmObjChrRes(const ResAnmChr &chr)
     : FrameCtrl(0.0f, chr.frameCount(), GetAnmPlayPolicy(chr.policy())),
       m_resAnmChr(chr) {}
 
+/// @brief Default destructor
 AnmObjChrRes::~AnmObjChrRes() = default;
 
+/// @brief Gets the framecount of the animation
+/// @return The number of frames in the animation
 u16 AnmObjChrRes::frameCount() const {
     return m_resAnmChr.frameCount();
 }
