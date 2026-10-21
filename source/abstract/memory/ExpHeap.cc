@@ -151,7 +151,7 @@ void *MEMiExpHeapHead::alloc(size_t size, s32 align) {
     }
     size = RoundUp(size, 4);
 
-    return align >= 0 ? allocFromhead(size, align) : allocFromTail(size, -align);
+    return align >= 0 ? allocFromHead(size, align) : allocFromTail(size, -align);
 }
 
 /// @addr{0x80199038}
@@ -320,14 +320,17 @@ void *MEMiExpHeapHead::allocFromHead(size_t size, s32 alignment) {
         }
     }
 
-    if (!found) {
-        return nullptr;
-    }
-
-    return allocUsedBlockFromFreeBlock(found, bestAddress, size, 0);
+    return found ? allocUsedBlockFromFreeBlock(found, bestAddress, size, 0) : nullptr;
 }
 
 /// @addr{0x80198A78}
+/// @brief Allocates a memory block from the tail of the heap
+/// @param size The size of the memory block to allocate
+/// @param alignment The alignment requirement for the memory block
+/// @return A pointer to the allocated memory block, or `nullptr` if allocation fails
+/// @details Iterates all free memory blocks from the tail of the free list to find a suitable block
+/// that satisfies the size and alignment requirements. If @ref eAttribute::BestFitAlloc is set in
+/// @ref m_attribute, it selects the smallest block that fits the request.
 void *MEMiExpHeapHead::allocFromTail(size_t size, s32 alignment) {
     MEMiExpBlockHead *found = nullptr;
     u32 blockSize = -1;
@@ -352,14 +355,22 @@ void *MEMiExpHeapHead::allocFromTail(size_t size, s32 alignment) {
         }
     }
 
-    if (!found) {
-        return nullptr;
-    }
-
-    return allocUsedBlockFromFreeBlock(found, bestAddress, size, 1);
+    return found ? allocUsedBlockFromFreeBlock(found, bestAddress, size, 1) : nullptr;
 }
 
 /// @addr{0x80198798}
+/// @brief Creates a used memory block from a free memory block
+/// @param block The free memory block to allocate from
+/// @param address The starting address of the memory block to allocate
+/// @param size The size of the memory block to allocate
+/// @param direction The allocation direction, 0 for head, 1 for tail
+/// @return A pointer to the allocated memory block, or `nullptr` if allocation fails
+/// @details This function takes a free memory block and splits it into a used block and potentially
+/// two smaller free blocks on either side, depending on the provided `address` and size. We start
+/// by removing the free block from @ref m_freeBlocks. It then checks if there is enough space to
+/// create new free blocks on the left and right sides of the allocated block. If there is enough
+/// space, it inserts the new free blocks back into the free list. Finally, it creates a new used
+/// block for the requested allocation and appends it to @ref m_usedBlocks.
 void *MEMiExpHeapHead::allocUsedBlockFromFreeBlock(MEMiExpBlockHead *block, void *address, u32 size,
         s32 direction) {
     // The left region represents the free block created to the left of the new memory block
@@ -404,6 +415,13 @@ void *MEMiExpHeapHead::allocUsedBlockFromFreeBlock(MEMiExpBlockHead *block, void
 }
 
 /// @addr{0x80198B40}
+/// @brief Recycles a used region of memory back into the free list of the expanded heap
+/// @param initialRegion The region of memory to recycle
+/// @return `true` if the region was successfully recycled, `false` otherwise
+/// @details This function attempts to merge the given used memory region back into the free list.
+/// It searches for adjacent free blocks to potentially merge with, and if the resulting region is
+/// large enough to hold a free block header, it inserts it back into the free list. If the region
+/// is too small, the function returns `false`.
 bool MEMiExpHeapHead::recycleRegion(const Region &initialRegion) {
     MEMiExpBlockHead *block = nullptr;
     Region region = initialRegion;

@@ -299,6 +299,16 @@ void GetAnmResult_S(f32 frame, ChrAnmResult &result, const ResAnmChr::InfoData &
     result.rt = EGG::Matrix34f::ident;
 }
 
+AnmObjChrRes::AnmObjChrRes(const ResAnmChr &chr)
+    : FrameCtrl(0.0f, chr.frameCount(), GetAnmPlayPolicy(chr.policy())),
+      m_resAnmChr(chr) {}
+
+AnmObjChrRes::~AnmObjChrRes() = default;
+
+u16 AnmObjChrRes::frameCount() const {
+    return m_resAnmChr.frameCount();
+}
+
 const std::array<ResAnmChr::GetAnmResultFunc, ResAnmChr::NUM_RESULT_FUNCS>
         ResAnmChr::s_getAnmResultTable = {{
                 &GetAnmResult_Stub,

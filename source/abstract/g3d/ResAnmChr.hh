@@ -43,27 +43,37 @@ struct ChrAnmResult {
 /// @brief Represents the CHR0 file format, which pertains to model movement animations.
 class ResAnmChr {
 public:
-    /// @brief Frame values (FVS) animation data
+    /// @brief Keyframe values (FVS) comprised of 2-byte integers
+    /// @details This is more compact than @ref FVS96Data but has lower precision since frames are
+    /// limited to 1/32 increments.
     struct Frm48Data {
-        s16 frame; // at 0x0
-        u16 value; // at 0x2
-        s16 slope; // at 0x4
+        s16 frame; ///< Fixed-point frame number with 5 fractional bits
+        u16 value; ///< The keyframe value
+        s16 slope; ///< Fixed-point value rate of change (units / frame) with 8 fractional bits
     };
+
+    /// @brief Keyframe value (FVS) data comprised of 2-byte integers
     struct FVS48Data {
-        f32 scale;                // at 0x0
-        f32 offset;               // at 0x4
-        Frm48Data frameValues[1]; // at 0x8
+        f32 scale;                ///< The scaled size of one step in the keyframe value
+        f32 offset;               ///< Base value for the keyframe values
+        Frm48Data frameValues[1]; ///< The keyframe values
     };
 
+    /// @brief Keyframe values (FVS) comprised of 4-byte floats
     struct Frm96Data {
-        f32 frame; // at 0x0
-        f32 value; // at 0x4
-        f32 slope; // at 0x8
-    };
-    struct FVS96Data {
-        Frm96Data frameValues[1]; // at 0x0
+        f32 frame; ///< Fractional frame number
+        f32 value; ///< The keyframe value
+        f32 slope; ///< The rate of change of the keyframe value (units / frame)
     };
 
+    /// @brief Keyframe value (FVS) data comprised of 4-byte floats
+    /// @details Unlike @ref FVS48Data, there is no `scale` or `offset` since the keyframe values
+    /// are stored as full-precision floats rather than fixed-point integers.
+    struct FVS96Data {
+        Frm96Data frameValues[1]; ///< The keyframe values
+    };
+
+    /// @brief Keyframe value (FVS) data, which can be either 2-byte integers or 4-byte floats
     struct FVSData {
         u16 numFrameValues;        // at 0x0
         u8 PADDING_0x2[0x4 - 0x2]; // at 0x2
@@ -219,22 +229,17 @@ private:
 
 class AnmObjChrRes : public FrameCtrl {
 public:
-    AnmObjChrRes(const ResAnmChr &chr)
-        : FrameCtrl(0.0f, chr.frameCount(), GetAnmPlayPolicy(chr.policy())),
-          m_resAnmChr(chr) {}
-
-    ~AnmObjChrRes() = default;
+    AnmObjChrRes(const ResAnmChr &chr);
+    ~AnmObjChrRes();
 
     /// @beginGetters
 
-    [[nodiscard]] u16 frameCount() const {
-        return m_resAnmChr.frameCount();
-    }
+    [[nodiscard]] u16 frameCount() const;
 
     /// @endGetters
 
 private:
-    ResAnmChr m_resAnmChr;
+    const ResAnmChr m_resAnmChr; ///< The underlying `CHR0` resource data
 };
 
 } // namespace Kinoko::Abstract::g3d
