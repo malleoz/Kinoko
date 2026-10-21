@@ -289,6 +289,13 @@ MEMiExpHeapHead::MEMiExpHeapHead(void *end, u16 opt)
 MEMiExpHeapHead::~MEMiExpHeapHead() = default;
 
 /// @addr{0x8019899C}
+/// @brief Allocates a memory block from the head of the heap
+/// @param size The size of the memory block to allocate
+/// @param alignment The alignment requirement for the memory block
+/// @return A pointer to the allocated memory block, or `nullptr` if allocation fails
+/// @details Iterates all free memory blocks from the head of the free list to find a suitable block
+/// that satisfies the size and alignment requirements. If @ref eAttribute::BestFitAlloc is set in
+/// @ref m_attribute, it selects the smallest block that fits the request.
 void *MEMiExpHeapHead::allocFromHead(size_t size, s32 alignment) {
     MEMiExpBlockHead *found = nullptr;
     u32 blockSize = -1;
