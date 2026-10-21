@@ -114,40 +114,51 @@ MEMiExpBlockHead *MEMiExpBlockHead::createUsed(const Region &region) {
     return new (region.start) MEMiExpBlockHead(region, USED_BLOCK_SIGNATURE);
 }
 
+/// @brief Gets the @ref Region of this memory block
+/// @return The @ref Region representing the memory block's start and end addresses
 Region MEMiExpBlockHead::getRegion() const {
     return Region(SubOffset(this, m_attribute.fields.alignment), getMemoryEnd());
 }
 
+/// @brief Gets the start of this memory block's data (after the @ref MEMiExpBlockHead)
+/// @return Pointer to the start of the memory block's usable data
 void *MEMiExpBlockHead::getMemoryStart() const {
     return AddOffset(this, sizeof(MEMiExpBlockHead));
 }
 
+/// @brief Gets the end of this memory block's data
+/// @return Pointer to the end of the memory block's usable data
 void *MEMiExpBlockHead::getMemoryEnd() const {
     return AddOffset(getMemoryStart(), m_size);
 }
 
+/// @brief Destroys this memory heap
+/// @details Calls the @ref MEMiExpHeapHead destructor on this instance to clean up the heap's
+/// handler information.
 void MEMiExpHeapHead::destroy() {
     this->~MEMiExpHeapHead();
 }
 
 /// @addr{0x80198D88}
+/// @brief Allocates a memory block of the specified size and alignment
+/// @param size The size of the memory block to allocate
+/// @param align The alignment requirement for the memory block. Positive values indicate alignment
+/// from the head, negative values indicate alignment from the tail.
+/// @return Pointer to the allocated memory block, or `nullptr` if allocation fails
 void *MEMiExpHeapHead::alloc(size_t size, s32 align) {
     if (size == 0) {
         size = 1;
     }
     size = RoundUp(size, 4);
 
-    void *block = nullptr;
-    if (align >= 0) {
-        block = allocFromHead(size, align);
-    } else {
-        block = allocFromTail(size, -align);
-    }
-
-    return block;
+    return align >= 0 ? allocFromhead(size, align) : allocFromTail(size, -align);
 }
 
 /// @addr{0x80199038}
+/// @brief Frees a previously allocated memory block
+/// @param block Pointer to the memory block to free
+/// @details Does nothing if `block` is `nullptr`. Retrieves the @ref MEMiExpBlockHead corresponding
+/// to the memory block and recycles its region via @ref recycleRegion().
 void MEMiExpHeapHead::free(void *block) {
     if (!block) {
         return;
@@ -162,6 +173,11 @@ void MEMiExpHeapHead::free(void *block) {
 }
 
 /// @addr{0x80199180}
+/// @brief Returns the maximum allocatable size for a given alignment requirement
+/// @param align The alignment requirement
+/// @return The maximum size of a memory block that can be allocated with the specified alignment
+/// @details Traverses all @ref m_freeBlocks and calculates the maximum allocatable size considering
+/// the alignment requirement.
 u32 MEMiExpHeapHead::getAllocatableSize(s32 align) const {
     // Doesn't matter which direction it can be allocated from, take absolute value
     align = std::abs(align);
@@ -189,6 +205,10 @@ u32 MEMiExpHeapHead::getAllocatableSize(s32 align) const {
 }
 
 /// @addr{0x801992A8}
+/// @brief Visits all allocated memory blocks and evaluates the provided `visitor` function on each
+/// block
+/// @param visitor The function to evaluate on each allocated memory block
+/// @param param An additional parameter to pass to the visitor function
 void MEMiExpHeapHead::visitAllocated(Visitor visitor, uintptr_t param) {
     for (MEMiExpBlockHead *block = m_usedBlocks.m_head; block;) {
         MEMiExpBlockHead *next = block->m_link.m_next;
@@ -198,16 +218,28 @@ void MEMiExpHeapHead::visitAllocated(Visitor visitor, uintptr_t param) {
 }
 
 /// @addr{0x8019934C}
+/// @brief Retrieves the @ref GroupID of the heap
+/// @return The group ID of the heap, @ref m_groupID
 u16 MEMiExpHeapHead::getGroupID() const {
     return m_groupId;
 }
 
 /// @addr{0x80199258}
+/// @brief Sets the @ref GroupID of the heap
+/// @param groupID The group ID to set for the heap
 void MEMiExpHeapHead::setGroupID(u16 groupID) {
     m_groupId = groupID;
 }
 
 /// @addr{0x80198CA8}
+/// @brief Creates a new expandable heap handle at the specified start address with the given size
+/// and flags
+/// @param startAddress The address at which to construct the heap handle
+/// @param size The size of the memory region for the heap
+/// @param flag The flags to set for the heap
+/// @return A pointer to the newly created expandable heap handle, or `nullptr` if creation fails
+/// @details Fails if the specified memory region is too small to accommodate the heap handle and
+/// its initial block.
 MEMiExpHeapHead *MEMiExpHeapHead::Create(void *startAddress, size_t size, u16 flag) {
     void *endAddress = AddOffset(startAddress, size);
 
@@ -228,6 +260,13 @@ MEMiExpHeapHead *MEMiExpHeapHead::Create(void *startAddress, size_t size, u16 fl
     return new (startAddress) MEMiExpHeapHead(endAddress, flag);
 }
 
+/// @brief Constructor
+/// @param end The end address of the memory region for the heap
+/// @param opt The flags to set for the heap
+/// @details Initializes @ref m_groupId to zero and clears all flags in @ref m_attribute. Marks the
+/// memory block of the new heap as free via @ref MEMiExpBlockHead::createFree(). Sets this block as
+/// both the head and tail of @ref m_freeBlocks and initializes the head and tail of @ref
+/// m_usedBlocks to `nullptr`.
 MEMiExpHeapHead::MEMiExpHeapHead(void *end, u16 opt)
     : MEMiHeapHead(EXP_HEAP_SIGNATURE, AddOffset(this, sizeof(MEMiExpHeapHead)), end, opt) {
     m_groupId = 0;
@@ -246,6 +285,7 @@ MEMiExpHeapHead::MEMiExpHeapHead(void *end, u16 opt)
 }
 
 /// @addr{0x80198D58}
+/// @brief Default destructor
 MEMiExpHeapHead::~MEMiExpHeapHead() = default;
 
 /// @addr{0x8019899C}
