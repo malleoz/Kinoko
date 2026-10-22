@@ -8,7 +8,13 @@
 // Credit: kiwi515/ogws
 
 namespace Kinoko::Abstract::g3d {
+
+/// @brief Result of sampling a `CHR0` animation for one node on a given frame
+/// @details Most of this implementation is unused since we only need to implement scaling
+/// animations for @ref Field::ObjectPropeller and @ref Field::ObjectPress.
 struct ChrAnmResult {
+    /// @brief Animation flags. Unused in Kinoko but kept in case any custom tracks implement unique
+    /// animation behavior
     enum Flag {
         FLAG_ANM_EXISTS = (1 << 0),
         FLAG_MTX_IDENT = (1 << 1),
@@ -29,13 +35,15 @@ struct ChrAnmResult {
         FLAG_XSI_SCALING = (1 << 12),
     };
 
-    u32 flags;
-    EGG::Vector3f s;
-    EGG::Vector3f rawR;
-    EGG::Matrix34f rt;
+    u32 flags;          ///< Set but not used in Kinoko, contains the animation flags for the node
+    EGG::Vector3f s;    ///< Scale vector
+    EGG::Vector3f rawR; ///< Unused in Kinoko, raw rotation vector
+    EGG::Matrix34f rt;  ///< Unused in Kinoko, rotation-translation matrix
 
     /// @addr{0x800555C0}
-    [[nodiscard]] EGG::Vector3f scale() const {
+    /// @brief Gets the scale vector
+    /// @return The scale vector, @ref s
+    [[nodiscard]] const EGG::Vector3f &scale() const {
         return s;
     }
 };
@@ -103,7 +111,12 @@ public:
         };
     };
 
+    /// @brief Information for one animation node (bone)
     struct NodeData {
+        /// @brief Animation flags for the node
+        /// @details For Kinoko, we only care about @ref FLAG_SCALE_X_CONST, @ref
+        /// FLAG_SCALE_Y_CONST, and @ref FLAG_SCALE_Z_CONST as these identify that the nodes use a
+        /// constant data value rather than a @ref ResAnmChr::AnmData block.
         enum Flag {
             FLAG_ANM_EXISTS = (1 << 0),
             FLAG_MTX_IDENT = (1 << 1),
@@ -166,23 +179,29 @@ public:
             FLAG_TRANS_FMT_MASK = FLAG_TRANS_FVS32_FMT | FLAG_TRANS_FVS48_FMT | FLAG_TRANS_FVS96_FMT
         };
 
+        /// @brief Union representing animation data for a node
+        /// @details This can either be a constant value (identified with the
+        /// FLAG_SCALE_X/Y/Z/_CONST @ref Flag) or an offset to the actual animation data.
         union AnmData {
-            s32 toResAnmChrAnmData;
-            f32 constValue;
+            s32 toResAnmChrAnmData; ///< Offset to the animation data block
+            f32 constValue;         ///< Constant value for the animation data
         };
 
-        s32 name;
-        u32 flags;
-        AnmData anms[1];
+        s32 name;        ///< Unused in Kinoko, offset to the node's name string
+        u32 flags;       ///< The raw @ref Flag values for the node (not byte-swapped)
+        AnmData anms[1]; ///< Array of animation data (size 1 if uniform scale, size 3 otherwise)
     };
     STATIC_ASSERT(sizeof(NodeData) == 0xC);
 
+    /// @brief `CHR0` info header containing animation metadata
     struct InfoData {
-        u16 numFrame;
-        u16 numNode;
-        AnmPolicy policy;
-        u32 scalingRule;
+        u16 numFrame;     ///< Framecount of the animation
+        u16 numNode;      ///< Number of keyframes in the animation
+        AnmPolicy policy; ///< Animation policy for the `CHR0` data
+        u32 scalingRule;  ///< Unused in Kinoko
 
+        /// @brief Initializes a @ref InfoData instance by reading data from a stream
+        /// @param stream The input stream to read the @ref InfoData from
         void read(EGG::Stream &stream) {
             numFrame = stream.read_u16();
             numNode = stream.read_u16();
@@ -192,15 +211,16 @@ public:
     };
     STATIC_ASSERT(sizeof(InfoData) == 0xC);
 
+    /// @brief `CHR0` file format header
     struct Data {
-        ResBlockHeaderData header;
-        u32 revision;
-        s32 toResFileData;
-        s32 toChrDataDic;
-        s32 toResUserData;
-        s32 name;
-        s32 originalPath;
-        InfoData info;
+        ResBlockHeaderData header; ///< Resource block header info
+        u32 revision;              ///< Unused in Kinoko, revision of the `CHR0` file format
+        s32 toResFileData;         ///< Unused in Kinoko, offset to the start of the `.brres` file
+        s32 toChrDataDic;          ///< Offset to the animation data section
+        s32 toResUserData;         ///< Unused in Kinoko
+        s32 name;                  ///< Unused in Kinoko
+        s32 originalPath;          ///< Unused in Kinoko
+        InfoData info;             ///< `CHR0` info header containing animation metadata
     };
     STATIC_ASSERT(sizeof(Data) == 0x2C);
 
@@ -219,13 +239,21 @@ public:
     /// @endGetters
 
 private:
+    /// @brief Function pointer type for retrieving animation sampling results for a node
+    /// @param frame The current animation frame
+    /// @param result The structure to store the sampled animation result
+    /// @param infoData The `CHR0` info header containing animation metadata
+    /// @param nodeData The node data
     typedef void (*GetAnmResultFunc)(f32 frame, ChrAnmResult &result,
             const ResAnmChr::InfoData &infoData, const ResAnmChr::NodeData *nodeData);
 
-    const Data *m_rawData;
-    InfoData m_infoData;
+    const Data *m_rawData; ///< Pointer to the raw `CHR0` data block
+    InfoData m_infoData;   ///< `CHR0` info header containing animation metadata
 
+    /// @brief The number of different @ref GetAnmResultFunc types available in the lookup table
     static constexpr size_t NUM_RESULT_FUNCS = 8;
+
+    /// @brief Lookup table for different @ref GetAnmResultFunc types indexed based on node flags
     static const std::array<GetAnmResultFunc, NUM_RESULT_FUNCS> s_getAnmResultTable;
 };
 
