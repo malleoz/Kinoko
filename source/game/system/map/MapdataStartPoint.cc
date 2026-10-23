@@ -64,7 +64,9 @@ void MapdataStartPoint::read(EGG::RamStream &stream) {
 /// @param rot Output parameter for the calculated starting rotation
 /// @param placement The ranking or placement of the kart
 /// @param playerCount The total number of players in the race
-/// @todo Add details section
+/// @details Kart spacing is dependent on some `.kmp`-defined settings, such as @ref
+/// CourseMap::m_longitudinalOffset, @ref CourseMap::m_longitudinalSpacing, and @ref
+/// CourseMap::m_lateralSpacing.
 void MapdataStartPoint::findKartStartPoint(EGG::Vector3f &pos, EGG::Vector3f &rot, u8 placement,
         u8 playerCount) const {
     EGG::Quatf rotation = EGG::Quatf::FromRPY(m_rotation * DEG2RAD);

@@ -21,7 +21,7 @@ ResAnmChr::~ResAnmChr() = default;
 /// @brief Initializes @ref m_infoData from a stream of raw `CHR0` block data
 /// @param stream The input stream to read the `CHR0` info header from
 void ResAnmChr::read(EGG::Stream &stream) {
-    stream.jump(sizeof(Data));
+    stream.jump(offsetof(Data, info));
     m_infoData.read(stream);
 }
 
@@ -199,39 +199,66 @@ public:
 template <typename T>
 class CAnmFmtTraits;
 
+/// @brief Template specialization that maps the @ref ResAnmChr::FVS48Data keyframe track format to
+/// the appropriate types and helper functions for reading keyframe data
 template <>
 class CAnmFmtTraits<ResAnmChr::FVS48Data> {
 public:
-    typedef ResAnmChr::Frm48Data TFrmData;
-    typedef s16 TFrame;
+    typedef ResAnmChr::Frm48Data TFrmData; ///< The type of keyframe data
+    typedef s16 TFrame;                    ///< The type used for quantized frame indices
 
+    /// @brief Retrieves the keyframe at the specified index from the given FVS data
+    /// @param pFVSData Pointer to the FVS data containing the keyframes
+    /// @param index The index of the keyframe to retrieve
+    /// @return A @ref CResAnmChrFrm<ResAnmChr::Frm48Data> object representing the keyframe at the
+    /// specified index
     [[nodiscard]] static CResAnmChrFrm<TFrmData> GetKeyFrame(const ResAnmChr::FVSData *pFVSData,
             int index) {
         return CResAnmChrFrm<TFrmData>(&pFVSData->fvs48.frameValues[index]);
     }
 
+    /// @brief Converts a true framecount into the format expected by @ref ResAnmChr::Frm48Data
+    /// @param frame The true frame count to be quantized
+    /// @return The fixed-point `s16` representation of the frame count
     [[nodiscard]] static TFrame QuantizeFrame(f32 frame) {
         return static_cast<TFrame>(frame * 32.0f);
     }
 };
 
+/// @brief Template specialization that maps the @ref ResAnmChr::FVS96Data keyframe track format to
+/// the appropriate types and helper functions for reading keyframe data
 template <>
 class CAnmFmtTraits<ResAnmChr::FVS96Data> {
 public:
-    typedef ResAnmChr::Frm96Data TFrmData;
-    typedef f32 TFrame;
+    typedef ResAnmChr::Frm96Data TFrmData; ///< The type of keyframe data
+    typedef f32 TFrame;                    ///< The type used for quantized frame indices
 
+    /// @brief Retrieves the keyframe at the specified index from the given FVS data
+    /// @param pFVSData Pointer to the FVS data containing the keyframes
+    /// @param index The index of the keyframe to retrieve
+    /// @return A @ref CResAnmChrFrm<ResAnmChr::Frm96Data> object representing the keyframe at the
+    /// specified index
     [[nodiscard]] static CResAnmChrFrm<TFrmData> GetKeyFrame(const ResAnmChr::FVSData *pFVSData,
             int index) {
         return CResAnmChrFrm<TFrmData>(&pFVSData->fvs96.frameValues[index]);
     }
 
+    /// @brief Converts a true framecount into the format expected by @ref ResAnmChr::Frm96Data
+    /// @param frame The true frame count to be quantized
+    /// @return Simply returns `frame`
     [[nodiscard]] static TFrame QuantizeFrame(f32 frame) {
         return frame;
     }
 };
 
-/// @brief Calculate frame values (FVS) result
+/// @brief Templated function that calculates the animation result for a given frame using the
+/// specified FVS format
+/// @tparam T The FVS format type (e.g., @ref ResAnmChr::FVS48Data or @ref ResAnmChr::FVS96Data)
+/// @param frame The frame to sample the animation at
+/// @param nodeData The node data containing the animation information
+/// @param anmData The animation data for the node
+/// @param constant Whether the animation is constant
+/// @return The calculated animation result for the given frame
 template <typename T>
 [[nodiscard]] f32 CalcResultFVS(f32 frame, const ResAnmChr::NodeData *nodeData,
         const ResAnmChr::NodeData::AnmData *anmData, bool constant) {
@@ -245,17 +272,41 @@ template <typename T>
     return CalcAnimationFVS<CAnmFmtTraits<T>>(frame, &pFVSAnmData->fvs);
 }
 
+/// @brief Wrapper function that calls into @ref CalcResultFVS() with the ResAnmChr::FVS48Data
+/// keyframe format
+/// @param frame The frame to sample the animation at
+/// @param nodeData The node data containing the animation information
+/// @param anmData The animation data for the node
+/// @param constant Whether the animation is constant
+/// @return The calculated animation result for the given frame
 [[nodiscard]] inline f32 CalcResult48(f32 frame, const ResAnmChr::NodeData *nodeData,
         const ResAnmChr::NodeData::AnmData *anmData, bool constant) {
     return CalcResultFVS<ResAnmChr::FVS48Data>(frame, nodeData, anmData, constant);
 }
 
+/// @brief Wrapper function that calls into @ref CalcResultFVS() with the ResAnmChr::FVS96Data
+/// keyframe format
+/// @param frame The frame to sample the animation at
+/// @param nodeData The node data containing the animation information
+/// @param anmData The animation data for the node
+/// @param constant Whether the animation is constant
+/// @return The calculated animation result for the given frame
 [[nodiscard]] inline f32 CalcResult96(f32 frame, const ResAnmChr::NodeData *nodeData,
         const ResAnmChr::NodeData::AnmData *anmData, bool constant) {
     return CalcResultFVS<ResAnmChr::FVS96Data>(frame, nodeData, anmData, constant);
 }
 
-/// @brief Frame values (FVS) implementation
+/// @brief Gets the value of an animation keyframe track at a specific frame
+/// @tparam TTraits The traits class that defines how to access keyframes and their values
+/// @param frame The frame to sample the animation at
+/// @param pFVSData The FVS data containing the keyframe track
+/// @return The calculated animation result for the given frame
+/// @details If the provided `frame` lies outside the range of the first and last keyframes, returns
+/// the value of the first and last keyframe respectively. Guesses where the desired keyframe is by
+/// assuming the keyframes are evenly spaced out, which skips the need to perform a binary search.
+/// Afterwards, adjusts the estimated position to find the exact keyframe corresponding to the
+/// desired frame. Lastly, performs cubic Hermite spline interpolation between the neighboring
+/// keyframes to compute the final animation value.
 template <typename TTraits>
 [[nodiscard]] f32 CalcAnimationFVS(f32 frame, const ResAnmChr::FVSData *pFVSData) {
     auto first = TTraits::GetKeyFrame(pFVSData, 0);
@@ -315,6 +366,15 @@ template <typename TTraits>
     return EGG::Mathf::fma(frameDelta * tMinus1, tanInterp, EGG::Mathf::fma(t, scaledCurve, v0));
 }
 
+/// @brief Gets the scale animation result for a specific frame
+/// @param frame /// @param frame The frame to sample the animation at
+/// @param result The scale result vector to be filled with the animation result for the given frame
+/// @param nodeData The node data containing the animation information
+/// @param anmData The animation data for the node
+/// @return A pointer to the next animation data after the one(s) used for this frame
+/// @details Depending on the keyframe format, the function will call either @ref CalcResult48() or
+/// @ref CalcResult96() to compute the scale result. If the node has the uniform scale flag set, the
+/// same value will be applied to all components of the result vector.
 const ResAnmChr::NodeData::AnmData *GetAnmScale(f32 frame, EGG::Vector3f &result,
         const ResAnmChr::NodeData *nodeData, const ResAnmChr::NodeData::AnmData *anmData) {
     u32 flags = parse<u32>(nodeData->flags);
@@ -358,9 +418,16 @@ const ResAnmChr::NodeData::AnmData *GetAnmScale(f32 frame, EGG::Vector3f &result
     return anmData;
 }
 
+/// @brief A stub function for unimplemented animation result retrieval functions
 void GetAnmResult_Stub(f32 /*frame*/, ChrAnmResult & /*result*/,
         const ResAnmChr::InfoData & /*infoData*/, const ResAnmChr::NodeData * /*nodeData*/) {}
 
+/// @brief Samples a scale animation for the given frame and node data
+/// @param frame The frame to sample the animation at
+/// @param result The structure to store the sampled animation result
+/// @param nodeData The node data containing the animation information to sample from
+/// @details Calls @ref GetAnmScale() to sample the scale animation for the given frame and node
+/// data. Sets @ref ChrAnmResult::rt to the identity matrix.
 void GetAnmResult_S(f32 frame, ChrAnmResult &result, const ResAnmChr::InfoData & /*infoData*/,
         const ResAnmChr::NodeData *nodeData) {
     GetAnmScale(frame, result.s, nodeData, nodeData->anms);

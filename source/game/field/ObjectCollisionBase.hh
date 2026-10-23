@@ -39,7 +39,6 @@ namespace Field {
 /// new search directions until it encloses the origin (the shapes intersect) or converges on the
 /// nearest point to the origin.\n
 /// See more: https://en.wikipedia.org/wiki/Gilbert-Johnson-Keerthi_distance_algorithm
-/// @todo Give a more detailed explanation on the significance of flags, mask, and m_candidateMask
 struct GJKState {
     /// @brief Default constructor
     /// @details Zero-initializes @ref m_flags, @ref m_idx, @ref m_mask, @ref m_candidateMask, and

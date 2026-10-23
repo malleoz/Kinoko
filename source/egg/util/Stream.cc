@@ -169,6 +169,9 @@ void Stream::write_f64(f64 val) {
 /// in an invalid state.
 template <ParseableType T>
 T Stream::read() {
+    if (!safe(sizeof(T))) {
+        PANIC("Uh oh");
+    }
     ASSERT(safe(sizeof(T)));
     T val;
     read(&val, sizeof(val));

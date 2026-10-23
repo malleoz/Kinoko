@@ -108,7 +108,7 @@ protected:
     /// @brief A bitfield of @ref eFlags used to control heap behavior
     typedef TBitFlag<u8, eFlags> Flags;
 
-    Abstract::Memory::MEMiHeapHead *const m_handle; /// @todo DOCUMENT
+    Abstract::Memory::MEMiHeapHead *const m_handle; ///< Handler for managing / accessing this heap
     Heap *m_parentHeap;                             ///< The parent heap, or `nullptr` if no parent
     Flags m_flags;                                  ///< Flags used to control heap behavior
     Abstract::Memory::MEMLink m_link;     ///< This heap's link in the global heap linked list
@@ -120,11 +120,11 @@ protected:
     static Abstract::Memory::MEMList s_heapList;
 
     /// @addr{0x80386EA0}
-    /// @todo DOCUMENT
+    /// @brief The global default heap used when an allocator does not specify a heap
     static Heap *s_currentHeap;
 
     /// @addr{0x80386EA8}
-    /// @todo DOCUMENT
+    /// @brief When set, acts as a global allocation guard, preventing allocation to any other heap
     static Heap *s_allocatableHeap;
 };
 

@@ -14,7 +14,19 @@ ObjectCollisionBase::~ObjectCollisionBase() = default;
 /// @param rhs The other collision object to check against
 /// @param distance Out parameter for the distance vector between the two objects
 /// @return `true` if a collision is detected, `false` otherwise
-/// @todo Add details section
+/// @details Picks a free slot in the simplex and computes the Minkowski difference between the two
+/// objects' support points. Early returns if the shapes are separated by more than the sum of their
+/// bounding radii. If the Minkowski difference is already in the simplex or the Minkowski
+/// difference barely improves on the current search direction, then the closts points have been
+/// found and treats the objects as colliding by returning `true`. Otherwise, adds the Minkowski
+/// difference to the simplex. Calls @ref getNearestSimplex() to reduce to the smallest sub-simplex
+/// nearest the origin and updates the current search direction; if @ref getNearestSimplex() returns
+/// `false`, then the simplex encloses the origin, meaning the objects are colliding and returns
+/// `true`. If the search direction stops improving, then calls @ref findNearestEnclosingSimplex()
+/// to exhaustively find the nearest enclosing simplex and returns `true`. If none of these early
+/// returns occurred, then loops again to improve the search direction. This loop repeats until all
+/// four simplex slots have been filled or the search direction's magnitude reaches zero, at which
+/// point the function returns `false` to indicate that no collission occurred.
 bool ObjectCollisionBase::check(const ObjectCollisionBase &rhs, EGG::Vector3f &distance) const {
     // std::sqrt(std::numeric_limits<f32>::max());
     constexpr f32 INITIAL_MAX_VALUE = std::bit_cast<f32>(0x5f7fffff);
@@ -102,7 +114,6 @@ const EGG::Vector3f &ObjectCollisionBase::velocity() const {
 /// @brief Computes the barycentric weights for every subset of the simplex (including the newly
 /// added vertex) and caches them in @ref GJKState::m_scales
 /// @param state The current state of the GJK algorithm
-/// @todo Add details section
 void ObjectCollisionBase::calcSimplex(GJKState &state) const {
     const u32 idx = state.m_idx;
 
@@ -183,7 +194,6 @@ void ObjectCollisionBase::calcSimplex(GJKState &state) const {
 /// @param state The current state of the GJK algorithm
 /// @param v Reference to the vector to store the nearest point to the origin within the enclosing
 /// simplex
-/// @todo Add details section
 void ObjectCollisionBase::findNearestEnclosingSimplex(GJKState &state, EGG::Vector3f &v) const {
     f32 min = std::numeric_limits<f32>::max();
 
@@ -284,7 +294,6 @@ bool ObjectCollisionBase::enclosesOrigin(const GJKState &state, u32 idx) const {
 /// simplex
 /// @return `true` if a valid nearest simplex was found, `false` if no valid subset was found,
 /// meaning the current simplex encloses the origin.
-/// @todo Add details section
 bool ObjectCollisionBase::getNearestSimplex(GJKState &state, EGG::Vector3f &v) const {
     calcSimplex(state);
 

@@ -807,6 +807,10 @@ static constexpr std::array<BaseAndDec32, 32> FRES_TABLE = {{
 }
 
 /// @addr{0x80085040}
+/// @brief Computes `1/√x` using the @ref frsqrte() approximation along with Newton-Raphson
+/// refinement for improved accuracy.
+/// @param x The value to compute the reciprocal square root of
+/// @return The reciprocal square root of `x`
 /// @note CREDIT: Hanachan
 [[nodiscard]] static inline constexpr f32 frsqrt(f32 x) {
     // frsqrte instruction
@@ -869,7 +873,10 @@ static inline constexpr u32 FindRootsQuadratic(f32 a, f32 b, f32 c, f32 &root1, 
     return 0;
 }
 
-/// @brief Fused Newton-Raphson operation.
+/// @brief Compute `1/x` using the @ref fres() approximation along with Newton-Raphson refinement
+/// for improved accuracy.
+/// @param x The value to compute the reciprocal of
+/// @return The apporoximate reciprocal of `x`
 [[nodiscard]] static inline constexpr f32 finv(f32 x) {
     f32 inv = fres(x);
     f32 invDouble = inv + inv;

@@ -32,11 +32,11 @@ private:
         End = 2,    ///< The current state is ending
     };
 
-    /// @todo Document this enum
+    /// @brief Describes the crab's state during a pause
     enum class StateResult {
-        Walking = 0,
-        Middle = 1,
-        BeginWalking = 2,
+        Walking = 0,      ///< The crab is not paused
+        Middle = 1,       ///< The crab is in the middle of a pause
+        BeginWalking = 2, ///< The crab is about to resume walking
     };
 
     void setState(State state);

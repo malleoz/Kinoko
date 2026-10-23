@@ -137,7 +137,7 @@ bool ObjectCrab::calcRail() {
     return true;
 }
 
-/// @brief Manages the crab's still-pause state machine
+/// @brief Manages the crab's still/pause state machine
 /// @details If the crab is not still, then it returns @ref StateResult::Walking. Otherwise:
 /// - Start phase -> Snaps the crab to the rail, resetting its rotation and advances to @ref
 /// StatePhase::Middle.

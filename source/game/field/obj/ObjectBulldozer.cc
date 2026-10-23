@@ -65,25 +65,9 @@ f32 ObjectBulldozer::colRadiusAdditionalLength() const {
 
 /// @addr{0x807FE364}
 /// @copybrief ObjectKCL::initCollision()
-/// @details Updates the bulldozer's transformation matrix. Sets the @ref ObjColMgr transformation
-/// matrix based off the transform. Calls the base class @ref ObjectKCL::initCollision(). Finally,
-/// computes @ref m_kclMidpoint based on the updated collision manager's KCL bounds.
-/// @todo The @ref ObjColMgr matrices are immediately overwritten in the call to @ref
-/// ObjectKCL::initCollision(). The @ref m_kclMidpoint assignment is also redundant, since the scale
-/// is always based on `getScaleY(0)`. We can likely clean this function up for Kinoko to improve
-/// performance slightly.
+/// @details Calls the base class @ref ObjectKCL::initCollision() and computes @ref m_kclMidpoint
+/// based on the updated collision manager's KCL bounds.
 void ObjectBulldozer::initCollision() {
-    calcTransform();
-
-    EGG::Matrix34f matInv;
-    transform().ps_inverse(matInv);
-
-    calcTransform();
-
-    m_objColMgr->setMtx(transform());
-    m_objColMgr->setInvMtx(matInv);
-    m_objColMgr->setScale(getScaleY(0));
-
     ObjectKCL::initCollision();
 
     m_kclMidpoint = (m_objColMgr->kclHighWorld() + m_objColMgr->kclLowWorld()).multInv(2.0f);

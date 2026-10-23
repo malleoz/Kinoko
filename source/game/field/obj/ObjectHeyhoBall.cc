@@ -213,9 +213,15 @@ void ObjectHeyhoBall::calcFinishedExplodingScale() {
 
 /// @addr{0x806D14D8}
 /// @brief Calculates the cannonball scale on the first 46 frames of the explosion
-/// @todo Describe the parabola once we better understand the significance of the "40" term
+/// @details Let \f$R\f$ be @ref m_blastRadiusRatio, \f$k\f$ be @ref m_scaleChangeRate, and \f$f\f$
+/// be @ref m_currentFrame. The scale follows a downward parabola capped at \f$R\f$:
+/// \f[s(f) = \min\left(R,\ 1.2R - k\,(f - 40)^2\right), \quad k = \frac{1.2R - 1}{40^2}\f]
+/// The parabola's vertex is at frame \f$40\f$ with an uncapped peak of \f$1.2R\f$. Since the
+/// explosion ends at frame \f$46\f$, the descending half of the parabola is never observed.
 void ObjectHeyhoBall::calcExplodingScale() {
-    f32 shrinkFrames = static_cast<f32>(m_currentFrame) - 40.0f;
+    constexpr f32 EXPLOSION_VERTEX_FRAME = 40.0f;
+
+    f32 shrinkFrames = static_cast<f32>(m_currentFrame) - EXPLOSION_VERTEX_FRAME;
     f32 scale = 1.2f * m_blastRadiusRatio + -m_scaleChangeRate * shrinkFrames * shrinkFrames;
 
     scale = std::min(m_blastRadiusRatio, scale);
