@@ -5,10 +5,6 @@
 #include <array>
 #include <cmath>
 
-/// @todo FINISH DOCUMENTING
-
-// frsqrte matching courtesy of Geotale, with reference to https://achurch.org/cpu-tests/ppc750cl.s
-
 namespace Kinoko {
 
 static constexpr f32 F_PI = 3.1415927f;          ///< Floating point representation of pi
@@ -470,10 +466,10 @@ static constexpr AtanEntry sArcTanTbl[32 + 1] = {
 }
 
 /// @addr{0x800853C0}
-/// @brief Approximates the arctangent of `x / y`
+/// @brief Approximates the arctangent of \f$y/x\f$
 /// @param y The y-coordinate
 /// @param x The x-coordinate
-/// @return The approximate arctangent of `x / y` (in fixed-index representation)
+/// @return The approximate arctangent of \f$y/x\f$ (in fixed-index representation)
 /// @details Splits into octants depending on the signs of `x` and `y`, and uses @ref AtanFIdx_()
 /// to approximate the arctangent within each octant.
 [[nodiscard]] static inline constexpr f32 Atan2FIdx(f32 y, f32 x) {
@@ -547,10 +543,10 @@ static constexpr AtanEntry sArcTanTbl[32 + 1] = {
 }
 
 /// @addr{0x8022F8E4}
-/// @brief Computes the arctangent of `y / x`
+/// @brief Computes the arctangent of \f$y/x\f$
 /// @param y The y-coordinate
 /// @param x The x-coordinate
-/// @return The arctangent of `y / x` (in radians)
+/// @return The arctangent of \f$y/x\f$ (in radians)
 [[nodiscard]] static inline constexpr f32 atan2(f32 y, f32 x) {
     return Atan2FIdx(y, x) * FIDX2RAD;
 }
@@ -562,14 +558,20 @@ static constexpr AtanEntry sArcTanTbl[32 + 1] = {
     return std::abs(x);
 }
 
+/// @brief Entry in @ref FRES_TABLE to approximate \f$1/x\f$
+/// @details Each entry represents a base value and a slope used to refine the reciprocal
+/// approximation.
 struct BaseAndDec32 {
-    u32 base;
-    s32 dec;
+    u32 base; ///< The base value for the reciprocal approximation
+    s32 dec;  ///< The rate of change between @ref base and the next entry in the table
 };
 
+/// @brief Entry in @ref RSQRTE_TABLE to approximate \f$1/\sqrt{x}\f$
+/// @details Each entry represents a base value and a slope used to refine the reciprocal square
+/// root approximation.
 struct BaseAndDec64 {
-    u64 base;
-    s64 dec;
+    u64 base; ///< The base value for the reciprocal square root approximation
+    s64 dec;  ///< The rate of change between @ref base and the next entry in the table
 };
 
 /// @brief Union around a `u32` and `f32` to allow for bit-level manipulation of floating-point
@@ -610,6 +612,10 @@ union c64 {
     f64 f; ///< The `f64` representation of the floating-point value
 };
 
+/// @brief Lookup table for the `frsqrte` PowerPC instruction, used in @ref frsqrte()
+/// @details Each entry in the table represents an estimate of \f$1/\sqrt{x}\f$ indexed by the
+/// exponent bit plus the top 4 mantissa bits, as well as the slope between this estimate and the
+/// next.
 static constexpr std::array<BaseAndDec64, 32> RSQRTE_TABLE = {{
         {0x69fa000000000ULL, -0x15a0000000LL},
         {0x5f2e000000000ULL, -0x13cc000000LL},
@@ -645,6 +651,12 @@ static constexpr std::array<BaseAndDec64, 32> RSQRTE_TABLE = {{
         {0x6fd0000000000ULL, -0x0b98000000LL},
 }};
 
+/// @brief Re-implementation of the `frsqrte` PowerPC instruction for computing the reciprocal
+/// square root of a double-precision floating-point value
+/// @param val The value to compute the reciprocal square root of
+/// @return The approximate reciprocal square root of `val`
+/// @note frsqrte matching courtesy of Geotale, with reference to
+/// https://achurch.org/cpu-tests/ppc750cl.s
 [[nodiscard]] static inline constexpr f64 frsqrte(const f64 val) {
     static constexpr u64 EXPONENT_SHIFT_F64 = 52;
     static constexpr u64 MANTISSA_MASK_F64 = 0x000fffffffffffffULL;
@@ -706,6 +718,9 @@ static constexpr std::array<BaseAndDec64, 32> RSQRTE_TABLE = {{
     return c64(new_exp | new_mantissa).f;
 }
 
+/// @brief Lookup table for the `fres` PowerPC instruction, used in @ref fres()
+/// @details Each entry in the table represents an estimate of \f$1/x\f$ indexed by the top 5 bits
+/// of the mantissa, as well as the slope between this estimate and the next.
 static constexpr std::array<BaseAndDec32, 32> FRES_TABLE = {{
         {0x00fff000UL, -0x3e1L},
         {0x00f07000UL, -0x3a7L},
@@ -741,6 +756,9 @@ static constexpr std::array<BaseAndDec32, 32> FRES_TABLE = {{
         {0x00041800UL, -0x106L},
 }};
 
+/// @brief Re-implementation of PowerPC's `fres` instruction for approximating \f$1/x\f$
+/// @param val The value to compute the reciprocal of
+/// @return The approximate reciprocal of `val`
 [[nodiscard]] static inline constexpr f32 fres(const f32 val) {
     static constexpr u32 EXPONENT_SHIFT_F32 = 23;
     static constexpr u64 EXPONENT_SHIFT_F64 = 52;
@@ -807,8 +825,8 @@ static constexpr std::array<BaseAndDec32, 32> FRES_TABLE = {{
 }
 
 /// @addr{0x80085040}
-/// @brief Computes `1/√x` using the @ref frsqrte() approximation along with Newton-Raphson
-/// refinement for improved accuracy.
+/// @brief Computes \f$1/\sqrt{x}\f$ using the @ref frsqrte() approximation along with
+/// Newton-Raphson refinement for improved accuracy.
 /// @param x The value to compute the reciprocal square root of
 /// @return The reciprocal square root of `x`
 /// @note CREDIT: Hanachan
@@ -833,6 +851,13 @@ static constexpr std::array<BaseAndDec32, 32> FRES_TABLE = {{
 }
 
 /// @addr{0x800867C0}
+/// @brief Solves \f$ax^2 + bx + c = 0\f$ for its real roots
+/// @param a The coefficient of \f$x^2\f$
+/// @param b The coefficient of \f$x\f$
+/// @param c The constant term
+/// @param root1 Output parameter for the first real root, if it exists
+/// @param root2 Output parameter for the second real root, if it exists
+/// @return The number of real roots found (0, 1, or 2)
 static inline constexpr u32 FindRootsQuadratic(f32 a, f32 b, f32 c, f32 &root1, f32 &root2) {
     constexpr f32 EPSILON = 0.0002f;
 
