@@ -61,7 +61,26 @@ debug_cflags = [
     '-ggdb',
 ]
 
+# Release optimizations with gprof instrumentation, for finding CPU bottlenecks
+profile_cflags = [
+    *target_cflags,
+    '-g',
+    '-pg',
+    '-fno-omit-frame-pointer',
+]
+
 common_ldflags = []
+
+profile_ldflags = [
+    '-pg',
+]
+
+# gprof can't map samples back to functions when MinGW's ASLR relocates the image
+if sys.platform.startswith('win32'):
+    profile_ldflags += [
+        '-Wl,--disable-dynamicbase',
+        '-Wl,--disable-high-entropy-va',
+    ]
 
 n.rule(
     'cc',
@@ -82,6 +101,7 @@ code_in_files = [file for file in glob('**/*.cc', recursive=True)]
 
 target_code_out_files = []
 debug_code_out_files = []
+profile_code_out_files = []
 
 for in_file in code_in_files:
     _, ext = os.path.splitext(in_file)
@@ -91,6 +111,9 @@ for in_file in code_in_files:
 
     debug_out_file = os.path.join('$builddir', in_file + 'D.o')
     debug_code_out_files.append(debug_out_file)
+
+    profile_out_file = os.path.join('$builddir', in_file + 'P.o')
+    profile_code_out_files.append(profile_out_file)
 
     n.build(
         target_out_file,
@@ -108,6 +131,16 @@ for in_file in code_in_files:
         in_file,
         variables={
             'ccflags': ' '.join([*common_ccflags, *debug_cflags])
+        }
+    )
+    n.newline()
+
+    n.build(
+        profile_out_file,
+        ext[1:],
+        in_file,
+        variables={
+            'ccflags': ' '.join([*common_ccflags, *profile_cflags])
         }
     )
     n.newline()
@@ -134,6 +167,28 @@ n.build(
         ])
     },
 )
+
+profile_exe = os.path.join('$outdir', f'kinokoP{file_extension}')
+n.build(
+    profile_exe,
+    'ld',
+    profile_code_out_files,
+    variables={
+        'ldflags': ' '.join([
+            *common_ldflags,
+            *profile_ldflags,
+        ])
+    },
+)
+n.newline()
+
+# The profiling build is opt-in via `ninja profile` so regular builds stay fast
+n.build('profile', 'phony', profile_exe)
+n.default([
+    os.path.join('$outdir', f'kinoko{file_extension}'),
+    os.path.join('$outdir', f'kinokoD{file_extension}'),
+])
+n.newline()
 
 n.variable('configure', 'configure.py')
 n.newline()
