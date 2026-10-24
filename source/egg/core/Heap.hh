@@ -44,13 +44,13 @@ public:
 
     /// @brief Returns the type of heap
     /// @return The @ref Kind of heap
-    virtual Kind getHeapKind() const = 0;
+    [[nodiscard]] virtual Kind getHeapKind() const = 0;
 
     /// @brief Allocates a block of memory from the heap
     /// @param size The size of the memory block to allocate
     /// @param align The alignment requirement for the memory block
     /// @return A pointer to the allocated memory block
-    virtual void *alloc(size_t size, s32 align) = 0;
+    [[nodiscard]] virtual void *alloc(size_t size, s32 align) = 0;
 
     /// @brief Frees a previously allocated block of memory
     /// @param block A pointer to the memory block to free
@@ -59,7 +59,7 @@ public:
     /// @brief Returns the maximum allocatable size for a given alignment
     /// @param align The alignment requirement
     /// @return The maximum size of memory that can be allocated with the specified alignment
-    virtual u32 getAllocatableSize(s32 align = 4) const = 0;
+    [[nodiscard]] virtual u32 getAllocatableSize(s32 align = 4) const = 0;
 
     void dispose();
 

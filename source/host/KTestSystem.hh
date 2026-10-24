@@ -37,7 +37,7 @@ public:
 
     static KTestSystem *CreateInstance();
     static void DestroyInstance();
-    static KTestSystem *Instance();
+    [[nodiscard]] static KTestSystem *Instance();
 
 private:
     /// @brief Structure representing the header of a KRKG test file
@@ -108,12 +108,12 @@ private:
     void startNextTestCase();
     bool popTestCase();
     bool calcTest();
-    TestData getCurrentFrameTestData();
+    [[nodiscard]] TestData getCurrentFrameTestData();
     void testFrame(const TestData &data);
     bool runTest();
     void writeTestOutput() const;
 
-    const TestCase &getCurrentTestCase() const;
+    [[nodiscard]] const TestCase &getCurrentTestCase() const;
 
     static void OnInit(System::RaceConfig *config, void *arg);
 

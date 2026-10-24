@@ -36,13 +36,13 @@ public:
 
     /// @brief Gets the position of the respawn point
     /// @return The position of the respawn point, @ref m_pos.
-    const EGG::Vector3f &pos() const {
+    [[nodiscard]] const EGG::Vector3f &pos() const {
         return m_pos;
     }
 
     /// @brief Gets the rotation of the respawn point
     /// @return The rotation of the respawn point, @ref m_rot.
-    const EGG::Vector3f &rot() const {
+    [[nodiscard]] const EGG::Vector3f &rot() const {
         return m_rot;
     }
 

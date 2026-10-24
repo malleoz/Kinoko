@@ -90,11 +90,11 @@ public:
     /// object's vertex with the greatest dot product with `v`
     /// @param v The direction to search in
     /// @return The support point of the collision object in the given direction
-    virtual const EGG::Vector3f &getSupport(const EGG::Vector3f &v) const = 0;
+    [[nodiscard]] virtual const EGG::Vector3f &getSupport(const EGG::Vector3f &v) const = 0;
 
     /// @brief Gets the radius of the sphere bounding the collision object in world space
     /// @return The radius of the bounding sphere in world space
-    virtual f32 getBoundingRadius() const = 0;
+    [[nodiscard]] virtual f32 getBoundingRadius() const = 0;
 
     [[nodiscard]] bool check(const ObjectCollisionBase &rhs, EGG::Vector3f &distance) const;
 

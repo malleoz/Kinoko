@@ -64,7 +64,7 @@ public:
 
     /// @brief Retrieves the current race timer
     /// @return A const ref to the current race timer, @ref m_currentTimer
-    const Timer &currentTimer() const {
+    [[nodiscard]] const Timer &currentTimer() const {
         return m_currentTimer;
     }
 

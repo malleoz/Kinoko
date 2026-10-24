@@ -142,7 +142,7 @@ enum class BlacklistedObjectId {
 
 /// @brief Checks if the object ID is blacklisted and should not be loaded in Kinoko
 /// @return `true` if the object ID is blacklisted and should not be loaded, `false` otherwise.
-static constexpr bool IsObjectBlacklisted(u16 id) {
+[[nodiscard]] static constexpr bool IsObjectBlacklisted(u16 id) {
     BlacklistedObjectId objectId = static_cast<BlacklistedObjectId>(id);
     switch (objectId) {
     // Disabled collision

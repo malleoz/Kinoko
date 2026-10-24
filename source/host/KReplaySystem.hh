@@ -36,7 +36,7 @@ public:
 
     static KReplaySystem *CreateInstance();
     static void DestroyInstance();
-    static KReplaySystem *Instance();
+    [[nodiscard]] static KReplaySystem *Instance();
 
 private:
     /// @brief Represents a pair of timers that are desynchronizing during a replay

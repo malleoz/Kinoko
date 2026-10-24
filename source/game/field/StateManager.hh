@@ -24,7 +24,7 @@ struct StateManagerEntry {
 /// @param id The ID of the state, always maps to the index in the entry table
 /// @return A StateManagerEntry struct initialized with the provided ID and function pointers
 template <typename T, void (T::*Enter)() = nullptr, void (T::*Calc)() = nullptr>
-constexpr StateManagerEntry StateEntry(u16 id) {
+[[nodiscard]] constexpr StateManagerEntry StateEntry(u16 id) {
     auto enter = [](void *obj) {
         if (Enter != nullptr) {
             (reinterpret_cast<T *>(obj)->*Enter)();

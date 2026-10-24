@@ -40,7 +40,7 @@ struct Timer {
     /// @brief Rocketship operator allowing for two timers to be compared
     /// @param rhs The other timer to compare against
     /// @return A `std::strong_ordering` value indicating the comparison result
-    std::strong_ordering operator<=>(const Timer &rhs) const {
+    [[nodiscard]] std::strong_ordering operator<=>(const Timer &rhs) const {
         if (auto cmp = min <=> rhs.min; cmp != 0) {
             return cmp;
         }
@@ -59,18 +59,18 @@ struct Timer {
     /// @brief Default equality operator for comparing two timers
     /// @param rhs The other timer to compare against
     /// @return `true` if the timers are equal, `false` otherwise
-    bool operator==(const Timer &rhs) const = default;
+    [[nodiscard]] bool operator==(const Timer &rhs) const = default;
 
     /// @brief Default inequality operator for comparing two timers
     /// @param rhs The other timer to compare against
     /// @return `true` if the timers are not equal, `false` otherwise
-    bool operator!=(const Timer &rhs) const = default;
+    [[nodiscard]] bool operator!=(const Timer &rhs) const = default;
 
     /// @addr{0x807EE860}
     /// @brief Subtraction operator for calculating the difference between two timers
     /// @param rhs The other timer to subtract
     /// @return A new @ref Timer representing the difference
-    Timer operator-(const Timer &rhs) const {
+    [[nodiscard]] Timer operator-(const Timer &rhs) const {
         s16 addMin = 0;
         s16 addSec = 0;
 
@@ -99,7 +99,7 @@ struct Timer {
     /// @brief Addition operator for adding milliseconds to a timer
     /// @param ms The number of milliseconds to add
     /// @return A new @ref Timer representing the updated time
-    Timer operator+(f32 ms) const {
+    [[nodiscard]] Timer operator+(f32 ms) const {
         s16 addMin = 0;
         s16 addSec = 0;
 

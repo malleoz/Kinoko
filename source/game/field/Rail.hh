@@ -41,25 +41,25 @@ public:
     /// @brief Gets the edges between the points in the rail
     /// @return A span of the edges if this is a @ref RailLine, or an empty span if this is a @ref
     /// RailSpline
-    virtual std::span<const RailLineTransition> getLinearTransitions() const = 0;
+    [[nodiscard]] virtual std::span<const RailLineTransition> getLinearTransitions() const = 0;
 
     /// @brief Gets the cubic bezier curves between the points in the rail
     /// @return A span of the cubic bezier curves if this is a @ref RailSpline, or an empty span if
     /// this is a @ref RailLine
-    virtual std::span<const RailSplineTransition> getSplineTransitions() const = 0;
+    [[nodiscard]] virtual std::span<const RailSplineTransition> getSplineTransitions() const = 0;
 
     /// @brief The number of samples used to approximate the shape of the cubic bezier curves
     /// @return The number of samples if this is a @ref RailSpline, or 0 if this is a @ref RailLine
-    virtual s32 getEstimatorSampleCount() const = 0;
+    [[nodiscard]] virtual s32 getEstimatorSampleCount() const = 0;
 
     /// @brief Inverse of the sample count used to approximate the shape of the cubic bezier curves
     /// @return The step size if this is a @ref RailSpline, or 0 if this is a @ref RailLine
-    virtual f32 getEstimatorStep() const = 0;
+    [[nodiscard]] virtual f32 getEstimatorStep() const = 0;
 
     /// @brief The percentage of the arc length at each sample point along the cubic bezier curves
     /// @return A span of the percentages if this is a @ref RailSpline, or an empty span if this is
     /// a @ref RailLine
-    virtual std::span<const f32> getPathPercentages() const = 0;
+    [[nodiscard]] virtual std::span<const f32> getPathPercentages() const = 0;
 
     void checkSphereFull();
 

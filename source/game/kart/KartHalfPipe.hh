@@ -30,7 +30,7 @@ public:
     /// @addr{0x80574108}
     /// @brief Gets the terminal velocity while mid-air from a half-pipe zipper
     /// @return The terminal velocity while mid-air from a half-pipe zipper, always `65.0f`
-    static consteval f32 TerminalVelocity() {
+    [[nodiscard]] static consteval f32 TerminalVelocity() {
         return 65.0f;
     }
 

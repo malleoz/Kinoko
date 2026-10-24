@@ -72,7 +72,7 @@ void KartBurnout::calcRotation() {
 }
 
 /// @addr{0x8058920C}
-/// @brief Checks if the burnout duration has ended
+/// @brief Increments @ref m_timer and checks if the burnout duration has ended
 /// @param duration The duration of the burnout in frames
 bool KartBurnout::calcEnd(u32 duration) {
     return ++m_timer >= duration;

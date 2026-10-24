@@ -39,7 +39,7 @@ public:
 
     /// @brief Returns the current velocity being used for interpolation
     /// @return The current velocity
-    virtual f32 getCurrSpeed() = 0;
+    [[nodiscard]] virtual f32 getCurrSpeed() = 0;
 
     /// @brief Fetches the position and tangent direction along the rail at a specific `dist`
     /// distance *behind* the current position

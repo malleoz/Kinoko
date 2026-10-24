@@ -12,7 +12,7 @@ public:
     /// @brief Responsible for creating a new scene instance
     /// @param sceneID The ID of the scene to be created
     /// @return A pointer to the created scene instance
-    virtual Scene *create(int sceneID) const = 0;
+    [[nodiscard]] virtual Scene *create(int sceneID) const = 0;
 
     /// @brief Responsible for destroying a scene instance
     /// @param sceneID The ID of the scene to be destroyed

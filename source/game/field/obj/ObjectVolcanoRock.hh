@@ -19,7 +19,7 @@ public:
     [[nodiscard]] f32 colRadiusAdditionalLength() const override;
 
 private:
-    EGG::Vector3f calcPos(u32 frame);
+    [[nodiscard]] EGG::Vector3f calcPos(u32 frame);
 
     const EGG::Vector3f m_initialPos; ///< Initial position of the volcano rock
     const EGG::Vector3f m_initialRot; ///< Initial rotation of the volcano rock

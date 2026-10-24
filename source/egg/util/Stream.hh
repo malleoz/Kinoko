@@ -24,16 +24,16 @@ public:
 
     /// @brief Checks if we have reached the end of the stream
     /// @return `true` if the stream has reached the end, `false` otherwise.
-    virtual bool eof() const = 0;
+    [[nodiscard]] virtual bool eof() const = 0;
 
     /// @brief Checks if it is safe to read/write the specified number of bytes from/to the stream
     /// @param size Number of bytes to check
     /// @return `true` if it is safe, `false` otherwise.
-    virtual bool safe(u32 size) const = 0;
+    [[nodiscard]] virtual bool safe(u32 size) const = 0;
 
     /// @brief Checks if the stream is in an invalid state
     /// @return `true` if the stream is in an invalid state, `false` otherwise.
-    virtual bool bad() const = 0;
+    [[nodiscard]] virtual bool bad() const = 0;
 
     void skip(u32 count);
     void jump(u32 index);

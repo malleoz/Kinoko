@@ -36,8 +36,8 @@ public:
 
     /// @beginGetters
 
-    const EGG::Vector3f &transPos() const;
-    const EGG::Matrix34f &transform() const;
+    [[nodiscard]] const EGG::Vector3f &transPos() const;
+    [[nodiscard]] const EGG::Matrix34f &transform() const;
 
     /// @endGetters
 

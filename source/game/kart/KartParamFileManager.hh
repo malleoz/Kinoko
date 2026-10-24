@@ -68,7 +68,7 @@ private:
         /// @param index The index in the @ref params at which to get the `T` element
         /// @return A const reference to the `T` at the given index in the `@ref params` array.
         /// @pre Requires that `index` is in-bounds (less than @ref count).
-        const T &operator[](u32 index) const {
+        [[nodiscard]] const T &operator[](u32 index) const {
             ASSERT(index < count);
             return params[index];
         }
