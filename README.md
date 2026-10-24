@@ -55,6 +55,16 @@ cd out
 ./kinoko test -s testCases.bin
 ```
 
+## Profiling
+
+To find CPU bottlenecks, build the gprof-instrumented `kinokoP` binary (release optimizations + `-pg`) and generate a report:
+
+```bash
+python tools/profile.py
+```
+
+This runs `ninja profile`, executes the test suite 10 times, merges the samples, prints the hottest functions, and writes the full flat profile and call graph to `out/profile.txt`. Arguments after `--` are passed to Kinoko instead, e.g. `python tools/profile.py --runs 20 -- replay -g pathTo.rkg`. Entries such as `_mcount_private` are gprof's own instrumentation overhead.
+
 ## Replaying a Ghost
 
 The simplest use of Kinoko is to just determine whether or not a ghost finishes the race with the timer matching what is present in the ghost `.rkg` file header. To replay a ghost, you can run:
