@@ -29,8 +29,8 @@ public:
     ~DvdArchive();
 
     [[nodiscard]] std::span<const u8> getFile(const char *filename) const;
-    void load(const char *path, bool decompress_);
-    void load(void *fileStart, size_t fileSize, bool decompress_);
+    void load(const char *path);
+    void load(void *fileStart, size_t fileSize);
     void rip(const char *path);
     void clear();
     void unmount();

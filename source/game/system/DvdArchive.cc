@@ -65,13 +65,13 @@ std::span<const u8> DvdArchive::getFile(const char *filename) const {
 /// @details Loads the file from the specified `path` into memory. If successful, checks to see if
 /// the file is compressed and calls @ref decompress(), otherwise calls @ref move(). Finally, mounts
 /// the archive via @ref mount().
-void DvdArchive::load(const char *path, bool decompress_) {
+void DvdArchive::load(const char *path) {
     if (m_state == State::Cleared) {
         rip(path);
     }
 
     if (m_state == State::Ripped) {
-        if (decompress_) {
+        if (EGG::Decomp::isCompressed(static_cast<u8 *>(m_fileStart))) {
             decompress();
             clearFile();
         } else {
@@ -89,13 +89,15 @@ void DvdArchive::load(const char *path, bool decompress_) {
 /// @details Updates @ref m_fileStart to point to the provided `fileStart` and @ref m_fileSize to
 /// the provided `fileSize`. If `decompress_` is `true`, decompresses the file via @ref decompress()
 /// and clears @ref m_fileStart and @ref m_fileSize. Finally, mounts the archive via @ref mount().
-void DvdArchive::load(void *fileStart, size_t fileSize, bool decompress_) {
+void DvdArchive::load(void *fileStart, size_t fileSize) {
     m_fileStart = fileStart;
     m_fileSize = fileSize;
-    if (decompress_) {
+    if (EGG::Decomp::isCompressed(static_cast<u8 *>(m_fileStart))) {
         decompress();
         m_fileStart = nullptr;
         m_fileSize = 0;
+    } else {
+        move();
     }
     mount();
 }

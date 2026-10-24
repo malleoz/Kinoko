@@ -6,6 +6,11 @@
 
 namespace Kinoko::EGG::Decomp {
 
+/// @addr{0x802198F8}
+[[nodiscard]] inline constexpr bool isCompressed(const u8 *src) {
+    return src[0] == 'Y' && src[1] == 'a' && src[2] == 'z';
+}
+
 /// @addr{0x8021997C}
 /// @brief Gets the expanded size of a YAZ0 compressed buffer
 /// @param src Pointer to the YAZ0 compressed buffer
