@@ -196,7 +196,7 @@ enum class GroupID : u16 {
 
 /// @brief Maps between a character and its corresponding weight class
 /// @return The weight class of the specified character
-static constexpr WeightClass CharacterToWeight(Character character) {
+[[nodiscard]] static constexpr WeightClass CharacterToWeight(Character character) {
     switch (character) {
     case Character::Baby_Peach:
     case Character::Baby_Daisy... Character::Baby_Mario:
@@ -232,7 +232,7 @@ static constexpr WeightClass CharacterToWeight(Character character) {
 
 /// @brief Maps between a vehicle and its corresponding weight class
 /// @return The weight class of the specified vehicle
-static constexpr WeightClass VehicleToWeight(Vehicle vehicle) {
+[[nodiscard]] static constexpr WeightClass VehicleToWeight(Vehicle vehicle) {
     switch (vehicle) {
     case Vehicle::Standard_Kart_S:
     case Vehicle::Baby_Booster:
@@ -427,7 +427,7 @@ concept ParseableType = std::is_integral_v<T> ||
 
 /// @brief Consistent file parsing with byte-swappable values
 template <ParseableType T>
-static inline constexpr T parse(T val, std::endian endian = std::endian::big) {
+[[nodiscard]] static inline constexpr T parse(T val, std::endian endian = std::endian::big) {
     if constexpr (std::is_integral_v<T>) {
         return endian == std::endian::native ? val : std::byteswap(val);
     } else {
@@ -440,7 +440,7 @@ static inline constexpr T parse(T val, std::endian endian = std::endian::big) {
 }
 
 /// @brief Helper function to allow hex representation of f32 by bitcasting to u32
-static inline constexpr u32 f2u(f32 val) {
+[[nodiscard]] static inline constexpr u32 f2u(f32 val) {
     return std::bit_cast<u32>(val);
 }
 
