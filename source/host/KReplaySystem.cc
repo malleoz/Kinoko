@@ -11,8 +11,11 @@
 
 #include <abstract/File.hh>
 
+#include <cstdio>
+#include <cstring>
 #include <filesystem>
 #include <iomanip>
+#include <iostream>
 
 namespace Kinoko {
 
@@ -23,7 +26,11 @@ void KReplaySystem::init() {
     m_sceneMgr = EGG::egg_new<EGG::SceneManager>(sceneCreator);
 
     System::RaceConfig::RegisterInitCallback(OnInit, nullptr);
-    Abstract::File::Remove("results.txt");
+
+    // Worker results are reported over stdout instead
+    if (!m_workerMode) {
+        Abstract::File::Remove("results.txt");
+    }
 }
 
 /// @copybrief KSystem::calc()
@@ -34,11 +41,16 @@ void KReplaySystem::calc() {
 
 /// @brief Executes a run.
 /// @return Whether the run was successful or not.
-/// @details A run consists of replaying the set of provided ghosts and/or directories.
+/// @details A run consists of replaying the set of provided ghosts and/or directories, or every
+/// ghost path received over stdin in worker mode.
 /// @note We intentionally do not short circuit when a replay fails; all provided ghosts and
 /// directories will be replayed so that the user can see the replay results for all provided ghost
 /// files.
 bool KReplaySystem::run() {
+    if (m_workerMode) {
+        return runWorker();
+    }
+
     bool success = true;
 
     while (true) {
@@ -63,12 +75,13 @@ bool KReplaySystem::run() {
 }
 
 /// @brief Parses non-generic command line options.
-/// @details The only currently accepted option is the ghost flag and a progress interval flag.
+/// @details Accepts the ghost flag (followed by ghost files and/or directories), the worker flag,
+/// and a progress interval flag. The ghost and worker flags are mutually exclusive.
 /// @param argc The number of arguments.
 /// @param argv The arguments.
 void KReplaySystem::parseOptions(int argc, char **argv) {
-    if (argc < 2) {
-        PANIC("Expected ghost argument!");
+    if (argc < 1) {
+        PANIC("Expected ghost or worker argument!");
     }
 
     for (int i = 0; i < argc; ++i) {
@@ -107,11 +120,18 @@ void KReplaySystem::parseOptions(int argc, char **argv) {
 
             m_progressInterval = strtoul(argv[++i], nullptr, 0);
         } break;
+        case Host::EOption::Worker:
+            m_workerMode = true;
+            break;
         case Host::EOption::Invalid:
         default:
             PANIC("Invalid flag!");
             break;
         }
+    }
+
+    if (m_workerMode && !m_ghostArgs.empty()) {
+        PANIC("The ghost and worker flags are mutually exclusive!");
     }
 }
 
@@ -140,10 +160,11 @@ KReplaySystem *KReplaySystem::Instance() {
 }
 
 /// @brief Default private constructor
-/// @details Initializes @ref m_progressInterval, @ref m_replaysPlayed, and @ref m_replaysSynced
-/// to zero and @ref m_currentGhost to `nullptr`.
+/// @details Initializes @ref m_workerMode to `false`, @ref m_progressInterval, @ref
+/// m_replaysPlayed, and @ref m_replaysSynced to zero and @ref m_currentGhost to `nullptr`.
 KReplaySystem::KReplaySystem()
-    : m_progressInterval(0),
+    : m_workerMode(false),
+      m_progressInterval(0),
       m_replaysPlayed(0),
       m_replaysSynced(0),
       m_currentGhost(nullptr) {}
@@ -157,8 +178,7 @@ KReplaySystem::~KReplaySystem() {
     }
 
     EGG::egg_delete(m_sceneMgr);
-    EGG::egg_delete(m_currentGhost);
-    EGG::egg_free(const_cast<u8 *>(m_currentRawGhost.data()));
+    unloadGhost();
 }
 
 /// @brief Reports failure to file.
@@ -209,31 +229,13 @@ bool KReplaySystem::runGhost(const std::filesystem::path &ghostPath) {
 
     loadGhost(ghostPath);
 
-    // Has the root scene been created?
-    if (!m_sceneMgr->currentScene()) {
-        m_sceneMgr->changeScene(0);
-    } else {
-        m_sceneMgr->createScene(2, m_sceneMgr->currentScene());
-    }
-
-    while (!calcEnd()) {
-        calc();
-    }
-
-    bool isSuccess = success();
+    std::string failMsg;
+    bool isSuccess = replayGhost(failMsg) == Result::Sync;
 
     if (!isSuccess) {
+        reportFail(failMsg);
         WARN("DESYNC! Ghost path: %s", ghostPath.string().c_str());
     }
-
-    m_sceneMgr->currentScene()->heap()->enableAllocation();
-    m_sceneMgr->destroyScene(m_sceneMgr->currentScene());
-
-    EGG::egg_free(const_cast<u8 *>(m_currentRawGhost.data()));
-    m_currentRawGhost = {};
-
-    delete m_currentGhost;
-    m_currentGhost = nullptr;
 
     ++m_replaysPlayed;
 
@@ -250,26 +252,152 @@ bool KReplaySystem::runGhost(const std::filesystem::path &ghostPath) {
     return isSuccess;
 }
 
+/// @brief Replays every ghost path received over stdin until EOF
+/// @return `true` if every ghost synchronized, `false` otherwise
+/// @details Exactly one result line is written to stdout per ghost, and stdout is flushed after
+/// every line so that a parent process can hand off ghosts one at a time.
+bool KReplaySystem::runWorker() {
+    bool allSynced = true;
+    std::string line;
+
+    while (std::getline(std::cin, line)) {
+        // Tolerate CRLF line endings
+        if (!line.empty() && line.back() == '\r') {
+            line.pop_back();
+        }
+
+        if (line.empty()) {
+            continue;
+        }
+
+        const char *err = nullptr;
+        if (!tryLoadGhost(std::filesystem::path(line), err)) {
+            reportWorkerResult("ERROR", line, err);
+            allSynced = false;
+            continue;
+        }
+
+        std::string failMsg;
+        switch (replayGhost(failMsg)) {
+        case Result::Sync:
+            reportWorkerResult("SYNC", line, "");
+            break;
+        case Result::Desync:
+            reportWorkerResult("DESYNC", line, failMsg);
+            allSynced = false;
+            break;
+        case Result::NoFinish:
+            reportWorkerResult("NOFINISH", line, failMsg);
+            allSynced = false;
+            break;
+        }
+    }
+
+    return allSynced;
+}
+
+/// @brief Writes a single machine-readable result line to stdout
+/// @param status The status of the replay
+/// @param path The ghost path, exactly as it was received
+/// @param msg Additional details about the result
+void KReplaySystem::reportWorkerResult(const char *status, const std::string &path,
+        const std::string &msg) const {
+    printf("KINOKO_RESULT\t%s\t%s\t%s\n", status, path.c_str(), msg.c_str());
+    fflush(stdout);
+}
+
 /// @brief Loads data from the provided filepath and constructs a @ref System::GhostFile that parses
 /// the data
 /// @param ghostPath The path to the ghost file to be loaded
-/// @details Constructs a @ref System::GhostFile from the provided ghost file.
+/// @warning Panics if the file is not a valid ghost.
 void KReplaySystem::loadGhost(const std::filesystem::path &ghostPath) {
-    m_currentGhostPath = ghostPath;
-    m_currentRawGhost = Abstract::File::Load(m_currentGhostPath);
-    if (m_currentRawGhost.size() < System::RKG_HEADER_SIZE ||
-            m_currentRawGhost.size() > sizeof(System::RawGhostFile)) {
-        PANIC("File cannot be a ghost! Check the file size. %llu", m_currentRawGhost.size());
+    const char *err = nullptr;
+    if (!tryLoadGhost(ghostPath, err)) {
+        PANIC("%s: %s", err, ghostPath.string().c_str());
+    }
+}
+
+/// @brief Loads and validates the ghost at the provided filepath
+/// @param ghostPath The path to the ghost file to be loaded
+/// @param err Set to a description of the problem if the ghost could not be loaded
+/// @return `true` if the ghost was successfully loaded, `false` otherwise
+/// @details On success, @ref m_currentRawGhost and @ref m_currentGhost are populated.
+bool KReplaySystem::tryLoadGhost(const std::filesystem::path &ghostPath, const char *&err) {
+    std::error_code ec;
+    if (!std::filesystem::is_regular_file(ghostPath, ec)) {
+        err = "Failed to open file";
+        return false;
     }
 
-    // Creating the raw ghost file validates it
-    System::RawGhostFile file = System::RawGhostFile(m_currentRawGhost.data());
+    uintmax_t size = std::filesystem::file_size(ghostPath, ec);
+    if (ec || size < System::RKG_HEADER_SIZE || size > sizeof(System::RawGhostFile)) {
+        err = "File cannot be a ghost! Check the file size.";
+        return false;
+    }
+
+    m_currentGhostPath = ghostPath;
+    m_currentRawGhost = Abstract::File::LoadHost(ghostPath);
+
+    // RawGhostFile::isValid panics on a malformed header, so check it here first
+    if (strncmp(reinterpret_cast<const char *>(m_currentRawGhost.data()), "RKGD", 4) != 0) {
+        unloadGhost();
+        err = "RKG header malformed";
+        return false;
+    }
+
+    System::RawGhostFile file;
+    if (!file.isValid(m_currentRawGhost.data())) {
+        unloadGhost();
+        err = "Invalid RKG header";
+        return false;
+    }
+
+    // Initializing the raw ghost file decompresses the inputs, if necessary
+    file = m_currentRawGhost.data();
     m_currentGhost = new System::GhostFile(file);
+
+    return true;
+}
+
+/// @brief Frees the currently loaded ghost, if any
+void KReplaySystem::unloadGhost() {
+    delete[] m_currentRawGhost.data();
+    m_currentRawGhost = {};
+
+    delete m_currentGhost;
+    m_currentGhost = nullptr;
+}
+
+/// @brief Replays the currently loaded ghost
+/// @param failMsg Set to a description of the failure if the replay does not synchronize
+/// @return The result of the replay
+/// @details Responsible for setting up and tearing down the @ref EGG::Scene for the race. Unloads
+/// the ghost once the replay is complete.
+KReplaySystem::Result KReplaySystem::replayGhost(std::string &failMsg) {
+    // Has the root scene been created?
+    if (!m_sceneMgr->currentScene()) {
+        m_sceneMgr->changeScene(0);
+    } else {
+        m_sceneMgr->createScene(2, m_sceneMgr->currentScene());
+    }
+
+    while (!calcEnd()) {
+        calc();
+    }
+
+    m_sceneMgr->currentScene()->heap()->enableAllocation();
+    Result result = checkResult(failMsg);
+    m_sceneMgr->destroyScene(m_sceneMgr->currentScene());
+
+    unloadGhost();
+
+    return result;
 }
 
 /// @brief Determines whether the simulation was a success or not.
-/// @return Whether the simulation was a success or not.
-bool KReplaySystem::success() const {
+/// @param failMsg Set to a description of the failure if the simulation was not a success
+/// @return The result of the simulation
+KReplaySystem::Result KReplaySystem::checkResult(std::string &failMsg) const {
     auto format = [](const System::Timer &timer) {
         std::ostringstream oss;
         oss << std::setw(2) << std::setfill('0') << timer.min << ":" << std::setw(2)
@@ -280,29 +408,24 @@ bool KReplaySystem::success() const {
 
     const auto *raceManager = System::RaceManager::Instance();
     if (raceManager->stage() != System::RaceManager::Stage::FinishGlobal) {
-        m_sceneMgr->currentScene()->heap()->enableAllocation();
-        reportFail("Race didn't finish");
-        return false;
+        failMsg = "Race didn't finish";
+        return Result::NoFinish;
     }
 
     s32 desyncingTimerIdx = getDesyncingTimerIdx();
-    if (desyncingTimerIdx != -1) {
-        m_sceneMgr->currentScene()->heap()->enableAllocation();
-        std::string msg;
-
-        const auto [correct, incorrect] = getDesyncingTimer(desyncingTimerIdx);
-        if (desyncingTimerIdx == 0) {
-            msg = "Final timer desync!";
-        } else {
-            msg = "Lap " + std::to_string(desyncingTimerIdx) + " timer desync!";
-        }
-
-        msg += " Expected " + format(correct) + ", got " + format(incorrect);
-        reportFail(msg);
-        return false;
+    if (desyncingTimerIdx == -1) {
+        return Result::Sync;
     }
 
-    return true;
+    const auto [correct, incorrect] = getDesyncingTimer(desyncingTimerIdx);
+    if (desyncingTimerIdx == 0) {
+        failMsg = "Final timer desync!";
+    } else {
+        failMsg = "Lap " + std::to_string(desyncingTimerIdx) + " timer desync!";
+    }
+
+    failMsg += " Expected " + format(correct) + ", got " + format(incorrect);
+    return Result::Desync;
 }
 
 /// @brief Determines whether or not the ghost simulation should end.

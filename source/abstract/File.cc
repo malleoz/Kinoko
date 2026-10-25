@@ -2,6 +2,7 @@
 
 #include <egg/core/Heap.hh>
 
+#include <cstdlib>
 #include <fstream>
 
 namespace Kinoko::Abstract::File {
@@ -41,12 +42,45 @@ std::span<const u8> Load(const std::filesystem::path &path) {
     return std::span<const u8>(buffer, size);
 }
 
-/// @brief Loads a file from the specified path into memory
-/// @param path Absolute or relative path to the file to load
+/// @brief Loads a game file from the specified path into memory
+/// @param path Path to the game file to load, such as `/Race/Course/castle_course.szs`
 /// @return A span containing the contents of the loaded file
+/// @details If the `KINOKO_FILESYSTEM_ROOT` environment variable is set, the path is relative to
+/// it. Otherwise, the path is relative to the current working directory.
 /// @warning Panics if the file cannot be opened or read correctly.
 std::span<const u8> Load(const char *path) {
-    return Load(Path(path));
+    std::filesystem::path filepath = Path(path);
+
+    const char *root = std::getenv("KINOKO_FILESYSTEM_ROOT");
+    if (root && root[0] != '\0') {
+        filepath = std::filesystem::path(root) / filepath;
+    }
+
+    return Load(filepath);
+}
+
+/// @brief Loads a file from the host system into memory, outside of the game's heaps
+/// @param path The filesystem path to the file to load
+/// @return A span containing the contents of the loaded file. The caller is responsible for
+/// freeing the buffer via `delete[]`.
+/// @details This is used for files that are not part of the game, such as ghosts and test cases.
+/// Since they are not allocated from the game's heaps, they persist across scene changes and are
+/// excluded from @ref Host::Context copies.
+/// @warning Panics if the file cannot be opened or read correctly.
+std::span<const u8> LoadHost(const std::filesystem::path &path) {
+    std::ifstream file(path, std::ios::binary);
+    if (!file) {
+        PANIC("File with provided path %s was not loaded correctly!", path.string().c_str());
+    }
+
+    file.seekg(0, std::ios::end);
+    size_t size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    u8 *buffer = new u8[size];
+    file.read(reinterpret_cast<char *>(buffer), size);
+
+    return std::span<const u8>(buffer, size);
 }
 
 /// @brief Writes data to the end of the file at the specified path

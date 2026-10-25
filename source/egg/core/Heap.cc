@@ -249,6 +249,13 @@ ExpHeap *Heap::DynamicCastToExp(Heap *heap) {
     return heap->getHeapKind() == Kind::Expanded ? reinterpret_cast<ExpHeap *>(heap) : nullptr;
 }
 
+/// @brief Reinterpret casts the provided @ref Heap to @ref FrmHeap, if safe
+/// @param heap The heap to reinterpret cast
+/// @return A pointer to the reinterpreted @ref FrmHeap if the cast is safe, otherwise `nullptr`
+FrmHeap *Heap::DynamicCastToFrm(Heap *heap) {
+    return heap->getHeapKind() == Kind::Frame ? reinterpret_cast<FrmHeap *>(heap) : nullptr;
+}
+
 /// @brief Gets the currently active heap
 /// @return A pointer to the currently active heap, @ref s_currentHeap
 Heap *Heap::GetCurrentHeap() {

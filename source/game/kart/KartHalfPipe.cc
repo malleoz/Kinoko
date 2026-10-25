@@ -14,8 +14,10 @@ namespace Kinoko::Kart {
 
 /// @addr{0x80574114}
 /// @brief Constructor
-/// @details Initializes @ref m_prevPos to zero.
-KartHalfPipe::KartHalfPipe() : m_prevPos(EGG::Vector3f::zero) {}
+/// @details Initializes @ref m_prevPos to zero. Unlike the base game, also initializes @ref
+/// m_leniencyTimer and @ref m_trick, since Kinoko's heaps are not zero-initialized.
+KartHalfPipe::KartHalfPipe()
+    : m_prevPos(EGG::Vector3f::zero), m_leniencyTimer(0), m_trick(System::Trick::None) {}
 
 /// @addr{0x80574170}
 /// @brief Default virtual destructor

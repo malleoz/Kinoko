@@ -96,6 +96,8 @@ public:
 
     /// @endSetters
 
+    [[nodiscard]] void *calcUsedEnd();
+
     static MEMiExpHeapHead *Create(void *startAddress, size_t size, u16 flag);
 
 private:

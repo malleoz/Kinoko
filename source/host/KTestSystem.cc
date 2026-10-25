@@ -103,7 +103,7 @@ void KTestSystem::parseOptions(int argc, char **argv) {
 
             ASSERT(i + 1 < argc);
 
-            std::span<const u8> data = Abstract::File::Load(argv[++i]);
+            std::span<const u8> data = Abstract::File::LoadHost(Abstract::File::Path(argv[++i]));
 
             if (data.empty()) {
                 PANIC("Failed to load suite data!");
@@ -365,7 +365,8 @@ void KTestSystem::initSuite() {
 void KTestSystem::startNextTestCase() {
     constexpr u32 KRKG_SIGNATURE = 0x4b524b47; // KRKG
 
-    std::span<const u8> krkg = Abstract::File::Load(getCurrentTestCase().krkgPath.data());
+    std::span<const u8> krkg =
+            Abstract::File::LoadHost(Abstract::File::Path(getCurrentTestCase().krkgPath.data()));
     m_stream = EGG::RamStream(krkg.data(), static_cast<u32>(krkg.size()));
     m_currentFrame = -1;
     m_sync = true;
@@ -401,7 +402,7 @@ void KTestSystem::startNextTestCase() {
 bool KTestSystem::popTestCase() {
     ASSERT(m_testCases.size() > 0);
     m_testCases.pop();
-    EGG::egg_free(m_stream.data());
+    delete[] m_stream.data();
 
     return !m_testCases.empty();
 }
@@ -578,9 +579,10 @@ const KTestSystem::TestCase &KTestSystem::getCurrentTestCase() const {
 /// @details Calls @ref System::RaceConfig::setGhost() with the current test case's RKG
 /// filepath and changes the player type to `Ghost`.
 void KTestSystem::OnInit(System::RaceConfig *config, void * /* arg */) {
-    std::span<const u8> rkg = Abstract::File::Load(Instance()->getCurrentTestCase().rkgPath.data());
+    std::span<const u8> rkg = Abstract::File::LoadHost(
+            Abstract::File::Path(Instance()->getCurrentTestCase().rkgPath.data()));
     config->setGhost(rkg.data());
-    EGG::egg_free(const_cast<u8 *>(rkg.data()));
+    delete[] rkg.data();
 
     config->raceScenario().players[0].type = System::RaceConfig::Player::Type::Ghost;
 }

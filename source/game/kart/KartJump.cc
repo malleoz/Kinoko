@@ -40,10 +40,12 @@ void KartJump::calcRot() {
 /// @addr{0x80575A44}
 /// @brief Constructor
 /// @param move Pointer to the kart's movement state manager
-/// @details Initializes @ref m_trickDelay and @ref m_leniencyTimer to zero.
+/// @details Initializes @ref m_trickDelay and @ref m_leniencyTimer to zero. Unlike the base game,
+/// also initializes @ref m_type, since Kinoko's heaps are not zero-initialized.
 KartJump::KartJump(KartMove *move) : m_move(move) {
     m_trickDelay = 0;
     m_leniencyTimer = 0;
+    m_type = TrickType::StuntTrickBasic;
 }
 
 /// @addr{0x80575AA8}

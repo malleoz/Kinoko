@@ -21,6 +21,11 @@ public:
     /// @details Initializes the rail interpolator to the start of the rail.
     void init() override {
         m_railInterpolator->init(0.0f, 0);
+
+        // In the base game, `ObjectDossun::init()` initializes this to `AnmState::Still`, but not
+        // this override. As a result, this value is uninitialized for the derived class if the heap
+        // was not zero-initialized.
+        m_anmState = AnmState::Still;
     }
 
     /// @addr{0x80763E0C}

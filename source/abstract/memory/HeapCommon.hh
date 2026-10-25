@@ -101,7 +101,9 @@ static constexpr size_t MEMORY_SPACE_SIZE = 0x1000000;
 static constexpr auto DEFAULT_OPT = MEMiHeapHead::OptFlag(MEMiHeapHead::eOptFlag::DebugFillAlloc);
 #else
 /// @brief Default options for new heaps
-static constexpr auto DEFAULT_OPT = MEMiHeapHead::OptFlag(MEMiHeapHead::eOptFlag::ZeroFillAlloc);
+/// @details Unlike the base game, heaps are not zero-initialized, for performance. Members which
+/// the base game relies on being zero-initialized are explicitly initialized instead.
+static constexpr auto DEFAULT_OPT = MEMiHeapHead::OptFlag();
 #endif
 
 } // namespace Abstract::Memory

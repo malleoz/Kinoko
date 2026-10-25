@@ -20,6 +20,7 @@ public:
     /// @brief Constructor
     /// @param newID The @ref GroupID to assign to the heap for the duration of the current scope
     ScopeLock(GroupID newID) {
+#ifdef BUILD_DEBUG
         EGG::ExpHeap *heap = EGG::Heap::DynamicCastToExp(EGG::Heap::GetCurrentHeap());
         ASSERT(heap);
         GroupID prevID = static_cast<GroupID>(heap->getGroupID());
@@ -29,13 +30,19 @@ public:
         }
 
         heap->setGroupID(static_cast<u16>(newID));
+#else
+        // Release builds use frame heaps for scenes, which do not track group IDs
+        static_cast<void>(newID);
+#endif
     }
 
     /// @brief Destructor that resets the @ref GroupID for the current heap to the default value
     ~ScopeLock() {
+#ifdef BUILD_DEBUG
         EGG::ExpHeap *heap = EGG::Heap::DynamicCastToExp(EGG::Heap::GetCurrentHeap());
         ASSERT(heap);
         heap->setGroupID(static_cast<u16>(GroupID::None));
+#endif
     }
 };
 

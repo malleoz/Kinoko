@@ -15,6 +15,7 @@ enum class EOption {
     KRKG,         ///< Specifies a `.krkg` file
     TargetFrame,  ///< The frame at which playback should end
     Progress,     ///< Specifies the replay count interval to log info to the output
+    Worker,       ///< Replays ghost paths received over stdin until EOF
 };
 
 namespace Option {
@@ -53,6 +54,10 @@ namespace Option {
             return EOption::Progress;
         }
 
+        if (strcmp(verbose_arg, "worker") == 0) {
+            return EOption::Worker;
+        }
+
         return EOption::Invalid;
     } else {
         switch (arg[1]) {
@@ -71,6 +76,9 @@ namespace Option {
         case 'P':
         case 'p':
             return EOption::Progress;
+        case 'W':
+        case 'w':
+            return EOption::Worker;
         default:
             return EOption::Invalid;
         }

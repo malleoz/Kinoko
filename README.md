@@ -80,6 +80,20 @@ The simplest use of Kinoko is to just determine whether or not a ghost finishes 
 ./kinoko replay -g pathTo.rkg
 ```
 
+### Replaying Many Ghosts
+
+Kinoko can also run as a long-lived worker that replays ghosts whose paths are read line-by-line from stdin. For each ghost, a single tab-separated line `KINOKO_RESULT<TAB>STATUS<TAB>path<TAB>message` is written to stdout, where `STATUS` is one of `SYNC`, `DESYNC`, `NOFINISH`, or `ERROR`.
+
+```
+./kinoko replay --worker < ghostPaths.txt
+```
+
+To validate a large collection of ghosts in parallel, `tools/parallel_dir_check.py` drives a pool of these workers: a producer thread recursively finds `.rkg` files, and each consumer thread hands them one at a time to its own Kinoko worker process. Workers that crash or hang are restarted, and the offending ghost is reported as `CRASH` or `TIMEOUT`. Non-synced ghosts are written to `parallel_results.tsv`.
+
+```
+python tools/parallel_dir_check.py path/to/ghosts -j 16
+```
+
 ## Creating New Test Cases
 
 When a ghost doesn't play back correctly, we want to be able to capture the exact frame that a desynchronization occurs, as well as gain insight as to what variables desynced. There are two ways to evaluate test cases in Kinoko. Both approaches require generating a `.krkg` file.

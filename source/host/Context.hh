@@ -90,7 +90,6 @@ private:
         EGG::Heap *m_allocatableHeap;
         EGG::Heap *m_heapForCreateScene;
         u16 m_heapOptionFlg;
-        EGG::Heap *m_rootHeap;
         Field::BoxColManager *m_boxColMgr;
         Field::CollisionDirector *m_colDir;
         Field::CourseColMgr *m_courseColMgr;
@@ -120,8 +119,11 @@ private:
         u32 m_flamePoleCount;
     };
 
-    void *m_contextMemory; ///< Pointer to the allocated memory block representing the context
-    Statics m_statics;     ///< Structure holding all static pointers and values
+    [[nodiscard]] static size_t RootHeapSize();
+
+    void *m_contextMemory;          ///< Pointer to the allocated memory block representing the context
+    size_t m_contextMemoryHeapSize; ///< Number of bytes of the root heap stored in the context
+    Statics m_statics;              ///< Structure holding all static pointers and values
 };
 
 } // namespace Host

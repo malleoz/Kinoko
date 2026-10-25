@@ -138,8 +138,12 @@ JugemUnit::~JugemUnit() {
 
 /// @addr{0x80722100}
 /// @brief Initializes the internal state of the Lakitu unit
-/// @details Resets @ref m_pos to zero and initializes the movement controller.
+/// @details Initializes the reverse switch, resets @ref m_pos to zero, and initializes the movement
+/// controller.
 void JugemUnit::init() {
+    ASSERT(m_switchReverse);
+    m_switchReverse->init();
+
     m_pos.setZero();
     m_move->init();
 }

@@ -231,6 +231,20 @@ void MEMiExpHeapHead::setGroupID(u16 groupID) {
     m_groupId = groupID;
 }
 
+/// @brief Finds the end of the used heap region (including the tail block head)
+/// @return Pointer to the end of the used heap region (including the tail block head)
+/// @details This is used by @ref Host::Context to discern the minimum `memcpy` size required to
+/// preserve the entire state of the heap. Falls back to @ref getHeapEnd() if the tail block is not
+/// free.
+void *MEMiExpHeapHead::calcUsedEnd() {
+    MEMiExpBlockHead *tail = m_freeBlocks.m_tail;
+    if (tail && tail->getMemoryEnd() == getHeapEnd()) {
+        return AddOffset(tail, sizeof(MEMiExpBlockHead));
+    }
+
+    return getHeapEnd();
+}
+
 /// @addr{0x80198CA8}
 /// @brief Creates a new expandable heap handle at the specified start address with the given size
 /// and flags
@@ -391,7 +405,7 @@ void *MEMiExpHeapHead::allocUsedBlockFromFreeBlock(MEMiExpBlockHead *block, void
 
     if (rightRegion.getRange() < sizeof(MEMiExpBlockHead) + 4) {
         // Not enough room to insert a free memory block
-        rightRegion.end = rightRegion.start;
+        rightRegion.start = rightRegion.end;
     } else {
         m_freeBlocks.insert(MEMiExpBlockHead::createFree(rightRegion), prev);
     }

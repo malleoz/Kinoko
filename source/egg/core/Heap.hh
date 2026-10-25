@@ -17,6 +17,7 @@ class Context;
 namespace EGG {
 
 class ExpHeap;
+class FrmHeap;
 
 /// @brief A high-level representation of a memory heap for managing dynamic memory allocation.
 /// Interface for allocating and freeing memory blocks.
@@ -31,7 +32,7 @@ public:
     enum class Kind {
         None,     ///< Uninitialized or invalid
         Expanded, ///< Designates @ref ExpHeap
-        Frame,    ///< Unused in Kinoko
+        Frame,    ///< Designates @ref FrmHeap
         Unit,     ///< Unused in Kinoko
         Assert,   ///< Unused in Kinoko
     };
@@ -88,6 +89,7 @@ public:
     [[nodiscard]] static Heap *FindContainHeap(const void *block);
 
     [[nodiscard]] static ExpHeap *DynamicCastToExp(Heap *heap);
+    [[nodiscard]] static FrmHeap *DynamicCastToFrm(Heap *heap);
     [[nodiscard]] static Heap *GetCurrentHeap();
 
     /// @brief Gets the offset of the @ref m_link member from the start of the @ref Heap object

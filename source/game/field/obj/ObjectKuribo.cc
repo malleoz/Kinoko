@@ -15,12 +15,16 @@ namespace Kinoko::Field {
 /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 /// @param params The parameters used to initialize the object
 /// @details Initializes the Goomba's acceleration based on param setting 2 divided by `100.0f`.
-/// Also initializes the animation rate based on param setting 3 divided by `100.0f`.
+/// Also initializes the animation rate based on param setting 3 divided by `100.0f`. Unlike the
+/// base game, also zero-initializes @ref m_rot and @ref m_floorNrm, since Kinoko's heaps are not
+/// zero-initialized.
 ObjectKuribo::ObjectKuribo(const System::MapdataGeoObj &params)
     : ObjectCollidable(params),
       StateManager(this, STATE_ENTRIES),
       m_accel(static_cast<f32>(params.setting(1)) / 100.0f),
-      m_animRate(static_cast<f32>(params.setting(2)) / 100.0f) {}
+      m_animRate(static_cast<f32>(params.setting(2)) / 100.0f),
+      m_rot(EGG::Vector3f::zero),
+      m_floorNrm(EGG::Vector3f::zero) {}
 
 /// @addr{0x806DB3A0}
 /// @brief Default virtual destructor

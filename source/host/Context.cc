@@ -1,8 +1,11 @@
 #include "Context.hh"
 
 #include <abstract/g3d/AnmObj.hh>
+#include <abstract/memory/ExpHeap.hh>
 
 #include <egg/core/Archive.hh>
+#include <egg/core/ExpHeap.hh>
+#include <egg/core/FrmHeap.hh>
 #include <egg/core/SceneManager.hh>
 
 #include <game/field/BoxColManager.hh>
@@ -31,13 +34,15 @@
 
 namespace Kinoko::Host {
 
-/// @brief Constructor which allocates memory for the context and `memcpy`'s the entire heap and
-/// copies all static pointers
+/// @brief Constructor which allocates memory for the context and `memcpy`'s the used portion of the
+/// heap and copies all static pointers
 Context::Context() {
+    m_contextMemoryHeapSize = RootHeapSize();
+
     m_contextMemory = malloc(Abstract::Memory::MEMORY_SPACE_SIZE);
-    ASSERT(m_contextMemory && EGG::SceneManager::s_rootHeap);
+    ASSERT(m_contextMemory);
     memcpy(m_contextMemory, static_cast<void *>(EGG::SceneManager::s_rootHeap),
-            Abstract::Memory::MEMORY_SPACE_SIZE);
+            m_contextMemoryHeapSize);
 
     m_statics.m_rootList = Abstract::Memory::MEMiHeapHead::s_rootList;
     m_statics.m_archiveList = EGG::Archive::s_archiveList;
@@ -45,6 +50,7 @@ Context::Context() {
     m_statics.m_currentHeap = EGG::Heap::s_currentHeap;
     m_statics.m_allocatableHeap = EGG::Heap::s_allocatableHeap;
     m_statics.m_heapForCreateScene = EGG::SceneManager::s_heapForCreateScene;
+    m_statics.m_heapOptionFlg = EGG::SceneManager::s_heapOptionFlg;
     m_statics.m_boxColMgr = Field::BoxColManager::s_instance;
     m_statics.m_colDir = Field::CollisionDirector::s_instance;
     m_statics.m_courseColMgr = Field::CourseColMgr::s_instance;
@@ -77,9 +83,14 @@ Context::Context() {
 /// @brief Copy constructor which clones the provided context
 /// @param c The context to copy from.
 Context::Context(const Context &c) {
+    ASSERT(c.m_contextMemory);
     m_contextMemory = malloc(Abstract::Memory::MEMORY_SPACE_SIZE);
-    ASSERT(m_contextMemory && c.m_contextMemory);
-    memcpy(m_contextMemory, c.m_contextMemory, Abstract::Memory::MEMORY_SPACE_SIZE);
+    ASSERT(m_contextMemory);
+
+    // For performance, only memcpy the minimum required to recover the allocated region of the heap
+    memcpy(m_contextMemory, c.m_contextMemory, c.m_contextMemoryHeapSize);
+
+    m_contextMemoryHeapSize = c.m_contextMemoryHeapSize;
     m_statics = c.m_statics;
 }
 
@@ -89,6 +100,8 @@ Context::Context(const Context &c) {
 Context::Context(Context &&c) {
     m_contextMemory = c.m_contextMemory;
     c.m_contextMemory = nullptr;
+    m_contextMemoryHeapSize = c.m_contextMemoryHeapSize;
+    c.m_contextMemoryHeapSize = 0;
     m_statics = c.m_statics;
     c.m_statics = {};
 }
@@ -109,7 +122,11 @@ Context &Context::operator=(const Context &rhs) {
     }
 
     ASSERT(m_contextMemory && rhs.m_contextMemory && m_contextMemory != rhs.m_contextMemory);
-    memcpy(m_contextMemory, rhs.m_contextMemory, Abstract::Memory::MEMORY_SPACE_SIZE);
+
+    // For performance, only memcpy the minimum required to recover the allocated region of the heap
+    memcpy(m_contextMemory, rhs.m_contextMemory, rhs.m_contextMemoryHeapSize);
+
+    m_contextMemoryHeapSize = rhs.m_contextMemoryHeapSize;
     m_statics = rhs.m_statics;
 
     return *this;
@@ -122,6 +139,8 @@ Context &Context::operator=(Context &&rhs) {
     free(m_contextMemory);
     m_contextMemory = rhs.m_contextMemory;
     rhs.m_contextMemory = nullptr;
+    m_contextMemoryHeapSize = rhs.m_contextMemoryHeapSize;
+    rhs.m_contextMemoryHeapSize = 0;
     m_statics = rhs.m_statics;
     rhs.m_statics = {};
 
@@ -133,6 +152,7 @@ Context &Context::operator=(Context &&rhs) {
 /// @return `true` if the contexts are equivalent, `false` otherwise.
 bool Context::operator==(const Context &rhs) const {
     bool ret = m_contextMemory == rhs.m_contextMemory;
+    ret = ret && m_contextMemoryHeapSize == rhs.m_contextMemoryHeapSize;
     ret = ret && m_statics.m_rootList == rhs.m_statics.m_rootList;
     ret = ret && m_statics.m_archiveList == rhs.m_statics.m_archiveList;
     ret = ret && m_statics.m_heapList == rhs.m_statics.m_heapList;
@@ -140,7 +160,6 @@ bool Context::operator==(const Context &rhs) const {
     ret = ret && m_statics.m_allocatableHeap == rhs.m_statics.m_allocatableHeap;
     ret = ret && m_statics.m_heapForCreateScene == rhs.m_statics.m_heapForCreateScene;
     ret = ret && m_statics.m_heapOptionFlg == rhs.m_statics.m_heapOptionFlg;
-    ret = ret && m_statics.m_rootHeap == rhs.m_statics.m_rootHeap;
     ret = ret && m_statics.m_boxColMgr == rhs.m_statics.m_boxColMgr;
     ret = ret && m_statics.m_colDir == rhs.m_statics.m_colDir;
     ret = ret && m_statics.m_courseColMgr == rhs.m_statics.m_courseColMgr;
@@ -178,8 +197,10 @@ bool Context::operator==(const Context &rhs) const {
 /// calling this function.
 void Context::SetActiveContext(const Context &rhs) {
     ASSERT(EGG::SceneManager::s_rootHeap && rhs.m_contextMemory);
-    memcpy(reinterpret_cast<void *>(EGG::SceneManager::s_rootHeap), rhs.m_contextMemory,
-            Abstract::Memory::MEMORY_SPACE_SIZE);
+
+    // For performance, only memcpy the minimum required to recover the allocated region of the heap
+    memcpy(static_cast<void *>(EGG::SceneManager::s_rootHeap), rhs.m_contextMemory,
+            rhs.m_contextMemoryHeapSize);
 
     Abstract::Memory::MEMiHeapHead::s_rootList = rhs.m_statics.m_rootList;
     EGG::Archive::s_archiveList = rhs.m_statics.m_archiveList;
@@ -188,7 +209,6 @@ void Context::SetActiveContext(const Context &rhs) {
     EGG::Heap::s_allocatableHeap = rhs.m_statics.m_allocatableHeap;
     EGG::SceneManager::s_heapForCreateScene = rhs.m_statics.m_heapForCreateScene;
     EGG::SceneManager::s_heapOptionFlg = rhs.m_statics.m_heapOptionFlg;
-    EGG::SceneManager::s_rootHeap = rhs.m_statics.m_rootHeap;
     Field::BoxColManager::s_instance = rhs.m_statics.m_boxColMgr;
     Field::CollisionDirector::s_instance = rhs.m_statics.m_colDir;
     Field::CourseColMgr::s_instance = rhs.m_statics.m_courseColMgr;
@@ -216,6 +236,38 @@ void Context::SetActiveContext(const Context &rhs) {
     Field::ObjectBasabasa::s_initialXRange = rhs.m_statics.m_basabasaInitialXRange;
     Field::ObjectBasabasa::s_initialYRange = rhs.m_statics.m_basabasaInitialYRange;
     Field::ObjectFlamePoleFoot::s_flamePoleCount = rhs.m_statics.m_flamePoleCount;
+}
+
+/// @brief Derives the minimum `memcpy` size required to preserve the entire state of the race
+/// @return The size of the root heap required to preserve the entire state of the race
+/// @details This is done by finding the offset of unused contiguous memory to the end of the heap.
+size_t Context::RootHeapSize() {
+    auto *rootHeap = EGG::SceneManager::s_rootHeap;
+    ASSERT(rootHeap);
+
+    // Heaps are nested, but the last byte before the heap end will always belong to a leaf heap
+    auto *lastHeap = EGG::Heap::FindContainHeap(static_cast<char *>(rootHeap->getEndAddress()) - 1);
+    ASSERT(lastHeap);
+
+    void *usedEnd = nullptr;
+
+    auto *expHeap = EGG::Heap::DynamicCastToExp(lastHeap);
+    auto *frmHeap = EGG::Heap::DynamicCastToFrm(lastHeap);
+    ASSERT(expHeap || frmHeap);
+    if (expHeap) {
+        auto *expHeapHead = expHeap->dynamicCastHandleToExp();
+        ASSERT(expHeapHead);
+        usedEnd = expHeapHead->calcUsedEnd();
+    } else {
+        auto *frmHeapHead = frmHeap->dynamicCastHandleToFrm();
+        ASSERT(frmHeapHead);
+        usedEnd = frmHeapHead->calcUsedEnd();
+    }
+
+    intptr_t heapSize = reinterpret_cast<intptr_t>(usedEnd) - reinterpret_cast<intptr_t>(rootHeap);
+    ASSERT(heapSize > 0 && static_cast<size_t>(heapSize) <= Abstract::Memory::MEMORY_SPACE_SIZE);
+
+    return static_cast<size_t>(heapSize);
 }
 
 } // namespace Kinoko::Host

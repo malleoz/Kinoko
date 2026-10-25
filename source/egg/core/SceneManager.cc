@@ -1,6 +1,7 @@
 #include "SceneManager.hh"
 
 #include "egg/core/ExpHeap.hh"
+#include "egg/core/FrmHeap.hh"
 #include "egg/core/Scene.hh"
 #include "egg/core/SceneCreator.hh"
 
@@ -65,7 +66,18 @@ void SceneManager::createScene(int id, Scene *parent) {
         parentHeap->enableAllocation();
     }
 
-    ExpHeap *newHeap = ExpHeap::Create(-1, parentHeap, s_heapOptionFlg);
+#ifdef BUILD_DEBUG
+    Heap *newHeap = ExpHeap::Create(-1, parentHeap, s_heapOptionFlg);
+#else
+    // Frame heaps are faster, but scene heaps that have child scene heaps must be able to free them
+    Heap *newHeap = nullptr;
+    if (parentHeap == s_rootHeap) {
+        // The RootScene needs to have ExpHeap or else we can't delete the child FrmHeap
+        newHeap = ExpHeap::Create(-1, parentHeap, s_heapOptionFlg);
+    } else {
+        newHeap = FrmHeap::Create(-1, parentHeap, s_heapOptionFlg);
+    }
+#endif
     s_heapForCreateScene = newHeap;
 
     if (locked) {
