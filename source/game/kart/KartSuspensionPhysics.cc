@@ -347,7 +347,6 @@ void KartSuspensionPhysics::setInitialState() {
 
 /// @addr{0x8059A278}
 /// @brief Updates the tire's position and calls @ref WheelPhysics::calcCollision
-/// @param dt The time step (always `1.0f`)
 /// @param gravity The gravity vector affecting the wheel
 /// @param mat The world transformation matrix for the wheel's position and orientation
 /// @details Sets @ref m_maxTravelScaled based on the wheel's maximum travel and the suspension
@@ -357,8 +356,7 @@ void KartSuspensionPhysics::setInitialState() {
 /// topmost position and the suspension travel distance along @ref m_bottomDir. Finally, if wheel
 /// collision should not be skipped (indicated via @ref eStatus::SkipWheelCalc), calls @ref
 /// WheelPhysics::calcCollision() and updates @ref m_topmostPos.
-void KartSuspensionPhysics::calcCollision(f32 dt, const EGG::Vector3f &gravity,
-        const EGG::Matrix34f &mat) {
+void KartSuspensionPhysics::calcCollision(const EGG::Vector3f &gravity, const EGG::Matrix34f &mat) {
     m_maxTravelScaled = m_bspWheel->maxTravel * sub()->suspScale();
 
     EGG::Vector3f topmostRelPos = m_bspWheel->springTop * scale();
@@ -374,7 +372,7 @@ void KartSuspensionPhysics::calcCollision(f32 dt, const EGG::Vector3f &gravity,
 
     f32 y_down = m_tirePhysics->suspTravel() + 5.0f * sub()->suspScale();
     m_tirePhysics->setSuspTravel(std::clamp(y_down, 0.0f, m_maxTravelScaled));
-    m_tirePhysics->setColVel(dt * 10.0f * gravity);
+    m_tirePhysics->setColVel(10.0f * gravity);
     m_tirePhysics->setPos(topmostPos + m_tirePhysics->suspTravel() * m_bottomDir);
 
     if (status().offBit(eStatus::SkipWheelCalc)) {

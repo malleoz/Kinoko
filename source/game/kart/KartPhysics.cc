@@ -76,7 +76,7 @@ void KartPhysics::updatePose() {
 /// @ref m_decayingStuntRot and @ref m_decayingExtraRot towards the identity quaternion with a rate
 /// of `0.1f`. Resets @ref m_instantaneousStuntRot and @ref m_instantaneousExtraRot to the identity
 /// quaternion since these only apply for the current frame.
-void KartPhysics::calc(f32 dt, f32 maxSpeed, const EGG::Vector3f &scale, bool air) {
+void KartPhysics::calc(f32 maxSpeed, const EGG::Vector3f &scale, bool air) {
     constexpr f32 DECAY_INTERP_RATE = 0.1f;
 
     m_stuntRot = m_instantaneousStuntRot * m_decayingStuntRot;
@@ -86,7 +86,7 @@ void KartPhysics::calc(f32 dt, f32 maxSpeed, const EGG::Vector3f &scale, bool ai
     m_dynamics->setExtraRot(m_extraRot);
     m_dynamics->setScale(scale);
 
-    m_dynamics->calc(dt, maxSpeed, air);
+    m_dynamics->calc(maxSpeed, air);
 
     m_decayingStuntRot = m_decayingStuntRot.slerpTo(EGG::Quatf::ident, DECAY_INTERP_RATE);
     m_decayingExtraRot = m_decayingExtraRot.slerpTo(EGG::Quatf::ident, DECAY_INTERP_RATE);

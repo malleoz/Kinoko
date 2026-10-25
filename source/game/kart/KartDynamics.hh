@@ -21,7 +21,8 @@ public:
     void setInertia(const EGG::Vector3f &m, const EGG::Vector3f &n);
     void setBspParams(f32 rotSpeed, const EGG::Vector3f &m, const EGG::Vector3f &n,
             bool skipInertia);
-    void calc(f32 dt, f32 maxSpeed, bool air);
+
+    void calc(f32 maxSpeed, bool air);
     void reset();
     void applySuspensionWrench(const EGG::Vector3f &p, const EGG::Vector3f &Flinear,
             const EGG::Vector3f &Frot, bool ignoreX);

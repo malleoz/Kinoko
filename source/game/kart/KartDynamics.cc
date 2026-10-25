@@ -121,7 +121,7 @@ void KartDynamics::setBspParams(f32 rotSpeed, const EGG::Vector3f &m, const EGG:
 /// velocity at `120.0f`. Computes overall velocity from external, internal, and moving object/road
 /// velocities. Updates position accordingly. Calculates overall angular velocity, stabilizes the
 /// vehicle, and applies the resulting rotation.
-void KartDynamics::calc(f32 dt, f32 maxSpeed, bool air) {
+void KartDynamics::calc(f32 maxSpeed, bool air) {
     constexpr f32 EXT_VEL_DECAY = 0.998f;
     constexpr f32 ANG_VEL_DECAY = 0.98f;
     constexpr f32 TERMINAL_Y_VEL = 120.0f;
@@ -131,7 +131,7 @@ void KartDynamics::calc(f32 dt, f32 maxSpeed, bool air) {
     }
 
     m_acceleration = m_totalForce;
-    m_extVel += m_acceleration * dt;
+    m_extVel += m_acceleration;
 
     if (m_killExtVelY) {
         m_extVel.y = std::min(0.0f, m_extVel.y);
@@ -165,7 +165,7 @@ void KartDynamics::calc(f32 dt, f32 maxSpeed, bool air) {
         m_intVel.y = std::min(TERMINAL_Y_VEL, m_intVel.y);
     }
 
-    m_velocity = m_extVel * dt + m_intVel + m_movingObjVel + m_movingRoadVel;
+    m_velocity = m_extVel + m_intVel + m_movingObjVel + m_movingRoadVel;
 
     if (m_scale.z > 1.0f) {
         maxSpeed *= m_scale.z;
@@ -175,8 +175,8 @@ void KartDynamics::calc(f32 dt, f32 maxSpeed, bool air) {
     m_velocity *= m_speedNorm;
     m_pos += m_velocity;
 
-    EGG::Vector3f t1 = m_invInertiaTensor.multVector33(m_totalTorque) * dt;
-    m_angVel0 += (t1 + m_invInertiaTensor.multVector33(t1 + m_totalTorque) * dt) * 0.5f;
+    EGG::Vector3f t1 = m_invInertiaTensor.multVector33(m_totalTorque);
+    m_angVel0 += (t1 + m_invInertiaTensor.multVector33(t1 + m_totalTorque)) * 0.5f;
 
     m_angVel0.x = std::clamp(m_angVel0.x, -0.4f, 0.4f);
     m_angVel0.y = std::clamp(m_angVel0.y, -0.4f, 0.4f) * m_angVel0YFactor;
@@ -189,7 +189,7 @@ void KartDynamics::calc(f32 dt, f32 maxSpeed, bool air) {
     EGG::Vector3f angVelSum = m_angVel2 + m_angVel1 + m_angVel0Factor * m_angVel0;
 
     if (angVelSum.squaredLength() > std::numeric_limits<f32>::epsilon()) {
-        m_mainRot += m_mainRot.multSwap(angVelSum) * (dt * 0.5f);
+        m_mainRot += m_mainRot.multSwap(angVelSum) * 0.5f;
 
         if (EGG::Mathf::abs(m_mainRot.squaredNorm()) > std::numeric_limits<f32>::epsilon()) {
             m_mainRot.normalise();

@@ -218,7 +218,7 @@ void KartSub::calcPass0() {
     }
 
     f32 maxSpeed = m_move->hardSpeedLimit();
-    physics()->calc(DT, maxSpeed, scale(), status.offBit(eStatus::TouchingGround));
+    physics()->calc(maxSpeed, scale(), status.offBit(eStatus::TouchingGround));
 
     m_move->calcRejectRoad();
 
@@ -383,7 +383,7 @@ void KartSub::calcPass1() {
     f32 handlingFactor = 0.0f;
     for (u16 i = 0; i < suspCount(); ++i) {
         const EGG::Matrix34f wheelMatrix = body()->wheelMatrix(i);
-        suspensionPhysics(i)->calcCollision(DT, gravity, wheelMatrix);
+        suspensionPhysics(i)->calcCollision(gravity, wheelMatrix);
 
         const CollisionData &colData = tirePhysics(i)->hitboxGroup()->collisionData();
 
