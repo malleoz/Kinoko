@@ -65,6 +65,13 @@ python tools/profile.py
 
 This runs `ninja profile`, executes the test suite 10 times, merges the samples, prints the hottest functions, and writes the full flat profile and call graph to `out/profile.txt`. Arguments after `--` are passed to Kinoko instead, e.g. `python tools/profile.py --runs 20 -- replay -g pathTo.rkg`. Entries such as `_mcount_private` are gprof's own instrumentation overhead.
 
+To compare the overall runtime of different builds, replay every ghost in `samples/` using replay worker mode:
+
+```bash
+python tools/benchmark_samples.py baseline.exe out/kinoko.exe
+```
+
+Each executable replays all sample ghosts in one `kinoko replay --worker` process per run. Runs of the different builds alternate, and the script reports min/median/mean runtimes, the median change relative to the first (baseline) executable, and a warning for any ghost whose result differs from the baseline. Use `--runs` and `--warmup` to control the number of runs.
 ## Replaying a Ghost
 
 The simplest use of Kinoko is to just determine whether or not a ghost finishes the race with the timer matching what is present in the ghost `.rkg` file header. To replay a ghost, you can run:
