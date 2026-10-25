@@ -31,7 +31,8 @@
         } \
     } while (0)
 
-/// @brief Runtime assert that is used as the default assertion mechanism
+/// @brief Runtime assert that is used as the default assertion mechanism. Only active in debug
+/// builds. In release builds, the expression is not evaluated, so it must not have side effects.
 #define ASSERT(e) RUNTIME_ASSERT(e)
 
 /// @brief Logs a panic message and aborts the program

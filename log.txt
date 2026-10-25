@@ -1,0 +1,10 @@
+E:\AllSyncedGhosts\04-tf-glitch: 1632
+E:\AllSyncedGhosts\04-tf-ng: 71303
+E:\AllSyncedGhosts\04-tf-tas: 32
+Total ghosts that will be run: 72967
+Shuffle seed: 1324156399
+Ghost list written to E:\Github\Kinoko\out\ghost_list.txt
+[KReplaySystem.cc:206] WARN: Skipping E:\Github\Kinoko\out\ghost_list.txt
+
+Total Kinoko runtime: 0.05 seconds
+Log written to E:\Github\Kinoko\log.txt

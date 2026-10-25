@@ -91,8 +91,8 @@ def main():
                              '(default: out/kinoko)')
     parser.add_argument('--samples', default=DEFAULT_SAMPLES,
                         help='directory searched recursively for .rkg ghosts (default: samples)')
-    parser.add_argument('--runs', type=int, default=5,
-                        help='timed runs per executable (default: 5)')
+    parser.add_argument('--runs', type=int, default=100,
+                        help='timed runs per executable (default: 100)')
     parser.add_argument('--warmup', type=int, default=1,
                         help='untimed runs per executable before timing (default: 1)')
     parser.add_argument('--cwd', default=OUT_DIR,

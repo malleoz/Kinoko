@@ -51,7 +51,10 @@ void ObjectKCL::calcCollisionTransform() {
 void ObjectKCL::initCollision() {
     const EGG::Matrix34f &mat = getUpdatedMatrix(0);
     EGG::Matrix34f matInv;
-    bool inverted = mat.ps_inverse(matInv);
+
+    // maybe_unused because the ASSERT checks for successful inversion but ASSERT is a no-op in
+    // release builds
+    [[maybe_unused]] bool inverted = mat.ps_inverse(matInv);
     ASSERT(inverted);
 
     m_objColMgr->setMtx(mat);

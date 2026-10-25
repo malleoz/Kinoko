@@ -363,7 +363,9 @@ void KTestSystem::initSuite() {
 /// @brief Starts the next test case.
 /// @details Reads in data from the `KRKG` file and initializes the test system's state accordingly.
 void KTestSystem::startNextTestCase() {
-    constexpr u32 KRKG_SIGNATURE = 0x4b524b47; // KRKG
+    // maybe_unused because the ASSERT checks for successful inversion but ASSERT is a no-op in
+    // release builds
+    [[maybe_unused]] constexpr u32 KRKG_SIGNATURE = 0x4b524b47; // KRKG
 
     std::span<const u8> krkg =
             Abstract::File::LoadHost(Abstract::File::Path(getCurrentTestCase().krkgPath.data()));
@@ -376,13 +378,19 @@ void KTestSystem::startNextTestCase() {
     std::endian endian = parse<u16>(mark) == 0xfeff ? std::endian::big : std::endian::little;
     m_stream.setEndian(endian);
 
-    ASSERT(m_stream.read_u32() == KRKG_SIGNATURE);
+    // maybe_unused because the ASSERT checks for successful inversion but ASSERT is a no-op in
+    // release builds
+    [[maybe_unused]] u32 signature = m_stream.read_u32();
+    ASSERT(signature == KRKG_SIGNATURE);
     m_stream.skip(2);
     m_frameCount = m_stream.read_u16();
     m_versionMajor = m_stream.read_u16();
     m_versionMinor = m_stream.read_u16();
 
-    ASSERT(m_stream.read_u32() == m_stream.index());
+    // maybe_unused because the ASSERT checks for successful inversion but ASSERT is a no-op in
+    // release builds
+    [[maybe_unused]] u32 headerSize = m_stream.read_u32();
+    ASSERT(headerSize == m_stream.index());
 
     // If we're in Ghost mode instead of Suite mode and framecount not specified, then target the
     // total framecount of the KRKG.

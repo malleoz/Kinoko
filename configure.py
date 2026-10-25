@@ -49,6 +49,8 @@ common_ccflags = [
     '-Wno-packed-bitfield-compat',
     '-Wsuggest-override',
     '-Wreorder',
+    '-flto',
+    '-ffat-lto-objects',
 ]
 
 target_cflags = [
@@ -69,7 +71,10 @@ profile_cflags = [
     '-fno-omit-frame-pointer',
 ]
 
-common_ldflags = []
+common_ldflags = [
+    '-flto',
+    '-ffat-lto-objects',
+]
 
 profile_ldflags = [
     '-pg',
