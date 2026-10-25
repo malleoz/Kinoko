@@ -3,6 +3,8 @@
 #include "game/kart/KartPullPath.hh"
 #include "game/kart/Reaction.hh"
 
+#include <egg/math/Matrix.hh>
+
 namespace Kinoko {
 
 namespace EGG {
@@ -71,6 +73,7 @@ public:
 
     void setTangentOff(const EGG::Vector3f &v);
     void setMovement(const EGG::Vector3f &v);
+    void setWorldInertiaTensor(const EGG::Matrix34f &worldInertiaTensor);
 
     /// @endSetters
 
@@ -167,6 +170,11 @@ private:
     s16 m_poleAngVelTimer;     ///< Cooldown frames after hitting @ref Field::ObjectId::DummyPole
     f32 m_poleYaw;             ///< Yaw induced by hitting @ref Field::ObjectId::DummyPole
     f32 m_colPerpendicularity; ///< Dot product between floor and colliding wall normals.
+
+    /// @brief The world-space inertia tensor of the kart
+    /// @details We cache this value in Kinoko to avoid unnecessary recomputation in @ref
+    /// applySomeFloorMoment().
+    EGG::Matrix34f m_worldInertiaTensor;
 
     /// @brief The maximum number of reactions, used for array sizing
     static constexpr size_t MAX_REACTION = static_cast<size_t>(Reaction::Max);

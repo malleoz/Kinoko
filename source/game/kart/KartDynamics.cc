@@ -280,6 +280,13 @@ void KartDynamics::addForce(const EGG::Vector3f &force) {
     m_totalForce += force;
 }
 
+EGG::Matrix34f KartDynamics::calcWorldInertiaTensor() const {
+    EGG::Matrix34f rotMat;
+    rotMat.makeQ(m_mainRot);
+    EGG::Matrix34f tmp = rotMat.multiplyTo(m_invInertiaTensor);
+    return tmp.multiplyTo(rotMat.transpose());
+}
+
 /// @brief Sets the current position of the kart
 /// @param pos The new position of the kart
 void KartDynamics::setPos(const EGG::Vector3f &pos) {

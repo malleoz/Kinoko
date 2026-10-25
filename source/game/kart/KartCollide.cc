@@ -460,14 +460,8 @@ void KartCollide::applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitbo
         return;
     }
 
-    EGG::Matrix34f rotMat;
-    rotMat.makeQ(mainRot());
-    EGG::Matrix34f tmp = rotMat.multiplyTo(dynamics()->invInertiaTensor());
-    EGG::Matrix34f rotMatTrans = rotMat.transpose();
-    tmp = tmp.multiplyTo(rotMatTrans);
-
     EGG::Vector3f crossVec = colData.relPos.cross(colData.floorNrm);
-    crossVec = tmp.multVector(crossVec);
+    crossVec = m_worldInertiaTensor.multVector(crossVec);
     crossVec = crossVec.cross(colData.relPos);
 
     f32 scalar = -velDotFloorNrm / (1.0f + colData.floorNrm.dot(crossVec));
@@ -529,7 +523,8 @@ void KartCollide::applySomeFloorMoment(f32 down, f32 rate, CollisionGroup *hitbo
 
     if (shouldApplyAngVel) {
         EGG::Vector3f rotation = colData.relPos.cross(projRejSumOrig);
-        EGG::Vector3f rotation2 = mainRot().rotateVectorInv(tmp.multVector(rotation));
+        EGG::Vector3f rotation2 =
+                mainRot().rotateVectorInv(m_worldInertiaTensor.multVector(rotation));
 
         EGG::Vector3f angVel = rotation2;
         angVel.y = 0.0f;
@@ -569,6 +564,12 @@ void KartCollide::setTangentOff(const EGG::Vector3f &v) {
 /// @param v The movement vector
 void KartCollide::setMovement(const EGG::Vector3f &v) {
     m_movement = v;
+}
+
+/// @brief Sets the world-space inertia tensor of the kart
+/// @param worldInertiaTensor The world-space inertia tensor to set for the kart
+void KartCollide::setWorldInertiaTensor(const EGG::Matrix34f &worldInertiaTensor) {
+    m_worldInertiaTensor = worldInertiaTensor;
 }
 
 /// @brief Gets the @ref KartPullPath instance associated with this kart

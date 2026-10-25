@@ -28,6 +28,8 @@ public:
     void applyWrenchScaled(const EGG::Vector3f &pos, const EGG::Vector3f &fLinear, f32 scale);
     void addForce(const EGG::Vector3f &force);
 
+    [[nodiscard]] EGG::Matrix34f calcWorldInertiaTensor() const;
+
     /// @beginSetters
 
     void setPos(const EGG::Vector3f &pos);
