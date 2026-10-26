@@ -181,6 +181,7 @@ KColData::KColData(const void *file) {
     preloadPrisms();
     preloadNormals();
     preloadVertices();
+    preloadPrismGeometry();
 
     computeBBox();
 }
@@ -374,6 +375,27 @@ void KColData::preloadVertices() {
     }
 }
 
+/// @brief Resolves each prism's vertex, height, and normal indices into a contiguous struct
+/// @details This is a performance optimization for Kinoko to avoid having to index several
+/// different arrays to fetch a prism's geometry. Memory cost is 64 bytes per prism, which is at
+/// worst 667KB (for Maple Treeway).
+void KColData::preloadPrismGeometry() {
+    m_prismGeometry = owning_span<KCollisionPrismGeometry>(m_prisms.size());
+
+    // Prisms are one-indexed, so the first entry is left empty
+    for (size_t i = 1; i < m_prisms.size(); ++i) {
+        const KCollisionPrism &prism = m_prisms[i];
+        KCollisionPrismGeometry &geom = m_prismGeometry[i];
+
+        geom.vtx = m_vertices[prism.pos_i];
+        geom.enrm1 = m_nrms[prism.enrm1_i];
+        geom.enrm2 = m_nrms[prism.enrm2_i];
+        geom.enrm3 = m_nrms[prism.enrm3_i];
+        geom.fnrm = m_nrms[prism.fnrm_i];
+        geom.height = prism.height;
+    }
+}
+
 /// @addr{0x807BDDFC}
 /// @brief Calculates a @ref EGG::BoundBox3f describing the boundary of all prisms in the KCL file
 /// @details The bounding box is constructed by iterating every prism and expanding the bounding box
@@ -499,8 +521,8 @@ bool KColData::checkSphereSingle(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flag
             }
         }
 
-        const KCollisionPrism &prism = m_prisms[parse<u16>(*m_prismIter)];
-        if (checkSphereCollision<CollisionCheckType::Edge>(prism, distOut, fnrmOut, flagsOut)) {
+        if (checkSphereCollision<CollisionCheckType::Edge>(parse<u16>(*m_prismIter), distOut,
+                    fnrmOut, flagsOut)) {
             return true;
         }
     }
@@ -526,8 +548,8 @@ bool KColData::checkPoint(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *attributeOu
 
     // Check collision for all triangles, and continuously call the function until we're out
     while (*++m_prismIter != 0) {
-        const KCollisionPrism &prism = m_prisms[parse<u16>(*m_prismIter)];
-        if (checkPointCollision(prism, distOut, fnrmOut, attributeOut, movement)) {
+        if (checkPointCollision(parse<u16>(*m_prismIter), distOut, fnrmOut, attributeOut,
+                    movement)) {
             return true;
         }
     }
@@ -539,7 +561,7 @@ bool KColData::checkPoint(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *attributeOu
 
 /// @brief This is a combination of two point collision check functions that check whether a point
 /// is colliding with any edge of a prism. They only vary based on whether we are checking movement.
-/// @param prism The collision prism to check against
+/// @param prismIdx The index of the collision prism to check against
 /// @param distOut Output parameter for the distance to the collision point, if colliding
 /// @param fnrmOut Output parameter for the prism's face normal, if colliding
 /// @param flagsOut Output parameter for the KCL flags of the prism, if colliding
@@ -554,34 +576,36 @@ bool KColData::checkPoint(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *attributeOu
 /// Finally, if the point is moving and the prism has directional flags, checks whether the point's
 /// movement is against the prism's face normal and returns `false` if so. Otherwise, returns `true`
 /// and updates the output parameters with the collision information.
-bool KColData::checkPointCollision(const KCollisionPrism &prism, f32 *distOut,
-        EGG::Vector3f *fnrmOut, u16 *flagsOut, bool movement) {
+bool KColData::checkPointCollision(u16 prismIdx, f32 *distOut, EGG::Vector3f *fnrmOut,
+        u16 *flagsOut, bool movement) {
+    const KCollisionPrism &prism = m_prisms[prismIdx];
     KCLTypeMask attrMask = KCL_ATTRIBUTE_TYPE_BIT(prism.attribute);
     if (!(attrMask & m_typeMask)) {
         return false;
     }
 
-    const EGG::Vector3f relativePos = m_pos - m_vertices[prism.pos_i];
+    const KCollisionPrismGeometry &geom = m_prismGeometry[prismIdx];
+    const EGG::Vector3f relativePos = m_pos - geom.vtx;
 
-    const EGG::Vector3f &enrm1 = m_nrms[prism.enrm1_i];
+    const EGG::Vector3f &enrm1 = geom.enrm1;
     f32 dist_ca = relativePos.ps_dot(enrm1);
     if (dist_ca >= 0.01f) {
         return false;
     }
 
-    const EGG::Vector3f &enrm2 = m_nrms[prism.enrm2_i];
+    const EGG::Vector3f &enrm2 = geom.enrm2;
     f32 dist_ab = relativePos.ps_dot(enrm2);
     if (dist_ab >= 0.01f) {
         return false;
     }
 
-    const EGG::Vector3f &enrm3 = m_nrms[prism.enrm3_i];
-    f32 dist_bc = relativePos.ps_dot(enrm3) - prism.height;
+    const EGG::Vector3f &enrm3 = geom.enrm3;
+    f32 dist_bc = relativePos.ps_dot(enrm3) - geom.height;
     if (dist_bc >= 0.01f) {
         return false;
     }
 
-    const EGG::Vector3f &fnrm = m_nrms[prism.fnrm_i];
+    const EGG::Vector3f &fnrm = geom.fnrm;
     f32 plane_dist = relativePos.ps_dot(fnrm);
     f32 dist_in_plane = 0.01f - plane_dist;
     if (dist_in_plane <= 0.0f) {
@@ -631,8 +655,7 @@ bool KColData::checkSphereImpl(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsO
 
     // Check collision for all triangles, and continuously call the function until we're out
     while (*++m_prismIter != 0) {
-        const KCollisionPrism &prism = m_prisms[parse<u16>(*m_prismIter)];
-        if (checkSphereCollision<Type>(prism, distOut, fnrmOut, flagsOut)) {
+        if (checkSphereCollision<Type>(parse<u16>(*m_prismIter), distOut, fnrmOut, flagsOut)) {
             return true;
         }
     }
@@ -645,7 +668,7 @@ bool KColData::checkSphereImpl(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsO
 /// @brief This is a combination of the three low-level sphere collision checks in the base game.
 /// @tparam Type The type of collision check to perform (@ref CollisionCheckType::Edge,
 /// CollisionCheckType::Plane, or CollisionCheckType::Movement)
-/// @param prism The prism to check for collision against
+/// @param prismIdx The index of the prism to check for collision against
 /// @param distOut Output parameter for the distance to the collision point, if colliding
 /// @param fnrmOut Output parameter for the prism's face normal, if colliding
 /// @param flagsOut Output parameter for the KCL flags of the prism, if colliding
@@ -686,15 +709,18 @@ bool KColData::checkSphereImpl(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsO
 /// otherwise returns `false. With all checks passed, returns `true`, updating the output parameters
 /// accordingly.
 template <KColData::CollisionCheckType Type>
-bool KColData::checkSphereCollision(const KCollisionPrism &prism, f32 *distOut,
-        EGG::Vector3f *fnrmOut, u16 *flagsOut) {
+bool KColData::checkSphereCollision(u16 prismIdx, f32 *distOut, EGG::Vector3f *fnrmOut,
+        u16 *flagsOut) {
+    const KCollisionPrism &prism = m_prisms[prismIdx];
+    const KCollisionPrismGeometry &geom = m_prismGeometry[prismIdx];
+
     // Responsible for updating the output params
     auto out = [&](f32 dist) {
         if (distOut) {
             *distOut = dist;
         }
         if (fnrmOut) {
-            *fnrmOut = m_nrms[prism.fnrm_i];
+            *fnrmOut = geom.fnrm;
         }
         if (flagsOut) {
             *flagsOut = prism.attribute;
@@ -709,28 +735,28 @@ bool KColData::checkSphereCollision(const KCollisionPrism &prism, f32 *distOut,
         return false;
     }
 
-    const EGG::Vector3f relativePos = m_pos - m_vertices[prism.pos_i];
+    const EGG::Vector3f relativePos = m_pos - geom.vtx;
 
     // Edge normals point outside the triangle
-    const EGG::Vector3f &enrm1 = m_nrms[prism.enrm1_i];
+    const EGG::Vector3f &enrm1 = geom.enrm1;
     f32 dist_ca = relativePos.ps_dot(enrm1);
     if (m_radius <= dist_ca) {
         return false;
     }
 
-    const EGG::Vector3f &enrm2 = m_nrms[prism.enrm2_i];
+    const EGG::Vector3f &enrm2 = geom.enrm2;
     f32 dist_ab = relativePos.ps_dot(enrm2);
     if (m_radius <= dist_ab) {
         return false;
     }
 
-    const EGG::Vector3f &enrm3 = m_nrms[prism.enrm3_i];
-    f32 dist_bc = relativePos.ps_dot(enrm3) - prism.height;
+    const EGG::Vector3f &enrm3 = geom.enrm3;
+    f32 dist_bc = relativePos.ps_dot(enrm3) - geom.height;
     if (m_radius <= dist_bc) {
         return false;
     }
 
-    const EGG::Vector3f &fnrm = m_nrms[prism.fnrm_i];
+    const EGG::Vector3f &fnrm = geom.fnrm;
     f32 plane_dist = relativePos.ps_dot(fnrm);
     f32 dist_in_plane = m_radius - plane_dist;
     if (dist_in_plane <= 0.0f) {
