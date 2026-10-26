@@ -212,6 +212,14 @@ void RailSpline::invalidateTransitions(bool lastOnly) {
     m_pathPercentageCount = 0;
     size_t transitionCount = m_transitions.size();
 
+    if (lastOnly) {
+        m_transitions.back().resetTangentCoefficients();
+    } else {
+        for (auto &transition : m_transitions) {
+            transition.resetTangentCoefficients();
+        }
+    }
+
     if (m_isOscillating) {
         if (!lastOnly) {
             auto &firstTransition = m_transitions[0];

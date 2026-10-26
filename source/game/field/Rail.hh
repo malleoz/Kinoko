@@ -2,6 +2,8 @@
 
 #include "game/system/map/MapdataPointInfo.hh"
 
+#include <optional>
+
 namespace Kinoko::Field {
 
 /// @brief Represents the edge between two points in a @ref Rail
@@ -23,6 +25,21 @@ struct RailSplineTransition {
     EGG::Vector3f m_p3; ///< The fourth control point (end point)
     f32 m_length;       ///< The length of the curve between the two points
     f32 m_lengthInv;    ///< The inverse of the length of the curve between the two points
+
+    /// @brief Clears the cached tangent coefficients so they are recomputed on next use
+    /// @details Must be called whenever any of the control points change.
+    void resetTangentCoefficients() {
+        m_c1.reset();
+        m_c2.reset();
+        m_c3.reset();
+    }
+
+    // Optimization for Kinoko - the derivative's polynomial coefficients only depend on the control
+    // points, so they are lazily computed once by
+    // RailSmoothInterpolator::calcCubicBezierTangentDir() instead of on every call.
+    mutable std::optional<EGG::Vector3f> m_c1; ///< Cached \f$t^2\f$ coefficient of the derivative
+    mutable std::optional<EGG::Vector3f> m_c2; ///< Cached \f$t\f$ coefficient of the derivative
+    mutable std::optional<EGG::Vector3f> m_c3; ///< Cached constant term of the derivative
 };
 
 /// @brief Represents a series of points in 3D space that can be used to define a path

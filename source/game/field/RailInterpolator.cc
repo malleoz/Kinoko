@@ -652,12 +652,17 @@ void RailSmoothInterpolator::calcCubicBezier(f32 t, u32 currIdx, u32 nextIdx, EG
 /// @param t The parameter along the curve to evaluate, in the range `[0.0f, 1.0f]`
 /// @param trans The bezier curve to evaluate
 /// @return The tangent direction along the cubic bezier curve
+/// @details The derivative's coefficients only depend on the control points, so they are computed
+/// on first use and cached in the transition.
 EGG::Vector3f RailSmoothInterpolator::calcCubicBezierTangentDir(f32 t,
         const RailSplineTransition &trans) const {
-    EGG::Vector3f c1 = trans.m_p0 * -1.0f + trans.m_p1 * 3.0f - (trans.m_p2 * 3.0f) + trans.m_p3;
-    EGG::Vector3f c2 = trans.m_p0 * 3.0f - trans.m_p1 * 6.0f + trans.m_p2 * 3.0f;
-    EGG::Vector3f c3 = trans.m_p0 * -3.0f + trans.m_p1 * 3.0f;
-    EGG::Vector3f ret = c1 * 3.0f * (t * t) + c2 * 2.0f * t + c3;
+    if (!trans.m_c1) {
+        trans.m_c1 = trans.m_p0 * -1.0f + trans.m_p1 * 3.0f - (trans.m_p2 * 3.0f) + trans.m_p3;
+        trans.m_c2 = trans.m_p0 * 3.0f - trans.m_p1 * 6.0f + trans.m_p2 * 3.0f;
+        trans.m_c3 = trans.m_p0 * -3.0f + trans.m_p1 * 3.0f;
+    }
+
+    EGG::Vector3f ret = *trans.m_c1 * 3.0f * (t * t) + *trans.m_c2 * 2.0f * t + *trans.m_c3;
 
     ret.normalise2();
 
