@@ -3,6 +3,7 @@
 #include <Common.hh>
 
 #include <filesystem>
+#include <span>
 
 /// @brief Provides file-related utility functions for constructing paths, loading, appending, and
 /// removing files

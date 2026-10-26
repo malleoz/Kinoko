@@ -48,7 +48,9 @@ void KReplaySystem::calc() {
 /// files.
 bool KReplaySystem::run() {
     if (m_workerMode) {
-        return runWorker();
+        bool allSynced = runWorker();
+        reportTiming();
+        return allSynced;
     }
 
     bool success = true;
@@ -70,6 +72,8 @@ bool KReplaySystem::run() {
             continue;
         }
     }
+
+    reportTiming();
 
     return success;
 }
@@ -161,13 +165,17 @@ KReplaySystem *KReplaySystem::Instance() {
 
 /// @brief Default private constructor
 /// @details Initializes @ref m_workerMode to `false`, @ref m_progressInterval, @ref
-/// m_replaysPlayed, and @ref m_replaysSynced to zero and @ref m_currentGhost to `nullptr`.
+/// m_replaysPlayed, @ref m_replaysSynced, and the timing totals to zero and @ref m_currentGhost to
+/// `nullptr`.
 KReplaySystem::KReplaySystem()
     : m_workerMode(false),
       m_progressInterval(0),
       m_replaysPlayed(0),
       m_replaysSynced(0),
-      m_currentGhost(nullptr) {}
+      m_currentGhost(nullptr),
+      m_initTime(0),
+      m_raceTime(0),
+      m_framesSimulated(0) {}
 
 /// @brief Default virtual destructor that destroys the associated @ref EGG::SceneManager, @ref
 /// System::GhostFile and frees the raw ghost data buffer
@@ -372,8 +380,13 @@ void KReplaySystem::unloadGhost() {
 /// @param failMsg Set to a description of the failure if the replay does not synchronize
 /// @return The result of the replay
 /// @details Responsible for setting up and tearing down the @ref EGG::Scene for the race. Unloads
-/// the ghost once the replay is complete.
+/// the ghost once the replay is complete. The time spent creating the race scene and simulating the
+/// race is accumulated into @ref m_initTime and @ref m_raceTime respectively.
 KReplaySystem::Result KReplaySystem::replayGhost(std::string &failMsg) {
+    using Clock = std::chrono::steady_clock;
+
+    auto initStart = Clock::now();
+
     // Has the root scene been created?
     if (!m_sceneMgr->currentScene()) {
         m_sceneMgr->changeScene(0);
@@ -381,9 +394,16 @@ KReplaySystem::Result KReplaySystem::replayGhost(std::string &failMsg) {
         m_sceneMgr->createScene(2, m_sceneMgr->currentScene());
     }
 
+    auto raceStart = Clock::now();
+
     while (!calcEnd()) {
         calc();
+        ++m_framesSimulated;
     }
+
+    auto raceEnd = Clock::now();
+    m_initTime += raceStart - initStart;
+    m_raceTime += raceEnd - raceStart;
 
     m_sceneMgr->currentScene()->heap()->enableAllocation();
     Result result = checkResult(failMsg);
@@ -392,6 +412,20 @@ KReplaySystem::Result KReplaySystem::replayGhost(std::string &failMsg) {
     unloadGhost();
 
     return result;
+}
+
+/// @brief Reports the total time spent initializing and simulating races across all replays
+void KReplaySystem::reportTiming() const {
+    using Seconds = std::chrono::duration<f64>;
+
+    f64 initSec = std::chrono::duration_cast<Seconds>(m_initTime).count();
+    f64 raceSec = std::chrono::duration_cast<Seconds>(m_raceTime).count();
+    f64 usPerFrame = m_framesSimulated > 0 ? raceSec * 1e6 / static_cast<f64>(m_framesSimulated) :
+                                             0.0;
+
+    REPORT("Timing: init %.10f s | race %.10f s (%llu frames, %.2f us/frame) | total %.10f s",
+            initSec, raceSec, static_cast<unsigned long long>(m_framesSimulated), usPerFrame,
+            initSec + raceSec);
 }
 
 /// @brief Determines whether the simulation was a success or not.

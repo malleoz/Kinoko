@@ -2,6 +2,8 @@
 
 #include "egg/math/Vector.hh"
 
+#include <algorithm>
+
 namespace Kinoko::EGG {
 
 /// @brief A quaternion, used to represent 3D rotation.

@@ -4,8 +4,10 @@
 
 #include <egg/core/Heap.hh>
 
+#include <chrono>
 #include <filesystem>
 #include <queue>
+#include <span>
 
 namespace Kinoko {
 
@@ -32,6 +34,9 @@ struct Timer;
 /// in the same process. For every ghost, exactly one line is written to stdout of the form:
 /// `KINOKO_RESULT\t<STATUS>\t<path>\t<message>`, where STATUS is one of SYNC, DESYNC, NOFINISH,
 /// or ERROR. This allows an external process to hand off ghosts to a pool of workers.
+///
+/// Once all replays are complete, the total time spent initializing races and simulating race
+/// frames is reported.
 class KReplaySystem : public KSystem {
 public:
     void init() override;
@@ -81,6 +86,7 @@ private:
     [[nodiscard]] bool tryLoadGhost(const std::filesystem::path &ghostPath, const char *&err);
     void unloadGhost();
     [[nodiscard]] Result replayGhost(std::string &failMsg);
+    void reportTiming() const;
 
     [[nodiscard]] Result checkResult(std::string &failMsg) const;
     [[nodiscard]] bool calcEnd() const;
@@ -99,6 +105,9 @@ private:
     const char *m_currentGhostFileName;       ///< Name of the currently loaded ghost file
     const System::GhostFile *m_currentGhost;  ///< Pointer to the currently loaded ghost file
     std::span<const u8> m_currentRawGhost;    ///< The raw ghost data
+    std::chrono::nanoseconds m_initTime;      ///< Total time spent creating race scenes
+    std::chrono::nanoseconds m_raceTime;      ///< Total time spent simulating race frames
+    u64 m_framesSimulated;                    ///< Total number of race frames simulated
 };
 
 } // namespace Kinoko

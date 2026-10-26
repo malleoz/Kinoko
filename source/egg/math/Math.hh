@@ -531,7 +531,7 @@ static constexpr AtanEntry sArcTanTbl[32 + 1] = {
 /// @param x The value to compute the arcsine of
 /// @return The arcsine of `x`
 [[nodiscard]] static inline constexpr f32 asin(f32 x) {
-    return ::asin(x);
+    return static_cast<f32>(::asin(static_cast<f64>(x)));
 }
 
 /// @addr{0x8022F8C0}
@@ -539,7 +539,7 @@ static constexpr AtanEntry sArcTanTbl[32 + 1] = {
 /// @param x The value to compute the arccosine of
 /// @return The arccosine of `x`
 [[nodiscard]] static inline constexpr f32 acos(f32 x) {
-    return ::acos(x);
+    return static_cast<f32>(::acos(static_cast<f64>(x)));
 }
 
 /// @addr{0x8022F8E4}
