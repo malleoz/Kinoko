@@ -455,8 +455,6 @@ EGG::Vector3f RailLinearInterpolator::lerp(f32 t, u32 currIdx, u32 nextIdx) cons
 RailSmoothInterpolator::RailSmoothInterpolator(f32 speed, u32 idx)
     : RailInterpolator(speed, idx),
       m_transitions(m_rail->getSplineTransitions()),
-      m_estimatorSampleCount(static_cast<u32>(m_rail->getEstimatorSampleCount())),
-      m_estimatorStep(m_rail->getEstimatorStep()),
       m_pathPercentages(m_rail->getPathPercentages()) {
     init(0.0f, 0);
 }
@@ -680,13 +678,16 @@ EGG::Vector3f RailSmoothInterpolator::calcCubicBezierTangentDir(f32 t,
 /// this, this function linearly interpolates within an array of precomputed arc length percentages
 /// across the curve.
 f32 RailSmoothInterpolator::calcT(f32 t) const {
-    u16 sampleIdx = m_forward ? m_currPointIdx * m_estimatorSampleCount :
-                                m_nextPointIdx * m_estimatorSampleCount;
+    constexpr u32 ESTIMATOR_SAMPLE_COUNT = RailSpline::getEstimatorSampleCount();
+    constexpr f32 ESTIMATOR_STEP = RailSpline::getEstimatorStep();
+
+    u16 sampleIdx = m_forward ? m_currPointIdx * ESTIMATOR_SAMPLE_COUNT :
+                                m_nextPointIdx * ESTIMATOR_SAMPLE_COUNT;
 
     f32 delta = 0.0f;
     u16 idx = 0;
 
-    for (u16 i = 0; i < m_estimatorSampleCount - 1; ++i) {
+    for (u16 i = 0; i < ESTIMATOR_SAMPLE_COUNT - 1; ++i) {
         f32 currPercent = m_pathPercentages[sampleIdx + i];
         f32 nextPercent = m_pathPercentages[sampleIdx + i + 1];
 
@@ -696,14 +697,14 @@ f32 RailSmoothInterpolator::calcT(f32 t) const {
         }
     }
 
-    f32 lastPercent = m_pathPercentages[sampleIdx + m_estimatorSampleCount - 1];
+    f32 lastPercent = m_pathPercentages[sampleIdx + ESTIMATOR_SAMPLE_COUNT - 1];
 
     if (lastPercent <= t && 1.0f >= t) {
-        idx = m_estimatorSampleCount - 1;
+        idx = ESTIMATOR_SAMPLE_COUNT - 1;
         delta = (t - lastPercent) / (1.0f - lastPercent);
     }
 
-    return m_estimatorStep * static_cast<f32>(idx) + m_estimatorStep * delta;
+    return ESTIMATOR_STEP * static_cast<f32>(idx) + ESTIMATOR_STEP * delta;
 }
 
 /// @addr{0x806EF350}

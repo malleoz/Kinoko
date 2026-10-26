@@ -135,20 +135,6 @@ RailLine::RailLine(u16 idx, const System::MapdataPointInfo *info) : Rail(idx, in
 /// @addr{0x806EFD6C}
 RailLine::~RailLine() = default;
 
-/// @addr{0x806F09A8}
-/// @copybrief Rail::getEstimatorSampleCount()
-/// @return `0` since this class does not use cubic bezier curves
-s32 RailLine::getEstimatorSampleCount() const {
-    return 0;
-}
-
-/// @addr{0x806F099C}
-/// @copybrief Rail::getEstimatorStep()
-/// @return `0.0f` since this class does not use cubic bezier curves
-f32 RailLine::getEstimatorStep() const {
-    return 0.0f;
-}
-
 /// @addr{0x806F0994}
 /// @copybrief Rail::getPathPercentages()
 /// @return An empty span since this class does not use cubic bezier curves
@@ -193,20 +179,6 @@ RailSpline::RailSpline(u16 idx, const System::MapdataPointInfo *info) : Rail(idx
 
 /// @addr{0x806ED828}
 RailSpline::~RailSpline() = default;
-
-/// @addr{0x806EF994}
-/// @copybrief Rail::getEstimatorSampleCount()
-/// @return The number of samples
-s32 RailSpline::getEstimatorSampleCount() const {
-    return ESTIMATOR_SAMPLE_COUNT;
-}
-
-/// @addr{0x806EF98C}
-/// @copybrief Rail::getEstimatorStep()
-/// @return The step size for the estimator
-f32 RailSpline::getEstimatorStep() const {
-    return ESTIMATOR_STEP;
-}
 
 /// @addr{0x806EF984}
 /// @copybrief Rail::getPathPercentages()

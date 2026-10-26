@@ -48,14 +48,6 @@ public:
     /// this is a @ref RailLine
     [[nodiscard]] virtual std::span<const RailSplineTransition> getSplineTransitions() const = 0;
 
-    /// @brief The number of samples used to approximate the shape of the cubic bezier curves
-    /// @return The number of samples if this is a @ref RailSpline, or 0 if this is a @ref RailLine
-    [[nodiscard]] virtual s32 getEstimatorSampleCount() const = 0;
-
-    /// @brief Inverse of the sample count used to approximate the shape of the cubic bezier curves
-    /// @return The step size if this is a @ref RailSpline, or 0 if this is a @ref RailLine
-    [[nodiscard]] virtual f32 getEstimatorStep() const = 0;
-
     /// @brief The percentage of the arc length at each sample point along the cubic bezier curves
     /// @return A span of the percentages if this is a @ref RailSpline, or an empty span if this is
     /// a @ref RailLine
@@ -97,8 +89,6 @@ public:
     RailLine(u16 idx, const System::MapdataPointInfo *info);
     ~RailLine() override;
 
-    [[nodiscard]] s32 getEstimatorSampleCount() const override;
-    [[nodiscard]] f32 getEstimatorStep() const override;
     [[nodiscard]] std::span<const f32> getPathPercentages() const override;
 
 private:
@@ -116,9 +106,15 @@ public:
     RailSpline(u16 idx, const System::MapdataPointInfo *info);
     ~RailSpline() override;
 
-    [[nodiscard]] s32 getEstimatorSampleCount() const override;
-    [[nodiscard]] f32 getEstimatorStep() const override;
     [[nodiscard]] std::span<const f32> getPathPercentages() const override;
+
+    [[nodiscard]] static consteval u32 getEstimatorSampleCount() {
+        return ESTIMATOR_SAMPLE_COUNT;
+    }
+
+    [[nodiscard]] static consteval f32 getEstimatorStep() {
+        return ESTIMATOR_STEP;
+    }
 
 private:
     [[nodiscard]] std::span<const RailLineTransition> getLinearTransitions() const override;

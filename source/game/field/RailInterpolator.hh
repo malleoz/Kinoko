@@ -167,12 +167,6 @@ private:
 
     const std::span<const RailSplineTransition> m_transitions; ///< Transitions between rail points
 
-    /// @brief The number of samples used to approximate the shape of the cubic bezier curves
-    const u32 m_estimatorSampleCount;
-
-    /// @brief The step size used to approximate the shape of the cubic bezier curves
-    const f32 m_estimatorStep;
-
     /// @brief The percentage of the arc length at each sample point along the cubic bezier curves
     const std::span<const f32> m_pathPercentages;
 
