@@ -42,7 +42,6 @@ ObjectCarTGE::ObjectCarTGE(const System::MapdataGeoObj &params)
       m_dummyId(ObjectId::None),
       m_vel(EGG::Vector3f::zero),
       m_currSpeed(0.0f),
-      m_up(EGG::Vector3f::zero),
       m_tangent(EGG::Vector3f::zero) {
     u32 color = static_cast<u32>(params.setting(3));
     s16 pathId = params.pathId();
@@ -398,8 +397,8 @@ void ObjectCarTGE::calcSlowdown() {
 /// @details Derives position and orientation by computing a cubic bezier along the rail to find
 /// the position of the rear of the car. Interpolates the X and Z components of @ref m_tangent
 /// towards the true direction of motion, while the Y component is directly taken from the
-/// car's travel direction. Finally, sets @ref m_up based on the orthonormal basis derived from @ref
-/// m_tangent, and updates the car's transformation matrix based on @ref m_up and @ref m_tangent.
+/// car's travel direction. updates the car's transformation matrix based on a derived up vector and
+/// @ref m_tangent.
 void ObjectCarTGE::calcPos() {
     constexpr f32 NORMAL_SPEED = 1500.0f;
     constexpr f32 TRUCK_SPEED = 1600.0f;
@@ -425,8 +424,7 @@ void ObjectCarTGE::calcPos() {
         setPos(curPos - m_tangent * dist * 0.5f - EGG::Vector3f::ey * 5.0f);
     }
 
-    m_up = OrthonormalBasis(m_tangent).base(1);
-    setMatrixTangentTo(m_up, m_tangent);
+    setMatrixTangentTo(OrthonormalBasis(m_tangent).base(1), m_tangent);
 }
 
 /// @addr{0x806D9504}

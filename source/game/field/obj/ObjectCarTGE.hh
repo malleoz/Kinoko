@@ -66,7 +66,6 @@ private:
     ObjectId m_dummyId;                  ///< Dummy id (CarBody or KartTruck) used for hit reaction
     EGG::Vector3f m_vel;                 ///< %Rail tangent scaled by current speed
     f32 m_currSpeed;                     ///< Current speed of the vehicle along the rail
-    EGG::Vector3f m_up;                  ///< Smoothed up vector
     EGG::Vector3f m_tangent;             ///< Smoothed forward direction along the rail
     bool m_squashed;                     ///< Set if this vehicle squashed player in last 200 frames
     bool m_hasAuxCollision; ///< Set when a collision was the result of @ref m_auxCollision
