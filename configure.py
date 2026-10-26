@@ -28,13 +28,13 @@ n.newline()
 
 common_ccflags = [
     '-DREVOLUTION',
-    '-fcheck-new',
     '-ffp-contract=off',
     '-fno-asynchronous-unwind-tables',
     '-fno-exceptions',
+    '-fno-math-errno',
     '-fno-rtti',
+    '-fno-trapping-math',
     '-fshort-wchar',
-    '-fstack-protector-strong',
     '-isystem', '.',
     '-isystem', 'include',
     '-isystem', 'source',
@@ -49,12 +49,13 @@ common_ccflags = [
     '-Wno-packed-bitfield-compat',
     '-Wsuggest-override',
     '-Wreorder',
-    '-flto',
-    '-ffat-lto-objects',
 ]
 
 target_cflags = [
     '-O3',
+    '-ffat-lto-objects',
+    '-flto',
+    '--param inline-unit-growth=1000',
 ]
 
 debug_cflags = [
@@ -71,9 +72,11 @@ profile_cflags = [
     '-fno-omit-frame-pointer',
 ]
 
-common_ldflags = [
+common_ldflags = []
+
+target_ldflags = [
     '-flto',
-    '-ffat-lto-objects',
+    '-flto-partition=one',
 ]
 
 profile_ldflags = [
@@ -158,6 +161,7 @@ n.build(
     variables={
         'ldflags': ' '.join([
             *common_ldflags,
+            *target_ldflags,
         ])
     },
 )
