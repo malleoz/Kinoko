@@ -34,7 +34,6 @@ common_ccflags = [
     '-fno-exceptions',
     '-fno-rtti',
     '-fshort-wchar',
-    '-fstack-protector-strong',
     '-isystem', '.',
     '-isystem', 'include',
     '-isystem', 'source',
@@ -58,6 +57,7 @@ debug_cflags = [
     '-DBUILD_DEBUG',
     '-O0',
     '-ggdb',
+    '-fstack-protector-strong',
 ]
 
 common_ldflags = []
