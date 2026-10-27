@@ -223,7 +223,6 @@ void KartSub::calcPass0() {
     m_move->calcRejectRoad();
 
     if (status.offBit(eStatus::InCannon)) {
-        collide()->calcHitboxes();
         collisionGroup()->setHitboxScale(m_move->totalScale());
     }
 }
