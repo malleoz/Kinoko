@@ -739,27 +739,20 @@ bool KColData::checkSphereCollision(u16 prismIdx, f32 *distOut, EGG::Vector3f *f
 
     // Edge normals point outside the triangle
     const EGG::Vector3f &enrm1 = geom.enrm1;
-    f32 dist_ca = relativePos.ps_dot(enrm1);
-    if (m_radius <= dist_ca) {
-        return false;
-    }
-
     const EGG::Vector3f &enrm2 = geom.enrm2;
-    f32 dist_ab = relativePos.ps_dot(enrm2);
-    if (m_radius <= dist_ab) {
-        return false;
-    }
-
     const EGG::Vector3f &enrm3 = geom.enrm3;
-    f32 dist_bc = relativePos.ps_dot(enrm3) - geom.height;
-    if (m_radius <= dist_bc) {
-        return false;
-    }
-
     const EGG::Vector3f &fnrm = geom.fnrm;
+    f32 dist_ca = relativePos.ps_dot(enrm1);
+    f32 dist_ab = relativePos.ps_dot(enrm2);
+    f32 dist_bc = relativePos.ps_dot(enrm3) - geom.height;
     f32 plane_dist = relativePos.ps_dot(fnrm);
     f32 dist_in_plane = m_radius - plane_dist;
-    if (dist_in_plane <= 0.0f) {
+
+    // The base game rejects after each distance is computed. These rejections are combined into a
+    // single branch for Kinoko, since they are hard to predict and the computations have no side
+    // effects.
+    if ((m_radius <= dist_ca) | (m_radius <= dist_ab) | (m_radius <= dist_bc) |
+            (dist_in_plane <= 0.0f)) {
         return false;
     }
 
