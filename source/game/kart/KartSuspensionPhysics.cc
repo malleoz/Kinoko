@@ -300,9 +300,16 @@ KartSuspensionPhysics::~KartSuspensionPhysics() = default;
 /// @brief Initializes the @ref WheelPhysics and @ref BSP::Wheel pointers for this suspension
 /// @details @ref m_tirePhysics is set by indexing into the kart's tire array using @ref m_wheelIdx,
 /// and @ref m_bspWheel is set by indexing into the @ref BSP::wheel array using @ref m_bspWheelIdx.
+/// Also caches @ref m_localBottomDir, which only depends on the constant @ref BSP::Wheel::xRot.
 void KartSuspensionPhysics::init() {
     m_tirePhysics = tire(m_wheelIdx)->wheelPhysics();
     m_bspWheel = &bsp().wheels[m_bspWheelIdx];
+
+    // BSP::Wheel::xRot is constant. For Kinoko, we can compute the local bottom direction once
+    // instead of rebuilding the rotation matrix every frame in calcCollision().
+    EGG::Matrix34f xRotMat;
+    xRotMat.makeR(EGG::Vector3f(m_bspWheel->xRot * DEG2RAD, 0.0f, 0.0f));
+    m_localBottomDir = xRotMat.multVector33(-EGG::Vector3f::ey);
 }
 
 /// @addr{0x80599F54}
@@ -365,10 +372,7 @@ void KartSuspensionPhysics::calcCollision(const EGG::Vector3f &gravity, const EG
     }
 
     const EGG::Vector3f topmostPos = mat.ps_multVector(topmostRelPos);
-    EGG::Matrix34f xRotMat;
-    xRotMat.makeR(EGG::Vector3f(m_bspWheel->xRot * DEG2RAD, 0.0f, 0.0f));
-    EGG::Vector3f localBottomDir = xRotMat.multVector33(-EGG::Vector3f::ey);
-    m_bottomDir = mat.multVector33(localBottomDir);
+    m_bottomDir = mat.multVector33(m_localBottomDir);
 
     f32 y_down = m_tirePhysics->suspTravel() + 5.0f * sub()->suspScale();
     m_tirePhysics->setSuspTravel(std::clamp(y_down, 0.0f, m_maxTravelScaled));

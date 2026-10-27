@@ -2,6 +2,8 @@
 
 #include "game/kart/KartObjectProxy.hh"
 
+#include <egg/math/Matrix.hh>
+
 namespace Kinoko::Kart {
 
 class KartPhysics;
@@ -15,7 +17,7 @@ public:
     KartBody(KartPhysics *physics);
     virtual ~KartBody();
 
-    [[nodiscard]] virtual EGG::Matrix34f wheelMatrix(u16);
+    [[nodiscard]] virtual EGG::Matrix34f wheelMatrix(u16 wheelIdx, const EGG::Matrix34f &bodyMat);
 
     void reset();
     void calcSinkDepth();
@@ -60,7 +62,13 @@ public:
     KartBodyBike(KartPhysics *physics);
     ~KartBodyBike() override;
 
-    [[nodiscard]] EGG::Matrix34f wheelMatrix(u16 wheelIdx) override;
+    [[nodiscard]] EGG::Matrix34f wheelMatrix(u16 wheelIdx, const EGG::Matrix34f &bodyMat) override;
+
+private:
+    /// @brief The rotation of the handlebar
+    /// @details Introduced in Kinoko as a slight performance improvement to prevent unnecessarily
+    /// recalculating the handlebar rotation matrix every frame in wheelMatrix().
+    std::optional<EGG::Matrix34f> m_handleRotMat;
 };
 
 /// @brief Represents the body of @ref Vehicle::Quacker
@@ -72,7 +80,7 @@ public:
     KartBodyQuacker(KartPhysics *physics);
     ~KartBodyQuacker() override;
 
-    [[nodiscard]] EGG::Matrix34f wheelMatrix(u16 wheelIdx) override;
+    [[nodiscard]] EGG::Matrix34f wheelMatrix(u16 wheelIdx, const EGG::Matrix34f &bodyMat) override;
 };
 
 } // namespace Kinoko::Kart

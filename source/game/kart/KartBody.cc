@@ -23,12 +23,13 @@ KartBody::~KartBody() = default;
 
 /// @addr{0x8056C604}
 /// @brief Computes a matrix to represent wheel rotation. For karts, this is wheel-agnostic.
+/// @param bodyMat The kart's full rotation and position as a matrix
 /// @return The transformation matrix representing the wheel's rotation
 /// @details For karts, this is simply the kart's full rotation and position.
-EGG::Matrix34f KartBody::wheelMatrix(u16) {
-    EGG::Matrix34f mat;
-    mat.makeQT(fullRot(), pos());
-    return mat;
+/// @note Kinoko-specific: the caller computes `bodyMat` once for all wheels, rather than once per
+/// wheel.
+EGG::Matrix34f KartBody::wheelMatrix(u16, const EGG::Matrix34f &bodyMat) {
+    return bodyMat;
 }
 
 /// @addr{0x8056C4B4}
@@ -110,30 +111,27 @@ KartBodyBike::~KartBodyBike() {
 /// @addr{0x8056DD54}
 /// @brief Computes a matrix to represent the rotation of a wheel.
 /// @param wheelIdx 0 for front wheel, 1 for rear wheel
+/// @param bodyMat The bike's full rotation and position as a matrix
 /// @return The transformation matrix representing the wheel's rotation
 /// @details For the front wheel, we factor in the handlebar rotation.
 /// For the rear wheel, we only factor in the kart's rotation.
-EGG::Matrix34f KartBodyBike::wheelMatrix(u16 wheelIdx) {
-    EGG::Matrix34f mat;
-
-    mat.makeQT(fullRot(), pos());
+EGG::Matrix34f KartBodyBike::wheelMatrix(u16 wheelIdx, const EGG::Matrix34f &bodyMat) {
     if (wheelIdx != 0) {
-        return mat;
+        return bodyMat;
     }
 
-    EGG::Vector3f position = param()->bikeDisp().m_handlePos * scale();
-    EGG::Vector3f rotation = DEG2RAD * param()->bikeDisp().m_handleRot;
+    if (!m_handleRotMat.has_value()) {
+        m_handleRotMat.emplace().makeR(DEG2RAD * param()->bikeDisp().m_handleRot);
+    }
 
-    EGG::Matrix34f handleMatrix;
-    handleMatrix.makeRT(rotation, position);
-    EGG::Matrix34f tmp = mat.multiplyTo(handleMatrix);
+    EGG::Matrix34f handleMatrix = *m_handleRotMat;
+    handleMatrix.setBase(3, param()->bikeDisp().m_handlePos * scale());
+    EGG::Matrix34f tmp = bodyMat.multiplyTo(handleMatrix);
 
     EGG::Vector3f yRotation = EGG::Vector3f(0.0f, DEG2RAD * m_leanAngle, 0.0f);
     EGG::Matrix34f yRotMatrix;
     yRotMatrix.makeR(yRotation);
-    mat = tmp.multiplyTo(yRotMatrix);
-
-    return mat;
+    return tmp.multiplyTo(yRotMatrix);
 }
 
 /// @addr{0x8056E218}
@@ -147,11 +145,10 @@ KartBodyQuacker::~KartBodyQuacker() = default;
 
 /// @addr{0x8056E2FC}
 /// @brief Computes a matrix to represent wheel rotation. For Quacker, this is wheel-agnostic.
+/// @param bodyMat The bike's full rotation and position as a matrix
 /// @return The transformation matrix representing the wheel's rotation
-EGG::Matrix34f KartBodyQuacker::wheelMatrix(u16 /* wheelIdx */) {
-    EGG::Matrix34f mat;
-    mat.makeQT(fullRot(), pos());
-    return mat;
+EGG::Matrix34f KartBodyQuacker::wheelMatrix(u16 /* wheelIdx */, const EGG::Matrix34f &bodyMat) {
+    return bodyMat;
 }
 
 } // namespace Kinoko::Kart

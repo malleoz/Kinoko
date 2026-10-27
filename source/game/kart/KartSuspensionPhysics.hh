@@ -94,6 +94,12 @@ private:
     EGG::Vector3f m_topmostPos;   ///< World position of the top of the suspension
     f32 m_maxTravelScaled;     ///< @ref BSP::Wheel::maxTravel scaled by @ref KartSub::m_suspScale
     EGG::Vector3f m_bottomDir; ///< The "down" direction along the suspension axis
+
+    /// @brief @ref m_bottomDir before applying the wheel matrix
+    /// @details This is introduced in Kinoko as a slight performance optimization to prevent
+    /// frequent recalculation of the local bottom direction, which doesn't change after the wheel
+    /// is initialized.
+    EGG::Vector3f m_localBottomDir;
 };
 
 } // namespace Kinoko::Kart
