@@ -67,6 +67,7 @@ public:
     /// @beginGetters
 
     [[nodiscard]] ObjectObakeManager *obakeManager() const;
+    [[nodiscard]] bool hasCalcObjects() const;
 
     /// @endGetters
 

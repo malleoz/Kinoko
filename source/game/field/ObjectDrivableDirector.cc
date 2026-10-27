@@ -293,6 +293,12 @@ ObjectObakeManager *ObjectDrivableDirector::obakeManager() const {
     return m_obakeManager;
 }
 
+/// @brief Checks whether any drivable objects require per-frame calculations
+/// @return `true` if @ref m_calcObjects is non-empty, `false` otherwise
+bool ObjectDrivableDirector::hasCalcObjects() const {
+    return !m_calcObjects.empty();
+}
+
 /// @endGetters
 
 /// @addr{0x8081B428}

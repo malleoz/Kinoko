@@ -2,6 +2,7 @@
 
 #include "game/field/CollisionDirector.hh"
 #include "game/field/KColData.hh"
+#include "game/field/ObjectDrivableDirector.hh"
 
 #include "game/kart/KartMove.hh"
 #include "game/kart/KartObject.hh"
@@ -54,12 +55,22 @@ void KartCamera::init() {
 /// left or right. Dispatches to @ref calcCamera() to finalize the update to the the two cameras'
 /// positions and orientations. Lastly, calls @ref calcCollision() to perform collision checks for
 /// both cameras.
+/// @note Kinoko skips the camera entirely when there are no drivable objects requiring per-frame
+/// calculations. Nothing reads the camera's state, so its only effect on the simulation is the
+/// transform update that its collision checks can trigger on moving @ref Field::ObjectKCL objects.
+/// Static drivable objects resolve to the same transform and scale regardless of when they are
+/// updated, and all other state touched by the camera's collision checks is reset before it is
+/// next read.
 void KartCamera::calc() {
     constexpr f32 HOP_POS_INTERP_RATE = 0.8f;
     constexpr f32 FORWARD_INTERP_RATE = 0.35f;
     constexpr f32 HORIZ_POS_INTERP_RATE = 0.05f;
     constexpr f32 VERT_POS_INTERP_RATE = 0.03f;
     constexpr f32 FAST_VERT_POS_INTERP_RATE = 0.1f;
+
+    if (!Field::ObjectDrivableDirector::Instance()->hasCalcObjects()) {
+        return;
+    }
 
     const auto *kartObj = Kart::KartObjectManager::Instance()->object(0);
     EGG::Vector3f targetPos = kartObj->pos();
