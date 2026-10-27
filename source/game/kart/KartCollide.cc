@@ -62,18 +62,6 @@ void KartCollide::setHitboxLastPos() {
     }
 }
 
-/// @addr{0x8056EE24}
-/// @brief On each frame, calculates the positions for each hitbox
-/// @details For each hitbox, calls @ref Hitbox::calc() to update its position based on the kart's
-/// current state.
-void KartCollide::calcHitboxes() {
-    CollisionGroup *hitboxGroup = physics()->hitboxGroup();
-    for (u16 idx = 0; idx < hitboxGroup->hitboxCount(); ++idx) {
-        hitboxGroup->hitbox(idx).calc(move()->totalScale(), body()->sinkDepth(), scale(), fullRot(),
-                pos());
-    }
-}
-
 /// @addr{0x80572C20}
 /// @brief Handles collisions for the kart's body and responds accordingly
 /// @details Evaluates kart body collisions via @ref calcBodyCollision() and updates the kart's @ref

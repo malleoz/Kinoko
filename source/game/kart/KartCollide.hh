@@ -50,7 +50,6 @@ public:
 
     void init();
     void setHitboxLastPos();
-    void calcHitboxes();
     void findCollision();
     void calcRebound();
     void calcFloorEffect();
