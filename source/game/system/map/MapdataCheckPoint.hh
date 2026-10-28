@@ -59,14 +59,14 @@ public:
 
     /// @beginSetters
 
-    void setSearched();
+    void setSearched(u32 epoch);
     void clearSearched();
 
     /// @endSetters
 
     /// @beginGetters
 
-    [[nodiscard]] bool searched() const;
+    [[nodiscard]] bool searched(u32 epoch) const;
     [[nodiscard]] s8 jugemIndex() const;
     [[nodiscard]] s8 type() const;
     [[nodiscard]] u16 nextCount() const;
@@ -107,8 +107,14 @@ private:
     u16 m_prevCount;          ///< Number of previous checkpoints
     EGG::Vector2f m_midpoint; ///< The midpoint of the checkpoint in XZ coordinates
     EGG::Vector2f m_dir;      ///< The direction vector of the checkpoint in XZ coordinates
-    bool m_searched; ///< Indicates whether the checkpoint has been searched against this frame
-    u16 m_id;        ///< ID of the checkpoint
+    u16 m_id;                 ///< ID of the checkpoint
+
+    /// @brief The @ref CourseMap::m_sectorSearchId in which this checkpoint was last searched
+    /// @details This is a performance improvement for Kinoko. The base game stores a boolean that
+    /// is cleared on every checkpoint before each search in @ref CourseMap::findSector(). By
+    /// referencing @ref m_lastSearchedId instead, we can determine if the checkpoint has been
+    /// found in the current search without having to clear it explicitly.
+    u32 m_lastSearchedId;
 
     /// @brief Array of previous checkpoint pointers (only @ref m_prevCount are valid)
     std::array<MapdataCheckPoint *, MAX_NEIGHBORS> m_prevPoints;

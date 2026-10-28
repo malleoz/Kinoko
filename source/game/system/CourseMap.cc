@@ -77,7 +77,7 @@ s16 CourseMap::findSector(const EGG::Vector3f &pos, u16 checkpointIdx, f32 &dist
 
     MapdataCheckPoint::SectorOccupancy occupancy =
             checkpoint->checkSectorAndDistanceRatio(pos, distanceRatio);
-    checkpoint->setSearched();
+    checkpoint->setSearched(m_sectorSearchId);
 
     switch (occupancy) {
     // The player is fully inside the current checkpoint, so just set to current checkpoint
@@ -412,7 +412,11 @@ CourseMap::CourseMap()
       m_lateralSpacing(0.0f),
       m_longitudinalSpacing(0.0f),
       m_longitudinalOffset(0.0f),
-      m_longitudinalWideOffset(0.0f) {}
+      m_longitudinalWideOffset(0.0f) {
+    // Performance improvement for Kinoko - a unique identifier representing the last search
+    // performed, which avoids having to clear a "searched" flag for every checkpoint.
+    m_sectorSearchId = 0;
+}
 
 /// @addr{0x805127AC}
 /// @brief Private destructor that destroys the accessors to the `course.kmp` sections
@@ -438,10 +442,19 @@ CourseMap::~CourseMap() {
 /// @brief Clears the sector checked status for all checkpoints
 /// @details Iterates all checkpoints, calling @ref
 /// MapdataCheckPointAccessor::clearSearched() on each one.
+/// @note Kinoko-specific: rather than clearing every checkpoint, this starts a new search epoch, so
+/// that checkpoints marked during previous searches no longer count as searched. Checkpoints are
+/// only cleared when the epoch wraps around.
 void CourseMap::clearSectorChecked() {
+    if (++m_sectorSearchId != 0) {
+        return;
+    }
+
     for (size_t i = 0; i < m_checkPoint->size(); ++i) {
         getCheckPoint(i)->clearSearched();
     }
+
+    m_sectorSearchId = 1;
 }
 
 /// @addr{0x80511110}
@@ -468,9 +481,9 @@ s16 CourseMap::findRecursiveSector(const EGG::Vector3f &pos, s16 depth, bool sea
     MapdataCheckPoint::SectorOccupancy completion =
             MapdataCheckPoint::SectorOccupancy::OutsideSector;
 
-    if (!checkpoint->searched()) {
+    if (!checkpoint->searched(m_sectorSearchId)) {
         completion = checkpoint->checkSectorAndDistanceRatio(pos, distanceRatio);
-        checkpoint->setSearched();
+        checkpoint->setSearched(m_sectorSearchId);
     }
 
     // If player is inside current checkpoint, stop searching
@@ -762,7 +775,7 @@ s16 CourseMap::searchNextCheckpoint(const EGG::Vector3f &pos, s16 depth,
     for (size_t i = 0; i < checkpoint->nextCount(); ++i) {
         MapdataCheckPoint *next = checkpoint->nextPoint(i);
 
-        if (!useCache || !next->searched()) {
+        if (!useCache || !next->searched(m_sectorSearchId)) {
             id = findRecursiveSector(pos, depth, false, next, distanceRatio, playerIsForwards);
 
             if (id != -1) {
@@ -793,7 +806,7 @@ s16 CourseMap::searchPrevCheckpoint(const EGG::Vector3f &pos, s16 depth,
     for (size_t i = 0; i < checkpoint->prevCount(); ++i) {
         MapdataCheckPoint *prev = checkpoint->prevPoint(i);
 
-        if (!useCache || !prev->searched()) {
+        if (!useCache || !prev->searched(m_sectorSearchId)) {
             id = findRecursiveSector(pos, depth, true, prev, distanceRatio, playerIsForwards);
 
             if (id != -1) {

@@ -147,6 +147,12 @@ private:
     f32 m_longitudinalOffset;     ///< Front-to-back offset per half-row
     f32 m_longitudinalWideOffset; ///< Front-to-back offset for wide starting grids
 
+    /// @brief Identifies the current sector search for @ref MapdataCheckPoint::searched()
+    /// @details This is a performance optimization for Kinoko. Rather than clearing the "searched"
+    /// flag for every checkpoint whenever we call @ref findSector(), we can instead store an ID
+    /// that represents the last time the sector was searched.
+    u32 m_sectorSearchId;
+
     [[nodiscard]] static std::span<const u8> LoadFile(const char *filename);
 
     /// @brief Helper function which converts a big-endian ASCII string to a `u32` signature

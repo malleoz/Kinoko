@@ -22,6 +22,10 @@ MapdataCheckPoint::MapdataCheckPoint(const SData *data)
     m_midpoint = 0.5f * (m_left + m_right);
     m_dir = EGG::Vector2f(m_right.y - m_left.y, m_left.x - m_right.x);
     m_dir.normalise();
+
+    // Performance improvement for Kinoko - a unique identifier representing the last search
+    // performed, which avoids having to clear a "searched" flag for every checkpoint.
+    m_lastSearchedId = 0;
 }
 
 /// @brief Default destructor
@@ -213,21 +217,23 @@ bool MapdataCheckPoint::isFinishLine() const {
 }
 
 /// @brief Marks this checkpoint as searched in the DFS traversal this frame
-/// @details Sets @ref m_searched to `true`.
-void MapdataCheckPoint::setSearched() {
-    m_searched = true;
+/// @param epoch The current @ref CourseMap::m_sectorSearchId
+/// @details Sets @ref m_lastSearchedId to `epoch`.
+void MapdataCheckPoint::setSearched(u32 epoch) {
+    m_lastSearchedId = epoch;
 }
 
 /// @brief Clears the searched status of this checkpoint
-/// @details Sets @ref m_searched to `false`.
+/// @details Resets @ref m_lastSearchedId so that it does not match any search epoch.
 void MapdataCheckPoint::clearSearched() {
-    m_searched = false;
+    m_lastSearchedId = 0;
 }
 
 /// @brief Checks whether this checkpoint has been searched in the DFS traversal this frame
+/// @param epoch The current @ref CourseMap::m_sectorSearchId
 /// @return `true` if this checkpoint has been searched, `false` otherwise.
-bool MapdataCheckPoint::searched() const {
-    return m_searched;
+bool MapdataCheckPoint::searched(u32 epoch) const {
+    return m_lastSearchedId == epoch;
 }
 
 /// @brief Gets the index of the respawn point associated with this checkpoint
