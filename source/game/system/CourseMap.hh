@@ -2,6 +2,8 @@
 
 #include "game/system/map/MapdataArea.hh"
 
+#include <egg/core/BitFlag.hh>
+
 namespace Kinoko {
 
 namespace Host {
@@ -140,6 +142,11 @@ private:
     MapdataJugemPointAccessor *m_jugemPoint;   ///< Accessor for the JGPT section of the KMP file
     MapdataCannonPointAccessor *m_cannonPoint; ///< Accessor for the CNPT section of the KMP file
     MapdataStageInfoAccessor *m_stageInfo;     ///< Accessor for the STGI section of the KMP file
+
+    /// @brief Bitmask of the @ref MapdataAreaBase::Type values present in @ref m_area
+    /// @details Kinoko-specific. Lets @ref getCurrentAreaID() skip searching for absent types.
+    /// Types outside `[0, AREA_TYPE_MASK_BITS)` are not tracked and are always searched.
+    EGG::TBitFlag<u32, MapdataAreaBase::Type> m_areaTypeMask;
 
     f32 m_skewAngle;              ///< Angle of the diagonal rows relative to the pole position
     f32 m_lateralSpacing;         ///< Side-to-side spacing between karts in the same starting row

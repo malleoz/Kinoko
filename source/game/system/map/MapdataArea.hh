@@ -18,7 +18,7 @@ public:
     };
 
     /// @brief The type of the area
-    enum class Type : s8 {
+    enum class Type : u8 {
         MovingRoad = 3, ///< Moving road area
     };
 

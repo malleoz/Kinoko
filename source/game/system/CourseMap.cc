@@ -47,6 +47,12 @@ void CourseMap::init() {
     ASSERT(m_area);
     m_area->sort();
 
+    m_areaTypeMask.makeAllZero();
+    for (u16 i = 0; i < getAreaCount(); ++i) {
+        MapdataAreaBase::Type type = getArea(i)->type();
+        m_areaTypeMask.setBit(type);
+    }
+
     const MapdataStageInfo *stageInfo = getStageInfo();
     constexpr u8 TRANSLATION_MODE_NARROW = 1;
     if (stageInfo && stageInfo->translationMode() == TRANSLATION_MODE_NARROW) {
@@ -147,6 +153,11 @@ f32 CourseMap::getCheckPointEntryOffsetExact(u16 i, const EGG::Vector3f &pos,
 /// @param type The type of area to search for
 /// @return The ID of the area containing the position, or -1 if not found
 s16 CourseMap::getCurrentAreaID(s16 i, const EGG::Vector3f &pos, MapdataAreaBase::Type type) const {
+    // Kinoko-specific: skip the search entirely if the course has no areas of this type
+    if (m_areaTypeMask.offBit(type)) {
+        return -1;
+    }
+
     // Check if we're colliding with the provided area ID
     if (i >= 0) {
         const MapdataAreaBase *area = getArea(i);
