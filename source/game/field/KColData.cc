@@ -587,6 +587,13 @@ bool KColData::checkPointCollision(u16 prismIdx, f32 *distOut, EGG::Vector3f *fn
     const KCollisionPrismGeometry &geom = m_prismGeometry[prismIdx];
     const EGG::Vector3f relativePos = m_pos - geom.vtx;
 
+    const EGG::Vector3f &fnrm = geom.fnrm;
+    f32 plane_dist = relativePos.ps_dot(fnrm);
+    f32 dist_in_plane = 0.01f - plane_dist;
+    if (dist_in_plane <= 0.0f) {
+        return false;
+    }
+
     const EGG::Vector3f &enrm1 = geom.enrm1;
     f32 dist_ca = relativePos.ps_dot(enrm1);
     if (dist_ca >= 0.01f) {
@@ -602,13 +609,6 @@ bool KColData::checkPointCollision(u16 prismIdx, f32 *distOut, EGG::Vector3f *fn
     const EGG::Vector3f &enrm3 = geom.enrm3;
     f32 dist_bc = relativePos.ps_dot(enrm3) - geom.height;
     if (dist_bc >= 0.01f) {
-        return false;
-    }
-
-    const EGG::Vector3f &fnrm = geom.fnrm;
-    f32 plane_dist = relativePos.ps_dot(fnrm);
-    f32 dist_in_plane = 0.01f - plane_dist;
-    if (dist_in_plane <= 0.0f) {
         return false;
     }
 
