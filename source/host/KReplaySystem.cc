@@ -469,12 +469,16 @@ KReplaySystem::Result KReplaySystem::checkResult(std::string &failMsg) const {
 bool KReplaySystem::calcEnd() const {
     constexpr u16 MAX_MINUTE_COUNT = 10;
 
+    // The timer reads at least MAX_MINUTE_COUNT minutes once the frame counter exceeds this value.
+    // Comparing frame counts avoids converting the timer to minutes every frame.
+    constexpr u32 MAX_TIMER_FRAME = System::TimerManager::FirstFrameWithMinutes(MAX_MINUTE_COUNT);
+
     const auto *raceManager = System::RaceManager::Instance();
     if (raceManager->stage() == System::RaceManager::Stage::FinishGlobal) {
         return true;
     }
 
-    if (raceManager->timerManager().currentTimer().min >= MAX_MINUTE_COUNT) {
+    if (raceManager->timerManager().frameCounter() > MAX_TIMER_FRAME) {
         return true;
     }
 
