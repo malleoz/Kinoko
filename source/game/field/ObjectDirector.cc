@@ -8,10 +8,16 @@
 #include "game/system/CourseMap.hh"
 #include "game/system/RaceConfig.hh"
 
+#include <algorithm>
+
 namespace Kinoko::Field {
 
 /// @addr{0x8082A2B4}
 /// @brief Initializes all objects, including those in @ref ObjectDrivableDirector
+/// @details Kinoko-specific: seagulls (@ref ObjectBird) only affect the simulation through their
+/// floor collision checks, which can update the transforms of moving drivable objects. If there
+/// are no drivable objects requiring per-frame calculations, the seagulls are removed from @ref
+/// m_calcObjects. They are still initialized, since initialization consumes random numbers.
 void ObjectDirector::init() {
     for (auto *&obj : m_objects) {
         obj->init();
@@ -19,6 +25,15 @@ void ObjectDirector::init() {
     }
 
     ObjectDrivableDirector::Instance()->init();
+
+    if (!m_calcObjects.empty() && !ObjectDrivableDirector::Instance()->hasCalcObjects()) {
+        auto *newEnd = std::remove_if(m_calcObjects.begin(), m_calcObjects.end(),
+                [](const ObjectBase *obj) { return obj->id() == ObjectId::Seagull; });
+
+        while (m_calcObjects.end() != newEnd) {
+            m_calcObjects.pop_back();
+        }
+    }
 }
 
 /// @addr{0x8082A8F4}
