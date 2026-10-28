@@ -2,6 +2,8 @@
 
 #include "game/field/jugem/JugemUnit.hh"
 
+#include "game/field/ObjectDrivableDirector.hh"
+
 #include "game/kart/KartObjectManager.hh"
 
 namespace Kinoko::Field {
@@ -15,7 +17,14 @@ void JugemDirector::init() {
 
 /// @addr{8071E6C0}
 /// @brief Updates the @ref JugemUnit for the player
+/// @details Lakitu is only implemented because it can refresh the transformation matrix of drivable
+/// objects. For Kinoko, we can introduce a performance improvement by skipping Lakitu calculation
+/// if there are no drivable objects on the current course.
 void JugemDirector::calc() {
+    if (!ObjectDrivableDirector::Instance()->hasCalcObjects()) {
+        return;
+    }
+
     m_unit->calc();
 }
 
