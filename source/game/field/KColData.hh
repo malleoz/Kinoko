@@ -86,11 +86,11 @@ public:
     /// @brief Represesnts a KCL collision prism
     struct KCollisionPrism {
         f32 height;    ///< The height of the tri
-        u16 pos_i;     ///< Index of the first vertex's index in @ref m_vertices
-        u16 fnrm_i;    ///< Index of the face normal in @ref m_nrms
-        u16 enrm1_i;   ///< Index of the first edge's normal in @ref m_nrms
-        u16 enrm2_i;   ///< Index of the second edge's normal in @ref m_nrms
-        u16 enrm3_i;   ///< Index of the third edge's normal in @ref m_nrms
+        u16 pos_i;     ///< Index of the first vertex's position in the KCL file's position data
+        u16 fnrm_i;    ///< Index of the face normal in the KCL file's normal data
+        u16 enrm1_i;   ///< Index of the first edge's normal in the KCL file's normal data
+        u16 enrm2_i;   ///< Index of the second edge's normal in the KCL file's normal data
+        u16 enrm3_i;   ///< Index of the third edge's normal in the KCL file's normal data
         u16 attribute; ///< KCL attribute of the tri
 
         /// @brief Non-initializing default constructor
@@ -145,16 +145,10 @@ public:
 
     [[nodiscard]] const EGG::BoundBox3f &bbox() const;
     [[nodiscard]] u16 prismCache(u32 idx) const;
-    [[nodiscard]] std::span<const KCollisionPrism> prisms() const;
-    [[nodiscard]] std::span<const EGG::Vector3f> nrms() const;
-    [[nodiscard]] std::span<const EGG::Vector3f> vertices() const;
 
     /// @endGetters
 
 private:
-    void preloadPrisms();
-    void preloadNormals();
-    void preloadVertices();
     void preloadPrismGeometry();
     void computeBBox();
 
@@ -199,24 +193,14 @@ private:
     EGG::Vector3f m_cachedPos; ///< Position of the point/sphere corresponding to the current cache
     f32 m_cachedRadius;        ///< Radius of the sphere corresponding to the current cache
 
-    /// @brief One-indexed byte-swapped array of all @ref KCollisionPrism objects in the KCL file
-    /// @details Optimizes for time by avoiding unnecessary byteswapping. The Wii doesn't have this
-    /// problem because big endian is always assumed.
-    owning_span<KCollisionPrism> m_prisms;
-
-    /// @brief Byte-swapped array of all vertex normals in the KCL file
-    /// @details Optimizes for time by avoiding unnecessary byteswapping. The Wii doesn't have this
-    /// problem because big endian is always assumed.
-    owning_span<EGG::Vector3f> m_nrms;
-
-    /// @brief Byte-swapped array of all vertex positions in the KCL file
-    /// @details Optimizes for time by avoiding unnecessary byteswapping. The Wii doesn't have this
-    /// problem because big endian is always assumed.
-    owning_span<EGG::Vector3f> m_vertices;
-
     /// @brief One-indexed array of each prism's geometry
     /// @details Kinoko-specific optimization for cache locality. See @ref KCollisionPrismGeometry.
     owning_span<KCollisionPrismGeometry> m_prismGeometry;
+
+    /// @brief One-indexed array of each prism's KCL attribute
+    /// @details Kept separate from @ref m_prismGeometry so that the attribute check, which rejects
+    /// most prisms, does not need to touch the geometry.
+    owning_span<u16> m_prismAttributes;
 
     [[nodiscard]] static EGG::Vector3f GetVertex(f32 height, const EGG::Vector3f &vertex1,
             const EGG::Vector3f &fnrm, const EGG::Vector3f &enrm3, const EGG::Vector3f &enrm);
