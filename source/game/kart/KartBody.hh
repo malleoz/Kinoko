@@ -68,7 +68,7 @@ private:
     /// @brief The rotation of the handlebar
     /// @details Introduced in Kinoko as a slight performance improvement to prevent unnecessarily
     /// recalculating the handlebar rotation matrix every frame in wheelMatrix().
-    std::optional<EGG::Matrix34f> m_handleRotMat;
+    EGG::Matrix34f m_handleRotMat;
 };
 
 /// @brief Represents the body of @ref Vehicle::Quacker
