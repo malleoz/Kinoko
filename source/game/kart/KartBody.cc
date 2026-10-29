@@ -126,7 +126,7 @@ EGG::Matrix34f KartBodyBike::wheelMatrix(u16 wheelIdx, const EGG::Matrix34f &bod
     }
 
     EGG::Matrix34f handleMatrix = m_handleRotMat;
-    handleMatrix.setBase(3, param()->bikeDisp().m_handlePos * scale());
+    handleMatrix.setBase(3, m_handlePos * scale());
     EGG::Matrix34f tmp = bodyMat.multiplyTo(handleMatrix);
 
     EGG::Vector3f yRotation = EGG::Vector3f(0.0f, DEG2RAD * m_leanAngle, 0.0f);
@@ -137,6 +137,7 @@ EGG::Matrix34f KartBodyBike::wheelMatrix(u16 wheelIdx, const EGG::Matrix34f &bod
 
 void KartBodyBike::setParams(const KartParam::KartDisp & /* kartDisp */,
         const KartParam::BikeDisp &bikeDisp) {
+    m_handlePos = bikeDisp.m_handlePos;
     m_handleRotMat.makeR(DEG2RAD * bikeDisp.m_handleRot);
 }
 

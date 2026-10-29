@@ -73,6 +73,8 @@ public:
             const KartParam::BikeDisp &bikeDisp) override;
 
 private:
+    EGG::Vector3f m_handlePos; ///< Relative position of the handlebars
+
     /// @brief The rotation of the handlebar
     /// @details Introduced in Kinoko as a slight performance improvement to prevent unnecessarily
     /// recalculating the handlebar rotation matrix every frame in wheelMatrix().
