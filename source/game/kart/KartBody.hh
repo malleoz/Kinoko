@@ -18,7 +18,10 @@ public:
     virtual ~KartBody();
 
     [[nodiscard]] virtual EGG::Matrix34f wheelMatrix(u16 wheelIdx, const EGG::Matrix34f &bodyMat);
+    virtual void setParams(const KartParam::KartDisp &kartDisp,
+            const KartParam::BikeDisp &bikeDisp) = 0;
 
+    void init(const KartParam::KartDisp &kartDisp, const KartParam::BikeDisp &bikeDisp);
     void reset();
     void calcSinkDepth();
     void trySetTargetSinkDepth(f32 val);
@@ -52,6 +55,9 @@ class KartBodyKart final : public KartBody {
 public:
     KartBodyKart(KartPhysics *physics);
     ~KartBodyKart() override;
+
+    /// @addr{0x8056CDC4}
+    void setParams(const KartParam::KartDisp &, const KartParam::BikeDisp &) override {}
 };
 
 /// @brief Represents the body of a bike
@@ -63,6 +69,8 @@ public:
     ~KartBodyBike() override;
 
     [[nodiscard]] EGG::Matrix34f wheelMatrix(u16 wheelIdx, const EGG::Matrix34f &bodyMat) override;
+    void setParams(const KartParam::KartDisp &kartDisp,
+            const KartParam::BikeDisp &bikeDisp) override;
 
 private:
     /// @brief The rotation of the handlebar

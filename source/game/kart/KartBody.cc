@@ -14,8 +14,6 @@ KartBody::KartBody(KartPhysics *physics) : m_physics(physics) {
     m_leanAngle = 0.0f;
     m_sinkDepth = 0.0f;
     m_targetSinkDepth = 0.0f;
-
-    m_handleRotMat.makeR(DEG2RAD * param()->bikeDisp().m_handleRot);
 }
 
 /// @addr{0x8056CD84}
@@ -32,6 +30,11 @@ KartBody::~KartBody() = default;
 /// wheel.
 EGG::Matrix34f KartBody::wheelMatrix(u16, const EGG::Matrix34f &bodyMat) {
     return bodyMat;
+}
+
+/// @addr{0x8056C458}
+void KartBody::init(const KartParam::KartDisp &kartDisp, const KartParam::BikeDisp &bikeDisp) {
+    setParams(kartDisp, bikeDisp);
 }
 
 /// @addr{0x8056C4B4}
@@ -130,6 +133,11 @@ EGG::Matrix34f KartBodyBike::wheelMatrix(u16 wheelIdx, const EGG::Matrix34f &bod
     EGG::Matrix34f yRotMatrix;
     yRotMatrix.makeR(yRotation);
     return tmp.multiplyTo(yRotMatrix);
+}
+
+void KartBodyBike::setParams(const KartParam::KartDisp & /* kartDisp */,
+        const KartParam::BikeDisp &bikeDisp) {
+    m_handleRotMat.makeR(DEG2RAD * bikeDisp.m_handleRot);
 }
 
 /// @addr{0x8056E218}
