@@ -156,8 +156,7 @@ void KartSub::resetPhysics() {
 ///
 /// Calls @ref KartPhysics::calc() to apply trick and correction rotation. Calls @ref
 /// KartMove::calcRejectRoad() to handle road rejection collisions. Finally, if the kart is not in a
-/// cannon (indicated via the @ref eStatus::InCannon flag), calls @ref KartCollide::calcHitboxes()
-/// to update the hitbox positions for this frame and resets the @ref CollisionGroup::m_hitboxScale
+/// cannon (indicated via the @ref eStatus::InCannon flag), resets the @ref CollisionGroup::m_hitboxScale
 /// to @ref KartMove::m_totalScale.
 void KartSub::calcPass0() {
     auto &status = KartObjectProxy::status();

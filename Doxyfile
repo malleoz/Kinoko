@@ -25,6 +25,12 @@ PROJECT_BRIEF          = "A reimplementation of Mario Kart Wii's physics engine 
 
 PROJECT_LOGO           = docs/kinoko_f.png
 
+# With the PROJECT_ICON tag one can specify an icon that is included in the tabs
+# when the HTML document is shown. Doxygen will copy the logo to the output
+# directory.
+
+PROJECT_ICON           = docs/kinoko_f.png
+
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) path
 # into which the generated documentation will be written. If a relative path is
 # entered, it will be relative to the location where doxygen was started. If
@@ -209,6 +215,13 @@ RECURSIVE              = YES
 # and want to reuse the introduction page also for the doxygen output.
 
 USE_MDFILE_AS_MAINPAGE = README.md
+
+# The EXAMPLE_PATH tag can be used to specify one or more files or directories
+# that contain example code fragments that are included
+
+EXAMPLE_PATH           = source/game/field/KColData.cc \
+                         source/game/system/CourseMap.cc
+
 
 #---------------------------------------------------------------------------
 # Configuration options related to source browsing

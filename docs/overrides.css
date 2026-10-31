@@ -54,6 +54,15 @@ dl.desync div.fragment, dl.desync pre.fragment {
     border: 1px solid var(--section-code-border);
 }
 
+/* Added/removed lines in diff fragments (classes applied by overrides.js) */
+div.fragment div.line.diff-add {
+    background: rgba(46, 160, 67, 0.18);
+}
+
+div.fragment div.line.diff-del {
+    background: rgba(248, 81, 73, 0.18);
+}
+
 /* Add border to cell descriptions (left) */
 td.mdescLeft {
     border-left: 1px solid var(--separator-color);

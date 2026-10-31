@@ -655,7 +655,7 @@ bool KColData::checkSphereImpl(f32 *distOut, EGG::Vector3f *fnrmOut, u16 *flagsO
 /// With the computed distance to the edge/corner, checks to see if the distance exceeds the
 /// sphere's radius. If it does, returns `false`. Lastly, if `Type` is
 /// `CollisionCheckType::Movement`, requires that the sphere is moving towards the prism's face,
-/// otherwise returns `false. With all checks passed, returns `true`, updating the output parameters
+/// otherwise returns `false`. With all checks passed, returns `true`, updating the output parameters
 /// accordingly.
 template <KColData::CollisionCheckType Type>
 bool KColData::checkSphereCollision(u16 prismIdx, f32 *distOut, EGG::Vector3f *fnrmOut,
@@ -722,6 +722,8 @@ bool KColData::checkSphereCollision(u16 prismIdx, f32 *distOut, EGG::Vector3f *f
 
     // Originally part of the edge searching, but moved out for simplicity
     // If these are all zero, then we're inside the triangle
+    // The below doxygen comment is so that this code snippet can be shown in Optimizations.md
+    // [early_inside_check]
     if (dist_ab <= 0.0f && dist_bc <= 0.0f && dist_ca <= 0.0f) {
         if constexpr (Type == CollisionCheckType::Movement) {
             EGG::Vector3f lastPos = relativePos - m_movement;
@@ -732,6 +734,7 @@ bool KColData::checkSphereCollision(u16 prismIdx, f32 *distOut, EGG::Vector3f *f
         }
         return out(dist_in_plane);
     }
+    // [early_inside_check]
 
     EGG::Vector3f edge_nor, other_edge_nor;
     f32 edge_dist, other_edge_dist;

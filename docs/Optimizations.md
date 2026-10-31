@@ -1,8 +1,11 @@
 # Performance Optimizations {#perfoptimization}
 
-Since Kinoko does not aim to be a byte-matching decompilation, we can take creative liberty for the sake of improving performance. This page lists all performance optimizations that were added to Kinoko, ordered roughly in terms of largest to smallest improvement.
+Since %Kinoko does not aim to be a byte-matching decompilation, we can take creative liberty for the sake of improving performance. This page lists all performance optimizations that were added to %Kinoko, ordered roughly in terms of largest to smallest improvement.
 
-## KCL Prism Prefetch
+
+---
+
+## <small>[[#533](https://github.com/vabold/Kinoko/pull/533)]</small> KCL Prism Prefetch {#perfoptimization_prism_prefetch}
 
 `.kcl` files are comprised of multiple different sections. In brief, the following sections are relevant:
 - The header (@ref Kinoko::Field::KColData::KColHeader "KColHeader")
@@ -16,26 +19,177 @@ The header contains offsets to each of the above sections within the file. Each 
 - Index into section 2 for the prism's first edge normal
 - Index into section 2 for the prism's second edge normal
 - Index into section 2 for the prism's third edge normal
+- The prism's attributes
 
-Since a prism maps to its vertices and normals with indices, accessing them requires pointer arithmetic overhead to seek throughout the file data, every time the game checks for collision against a KCL prism.
+Since a prism maps to its vertices and normals using indices into their respective file sections, accessing them requires pointer arithmetic overhead to seek throughout the file data, every time the game checks for collision against a KCL prism. Not only that, but the indices and the prism's attributes are stored as big-endian, which means that all reads must @ref Kinoko::parse() "byteswap" the value to the endianness of the system running %Kinoko.
 
-We can eliminate this overhead by pre-emptively fetching the vertex position and normals for all prisms, such that they can all exist in a struct that is contiguous in memory. With the prism data now existing in a `0x40` byte struct in memory, cache locality results in a substantial speedup. Though this results in slightly longer race initialization time, this is negligible given that KCL collision checks are the hottest path when profiling.
+```mermaid
+flowchart LR
+    subgraph before["Without Prefetch"]
+        direction LR
+        A1["Prism index i"] --> B1["prismData + i × 0x10<br/>Read + byteswap prism data"]
+        B1 -->|pos_i| C1["posData + pos_i × 0xC<br/>Read + byteswap vertex"]
+        B1 -->|fnrm_i| D1["nrmData + fnrm_i × 0xC<br/>Read + byteswap face normal"]
+        B1 -->|"enrm1_i, enrm2_i, enrm3_i"| E1["nrmData + enrmN_i × 0xC<br/>Read + byteswap 3 edge normals"]
+    end
+```
+
+We can eliminate this overhead by pre-emptively fetching and byteswapping the vertex position and normals for all prisms, such that they can all exist in a struct that is contiguous in memory. With the prism data now existing in a `0x40` byte struct in memory, cache locality results in a substantial speedup. In order to preserve this cache locality, we store the prefetched and byteswapped prism attributes in a separate array. Though this all results in slightly longer race initialization time, this is negligible given that KCL collision checks are the hottest path when profiling.
+
+```mermaid
+flowchart LR
+    subgraph after["With prefetch"]
+        direction LR
+        A2["Prism index i"] --> B2["m_prismGeometry[i]<br/>0x40 byte struct, already byteswapped"]
+    end
+```
 
 @see @ref Kinoko::Field::KColData "KColData" | @ref Kinoko::Field::KColData::KColHeader "KColHeader" | @ref Kinoko::Field::KColData::KCollisionPrism "KCollisionPrism" | @ref Kinoko::Field::KColData::KCollisionPrismGeometry "KCollisionPrismGeometry"
 
+---
+
+## <small>[[#534](https://github.com/vabold/Kinoko/pull/534)]</small> Skip KartCamera Calculation {#perfoptimization_kartcamera}
+
+@ref Kinoko::Render::KartCamera "KartCamera" is responsible for computing the position and rotation of the front-facing and rear-facing cameras that follow the player. While it may initially seem that there is no need to implement this class for %Kinoko, @ref Kinoko::Render::KartCamera "KartCamera" actually performs collision checks to handle cases where there may be a surface that lies between the player and the camera. This collision check can result in updates to a @ref Kinoko::Field::ObjectKCL "ObjectKCL's" collision transform matrix in @ref Kinoko::Field::ObjColMgr "ObjColMgr". Since the camera lies behind the player, the camera can update objects behind the player in scenarios where the kart's collision checks do not reach the object.
+
+Since @ref Kinoko::Render::KartCamera "KartCamera" was only implemented for these drivable objects, we can skip over per-frame calculation of the camera for courses which do not have any drivable objects. This is observed via @ref Kinoko::Field::ObjectDrivableDirector::hasCalcObjects "ObjectDrivableDirector::hasCalcObjects()". This offers a significant speedup since two collision checks are now skipped per-frame.
+
+@see @ref Kinoko::Render::KartCamera | @ref Kinoko::Field::ObjectKCL::checkCollision "ObjectKCL::checkCollision" | @ref Kinoko::Field::ObjColMgr "ObjColMgr"
+
+---
+
+## <small>[[#546](https://github.com/vabold/Kinoko/pull/546)]</small> KCL Early Plane Distance Check {#perfoptimization_earlyplane}
+
+In the base game, @ref Kinoko::Field::KColData::checkSphereCollision(Kinoko::u16,Kinoko::f32*,Kinoko::EGG::Vector3f*,Kinoko::u16*) "KColData::checkSphereCollision" and @ref Kinoko::Field::KColData::checkPointCollision(Kinoko::u16,Kinoko::f32*,Kinoko::EGG::Vector3f*,Kinoko::u16*,bool) "KColData::checkPointCollision" normally check the kart/object's relative position from each edge of the prism and THEN check to see if the kart/object lies in front of the prism's plane.
+
+We find that performing the plane distance check earlier, such that it preempts the edge distance checks, yields a sizable performance improvement, demonstrating that this is a more common collision check failure branch than the edge distance checks.
+
+Our current understanding for why this is faster is because this is a broader check than the edge checks.
+- Wall prism face normals most commonly point somewhere in the XZ plane, which means the wall's face plane is the Y-axis. In this case, checking that the kart's/object's sphere lies in front of the wall's plane means that the kart/object is not colliding with the wall.
+- Similarly, the kart's body usually does not contact the floor; rather, the tires are more commonly colliding with floor prisms. This means that this broader check can eliminate scenarios where the kart's body is not actually contacting the floor, without having to check multiple edge distances.
+
+@see @ref Kinoko::Field::KColData::checkSphereCollision(Kinoko::u16,Kinoko::f32*,Kinoko::EGG::Vector3f*,Kinoko::u16*) "KColData::checkSphereCollision" | @ref Kinoko::Field::KColData::checkPointCollision(Kinoko::u16,Kinoko::f32*,Kinoko::EGG::Vector3f*,Kinoko::u16*,bool) "KColData::checkPointCollision"
+
+---
+
+## KCL Early Inside Check {#perfoptimization_earlyinside}
+
+In @ref Kinoko::Field::KColData::checkSphereCollision(Kinoko::u16,Kinoko::f32*,Kinoko::EGG::Vector3f*,Kinoko::u16*) "KColData::checkSphereCollision", the game determines which prism edge is the furthest and closest to the player. After doing so, it checks to see if the kart's/object's sphere lies entirely within the prism. If it does, then it enters an early return branch.
+
+Checking to see if the sphere lies entirely within the prism can be performed without having to first rank the distances of the prism edges. Moving this check before the edge sorting yields a small performance improvement.
+
+@snippet KColData.cc early_inside_check
+
+@see @ref Kinoko::Field::KColData::checkSphereCollision(Kinoko::u16,Kinoko::f32*,Kinoko::EGG::Vector3f*,Kinoko::u16*) "KColData::checkSphereCollision" 
+
+---
+
+## <small>[[#543](https://github.com/vabold/Kinoko/pull/543)]</small> Skip Lakitu Calculation {#perfoptimization_lakitu}
+
+For the same reasons as @ref perfoptimization_kartcamera "the KartCamera section above", we can skip updates to Lakitu's state management when there are no drivable objects on the loaded course. This is about a 1% performance improvement when averaged across all tracks.
+
+@see @ref Kinoko::Field::JugemDirector "JugemDirector"
+
+---
+
+## <small>[[#542](https://github.com/vabold/Kinoko/pull/542)]</small> Skip Seagull Calculation {#perfoptimization_seagull}
+
+For the same reasons as @ref perfoptimization_kartcamera "the KartCamera" and @ref perfoptimization_lakitu "the Lakitu" sections above, we can also skip updates to @ref Kinoko::Field::ObjectBird "ObjectBird" calculation if there are no drivable objects.
+
+@see @ref Kinoko::Field::ObjectBird "ObjectBird"
+
+---
+
+## <small>[[#538](https://github.com/vabold/Kinoko/pull/538)]</small> Skip Multiplayer Hitbox Calc {#perfoptimization_hitbox_calc}
+
+In the first pass of the kart's physics calculation (@ref Kinoko::Kart::KartSub::calcPass0() "calcPass0()"), the base game normally calls a function which updates all of the kart body's hitbox positions. This call exists in the base game so that intra-player collision checks can occur with up-to-date hitbox positions, but since %Kinoko does not support multiplayer, we can remove the call; the kart hitboxes are not used until we call @ref Kinoko::Kart::KartCollide::calcBodyCollision() "KartCollide::calcBodyCollision()", but this function also calls @ref Kinoko::Kart::Hitbox::calc() "Hitbox::calc()" for each hitbox before using them in collision checks. This means that we can remove the call in @ref Kinoko::Kart::KartSub::calcPass0() "calcPass0()" while still having up-to-date hitbox positions by the time they're used in @ref Kinoko::Kart::KartCollide::calcBodyCollision() "KartCollide::calcBodyCollision()".
+
+@see @ref Kinoko::Kart::KartSub::calcPass0() "KartSub::calcPass0()" | @ref Kinoko::Kart::KartCollide::calcBodyCollision() "KartCollide::calcBodyCollision()"
+
+---
+
+## <small>[[#519](https://github.com/vabold/Kinoko/pull/519)]</small> Remove Heap Zero Init {#perfoptimization_heap_init}
+
+In the base game, anytime a new @ref Kinoko::EGG::ExpHeap "EGG::ExpHeap" is created, its memory is zeroed via a `memset` call across the entire heap region. Since the root heap represents the entire 16MB normally allocated for the game's memory, this means we have to memset the entire 16MB on every course load. Additionally, any child heaps would also incur another `memset` for their subregion.
+
+This `memset` is unnecessary, so long as any class member variables previously zero-initialized due to the `memset` are explicitly zero-initialized in their respective class's constructor. This improves initialization time by a few percentage points.
+
+@see @ref Kinoko::Abstract::Memory::MEMiHeapHead::fillAllocMemory() "MEMiHeapHead::fillAllocMemory()"
+
+---
+
+## <small>[[#545](https://github.com/vabold/Kinoko/pull/545)]</small> AREA Search Early Return {#perfoptimization_area_early}
+
+@ref Kinoko::System::CourseMap::getCurrentAreaID() "CourseMap::getCurrentAreaID()" attempts to search for the @ref Kinoko::System::MapdataAreaBase "AREA" that a given kart's position lies within. For Kinoko, this is exclusively used to identify when the kart is within a moving water area on Koopa Cape. As a result, this search is useless for all other courses.
+
+We can avoid the unnecessary search by storing the area types of the course in @ref Kinoko::System::CourseMap::init() "CourseMap::init()". When we go to search for areas the kart's position lies within, we can early return if the course does not have the area type we are searching for. This is less than a 0.5% performance improvement.
+
+@snippet CourseMap.cc early_area_return
+
+@see @ref Kinoko::System::CourseMap::getCurrentAreaID() "CourseMap::getCurrentAreaID()" | @ref Kinoko::System::CourseMap::init() "CourseMap::init()" | @ref Kinoko::System::MapdataAreaBase
+
+---
+
+## <small>[[#547](https://github.com/vabold/Kinoko/pull/547)]</small> Remove BoxColManager Broadphase Loop {#perfoptimization_boxcol_broadphase}
+
+In @ref Kinoko::Field::BoxColManager::searchImpl() "BoxColManager::searchImpl()", the game prunes the GJK spatial index by excluding all units whose Z-axis range lies outside the range of the kart's sphere. It does so with two for-loops which adjusts local `highPointIdx` and `lowPointIdx` variables. The game normally has a broadphase pass where it tries to increment/decrement these locals by `8` per iteration. It then has a finer pass which increments/decrements by `1`.
+
+```c++
+// Broadphase
+while (highPointIdx > 7 && m_highPoints[highPointIdx - 8].z >= lowZPos) {
+    highPointIdx -= 8;
+}
+
+// Finer pass
+while (highPointIdx > 0 && m_highPoints[highPointIdx - 1].z >= lowZPos) {
+    --highPointIdx;
+}
+
+// Broadphase
+while (lowPointIdx < maxIdx - 7 && m_lowPoints[lowPointIdx + 8].z <= highZPos) {
+    lowPointIdx += 8;
+}
+
+// Finer pass
+while (lowPointIdx < maxIdx && m_lowPoints[lowPointIdx + 1].z <= highZPos) {
+    ++lowPointIdx;
+}
+```
+
+We find that it is faster to remove these two broadphase loops, leaving only the finer pass loops.
+
+Afterwards, the game iteratively checks to see if any units intersect the kart. In this loop, the game tracks both a temporary `i` loop iteration variable and a `lowPointIdx`. These two variables are always equivalent, thus we can remove `i` entirely. Doing so yields an additional performance improvement.
+
+```diff
+- for (int i = lowPointIdx; i >= minLowPoint; --i, --lowPointIdx) {
+-     BoxColLowPoint &low = m_lowPoints[i];
++ for (; lowPointIdx >= minLowPoint; --lowPointIdx) {
++     BoxColLowPoint &low = m_lowPoints[lowPointIdx];
+```
+
+Overall, these changes resulted in a 0.5% - 1% performance improvement.
+
+@see @ref Kinoko::Field::BoxColManager::searchImpl() "BoxColManager::searchImpl()"
+
+---
+
+## <small>[[#544](https://github.com/vabold/Kinoko/pull/544)]</small> Faster Checkpoint Search Tracking {#perfoptimization_ckpt_searchid}
+
+@ref Kinoko::System::CourseMap::findSector() "CourseMap::findSector()" is responsible for finding the ID of the @ref Kinoko::System::MapdataCheckPoint "checkpoint" that the kart lies within. This is a depth-first search, so the base game uses a boolean to indicate that the checkpoint has already been checked. To make sure that calls to Kinoko::System::CourseMap::findSector() "CourseMap::findSector()" are fresh searches, the game calls @ref Kinoko::System::CourseMap::clearSectorChecked() "CourseMap::clearSectorChecked()" which normally iterates all checkpoints to clear the boolean.
+
+This is an `O(n)` operation since we have to iterate all checkpoints to clear their boolean. We can improve on this by replacing the boolean with a `u32` identifier that represents the last time that the checkpoint was searched against. If this ID is less than the current search's ID, then we know it needs to be checked and the checkpoint's search ID needs to be updated. To prevent theoretical overflow of this ID, we still have to iteratively clear all IDs whenever the ID does overflow, but this will not happen under normal circumstances.
+
+Due to the large number of checkpoints on tracks and the search occurring on every frame, this results in a 1.5% performance boost.
+
+@see @ref Kinoko::System::CourseMap::findSector() "CourseMap::findSector()" | @ref Kinoko::System::CourseMap::clearSectorChecked() "CourseMap::clearSectorChecked()" | @ref Kinoko::System::MapdataCheckPoint::m_lastSearchedId "MapdataCheckPoint::m_lastSearchId"
+
+---
+
+## <small>[[#541](https://github.com/vabold/Kinoko/pull/541)]</small> Skip Per-Frame Timer Update
+
+
 
 ## TODO
-- KCLCollisionPrismGeometry prefetch - https://github.com/vabold/Kinoko/pull/533
-- Skip KartCamera https://github.com/vabold/Kinoko/pull/534
-- KColData plane distance check first https://github.com/vabold/Kinoko/pull/546
-- KColData early return if any distance is less than 0
-- Skip Lakitu https://github.com/vabold/Kinoko/pull/543
-- Skip Seagulls https://github.com/vabold/Kinoko/pull/542
-- Remove multiplayer Hitbox::calc call https://github.com/vabold/Kinoko/pull/538
-- Heap zero init https://github.com/vabold/Kinoko/pull/519
-- AREA early return https://github.com/vabold/Kinoko/pull/545
-- BoxColManager iterator loop: https://github.com/vabold/Kinoko/pull/547
-- Faster checkpoint search tracking https://github.com/vabold/Kinoko/pull/544
 - Skip timer https://github.com/vabold/Kinoko/pull/541
 - Optimize firebar matrix https://github.com/vabold/Kinoko/pull/540
 - Handlebar matrix and suspension down https://github.com/vabold/Kinoko/pull/539

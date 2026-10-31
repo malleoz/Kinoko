@@ -154,9 +154,12 @@ f32 CourseMap::getCheckPointEntryOffsetExact(u16 i, const EGG::Vector3f &pos,
 /// @return The ID of the area containing the position, or -1 if not found
 s16 CourseMap::getCurrentAreaID(s16 i, const EGG::Vector3f &pos, MapdataAreaBase::Type type) const {
     // Kinoko-specific: skip the search entirely if the course has no areas of this type
+    // The below doxygen comment is so that this code snippet can be shown in Optimizations.md
+    // [early_area_return]
     if (m_areaTypeMask.offBit(type)) {
         return -1;
     }
+    // [early_area_return]
 
     // Check if we're colliding with the provided area ID
     if (i >= 0) {
