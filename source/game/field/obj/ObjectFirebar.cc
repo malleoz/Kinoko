@@ -60,11 +60,23 @@ void ObjectFirebar::calc() {
         m_currAngle += 360.0f;
     }
 
-    for (auto *&fireball : m_fireballs) {
-        EGG::Vector3f dir = m_initDir * fireball->distance();
-        fireball->setPos(
-                pos() + RotateAxisAngle((m_currAngle + fireball->angle()) * DEG2RAD, m_axis, dir));
+    // Every fireball on the same spoke shares the same angle. For Kinoko, we can leverage this fact
+    // to introduce a small performance improvement by building each spoke's rotation matrix once
+    // instead of calling RotateAxisAngle() once per fireball.
+    // The below doxygen comment is so that this code snippet can be shown in Optimizations.md
+    // [spoke_angle_optimization]
+    size_t spokeCount = std::min<size_t>(m_spokes, m_fireballs.size());
+    for (size_t spoke = 0; spoke < spokeCount; ++spoke) {
+        EGG::Matrix34f mat;
+        mat.setBase(3, EGG::Vector3f::zero);
+        mat.setAxisRotation((m_currAngle + m_fireballs[spoke]->angle()) * DEG2RAD, m_axis);
+
+        for (size_t i = spoke; i < m_fireballs.size(); i += m_spokes) {
+            auto *fireball = m_fireballs[i];
+            fireball->setPos(pos() + mat.ps_multVector(m_initDir * fireball->distance()));
+        }
     }
+    // [spoke_angle_optimization]
 }
 
 /// @addr{0x807687D8}

@@ -220,7 +220,8 @@ USE_MDFILE_AS_MAINPAGE = README.md
 # that contain example code fragments that are included
 
 EXAMPLE_PATH           = source/game/field/KColData.cc \
-                         source/game/system/CourseMap.cc
+                         source/game/system/CourseMap.cc \
+                         source/game/field/obj/ObjectFirebar.cc
 
 
 #---------------------------------------------------------------------------

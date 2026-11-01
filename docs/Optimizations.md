@@ -185,13 +185,47 @@ Due to the large number of checkpoints on tracks and the search occurring on eve
 
 ---
 
-## <small>[[#541](https://github.com/vabold/Kinoko/pull/541)]</small> Skip Per-Frame Timer Update
+## <small>[[#541](https://github.com/vabold/Kinoko/pull/541)]</small> Skip Per-Frame Timer Update {#perfoptimization_race_timer}
 
+Every frame, the game maintains an up-to-date race timer in @ref Kinoko::System::TimerManager::calc() "TimerManager::calc()". For the purposes of physics simulation, this is unnecessary overhead, so we can remove it entirely. To allow those using Kinoko as a library to still fetch the current race time, we expose a @ref Kinoko::System::TimerManager::currentTimer() "TimerManager::currentTimer()" getter function.
 
+@see @ref Kinoko::System::TimerManager::calc() "TimerManager::calc()" | @ref Kinoko::System::TimerManager::currentTimer() "TimerManager::currentTimer()"
+
+---
+
+## <small>[[#540](https://github.com/vabold/Kinoko/pull/540)]</small> Improve ObjectFirebar Matrix Calc {#perfoptimization_firebar}
+
+Every frame, @ref Kinoko::Field::ObjectFirebar::calc() "ObjectFirebar::calc()" updates the positions of the underlying @ref Kinoko::Field::ObjectFireball "fireballs" such that they rotate about a central axis and are organized into a set number of spokes. For each fireball, it calls @ref Kinoko::Field::ObjectBase::RotateAxisAngle() "ObjectBase::RotateAxisAngle()" to offset the fireball's position about the firebar's axis of rotation. This involves matrix multiplication for each fireball, which is expensive.
+
+```c++
+using namespace Kinoko;
+
+for (auto *&fireball : m_fireballs) {
+    EGG::Vector3f dir = m_initDir * fireball->distance();
+    EGG::Vector3f offset = RotateAxisAngle((m_degAngle + fireball->angle()) * DEG2RAD, m_axis, dir);
+    fireball->setPos(pos() + offset);
+}
+```
+
+Since we know that all fireballs within a given spoke share the same angle around the firebar's axis of rotation, we can instead construct one rotation matrix per spoke and share it for each fireball in that spoke.
+
+@snippet ObjectFirebar.cc spoke_angle_optimization
+
+This improves performance on Bowser's Castle by 1.9% and GCN Waluigi Stadium by 2.5%.
+
+@see @ref Kinoko::Field::ObjectFirebar::calc() "ObjectFirebar::calc()" | @ref Kinoko::Field::ObjectFireball "ObjectFireball"
+
+---
+
+## <small>[[#539](https://github.com/vabold/Kinoko/pull/539)]</small> Cached Handlebar Matrix and Suspension Down {#perfoptimization_handlebar_and_down}
+
+This PR essentially contains three different changes.
+
+1. Re-use rotation/translation matrix for all wheels
+
+@ref Kinoko::Kart::KartBody::wheelMatrix() "KartBody::wheelMatrix()" and its overrides compute a matrix representing the kart's rotation and position.
 
 ## TODO
-- Skip timer https://github.com/vabold/Kinoko/pull/541
-- Optimize firebar matrix https://github.com/vabold/Kinoko/pull/540
 - Handlebar matrix and suspension down https://github.com/vabold/Kinoko/pull/539
 - RailSmoothInterpolator::calcT early return https://github.com/vabold/Kinoko/pull/535
 - Estimator step count https://github.com/vabold/Kinoko/pull/525
