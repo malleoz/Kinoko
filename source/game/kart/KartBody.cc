@@ -135,6 +135,10 @@ EGG::Matrix34f KartBodyBike::wheelMatrix(u16 wheelIdx, const EGG::Matrix34f &bod
     return tmp.multiplyTo(yRotMatrix);
 }
 
+/// @copybrief KartBody::setParams()
+/// @param bikeDisp Parsed display parameters for bikes
+/// @details Caches the handlebar position and computes the handlebarrotation matrix for later use
+/// in @ref wheelMatrix().
 void KartBodyBike::setParams(const KartParam::KartDisp & /* kartDisp */,
         const KartParam::BikeDisp &bikeDisp) {
     m_handlePos = bikeDisp.m_handlePos;

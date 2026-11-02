@@ -84,6 +84,16 @@ Checking to see if the sphere lies entirely within the prism can be performed wi
 
 ---
 
+## <small>[[#523](https://github.com/vabold/Kinoko/pull/523)]</small> Cache World Intertia Tensor {#perfoptimization_inertia_tensor}
+
+In @ref Kinoko::Kart::KartCollide::applySomeFloorMoment() "KartCollide::applySomeFloorMoment()", the game computes a matrix that represents the kart's inertia tensor in world space. This function is called once per tire per frame.
+
+Since the matrix is dependent on the kart's rotation and local inertia tensor which don't change on a per-tire basis, we introduce a new function @ref Kinoko::Kart::KartDynamics::calcWorldInertiaTensor() "KartDynamics::calcWorldInertiaTensor()" which can be used to compute the matrix once, so that it can be re-used in @ref Kinoko::Kart::KartCollide::applySomeFloorMoment() "KartCollide::applySomeFloorMoment()" for each tire. This results in a 1.3% performance boost.
+
+@see @ref Kinoko::Kart::KartCollide::applySomeFloorMoment() "KartCollide::applySomeFloorMoment()" | @ref Kinoko::Kart::KartDynamics::calcWorldInertiaTensor() "KartDynamics::calcWorldInertiaTensor()"
+
+---
+
 ## <small>[[#543](https://github.com/vabold/Kinoko/pull/543)]</small> Skip Lakitu Calculation {#perfoptimization_lakitu}
 
 For the same reasons as @ref perfoptimization_kartcamera "the KartCamera section above", we can skip updates to Lakitu's state management when there are no drivable objects on the loaded course. This is about a 1% performance improvement when averaged across all tracks.
@@ -219,15 +229,51 @@ This improves performance on Bowser's Castle by 1.9% and GCN Waluigi Stadium by 
 
 ## <small>[[#539](https://github.com/vabold/Kinoko/pull/539)]</small> Cached Handlebar Matrix and Suspension Down {#perfoptimization_handlebar_and_down}
 
-This PR essentially contains three different changes.
+This PR essentially contains three different changes:
 
 1. Re-use rotation/translation matrix for all wheels
 
-@ref Kinoko::Kart::KartBody::wheelMatrix() "KartBody::wheelMatrix()" and its overrides compute a matrix representing the kart's rotation and position.
+    @ref Kinoko::Kart::KartBody::wheelMatrix() "KartBody::wheelMatrix()" and its overrides compute a matrix representing the kart's current rotation and position. This virtual function is called within @ref Kinoko::Kart::KartSub::calcPass1() "KartSub::calcPass1()" in a loop for each suspension. Because the kart's rotation and position does not change during this loop, we can compute the kart's rotation/translation matrix once and pass it into @ref Kinoko::Kart::KartBody::wheelMatrix() "KartBody::wheelMatrix()".
 
-## TODO
-- Handlebar matrix and suspension down https://github.com/vabold/Kinoko/pull/539
-- RailSmoothInterpolator::calcT early return https://github.com/vabold/Kinoko/pull/535
-- Estimator step count https://github.com/vabold/Kinoko/pull/525
-- KartSub::DT https://github.com/vabold/Kinoko/pull/524
-- world inertia tensor https://github.com/vabold/Kinoko/pull/523
+2. Suspension bottom direction vector
+
+    In @ref Kinoko::Kart::KartSuspensionPhysics::calcCollision() "KartSuspensionPhysics::calcCollision()", the game constructs a local "down" vector based off of the wheel's rotation defined by @ref Kinoko::Kart::BSP::Wheel::xRot "BSP::Wheel::xRot".
+
+    ```c++
+    EGG::Matrix34f rot;
+    EGG::Vector3f euler_angles(m_bspWheel->xRot * DEG2RAD, 0.0f, 0.0f);
+    rot.makeR(euler_angles);
+    EGG::Vector3f localDown = rot.multVector33(-EGG::Vector3f::ey);
+    ```
+
+    Since the BSP parameters are constant, we can prevent this repetitive vector calculation by computing it once in a new member variable @ref Kinoko::Kart::KartSuspensionPhysics::m_localBottomDir "KartSuspensionPhysics::m_localBottomDir".
+
+3. Cache handlebar rotation matrix
+
+    For bikes, @ref Kinoko::Kart::KartBodyBike::wheelMatrix() "KartBodyBike::wheelMatrix()" calculates a rotation/translation matrix that is dependent on the handlebar's relative position and rotation defined by @ref Kinoko::KartParam::BikeDisp::m_handlePos "BikeDisp::m_handlePos" and @ref Kinoko::KartParam::BikeDisp::m_handleRot "BikeDisp::m_handleRot" respectively. Since these values are constant, we can compute the rotation component of the matrix during initialization and simply update the translation in @ref Kinoko::Kart::KartBodyBike::wheelMatrix() "KartBodyBike::wheelMatrix()". To do this, we create a new member variable @ref Kinoko::Kart::KartBodyBike::m_handleRotMat "KartBodyBike::m_handleRotMat" and initialize it in @ref Kinoko::Kart::KartBodyBike::setParams() "KartBodyBike::setParams()".
+
+@see @ref Kinoko::Kart::KartBody::wheelMatrix() "KartBody::wheelMatrix()" | @ref Kinoko::Kart::KartBodyBike::wheelMatrix() "KartBodyBike::wheelMatrix()" | @ref Kinoko::Kart::KartBodyQuacker::wheelMatrix() "KartBodyQuacker::wheelMatrix()" | @ref Kinoko::Kart::KartSuspensionPhysics::m_localBottomDir "KartSuspensionPhysics::m_localBottomDir" | @ref Kinoko::Kart::KartBodyBike::m_handleRotMat "KartBodyBike::m_handleRotMat" | @ref Kinoko::Kart::KartBodyBike::setParams() "KartBodyBike::setParams()"
+
+---
+
+## <small>[[#535](https://github.com/vabold/Kinoko/pull/535)]</small> Smooth Rail Segment Early Return {#perfoptimization_calct}
+
+@ref Kinoko::Field::RailSmoothInterpolator::calcT() "RailSmoothInterpolator::calcT()" is responsible for converting a position-based parameter into its corresponding cubic bezier curve parameter so that motion along the spline has constant speed. Each spline has a pre-computed table of @ref Kinoko::Field::RailSmoothInterpolator::m_pathPercentages "path percentages" at evenly-spaced parameter steps. This function iterates the path percentages array to find the index corresponding to the provided position-based parameter. In the base game, this loop continues to iterate the full array, even after finding the corresponding index. We can improve performance slightly by early returning once the index is found.
+
+@see @ref Kinoko::Field::RailSmoothInterpolator::calcT() "RailSmoothInterpolator::calcT()" | @ref Kinoko::Field::RailSmoothInterpolator::m_pathPercentages "m_pathPercentages"
+
+---
+
+## <small>[[#525](https://github.com/vabold/Kinoko/pull/525)]</small> Devirtualize Smooth Rail Estimator Sample Count {#perfoptimization_smooth_sample_count}
+
+@ref Kinoko::Field::RailSmoothInterpolator "RailSmoothInterpolator" smooths movement along a cubic bezier curve by computing an array of arc-length percentages, stored in @ref Kinoko::Field::RailSmoothInterpolator::m_pathPercentages "m_pathPercentages". The number of samples is normally defined by a virtual function and the inverse (the step per sample) by another virtual function. These virtual functions are not called by other classes and can thus be devirtualized. As a result, we can then optimize further; since @ref Kinoko::Field::RailSmoothInterpolator "RailSmoothInterpolator" always sets the sample count to `10`. we can make these values `constexpr` and directly fetch them from @ref Kinoko::Field::RailSpline::ESTIMATOR_SAMPLE_COUNT "ESTIMATOR_SAMPLE_COUNT" and @ref Kinoko::Field::RailSpline::ESTIMATOR_STEP "ESTIMATOR_STEP".
+
+@see @ref Kinoko::Field::RailSmoothInterpolator "RailSmoothInterpolator" | @ref Kinoko::Field::RailSpline::ESTIMATOR_SAMPLE_COUNT "RailSpline::ESTIMATOR_SAMPLE_COUNT" | @ref Kinoko::Field::RailSpline::ESTIMATOR_STEP "RailSpline::ESTIMATOR_STEP"
+
+---
+
+## <small>[[#524](https://github.com/vabold/Kinoko/pull/524)]</small> Remove Physics Delta Time {#perfoptimization_dt}
+
+In the base game, @ref Kinoko::Kart::KartDynamics::calc() "KartDynamics::calc()" and @ref Kinoko::Kart::KartSuspensionPhysics::calcCollision() "KartSuspensionPhysics::calcCollision()" are called with an additional `dt` parameter which represents the delta time for the current step in the physics evaluation. In theory, this could be used to speed up or slow down the rate at which physics calculations are performed. In the base game, this `dt` value is always set to `1.0f`. We originally made this a `constexpr` value, but for performance, we have removed it altogether.
+
+@see @ref Kinoko::Kart::KartDynamics::calc() "KartDynamics::calc()" | @ref Kinoko::Kart::KartSuspensionPhysics::calcCollision() "KartSuspensionPhysics::calcCollision()"

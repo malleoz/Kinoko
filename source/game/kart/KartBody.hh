@@ -18,6 +18,10 @@ public:
     virtual ~KartBody();
 
     [[nodiscard]] virtual EGG::Matrix34f wheelMatrix(u16 wheelIdx, const EGG::Matrix34f &bodyMat);
+
+    /// @brief Virtual function to set display-related parameters for karts/bikes
+    /// @param kartDisp Parsed display parameters for karts
+    /// @param bikeDisp Parsed display parameters for bikes
     virtual void setParams(const KartParam::KartDisp &kartDisp,
             const KartParam::BikeDisp &bikeDisp) = 0;
 
@@ -57,6 +61,8 @@ public:
     ~KartBodyKart() override;
 
     /// @addr{0x8056CDC4}
+    /// @copybrief KartBody::setParams()
+    /// @details This is a nop since we do not need to set any display-related parameters for karts.
     void setParams(const KartParam::KartDisp &, const KartParam::BikeDisp &) override {}
 };
 
