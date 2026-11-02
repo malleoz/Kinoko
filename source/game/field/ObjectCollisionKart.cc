@@ -1,5 +1,6 @@
 #include "ObjectCollisionKart.hh"
 
+#include "game/field/BoxColManager.hh"
 #include "game/field/ObjectCollisionConvexHull.hh"
 #include "game/field/ObjectDirector.hh"
 #include "game/field/obj/ObjectCollidable.hh"
@@ -49,8 +50,15 @@ void ObjectCollisionKart::init(u32 idx) {
 /// @details Re-orientates and rescales the convex hull based on `mat` and the kart's scale. Sets
 /// the hull's bounding radius based on the kart's current scale. Finally, dispatches to @ref
 /// ObjectDirector::checkKartObjectCollision() to check for collisions.
+/// @pre Requires that @ref BoxColManager::search() has been called prior to invoking this function.
 size_t ObjectCollisionKart::checkCollision(const EGG::Matrix34f &mat, const EGG::Vector3f &v) {
     if (!m_hull) {
+        return 0;
+    }
+
+    // Performance improvement for Kinoko: the hull is only used to check collision against nearby
+    // objects. If there are none, then skip the transform since there are no collisions.
+    if (!BoxColManager::Instance()->hasNextObject()) {
         return 0;
     }
 
