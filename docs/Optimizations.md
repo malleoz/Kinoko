@@ -274,6 +274,14 @@ This PR essentially contains three different changes:
 
 ---
 
+## <small>[[#551](https://github.com/vabold/Kinoko/pull/551)]</small> Skip Unnecessary Kart Hull Transforms {#perfoptimization_skip_hull}
+
+@ref Kinoko::Field::ObjectCollisionKart::checkCollision() "ObjectCollisionKart::checkCollision()" unconditionally updates the kart's @ref Kinoko::Field::ObjectCollisionKart::m_hull "collision hull" transform and bounding radius and calls @ref Kinoko::Field::ObjectDirector::checkKartObjectCollision() "ObjectDirector::checkKartObjectCollision()". However, since the hull is only used when there are actually GJK units that the kart is colliding with, we can skip updating the hull when the kart is not near any GJK units. We can determine when there are no GJK units by exposing a new helper function @ref Kinoko::Field::BoxColManager::hasNextObject() "BoxColManager::hasNextObject()" and early return from @ref Kinoko::Field::ObjectCollisionKart::checkCollision() "ObjectCollisionKart::checkCollision()".
+
+@see @ref Kinoko::Field::ObjectCollisionKart::checkCollision() "ObjectCollisionKart::checkCollision()" | @ref Kinoko::Field::BoxColManager::hasNextObject() "BoxColManager::hasNextObject()" | @ref Kinoko::Field::ObjectCollisionKart::m_hull "ObjectCollisionKart::m_hull"
+
+---
+
 ## <small>[[#525](https://github.com/vabold/Kinoko/pull/525)]</small> Devirtualize Smooth Rail Estimator Sample Count {#perfoptimization_smooth_sample_count}
 
 @ref Kinoko::Field::RailSmoothInterpolator "RailSmoothInterpolator" smooths movement along a cubic bezier curve by computing an array of arc-length percentages, stored in @ref Kinoko::Field::RailSmoothInterpolator::m_pathPercentages "m_pathPercentages". The number of samples is normally defined by a virtual function and the inverse (the step per sample) by another virtual function. These virtual functions are not called by other classes and can thus be devirtualized. As a result, we can then optimize further; since @ref Kinoko::Field::RailSmoothInterpolator "RailSmoothInterpolator" always sets the sample count to `10`. we can make these values `constexpr` and directly fetch them from @ref Kinoko::Field::RailSpline::ESTIMATOR_SAMPLE_COUNT "ESTIMATOR_SAMPLE_COUNT" and @ref Kinoko::Field::RailSpline::ESTIMATOR_STEP "ESTIMATOR_STEP".
