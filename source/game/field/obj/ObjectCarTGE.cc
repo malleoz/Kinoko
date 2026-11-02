@@ -42,7 +42,8 @@ ObjectCarTGE::ObjectCarTGE(const System::MapdataGeoObj &params)
       m_dummyId(ObjectId::None),
       m_vel(EGG::Vector3f::zero),
       m_currSpeed(0.0f),
-      m_tangent(EGG::Vector3f::zero) {
+      m_tangent(EGG::Vector3f::zero),
+      m_transformPending(false) {
     u32 color = static_cast<u32>(params.setting(3));
     s16 pathId = params.pathId();
 
@@ -200,6 +201,13 @@ void ObjectCarTGE::calcCollisionTransform() {
 
     if (!col) {
         return;
+    }
+
+    // Performance optimization for Kinoko: the rotation derived from m_tangent is only read when
+    // checking collision against the kart, so it's computed here instead of calcPos().
+    if (m_transformPending) {
+        m_transformPending = false;
+        setMatrixTangentTo(OrthonormalBasis(m_tangent).base(1), m_tangent);
     }
 
     calcTransform();
@@ -424,7 +432,9 @@ void ObjectCarTGE::calcPos() {
         setPos(curPos - m_tangent * dist * 0.5f - EGG::Vector3f::ey * 5.0f);
     }
 
-    setMatrixTangentTo(OrthonormalBasis(m_tangent).base(1), m_tangent);
+    // Performance optimization for Kinoko: the rotation derived from m_tangent is only read when
+    // checking collision against the kart, so defer computing it until calcCollisionTransform().
+    m_transformPending = true;
 }
 
 /// @addr{0x806D9504}

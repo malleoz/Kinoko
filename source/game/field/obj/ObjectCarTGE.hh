@@ -71,6 +71,12 @@ private:
     bool m_hasAuxCollision; ///< Set when a collision was the result of @ref m_auxCollision
     f32 m_hitAngle; ///< Angular threshold for determining if player should be launched or squished
 
+    /// @brief Whether the transform's rotation still needs to be updated from @ref m_tangent
+    /// @details This is performance optimization for Kinoko. The car's rotation is only read when
+    /// checking collision against the kart, so @ref calcPos() defers computing it to @ref
+    /// calcCollisionTransform().
+    bool m_transformPending;
+
     /// @brief Rate of speed increase when a vehicle enters and exits the highway
     static constexpr f32 TOLL_BOOTH_ACCEL = 200.0f;
 
