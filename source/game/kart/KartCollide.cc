@@ -152,10 +152,6 @@ void KartCollide::calcFloorEffect() {
 
     if (m_solidOobTimer >= 3 && m_surfaceFlags.onBit(eSurfaceFlags::SolidOOB) &&
             m_surfaceFlags.offBit(eSurfaceFlags::Wall)) {
-        if (mask & KCL_TYPE_BIT(COL_TYPE_SOLID_OOB)) {
-            colDir->findClosestCollisionEntry(&mask, KCL_TYPE_BIT(COL_TYPE_SOLID_OOB));
-        }
-
         activateOob(true, &mask, false, false);
     }
 
@@ -212,11 +208,9 @@ void KartCollide::calcFallBoundary(Field::KCLTypeMask *mask, bool shortBoundary)
     }
 
     auto *colDir = Field::CollisionDirector::Instance();
-    if (!colDir->findClosestCollisionEntry(mask, KCL_TYPE_BIT(COL_TYPE_FALL_BOUNDARY))) {
-        return;
-    }
-
-    if (!shortBoundary || colDir->closestCollisionEntry()->variant() == 7) {
+    if (!shortBoundary ||
+            (colDir->findClosestCollisionEntry(mask, KCL_TYPE_BIT(COL_TYPE_FALL_BOUNDARY)) &&
+                    colDir->closestCollisionEntry()->variant() == 7)) {
         activateOob(false, mask, false, false);
     }
 }
@@ -340,13 +334,6 @@ void KartCollide::calcWheelCollision(u16 /*wheelIdx*/, CollisionGroup *hitboxGro
     }
 
     processWheel(collisionData, hitbox, &colInfo, &kclOut);
-
-    if (!(kclOut & KCL_TYPE_VEHICLE_COLLIDEABLE)) {
-        return;
-    }
-
-    Field::CollisionDirector::Instance()->findClosestCollisionEntry(&kclOut,
-            KCL_TYPE_VEHICLE_COLLIDEABLE);
 }
 
 /// @addr{0x8056E70C}
