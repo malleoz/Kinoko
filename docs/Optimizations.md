@@ -84,6 +84,14 @@ Checking to see if the sphere lies entirely within the prism can be performed wi
 
 ---
 
+## <small>[[#552](https://github.com/vabold/Kinoko/pull/552)]</small> Defer ObjectCarTGE Transform Update {#perfoptimization_objectcartge_defer}
+
+Every frame, @ref Kinoko::Field::ObjectCarTGE::calcPos() "ObjectCarTGE::calcPos()" updates the car's/truck's position, facing direction, and resulting @ref Kinoko::Field::ObjectBase::m_transform "transformation matrix". However, this transform is only relevant when we are performing collision checks against the car/truck. Rather than update the transformation matrix every frame, we can defer calculation until @ref Kinoko::Field::ObjectCarTGE::calcCollisionTransform() "ObjectCarTGE::calcCollisionTransform()" which is only ever called once we are intersecting with the car's/truck's GJK unit. We do so by implementing @ref Kinoko::Field::ObjectCarTGE::m_transformPending "m_transformPending" to track when the car's/truck's matrix needs to be updated, and we update it in @ref Kinoko::Field::ObjectCarTGE::calcCollisionTransform() "ObjectCarTGE::calcCollisionTransform()" when set.
+
+@see  @ref Kinoko::Field::ObjectCarTGE::calcPos() "ObjectCarTGE::calcPos()" | @ref Kinoko::Field::ObjectCarTGE::calcCollisionTransform() "ObjectCarTGE::calcCollisionTransform()" | @ref Kinoko::Field::ObjectCarTGE::calcCollisionTransform() "ObjectCarTGE::calcCollisionTransform()"
+
+---
+
 ## <small>[[#549](https://github.com/vabold/Kinoko/pull/549)]</small> Narrow CalcTriggers Collision Check Mask {#perfoptimization_calctrigger}
 
 @note THIS FUNCTION WAS RENAMED IN THE DOXYGEN_ENHANCE BRANCH.
