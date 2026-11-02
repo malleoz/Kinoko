@@ -84,6 +84,16 @@ Checking to see if the sphere lies entirely within the prism can be performed wi
 
 ---
 
+## <small>[[#549](https://github.com/vabold/Kinoko/pull/549)]</small> Narrow CalcTriggers Collision Check Mask {#perfoptimization_calctrigger}
+
+@note THIS FUNCTION WAS RENAMED IN THE DOXYGEN_ENHANCE BRANCH.
+
+@ref Kinoko::Kart::KartCollide::calcFloorEffect() "KartCollide::calcFloorEffect()" calls @ref Kinoko::Kart::KartCollide::calcLeanCollision() "KartCollide::calcLeanCollision()" twice, once for direction-specific KCL types, and once for non-directional KCL types. However, for the purposes of %Kinoko, we only care about @ref KCL_TYPE_WALL and @ref COL_TYPE_SOLID_OOB for the non-directional call. As such, we can actually narrow the KCL flags that the base game normally uses (@ref KCL_TYPE_NON_DIRECTIONAL) for the non-directional scenario such that we only check for @ref KCL_TYPE_WALL and @ref COL_TYPE_SOLID_OOB. This narrowing results in a 2% performance improvement.
+
+@see @ref Kinoko::Kart::KartCollide::calcLeanCollision() "KartCollide::calcLeanCollision()" | @ref KCL_TYPE_NON_DIRECTIONAL | @ref KCL_TYPE_WALL | @ref COL_TYPE_SOLID_OOB
+
+---
+
 ## <small>[[#523](https://github.com/vabold/Kinoko/pull/523)]</small> Cache World Intertia Tensor {#perfoptimization_inertia_tensor}
 
 In @ref Kinoko::Kart::KartCollide::applySomeFloorMoment() "KartCollide::applySomeFloorMoment()", the game computes a matrix that represents the kart's inertia tensor in world space. This function is called once per tire per frame.
