@@ -1126,14 +1126,18 @@ void KartCollide::applyBodyCollision(CollisionData &collisionData, const EGG::Ve
 /// `checkDirection` is `true`, otherwise `100.0f` times the kart's total scale defined by @ref
 /// KartMove::m_totalScale). If a collision did not occur, the function returns early. If
 /// `checkDirection` was `true`, then the function calls @ref calcTriggers() and returns after.
-/// Otherwise, fetches the closest #KCL_TYPE_FLOOR collision entry (this is effectively ignored in
-/// the current Kinoko implementation). If the collision set any of the bits of #KCL_TYPE_WALL, then
-/// sets the @ref eSurfaceFlags::Wall bit in @ref m_surfaceFlags. If the collision set the
-/// #COL_TYPE_SOLID_OOB bit, then sets the @ref eSurfaceFlags::SolidOOB bit in @ref m_surfaceFlags.
+/// Otherwise, if the collision set any of the bits of #KCL_TYPE_WALL, then sets the @ref
+/// eSurfaceFlags::Wall bit in @ref m_surfaceFlags. If the collision set the #COL_TYPE_SOLID_OOB
+/// bit, then sets the @ref eSurfaceFlags::SolidOOB bit in @ref m_surfaceFlags.
 void KartCollide::calcLeanCollision(Field::KCLTypeMask *maskOut, const EGG::Vector3f &pos,
         bool checkDirection) {
+    // Kinoko-specific: the non-directional check's result is only used to set the wall and solid
+    // OOB surface flags, so we skip checking against all other KCL types (e.g. floors).
+    constexpr Field::KCLTypeMask NON_DIRECTIONAL_MASK =
+            KCL_TYPE_NON_DIRECTIONAL & (KCL_TYPE_WALL | KCL_TYPE_BIT(COL_TYPE_SOLID_OOB));
+
     const EGG::Vector3f &v1 = checkDirection ? prevPos() : EGG::Vector3f::inf;
-    Field::KCLTypeMask typeMask = checkDirection ? KCL_TYPE_DIRECTIONAL : KCL_TYPE_NON_DIRECTIONAL;
+    Field::KCLTypeMask typeMask = checkDirection ? KCL_TYPE_DIRECTIONAL : NON_DIRECTIONAL_MASK;
     f32 radius = checkDirection ? 80.0f : 100.0f * move()->totalScale();
     f32 scalar = -bsp().offsetY * move()->totalScale() * 0.3f;
     EGG::Vector3f scaledPos = pos + scalar * componentYAxis();
@@ -1154,11 +1158,6 @@ void KartCollide::calcLeanCollision(Field::KCLTypeMask *maskOut, const EGG::Vect
     if (checkDirection) {
         calcTriggers(maskOut);
     } else {
-        if (*maskOut & KCL_TYPE_FLOOR) {
-            Field::CollisionDirector::Instance()->findClosestCollisionEntry(maskOut,
-                    KCL_TYPE_FLOOR);
-        }
-
         if (*maskOut & KCL_TYPE_WALL) {
             m_surfaceFlags.setBit(eSurfaceFlags::Wall);
         }
