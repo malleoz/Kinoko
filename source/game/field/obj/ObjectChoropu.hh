@@ -52,7 +52,7 @@ private:
     f32 m_groundHeight; ///< Height of a single dirt trail cylinder. Used to space out segments.
     const bool m_isStationary; ///< rPG moles don't move while MMM moles do
     EGG::Matrix34f m_initRt;   ///< Initial transform for statinary moles
-    EGG::Matrix34f m_railMat;  ///< Orthonormal basis for moving mole's current pos and orientation
+    EGG::Vector3f m_railPos;   ///< Moving mole's current position along the rail
     f32 m_groundLength;        ///< Cumulative length of dirt trail behind moving monty moles on MMM
 
     static constexpr f32 RADIUS = 300.0f; ///< Radius of the dirt trail segments' collision sphere

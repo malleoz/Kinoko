@@ -89,8 +89,8 @@ void ObjectChoropu::init() {
         m_railInterpolator->init(0.0f, 0);
         m_railInterpolator->setPerPointVelocities(true);
 
-        m_railMat = RailOrthonormalBasis(*m_railInterpolator);
-        setPos(m_railMat.base(3));
+        m_railPos = m_railInterpolator->curPos();
+        setPos(m_railPos);
 
         disableCollision();
         m_objHoll->disableCollision();
@@ -102,9 +102,9 @@ void ObjectChoropu::init() {
 /// @addr{0x806B9E60}
 /// @copybrief ObjectBase::calc()
 /// @details If the mole hasn't spawned yet (which is the case when the race duration is below `@ref
-/// m_startFrameOffset + 300`), then returns early. If the mole moves along a rail, then calculates
-/// @ref m_railMat. Evaluates the mole's state machine. Finally, resets the X and Z component of the
-/// hole scale to `1.0f`.
+/// m_startFrameOffset + 300`), then returns early. If the mole moves along a rail, then stores the
+/// rail's current position in @ref m_railPos. Evaluates the mole's state machine. Finally, resets
+/// the X and Z component of the hole scale to `1.0f`.
 void ObjectChoropu::calc() {
     constexpr u32 START_DELAY = 300;
 
@@ -119,7 +119,9 @@ void ObjectChoropu::calc() {
             return;
         }
 
-        m_railMat = RailOrthonormalBasis(*m_railInterpolator);
+        // Kinoko-specific: the base game computes RailOrthonormalBasis() here, but only its
+        // translation is ever used, so we skip computing the rotation.
+        m_railPos = m_railInterpolator->curPos();
     }
 
     StateManager::calc();
@@ -176,7 +178,7 @@ void ObjectChoropu::enterPeeking() {
 
         enableCollision();
     } else {
-        setPos(m_railMat.base(3));
+        setPos(m_railPos);
         setRot(EGG::Vector3f(rot().x, 0.0f, 0.0f));
         enableCollision();
 
@@ -198,7 +200,7 @@ void ObjectChoropu::enterPeeking() {
 void ObjectChoropu::enterJumping() {
     enableCollision();
 
-    setPos(m_isStationary ? m_initRt.base(3) : m_railMat.base(3));
+    setPos(m_isStationary ? m_initRt.base(3) : m_railPos);
     setRot(EGG::Vector3f(rot().x, rot().y, 0.0f));
 }
 
