@@ -19,6 +19,7 @@ public:
     void calc() override;
     [[nodiscard]] LoadFlags loadFlags() const override;
 
+    void calcCollisionTransform() override;
     [[nodiscard]] const EGG::Vector3f &getCollisionTranslation() const override;
     [[nodiscard]] Kart::Reaction onCollision(Kart::KartObject *kartObj,
             Kart::Reaction reactionOnKart, Kart::Reaction reactionOnObj,
@@ -44,6 +45,12 @@ private:
     f32 m_angSpd;        ///< Angular velocity
     s32 m_cooldownTimer; ///< Cooldown timer before rock becomes tangible again
     f32 m_angRad;        ///< Rotation from accumulated angular velocity
+
+    /// @brief Whether the transform still needs to be updated from @ref m_angRad and the rail
+    /// @details Kinoko-specific optimization. The transform is only read when checking collision
+    /// against the kart, so @ref calcTangibleSub() defers computing it to @ref
+    /// calcCollisionTransform().
+    bool m_transformPending;
 
     const s32 m_cooldownDuration; ///< Duration of the cooldown before becoming tangible again
     const f32 m_railSpeed;        ///< Speed at which the rock moves along the rail
