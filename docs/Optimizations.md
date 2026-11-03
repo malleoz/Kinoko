@@ -86,9 +86,17 @@ Checking to see if the sphere lies entirely within the prism can be performed wi
 
 ## <small>[[#552](https://github.com/vabold/Kinoko/pull/552)]</small> Defer ObjectCarTGE Transform Update {#perfoptimization_objectcartge_defer}
 
-Every frame, @ref Kinoko::Field::ObjectCarTGE::calcPos() "ObjectCarTGE::calcPos()" updates the car's/truck's position, facing direction, and resulting @ref Kinoko::Field::ObjectBase::m_transform "transformation matrix". However, this transform is only relevant when we are performing collision checks against the car/truck. Rather than update the transformation matrix every frame, we can defer calculation until @ref Kinoko::Field::ObjectCarTGE::calcCollisionTransform() "ObjectCarTGE::calcCollisionTransform()" which is only ever called once we are intersecting with the car's/truck's GJK unit. We do so by implementing @ref Kinoko::Field::ObjectCarTGE::m_transformPending "m_transformPending" to track when the car's/truck's matrix needs to be updated, and we update it in @ref Kinoko::Field::ObjectCarTGE::calcCollisionTransform() "ObjectCarTGE::calcCollisionTransform()" when set.
+Every frame, @ref Kinoko::Field::ObjectCarTGE::calcPos() "ObjectCarTGE::calcPos()" updates the car's/truck's position, facing direction, and resulting @ref Kinoko::Field::ObjectBase::m_transform "transformation matrix". However, this transform is only relevant when we are performing collision checks against the car/truck. Rather than update the transformation matrix every frame, we can defer calculation until @ref Kinoko::Field::ObjectCarTGE::calcCollisionTransform() "ObjectCarTGE::calcCollisionTransform()" which is only ever called once we are intersecting with the car's/truck's GJK unit. We do so by implementing @ref Kinoko::Field::ObjectCarTGE::m_transformPending "m_transformPending" to track when the car's/truck's matrix needs to be updated, and we update it in @ref Kinoko::Field::ObjectCarTGE::calcCollisionTransform() "ObjectCarTGE::calcCollisionTransform()" when set. This results in a 21% performance improvement on Moonview Highway ghosts.
 
-@see  @ref Kinoko::Field::ObjectCarTGE::calcPos() "ObjectCarTGE::calcPos()" | @ref Kinoko::Field::ObjectCarTGE::calcCollisionTransform() "ObjectCarTGE::calcCollisionTransform()" | @ref Kinoko::Field::ObjectCarTGE::calcCollisionTransform() "ObjectCarTGE::calcCollisionTransform()"
+@see @ref Kinoko::Field::ObjectCarTGE::calcPos() "ObjectCarTGE::calcPos()" | @ref Kinoko::Field::ObjectCarTGE::calcCollisionTransform() "ObjectCarTGE::calcCollisionTransform()" | @ref Kinoko::Field::ObjectCarTGE::calcCollisionTransform() "ObjectCarTGE::calcCollisionTransform()" | @ref Kinoko::Field::ObjectCarTGE::m_transformPending "m_transformPending"
+
+---
+
+## <small>[[#553](https://github.com/vabold/Kinoko/pull/553)]</small> Defer ObjectRock Transform Update {#perfoptimization_objectrock_defer}
+
+Every frame, @ref Kinoko::Field::ObjectRock::calcTangibleSub() "ObjectRock::calcTangibleSub()" updates the rock's rotation and updates the transformation matrix accordingly. Just like the @ref perfoptimization_objectcartge_defer "ObjectCarTGE section above", we can defer this transformation matrix to @ref Kinoko::Field::ObjectRock::calcCollisionTransform() "ObjectRock::calcCollisionTransform()" so that it's only updated when we are actually performing collision checks between it and the kart. This results in a 13% performance improvement on GCN DK Mountain ghosts.
+
+@see @ref Kinoko::Field::ObjectRock::calcTangibleSub() "ObjectRock::calcTangibleSub()" | @ref Kinoko::Field::ObjectRock::calcCollisionTransform() "ObjectRock::calcCollisionTransform()" | @ref Kinoko::Field::ObjectRock::m_transformPending "m_transformPending"
 
 ---
 
