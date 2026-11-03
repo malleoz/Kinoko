@@ -253,6 +253,14 @@ This improves performance on Bowser's Castle by 1.9% and GCN Waluigi Stadium by 
 
 ---
 
+## <small>[[#555](https://github.com/vabold/Kinoko/pull/555)]</small> Skip Monty Mole Orthonormal Basis {#perfoptimization_monty_ortho_basis}
+
+@ref Kinoko::Field::ObjectChoropu::calc() "ObjectChoropu::calc()" computes an orthonormal basis from the monty mole's current position along the rail. Only the position is used for the mole's physics calculations. Thus, we can substitute the rail matrix for a position vector stored in @ref Kinoko::Field::ObjectChoropu::m_railPos "m_railPos". This results in a 2% performance improvement for Moo Moo Meadows.
+
+@see @ref Kinoko::Field::ObjectChoropu::calc() "ObjectChoropu::calc()" | @ref Kinoko::Field::ObjectChoropu::m_railPos "ObjectChoropu::m_railPos"
+
+---
+
 ## <small>[[#539](https://github.com/vabold/Kinoko/pull/539)]</small> Cached Handlebar Matrix and Suspension Down {#perfoptimization_handlebar_and_down}
 
 This PR essentially contains three different changes:
