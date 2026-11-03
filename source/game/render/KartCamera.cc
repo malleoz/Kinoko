@@ -298,6 +298,11 @@ void KartCamera::calcAirtime(KartCameraState &state, const Kart::KartObjectProxy
 /// @note This function is the reason that @ref KartCamera needs to be implemented in Kinoko. This
 /// function can result in an @ref Field::ObjColMgr transformation matrix update. This can cause
 /// desyncs from the DS Delfino Square drawbridge (@ref ObjectTownBridge) if not implemented.
+/// @details Kinoko only checks collision against drivable objects, skipping the course KCL check
+/// that @ref Field::CollisionDirector::checkSphereFullPush() performs first. The course check has
+/// no lasting side effects, and its result only feeds back into @ref KartCameraState::m_prevPos.
+/// Previous position only influences the result of later camera collision checks, not which
+/// drivable objects they reach or update.
 void KartCamera::calcCollision(KartCameraState &state, bool isBackwards) const {
     constexpr f32 FRONT_RADIUS = 80.0f;
     constexpr f32 BACK_RADIUS = 140.0f;
@@ -306,7 +311,11 @@ void KartCamera::calcCollision(KartCameraState &state, bool isBackwards) const {
     Field::CollisionInfo info;
     Field::KCLTypeMask mask;
 
-    if (!Field::CollisionDirector::Instance()->checkSphereFullPush(radius, state.m_pos,
+    // Kinoko-specific: only check drivable objects, as the course KCL check has no effect on sync
+    info.reset();
+    Field::CollisionDirector::Instance()->resetCollisionEntries(&mask);
+
+    if (!Field::ObjectDrivableDirector::Instance()->checkSphereFullPush(radius, state.m_pos,
                 state.m_prevPos, KCL_TYPE_CAMERA_COLLIDABLE, &info, &mask, 0)) {
         state.m_prevPos = state.m_pos;
     }
