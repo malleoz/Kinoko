@@ -48,13 +48,32 @@ flowchart LR
 
 ---
 
-## <small>[[#534](https://github.com/vabold/Kinoko/pull/534)]</small> Skip KartCamera Calculation {#perfoptimization_kartcamera}
+## <small>[[#534](https://github.com/vabold/Kinoko/pull/534)]</small> Skip KartCamera Calculation {#perfoptimization_kartcamera_drivable}
 
 @ref Kinoko::Render::KartCamera "KartCamera" is responsible for computing the position and rotation of the front-facing and rear-facing cameras that follow the player. While it may initially seem that there is no need to implement this class for %Kinoko, @ref Kinoko::Render::KartCamera "KartCamera" actually performs collision checks to handle cases where there may be a surface that lies between the player and the camera. This collision check can result in updates to a @ref Kinoko::Field::ObjectKCL "ObjectKCL's" collision transform matrix in @ref Kinoko::Field::ObjColMgr "ObjColMgr". Since the camera lies behind the player, the camera can update objects behind the player in scenarios where the kart's collision checks do not reach the object.
 
 Since @ref Kinoko::Render::KartCamera "KartCamera" was only implemented for these drivable objects, we can skip over per-frame calculation of the camera for courses which do not have any drivable objects. This is observed via @ref Kinoko::Field::ObjectDrivableDirector::hasCalcObjects "ObjectDrivableDirector::hasCalcObjects()". This offers a significant speedup since two collision checks are now skipped per-frame.
 
 @see @ref Kinoko::Render::KartCamera | @ref Kinoko::Field::ObjectKCL::checkCollision "ObjectKCL::checkCollision" | @ref Kinoko::Field::ObjColMgr "ObjColMgr"
+
+---
+
+## <small>[[#556](https://github.com/vabold/Kinoko/pull/556)]</small> Skip KartCamera Course KCL Query {#perfoptimization_kartcamera_coursecolmgr}
+
+This is an additional improvement on top of @ref perfoptimization_kartcamera_drivable "Skip KartCamera Calculation". Since we only care about the @ref Kinoko::Render::KartCamera "KartCamera" colliding with drivable objects, we can skip the @ref Kinoko::Field::CourseColMgr::checkSphereFullPush "course KCL query" in @ref Kinoko::Render::KartCamera::calcCollision() "KartCamera::calcCollision()" by directly calling @ref Kinoko::Field::ObjectDrivableDirector::checkSphereFullPush "ObjectDrivableDirector::checkSphereFullPush". This is an average improvement of 2.6%, with gains up to 7.7% on some courses.
+
+```diff
+- if (!Field::CollisionDirector::Instance()->checkSphereFullPush(radius, state.m_pos,
++ info.reset();
++ Field::CollisionDirector::Instance()->resetCollisionEntries(&mask);
++ 
++ if (!Field::ObjectDrivableDirector::Instance()->checkSphereFullPush(radius, state.m_pos,
+            state.m_prevPos, KCL_TYPE_CAMERA_COLLIDABLE, &info, &mask, 0)) {
+     state.m_prevPos = state.m_pos;
+ }
+```
+
+@see @ref Kinoko::Render::KartCamera::calcCollision() "KartCamera::calcCollision()"
 
 ---
 
@@ -122,7 +141,7 @@ Since the matrix is dependent on the kart's rotation and local inertia tensor wh
 
 ## <small>[[#543](https://github.com/vabold/Kinoko/pull/543)]</small> Skip Lakitu Calculation {#perfoptimization_lakitu}
 
-For the same reasons as @ref perfoptimization_kartcamera "the KartCamera section above", we can skip updates to Lakitu's state management when there are no drivable objects on the loaded course. This is about a 1% performance improvement when averaged across all tracks.
+For the same reasons as @ref perfoptimization_kartcamera_drivable "the KartCamera section above", we can skip updates to Lakitu's state management when there are no drivable objects on the loaded course. This is about a 1% performance improvement when averaged across all tracks.
 
 @see @ref Kinoko::Field::JugemDirector "JugemDirector"
 
@@ -130,7 +149,7 @@ For the same reasons as @ref perfoptimization_kartcamera "the KartCamera section
 
 ## <small>[[#542](https://github.com/vabold/Kinoko/pull/542)]</small> Skip Seagull Calculation {#perfoptimization_seagull}
 
-For the same reasons as @ref perfoptimization_kartcamera "the KartCamera" and @ref perfoptimization_lakitu "the Lakitu" sections above, we can also skip updates to @ref Kinoko::Field::ObjectBird "ObjectBird" calculation if there are no drivable objects.
+For the same reasons as @ref perfoptimization_kartcamera_drivable "the KartCamera" and @ref perfoptimization_lakitu "the Lakitu" sections above, we can also skip updates to @ref Kinoko::Field::ObjectBird "ObjectBird" calculation if there are no drivable objects.
 
 @see @ref Kinoko::Field::ObjectBird "ObjectBird"
 
