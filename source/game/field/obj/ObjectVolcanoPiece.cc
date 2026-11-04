@@ -14,7 +14,8 @@ namespace Kinoko::Field {
 /// and rotation. Sets @ref m_restDuration and @ref m_shakeDuration based on the number of
 /// seconds defined by param setting 2 and 3 respectively. Sets @ref m_quakeDuration based on
 /// the number of frames defined by param setting 8 plus one. Initializes @ref m_colMgrB and
-/// @ref m_colMgrC to `nullptr`. Finally, sets @ref m_modelName based on param setting 1.
+/// @ref m_colMgrC to `nullptr`. Sets @ref m_modelName based on param setting 1. Finally, Kinoko
+/// computes the rotation of @ref m_rtMat, which never changes.
 ObjectVolcanoPiece::ObjectVolcanoPiece(const System::MapdataGeoObj &params)
     : ObjectKCL(params),
       m_initialPos(pos()),
@@ -26,6 +27,10 @@ ObjectVolcanoPiece::ObjectVolcanoPiece(const System::MapdataGeoObj &params)
       m_colMgrC(nullptr) {
     snprintf(m_modelName, sizeof(m_modelName), "VolcanoPiece%hd",
             static_cast<s16>(params.setting(0)));
+
+    // Kinoko-specific: the rotation never changes, so compute it once rather than in every call to
+    // calcShakeAndFall()
+    m_rtMat.makeRT(rot(), m_initialPos);
 }
 
 /// @addr{0x80803DA8}
@@ -476,6 +481,7 @@ bool ObjectVolcanoPiece::checkCollisionCached(f32 radius, const EGG::Vector3f &p
 /// @details Calls @ref getShakePosY() to find the current vertical position of the volcano piece.
 /// If `vel` is not `nullptr`, then it will be updated with the difference between the current and
 /// previous positions, representing the current moving object velocity of the volcano piece.
+/// Kinoko only updates the translation of @ref m_rtMat, since its rotation never changes.
 const EGG::Matrix34f &ObjectVolcanoPiece::calcShakeAndFall(EGG::Vector3f *vel, u32 timeOffset) {
     u32 t = System::RaceManager::Instance()->timer() - timeOffset;
 
@@ -485,7 +491,7 @@ const EGG::Matrix34f &ObjectVolcanoPiece::calcShakeAndFall(EGG::Vector3f *vel, u
         *vel = EGG::Vector3f(0.0f, currPosY - getShakePosY(t - 1), 0.0f);
     }
 
-    m_rtMat.makeRT(rot(), EGG::Vector3f(m_initialPos.x, currPosY, m_initialPos.z));
+    m_rtMat.setBase(3, EGG::Vector3f(m_initialPos.x, currPosY, m_initialPos.z));
     return m_rtMat;
 }
 
