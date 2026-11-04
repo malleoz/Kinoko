@@ -208,6 +208,14 @@ Every frame per suspension, @ref Kinoko::Kart::KartCollide::applySomeFloorMoment
 
 ---
 
+## <small>[[#558](https://github.com/vabold/Kinoko/pull/558)]</small> Cache Linear Rail Segment Length {#perfoptimization_linear_rail_segment_len}
+
+@ref Kinoko::Field::RailLinearInterpolator::setSpeed() "RailLinearInterpolator::setSpeed()" and @ref Kinoko::Field::RailLinearInterpolator::calcNextSegment() "RailLinearInterpolator::calcNextSegment()" both recompute the length of @ref Kinoko::Field::RailLinearInterpolator::m_currentDirection "m_currentDirection". However, this vector only changes when the rail transitions onto a new segment. To prevent unnecessary recomputation of the segment's length, we can instead cache it to a new member @ref Kinoko::Field::RailLinearInterpolator::m_segmentLength "m_segmentLength" and re-use its value.
+
+@see @ref Kinoko::Field::RailLinearInterpolator::setSpeed() "RailLinearInterpolator::setSpeed()" | @ref Kinoko::Field::RailLinearInterpolator::calcNextSegment() "RailLinearInterpolator::calcNextSegment()" | @ref Kinoko::Field::RailLinearInterpolator::m_segmentLength "RailLinearInterpolator::m_segmentLength"
+
+---
+
 ## <small>[[#547](https://github.com/vabold/Kinoko/pull/547)]</small> Remove BoxColManager Broadphase Loop {#perfoptimization_boxcol_broadphase}
 
 In @ref Kinoko::Field::BoxColManager::searchImpl() "BoxColManager::searchImpl()", the game prunes the GJK spatial index by excluding all units whose Z-axis range lies outside the range of the kart's sphere. It does so with two for-loops which adjusts local `highPointIdx` and `lowPointIdx` variables. The game normally has a broadphase pass where it tries to increment/decrement these locals by `8` per iteration. It then has a finer pass which increments/decrements by `1`.
