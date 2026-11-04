@@ -155,6 +155,19 @@ For the same reasons as @ref perfoptimization_kartcamera_drivable "the KartCamer
 
 ---
 
+## <small>[[#560](https://github.com/vabold/Kinoko/pull/560)]</small> Re-use Rotation in ObjectVolcanoPiece {#perfoptimization_volcanopiece}
+
+Once a @ref Kinoko::Field::ObjectVolcanoPiece "ObjectVolcanoPiece" starts to fall, @ref Kinoko::Field::ObjectVolcanoPiece::calcShakeAndFall() "calcShakeAndFall()" updates the object's position. In doing so, it sets @ref Kinoko::Field::ObjectVolcanoPiece::m_rtMat "m_rtMat" via @ref Kinoko::EGG::Matrix34f::makeRT() "makeRT()", which unnecessarily recomputes the matrix's rotation. Since the object's rotation never changes, we can instead re-use the existing rotation portion of the matrix and solely update the object's position.
+
+```diff
+- m_rtMat.makeRT(rot(), EGG::Vector3f(m_initialPos.x, currPosY, m_initialPos.z));
++ m_rtMat.setBase(3, EGG::Vector3f(m_initialPos.x, currPosY, m_initialPos.z));
+```
+
+@see @ref Kinoko::Field::ObjectVolcanoPiece "ObjectVolcanoPiece" | @ref Kinoko::Field::ObjectVolcanoPiece::calcShakeAndFall() "calcShakeAndFall()" | @ref Kinoko::Field::ObjectVolcanoPiece::m_rtMat "ObjectVolcanoPiece::m_rtMat"
+
+---
+
 ## <small>[[#538](https://github.com/vabold/Kinoko/pull/538)]</small> Skip Multiplayer Hitbox Calc {#perfoptimization_hitbox_calc}
 
 In the first pass of the kart's physics calculation (@ref Kinoko::Kart::KartSub::calcPass0() "calcPass0()"), the base game normally calls a function which updates all of the kart body's hitbox positions. This call exists in the base game so that intra-player collision checks can occur with up-to-date hitbox positions, but since %Kinoko does not support multiplayer, we can remove the call; the kart hitboxes are not used until we call @ref Kinoko::Kart::KartCollide::calcBodyCollision() "KartCollide::calcBodyCollision()", but this function also calls @ref Kinoko::Kart::Hitbox::calc() "Hitbox::calc()" for each hitbox before using them in collision checks. This means that we can remove the call in @ref Kinoko::Kart::KartSub::calcPass0() "calcPass0()" while still having up-to-date hitbox positions by the time they're used in @ref Kinoko::Kart::KartCollide::calcBodyCollision() "KartCollide::calcBodyCollision()".
