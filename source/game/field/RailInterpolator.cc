@@ -307,13 +307,14 @@ void RailLinearInterpolator::init(f32 t, u32 idx) {
 
     m_curPos = m_points[m_currPointIdx].pos;
     m_currVel = m_points[m_nextPointIdx].pos - m_curPos;
+    m_currVelLength = m_currVel.length();
     m_curTangentDir = m_currVel;
     m_curTangentDir.normalise2();
     m_currSpeed = m_baseSpeed;
     m_currPointVel = m_baseSpeed;
     m_nextPointVel = m_baseSpeed;
     m_usePerPointVelocities = false;
-    m_currSegmentVel = m_baseSpeed / m_currVel.length();
+    m_currSegmentVel = m_baseSpeed / m_currVelLength;
 }
 
 /// @addr{0x806F0050}
@@ -349,8 +350,9 @@ RailInterpolator::Status RailLinearInterpolator::calc() {
     }
 
     m_currVel = m_points[m_nextPointIdx].pos - m_points[m_currPointIdx].pos;
+    m_currVelLength = m_currVel.length();
     m_curTangentDir = m_currVel;
-    m_currSegmentVel = m_currSpeed / m_currVel.length();
+    m_currSegmentVel = m_currSpeed / m_currVelLength;
     m_curTangentDir.normalise2();
 
     return status;
@@ -362,7 +364,7 @@ RailInterpolator::Status RailLinearInterpolator::calc() {
 /// m_currSegmentVel accordingly.
 void RailLinearInterpolator::setSpeed(f32 speed) {
     m_currSpeed = speed;
-    m_currSegmentVel = m_currSpeed / m_currVel.length();
+    m_currSegmentVel = m_currSpeed / m_currVelLength;
 }
 
 /// @addr{0x806F02EC}
@@ -422,9 +424,10 @@ void RailLinearInterpolator::calcNextSegment() {
     if (hasReachedEndOfRail()) {
         m_segmentT = 0.0f;
     } else {
-        f32 prevDirLength = m_currVel.length();
+        f32 prevDirLength = m_currVelLength;
         m_currVel = m_points[m_nextPointIdx].pos - m_points[m_currPointIdx].pos;
-        m_segmentT = ((m_segmentT - 1.0f) * prevDirLength) / m_currVel.length();
+        m_currVelLength = m_currVel.length();
+        m_segmentT = ((m_segmentT - 1.0f) * prevDirLength) / m_currVelLength;
 
         if (m_segmentT > 1.0f) {
             m_segmentT = 0.99f;

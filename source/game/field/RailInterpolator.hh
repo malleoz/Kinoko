@@ -139,6 +139,12 @@ private:
     [[nodiscard]] EGG::Vector3f lerp(f32 t, u32 currIdx, u32 nextIdx) const;
 
     EGG::Vector3f m_currVel; ///< Position displacement from the current point to the next point
+
+    /// @brief The length of @ref m_currVel
+    /// @details Kinoko-specific optimization. @ref setSpeed() is called every frame when using
+    /// per-point velocities, so we cache the length rather than recomputing it each time.
+    f32 m_currVelLength;
+
     const std::span<const RailLineTransition> m_transitions; ///< Transitions between rail points
 };
 
