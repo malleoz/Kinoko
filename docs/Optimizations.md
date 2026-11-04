@@ -185,6 +185,29 @@ We can avoid the unnecessary search by storing the area types of the course in @
 
 ---
 
+## <small>[[#557](https://github.com/vabold/Kinoko/pull/557)]</small> Reuse Vector Length for Floor Moment Calculation {#perfoptimization_floor_moment_length}
+
+Every frame per suspension, @ref Kinoko::Kart::KartCollide::applySomeFloorMoment() "KartCollide::applySomeFloorMoment()" applies internal and external velocity based on the wheel's collision with the floor. As part of this calculation, it computes a projection and rejection onto the floor plane. It then computes the length of the projection and rejection. Later, the vectors are normalized via a call to @ref Kinoko::EGG::Vector3f::normalise() "Vector3f::normalise()". This function re-calculates the vectors' lengths, which has already been calculated earlier. Rather than call @ref Kinoko::EGG::Vector3f::normalise() "Vector3f::normalise()", we can simply divide by the calculated lengths of the vectors. This saves 2 @ref Kinoko::EGG::Mathf::frsqrt() "frsqrt()" calls per suspension per frame, which leads to a 1% performance improvement.
+
+```diff
+ f32 projNorm = proj.length();
+ f32 rejNorm = rej.length();
+
+- proj.normalise();
+- rej.normalise();
++ if (proj.squaredLength() > std::numeric_limits<f32>::epsilon()) {
++     proj *= 1.0f / projNorm;
++ }
++ 
++ if (rej.squaredLength() > std::numeric_limits<f32>::epsilon()) {
++     rej *= 1.0f / rejNorm;
++ }
+```
+
+@see @ref Kinoko::Kart::KartCollide::applySomeFloorMoment() "KartCollide::applySomeFloorMoment()" | @ref Kinoko::EGG::Vector3f::normalise() "Vector3f::normalise()"
+
+---
+
 ## <small>[[#547](https://github.com/vabold/Kinoko/pull/547)]</small> Remove BoxColManager Broadphase Loop {#perfoptimization_boxcol_broadphase}
 
 In @ref Kinoko::Field::BoxColManager::searchImpl() "BoxColManager::searchImpl()", the game prunes the GJK spatial index by excluding all units whose Z-axis range lies outside the range of the kart's sphere. It does so with two for-loops which adjusts local `highPointIdx` and `lowPointIdx` variables. The game normally has a broadphase pass where it tries to increment/decrement these locals by `8` per iteration. It then has a finer pass which increments/decrements by `1`.
