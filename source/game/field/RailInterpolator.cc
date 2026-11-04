@@ -17,6 +17,7 @@ RailInterpolator::RailInterpolator(f32 speed, u32 idx)
       m_isOscillating(m_rail->isOscillating()),
       m_baseSpeed(speed) {
     m_currSpeed = 0.0f;
+    m_tangentPending = false;
 }
 
 /// @addr{0x806ED53C}
@@ -101,7 +102,14 @@ const EGG::Vector3f &RailInterpolator::curPos() const {
 
 /// @brief Gets the current tangent direction of the rail interpolator
 /// @return The current tangent direction of the rail interpolator, @ref m_curTangentDir
+/// @details Kinoko normalizes @ref m_curTangentDir here if it was deferred by @ref
+/// RailSmoothInterpolator::calc().
 const EGG::Vector3f &RailInterpolator::curTangentDir() const {
+    if (m_tangentPending) {
+        m_tangentPending = false;
+        m_curTangentDir.normalise2();
+    }
+
     return m_curTangentDir;
 }
 
@@ -499,6 +507,7 @@ void RailSmoothInterpolator::init(f32 t, u32 idx) {
     m_nextPointVel = m_baseSpeed;
     m_velocity = 0.0f;
     m_velocityPending = false;
+    m_tangentPending = false;
     m_usePerPointVelocities = false;
 }
 
@@ -507,7 +516,8 @@ void RailSmoothInterpolator::init(f32 t, u32 idx) {
 /// @details If @ref m_usePerPointVelocities is `true`, then calls @ref updateVel() to interpolate
 /// @ref m_currSegmentVel towards the next point's velocity. Evaluates the cubic bezier curve at the
 /// current @ref m_segmentT, updating @ref m_curPos and @ref m_curTangentDir accordingly. Kinoko
-/// defers updating @ref m_velocity until @ref getCurrSpeed() is called. Increments @ref m_segmentT
+/// defers normalizing @ref m_curTangentDir until @ref curTangentDir() is called, and defers
+/// updating @ref m_velocity until @ref getCurrSpeed() is called. Increments @ref m_segmentT
 /// by @ref m_currSegmentVel. If @ref m_segmentT is less than or equal to `1.0f`, then the segment
 /// is still in progress and early returns @ref State::InProgress. Otherwise, it proceeds to the
 /// next segment, checking to see if the interpolator has reached the end of the rail. Updates @ref
@@ -521,7 +531,17 @@ RailInterpolator::Status RailSmoothInterpolator::calc() {
 
     f32 t = m_forward ? calcT(m_segmentT) : calcT(1.0f - m_segmentT);
 
-    calcCubicBezier(t, m_currPointIdx, m_nextPointIdx, m_curPos, m_curTangentDir);
+    // Kinoko-specific: many objects never read the tangent, so defer normalizing it until
+    // curTangentDir(). Negating before normalizing is exact, since normalise2() scales each
+    // component by the same factor computed from the squared length.
+    const auto &transition =
+            m_forward ? m_transitions[m_currPointIdx] : m_transitions[m_nextPointIdx];
+    m_curPos = CalcCubicBezierPos(t, transition);
+    m_curTangentDir = calcCubicBezierTangent(t, transition);
+    if (!m_forward) {
+        m_curTangentDir *= -1.0f;
+    }
+    m_tangentPending = true;
 
     // Kinoko-specific: few objects read the speed, so defer computing it until getCurrSpeed()
     m_velocityPending = true;
@@ -666,13 +686,7 @@ void RailSmoothInterpolator::calcCubicBezier(f32 t, u32 currIdx, u32 nextIdx, EG
 /// on first use and cached in the transition.
 EGG::Vector3f RailSmoothInterpolator::calcCubicBezierTangentDir(f32 t,
         const RailSplineTransition &trans) const {
-    if (!trans.m_c1) {
-        trans.m_c1 = trans.m_p0 * -1.0f + trans.m_p1 * 3.0f - (trans.m_p2 * 3.0f) + trans.m_p3;
-        trans.m_c2 = trans.m_p0 * 3.0f - trans.m_p1 * 6.0f + trans.m_p2 * 3.0f;
-        trans.m_c3 = trans.m_p0 * -3.0f + trans.m_p1 * 3.0f;
-    }
-
-    EGG::Vector3f ret = *trans.m_c1 * 3.0f * (t * t) + *trans.m_c2 * 2.0f * t + *trans.m_c3;
+    EGG::Vector3f ret = calcCubicBezierTangent(t, trans);
 
     ret.normalise2();
 
@@ -681,6 +695,23 @@ EGG::Vector3f RailSmoothInterpolator::calcCubicBezierTangentDir(f32 t,
     }
 
     return ret;
+}
+
+/// @brief Evaluates the derivative of a cubic bezier curve at the given parameter `t`
+/// @param t The parameter along the curve to evaluate, in the range `[0.0f, 1.0f]`
+/// @param trans The bezier curve to evaluate
+/// @return The unnormalized derivative of the cubic bezier curve
+/// @details The derivative's coefficients only depend on the control points, so they are computed
+/// on first use and cached in the transition.
+EGG::Vector3f RailSmoothInterpolator::calcCubicBezierTangent(f32 t,
+        const RailSplineTransition &trans) const {
+    if (!trans.m_c1) {
+        trans.m_c1 = trans.m_p0 * -1.0f + trans.m_p1 * 3.0f - (trans.m_p2 * 3.0f) + trans.m_p3;
+        trans.m_c2 = trans.m_p0 * 3.0f - trans.m_p1 * 6.0f + trans.m_p2 * 3.0f;
+        trans.m_c3 = trans.m_p0 * -3.0f + trans.m_p1 * 3.0f;
+    }
+
+    return *trans.m_c1 * 3.0f * (t * t) + *trans.m_c2 * 2.0f * t + *trans.m_c3;
 }
 
 /// @addr{0x806EF0F8}

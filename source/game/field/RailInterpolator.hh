@@ -102,12 +102,11 @@ protected:
 
     const Rail *const m_rail; ///< Pointer to the rail being interpolated along
     const std::span<const System::MapdataPointInfo::Point> m_points; ///< The points in the rail
-    const u16 m_pointCount;        ///< The number of nodes/points in the rail
-    const bool m_isOscillating;    ///< Whether the rail is a loop or a back-and-forth path
-    const f32 m_baseSpeed;         ///< Default speed used when per-point velocities are not enabled
-    bool m_usePerPointVelocities;  ///< When true, uses velocities defined at each point in the rail
-    EGG::Vector3f m_curPos;        ///< The current position along the rail
-    EGG::Vector3f m_curTangentDir; ///< The current tangent direction along the rail
+    const u16 m_pointCount;       ///< The number of nodes/points in the rail
+    const bool m_isOscillating;   ///< Whether the rail is a loop or a back-and-forth path
+    const f32 m_baseSpeed;        ///< Default speed used when per-point velocities are not enabled
+    bool m_usePerPointVelocities; ///< When true, uses velocities defined at each point in the rail
+    EGG::Vector3f m_curPos;       ///< The current position along the rail
     f32 m_currSpeed;    ///< Current speed either set via @ref setSpeed or from per-point velocities
     f32 m_currPointVel; ///< The velocity at the current point in the rail
     f32 m_nextPointVel; ///< The velocity at the next point in the rail
@@ -116,6 +115,16 @@ protected:
     bool m_forward;       ///< Whether the interpolator is moving forward or backward along the rail
     s16 m_currPointIdx;   ///< The index of the current point in the rail's point list
     s16 m_nextPointIdx;   ///< The index of the next point in the rail's point list
+
+    /// @brief The current tangent direction along the rail
+    /// @details Mutable so that @ref curTangentDir() can normalize it if @ref m_tangentPending.
+    mutable EGG::Vector3f m_curTangentDir;
+
+    /// @brief Whether @ref m_curTangentDir still needs to be normalized
+    /// @details Kinoko-specific optimization. Many objects never read the tangent direction of a
+    /// @ref RailSmoothInterpolator, so @ref RailSmoothInterpolator::calc() defers normalizing it
+    /// until @ref curTangentDir() is called.
+    mutable bool m_tangentPending;
 };
 
 /// @brief Interpolates along a rail using linear interpolation between points
@@ -168,6 +177,8 @@ private:
     void calcCubicBezier(f32 t, u32 currIdx, u32 nextIdx, EGG::Vector3f &pos,
             EGG::Vector3f &dir) const;
     [[nodiscard]] EGG::Vector3f calcCubicBezierTangentDir(f32 t,
+            const RailSplineTransition &trans) const;
+    [[nodiscard]] EGG::Vector3f calcCubicBezierTangent(f32 t,
             const RailSplineTransition &trans) const;
     [[nodiscard]] f32 calcT(f32 t) const;
 
