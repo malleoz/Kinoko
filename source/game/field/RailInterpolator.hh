@@ -179,6 +179,11 @@ private:
     EGG::Vector3f m_prevPos; ///< The previous frame's position, used to calculate speed
     f32 m_velocity; ///< Magnitude of the diff between the current and previous frame's position
 
+    /// @brief Whether @ref m_velocity needs to be recomputed from @ref m_curPos and @ref m_prevPos
+    /// @details Kinoko-specific optimization. Few objects read @ref getCurrSpeed(), so @ref calc()
+    /// defers computing @ref m_velocity until it is read.
+    bool m_velocityPending;
+
     [[nodiscard]] static EGG::Vector3f CalcCubicBezierPos(f32 t, const RailSplineTransition &trans);
 };
 
