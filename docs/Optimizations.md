@@ -155,6 +155,14 @@ For the same reasons as @ref perfoptimization_kartcamera_drivable "the KartCamer
 
 ---
 
+## <small>[[#561](https://github.com/vabold/Kinoko/pull/561)]</small> Defer Object Transformation Updates {#perfoptimization_defer_transform}
+
+@ref Kinoko::Field::ObjectBase::setMatrixTangentTo() "ObjectBase::setMatrixTangentTo()" and @ref Kinoko::Field::ObjectBase::setMatrixFromOrthonormalBasisAndPos() "ObjectBase::setMatrixFromOrthonormalBasisAndPos()" update the rotation and position of @ref Kinoko::Field::ObjectBase::m_transform "m_transform", which may not actually be used that frame. Rather than immediately update this matrix, we can instead cache their dependencies to @ref Kinoko::Field::ObjectBase::m_pendingRot "m_pendingRot", @ref Kinoko::Field::ObjectBase::m_pendingUp "m_pendingUp", and @ref Kinoko::Field::ObjectBase::m_pendingTangent "m_pendingTangent", and only update the matrix when it's actually fetched. This is an average improvement of 1.7%, with gains of up to 19% on N64 Sherbet Land.
+
+@see @ref Kinoko::Field::ObjectBase::setMatrixTangentTo() "ObjectBase::setMatrixTangentTo()" | @ref Kinoko::Field::ObjectBase::setMatrixFromOrthonormalBasisAndPos() "ObjectBase::setMatrixFromOrthonormalBasisAndPos()" | @ref Kinoko::Field::ObjectBase::m_transform "ObjectBase::m_transform" | @ref Kinoko::Field::ObjectBase::m_pendingRot "ObjectBase::m_pendingRot" | @ref Kinoko::Field::ObjectBase::m_pendingUp "ObjectBase::m_pendingUp" | @ref Kinoko::Field::ObjectBase::m_pendingTangent "ObjectBase::m_pendingTangent"
+
+---
+
 ## <small>[[#560](https://github.com/vabold/Kinoko/pull/560)]</small> Re-use Rotation in ObjectVolcanoPiece {#perfoptimization_volcanopiece}
 
 Once a @ref Kinoko::Field::ObjectVolcanoPiece "ObjectVolcanoPiece" starts to fall, @ref Kinoko::Field::ObjectVolcanoPiece::calcShakeAndFall() "calcShakeAndFall()" updates the object's position. In doing so, it sets @ref Kinoko::Field::ObjectVolcanoPiece::m_rtMat "m_rtMat" via @ref Kinoko::EGG::Matrix34f::makeRT() "makeRT()", which unnecessarily recomputes the matrix's rotation. Since the object's rotation never changes, we can instead re-use the existing rotation portion of the matrix and solely update the object's position.
