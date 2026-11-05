@@ -115,7 +115,7 @@ public:
     [[nodiscard]] const EGG::Vector3f &pos() const;
     [[nodiscard]] const EGG::Vector3f &scale() const;
     [[nodiscard]] const EGG::Vector3f &rot() const;
-    [[nodiscard]] const EGG::Matrix34f &transform() const;
+    [[nodiscard]] const EGG::Matrix34f &transform();
 
     /// @endGetters
 
@@ -148,12 +148,28 @@ protected:
     const System::MapdataGeoObj *const m_mapObj; ///< The KMP object associated with the object
 
 private:
+    /// @brief The source of a rotation for @ref m_transform which has not been computed yet
+    /// @details Kinoko-specific optimization. Many objects recompute their rotation every frame,
+    /// but it is usually only read when checking collision against the kart, so the rotation
+    /// columns of @ref m_transform are only computed when the matrix is next read.
+    enum class PendingRotation : u8 {
+        None,             ///< @ref m_transform is up-to-date
+        TangentTo,        ///< @ref SetRotTangentHorizontal() with the pending up and tangent
+        OrthonormalBasis, ///< @ref OrthonormalBasis() of the pending up vector
+    };
+
+    void resolvePendingRotation();
+
     Flags m_flags;              ///< The properties of the transform matrix to be recalculated
     EGG::Vector3f m_pos;        ///< The position of the object
     EGG::Vector3f m_scale;      ///< The scale of the object
     EGG::Vector3f m_rot;        ///< The rotation of the object (in radians)
     bool m_rotUpdated;          ///< Whether @ref m_rot is up-to-date
     EGG::Matrix34f m_transform; ///< The 3x4 matrix representing the object's position and rotation
+
+    PendingRotation m_pendingRot;   ///< Rotation of @ref m_transform yet to be computed
+    EGG::Vector3f m_pendingUp;      ///< Up vector of the @ref PendingRotation
+    EGG::Vector3f m_pendingTangent; ///< Tangent vector of the @ref PendingRotation
 };
 
 } // namespace Field
