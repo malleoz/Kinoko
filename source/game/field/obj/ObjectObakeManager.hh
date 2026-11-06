@@ -105,8 +105,13 @@ private:
     /// @brief Spatially-indexed 122-by-116 array of blocks for faster collision lookups
     std::array<std::array<ObjectObakeBlock *, CACHE_SIZE_X>, CACHE_SIZE_Z> m_blockCache;
 
-    fixed_vector<ObjectObakeBlock *> m_blocks;        ///< Owning vector of all blocks
-    fixed_vector<ObjectObakeBlock *> m_fallingBlocks; ///< Pointers to all actively falling blocks
+    /// @brief Owning vector of all blocks
+    /// @details Kinoko-specific: Sorted by the frame each block starts falling, with blocks that
+    /// never fall placed last. This way, the falling blocks are always the first @ref
+    /// m_fallingBlockCount blocks, so the base game's separate array of falling blocks isn't
+    /// needed, and @ref calc() only checks the blocks that are next to fall.
+    fixed_vector<ObjectObakeBlock *> m_blocks;
+    size_t m_fallingBlockCount; ///< Number of blocks at the start of @ref m_blocks that are falling
 
     [[nodiscard]] std::pair<s32, s32> static SpatialIndex(const EGG::Vector3f &pos);
 
@@ -116,7 +121,7 @@ private:
     /// @brief Scale of a block's road collision
     static constexpr EGG::Vector3f ROAD_SCALE = EGG::Vector3f(1.0f, 0.95f, 1.0f);
 
-    static constexpr size_t MAX_BLOCKS = 656; ///< Allocated size of m_blocks and m_calcBlocks
+    static constexpr size_t MAX_BLOCKS = 656; ///< Allocated size of m_blocks
 };
 
 } // namespace Kinoko::Field

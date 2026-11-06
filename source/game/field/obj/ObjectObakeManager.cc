@@ -8,20 +8,22 @@
 
 #include "game/system/RaceManager.hh"
 
+#include <algorithm>
+
 namespace Kinoko::Field {
 
 /// @addr{0x8080B0D8}
 /// @copybrief Constructor that is called when the first @ref ObjectObakeBlock is added
 /// @param params The parameters used to initialize the object
-/// @details Sizes @ref m_blocks and @ref m_fallingBlocks to hold up to @ref MAX_BLOCKS
-/// elements. Creates @ref m_colBox with a length and width of `195.00002f` and a height of
-/// `130.0f`. Creates @ref m_colSphere with a radius of `1.0f` and a center at the origin.
-/// Finally, adds the block defined by the `params` to the manager.
+/// @details Sizes @ref m_blocks to hold up to @ref MAX_BLOCKS elements. Creates @ref m_colBox with
+/// a length and width of `195.00002f` and a height of `130.0f`. Creates @ref m_colSphere with a
+/// radius of `1.0f` and a center at the origin. Finally, adds the block defined by the `params` to
+/// the manager.
 ObjectObakeManager::ObjectObakeManager(const System::MapdataGeoObj &params)
     : ObjectDrivable(params),
       m_blockCache({}),
       m_blocks(MAX_BLOCKS),
-      m_fallingBlocks(MAX_BLOCKS) {
+      m_fallingBlockCount(0) {
     static constexpr f32 BLOCK_WIDTH = 195.00002f;
     static constexpr f32 BLOCK_HEIGHT = 130.0f;
 
@@ -46,23 +48,29 @@ ObjectObakeManager::~ObjectObakeManager() {
 /// @addr{0x8080BB28}
 /// @copybrief ObjectBase::calc()
 /// @details Checks if any blocks should start falling and updates the state of any falling blocks.
+/// Since Kinoko keeps @ref m_blocks sorted by fall frame, only the blocks which are next to fall
+/// are checked, and the falling blocks are the first @ref m_fallingBlockCount blocks. Blocks never
+/// return to @ref ObjectObakeBlock::FallState::Rest, and each block's calc only affects that block,
+/// so this starts the same blocks falling on the same frames as the base game.
 void ObjectObakeManager::calc() {
     u32 frame = System::RaceManager::Instance()->timer();
 
-    for (auto *&block : m_blocks) {
+    // Kinoko-specific: Only check the blocks that are next to fall
+    for (; m_fallingBlockCount < m_blocks.size(); ++m_fallingBlockCount) {
+        auto *block = m_blocks[m_fallingBlockCount];
         u32 fallFrame = block->fallFrame();
 
-        // Block is starting to fall
-        if (fallFrame > 0 && fallFrame <= frame &&
-                block->fallState() == ObjectObakeBlock::FallState::Rest) {
-            block->setFallState(ObjectObakeBlock::FallState::Falling);
-            block->calc();
-            m_fallingBlocks.push_back(block);
+        if (fallFrame == 0 || fallFrame > frame) {
+            break;
         }
+
+        // Block is starting to fall
+        block->setFallState(ObjectObakeBlock::FallState::Falling);
+        block->calc();
     }
 
-    for (auto *&block : m_fallingBlocks) {
-        block->calc();
+    for (size_t i = 0; i < m_fallingBlockCount; ++i) {
+        m_blocks[i]->calc();
     }
 }
 
@@ -220,8 +228,19 @@ bool ObjectObakeManager::checkSphereCachedFullPush(f32 radius, const EGG::Vector
 /// in the spatial cache for collision checks
 /// @param params The parameters used to initialize the new block
 void ObjectObakeManager::addBlock(const System::MapdataGeoObj &params) {
+    // Kinoko-specific: Insert the block so that m_blocks stays sorted by fall frame, with blocks
+    // that never fall (fall frame 0) last. Blocks with the same fall frame stay in insertion order.
+    auto fallsBefore = [](const ObjectObakeBlock *lhs, const ObjectObakeBlock *rhs) {
+        u32 lhsFallFrame = lhs->fallFrame();
+        u32 rhsFallFrame = rhs->fallFrame();
+        return lhsFallFrame != 0 && (rhsFallFrame == 0 || lhsFallFrame < rhsFallFrame);
+    };
+
     auto *block = EGG::egg_new<ObjectObakeBlock>(params);
     m_blocks.push_back(block);
+    auto *last = m_blocks.end() - 1;
+    std::rotate(std::upper_bound(m_blocks.begin(), last, block, fallsBefore), last, m_blocks.end());
+
     auto [spatialX, spatialZ] = SpatialIndex(block->pos());
     m_blockCache[spatialZ][spatialX] = block;
 }
