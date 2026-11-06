@@ -111,6 +111,14 @@ Every frame, @ref Kinoko::Field::ObjectCarTGE::calcPos() "ObjectCarTGE::calcPos(
 
 ---
 
+## <small>[[#563](https://github.com/vabold/Kinoko/pull/563)]</small> Sort rGV2 Blocks by Fall Frame {#perfoptimization_obake_fall}
+
+Every frame, @ref Kinoko::Field::ObjectObakeManager::calc() "ObjectObakeManager::calc()" iterates all @ref Kinoko::Field::ObjectObakeManager::m_blocks "m_blocks" to check if any are now falling this frame. This iteration is `O(n)` since it always loops over all blocks. Rather than blindly check the entire array of blocks, we can instead sort the block array such that blocks that fall earlier in the race appear first in the array. To track how many blocks have fallen so far, we add a member variable @ref Kinoko::Field::ObjectObakeManager::m_fallingBlockCount "m_fallingBlockCount". This way, we can start iterating from this index and stop once we reach the first block not falling this frame. We maintain order by inserting new blocks in-order within @ref Kinoko::Field::ObjectObakeManager::addBlock() "addBlock()".
+
+@see @ref Kinoko::Field::ObjectObakeManager "ObjectObakeManager" | @ref Kinoko::Field::ObjectObakeManager::m_blocks "ObjectObakeManager::m_blocks" | @ref Kinoko::Field::ObjectObakeManager::m_fallingBlockCount "ObjectObakeManager::m_fallingBlockCount" | @ref Kinoko::Field::ObjectObakeManager::addBlock() "ObjectObakeManager::addBlock()"
+
+---
+
 ## <small>[[#553](https://github.com/vabold/Kinoko/pull/553)]</small> Defer ObjectRock Transform Update {#perfoptimization_objectrock_defer}
 
 Every frame, @ref Kinoko::Field::ObjectRock::calcTangibleSub() "ObjectRock::calcTangibleSub()" updates the rock's rotation and updates the transformation matrix accordingly. Just like the @ref perfoptimization_objectcartge_defer "ObjectCarTGE section above", we can defer this transformation matrix to @ref Kinoko::Field::ObjectRock::calcCollisionTransform() "ObjectRock::calcCollisionTransform()" so that it's only updated when we are actually performing collision checks between it and the kart. This results in a 13% performance improvement on GCN DK Mountain ghosts.
