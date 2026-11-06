@@ -44,7 +44,7 @@ flowchart LR
     end
 ```
 
-@see @ref Kinoko::Field::KColData "KColData" | @ref Kinoko::Field::KColData::KColHeader "KColHeader" | @ref Kinoko::Field::KColData::KCollisionPrism "KCollisionPrism" | @ref Kinoko::Field::KColData::KCollisionPrismGeometry "KCollisionPrismGeometry"
+@see @ref Kinoko::Field::KColData "KColData" | @ref Kinoko::Field::KColData::preloadPrismGeometry() "KColData::preloadPrismGeometry()" | @ref Kinoko::Field::KColData::KColHeader "KColHeader" | @ref Kinoko::Field::KColData::KCollisionPrism "KCollisionPrism" | @ref Kinoko::Field::KColData::KCollisionPrismGeometry "KCollisionPrismGeometry"
 
 ---
 
