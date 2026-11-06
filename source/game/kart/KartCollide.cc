@@ -185,12 +185,12 @@ void KartCollide::calcTriggers(Field::KCLTypeMask *mask) {
 
     if (*mask & KCL_TYPE_BIT(COL_TYPE_EFFECT_TRIGGER)) {
         auto *colDir = Field::CollisionDirector::Instance();
-        if (colDir->findClosestCollisionEntry(mask, KCL_TYPE_BIT(COL_TYPE_EFFECT_TRIGGER))) {
-            if (colDir->closestCollisionEntry()->variant() == 4) {
-                halfPipe()->end(true);
-                status().setBit(eStatus::EndHalfPipe);
-                m_surfaceFlags.setBit(eSurfaceFlags::EndHalfPipe);
-            }
+        const auto *entry =
+                colDir->findClosestCollisionEntry(mask, KCL_TYPE_BIT(COL_TYPE_EFFECT_TRIGGER));
+        if (entry && entry->variant() == 4) {
+            halfPipe()->end(true);
+            status().setBit(eStatus::EndHalfPipe);
+            m_surfaceFlags.setBit(eSurfaceFlags::EndHalfPipe);
         }
     }
 }
@@ -207,12 +207,16 @@ void KartCollide::calcFallBoundary(Field::KCLTypeMask *mask, bool shortBoundary)
         return;
     }
 
-    auto *colDir = Field::CollisionDirector::Instance();
-    if (!shortBoundary ||
-            (colDir->findClosestCollisionEntry(mask, KCL_TYPE_BIT(COL_TYPE_FALL_BOUNDARY)) &&
-                    colDir->closestCollisionEntry()->variant() == 7)) {
-        activateOob(false, mask, false, false);
+    if (shortBoundary) {
+        auto *colDir = Field::CollisionDirector::Instance();
+        const auto *entry =
+                colDir->findClosestCollisionEntry(mask, KCL_TYPE_BIT(COL_TYPE_FALL_BOUNDARY));
+        if (!entry || entry->variant() != 7) {
+            return;
+        }
     }
+
+    activateOob(false, mask, false, false);
 }
 
 /// @addr{0x80573ED4}
@@ -284,8 +288,7 @@ void KartCollide::activateOob(bool /*detachCamera*/, Field::KCLTypeMask * /*mask
 /// velocity is stored in @ref CollisionData::vel. If the collision involved a moving road, then
 /// @ref CollisionData::bHasMovingRoad is set to `true` and the moving road's velocity is stored in
 /// @ref CollisionData::movingRoadVel. Calls @ref processWheel() to handle moving water and floor
-/// effects. If the collision involved #KCL_TYPE_VEHICLE_COLLIDEABLE, then fetches the closest
-/// collision entry via @ref CollisionDirector::findClosestCollisionEntry().
+/// effects.
 void KartCollide::calcWheelCollision(u16 /*wheelIdx*/, CollisionGroup *hitboxGroup,
         const EGG::Vector3f &colVel, const EGG::Vector3f &center, f32 radius) {
     Hitbox &hitbox = hitboxGroup->hitbox(0);
@@ -974,11 +977,6 @@ void KartCollide::calcBodyCollision(f32 totalScale, f32 sinkDepth, const EGG::Qu
 
         if (Field::CollisionDirector::Instance()->checkSphereCachedFullPush(hitbox.radius(),
                     hitbox.worldPos(), hitbox.lastPos(), flags, &colInfo, &maskOut, 0)) {
-            if (!!(maskOut & KCL_TYPE_VEHICLE_COLLIDEABLE)) {
-                Field::CollisionDirector::Instance()->findClosestCollisionEntry(&maskOut,
-                        KCL_TYPE_VEHICLE_COLLIDEABLE);
-            }
-
             if (!accumulateBodyCollision(collisionData, hitbox, minMax, posRel, count, maskOut,
                         colInfo)) {
                 bVar1 = true;
@@ -1271,13 +1269,14 @@ void KartCollide::processMovingWater(CollisionData &collisionData, Field::KCLTyp
     }
 
     auto *colDir = Field::CollisionDirector::Instance();
-    if (!colDir->findClosestCollisionEntry(mask, KCL_TYPE_BIT(COL_TYPE_MOVING_WATER))) {
+    const auto *entry =
+            colDir->findClosestCollisionEntry(mask, KCL_TYPE_BIT(COL_TYPE_MOVING_WATER));
+    if (!entry) {
         return;
     }
 
     state()->status().setBit(eStatus::StickyRoad);
 
-    auto *entry = colDir->closestCollisionEntry();
     switch (entry->variant()) {
     case 1:
         collisionData.bMovingWaterMomentum = true;
@@ -1317,16 +1316,16 @@ bool KartCollide::processWall(CollisionData &collisionData, Field::KCLTypeMask *
         return false;
     }
 
-    if ((*maskOut & KCL_TYPE_DRIVER_WALL_NO_INVISIBLE_WALL) &&
-            colDirector->findClosestCollisionEntry(maskOut,
-                    KCL_TYPE_DRIVER_WALL_NO_INVISIBLE_WALL)) {
-        auto *entry = colDirector->closestCollisionEntry();
+    if (*maskOut & KCL_TYPE_DRIVER_WALL_NO_INVISIBLE_WALL) {
+        const auto *entry = colDirector->findClosestCollisionEntry(maskOut,
+                KCL_TYPE_DRIVER_WALL_NO_INVISIBLE_WALL);
+        if (entry) {
+            collisionData.closestWallFlags = entry->baseType();
+            collisionData.closestWallSettings = entry->variant();
 
-        collisionData.closestWallFlags = entry->baseType();
-        collisionData.closestWallSettings = entry->variant();
-
-        if (entry->attribute.onBit(Field::CollisionDirector::eCollisionAttribute::Soft)) {
-            collisionData.bSoftWall = true;
+            if (entry->attribute.onBit(Field::CollisionDirector::eCollisionAttribute::Soft)) {
+                collisionData.bSoftWall = true;
+            }
         }
     }
 
@@ -1361,11 +1360,10 @@ void KartCollide::processFloor(CollisionData &collisionData, Hitbox &hitbox,
 
     auto *colDirector = Field::CollisionDirector::Instance();
 
-    if (!colDirector->findClosestCollisionEntry(mask, KCL_TYPE_FLOOR)) {
+    const auto *closestColEntry = colDirector->findClosestCollisionEntry(mask, KCL_TYPE_FLOOR);
+    if (!closestColEntry) {
         return;
     }
-
-    const auto *closestColEntry = colDirector->closestCollisionEntry();
 
     if (closestColEntry->attribute.offBit(
                 Field::CollisionDirector::eCollisionAttribute::Trickable)) {
@@ -1395,11 +1393,12 @@ void KartCollide::processFloor(CollisionData &collisionData, Hitbox &hitbox,
         move()->padType().setBit(KartMove::ePadType::BoostPanel);
     }
 
-    if (!!(*mask & BOOST_RAMP_MASK) &&
-            colDirector->findClosestCollisionEntry(mask, BOOST_RAMP_MASK)) {
-        closestColEntry = colDirector->closestCollisionEntry();
+    const auto *boostRampEntry = (*mask & BOOST_RAMP_MASK) ?
+            colDirector->findClosestCollisionEntry(mask, BOOST_RAMP_MASK) :
+            nullptr;
+    if (boostRampEntry) {
         move()->padType().setBit(KartMove::ePadType::BoostRamp);
-        state()->setBoostRampType(closestColEntry->variant());
+        state()->setBoostRampType(boostRampEntry->variant());
         m_surfaceFlags.setBit(eSurfaceFlags::BoostRamp, eSurfaceFlags::Trickable);
     } else {
         state()->setBoostRampType(-1);
@@ -1416,24 +1415,28 @@ void KartCollide::processFloor(CollisionData &collisionData, Hitbox &hitbox,
     }
 
     Field::KCLTypeMask halfPipeRampMask = KCL_TYPE_BIT(COL_TYPE_HALFPIPE_RAMP);
-    if ((*mask & halfPipeRampMask) &&
-            colDirector->findClosestCollisionEntry(mask, halfPipeRampMask)) {
-        status.setBit(eStatus::HalfPipeRamp);
-        state()->setHalfPipeInvisibilityTimer(2);
-        if (colDirector->closestCollisionEntry()->variant() == 1) {
-            move()->padType().setBit(KartMove::ePadType::BoostPanel);
+    if (*mask & halfPipeRampMask) {
+        const auto *entry = colDirector->findClosestCollisionEntry(mask, halfPipeRampMask);
+        if (entry) {
+            status.setBit(eStatus::HalfPipeRamp);
+            state()->setHalfPipeInvisibilityTimer(2);
+            if (entry->variant() == 1) {
+                move()->padType().setBit(KartMove::ePadType::BoostPanel);
+            }
         }
     }
 
     Field::KCLTypeMask jumpPadMask = KCL_TYPE_BIT(COL_TYPE_JUMP_PAD);
-    if (*mask & jumpPadMask && colDirector->findClosestCollisionEntry(mask, jumpPadMask)) {
-        if (status.offAnyBit(eStatus::TouchingGround, eStatus::JumpPad) &&
-                status.offBit(eStatus::JumpPadMushroomVelYInc)) {
-            move()->padType().setBit(KartMove::ePadType::JumpPad);
-            closestColEntry = colDirector->closestCollisionEntry();
-            state()->setJumpPadVariant(closestColEntry->variant());
+    if (*mask & jumpPadMask) {
+        const auto *entry = colDirector->findClosestCollisionEntry(mask, jumpPadMask);
+        if (entry) {
+            if (status.offAnyBit(eStatus::TouchingGround, eStatus::JumpPad) &&
+                    status.offBit(eStatus::JumpPadMushroomVelYInc)) {
+                move()->padType().setBit(KartMove::ePadType::JumpPad);
+                state()->setJumpPadVariant(entry->variant());
+            }
+            collisionData.bTrickable = true;
         }
-        collisionData.bTrickable = true;
     }
 }
 
@@ -1445,8 +1448,10 @@ void KartCollide::processFloor(CollisionData &collisionData, Hitbox &hitbox,
 /// eStatus::CannonStart bit in the kart's @ref Status.
 void KartCollide::processCannon(Field::KCLTypeMask *mask) {
     auto *colDirector = Field::CollisionDirector::Instance();
-    if (colDirector->findClosestCollisionEntry(mask, KCL_TYPE_BIT(COL_TYPE_CANNON_TRIGGER))) {
-        state()->setCannonPointId(colDirector->closestCollisionEntry()->variant());
+    const auto *entry =
+            colDirector->findClosestCollisionEntry(mask, KCL_TYPE_BIT(COL_TYPE_CANNON_TRIGGER));
+    if (entry) {
+        state()->setCannonPointId(entry->variant());
         status().setBit(eStatus::CannonStart);
     }
 }

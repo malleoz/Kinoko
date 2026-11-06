@@ -129,13 +129,8 @@ public:
             CollisionAttribute attribute);
     void setCurrentCollisionVariant(u16 variant);
     void setCurrentCollisionTrickable(bool trickable);
-    bool findClosestCollisionEntry(KCLTypeMask *typeMask, KCLTypeMask type);
-
-    /// @beginGetters
-
-    [[nodiscard]] const CollisionEntry *closestCollisionEntry() const;
-
-    /// @endGetters
+    [[nodiscard]] const CollisionEntry *findClosestCollisionEntry(KCLTypeMask *typeMask,
+            KCLTypeMask type) const;
 
     static CollisionDirector *CreateInstance();
     static void DestroyInstance();
@@ -173,7 +168,6 @@ private:
     /// @brief The maximum number of collision entries that can be cached
     static constexpr size_t COLLISION_ARR_LENGTH = 0x40;
 
-    const CollisionEntry *m_closestCollisionEntry; ///< Pointer to the closest colliding tri
     std::array<CollisionEntry, COLLISION_ARR_LENGTH> m_entries; ///< Array of all colliding tris
     size_t m_collisionEntryCount;                               ///< Number of valid colliding tris
 

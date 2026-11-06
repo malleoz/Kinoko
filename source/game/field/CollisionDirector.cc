@@ -142,7 +142,6 @@ void CollisionDirector::checkCourseColNarrScLocal(f32 radius, const EGG::Vector3
 void CollisionDirector::resetCollisionEntries(KCLTypeMask *maskOut) {
     *maskOut = 0;
     m_collisionEntryCount = 0;
-    m_closestCollisionEntry = nullptr;
 }
 
 /// @addr{0x807BDA9C}
@@ -185,11 +184,12 @@ void CollisionDirector::setCurrentCollisionTrickable(bool trickable) {
 /// @addr{0x807BD96C}
 /// @brief Finds the closest KCL triangle out of the list of tris we are colliding with
 /// @param type Filters the result for particular KCL types
-/// @return Whether there was a collision entry for the provided type
-/// @details If an entry was found, then @ref m_closestCollisionEntry will point to the closest
-/// collision entry matching the specified type.
-bool CollisionDirector::findClosestCollisionEntry(KCLTypeMask * /*typeMask*/, KCLTypeMask type) {
-    m_closestCollisionEntry = nullptr;
+/// @return A pointer to the closest collision entry matching `type`, or `nullptr` if there is none
+/// @details Unlike the base game, which caches the result in a member and returns a bool, Kinoko
+/// returns the entry directly.
+const CollisionDirector::CollisionEntry *CollisionDirector::findClosestCollisionEntry(
+        KCLTypeMask * /*typeMask*/, KCLTypeMask type) const {
+    const CollisionEntry *closest = nullptr;
     f32 minDist = -std::numeric_limits<f32>::min();
 
     for (size_t i = 0; i < m_collisionEntryCount; ++i) {
@@ -197,18 +197,11 @@ bool CollisionDirector::findClosestCollisionEntry(KCLTypeMask * /*typeMask*/, KC
         u32 typeMask = entry.typeMask & type;
         if (typeMask != 0 && entry.dist > minDist) {
             minDist = entry.dist;
-            m_closestCollisionEntry = &entry;
+            closest = &entry;
         }
     }
 
-    return !!m_closestCollisionEntry;
-}
-
-/// @brief Gets a pointer to the closest cached collision information
-/// @return A const pointer to @ref m_closestCollisionEntry, or `nullptr` if there
-/// is none.
-const CollisionDirector::CollisionEntry *CollisionDirector::closestCollisionEntry() const {
-    return m_closestCollisionEntry;
+    return closest;
 }
 
 /// @addr{0x8078DFE8}
@@ -239,11 +232,10 @@ CollisionDirector *CollisionDirector::Instance() {
 
 /// @addr{0x8078E33C}
 /// @brief Private constructor
-/// @details Initializes @ref m_collisionEntryCount to zero and @ref m_closestCollisionEntry to
-/// `nullptr`. Finally, creates and initializes the @ref CourseColMgr singleton.
+/// @details Initializes @ref m_collisionEntryCount to zero, then creates and initializes the @ref
+/// CourseColMgr singleton.
 CollisionDirector::CollisionDirector() {
     m_collisionEntryCount = 0;
-    m_closestCollisionEntry = nullptr;
     CourseColMgr::CreateInstance()->init();
 }
 
