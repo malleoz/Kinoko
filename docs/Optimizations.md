@@ -143,6 +143,14 @@ Every frame, @ref Kinoko::Field::ObjectPakkunF::calc() "ObjectPakkunF::calc()" c
 
 ---
 
+## <small>[[#566](https://github.com/vabold/Kinoko/pull/566)]</small> Defer ObjectHwanwan Transform Update {#perfoptimization_hwanwan_defer}
+
+Every frame, @ref Kinoko::Field::ObjectHwanwan::calc() "ObjectHwanwan::calc()" refreshes the Chain Chomp's transformation matrix based on @ref Kinoko::Field::ObjectHwanwan::m_up "m_up" and @ref Kinoko::Field::ObjectHwanwan::m_tangent "m_tangent". We can defer this computation until the transform is actually fetched by leveraging changes made to @ref Kinoko::Field::ObjectBase::setMatrixTangentTo() "ObjectBase::setMatrixTangentTo()". This is about a 0.5% performance improvement on DS Peach Gardens.
+
+@see @ref Kinoko::Field::ObjectHwanwan::calc() "ObjectHwanwan::calc()" | @ref Kinoko::Field::ObjectBase::setMatrixTangentTo() "ObjectBase::setMatrixTangentTo()"
+
+---
+
 ## <small>[[#549](https://github.com/vabold/Kinoko/pull/549)]</small> Narrow CalcTriggers Collision Check Mask {#perfoptimization_calctrigger}
 
 @note THIS FUNCTION WAS RENAMED IN THE DOXYGEN_ENHANCE BRANCH.
