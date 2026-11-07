@@ -119,7 +119,15 @@ Every frame, @ref Kinoko::Field::ObjectObakeManager::calc() "ObjectObakeManager:
 
 ---
 
-## <small>[[#564](https://github.com/vabold/Kinoko/pull/564)]</small> Defer ObjectCrab TransformUpdate {#perfoptimization_crab_defer}
+## <small>[[#553](https://github.com/vabold/Kinoko/pull/553)]</small> Defer ObjectRock Transform Update {#perfoptimization_objectrock_defer}
+
+Every frame, @ref Kinoko::Field::ObjectRock::calcTangibleSub() "ObjectRock::calcTangibleSub()" updates the rock's rotation and updates the transformation matrix accordingly. Just like the @ref perfoptimization_objectcartge_defer "ObjectCarTGE section above", we can defer this transformation matrix to @ref Kinoko::Field::ObjectRock::calcCollisionTransform() "ObjectRock::calcCollisionTransform()" so that it's only updated when we are actually performing collision checks between it and the kart. This results in a 13% performance improvement on GCN DK Mountain ghosts.
+
+@see @ref Kinoko::Field::ObjectRock::calcTangibleSub() "ObjectRock::calcTangibleSub()" | @ref Kinoko::Field::ObjectRock::calcCollisionTransform() "ObjectRock::calcCollisionTransform()" | @ref Kinoko::Field::ObjectRock::m_transformPending "m_transformPending"
+
+---
+
+## <small>[[#564](https://github.com/vabold/Kinoko/pull/564)]</small> Defer ObjectCrab Transform Update {#perfoptimization_crab_defer}
 
 Every frame the crab is walking, @ref Kinoko::Field::ObjectCrab::calcState() "ObjectCrab::calcState()" updates the crab's transformation matrix based on its current rotation and @ref Kinoko::Field::RailInterpolator::m_curTangentDir "rail tangent direction". However, for the purposes of physics calculations, we only care about the crab's transform when we are colliding with it. As such, we can defer calculation to @ref Kinoko::Field::ObjectCrab::calcCollisionTransform() "calcCollisionTransform()" to minimize the number of transform updates. We signal that the transform needs to be updated via a new member @ref Kinoko::Field::ObjectCrab::m_transMatPending "m_transMatPending" and we perform the update in @ref Kinoko::Field::ObjectCrab::calcTransMat() "calcTransMat()". This is a 9% performance improvement for GBA Shy Guy Beach.
 
@@ -127,11 +135,11 @@ Every frame the crab is walking, @ref Kinoko::Field::ObjectCrab::calcState() "Ob
 
 ---
 
-## <small>[[#553](https://github.com/vabold/Kinoko/pull/553)]</small> Defer ObjectRock Transform Update {#perfoptimization_objectrock_defer}
+## <small>[[#565](https://github.com/vabold/Kinoko/pull/565)]</small> Defer ObjectPakkunF Collision Transform Update {#perfoptimization_pakkunf_defer}
 
-Every frame, @ref Kinoko::Field::ObjectRock::calcTangibleSub() "ObjectRock::calcTangibleSub()" updates the rock's rotation and updates the transformation matrix accordingly. Just like the @ref perfoptimization_objectcartge_defer "ObjectCarTGE section above", we can defer this transformation matrix to @ref Kinoko::Field::ObjectRock::calcCollisionTransform() "ObjectRock::calcCollisionTransform()" so that it's only updated when we are actually performing collision checks between it and the kart. This results in a 13% performance improvement on GCN DK Mountain ghosts.
+Every frame, @ref Kinoko::Field::ObjectPakkunF::calc() "ObjectPakkunF::calc()" calls @ref Kinoko::Field::ObjectPakkunF::calcCollisionTransform() "calcCollisionTransform()". This is an unnecessary call, as @ref Kinoko::Field::ObjectPakkunF::calcCollisionTransform() "calcCollisionTransform()" is always called prior to any collision checks. Simply removing this call in @ref Kinoko::Field::ObjectPakkunF::calc() "calc()" allows for a 4% performance improvement on GCN Mario Circuit.
 
-@see @ref Kinoko::Field::ObjectRock::calcTangibleSub() "ObjectRock::calcTangibleSub()" | @ref Kinoko::Field::ObjectRock::calcCollisionTransform() "ObjectRock::calcCollisionTransform()" | @ref Kinoko::Field::ObjectRock::m_transformPending "m_transformPending"
+@see @ref Kinoko::Field::ObjectPakkunF::calc() "ObjectPakkunF::calc()" | @ref Kinoko::Field::ObjectPakkunF::calcCollisionTransform() "ObjectPakkunF::calcCollisionTransform()"
 
 ---
 
@@ -142,6 +150,14 @@ Every frame, @ref Kinoko::Field::ObjectRock::calcTangibleSub() "ObjectRock::calc
 @ref Kinoko::Kart::KartCollide::calcFloorEffect() "KartCollide::calcFloorEffect()" calls @ref Kinoko::Kart::KartCollide::calcLeanCollision() "KartCollide::calcLeanCollision()" twice, once for direction-specific KCL types, and once for non-directional KCL types. However, for the purposes of %Kinoko, we only care about @ref KCL_TYPE_WALL and @ref COL_TYPE_SOLID_OOB for the non-directional call. As such, we can actually narrow the KCL flags that the base game normally uses (@ref KCL_TYPE_NON_DIRECTIONAL) for the non-directional scenario such that we only check for @ref KCL_TYPE_WALL and @ref COL_TYPE_SOLID_OOB. This narrowing results in a 2% performance improvement.
 
 @see @ref Kinoko::Kart::KartCollide::calcLeanCollision() "KartCollide::calcLeanCollision()" | @ref KCL_TYPE_NON_DIRECTIONAL | @ref KCL_TYPE_WALL | @ref COL_TYPE_SOLID_OOB
+
+---
+
+## <small>[[#561](https://github.com/vabold/Kinoko/pull/561)]</small> Defer Object Transformation Updates {#perfoptimization_defer_transform}
+
+@ref Kinoko::Field::ObjectBase::setMatrixTangentTo() "ObjectBase::setMatrixTangentTo()" and @ref Kinoko::Field::ObjectBase::setMatrixFromOrthonormalBasisAndPos() "ObjectBase::setMatrixFromOrthonormalBasisAndPos()" update the rotation and position of @ref Kinoko::Field::ObjectBase::m_transform "m_transform", which may not actually be used that frame. Rather than immediately update this matrix, we can instead cache their dependencies to @ref Kinoko::Field::ObjectBase::m_pendingRot "m_pendingRot", @ref Kinoko::Field::ObjectBase::m_pendingUp "m_pendingUp", and @ref Kinoko::Field::ObjectBase::m_pendingTangent "m_pendingTangent", and only update the matrix when it's actually fetched. This is an average improvement of 1.7%, with gains of up to 19% on N64 Sherbet Land.
+
+@see @ref Kinoko::Field::ObjectBase::setMatrixTangentTo() "ObjectBase::setMatrixTangentTo()" | @ref Kinoko::Field::ObjectBase::setMatrixFromOrthonormalBasisAndPos() "ObjectBase::setMatrixFromOrthonormalBasisAndPos()" | @ref Kinoko::Field::ObjectBase::m_transform "ObjectBase::m_transform" | @ref Kinoko::Field::ObjectBase::m_pendingRot "ObjectBase::m_pendingRot" | @ref Kinoko::Field::ObjectBase::m_pendingUp "ObjectBase::m_pendingUp" | @ref Kinoko::Field::ObjectBase::m_pendingTangent "ObjectBase::m_pendingTangent"
 
 ---
 
@@ -168,14 +184,6 @@ For the same reasons as @ref perfoptimization_kartcamera_drivable "the KartCamer
 For the same reasons as @ref perfoptimization_kartcamera_drivable "the KartCamera" and @ref perfoptimization_lakitu "the Lakitu" sections above, we can also skip updates to @ref Kinoko::Field::ObjectBird "ObjectBird" calculation if there are no drivable objects.
 
 @see @ref Kinoko::Field::ObjectBird "ObjectBird"
-
----
-
-## <small>[[#561](https://github.com/vabold/Kinoko/pull/561)]</small> Defer Object Transformation Updates {#perfoptimization_defer_transform}
-
-@ref Kinoko::Field::ObjectBase::setMatrixTangentTo() "ObjectBase::setMatrixTangentTo()" and @ref Kinoko::Field::ObjectBase::setMatrixFromOrthonormalBasisAndPos() "ObjectBase::setMatrixFromOrthonormalBasisAndPos()" update the rotation and position of @ref Kinoko::Field::ObjectBase::m_transform "m_transform", which may not actually be used that frame. Rather than immediately update this matrix, we can instead cache their dependencies to @ref Kinoko::Field::ObjectBase::m_pendingRot "m_pendingRot", @ref Kinoko::Field::ObjectBase::m_pendingUp "m_pendingUp", and @ref Kinoko::Field::ObjectBase::m_pendingTangent "m_pendingTangent", and only update the matrix when it's actually fetched. This is an average improvement of 1.7%, with gains of up to 19% on N64 Sherbet Land.
-
-@see @ref Kinoko::Field::ObjectBase::setMatrixTangentTo() "ObjectBase::setMatrixTangentTo()" | @ref Kinoko::Field::ObjectBase::setMatrixFromOrthonormalBasisAndPos() "ObjectBase::setMatrixFromOrthonormalBasisAndPos()" | @ref Kinoko::Field::ObjectBase::m_transform "ObjectBase::m_transform" | @ref Kinoko::Field::ObjectBase::m_pendingRot "ObjectBase::m_pendingRot" | @ref Kinoko::Field::ObjectBase::m_pendingUp "ObjectBase::m_pendingUp" | @ref Kinoko::Field::ObjectBase::m_pendingTangent "ObjectBase::m_pendingTangent"
 
 ---
 
