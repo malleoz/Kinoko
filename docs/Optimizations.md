@@ -158,6 +158,14 @@ Every frame, @ref Kinoko::Field::ObjectPakkunF::calc() "ObjectPakkunF::calc()" c
 
 ---
 
+## <small>[[#568](https://github.com/vabold/Kinoko/pull/568)]</small> Reuse SphereLink Direction and Distance {#perfoptimization_spherelink_dir}
+
+@ref Kinoko::Field::SphereLink::calc() "SphereLink::calc()" runs every frame to update the body parts of @ref Kinoko::Field::ObjectHanachan "Wigglers". In this function, we compute the direction and distance from one body part to the previous. However, this direction and distance is re-computed in both @ref Kinoko::Field::SphereLink::calcStiffness() "calcStiffness()" and @ref Kinoko::Field::SphereLink::calcSpring() "calcSpring()". We can skip this unnecessary duplicate construction and normalization by passing the computed direction and distance into @ref Kinoko::Field::SphereLink::calcStiffness() "calcStiffness()" and @ref Kinoko::Field::SphereLink::calcSpring() "calcSpring()". This results in a 3% performance improvement on Maple Treeway.
+
+@see @ref Kinoko::Field::SphereLink::calc() "SphereLink::calc()" | @ref Kinoko::Field::SphereLink::calcStiffness() "SphereLink::calcStiffness()" | @ref Kinoko::Field::SphereLink::calcSpring() "SphereLink::calcSpring()"
+
+---
+
 ## <small>[[#566](https://github.com/vabold/Kinoko/pull/566)]</small> Defer ObjectHwanwan Transform Update {#perfoptimization_hwanwan_defer}
 
 Every frame, @ref Kinoko::Field::ObjectHwanwan::calc() "ObjectHwanwan::calc()" refreshes the Chain Chomp's transformation matrix based on @ref Kinoko::Field::ObjectHwanwan::m_up "m_up" and @ref Kinoko::Field::ObjectHwanwan::m_tangent "m_tangent". We can defer this computation until the transform is actually fetched by leveraging changes made to @ref Kinoko::Field::ObjectBase::setMatrixTangentTo() "ObjectBase::setMatrixTangentTo()". This is about a 0.5% performance improvement on DS Peach Gardens.
