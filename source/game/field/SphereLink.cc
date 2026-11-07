@@ -35,18 +35,19 @@ void SphereLink::init() {
 
 /// @addr{0x806F2074}
 /// @brief Calculates the spring force between this link and its neighbors
+/// @param dir The normalized direction from this link to the previous link
+/// @param dist The distance between this link and the previous link
 /// @pre This link must not be the leader (i.e., it must have a @ref m_prev link)
 /// @details If there is slack in the chain, then this function early returns. Applies a spring
 /// damper force which will pull this link back towards its previous link when it is stretched too
 /// far away. Subtracts the resulting increase in force from the previous (forward) link's spring
 /// force so that the previous link experiences an equal and opposite reaction.
-void SphereLink::calcStiffness() {
+/// @note The base game computes `dir` and `dist` again here. Kinoko-specific: they are passed in
+/// from @ref calc(), since neither link's position changes in between.
+void SphereLink::calcStiffness(const EGG::Vector3f &dir, f32 dist) {
     constexpr f32 STIFFNESS = 0.15f;
 
     ASSERT(!isLeader());
-
-    EGG::Vector3f dir = m_prev->m_pos - m_pos;
-    f32 dist = dir.normalise();
 
     // Nothing to do if there is slack in the chain
     if (dist < m_prev->m_linkLen) {
@@ -76,19 +77,20 @@ void SphereLink::calc() {
         return;
     }
 
-    if (!m_next) {
-        EGG::Vector3f dir = m_prev->m_pos - m_pos;
-        f32 dist = dir.normalise();
+    // Kinoko-specific: the direction to the previous link is computed once and shared with
+    // calcStiffness(), rather than being recomputed there.
+    EGG::Vector3f dir = m_prev->m_pos - m_pos;
+    f32 dist = dir.normalise();
 
+    if (!m_next) {
         if (dist > m_prev->m_linkLen) {
             m_springForce += dir * SPRING_FORCE_MAGNITUDE;
         }
-
-        calcStiffness();
     } else {
-        calcSpring();
-        calcStiffness();
+        calcSpring(dir, dist);
     }
+
+    calcStiffness(dir, dist);
 }
 
 /// @addr{0x806F2490}
@@ -255,22 +257,21 @@ const EGG::Vector3f &SphereLink::up() const {
 
 /// @addr{0x806F1C58}
 /// @brief Calculates the spring force between this link and its neighbors
+/// @param prevDir The normalized direction from this link to the previous link
+/// @param prevDist The distance between this link and the previous link
 /// @pre This link must have both a previous and a next link (i.e., it must not be the leader or the
 /// last link in the chain).
 /// @details If this link is further away than its allowed link length from either its previous or
 /// next link, a spring force of magnitude @ref SPRING_FORCE_MAGNITUDE is applied to bring it back
 /// within the allowed distance.
-void SphereLink::calcSpring() {
+void SphereLink::calcSpring(const EGG::Vector3f &prevDir, f32 prevDist) {
     ASSERT(m_prev && m_next);
 
-    EGG::Vector3f dir = m_prev->m_pos - m_pos;
-    f32 dist = dir.normalise();
-
-    if (dist > m_prev->m_linkLen) {
-        m_springForce += dir * SPRING_FORCE_MAGNITUDE;
+    if (prevDist > m_prev->m_linkLen) {
+        m_springForce += prevDir * SPRING_FORCE_MAGNITUDE;
     }
 
-    dir = m_next->m_pos - m_pos;
+    EGG::Vector3f dir = m_next->m_pos - m_pos;
     f32 nextDist = dir.normalise();
 
     if (nextDist > m_linkLen) {

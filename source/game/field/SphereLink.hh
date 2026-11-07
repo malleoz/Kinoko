@@ -14,7 +14,7 @@ public:
 
     void initLinkLen(f32 length);
     void init();
-    void calcStiffness();
+    void calcStiffness(const EGG::Vector3f &dir, f32 dist);
     void calc();
     void calcConstraints(f32 scale);
     void checkCollision();
@@ -43,7 +43,7 @@ public:
     static constexpr EGG::Vector3f GRAVITY = EGG::Vector3f(0.0f, 2.5f, 0.0f);
 
 private:
-    void calcSpring();
+    void calcSpring(const EGG::Vector3f &prevDir, f32 prevDist);
 
     SphereLink *m_prev;  ///< The previous link in the chain, or nullptr if this is the first link
     SphereLink *m_next;  ///< The next link in the chain, or nullptr if this is the last link
