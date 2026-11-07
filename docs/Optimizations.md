@@ -103,6 +103,21 @@ Checking to see if the sphere lies entirely within the prism can be performed wi
 
 ---
 
+## <small>[[#567](https://github.com/vabold/Kinoko/pull/567)]</small> Cache Kuribo and Cow Course KCL Queries {#perfoptimization_query_cache}
+
+While at rest, @ref Kinoko::Field::ObjectKuribo "Goombas" and @ref Kinoko::Field::ObjectCow "cows" perform collision checks against course KCL every frame via @ref Kinoko::Field::CollisionDirector::checkSphereFull() "CollisionDirector::checkSphereFull()". However, since the Goombas and cows are at rest and course KCL doesn't change, we know that the collision query will have the same result as the last frame. As such, we can improve performance by caching the result from the previous frame. To accomplish this, we introduce a new class @ref Kinoko::Field::CollisionQueryCache "CollisionQueryCache" which is added as a member per-object. When the object goes to perform a collision query, it now leverages this new class to attempt to re-use the collision result from the last frame. This new class still calls out to @ref Kinoko::Field::ObjectDrivableDirector::checkSphereFull() "ObjectDrivableDirector::checkSphereFull()" so that moving objects can still properly influence the Goomba's and cow's physics.
+
+This results in a performance improvement varying by course:
+- Moo Moo Meadows: 6%
+- Mushroom Gorge: 6%
+- Mario Circuit: 10.5%
+- Koopa Cape: 8%
+- GCN Mario Circuit: 14.5%
+
+@see @ref Kinoko::Field::ObjectKuribo "ObjectKuribo" | @ref Kinoko::Field::ObjectKuribo::m_floorQuery "ObjectKuribo::m_floorQuery" | @ref Kinoko::Field::ObjectCow "ObjectCow" | @ref Kinoko::Field::ObjectCow::m_floorQuery "ObjectCow::m_floorQuery" | @ref Kinoko::Field::CollisionQueryCache "CollisionQueryCache"
+
+---
+
 ## <small>[[#552](https://github.com/vabold/Kinoko/pull/552)]</small> Defer ObjectCarTGE Transform Update {#perfoptimization_objectcartge_defer}
 
 Every frame, @ref Kinoko::Field::ObjectCarTGE::calcPos() "ObjectCarTGE::calcPos()" updates the car's/truck's position, facing direction, and resulting @ref Kinoko::Field::ObjectBase::m_transform "transformation matrix". However, this transform is only relevant when we are performing collision checks against the car/truck. Rather than update the transformation matrix every frame, we can defer calculation until @ref Kinoko::Field::ObjectCarTGE::calcCollisionTransform() "ObjectCarTGE::calcCollisionTransform()" which is only ever called once we are intersecting with the car's/truck's GJK unit. We do so by implementing @ref Kinoko::Field::ObjectCarTGE::m_transformPending "m_transformPending" to track when the car's/truck's matrix needs to be updated, and we update it in @ref Kinoko::Field::ObjectCarTGE::calcCollisionTransform() "ObjectCarTGE::calcCollisionTransform()" when set. This results in a 21% performance improvement on Moonview Highway ghosts.
