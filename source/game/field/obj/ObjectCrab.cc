@@ -11,12 +11,14 @@ namespace Kinoko::Field {
 /// @copybrief ObjectCollidable::ObjectCollidable(const System::MapdataGeoObj &)
 /// @param params The parameters used to initialize the object
 /// @details Sets @ref m_vel based on param setting 1 and sets @ref m_backwards to `true` when
-/// param setting 2 is non-zero. Finally, initializes @ref m_introCalc to `false`.
+/// param setting 2 is non-zero. Finally, initializes @ref m_introCalc and @ref m_transMatPending to
+/// `false`.
 ObjectCrab::ObjectCrab(const System::MapdataGeoObj &params)
     : ObjectCollidable(params),
       m_vel(static_cast<f32>(static_cast<s16>(params.setting(0)))),
       m_backwards(!!params.setting(1)),
-      m_introCalc(false) {}
+      m_introCalc(false),
+      m_transMatPending(false) {}
 
 /// @addr{0x808837B8}
 /// @brief Default virtual destructor
@@ -35,7 +37,8 @@ void ObjectCrab::init() {
 
     m_railInterpolator->setSpeed(m_vel);
     setPos(m_railInterpolator->curPos());
-    calcTransMat(m_curRot);
+    calcTransMat(m_curRot, m_railInterpolator->curTangentDir());
+    m_transMatPending = false;
 
     m_stillDuration = 0;
     m_stillFrame = 0;
@@ -91,6 +94,19 @@ void ObjectCrab::calc() {
 /// @return Returns @ref eLoadFlags::Calc, so that the object is calculated every frame.
 ObjectBase::LoadFlags ObjectCrab::loadFlags() const {
     return LoadFlags(eLoadFlags::Calc);
+}
+
+/// @copybrief ObjectBase::calcCollisionTransform()
+/// @details Kinoko-specific: First calls the @ref calcTransMat() deferred by @ref calcState(), if
+/// any. This produces the same transform as calling it immediately, since the crab's position and
+/// @ref m_curRot are only changed by @ref calcState() right before it defers another call.
+void ObjectCrab::calcCollisionTransform() {
+    if (m_transMatPending) {
+        m_transMatPending = false;
+        calcTransMat(m_curRot, m_pendingTangent);
+    }
+
+    ObjectCollidable::calcCollisionTransform();
 }
 
 /// @addr{0x80886438}
@@ -153,7 +169,11 @@ ObjectCrab::StateResult ObjectCrab::calcState() {
     if (m_statePhase == StatePhase::Start) {
         setPos(m_railInterpolator->curPos());
         calcCurRot(INIT_ROT);
-        calcTransMat(m_curRot);
+
+        // Kinoko-specific: Defer calcTransMat() until the transform is needed for collision
+        m_pendingTangent = m_railInterpolator->curTangentDir();
+        m_transMatPending = true;
+
         m_statePhase = StatePhase::Middle;
     }
 
@@ -179,16 +199,17 @@ void ObjectCrab::calcCurRot(const EGG::Vector3f &rot) {
     m_curRot.y = m_railInterpolator->isMovementDirectionForward() ? m_curRot.y : -m_curRot.y;
 }
 
-/// @brief Sets the transformation matrix based on the provided rotation and the rail's tangent
+/// @brief Sets the transformation matrix based on the provided rotation and rail tangent
 /// @param rot The rotation to apply to the crab's transformation matrix
+/// @param tangent The rail's tangent direction
 /// @details The provided rotation is applied on top of the tangent-facing basis.
-void ObjectCrab::calcTransMat(const EGG::Vector3f &rot) {
+void ObjectCrab::calcTransMat(const EGG::Vector3f &rot, const EGG::Vector3f &tangent) {
     EGG::Matrix34f rotMat;
     rotMat.makeR(rot);
     rotMat = rotMat.multiplyTo(EGG::Matrix34f::ident);
 
     EGG::Matrix34f mat;
-    mat.ps_makeOrthonormalBasis(m_railInterpolator->curTangentDir(), EGG::Vector3f::ey);
+    mat.ps_makeOrthonormalBasis(tangent, EGG::Vector3f::ey);
     mat = mat.multiplyTo(rotMat);
     mat.setBase(3, pos());
     setTransform(mat);

@@ -14,6 +14,7 @@ public:
 
     void init() override;
     void calc() override;
+    void calcCollisionTransform() override;
     [[nodiscard]] LoadFlags loadFlags() const override;
 
 private:
@@ -43,7 +44,7 @@ private:
     bool calcRail();
     StateResult calcState();
     void calcCurRot(const EGG::Vector3f &rot);
-    void calcTransMat(const EGG::Vector3f &rot);
+    void calcTransMat(const EGG::Vector3f &rot, const EGG::Vector3f &tangent);
 
     const f32 m_vel;         ///< The speed at which the crab moves along the rail
     u32 m_stillDuration;     ///< Frames the crab will remain still at the current rail point
@@ -54,6 +55,12 @@ private:
     State m_state;           ///< The current state of the crab: walking or still
     StatePhase m_statePhase; ///< Phase of the current state
     bool m_introCalc;        ///< Enforces only one calc call during the race intro timer
+
+    /// @brief Whether @ref calcTransMat() was deferred by @ref calcState()
+    /// @details Kinoko-specific optimization. The crab's transform is only read when checking
+    /// collision against the kart, so it is only calculated in @ref calcCollisionTransform().
+    bool m_transMatPending;
+    EGG::Vector3f m_pendingTangent; ///< The rail tangent for the deferred @ref calcTransMat()
 
     /// @brief The initial rotation of the crab
     static constexpr EGG::Vector3f INIT_ROT = EGG::Vector3f(0.0f, HALF_PI, 0.0f);
