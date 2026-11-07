@@ -166,6 +166,26 @@ Every frame, @ref Kinoko::Field::ObjectPakkunF::calc() "ObjectPakkunF::calc()" c
 
 ---
 
+## <small>[[#569](https://github.com/vabold/Kinoko/pull/569)]</small> Reuse Velocity Length for Seagulls {#perfoptimization_seagull_length}
+
+Every frame, @ref Kinoko::Field::ObjectBird::calc() "ObjectBird::calc()" and @ref Kinoko::Field::ObjectBirdFollower::calc() "ObjectBirdFollower::calc()" compute the seagull's velocity and the length of that velocity vector, only to then call @ref Kinoko::EGG::Vector3f::normalise() "normalise()". This results in re-computing the vector's length. We can avoid this duplicate calculation by simply dividing the vector by its pre-computed length.
+
+```diff
+ EGG::Vector3f posDelta = firstPos - secondPos;
+ f32 len = posDelta.length();
+
+- posDelta.normalise();
++ if (posDelta.squaredLength() > std::numeric_limits<f32>::epsilon()) {
++     posDelta *= 1.0f / len;
++ }
+```
+
+This results in a 1% performance improvement on Toad's Factory and DS Delfino Square.
+
+@see @ref Kinoko::Field::ObjectBird::calc() "ObjectBird::calc()" | @ref Kinoko::Field::ObjectBirdFollower::calc() "ObjectBirdFollower::calc()"
+
+---
+
 ## <small>[[#566](https://github.com/vabold/Kinoko/pull/566)]</small> Defer ObjectHwanwan Transform Update {#perfoptimization_hwanwan_defer}
 
 Every frame, @ref Kinoko::Field::ObjectHwanwan::calc() "ObjectHwanwan::calc()" refreshes the Chain Chomp's transformation matrix based on @ref Kinoko::Field::ObjectHwanwan::m_up "m_up" and @ref Kinoko::Field::ObjectHwanwan::m_tangent "m_tangent". We can defer this computation until the transform is actually fetched by leveraging changes made to @ref Kinoko::Field::ObjectBase::setMatrixTangentTo() "ObjectBase::setMatrixTangentTo()". This is about a 0.5% performance improvement on DS Peach Gardens.
