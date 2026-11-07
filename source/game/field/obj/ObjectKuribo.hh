@@ -1,5 +1,6 @@
 #pragma once
 
+#include "game/field/CollisionQueryCache.hh"
 #include "game/field/StateManager.hh"
 #include "game/field/obj/ObjectCollidable.hh"
 
@@ -36,6 +37,7 @@ private:
     EGG::Vector3f m_rot;      ///< Smoothed rotation based off of the floor normal
     EGG::Vector3f m_floorNrm; ///< Up vector of the floor beneath the Goomba
     f32 m_animTimer;          ///< m_animDuration wrapped timer, determines if Goomba should walk
+    CollisionQueryCache m_floorQuery; ///< Performs the floor collision check
 
     /// @brief The enter and calc functions for each @ref StateManager entry
     static constexpr std::array<StateManagerEntry, 4> STATE_ENTRIES = {{

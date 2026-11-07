@@ -65,14 +65,16 @@ Kart::Reaction ObjectCow::onCollision(Kart::KartObject *kartObj, Kart::Reaction 
 /// @details If a collision is detected, the cow's position is adjusted, the floor normal is
 /// updated, and @ref m_upForce is set to counteract gravity. If no collision is detected, the cow's
 /// upward force is set to zero so that gravity will take effect.
+/// @note Kinoko-specific: the collision check is performed through @ref m_floorQuery, since a cow
+/// standing still often repeats the exact same check every frame.
 void ObjectCow::calcFloor() {
     constexpr f32 RADIUS = 50.0f;
     constexpr EGG::Vector3f POS_OFFSET = EGG::Vector3f(0.0f, RADIUS, 0.0f);
 
     CollisionInfo info;
 
-    bool hasCol = CollisionDirector::Instance()->checkSphereFull(RADIUS, pos() + POS_OFFSET,
-            EGG::Vector3f::inf, KCL_TYPE_OBJECT_COLLIDABLE, &info, nullptr, 0);
+    bool hasCol = m_floorQuery.checkSphereFull(RADIUS, pos() + POS_OFFSET,
+            KCL_TYPE_OBJECT_COLLIDABLE, &info);
 
     if (hasCol) {
         addPos(info.tangentOff);

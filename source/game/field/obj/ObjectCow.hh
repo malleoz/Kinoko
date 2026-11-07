@@ -1,5 +1,6 @@
 #pragma once
 
+#include "game/field/CollisionQueryCache.hh"
 #include "game/field/StateManager.hh"
 #include "game/field/obj/ObjectCollidable.hh"
 
@@ -37,6 +38,7 @@ protected:
     EGG::Vector3f m_targetPos; ///< Position the cow is walking towards
     EGG::Vector3f m_targetDir; ///< Direction from current position to @ref m_targetPos
     EGG::Vector3f m_upForce;   ///< Used by calcPos to counteract gravity
+    CollisionQueryCache m_floorQuery; ///< Performs the floor collision check
     f32 m_interpRate; ///< Rate at which @ref m_tangent is interpolated toward @ref m_targetDir
 
     /// @brief The force of gravity applied to the cow when it is not on the ground

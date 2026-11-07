@@ -173,6 +173,8 @@ void ObjectKuribo::calcRot() {
 /// @details If the Goomba is walking, applies a downward gravitational force of `2.0f` every frame.
 /// If the Goomba has collided with the floor, updates the Goomba's position accordingly and caches
 /// the colliding floor's normal to @ref m_floorNrm.
+/// @note Kinoko-specific: the collision check is performed through @ref m_floorQuery, since a
+/// Goomba resting on the floor often repeats the exact same check every frame.
 void ObjectKuribo::checkSphereFull() {
     constexpr f32 RADIUS = 50.0f;
     constexpr f32 GRAVITY = 2.0f;
@@ -186,8 +188,7 @@ void ObjectKuribo::checkSphereFull() {
     EGG::Vector3f colPos = pos();
     colPos.y += RADIUS;
 
-    bool hasCol = CollisionDirector::Instance()->checkSphereFull(RADIUS, colPos, EGG::Vector3f::inf,
-            KCL_TYPE_FLOOR, &colInfo, nullptr, 0);
+    bool hasCol = m_floorQuery.checkSphereFull(RADIUS, colPos, KCL_TYPE_FLOOR, &colInfo);
 
     if (hasCol) {
         addPos(colInfo.tangentOff);
