@@ -66,11 +66,42 @@ debug_cflags = [
     '-fstack-protector-strong',
 ]
 
+# Release optimizations for CPUs supporting AVX2/FMA/BMI2 (x86-64-v3), tuned for Zen 4. Results
+# remain accurate because -ffp-contract=off prevents fusing multiplies and adds into FMA
+native_cflags = [
+    *target_cflags,
+    '-march=x86-64-v3',
+    '-mtune=znver4',
+]
+
+# Profile-guided optimization is a two stage build. The instrumented build replays the sample
+# ghosts to record branch and call frequencies, which then guide optimization of the final build
+pgo_gen_cflags = [
+    *native_cflags,
+    '-fprofile-generate',
+]
+
+pgo_use_cflags = [
+    *native_cflags,
+    '-fprofile-use',
+]
+
 common_ldflags = []
 
 target_ldflags = [
     '-flto',
     '-flto-partition=one',
+]
+
+# LTO optimizes at link time, so the optimization flags must be passed to the linker as well
+pgo_gen_ldflags = [
+    *pgo_gen_cflags,
+    *target_ldflags,
+]
+
+pgo_use_ldflags = [
+    *pgo_use_cflags,
+    *target_ldflags,
 ]
 
 n.rule(
@@ -88,10 +119,22 @@ n.rule(
     description='LD $out',
 )
 
+n.rule(
+    'pgo_train',
+    command=f'{sys.executable} $script $in $out $profile_dir',
+    description='PGO train $in',
+)
+n.newline()
+
 code_in_files = [file for file in glob('**/*.cc', recursive=True)]
 
 target_code_out_files = []
 debug_code_out_files = []
+pgo_gen_code_out_files = []
+pgo_code_out_files = []
+
+pgo_profile_dir = os.path.join('$builddir', 'pgo')
+pgo_stamp = os.path.join(pgo_profile_dir, 'profile.stamp')
 
 for in_file in code_in_files:
     _, ext = os.path.splitext(in_file)
@@ -122,6 +165,37 @@ for in_file in code_in_files:
     )
     n.newline()
 
+    pgo_gen_out_file = os.path.join('$builddir', in_file + 'PGOGen.o')
+    pgo_gen_code_out_files.append(pgo_gen_out_file)
+
+    pgo_out_file = os.path.join('$builddir', in_file + 'PGO.o')
+    pgo_code_out_files.append(pgo_out_file)
+
+    # GCC derives the profile data path, and the profile IDs of functions with internal linkage,
+    # from the object's auxiliary base name. Both stages must share it for their profiles to match.
+    pgo_dumpbase = ['-dumpbase', os.path.join(pgo_profile_dir, in_file)]
+
+    n.build(
+        pgo_gen_out_file,
+        ext[1:],
+        in_file,
+        variables={
+            'ccflags': ' '.join([*common_ccflags, *pgo_gen_cflags, *pgo_dumpbase])
+        }
+    )
+    n.newline()
+
+    n.build(
+        pgo_out_file,
+        ext[1:],
+        in_file,
+        implicit=[pgo_stamp],
+        variables={
+            'ccflags': ' '.join([*common_ccflags, *pgo_use_cflags, *pgo_dumpbase])
+        }
+    )
+    n.newline()
+
 
 n.build(
     os.path.join('$outdir', f'kinoko{file_extension}'),
@@ -145,6 +219,59 @@ n.build(
         ])
     },
 )
+n.newline()
+
+pgo_gen_exe = os.path.join('$outdir', f'kinokoPGOGen{file_extension}')
+n.build(
+    pgo_gen_exe,
+    'ld',
+    pgo_gen_code_out_files,
+    variables={
+        'ldflags': ' '.join([
+            *common_ldflags,
+            *pgo_gen_ldflags,
+        ])
+    },
+)
+n.newline()
+
+pgo_train_script = os.path.join('tools', 'pgo_train.py')
+n.build(
+    pgo_stamp,
+    'pgo_train',
+    pgo_gen_exe,
+    implicit=[
+        pgo_train_script,
+        *sorted(glob(os.path.join('samples', '*.rkg'))),
+    ],
+    variables={
+        'script': pgo_train_script,
+        'profile_dir': pgo_profile_dir,
+    },
+)
+n.newline()
+
+pgo_exe = os.path.join('$outdir', f'kinokoPGO{file_extension}')
+n.build(
+    pgo_exe,
+    'ld',
+    pgo_code_out_files,
+    variables={
+        'ldflags': ' '.join([
+            *common_ldflags,
+            *pgo_use_ldflags,
+        ])
+    },
+)
+n.newline()
+
+# The PGO build is opt-in via `ninja pgo`, as training requires the extracted Race folder in out/
+n.build('pgo', 'phony', pgo_exe)
+n.default([
+    os.path.join('$outdir', f'kinoko{file_extension}'),
+    os.path.join('$outdir', f'kinokoD{file_extension}'),
+])
+n.newline()
 
 n.variable('configure', 'configure.py')
 n.newline()
