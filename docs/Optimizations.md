@@ -113,9 +113,17 @@ Every frame, @ref Kinoko::Field::ObjectCarTGE::calcPos() "ObjectCarTGE::calcPos(
 
 ## <small>[[#563](https://github.com/vabold/Kinoko/pull/563)]</small> Sort rGV2 Blocks by Fall Frame {#perfoptimization_obake_fall}
 
-Every frame, @ref Kinoko::Field::ObjectObakeManager::calc() "ObjectObakeManager::calc()" iterates all @ref Kinoko::Field::ObjectObakeManager::m_blocks "m_blocks" to check if any are now falling this frame. This iteration is `O(n)` since it always loops over all blocks. Rather than blindly check the entire array of blocks, we can instead sort the block array such that blocks that fall earlier in the race appear first in the array. To track how many blocks have fallen so far, we add a member variable @ref Kinoko::Field::ObjectObakeManager::m_fallingBlockCount "m_fallingBlockCount". This way, we can start iterating from this index and stop once we reach the first block not falling this frame. We maintain order by inserting new blocks in-order within @ref Kinoko::Field::ObjectObakeManager::addBlock() "addBlock()".
+Every frame, @ref Kinoko::Field::ObjectObakeManager::calc() "ObjectObakeManager::calc()" iterates all @ref Kinoko::Field::ObjectObakeManager::m_blocks "m_blocks" to check if any are now falling this frame. This iteration is `O(n)` since it always loops over all blocks. Rather than blindly check the entire array of blocks, we can instead sort the block array such that blocks that fall earlier in the race appear first in the array. To track how many blocks have fallen so far, we add a member variable @ref Kinoko::Field::ObjectObakeManager::m_fallingBlockCount "m_fallingBlockCount". This way, we can start iterating from this index and stop once we reach the first block not falling this frame. We maintain order by inserting new blocks in-order within @ref Kinoko::Field::ObjectObakeManager::addBlock() "addBlock()". This is a 14% performance improvement for SNES Ghost Valley 2.
 
 @see @ref Kinoko::Field::ObjectObakeManager "ObjectObakeManager" | @ref Kinoko::Field::ObjectObakeManager::m_blocks "ObjectObakeManager::m_blocks" | @ref Kinoko::Field::ObjectObakeManager::m_fallingBlockCount "ObjectObakeManager::m_fallingBlockCount" | @ref Kinoko::Field::ObjectObakeManager::addBlock() "ObjectObakeManager::addBlock()"
+
+---
+
+## <small>[[#564](https://github.com/vabold/Kinoko/pull/564)]</small> Defer ObjectCrab TransformUpdate {#perfoptimization_crab_defer}
+
+Every frame the crab is walking, @ref Kinoko::Field::ObjectCrab::calcState() "ObjectCrab::calcState()" updates the crab's transformation matrix based on its current rotation and @ref Kinoko::Field::RailInterpolator::m_curTangentDir "rail tangent direction". However, for the purposes of physics calculations, we only care about the crab's transform when we are colliding with it. As such, we can defer calculation to @ref Kinoko::Field::ObjectCrab::calcCollisionTransform() "calcCollisionTransform()" to minimize the number of transform updates. We signal that the transform needs to be updated via a new member @ref Kinoko::Field::ObjectCrab::m_transMatPending "m_transMatPending" and we perform the update in @ref Kinoko::Field::ObjectCrab::calcTransMat() "calcTransMat()". This is a 9% performance improvement for GBA Shy Guy Beach.
+
+@see @ref Kinoko::Field::ObjectCrab "ObjectCrab" | @ref Kinoko::Field::ObjectCrab::calcState() "ObjectCrab::calcState()" | @ref Kinoko::Field::ObjectCrab::calcCollisionTransform() "calcCollisionTransform()" | @ref Kinoko::Field::ObjectCrab::m_transMatPending "m_transMatPending" | @ref Kinoko::Field::ObjectCrab::calcTransMat() "calcTransMat()"
 
 ---
 
