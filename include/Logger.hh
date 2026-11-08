@@ -32,8 +32,12 @@
     } while (0)
 
 /// @brief Runtime assert that is used as the default assertion mechanism. Only active in debug
-/// builds. In release builds, the expression is not evaluated, so it must not have side effects.
+/// builds.
+#ifdef BUILD_DEBUG
 #define ASSERT(e) RUNTIME_ASSERT(e)
+#else
+#define ASSERT(e) static_cast<void>(e)
+#endif
 
 /// @brief Logs a panic message and aborts the program
 #define PANIC(m, ...) \
