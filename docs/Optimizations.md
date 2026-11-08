@@ -444,6 +444,28 @@ This PR essentially contains three different changes:
 
 ---
 
+## <small>[[#570](https://github.com/vabold/Kinoko/pull/570)]</small> Skip Small Angle Atan in KartMove::calcRotation {#perfoptimization_kartmove_skip_small_atan}
+
+In @ref Kinoko::Kart::KartMove::calcRotation() "KartMove::calcRotation()", we dampen the magnitude of the kart's turn if the angle between the kart's forward vector and its direction of travel differs by more than `60.0f` degrees. This operation involves computing a cross product's @ref Kinoko::EGG::Vector3f::length() "length()" and taking the inverse tangent via @ref Kinoko::EGG::Mathf::atan2() "atan2()". However, since it is very rare for the kart's forward vector and its direction of travel to differ by more than `60.0f` degrees, this branch is rarely taken. We can improve performance slightly by ruling out scenarios where the inverse tangent of the two vectors lies within the first octant of @ref Kinoko::EGG::Mathf::atan2() "atan2()". When this is the case, we know that the inverse tangent is 45 degrees or less. Doing so introduces a 0.5% performance improvement.
+
+```c++
+const EGG::Vector3f cross = forward.cross(m_dir);
+f32 dot = forward.dot(m_dir);
+
+if (dot <= 0.0f || cross.squaredLength() > dot * dot) {
+    f32 angle = EGG::Mathf::atan2(cross.length(), dot);
+    angle = EGG::Mathf::abs(angle) * RAD2DEG;
+
+    if (angle > 60.0f) {
+        turn *= std::max(0.0f, 1.0f - (angle - 60.0f) / 40.0f);
+    }
+}
+```
+
+@see @ref Kinoko::Kart::KartMove::calcRotation() "KartMove::calcRotation()" | @ref Kinoko::EGG::Mathf::atan2() "EGG::Mathf::atan2()"
+
+---
+
 ## <small>[[#535](https://github.com/vabold/Kinoko/pull/535)]</small> Smooth Rail Segment Early Return {#perfoptimization_calct}
 
 @ref Kinoko::Field::RailSmoothInterpolator::calcT() "RailSmoothInterpolator::calcT()" is responsible for converting a position-based parameter into its corresponding cubic bezier curve parameter so that motion along the spline has constant speed. Each spline has a pre-computed table of @ref Kinoko::Field::RailSmoothInterpolator::m_pathPercentages "path percentages" at evenly-spaced parameter steps. This function iterates the path percentages array to find the index corresponding to the provided position-based parameter. In the base game, this loop continues to iterate the full array, even after finding the corresponding index. We can improve performance slightly by early returning once the index is found.
