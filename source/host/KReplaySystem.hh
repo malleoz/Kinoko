@@ -7,6 +7,7 @@
 #include <game/system/RaceConfig.hh>
 
 #include <array>
+#include <chrono>
 #include <optional>
 
 namespace Kinoko {
@@ -36,6 +37,7 @@ public:
 
 private:
     typedef std::pair<const System::Timer &, const System::Timer &> DesyncingTimerPair;
+    using Clock = std::chrono::steady_clock;
 
     enum class Result {
         Sync,
@@ -53,6 +55,7 @@ private:
     bool loadGhost(const char *path, const char *&err);
     bool calcEnd() const;
     void reportFail(const std::string &msg) const;
+    void reportTiming(Clock::duration raceTime) const;
 
     Result checkResult();
     s32 getDesyncingTimerIdx() const;
@@ -62,6 +65,7 @@ private:
 
     EGG::SceneManager *m_sceneMgr;
     bool m_workerMode;
+    Clock::duration m_initTime; ///< Time spent creating the race scene for the current ghost
 
     const char *m_currentGhostFileName;
     std::optional<System::GhostFile> m_currentGhost;

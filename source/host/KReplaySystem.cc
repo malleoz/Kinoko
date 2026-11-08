@@ -31,7 +31,10 @@ void KReplaySystem::init() {
 
     Abstract::File::Remove("results.txt");
 
+    // Creates the root scene, which then creates the race scene
+    auto initStart = Clock::now();
     m_sceneMgr->changeScene(0);
+    m_initTime = Clock::now() - initStart;
 }
 
 /// @brief Executes a frame.
@@ -47,9 +50,11 @@ bool KReplaySystem::run() {
         return runWorker();
     }
 
+    auto raceStart = Clock::now();
     while (!calcEnd()) {
         calc();
     }
+    reportTiming(Clock::now() - raceStart);
 
     if (checkResult() == Result::Sync) {
         return true;
@@ -126,8 +131,8 @@ void KReplaySystem::DestroyInstance() {
 }
 
 KReplaySystem::KReplaySystem()
-    : m_sceneMgr(nullptr), m_workerMode(false), m_currentGhostFileName(nullptr), m_rawGhost{},
-      m_workerGhostPath{}, m_failMsg{} {}
+    : m_sceneMgr(nullptr), m_workerMode(false), m_initTime{}, m_currentGhostFileName(nullptr),
+      m_rawGhost{}, m_workerGhostPath{}, m_failMsg{} {}
 
 KReplaySystem::~KReplaySystem() {
     if (s_instance) {
@@ -301,6 +306,17 @@ void KReplaySystem::reportFail(const std::string &msg) const {
     std::string report(m_currentGhostFileName);
     report += "\n" + std::string(msg);
     Abstract::File::Append("results.txt", report.c_str(), report.size());
+}
+
+/// @brief Reports how long the replay took, split into the init phase and the race simulation.
+/// @details The init phase covers creating the race scene (course, objects, karts, etc.), and the
+/// race covers every frame simulated until the replay ends.
+/// @param raceTime The time spent simulating the race.
+void KReplaySystem::reportTiming(Clock::duration raceTime) const {
+    using Seconds = std::chrono::duration<f64>;
+    f64 initSec = Seconds(m_initTime).count();
+    f64 raceSec = Seconds(raceTime).count();
+    REPORT("Timing: init %.6f s | race %.6f s | total %.6f s", initSec, raceSec, initSec + raceSec);
 }
 
 /// @brief Determines whether the simulation was a success or not.
