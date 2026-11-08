@@ -17,7 +17,7 @@ namespace Kart {
 /// @brief Determined by the KCL, represents the variation of the trick that is performed.
 /// @details This is also directly used to determine the duration of the trick boost.
 enum class TrickVariant {
-    StuntTrick = 0,      ///< The kart performs a a small stunt (e.g. Luigi Circuit ramp)
+    StuntTrick = 0,      ///< The kart performs a small stunt (e.g. Luigi Circuit ramp)
     SingleFlipTrick = 1, ///< The kart performs one backflip (e.g. Bowser's Castle starting ramp)
     DoubleFlipTrick = 2, ///< The kart performs two backflips (e.g. Rainbow Road wavy road ramp)
 };

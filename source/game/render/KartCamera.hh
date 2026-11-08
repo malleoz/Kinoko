@@ -38,7 +38,7 @@ private:
     f32 m_downPitchRatio;      ///< Smoothed ratio scaling the camera's downward pitch angle
     EGG::Vector3f m_prevPos;   ///< The position of the camera on the previous frame
     f32 m_dist;                ///< Orbit distance from @ref m_targetPos
-    f32 m_bigAirFallPitch;     ///< Height applied once you start falling after 20 frames of airtime
+    f32 m_bigAirFallPitch;     ///< Pitch applied once you start falling after 20 frames of airtime
     EGG::Vector3f m_targetPos; ///< The position the camera looks towards
 };
 

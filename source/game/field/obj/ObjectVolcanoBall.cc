@@ -79,7 +79,7 @@ void ObjectVolcanoBall::enterFalling() {
 /// \f]
 /// where \f$v_f^2\f$ is @ref m_finalVelSq, \f$a\f$ is @ref m_accel,
 /// \f$y\f$ is the Y-component of @ref pos(), and \f$y_{end}\f$ is @ref m_endPosY.
-/// If the fireball has reaches the end of its rail, then it transitions to the burning state.
+/// If the fireball has reached the end of its rail, then it transitions to the burning state.
 /// Otherwise, the fireball's transformation matrix and position are
 void ObjectVolcanoBall::calcFalling() {
     f32 sqVel = std::max(0.01f, m_finalVelSq - 2.0f * m_accel * (pos().y - m_endPosY));

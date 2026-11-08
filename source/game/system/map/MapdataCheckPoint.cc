@@ -331,8 +331,7 @@ bool MapdataCheckPoint::checkSector(const MapdataCheckPoint::LinkedCheckpoint &n
 }
 
 /// @addr{0x80510BF0}
-/// @brief Computes the the distance ratio: progress of traversal through the checkpoint
-/// quad
+/// @brief Computes the distance ratio: progress of traversal through the checkpoint quad
 /// @param next The linked checkpoint to check against
 /// @param p0 The XZ vector from the next checkpoint's left boundary to the player
 /// @param p1 The XZvector from this checkpoint right boundary to the player

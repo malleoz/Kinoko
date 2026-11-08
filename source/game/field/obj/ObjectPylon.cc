@@ -10,7 +10,6 @@
 
 #include "game/system/RaceManager.hh"
 
-
 namespace Kinoko::Field {
 
 /// @addr{0x8082CAD8}
@@ -285,8 +284,8 @@ void ObjectPylon::startHit(f32 velFactor, EGG::Vector3f &hitDepth) {
 /// collision checks against KCL_TYPE_OBJECT_WALL. On subsequent frames it checks both walls and
 /// floors. When a collision occurs, the cone is redirected away from direction of impact. If the
 /// collision was with the floor, then a velocity dampener reduces the pylon's flying speed by 25%.
-/// If 4 collisions have occured, then the pylon transitions to the Hiding state. Regardless of
-/// whether a collision occured, the pylon's position is updated to reflect its new @ref m_vel and
+/// If 4 collisions have occurred, then the pylon transitions to the Hiding state. Regardless of
+/// whether a collision occurred, the pylon's position is updated to reflect its new @ref m_vel and
 /// its rotation is updated based on @ref m_angVel.
 void ObjectPylon::calcHit() {
     constexpr f32 GRAVITY = 3.0f;

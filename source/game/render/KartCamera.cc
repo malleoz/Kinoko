@@ -52,7 +52,7 @@ void KartCamera::init() {
 /// @details Cancels out any change in the kart's height resulting from a drift hop. Calls @ref
 /// calcForward() to interpolate the camera's facing direction towards the kart's smoothed forward
 /// vector. Calls @ref calcManualDriftOffset() to account for yaw resulting from the kart drifting
-/// left or right. Dispatches to @ref calcCamera() to finalize the update to the the two cameras'
+/// left or right. Dispatches to @ref calcCamera() to finalize the update to the two cameras'
 /// positions and orientations. Lastly, calls @ref calcCollision() to perform collision checks for
 /// both cameras.
 /// @note Kinoko skips the camera entirely when there are no drivable objects requiring per-frame

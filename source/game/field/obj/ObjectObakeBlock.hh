@@ -40,7 +40,7 @@ public:
     /// @endGetters
 
 private:
-    const EGG::Vector3f m_initPos; ///< Inital position of the block
+    const EGG::Vector3f m_initPos; ///< Initial position of the block
     FallState m_fallState;         ///< Current state of the block in its falling lifecycle
     s32 m_framesFallen;            ///< How long the block has been falling for, capped at 256
     EGG::Vector3f m_xzFallVel;     ///< Lateral velocity while the block is falling

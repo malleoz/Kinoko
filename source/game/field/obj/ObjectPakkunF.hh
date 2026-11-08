@@ -38,7 +38,7 @@ private:
     State m_state;         ///< Tracks whether the piranha is idle or chomping
     s32 m_waitFrames;      ///< How long until the piranha starts chomping
     s32 m_attackFrames;    ///< How long until the piranha stops chomping
-    u32 m_currAttackFrame; /// How long the piranhas has been attacking for
+    u32 m_currAttackFrame; ///< How long the piranhas has been attacking for
 
     /// @brief Total time the piranha will be idle for
     /// @details Not in the base game, but caching this prevents having to dereference m_mapObj

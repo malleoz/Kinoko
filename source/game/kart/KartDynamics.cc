@@ -80,7 +80,7 @@ void KartDynamics::resetInternalVelocity() {
 }
 
 /// @addr{0x805B4E84}
-/// @brief Computes the intertia tensor from the provided cuboid dimensions
+/// @brief Computes the inertia tensor from the provided cuboid dimensions
 /// @param m The dimensions of the first cuboid with mass 12
 /// @param n The dimensions of the second cuboid with mass 1
 void KartDynamics::setInertia(const EGG::Vector3f &m, const EGG::Vector3f &n) {
@@ -100,7 +100,7 @@ void KartDynamics::setInertia(const EGG::Vector3f &m, const EGG::Vector3f &n) {
 /// @param n The dimensions of the second cuboid with mass 1
 /// @param skipInertia Whether to skip the inertia tensor calculation
 /// @details Sets @ref m_angVel0Factor based on the provided `rotSpeed`. If `skipInertia` is
-/// `false`, then calls @ref setIntertia() to compute the inertia tensor.
+/// `false`, then calls @ref setInertia() to compute the inertia tensor.
 void KartDynamics::setBspParams(f32 rotSpeed, const EGG::Vector3f &m, const EGG::Vector3f &n,
         bool skipInertia) {
     m_angVel0Factor = rotSpeed;

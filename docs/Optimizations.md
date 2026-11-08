@@ -212,7 +212,7 @@ Every frame, @ref Kinoko::Field::ObjectHwanwan::calc() "ObjectHwanwan::calc()" r
 
 ---
 
-## <small>[[#523](https://github.com/vabold/Kinoko/pull/523)]</small> Cache World Intertia Tensor {#perfoptimization_inertia_tensor}
+## <small>[[#523](https://github.com/vabold/Kinoko/pull/523)]</small> Cache World Inertia Tensor {#perfoptimization_inertia_tensor}
 
 In @ref Kinoko::Kart::KartCollide::applySomeFloorMoment() "KartCollide::applySomeFloorMoment()", the game computes a matrix that represents the kart's inertia tensor in world space. This function is called once per tire per frame.
 
@@ -312,7 +312,7 @@ Every frame per suspension, @ref Kinoko::Kart::KartCollide::applySomeFloorMoment
 
 ---
 
-##<small>[[#559](https://github.com/vabold/Kinoko/pull/559)]</small> Defer Smooth Rail Velocity Calculation {#perfoptimization_smooth_rail_velocity}
+## <small>[[#559](https://github.com/vabold/Kinoko/pull/559)]</small> Defer Smooth Rail Velocity Calculation {#perfoptimization_smooth_rail_velocity}
 
 The current velocity along the @ref Kinoko::Field::RailSmoothInterpolator "RailSmoothInterpolator" is normally calculated every rail update in @ref Kinoko::Field::RailSmoothInterpolator::calc() "calc()", but very few objects actually read the rail's current velocity; furthermore, the objects that do fetch the speed may only do so depending on the object's current state or proximity to the player. Rather than unnecessarily update it everytime the rail is updated, we can instead defer its calculation until the speed is actually fetched in @ref Kinoko::Field::RailSmoothInterpolator::getCurrVel() "getCurrVel()". We signal that the velocity needs to be updated with a new member variable @ref Kinoko::Field::RailSmoothInterpolator::m_velocityPending "m_velocityPending". This results in a performance improvement of up to 3% on certain courses.
 

@@ -18,7 +18,7 @@ namespace Kinoko::Kart {
 /// @addr{0x805943B4}
 /// @brief Constructor that initializes all @ref m_status bits to 0, except for @ref
 /// eStatus::AutoDrift which is set if the kart is using automatic transmission. Initializes
-/// @ref m_airtime, @ref m_cannonPointIdx, and @ref m_startBoostIdx to zero.
+/// @ref m_airtime, @ref m_cannonPointId, and @ref m_startBoostIdx to zero.
 KartState::KartState() {
     m_status.makeAllZero();
     m_status.changeBit(inputs()->driftIsAuto(), eStatus::AutoDrift);

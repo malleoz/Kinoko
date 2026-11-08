@@ -7,9 +7,9 @@ namespace Kinoko::Field {
 /// @brief The falling rocks on GCN DK Mountain
 /// @details Rocks move along a rail when they are tangible. When they collide with a floor, an
 /// inelastic bounce occurs while increasng the rock's @ref m_angSpd. Rocks become intangible (aka
-/// despawn) when they reach the end of the rail path, or, if the the rock's scale is less than
-/// `1.0f`, the rock breaks and becomes intangible when a kart collides with it. Rocks with a scale
-/// lesser than `1.0f` do not impart any reaction on the kart.
+/// despawn) when they reach the end of the rail path, or, if the rock's scale is less than `1.0f`,
+/// the rock breaks and becomes intangible when a kart collides with it. Rocks with a scale lesser
+/// than `1.0f` do not impart any reaction on the kart.
 class ObjectRock final : public ObjectCollidable {
 public:
     ObjectRock(const System::MapdataGeoObj &params);

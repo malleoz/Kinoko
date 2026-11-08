@@ -45,8 +45,8 @@ public:
     [[nodiscard]] static MEMList &GetRootList();
     [[nodiscard]] static MEMiHeapHead *FindContainHeap(const void *block);
 
-    /// @brief Gets the offset of the link member within the @ref Archive class
-    /// @return The offset of the link member within the @ref Archive class
+    /// @brief Gets the offset of the link member within the @ref MEMiHeapHead class
+    /// @return The offset of the link member within the @ref MEMiHeapHead class
     [[nodiscard]] static constexpr u16 getLinkOffset() {
         return offsetof(MEMiHeapHead, m_link);
     }

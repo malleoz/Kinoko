@@ -26,7 +26,7 @@ ObjectCollisionBase::~ObjectCollisionBase() = default;
 /// to exhaustively find the nearest enclosing simplex and returns `true`. If none of these early
 /// returns occurred, then loops again to improve the search direction. This loop repeats until all
 /// four simplex slots have been filled or the search direction's magnitude reaches zero, at which
-/// point the function returns `false` to indicate that no collission occurred.
+/// point the function returns `false` to indicate that no collision occurred.
 bool ObjectCollisionBase::check(const ObjectCollisionBase &rhs, EGG::Vector3f &distance) const {
     // std::sqrt(std::numeric_limits<f32>::max());
     constexpr f32 INITIAL_MAX_VALUE = std::bit_cast<f32>(0x5f7fffff);

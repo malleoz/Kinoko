@@ -126,7 +126,7 @@ private:
     const std::array<f32, 2> m_stopFrames;      ///< When the escalator starts slowing down
     const std::array<f32, 2> m_startFrames;     ///< When the escalator starts accelerating
     const std::array<f32, 2> m_fullSpeedFrames; ///< When escalator reaches max speed
-    const f32 m_midDuration; /// Duration of full speed in between the dir changes
+    const f32 m_midDuration; ///< Duration of full speed in between the dir changes
 
     /// @brief Helper function to compute the speeds of the escalator at each stage of its movement
     /// @param params The parameters used to initialize the object

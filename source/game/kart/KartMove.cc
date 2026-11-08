@@ -1730,7 +1730,7 @@ void KartMove::calcVehicleSpeed() {
 /// further scaled based off the return of @ref calcWallCollisionSpeedFactor.
 ///
 /// Next, this function computes the "soft" speed limit. If it's less than the speed limit computed
-/// above or a wall collision occured, it's set to the speed limit; otherwise, it decays by 3 units
+/// above or a wall collision occurred, it's set to the speed limit; otherwise, it decays by 3 units
 /// per frame. Next, the soft speed limit is clamped to the "hard" speed limit. Finally, the kart's
 /// speed is clamped to the soft speed limit. If the kart is in a jump pad and the kart's speed is
 /// lower than @ref m_jumpPadMinSpeed, it is set to @ref m_jumpPadMinSpeed. Next, it dispatches to
@@ -1999,11 +1999,11 @@ void KartMove::calcDisableBackwardsAccel() {
 
 /// @addr{0x8057B028}
 /// @brief Applies gravity-induced rolling on slopes when the kart is near stationary
-/// @details If the the magnitude of the kart's @ref m_speed is `30.0f` or greater, then this
-/// function does nothing. Otherwise, takes the difference between `1.0f` and the vertical
-/// component of @ref m_smoothedUp and doubles it. This value is then multiplied by the
-/// Y-component of the kart's backwards-facing direction, clamped to `[-0.5f, 0.5f]`. Finally,
-/// adds this value to @ref m_speed.
+/// @details If the magnitude of the kart's @ref m_speed is `30.0f` or greater, then this function
+/// does nothing. Otherwise, takes the difference between `1.0f` and the vertical component of @ref
+/// m_smoothedUp and doubles it. This value is then multiplied by the Y-component of the kart's
+/// backwards-facing direction, clamped to `[-0.5f, 0.5f]`. Finally, adds this value to @ref
+/// m_speed.
 void KartMove::calcSlopeAccel() {
     constexpr f32 SPEED_THRESHOLD = 30.0f;
 
@@ -2696,7 +2696,7 @@ void KartMove::calcAutoDrift() {
 /// @details Computes the drift rotation angle for outward drifting vehicles. Checks if the kart is
 /// starting a drift hop and and cancels wheelies if so. If the kart is not drifting but is also
 /// touching the ground, then resets all manual drift-related settings. If the kart is drifting,
-/// checks various conditions to see if the drift should end. This occurs either when the the player
+/// checks various conditions to see if the drift should end. This occurs either when the player
 /// stops accelerating or drifting, the kart enters an action, reject road applies a rejection on
 /// the kart, a wall collision occurs, or the kart falls below the required speed threshold for
 /// drifting. If a mini-turbo was charged by the time the drift ends, it will be activated.

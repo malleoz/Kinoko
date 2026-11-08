@@ -146,7 +146,7 @@ f32 ObjectPakkunF::getCollisionRadius() const {
 
 /// @addr{0x80774A00}
 /// @brief Runs every frame when the piranha is idle
-/// @details When the the wait timer reaches 0, the piranha will enter the attack state.
+/// @details When the wait timer reaches 0, the piranha will enter the attack state.
 void ObjectPakkunF::calcWait() {
     if (--m_waitFrames == 0) {
         enterAttack();

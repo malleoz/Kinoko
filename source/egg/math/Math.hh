@@ -391,7 +391,7 @@ static constexpr AtanEntry sArcTanTbl[32 + 1] = {
 }
 
 /// @addr{0x80085180}
-/// @brief Approximates the cosine of the provided fixed index paramter
+/// @brief Approximates the cosine of the provided fixed index parameter
 /// @param fidx The fixed index to compute the cosine of
 /// @return The approximation of the cosine of `fidx`
 /// @details This function takes in a "fixed index". Rather than divide a circle into 360 degrees, a
