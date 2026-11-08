@@ -1,1 +1,0 @@
-- ObjectCrab.hh has `StateResult` undocumented
