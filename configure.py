@@ -55,6 +55,11 @@ target_cflags = [
     '-fno-math-errno',
     '-fno-trapping-math',
     '--param inline-unit-growth=1000',
+    '-fcf-protection=none',
+    '-fno-pie',
+    '-fno-stack-clash-protection',
+    '-fno-stack-protector',
+    '-U_FORTIFY_SOURCE',
 ]
 
 debug_cflags = [
@@ -70,8 +75,8 @@ debug_cflags = [
 # remain accurate because -ffp-contract=off prevents fusing multiplies and adds into FMA
 native_cflags = [
     *target_cflags,
-    '-march=x86-64-v3',
-    '-mtune=znver4',
+    '-march=native',
+    '-mtune=native',
 ]
 
 # Profile-guided optimization is a two stage build. The instrumented build replays the sample
@@ -91,6 +96,7 @@ common_ldflags = []
 target_ldflags = [
     '-flto',
     '-flto-partition=one',
+    '-no-pie',
 ]
 
 # LTO optimizes at link time, so the optimization flags must be passed to the linker as well
