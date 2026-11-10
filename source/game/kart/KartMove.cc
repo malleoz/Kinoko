@@ -1327,7 +1327,7 @@ void KartMove::calcTop() {
                             (status.offBit(eStatus::ZipperBoost) || m_zipperBoostTimer > 15))) {
                 f32 topDotZ = DEFAULT_SMOOTH_INTERP_RATE -
                         6.0f * (EGG::Mathf::abs(collisionTop.dot(componentZAxis())));
-                smoothInterpRate = std::min(DEFAULT_SMOOTH_INTERP_RATE, std::max(0.3f, topDotZ));
+                smoothInterpRate = std::clamp(topDotZ, 0.3f, DEFAULT_SMOOTH_INTERP_RATE);
             }
 
             m_smoothedUp += (collisionTop - m_smoothedUp) * smoothInterpRate;
