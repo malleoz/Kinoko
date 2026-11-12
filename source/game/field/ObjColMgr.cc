@@ -1,6 +1,7 @@
 #include "ObjColMgr.hh"
 
 #include "game/field/CourseColMgr.hh"
+#include "game/field/KColData.hh"
 
 namespace Kinoko::Field {
 

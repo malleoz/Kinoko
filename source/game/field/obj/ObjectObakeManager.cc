@@ -1,7 +1,7 @@
 #include "ObjectObakeManager.hh"
 
 #include "game/field/CollisionDirector.hh"
-#include "game/field/KColData.hh"
+#include "game/field/CollisionInfo.hh"
 #include "game/field/ObjectCollisionBox.hh"
 #include "game/field/ObjectCollisionSphere.hh"
 #include "game/field/obj/ObjectObakeBlock.hh"

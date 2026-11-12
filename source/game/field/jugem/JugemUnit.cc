@@ -1,7 +1,7 @@
 #include "JugemUnit.hh"
 
 #include "game/field/CollisionDirector.hh"
-#include "game/field/KColData.hh"
+#include "game/field/CollisionInfo.hh"
 #include "game/field/jugem/JugemMove.hh"
 #include "game/field/jugem/JugemSwitch.hh"
 

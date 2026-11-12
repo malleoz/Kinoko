@@ -1,7 +1,7 @@
 #include "ObjectDokan.hh"
 
 #include "game/field/CollisionDirector.hh"
-#include "game/field/KColData.hh"
+#include "game/field/CollisionInfo.hh"
 #include "game/field/ObjectCollisionBase.hh"
 
 namespace Kinoko::Field {

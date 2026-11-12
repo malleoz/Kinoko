@@ -1,7 +1,7 @@
 #include "KartCamera.hh"
 
 #include "game/field/CollisionDirector.hh"
-#include "game/field/KColData.hh"
+#include "game/field/CollisionInfo.hh"
 #include "game/field/ObjectDrivableDirector.hh"
 
 #include "game/kart/KartMove.hh"

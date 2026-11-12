@@ -13,7 +13,7 @@
 #include "game/kart/KartSuspension.hh"
 
 #include "game/field/CollisionDirector.hh"
-#include "game/field/KColData.hh"
+#include "game/field/CollisionInfo.hh"
 #include "game/field/ObjectDirector.hh"
 
 #include "game/item/ItemDirector.hh"

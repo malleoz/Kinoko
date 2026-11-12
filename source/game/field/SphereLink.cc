@@ -1,7 +1,7 @@
 #include "SphereLink.hh"
 
 #include "game/field/CollisionDirector.hh"
-#include "game/field/KColData.hh"
+#include "game/field/CollisionInfo.hh"
 
 #include <egg/math/Matrix.hh>
 

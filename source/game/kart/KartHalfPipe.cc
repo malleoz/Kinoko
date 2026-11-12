@@ -6,7 +6,7 @@
 #include "game/kart/KartPhysics.hh"
 #include "game/kart/KartState.hh"
 
-#include "game/field/KColData.hh"
+#include "game/field/CollisionInfo.hh"
 
 #include "game/system/KPadController.hh"
 

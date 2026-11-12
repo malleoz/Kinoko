@@ -1,7 +1,7 @@
 #include "ObjectBird.hh"
 
 #include "game/field/CollisionDirector.hh"
-#include "game/field/KColData.hh"
+#include "game/field/CollisionInfo.hh"
 #include "game/field/RailInterpolator.hh"
 
 #include "game/render/AnmMgr.hh"

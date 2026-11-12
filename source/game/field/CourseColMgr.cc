@@ -1,6 +1,7 @@
 #include "CourseColMgr.hh"
 
 #include "game/field/CollisionDirector.hh"
+#include "game/field/KColData.hh"
 
 #include "game/system/ResourceManager.hh"
 

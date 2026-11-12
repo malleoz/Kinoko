@@ -1,6 +1,9 @@
 #pragma once
 
-#include "game/field/KColData.hh"
+#include <Types.hh>
+
+#include "game/field/CollisionInfo.hh"
+#include "game/field/KCollisionTypes.hh"
 
 namespace Kinoko {
 
