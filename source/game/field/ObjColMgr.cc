@@ -444,7 +444,7 @@ bool ObjColMgr::checkSphereImpl(CourseColCheckSphereFunc<T> fn, f32 radius,
 /// bbox
 /// @param info The caller's collision info object to merge into
 /// @param tempInfo The temporary collision info object to merge from
-void ObjColMgr::mergeInfo(CollisionInfoPartial &info, CollisionInfoPartial &tempInfo) const {
+void ObjColMgr::mergeInfo(CollisionInfoPartial &info, const CollisionInfoPartial &tempInfo) const {
     info.transformInfo(tempInfo, m_mtx);
 }
 
@@ -452,7 +452,7 @@ void ObjColMgr::mergeInfo(CollisionInfoPartial &info, CollisionInfoPartial &temp
 /// info
 /// @param info The caller's collision info object to merge into
 /// @param tempInfo The temporary collision info object to merge from
-void ObjColMgr::mergeInfo(CollisionInfo &info, CollisionInfo &tempInfo) const {
+void ObjColMgr::mergeInfo(CollisionInfo &info, const CollisionInfo &tempInfo) const {
     info.transformInfo(tempInfo, m_mtx, m_movingObjVel);
 }
 

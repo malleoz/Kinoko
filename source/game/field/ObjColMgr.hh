@@ -128,8 +128,8 @@ private:
             const EGG::Vector3f &pos, const EGG::Vector3f &prevPos, KCLTypeMask mask, T *info,
             KCLTypeMask *maskOut);
 
-    void mergeInfo(CollisionInfoPartial &info, CollisionInfoPartial &tempInfo) const;
-    void mergeInfo(CollisionInfo &info, CollisionInfo &tempInfo) const;
+    void mergeInfo(CollisionInfoPartial &info, const CollisionInfoPartial &tempInfo) const;
+    void mergeInfo(CollisionInfo &info, const CollisionInfo &tempInfo) const;
 
     KColData *const m_data;       ///< Pointer to parsed KCL tri data
     EGG::Matrix34f m_mtx;         ///< The local-to-world transformation matrix

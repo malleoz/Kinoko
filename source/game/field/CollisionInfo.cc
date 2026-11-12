@@ -22,17 +22,13 @@ void CollisionInfoPartial::updateBBox(const EGG::Vector3f &offset) {
 /// @brief Maps the provided collision info from local to world space
 /// @param rhs The partial collision info accumulated from local space
 /// @param mtx The local-to-world transformation matrix
-/// @details Also updates the provided collision info's bbox to world space.
-void CollisionInfoPartial::transformInfo(CollisionInfoPartial &rhs, const EGG::Matrix34f &mtx) {
-    rhs.bbox.min = mtx.ps_multVector33(rhs.bbox.min);
-    rhs.bbox.max = mtx.ps_multVector33(rhs.bbox.max);
+void CollisionInfoPartial::transformInfo(const CollisionInfoPartial &rhs,
+        const EGG::Matrix34f &mtx) {
+    EGG::Vector3f min = mtx.ps_multVector33(rhs.bbox.min);
+    EGG::Vector3f max = mtx.ps_multVector33(rhs.bbox.max);
 
-    EGG::Vector3f min = rhs.bbox.min;
-    rhs.bbox.min = min.minimize(rhs.bbox.max);
-    rhs.bbox.max = min.maximize(rhs.bbox.max);
-
-    bbox.min = bbox.min.minimize(rhs.bbox.min);
-    bbox.max = bbox.max.maximize(rhs.bbox.max);
+    bbox.min = bbox.min.minimize(min.minimize(max));
+    bbox.max = bbox.max.maximize(min.maximize(max));
 }
 
 /// @brief Expands the bounding box to include the provided position vector
@@ -102,19 +98,13 @@ void CollisionInfo::update(f32 now_dist, const EGG::Vector3f &offset, const EGG:
 /// @param rhs The collision info accumulated from local space
 /// @param mtx The local-to-world transformation matrix
 /// @param v Moving road velocity of the colliding tri
-/// @details Also updates the provided collision info's bbox to world space.
-void CollisionInfo::transformInfo(CollisionInfo &rhs, const EGG::Matrix34f &mtx,
+void CollisionInfo::transformInfo(const CollisionInfo &rhs, const EGG::Matrix34f &mtx,
         const EGG::Vector3f &v) {
-    rhs.bbox.min = mtx.ps_multVector33(rhs.bbox.min);
-    rhs.bbox.max = mtx.ps_multVector33(rhs.bbox.max);
+    EGG::Vector3f min = mtx.ps_multVector33(rhs.bbox.min);
+    EGG::Vector3f max = mtx.ps_multVector33(rhs.bbox.max);
 
-    EGG::Vector3f min = rhs.bbox.min;
-
-    rhs.bbox.min = min.minimize(rhs.bbox.max);
-    rhs.bbox.max = min.maximize(rhs.bbox.max);
-
-    bbox.min = bbox.min.minimize(rhs.bbox.min);
-    bbox.max = bbox.max.maximize(rhs.bbox.max);
+    bbox.min = bbox.min.minimize(min.minimize(max));
+    bbox.max = bbox.max.maximize(min.maximize(max));
 
     if (floorDist < rhs.floorDist) {
         floorDist = rhs.floorDist;

@@ -12,7 +12,7 @@ struct CollisionInfoPartial {
 
     void reset();
     void updateBBox(const EGG::Vector3f &offset);
-    void transformInfo(CollisionInfoPartial &rhs, const EGG::Matrix34f &mtx);
+    void transformInfo(const CollisionInfoPartial &rhs, const EGG::Matrix34f &mtx);
 };
 
 /// @brief Stores information pertaining to a collision
@@ -36,7 +36,7 @@ struct CollisionInfo {
     void reset();
     void update(f32 now_dist, const EGG::Vector3f &offset, const EGG::Vector3f &fnrm,
             u32 kclAttributeTypeBit);
-    void transformInfo(CollisionInfo &rhs, const EGG::Matrix34f &mtx, const EGG::Vector3f &v);
+    void transformInfo(const CollisionInfo &rhs, const EGG::Matrix34f &mtx, const EGG::Vector3f &v);
 };
 
 } // namespace Kinoko::Field

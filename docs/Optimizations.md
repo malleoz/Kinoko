@@ -495,3 +495,9 @@ if (dot <= 0.0f || cross.squaredLength() > dot * dot) {
 In the base game, @ref Kinoko::Kart::KartDynamics::calc() "KartDynamics::calc()" and @ref Kinoko::Kart::KartSuspensionPhysics::calcCollision() "KartSuspensionPhysics::calcCollision()" are called with an additional `dt` parameter which represents the delta time for the current step in the physics evaluation. In theory, this could be used to speed up or slow down the rate at which physics calculations are performed. In the base game, this `dt` value is always set to `1.0f`. We originally made this a `constexpr` value, but for performance, we have removed it altogether.
 
 @see @ref Kinoko::Kart::KartDynamics::calc() "KartDynamics::calc()" | @ref Kinoko::Kart::KartSuspensionPhysics::calcCollision() "KartSuspensionPhysics::calcCollision()"
+
+---
+
+## NO PR YET - Remove rhs BBox Update in CollisionInfo::TransformInfo
+
+Update this
